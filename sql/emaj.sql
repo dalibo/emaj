@@ -1332,21 +1332,15 @@ $emaj_set_mark_group$
 --        a null or '' mark is transformed into 'MARK_%'
 -- Output: number of processed tables and sequences
   DECLARE
-    v_pgversion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
-    v_emajSchema    TEXT := 'emaj';
     v_groupState    TEXT;
     v_markName      TEXT;
-    v_nbTb          INT := 0;
-    v_fullSeqName   TEXT;
-    v_seqName       TEXT;
-    v_timestamp     TIMESTAMPTZ;
-    v_stmt          TEXT;
-    r_tblsq         RECORD;
+    v_nbTb          INT;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('SET_MARK_GROUP', 'BEGIN', v_groupName, v_mark);
 -- check that the group is recorded in emaj_group table
+-- (the SELECT is coded FOR UPDATE to lock the accessed group, avoiding any operation on this group at the same time)
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_set_mark_group: group % has not been created', v_groupName;
@@ -1373,64 +1367,84 @@ $emaj_set_mark_group$
     IF FOUND THEN
        RAISE EXCEPTION 'emaj_set_mark_group: Group % already contains a name %.', v_groupName, v_markName;
     END IF;
--- OK, begin a sub-transaction, lock all tables to get a stable point ...
-    BEGIN
+-- OK, lock all tables to get a stable point ...
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
-      PERFORM emaj._lock_group(v_groupName,'ROW EXCLUSIVE');
--- ... look at the clock and insert the mark into the emaj_mark table
-      v_timestamp = clock_timestamp();
-      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_state) 
-        VALUES (v_groupName, v_markName, v_timestamp, 'ACTIVE');
--- then, examine the group's definition
-      FOR r_tblsq IN
-          SELECT rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation WHERE rel_group = v_groupName
-          LOOP
-        IF r_tblsq.rel_kind = 'r' THEN
--- if it is a table, record the emaj_id associated sequence parameters in the emaj sequence table
-          v_seqName := r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log_emaj_id_seq';
-          v_fullSeqName := quote_ident(v_emajSchema) || '.' || quote_ident(v_seqName);
-          v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
-                   'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' || 
-                   'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                   ') SELECT '''|| v_emajSchema || ''', ''' || v_seqName || ''', ''' || v_timestamp || ''', ''' || v_markName || 
-                   ''', ' || 'last_value, ';
-          IF v_pgversion <= '8.3' THEN
-             v_stmt = v_stmt || '0, ';
-          ELSE
-             v_stmt = v_stmt || 'start_value, ';
-          END IF;
-          v_stmt = v_stmt || 
-                   'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-                   'FROM ' || v_fullSeqName;
-        ELSEIF r_tblsq.rel_kind = 'S' THEN
--- if it is a sequence, record the sequence parameters in the emaj sequence table
-          v_fullSeqName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-          v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
-                   'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' || 
-                   'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                   ') SELECT ''' || r_tblsq.rel_schema || ''', ''' || 
-                   r_tblsq.rel_tblseq || ''', ''' || v_timestamp || ''', ''' || v_markName || ''', ' ||
-                   'last_value, ';
-          IF v_pgversion <= '8.3' THEN
-             v_stmt = v_stmt || '0, ';
-          ELSE
-             v_stmt = v_stmt || 'start_value, ';
-          END IF;
-          v_stmt = v_stmt || 
-                   'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-                   'FROM ' || v_fullSeqName;
-        END IF;
-        EXECUTE v_stmt;
-        v_nbTb = v_nbTb + 1;
-      END LOOP;
--- ... and finaly commit the operation and release locks
-    END;
+    PERFORM emaj._lock_group(v_groupName,'ROW EXCLUSIVE');
+-- Effectively set the mark using the internal _set_mark_group() function
+    SELECT emaj._set_mark_group(v_groupName, v_markName) into v_nbTb;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('SET_MARK_GROUP', 'END', v_groupName, v_markName);
     RETURN v_nbTb;
   END;
 $emaj_set_mark_group$;
+
+CREATE or REPLACE FUNCTION emaj._set_mark_group(v_groupName TEXT, v_mark TEXT) 
+RETURNS int LANGUAGE plpgsql AS
+$_set_mark_group$
+-- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the group. 
+-- It is called by emaj_set_mark_group function but may be called by other functions to set an internal mark.
+-- Input: group name, mark to set
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_pgversion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_emajSchema    TEXT := 'emaj';
+    v_nbTb          INT := 0;
+    v_fullSeqName   TEXT;
+    v_seqName       TEXT;
+    v_timestamp     TIMESTAMPTZ;
+    v_stmt          TEXT;
+    r_tblsq         RECORD;
+  BEGIN
+-- ... look at the clock and insert the mark into the emaj_mark table
+    v_timestamp = clock_timestamp();
+    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_state) 
+      VALUES (v_groupName, v_mark, v_timestamp, 'ACTIVE');
+-- then, examine the group's definition
+    FOR r_tblsq IN
+        SELECT rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation WHERE rel_group = v_groupName
+        LOOP
+      IF r_tblsq.rel_kind = 'r' THEN
+-- if it is a table, record the emaj_id associated sequence parameters in the emaj sequence table
+        v_seqName := r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log_emaj_id_seq';
+        v_fullSeqName := quote_ident(v_emajSchema) || '.' || quote_ident(v_seqName);
+        v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
+                 'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' || 
+                 'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                 ') SELECT '''|| v_emajSchema || ''', ''' || v_seqName || ''', ''' || v_timestamp || ''', ''' || v_mark || 
+                 ''', ' || 'last_value, ';
+        IF v_pgversion <= '8.3' THEN
+           v_stmt = v_stmt || '0, ';
+        ELSE
+           v_stmt = v_stmt || 'start_value, ';
+        END IF;
+        v_stmt = v_stmt || 
+                 'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+                 'FROM ' || v_fullSeqName;
+      ELSEIF r_tblsq.rel_kind = 'S' THEN
+-- if it is a sequence, record the sequence parameters in the emaj sequence table
+        v_fullSeqName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+        v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
+                 'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' || 
+                 'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                 ') SELECT ''' || r_tblsq.rel_schema || ''', ''' || 
+                 r_tblsq.rel_tblseq || ''', ''' || v_timestamp || ''', ''' || v_mark || ''', ' ||
+                 'last_value, ';
+        IF v_pgversion <= '8.3' THEN
+           v_stmt = v_stmt || '0, ';
+        ELSE
+           v_stmt = v_stmt || 'start_value, ';
+        END IF;
+        v_stmt = v_stmt || 
+                 'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+                 'FROM ' || v_fullSeqName;
+      END IF;
+      EXECUTE v_stmt;
+      v_nbTb = v_nbTb + 1;
+    END LOOP;
+    RETURN v_nbTb;
+  END;
+$_set_mark_group$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS void LANGUAGE plpgsql AS
@@ -2546,6 +2560,7 @@ REVOKE ALL ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) 
 REVOKE ALL ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
@@ -2584,6 +2599,7 @@ GRANT EXECUTE ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEA
 GRANT EXECUTE ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
