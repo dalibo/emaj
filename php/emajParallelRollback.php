@@ -39,14 +39,16 @@
   $group='';                        // -g E-maj group name (mandatory)
   $mark='';                         // -m E-maj mark name to rollback to (mandatory)
   $nbSubgroup=1;                    // -s number of E-maj sub_groups to use for rollback (default=1)
-  $verbose=false;                   // -v flag for verbose mode
+  $verbose='false';                 // -v flag for verbose mode
+  $unlogged='true';                 // -l flag for logged rollback mode
 
 // Get supplied parameters
-  $shortOptions="d:h:p:U:W:g:m:s:v";
+  $shortOptions="d:h:p:U:W:g:m:s:v:l";
   $options = getopt($shortOptions);
 
 // ... and process them
   $conn_string = '';
+  $deleteLog = 'true';
   foreach (array_keys($options) as $opt) switch ($opt) {
     case 'd':
       $dbname=$options['d'];
@@ -85,6 +87,10 @@
       break;
     case 'v':
       $verbose=true;
+      break;
+    case 'l':
+      $unlogged='false';
+      $deleteLog='false';
       break;
   }
 // check the group name has been supplied
@@ -130,7 +136,7 @@
 // Call for _rlbk_group_step1 on first connection
 // This prepares the parallel rollback by creating well balanced sub_groups
 
-  $query="SELECT emaj._rlbk_group_step1 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$nbSubgroup)";
+  $query="SELECT emaj._rlbk_group_step1 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$unlogged,$nbSubgroup)";
   if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step1 for group $group and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call for _rlbk_group_step1 function failed '.pg_last_error()."\n");
@@ -158,33 +164,42 @@
     }
   pg_free_result($result);
 
-// Once all tables are locked, synchronous call for _rlbk_group_step3 to drop all foreign keys involved 
+// Call for _rlbk_group_step3 on first connection
+// This set a rollback start mark if logged rollback
+
+  $query="SELECT emaj._rlbk_group_step3 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$unlogged)";
+  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step3 for group $group and mark $mark...\n";
+  $result = pg_query($dbconn[1],$query)
+      or die('Call for _rlbk_group_step3 function failed '.pg_last_error()."\n");
+  pg_free_result($result);
+
+// Once all tables are locked, synchronous call for _rlbk_group_step4 to drop all foreign keys involved 
 // in the sub-group before rollback
 
   for ($i=1;$i<=$nbSubgroup;$i++){
-    $query="SELECT emaj._rlbk_group_step3 ('".pg_escape_string($group)."',$i)";
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step3 for #$i -> drop foreign keys...\n";
+    $query="SELECT emaj._rlbk_group_step4 ('".pg_escape_string($group)."',$i)";
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step4 for #$i -> drop foreign keys...\n";
     $result = pg_query($dbconn[$i],$query)
-        or die('Call for j_rlbk_group_step3 function for #'.$i.' failed '.pg_last_error()."\n");
+        or die('Call for j_rlbk_group_step4 function for #'.$i.' failed '.pg_last_error()."\n");
     }
   pg_free_result($result);
 
-// For each subgroup, asynchronous call for _rlbk_group_step4 to rollback tables
+// For each subgroup, asynchronous call for _rlbk_group_step5 to rollback tables
 
   for ($i=1;$i<=$nbSubgroup;$i++){
-    $query="SELECT emaj._rlbk_group_step4 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$i, true)";
+    $query="SELECT emaj._rlbk_group_step5 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$i,$unlogged,$deleteLog)";
     if (pg_connection_busy($dbconn[$i]))
-      die("Connection #$i is busy. Unable to call for _rlbk_group_step4\n");
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step4 for #$i -> rollback tables...\n";
+      die("Connection #$i is busy. Unable to call for _rlbk_group_step5\n");
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step5 for #$i -> rollback tables...\n";
     pg_send_query($dbconn[$i],$query) 
-        or die('Call for _rlbk_group_step4 function for #'.$i.' failed: '.pg_last_error()."\n");
+        or die('Call for _rlbk_group_step5 function for #'.$i.' failed: '.pg_last_error()."\n");
     }
 
-// For each subgroup, get the result of the previous call for _rlbk_group_step4
+// For each subgroup, get the result of the previous call for _rlbk_group_step5
   $cumNbTbl=0;
   for ($i=1;$i<=$nbSubgroup;$i++){
     $result = pg_get_result($dbconn[$i]);
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." get result of _rlbk_group_step4 call for #$i...\n";
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." get result of _rlbk_group_step5 call for #$i...\n";
     $nbTbl=pg_fetch_result($result,0,0);
     if ($verbose) echo "     => Number of rollbacked tables for the subgroup = $nbTbl\n";
     $cumNbTbl=$cumNbTbl+$nbTbl;
@@ -197,22 +212,22 @@
     die("Internal error: sum of processed tables/sequences by sub-group ($cumNbTbl) is not equal the number of tables/sequences of the group ($totalNbTbl) !\n");
   }
 
-// Once all tables are restored, synchronous call for _rlbk_group_step5 to recreate all foreign keys
+// Once all tables are restored, synchronous call for _rlbk_group_step6 to recreate all foreign keys
 
   for ($i=1;$i<=$nbSubgroup;$i++){
-    $query="SELECT emaj._rlbk_group_step5 ('".pg_escape_string($group)."',$i)";
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step5 for #$i -> recreate foreign keys...\n";
+    $query="SELECT emaj._rlbk_group_step6 ('".pg_escape_string($group)."',$i)";
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step6 for #$i -> recreate foreign keys...\n";
     $result = pg_query($dbconn[$i],$query)
-        or die('Call for _rlbk_group_step5 function for #'.$i.' failed '.pg_last_error()."\n");
+        or die('Call for _rlbk_group_step6 function for #'.$i.' failed '.pg_last_error()."\n");
     }
   pg_free_result($result);
 
-// Call for emaj_rlbk_group_step6 on first connection to complete the rollback operation
+// Call for emaj_rlbk_group_step7 on first connection to complete the rollback operation
 
-  $query="SELECT emaj._rlbk_group_step6 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$totalNbTbl,true)";
-  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step6 -> complete rollback operation...\n";
+  $query="SELECT emaj._rlbk_group_step7 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$totalNbTbl,$unlogged,$deleteLog)";
+  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step7 -> complete rollback operation...\n";
   $result = pg_query($dbconn[1],$query)
-      or die('Call for _rlbk_group_step6 function failed '.pg_last_error()."\n");
+      or die('Call for _rlbk_group_step7 function failed '.pg_last_error()."\n");
   $nbSeq=pg_fetch_result($result,0,0);
   pg_free_result($result);
   if ($verbose) echo "     => Number of rollbacked sequences for group '$group' = $nbSeq\n";
@@ -255,6 +270,7 @@ function print_help(){
   echo "  $progName -g <E-Maj group name> -m <E-Maj mark> -s <number of sub_groups> [OPTION]... \n";
   echo "\nOptions:\n";
   echo "  -v          verbose mode; writes more information about the processing\n";
+  echo "  -l          logged rollback mode (i.e. 'rollbackable' rollback)\n";
   echo "  --help      shows this help, then exit\n";
   echo "  --version   outputs version information, then exit\n";
   echo "\nConnection options:\n";

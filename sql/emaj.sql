@@ -541,12 +541,17 @@ $_delete_seq$
   END;
 $_delete_seq$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ,  v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_rlbk_table$
 -- This function rollbacks one table to a given timestamp
--- The function is used by emaj.emaj_rollback_group
--- Input: schema name and table name, timestamp limit for rollback
+-- The function is called by emaj.emaj_rollback_group
+-- Input: schema name and table name, timestamp limit for rollback, flag to specify if log trigger 
+--        must be disable during rollback operation and flag to specify if rollbacked log rows must be deleted.
+-- These flags must be respectively:
+--   - true and true   for common (unlogged) rollback,
+--   - false and false for logged rollback, 
+--   - true and false  for unlogged rollback with undeleted log rows (for emaj_rollback_and_stop_group function)
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_emajSchema     TEXT := 'emaj';
@@ -562,7 +567,6 @@ $_rlbk_table$
     v_tsrlbk_end     TIMESTAMP;
     v_tsdel_start    TIMESTAMP;
     v_tsdel_end      TIMESTAMP;
-
   BEGIN
     v_fullTableName  := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
     v_logTableName   := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
@@ -581,8 +585,10 @@ $_rlbk_table$
 -- insert begin event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'Up to log_id ' || v_emaj_id);
--- deactivate the log trigger on the application table
-    EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
+-- deactivate the log trigger on the application table, if needed (unlogged rollback)
+    IF v_disableTrigger THEN
+      EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
+    END IF;
 -- record the time at the rollback start
     SELECT clock_timestamp() INTO v_tsrlbk_start;
 -- rollback the table
@@ -622,8 +628,10 @@ $_rlbk_table$
       INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
          VALUES ('del_log', v_schemaName, v_tableName, v_tsrlbk_start, v_nb_rows, v_tsdel_end - v_tsdel_start);
    END IF;
--- re-activate the log trigger on the application table
-    EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || v_logTriggerName;
+-- re-activate the log trigger on the application table, if previously disabled
+   IF v_disableTrigger THEN
+      EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || v_logTriggerName;
+   END IF;
 -- insert end event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('ROLLBACK_TABLE', 'END', v_fullTableName, v_nb_rows || ' rollbacked rows ');
@@ -1336,9 +1344,6 @@ $emaj_set_mark_group$
     v_markName      TEXT;
     v_nbTb          INT;
   BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('SET_MARK_GROUP', 'BEGIN', v_groupName, v_mark);
 -- check that the group is recorded in emaj_group table
 -- (the SELECT is coded FOR UPDATE to lock the accessed group, avoiding any operation on this group at the same time)
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
@@ -1372,9 +1377,6 @@ $emaj_set_mark_group$
     PERFORM emaj._lock_group(v_groupName,'ROW EXCLUSIVE');
 -- Effectively set the mark using the internal _set_mark_group() function
     SELECT emaj._set_mark_group(v_groupName, v_markName) into v_nbTb;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('SET_MARK_GROUP', 'END', v_groupName, v_markName);
     RETURN v_nbTb;
   END;
 $emaj_set_mark_group$;
@@ -1396,7 +1398,10 @@ $_set_mark_group$
     v_stmt          TEXT;
     r_tblsq         RECORD;
   BEGIN
--- ... look at the clock and insert the mark into the emaj_mark table
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('SET_MARK_GROUP', 'BEGIN', v_groupName, v_mark);
+-- look at the clock and insert the mark into the emaj_mark table
     v_timestamp = clock_timestamp();
     INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_state) 
       VALUES (v_groupName, v_mark, v_timestamp, 'ACTIVE');
@@ -1442,6 +1447,9 @@ $_set_mark_group$
       EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('SET_MARK_GROUP', 'END', v_groupName, v_mark);
     RETURN v_nbTb;
   END;
 $_set_mark_group$;
@@ -1606,8 +1614,8 @@ $emaj_rollback_group$
 -- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group
 -- Output: number of processed tables and sequences
   BEGIN
--- just rollback the group, with log table deletion
-    return emaj._rlbk_group(v_groupName, v_mark, true);
+-- just (unlogged) rollback the group, with log table deletion
+    return emaj._rlbk_group(v_groupName, v_mark, true, true);
   END;
 $emaj_rollback_group$;
 
@@ -1622,8 +1630,8 @@ $emaj_rollback_and_stop_group$
     v_ret_rollback   INT;
     v_ret_stop       INT;
   BEGIN
--- rollback the group without log table deletion
-    SELECT emaj._rlbk_group(v_groupName, v_mark, false) INTO v_ret_rollback;
+-- (unlogged) rollback the group without log table deletion
+    SELECT emaj._rlbk_group(v_groupName, v_mark, true, false) INTO v_ret_rollback;
 -- and stop
     SELECT emaj.emaj_stop_group(v_groupName) INTO v_ret_stop;
 -- return the number of rollbacked tables and sequences
@@ -1631,7 +1639,23 @@ $emaj_rollback_and_stop_group$
   END;
 $emaj_rollback_and_stop_group$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group(v_groupName TEXT, v_mark TEXT, v_deleteLog BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) 
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_logged_rollback_group$
+-- The function performs a logged rollback of all tables and sequences of a group up to a mark in the history.
+-- A logged rollback is a rollback which can be later rollbacked! To achieve this:
+-- - log triggers are not disabled at rollback time,
+-- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
+-- - rollbacked log rows and any marks inside the rollback time frame are kept.
+-- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group
+-- Output: number of processed tables and sequences
+  BEGIN
+-- just "logged-rollback" the group, with log table deletion
+    return emaj._rlbk_group(v_groupName, v_mark, false, false);
+  END;
+$emaj_logged_rollback_group$;
+
+CREATE or REPLACE FUNCTION emaj._rlbk_group(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) 
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_group$
 -- The function rollbacks all tables and sequences of a group up to a mark in the history.
@@ -1648,26 +1672,28 @@ $_rlbk_group$
     v_nbSeq             INT;
   BEGIN
 -- Step 1: prepare the rollback operation
-    SELECT emaj._rlbk_group_step1(v_groupName, v_mark, 1) INTO v_nbTblInGroup;
+    SELECT emaj._rlbk_group_step1(v_groupName, v_mark, v_unloggedRlbk, 1) INTO v_nbTblInGroup;
 -- Step 2: lock all tables
     PERFORM emaj._rlbk_group_step2(v_groupName, 1);
--- Step 3: record and drop foreign keys
-    PERFORM emaj._rlbk_group_step3(v_groupName, 1);
--- Step 4: rollback tables
-    SELECT emaj._rlbk_group_step4(v_groupName, v_mark, 1, v_deleteLog) INTO v_nbTbl;
+-- Step 3: set a rollback start mark if logged rollback
+    PERFORM emaj._rlbk_group_step3(v_groupName, v_mark, v_unloggedRlbk);
+-- Step 4: record and drop foreign keys
+    PERFORM emaj._rlbk_group_step4(v_groupName, 1);
+-- Step 5: effectively rollback tables
+    SELECT emaj._rlbk_group_step5(v_groupName, v_mark, 1, v_unloggedRlbk, v_deleteLog) INTO v_nbTbl;
 -- checks that we have the expected number of processed tables
     IF v_nbTbl <> v_nbTblInGroup THEN
        RAISE EXCEPTION '_rlbk_group: Internal error 1 (%,%)',v_nbTbl,v_nbTblInGroup;
     END IF;
--- Step 5: recreate foreign keys
-    PERFORM emaj._rlbk_group_step5(v_groupName, 1);
--- Step 6: process sequences and complete the rollback operation record
-    SELECT emaj._rlbk_group_step6(v_groupName, v_mark, v_nbTbl, v_deleteLog) INTO v_nbSeq;
+-- Step 6: recreate foreign keys
+    PERFORM emaj._rlbk_group_step6(v_groupName, 1);
+-- Step 7: process sequences and complete the rollback operation record
+    SELECT emaj._rlbk_group_step7(v_groupName, v_mark, v_nbTbl, v_unloggedRlbk, v_deleteLog) INTO v_nbSeq;
     RETURN v_nbTbl + v_nbSeq;
   END;
 $_rlbk_group$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step1(v_groupName TEXT, v_mark TEXT, v_nbSubGroup INT) 
+CREATE or REPLACE FUNCTION emaj._rlbk_group_step1(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSubGroup INT) 
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_group_step1$
 -- This is the first step of a rollback group processing.
@@ -1685,6 +1711,7 @@ $_rlbk_group_step1$
     v_minSubGroup         INT;
     v_minRows             INT;
     v_fullTableName       TEXT;
+    v_msg                 TEXT;
     r_tbl                 RECORD;
     r_tbl2                RECORD;
   BEGIN
@@ -1723,7 +1750,7 @@ $_rlbk_group_step1$
     PERFORM emaj._check_fk_group (v_groupName);
 -- create sub_groups, using the number of sub-groups requested by the caller
 -- subgroup 0 will contain tables without any row to rollback, subgroup for sequences will remain NULL
---   initialisatin
+--   initialisation
 --     accumulated counters of number of log rows to rollback for each parallel connection 
     FOR v_subGroup IN 1 .. v_nbSubGroup LOOP
       v_subGroupLoad [v_subGroup] = 0;
@@ -1763,8 +1790,13 @@ $_rlbk_group_step1$
       END IF;
     END LOOP;
 -- insert begin in the history
+    IF v_unloggedRlbk THEN
+      v_msg = 'Unlogged';
+    ELSE
+      v_msg = 'Logged';
+    END IF;
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('ROLLBACK_GROUP', 'BEGIN', v_groupName, 'Rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
+      VALUES ('ROLLBACK_GROUP', 'BEGIN', v_groupName, v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
     RETURN v_nbTblInGroup - v_nbTblInSubGroup0;
   END;
 $_rlbk_group_step1$;
@@ -1850,10 +1882,38 @@ $_rlbk_group_step2$
   END;
 $_rlbk_group_step2$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step3(v_groupName TEXT, v_subGroup INT) 
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
+CREATE or REPLACE FUNCTION emaj._rlbk_group_step3(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN) 
+RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_group_step3$
--- This is the third step of a rollback group processing. It drops all foreign keys involved in a table sub-group.
+-- This is the third step of a rollback group processing.
+-- For logged rollback, it sets a mark that materialize the point in time just before the tables rollback. 
+-- All concerned tables are already locked.
+  DECLARE
+    v_markName       TEXT := v_mark;
+  BEGIN
+    IF NOT v_unloggedRlbk THEN
+-- if rollback is "logged" rollback, build a mark name with the pattern:
+-- 'RLBK_<mark name to rollback to>_%_START', where % represents the current time
+      IF v_mark = 'EMAJ_LAST_MARK' THEN
+-- if mark = 'EMAJ_LAST_MARK', retrieve the name of the last mark for the group
+        SELECT mark_name INTO v_markName 
+          FROM emaj.emaj_mark
+          WHERE mark_group = v_groupName ORDER BY mark_datetime DESC LIMIT 1;
+        IF NOT FOUND THEN
+           RAISE EXCEPTION '_rlbk_group_step3: Internal error - ''EMAJ_LAST_MARK'' not found for group % ', v_groupName;
+        END IF;
+      END IF;
+-- set the mark
+      PERFORM emaj._set_mark_group(v_groupName, 'RLBK_' || v_markName || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START');
+    END IF;
+    RETURN;
+  END;
+$_rlbk_group_step3$;
+
+CREATE or REPLACE FUNCTION emaj._rlbk_group_step4(v_groupName TEXT, v_subGroup INT) 
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
+$_rlbk_group_step4$
+-- This is the fourth step of a rollback group processing. It drops all foreign keys involved in a table sub-group.
 -- Before dropping, it records them to be able to recreate them at step 5.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables.
   DECLARE
@@ -1882,20 +1942,19 @@ $_rlbk_group_step3$
     FOR r_fk IN
       SELECT fk_schema, fk_table, fk_name FROM emaj.emaj_fk WHERE fk_group = v_groupName  AND fk_subgroup = v_subGroup
       LOOP
-        RAISE NOTICE '_rlbk_group_step3: group %, sub-group % -> foreign key constraint % dropped for table %.%', v_groupName, v_subGroup, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
+        RAISE NOTICE '_rlbk_group_step4: group %, sub-group % -> foreign key constraint % dropped for table %.%', v_groupName, v_subGroup, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
         EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' DROP CONSTRAINT ' || quote_ident(r_fk.fk_name);
     END LOOP;
   END;
-$_rlbk_group_step3$;
+$_rlbk_group_step4$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step4(v_groupName TEXT, v_mark TEXT, v_subGroup INT, v_deleteLog BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._rlbk_group_step5(v_groupName TEXT, v_mark TEXT, v_subGroup INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) 
 RETURNS INT LANGUAGE plpgsql AS
-$_rlbk_group_step4$
--- This is the fourth step of a rollback group processing. It performs the rollback of all tables of a sub-group of a group.
+$_rlbk_group_step5$
+-- This is the fifth step of a rollback group processing. It performs the rollback of all tables of a sub-group of a group.
   DECLARE
     v_nbTbl             INT := 0;
     v_timestampMark     TIMESTAMPTZ;
-    r_tblsq             RECORD;
   BEGIN
 -- fetch the timestamp mark again (its existence has been already checked at step 1)
     IF v_mark = 'EMAJ_LAST_MARK' THEN
@@ -1906,18 +1965,18 @@ $_rlbk_group_step4$
         WHERE mark_group = v_groupName AND mark_name = v_mark;
     END IF;
 -- rollback all tables of the sub-group (sequences are processed later)
-    PERFORM emaj._rlbk_table(rel_schema, rel_tblseq, v_timestampMark, v_deleteLog)
+    PERFORM emaj._rlbk_table(rel_schema, rel_tblseq, v_timestampMark, v_unloggedRlbk, v_deleteLog)
       FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_subgroup = v_subGroup and rel_kind = 'r';
 -- and return the number of processed tables
     GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
     RETURN v_nbTbl;
   END;
-$_rlbk_group_step4$;
+$_rlbk_group_step5$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step5(v_groupName TEXT, v_subGroup INT) 
+CREATE or REPLACE FUNCTION emaj._rlbk_group_step6(v_groupName TEXT, v_subGroup INT) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
-$_rlbk_group_step5$
--- This is the fifth step of a rollback group processing. It recreates the previously deleted foreign keys.
+$_rlbk_group_step6$
+-- This is the sixth step of a rollback group processing. It recreates the previously deleted foreign keys.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables.
   DECLARE
     v_ts_start          TIMESTAMP;
@@ -1940,15 +1999,15 @@ $_rlbk_group_step5$
         INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
            VALUES ('add_fk', r_fk.fk_schema, r_fk.fk_name, v_ts_start, r_fk.reltuples, v_ts_end - v_ts_start);
 -- send a message about the fk creation completion 
-        RAISE NOTICE '_rlbk_group_step5: group %, sub-group % -> foreign key constraint % recreated for table %.%', v_groupName, v_subGroup, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
+        RAISE NOTICE '_rlbk_group_step6: group %, sub-group % -> foreign key constraint % recreated for table %.%', v_groupName, v_subGroup, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
     END LOOP;
     RETURN;
   END;
-$_rlbk_group_step5$;
+$_rlbk_group_step6$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step6(v_groupName TEXT, v_mark TEXT, v_nbTb INT, v_deleteLog BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._rlbk_group_step7(v_groupName TEXT, v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) 
 RETURNS INT LANGUAGE plpgsql AS
-$_rlbk_group_step6$
+$_rlbk_group_step7$
 -- This is the last step of a rollback group processing. It :
 --    - deletes the marks that are no longer available,
 --    - rollbacks all sequences of the group.
@@ -1956,6 +2015,7 @@ $_rlbk_group_step6$
   DECLARE
     v_timestampMark     TIMESTAMPTZ;
     v_nbSeq             INT;
+    v_markName          TEXT;
   BEGIN
 -- fetch the timestamp mark again (its existence has been already checked at step 1)
     IF v_mark = 'EMAJ_LAST_MARK' THEN
@@ -1967,8 +2027,9 @@ $_rlbk_group_step6$
       SELECT mark_datetime INTO v_timestampMark FROM emaj.emaj_mark
         WHERE mark_group = v_groupName AND mark_name = v_mark;
     END IF;
--- delete all marks and sequence holes later than the now rollbacked mark (not needed if mark = 'EMAJ_LAST_MARK')
-    IF v_mark <> 'EMAJ_LAST_MARK' THEN
+-- if "unlogged" rollback, delete all marks and sequence holes later than the now rollbacked mark
+-- (not needed if mark = 'EMAJ_LAST_MARK')
+    IF v_unloggedRlbk AND v_mark <> 'EMAJ_LAST_MARK' THEN
 -- log in the history the name of all marks that must be deleted due to the rollback
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
         SELECT 'ROLLBACK_GROUP', 'MARK DELETED', v_groupName, 'mark ' || mark_name || ' has been deleted' FROM emaj.emaj_mark 
@@ -1976,17 +2037,30 @@ $_rlbk_group_step6$
 -- and finaly delete these useless marks (the related sequences have been already deleted by rollback functions)
       DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_datetime > v_timestampMark; 
     END IF;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('ROLLBACK_GROUP', 'END', v_groupName, v_nbTb || ' tables and ' || v_nbSeq || ' sequences effectively processed');
 -- rollback the application sequences belonging to the group
--- warning, this operation is not transaction safe (that's why it is placed at the end of the operation) !
+-- warning, this operation is not transaction safe (that's why it is placed at the end of the operation)!
     PERFORM emaj._rlbk_sequence(rel_schema, rel_tblseq, v_timestampMark, v_deleteLog) 
        FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'S';
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
+-- if rollback is "logged" rollback, automaticaly set a mark representing the tables state just after the rollback.
+-- this mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the current time
+    IF NOT v_unloggedRlbk THEN
+-- get the mark name set at the beginning of the rollback operation
+      SELECT mark_name INTO v_markName 
+        FROM emaj.emaj_mark
+        WHERE mark_group = v_groupName ORDER BY mark_datetime DESC LIMIT 1;
+      IF NOT FOUND OR substr(v_markName,1,5) <> 'RLBK_' THEN
+        RAISE EXCEPTION '_rlbk_group_step7: Internal error - rollback start mark not found for group % ', v_groupName;
+      END IF;
+-- set the mark, replacing the '_START' suffix of the rollback start mark by '_DONE'
+      PERFORM emaj._set_mark_group(v_groupName, substring(v_markName from '(.*)_START$') || '_DONE');
+    END IF;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('ROLLBACK_GROUP', 'END', v_groupName, v_nbTb || ' tables and ' || v_nbSeq || ' sequences effectively processed');
     RETURN v_nbSeq;
   END;
-$_rlbk_group_step6$;
+$_rlbk_group_step7$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_reset_group(v_groupName TEXT) 
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
@@ -2546,7 +2620,7 @@ REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FR
 REVOKE ALL ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._delete_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
@@ -2565,14 +2639,16 @@ REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT
 REVOKE ALL ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_and_stop_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj._rlbk_group(v_groupName TEXT, v_mark TEXT, v_deleteLog BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step1(v_groupName TEXT, v_mark TEXT, v_nbSubGroup INT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_group(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_group_step1(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSubGroup INT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_group_set_subgroup(v_groupName TEXT, v_schema TEXT, v_table TEXT, v_subGroup INT, v_rows BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_group_step2(v_groupName TEXT, v_subGroup INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step3(v_groupName TEXT, v_subGroup INT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step4(v_groupName TEXT, v_mark TEXT, v_subGroup INT, v_deleteLog BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step5(v_groupName TEXT, v_subGroup INT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step6(v_groupName TEXT, v_mark TEXT, v_nbTb INT, v_deleteLog BOOLEAN) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj._rlbk_group_step3(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_group_step4(v_groupName TEXT, v_subGroup INT) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj._rlbk_group_step5(v_groupName TEXT, v_mark TEXT, v_subGroup INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_group_step6(v_groupName TEXT, v_subGroup INT) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj._rlbk_group_step7(v_groupName TEXT, v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj._rst_group(v_groupName TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC; 
@@ -2585,7 +2661,7 @@ GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT)
 GRANT EXECUTE ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
@@ -2604,14 +2680,16 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark T
 GRANT EXECUTE ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_and_stop_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group(v_groupName TEXT, v_mark TEXT, v_deleteLog BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step1(v_groupName TEXT, v_mark TEXT, v_nbSubGroup INT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj._rlbk_group(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step1(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSubGroup INT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_group_set_subgroup(v_groupName TEXT, v_schema TEXT, v_table TEXT, v_subGroup INT, v_rows BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step2(v_groupName TEXT, v_subGroup INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step3(v_groupName TEXT, v_subGroup INT) TO emaj_adm; 
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step4(v_groupName TEXT, v_mark TEXT, v_subGroup INT, v_deleteLog BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step5(v_groupName TEXT, v_subGroup INT) TO emaj_adm; 
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step6(v_groupName TEXT, v_mark TEXT, v_nbTb INT, v_deleteLog BOOLEAN) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step3(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step4(v_groupName TEXT, v_subGroup INT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step5(v_groupName TEXT, v_mark TEXT, v_subGroup INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step6(v_groupName TEXT, v_subGroup INT) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step7(v_groupName TEXT, v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj._rst_group(v_groupName TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm; 
