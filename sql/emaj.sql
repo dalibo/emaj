@@ -1704,7 +1704,7 @@ $_rlbk_group_step1$
     v_logOnly             BOOLEAN;
     v_groupState          TEXT;
     v_nbTblInGroup        INT;
-    v_nbTblInSubGroup0    INT;
+    v_nbUnchangedTbl      INT;
     v_timestampMark       TIMESTAMPTZ;
     v_subGroup            INT;
     v_subGroupLoad        INT [];
@@ -1749,7 +1749,7 @@ $_rlbk_group_step1$
 -- check foreign keys with tables outside the group
     PERFORM emaj._check_fk_group (v_groupName);
 -- create sub_groups, using the number of sub-groups requested by the caller
--- subgroup 0 will contain tables without any row to rollback, subgroup for sequences will remain NULL
+-- subgroup for sequences will remain NULL
 --   initialisation
 --     accumulated counters of number of log rows to rollback for each parallel connection 
     FOR v_subGroup IN 1 .. v_nbSubGroup LOOP
@@ -1762,13 +1762,11 @@ $_rlbk_group_step1$
       FROM emaj.emaj_log_stat_group (v_groupName, v_mark, NULL) stat
       WHERE rel_group = v_groupName
         AND rel_group = stat_group AND rel_schema = stat_schema AND rel_tblseq = stat_table;
---   allocate to subgroup 0 tables with no row to rollback in their associated log tables
-    UPDATE emaj.emaj_relation SET rel_subgroup = 0 
-      WHERE rel_group = v_groupName AND rel_rows = 0;
-    GET DIAGNOSTICS v_nbTblInSubGroup0 = ROW_COUNT;
+--   count the number of tables that have no update to rollback
+    SELECT count(*) INTO v_nbUnchangedTbl FROM emaj.emaj_relation WHERE rel_rows = 0;
 --   allocate tables with rows to rollback to sub-groups starting with the heaviest to rollback tables as reported by emaj_log_stat_group function
     FOR r_tbl IN
-        SELECT * FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_rows > 0 ORDER BY rel_rows DESC
+        SELECT * FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_rows DESC
         LOOP
 --   is the table already allocated to a subgroup (it may have been already allocated because of a fkey link) ?
       PERFORM 1 FROM emaj.emaj_relation 
@@ -1797,7 +1795,7 @@ $_rlbk_group_step1$
     END IF;
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('ROLLBACK_GROUP', 'BEGIN', v_groupName, v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
-    RETURN v_nbTblInGroup - v_nbTblInSubGroup0;
+    RETURN v_nbTblInGroup - v_nbUnchangedTbl;
   END;
 $_rlbk_group_step1$;
 
@@ -1964,9 +1962,11 @@ $_rlbk_group_step5$
       SELECT mark_datetime INTO v_timestampMark FROM emaj.emaj_mark
         WHERE mark_group = v_groupName AND mark_name = v_mark;
     END IF;
--- rollback all tables of the sub-group (sequences are processed later)
+-- rollback all tables of the sub-group, having rows to rollback (sequences are processed later)
+-- (the disableTrigger boolean for the _rlbk_table() function always equal unloggedRlbk boolean)
     PERFORM emaj._rlbk_table(rel_schema, rel_tblseq, v_timestampMark, v_unloggedRlbk, v_deleteLog)
-      FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_subgroup = v_subGroup and rel_kind = 'r';
+      FROM emaj.emaj_relation 
+      WHERE rel_group = v_groupName AND rel_subgroup = v_subGroup AND rel_kind = 'r' AND rel_rows > 0;
 -- and return the number of processed tables
     GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
     RETURN v_nbTbl;

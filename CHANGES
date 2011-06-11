@@ -26,6 +26,9 @@ Enhancements:
     aborts. 
 
 Bug fixes:
+  - fix a case of infinite wait on parallel rollback at foreign key processing 
+    when several tables affected to different sub-groups have a foreign key 
+    referencing a table that has no row to rollback.
   - in emaj_start_group() and emaj_set_mark_group() functions, avoid empty or 
     NULL mark names. If the supplied mark name is NULL or empty, a name is 
     automaticaly generated as "MARK_" followed by digits from the current time.
