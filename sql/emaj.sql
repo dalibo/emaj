@@ -2340,7 +2340,9 @@ RETURNS interval LANGUAGE plpgsql AS
 $emaj_estimate_rollback_duration$
 -- This function computes an approximate duration of a rollback to a predefined mark for a group.
 -- It takes into account the content of emaj_rollback_stat table filled by previous rollback operations.
--- It also uses the several parameters.
+-- It also uses several parameters from emaj_param table.
+-- "Logged" and "Unlogged" rollback durations are estimated with the same algorithm. (the cost of log insertion
+-- for logged rollback balances the cost of log deletion of unlogged rollback) 
 -- Input: group name, the mark name of the rollback operation
 -- Output: the approximate duration that the rollback would need as time interval
   DECLARE
@@ -2360,10 +2362,14 @@ $emaj_estimate_rollback_duration$
       RAISE EXCEPTION 'emaj_estimate_rollback_duration: group % has not been created', v_groupName;
     END IF;
 -- get all needed duration parameters from emaj_param table
-    SELECT param_value_interval INTO v_avg_row_rlbk FROM emaj.emaj_param WHERE param_key = 'avg_row_rollback_duration';
-    SELECT param_value_interval INTO v_avg_row_del_log FROM emaj.emaj_param WHERE param_key = 'avg_row_delete_log_duration';
-    SELECT param_value_interval INTO v_fixed_table_rlbk FROM emaj.emaj_param WHERE param_key = 'fixed_table_rollback_duration';
-    SELECT param_value_interval INTO v_fixed_table_with_rlbk FROM emaj.emaj_param WHERE param_key = 'fixed_table_with_rollback_duration';
+    SELECT param_value_interval INTO v_avg_row_rlbk FROM emaj.emaj_param 
+        WHERE param_key = 'avg_row_rollback_duration';
+    SELECT param_value_interval INTO v_avg_row_del_log FROM emaj.emaj_param 
+        WHERE param_key = 'avg_row_delete_log_duration';
+    SELECT param_value_interval INTO v_fixed_table_rlbk FROM emaj.emaj_param 
+        WHERE param_key = 'fixed_table_rollback_duration';
+    SELECT param_value_interval INTO v_fixed_table_with_rlbk FROM emaj.emaj_param 
+        WHERE param_key = 'fixed_table_with_rollback_duration';
 -- compute the fixed cost for the group
     v_estim_duration = v_nbTblSeq * v_fixed_table_rlbk;
 --
