@@ -1744,6 +1744,14 @@ $_rlbk_group_step1$
          RAISE EXCEPTION '_rlbk_group_step1: No mark % exists for group % ', v_mark, v_groupName;
       END IF;
     END IF;
+-- insert begin in the history
+    IF v_unloggedRlbk THEN
+      v_msg = 'Unlogged';
+    ELSE
+      v_msg = 'Logged';
+    END IF;
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('ROLLBACK_GROUP', 'BEGIN', v_groupName, v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
 -- check that emaj group is OK 
     PERFORM emaj._verify_group(v_groupName);
 -- check foreign keys with tables outside the group
@@ -1787,14 +1795,6 @@ $_rlbk_group_step1$
                  emaj._rlbk_group_set_subgroup(v_groupName, r_tbl.rel_schema, r_tbl.rel_tblseq, v_minSubGroup, r_tbl.rel_rows);
       END IF;
     END LOOP;
--- insert begin in the history
-    IF v_unloggedRlbk THEN
-      v_msg = 'Unlogged';
-    ELSE
-      v_msg = 'Logged';
-    END IF;
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('ROLLBACK_GROUP', 'BEGIN', v_groupName, v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
     RETURN v_nbTblInGroup - v_nbUnchangedTbl;
   END;
 $_rlbk_group_step1$;
