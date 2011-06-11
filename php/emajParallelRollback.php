@@ -43,7 +43,7 @@
   $unlogged='true';                 // -l flag for logged rollback mode
 
 // Get supplied parameters
-  $shortOptions="d:h:p:U:W:g:m:s:v:l";
+  $shortOptions="d:h:p:U:W:g:l:m:s:v";
   $options = getopt($shortOptions);
 
 // ... and process them
@@ -73,6 +73,10 @@
     case 'g':
       $group=$options['g'];
       break;
+    case 'l':
+      $unlogged='false';
+      $deleteLog='false';
+      break;
     case 'm':
       $mark=$options['m'];
       break;
@@ -87,10 +91,6 @@
       break;
     case 'v':
       $verbose=true;
-      break;
-    case 'l':
-      $unlogged='false';
-      $deleteLog='false';
       break;
   }
 // check the group name has been supplied
@@ -119,18 +119,18 @@
   $query="SELECT group_state FROM emaj.emaj_group WHERE group_name = '".pg_escape_string($group)."'";
   $result = pg_query($dbconn[1],$query)
       or die('Check group name failed '.pg_last_error()."\n");
-  if (pg_num_rows($result)==0) die('The supplied group $group doesn\'t exist');
+  if (pg_num_rows($result)==0) die("The supplied group $group doesn't exist\n");
   $groupState=pg_fetch_result($result,0,0);
-  if ($groupState<>'LOGGING') die('The supplied group $group is not in LOGGING state');
+  if ($groupState<>'LOGGING') die("The supplied group $group is not in LOGGING state\n");
   pg_free_result($result);
 
 // Check the existence of the supplied mark and verify its state
   $query="SELECT mark_state FROM emaj.emaj_mark WHERE mark_group = '".pg_escape_string($group)."' AND mark_name = '".pg_escape_string($mark)."'";
   $result = pg_query($dbconn[1],$query)
       or die('Check mark name failed '.pg_last_error()."\n");
-  if (pg_num_rows($result)==0) die('The supplied mark $mark doesn\'t exist');
+  if (pg_num_rows($result)==0) die("The supplied mark $mark doesn't exist\n");
   $markState=pg_fetch_result($result,0,0);
-  if ($markState<>'ACTIVE') die('The supplied mark $mark is not in ACTIVE state');
+  if ($markState<>'ACTIVE') die("The supplied mark $mark is not in ACTIVE state\n");
   pg_free_result($result);
  
 // Call for _rlbk_group_step1 on first connection
