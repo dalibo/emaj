@@ -3,6 +3,12 @@ E-Maj - Release notes
 0.10.0
 ------
 Enhancements:
+  - create a new type of rollback: logged rollback, i.e. rollback executed 
+    without disabling the log triggers. As a result, the application table 
+    updates performed by the logged rollback are also recorded in emaj log 
+    tables, and a logged rollback can be ... rollbacked too! Two marks are 
+    automatically set to represent both before and after rollback states of 
+    the table group.
 
 Bug fixes:
 
