@@ -1771,7 +1771,7 @@ $_rlbk_group_step1$
       WHERE rel_group = v_groupName
         AND rel_group = stat_group AND rel_schema = stat_schema AND rel_tblseq = stat_table;
 --   count the number of tables that have no update to rollback
-    SELECT count(*) INTO v_nbUnchangedTbl FROM emaj.emaj_relation WHERE rel_rows = 0;
+    SELECT count(*) INTO v_nbUnchangedTbl FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_rows = 0;
 --   allocate tables with rows to rollback to sub-groups starting with the heaviest to rollback tables as reported by emaj_log_stat_group function
     FOR r_tbl IN
         SELECT * FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_rows DESC
