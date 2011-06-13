@@ -32,6 +32,7 @@ Bug fixes:
   - in emaj_start_group() and emaj_set_mark_group() functions, avoid empty or 
     NULL mark names. If the supplied mark name is NULL or empty, a name is 
     automaticaly generated as "MARK_" followed by digits from the current time.
+  - fix an invalid column name referenced in emaj_delete_mark_group() function.
 
 0.9.0
 -----
