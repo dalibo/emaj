@@ -943,7 +943,7 @@ $_check_fk_group$
           AND (nf.nspname,tf.relname) NOT IN
               (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = v_groupName)    -- referenced table outside the group
       LOOP
-      RAISE WARNING '_check_fk_group: Foreign key %, for %.% references %.% that is ouside the group %',
+      RAISE WARNING '_check_fk_group: Foreign key %, for %.% references %.% that is outside the group %',
                 r_fk.conname,r_fk.rel_schema,r_fk.rel_tblseq,r_fk.nspname,r_fk.relname,v_groupName;
     END LOOP;
 -- issue a warning if a table of the group is referenced by a table outside the group
@@ -957,7 +957,7 @@ $_check_fk_group$
           AND (n.nspname,t.relname) NOT IN
               (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = v_groupName)    -- referenced table outside the group
       LOOP
-      RAISE WARNING '_check_fk_group: table %.% is referenced by foreign key % of %.% that is ouside the group %',
+      RAISE WARNING '_check_fk_group: table %.% is referenced by foreign key % of %.% that is outside the group %',
                 r_fk.rel_schema,r_fk.rel_tblseq,r_fk.conname,r_fk.nspname,r_fk.relname,v_groupName;
     END LOOP;
     RETURN;
@@ -1370,7 +1370,7 @@ $emaj_set_mark_group$
     PERFORM 1 FROM emaj.emaj_mark
       WHERE mark_group = v_groupName AND mark_name = v_markName;
     IF FOUND THEN
-       RAISE EXCEPTION 'emaj_set_mark_group: Group % already contains a name %.', v_groupName, v_markName;
+       RAISE EXCEPTION 'emaj_set_mark_group: Group % already contains a mark named %.', v_groupName, v_markName;
     END IF;
 -- OK, lock all tables to get a stable point ...
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
@@ -1535,7 +1535,7 @@ $emaj_delete_mark_group$
 -- delete also all sequence holes that are prior the new first mark for the tables of the group
       DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
         WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
-          AND sqhl_timestamp < v_datetimeNewMin;
+          AND sqhl_datetime < v_datetimeNewMin;
     END IF;
 -- now the sequences related to the mark to delete can be suppressed
     DELETE FROM emaj.emaj_sequence WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark;
