@@ -1260,11 +1260,11 @@ $emaj_start_group$
     END LOOP;
 -- update the state of the group row from the emaj_group table
     UPDATE emaj.emaj_group SET group_state = 'LOGGING' WHERE group_name = v_groupName;
+-- Set the first mark
+    PERFORM emaj._set_mark_group(v_groupName, v_markName);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('START_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
--- Set the first mark
-    PERFORM emaj.emaj_set_mark_group(v_groupName, v_markName);
     RETURN v_nbTb;
   END;
 $emaj_start_group$;
@@ -1384,7 +1384,7 @@ $emaj_set_mark_group$;
 CREATE or REPLACE FUNCTION emaj._set_mark_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS int LANGUAGE plpgsql AS
 $_set_mark_group$
--- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the group. 
+-- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the group.
 -- It is called by emaj_set_mark_group function but may be called by other functions to set an internal mark.
 -- Input: group name, mark to set
 -- Output: number of processed tables and sequences
