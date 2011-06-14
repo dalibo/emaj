@@ -11,7 +11,8 @@ Enhancements:
     the table group.
 
 Bug fixes:
-
+  - during emaj_start_group() avoid double lock of tables and reoder events
+    in the emaj_hist table.
 
 0.9.1
 -----
