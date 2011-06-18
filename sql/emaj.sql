@@ -2383,12 +2383,12 @@ $emaj_estimate_rollback_duration$
 -- compute the rollback duration estimate for the table
 --
 -- first look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude)
-      SELECT sum(rlbk_duration) / sum(rlbk_nb_rows) * r_tblsq.stat_rows INTO v_estim FROM emaj.emaj_rlbk_stat 
+      SELECT sum(rlbk_duration) * r_tblsq.stat_rows / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat 
         WHERE rlbk_operation = 'rlbk' AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table
           AND rlbk_nb_rows / r_tblsq.stat_rows < 10 AND r_tblsq.stat_rows / rlbk_nb_rows < 10;
       IF v_estim IS NULL THEN
 -- if there is no previous rollback operation with similar volume, take statistics for the table with all available volumes
-        SELECT sum(rlbk_duration) / sum(rlbk_nb_rows) * r_tblsq.stat_rows INTO v_estim FROM emaj.emaj_rlbk_stat 
+        SELECT sum(rlbk_duration) * r_tblsq.stat_rows / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat 
           WHERE rlbk_operation = 'rlbk' AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table;
         IF v_estim IS NULL THEN
 -- if there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table
@@ -2400,12 +2400,12 @@ $emaj_estimate_rollback_duration$
 -- compute the log rows delete duration for the table
 --
 -- first look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude)
-      SELECT sum(rlbk_duration) / sum(rlbk_nb_rows) * r_tblsq.stat_rows INTO v_estim FROM emaj.emaj_rlbk_stat 
+      SELECT sum(rlbk_duration) * r_tblsq.stat_rows / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat 
         WHERE rlbk_operation = 'del_log' AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table
           AND rlbk_nb_rows / r_tblsq.stat_rows < 10 AND r_tblsq.stat_rows / rlbk_nb_rows < 10;
       IF v_estim IS NULL THEN
 -- if there is no previous rollback operation with similar volume, take statistics for the table with all available volumes
-        SELECT sum(rlbk_duration) / sum(rlbk_nb_rows) * r_tblsq.stat_rows INTO v_estim FROM emaj.emaj_rlbk_stat 
+        SELECT sum(rlbk_duration) * r_tblsq.stat_rows / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat 
           WHERE rlbk_operation = 'del_log' AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table;
         IF v_estim IS NULL THEN
 -- if there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table
@@ -2442,7 +2442,7 @@ $emaj_estimate_rollback_duration$
         v_estim = 0;
 	  ELSE
 -- non empty table and statistics (with at least one row) are available
-        SELECT sum(rlbk_duration) / sum(rlbk_nb_rows) * r_fkey.reltuples INTO v_estim FROM emaj.emaj_rlbk_stat
+        SELECT sum(rlbk_duration) * r_fkey.reltuples / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat
           WHERE rlbk_operation = 'add_fk' AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname AND rlbk_nb_rows > 0;
         IF v_estim IS NULL THEN
 -- non empty table, but no statistics with at least one row are available => take the last duration for this fkey, if any
