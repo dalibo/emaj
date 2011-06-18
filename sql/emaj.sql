@@ -2357,9 +2357,10 @@ $emaj_estimate_rollback_duration$
     r_fkey		            RECORD;
   BEGIN
 -- check that the group is recorded in emaj_group table and get the number of tables and sequences
-    SELECT group_nb_table + group_nb_sequence INTO v_nbTblSeq FROM emaj.emaj_group WHERE group_name = v_groupName;
+    SELECT group_nb_table + group_nb_sequence INTO v_nbTblSeq FROM emaj.emaj_group 
+      WHERE group_name = v_groupName and group_state = 'LOGGING';
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_estimate_rollback_duration: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_estimate_rollback_duration: group % has not been created or is not in LOGGING state', v_groupName;
     END IF;
 -- get all needed duration parameters from emaj_param table
     SELECT param_value_interval INTO v_avg_row_rlbk FROM emaj.emaj_param 
