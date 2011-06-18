@@ -9,6 +9,8 @@ Enhancements:
     tables, and a logged rollback can be ... rollbacked too! Two marks are 
     automatically set to represent both before and after rollback states of 
     the table group.
+  - in emaj_estime_rollback_duration(), check that the group is in LOGGING
+    state.
 
 Bug fixes:
   - during emaj_start_group() avoid double lock of tables and reoder events
