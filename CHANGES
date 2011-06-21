@@ -32,7 +32,8 @@ Enhancements:
     of digits from the current time.
   - while locking tables of a group, if a deadlock occurs, the locking 
     operation is cancelled and retried up to 5 times before the transaction 
-    aborts. 
+    aborts.  The comment in the history table reports the number of locked 
+    tables and the number of deadlocks encountered.
 
 Bug fixes:
   - fix a case of infinite wait on parallel rollback at foreign key processing 
