@@ -11,6 +11,8 @@ Enhancements:
     the table group.
   - in emaj_estime_rollback_duration(), check that the group is in LOGGING
     state.
+  - in emaj_create_group(), explicitely check that no table or sequence 
+    already belong to another created group.
 
 Bug fixes:
   - during emaj_start_group() avoid double lock of tables and reoder events
