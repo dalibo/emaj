@@ -1029,6 +1029,7 @@ $emaj_create_group$
   DECLARE
     v_nbTbl         INT := 0;
     v_nbSeq         INT := 0;
+    v_msg           TEXT;
     v_logOnly       BOOLEAN := false;          -- emaj parameter telling if rollback functions have to be skipped (for Emaj test)
     v_relkind       TEXT;
     v_stmt          TEXT;
@@ -1042,6 +1043,20 @@ $emaj_create_group$
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF FOUND THEN
       RAISE EXCEPTION 'emaj_create_group: group % is already created', v_groupName;
+    END IF;
+-- check that no table or sequence of the new group already belong to another created group
+    v_msg = '';
+    FOR r_tblsq IN
+        SELECT grpdef_schema, grpdef_tblseq, rel_group FROM emaj.emaj_group_def, emaj.emaj_relation
+          WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq AND grpdef_group = v_groupName
+      LOOP
+      IF v_msg <> '' THEN
+        v_msg = v_msg || ', ';
+      END IF;
+      v_msg = v_msg || r_tblsq.grpdef_schema || '.' || r_tblsq.grpdef_tblseq || ' in ' || r_tblsq.rel_group;
+    END LOOP;
+    IF v_msg <> '' THEN
+      RAISE EXCEPTION 'emaj_create_group: one or several tables already belong to another group (%)', v_msg;
     END IF;
 -- OK, insert group row in the emaj_group table
     INSERT INTO emaj.emaj_group (group_name, group_state) VALUES (v_groupName, 'IDLE');
