@@ -13,6 +13,8 @@ Enhancements:
     state.
   - in emaj_create_group(), explicitely check that no table or sequence 
     already belong to another created group.
+  - in emaj_hist table, add a column containing the id of the insertion 
+    transaction. 
 
 Bug fixes:
   - during emaj_start_group() avoid double lock of tables and reoder events

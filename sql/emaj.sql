@@ -77,6 +77,7 @@ CREATE TABLE emaj.emaj_hist (
     hist_object              TEXT,
     hist_wording             TEXT,
     hist_user                TEXT        DEFAULT session_user,
+    hist_txid                BIGINT      DEFAULT emaj.emaj_txid_current(),
     PRIMARY KEY (hist_id)
     ) TABLESPACE tspemaj;
 
