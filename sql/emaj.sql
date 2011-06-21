@@ -972,6 +972,7 @@ $_lock_group$
 -- Input: group name, lock mode
   DECLARE
     v_nbRetry       SMALLINT := 0;
+    v_nbTbl         INT;
     v_ok            BOOLEAN := false;
     v_fullTableName TEXT;
     v_mode          TEXT;
@@ -991,6 +992,7 @@ $_lock_group$
     WHILE NOT v_ok AND v_nbRetry < 5 LOOP
       BEGIN
 -- scan all tables of the group
+        v_nbTbl = 0;
         FOR r_tblsq IN
             SELECT rel_schema, rel_tblseq FROM emaj.emaj_relation 
                WHERE rel_group = v_groupName AND rel_kind = 'r'
@@ -998,6 +1000,7 @@ $_lock_group$
 -- lock the table
           v_fullTableName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
           EXECUTE 'LOCK TABLE ' || v_fullTableName || ' IN ' || v_mode || ' MODE';
+          v_nbTbl = v_nbTbl + 1;
         END LOOP;
 -- ok, all tables locked
         v_ok = true;
@@ -1012,7 +1015,7 @@ $_lock_group$
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('LOCK_GROUP', 'END', v_groupName, v_nbRetry || ' deadlock(s)');
+      VALUES ('LOCK_GROUP', 'END', v_groupName, v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
     RETURN;
   END;
 $_lock_group$;
