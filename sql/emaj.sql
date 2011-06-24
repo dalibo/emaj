@@ -226,6 +226,30 @@ INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_tab
 -- Low level Functions            --
 --                                --
 ------------------------------------
+CREATE or REPLACE FUNCTION emaj._get_mark_name(TEXT, TEXT) returns TEXT language sql as
+$$
+-- This function returns a mark name if exists for a group, processing the EMAJ_LAST_MARK keyword.
+-- input: group name and mark name
+-- output: mark name or NULL
+SELECT case 
+         when $2 = 'EMAJ_LAST_MARK' then
+              (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = $1 ORDER BY mark_datetime DESC LIMIT 1)
+         else (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = $1 AND mark_name = $2)
+       end
+$$;
+
+CREATE or REPLACE FUNCTION emaj._get_mark_datetime(TEXT, TEXT) returns TIMESTAMPTZ language sql as
+$$
+-- This function returns the creation timestamp of a mark if exists for a group, 
+--   processing the EMAJ_LAST_MARK keyword.
+-- input: group name and mark name
+-- output: mark date-time or NULL
+SELECT case 
+         when $2 = 'EMAJ_LAST_MARK' then
+              (SELECT MAX(mark_datetime) FROM emaj.emaj_mark WHERE mark_group = $1)
+         else (SELECT mark_datetime FROM emaj.emaj_mark WHERE mark_group = $1 AND mark_name = $2)
+       end
+$$;
 
 CREATE or REPLACE FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) 
 RETURNS TEXT LANGUAGE plpgsql AS
@@ -1512,7 +1536,7 @@ $emaj_delete_mark_group$
 -- This function deletes all traces from a previous set_mark_group function. 
 -- Then, any rollback on the deleted mark will not be possible.
 -- It deletes rows corresponding to the mark to delete from emaj_mark and emaj_sequence 
--- If this mark is the first mark, it also physically deletes rows from all concerned log tables.
+-- If this mark is the first mark, it also deletes rows from all concerned log tables and holes from emaj_seq_hole.
 -- At least one mark must remain after the operation (otherwise it is not worth having a group in LOGGING state !).
 -- Input: group name, mark to delete
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark to delete to specify the last set mark.
@@ -1541,20 +1565,10 @@ $emaj_delete_mark_group$
     IF v_groupState <> 'LOGGING' THEN
       RAISE EXCEPTION 'emaj_delete_mark_group: A mark cannot be deleted for group % because it is not in logging state. A emaj_reset_group function can be performed if you wish to reclaim disk space', v_groupName;
     END IF;
--- if mark = 'EMAJ_LAST_MARK', retrieve the last mark name for the group
-    IF v_mark = 'EMAJ_LAST_MARK' THEN
-      SELECT mark_name INTO v_realMark FROM emaj.emaj_mark WHERE mark_datetime =
-        (SELECT MAX(mark_datetime) FROM emaj.emaj_mark WHERE mark_group = v_groupName);
-      IF NOT FOUND THEN
-         RAISE EXCEPTION 'emaj_delete_mark_group: No mark can be used as ''EMAJ_LAST_MARK'' for group % ', v_groupName;
-      END IF;
-    ELSE
--- otherwise, check if the supplied mark exists 
-      PERFORM 1 FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_mark;
-      IF NOT FOUND THEN
-         RAISE EXCEPTION 'emaj_delete_mark_group: % is not a known mark for group %.', v_mark, v_groupName;
-      END IF;
-      v_realMark=v_mark;
+-- retrieve and check the mark name
+    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION 'emaj_delete_mark_group: % is not a known mark for group %.', v_mark, v_groupName;
     END IF;
 -- count the number of mark in the group
     SELECT count(*) INTO v_cpt FROM emaj.emaj_mark WHERE mark_group = v_groupName;
@@ -1563,7 +1577,7 @@ $emaj_delete_mark_group$
        RAISE EXCEPTION 'emaj_delete_mark_group: % is the only mark. It cannot be deleted.', v_mark;
     END IF;
 -- OK, now get the timestamp of the mark to delete
-    SELECT mark_datetime INTO v_datetimeMark FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
+    SELECT emaj._get_mark_datetime(v_groupName,v_realMark) INTO v_datetimeMark;
 -- OK, now get the timestamp of the future first mark
     SELECT min (mark_datetime) INTO v_datetimeNewMin FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_realMark;
 -- if the mark to delete is the first mark, delete data from log tables and emaj_sequence that will becomes useless
@@ -1620,21 +1634,10 @@ $emaj_rename_mark_group$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_rename_mark_group: group % has not been created', v_groupName;
     END IF;
--- if mark = 'EMAJ_LAST_MARK', retrieve the last mark name for the group
-    IF v_mark = 'EMAJ_LAST_MARK' THEN
-      SELECT mark_name INTO v_realMark FROM emaj.emaj_mark WHERE mark_datetime =
-        (SELECT MAX(mark_datetime) FROM emaj.emaj_mark WHERE mark_group = v_groupName);
-      IF NOT FOUND THEN
-         RAISE EXCEPTION 'emaj_rename_mark_group: No mark can be used as ''EMAJ_LAST_MARK'' for group % ', v_groupName;
-      END IF;
-    ELSE
--- otherwise, check if the supplied mark exists 
-      PERFORM 1 FROM emaj.emaj_mark
-        WHERE mark_group = v_groupName AND mark_name = v_mark LIMIT 1;
-      IF NOT FOUND THEN
-         RAISE EXCEPTION 'emaj_rename_mark_group: mark % doesn''t exist for group %.', v_mark, v_groupName;
-      END IF;
-      v_realMark=v_mark;
+-- retrieve and check the mark name
+    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION 'emaj_rename_mark_group: mark % doesn''t exist for group %.', v_mark, v_groupName;
     END IF;
 -- check the new mark name is not 'EMAJ_LAST_MARK'
     IF v_newName = 'EMAJ_LAST_MARK' THEN
@@ -1781,20 +1784,10 @@ $_rlbk_group_step1$
     IF v_groupState <> 'LOGGING' THEN
       RAISE EXCEPTION '_rlbk_group_step1: Group % cannot be rollbacked because it is not in logging state. An emaj_start_group function must be previously executed', v_groupName;
     END IF;
--- if mark = 'EMAJ_LAST_MARK', retrieve the timestamp of the last mark for the group
-    IF v_mark = 'EMAJ_LAST_MARK' THEN
-      SELECT MAX(mark_datetime) INTO v_timestampMark FROM emaj.emaj_mark
-        WHERE mark_group = v_groupName;
-      IF NOT FOUND THEN
-         RAISE EXCEPTION '_rlbk_group_step1: No mark can be used as ''EMAJ_LAST_MARK'' for group % ', v_groupName;
-      END IF;
-    ELSE
--- otherwise, check the requested mark exists and get its timestamp
-      SELECT mark_datetime INTO v_timestampMark FROM emaj.emaj_mark
-        WHERE mark_group = v_groupName AND mark_name = v_mark;
-      IF NOT FOUND THEN
-         RAISE EXCEPTION '_rlbk_group_step1: No mark % exists for group % ', v_mark, v_groupName;
-      END IF;
+-- check the requested mark exists and get its timestamp
+    SELECT emaj._get_mark_datetime(v_groupName,v_mark) INTO v_timestampMark;
+    IF v_timestampMark IS NULL THEN
+      RAISE EXCEPTION '_rlbk_group_step1: No mark % exists for group % ', v_mark, v_groupName;
     END IF;
 -- insert begin in the history
     IF v_unloggedRlbk THEN
@@ -1939,22 +1932,17 @@ $_rlbk_group_step3$
 -- For logged rollback, it sets a mark that materialize the point in time just before the tables rollback. 
 -- All concerned tables are already locked.
   DECLARE
-    v_markName       TEXT := v_mark;
+    v_realMark       TEXT;
   BEGIN
     IF NOT v_unloggedRlbk THEN
 -- if rollback is "logged" rollback, build a mark name with the pattern:
 -- 'RLBK_<mark name to rollback to>_%_START', where % represents the current time
-      IF v_mark = 'EMAJ_LAST_MARK' THEN
--- if mark = 'EMAJ_LAST_MARK', retrieve the name of the last mark for the group
-        SELECT mark_name INTO v_markName 
-          FROM emaj.emaj_mark
-          WHERE mark_group = v_groupName ORDER BY mark_datetime DESC LIMIT 1;
-        IF NOT FOUND THEN
-           RAISE EXCEPTION '_rlbk_group_step3: Internal error - ''EMAJ_LAST_MARK'' not found for group % ', v_groupName;
-        END IF;
+      SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+      IF v_realMark IS NULL THEN
+        RAISE EXCEPTION '_rlbk_group_step3: Internal error - mark % not found for group % ', v_mark, v_groupName;
       END IF;
 -- set the mark
-      PERFORM emaj._set_mark_group(v_groupName, 'RLBK_' || v_markName || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START');
+      PERFORM emaj._set_mark_group(v_groupName, 'RLBK_' || v_realMark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START');
     END IF;
     RETURN;
   END;
@@ -2006,13 +1994,10 @@ $_rlbk_group_step5$
     v_nbTbl             INT := 0;
     v_timestampMark     TIMESTAMPTZ;
   BEGIN
--- fetch the timestamp mark again (its existence has been already checked at step 1)
-    IF v_mark = 'EMAJ_LAST_MARK' THEN
-      SELECT MAX(mark_datetime) INTO v_timestampMark FROM emaj.emaj_mark
-        WHERE mark_group = v_groupName;
-    ELSE
-      SELECT mark_datetime INTO v_timestampMark FROM emaj.emaj_mark
-        WHERE mark_group = v_groupName AND mark_name = v_mark;
+-- fetch the timestamp mark again
+    SELECT emaj._get_mark_datetime(v_groupName,v_mark) INTO v_timestampMark;
+    IF v_timestampMark IS NULL THEN
+      RAISE EXCEPTION '_rlbk_group_step5: Internal error - mark % not found for group % ', v_mark, v_groupName;
     END IF;
 -- rollback all tables of the sub-group, having rows to rollback (sequences are processed later)
 -- (the disableTrigger boolean for the _rlbk_table() function always equal unloggedRlbk boolean)
@@ -2069,15 +2054,10 @@ $_rlbk_group_step7$
     v_nbSeq             INT;
     v_markName          TEXT;
   BEGIN
--- fetch the timestamp mark again (its existence has been already checked at step 1)
-    IF v_mark = 'EMAJ_LAST_MARK' THEN
-      SELECT MAX(mark_datetime) INTO v_timestampMark FROM emaj.emaj_mark
-        WHERE mark_group = v_groupName;
---      SELECT mark_name INTO v_actualMark FROM emaj.emaj_mark
---        WHERE mark_group = v_groupName AND mark_datetime = v_timestampMark;
-    ELSE
-      SELECT mark_datetime INTO v_timestampMark FROM emaj.emaj_mark
-        WHERE mark_group = v_groupName AND mark_name = v_mark;
+-- fetch the timestamp mark again
+    SELECT emaj._get_mark_datetime(v_groupName,v_mark) INTO v_timestampMark;
+    IF v_timestampMark IS NULL THEN
+      RAISE EXCEPTION '_rlbk_group_step7: Internal error - mark % not found for group % ', v_mark, v_groupName;
     END IF;
 -- if "unlogged" rollback, delete all marks and sequence holes later than the now rollbacked mark
 -- (not needed if mark = 'EMAJ_LAST_MARK')
@@ -2234,40 +2214,20 @@ $emaj_log_stat_group$
          RAISE EXCEPTION 'emaj_log_stat_group: No initial mark can be found for group % ', v_groupName;
       END IF;
     ELSE
--- else, if first mark = 'EMAJ_LAST_MARK', retrieve the timestamp of the last mark for the group
-      IF v_firstMark = 'EMAJ_LAST_MARK' THEN
-        SELECT MAX(mark_datetime) INTO v_tsFirstMark FROM emaj.emaj_mark
-          WHERE mark_group = v_groupName;
-        IF NOT FOUND THEN
-           RAISE EXCEPTION 'emaj_log_stat_group: No mark can be used as ''EMAJ_LAST_MARK'' for group % ', v_groupName;
-        END IF;
-      ELSE
--- otherwise, check the requested first mark exists and get its timestamp
-        SELECT mark_datetime INTO v_tsFirstMark FROM emaj.emaj_mark
-          WHERE mark_group = v_groupName AND mark_name = v_firstMark;
-        IF NOT FOUND THEN
-           RAISE EXCEPTION 'emaj_log_stat_group: no mark % exists for group %', v_firstMark, v_groupName;
-        END IF;
+-- else, check and retrieve the timestamp of the start mark for the group
+      SELECT emaj._get_mark_datetime(v_groupName,v_firstMark) INTO v_tsFirstMark;
+      IF v_tsFirstMark IS NULL THEN
+        RAISE EXCEPTION 'emaj_log_stat_group: Start mark % is unknown for group %', v_firstMark, v_groupName;
       END IF;
     END IF;
 -- if last mark is NULL, there is no timestamp to register
     IF v_lastMark IS NULL THEN
       v_tsLastMark = NULL;
     ELSE
--- else, if last mark = 'EMAJ_LAST_MARK', retrieve the timestamp of the last mark for the group
-      IF v_lastMark = 'EMAJ_LAST_MARK' THEN
-        SELECT MAX(mark_datetime) INTO v_tsLastMark FROM emaj.emaj_mark
-          WHERE mark_group = v_groupName;
-        IF NOT FOUND THEN
-           RAISE EXCEPTION 'emaj_log_stat_group: No mark can ge used as ''EMAJ_LAST_MARK'' for group % ', v_groupName;
-        END IF;
-      ELSE
--- otherwise, check the requested last mark exists and get its timestamp
-        SELECT mark_datetime INTO v_tsLastMark FROM emaj.emaj_mark
-          WHERE mark_group = v_groupName AND mark_name = v_lastMark;
-        IF NOT FOUND THEN
-           RAISE EXCEPTION 'emaj_log_stat_group: no mark % exists for group %', v_lastMark, v_groupName;
-        END IF;
+-- else, check and retrieve the timestamp of the end mark for the group
+      SELECT emaj._get_mark_datetime(v_groupName,v_lastMark) INTO v_tsLastMark;
+      IF v_tsLastMark IS NULL THEN
+        RAISE EXCEPTION 'emaj_log_stat_group: End mark % is unknown for group %', v_lastMark, v_groupName;
       END IF;
     END IF;
 -- check that the first_mark < end_mark
@@ -2311,40 +2271,18 @@ $emaj_detailed_log_stat_group$
     END IF;
 -- catch the timestamp of the first mark
     IF v_firstMark IS NOT NULL THEN
--- if first mark = 'EMAJ_LAST_MARK', retrieve the timestamp of the last mark for the group
-      IF v_firstMark = 'EMAJ_LAST_MARK' THEN
-        SELECT MAX(mark_datetime) INTO v_tsFirstMark FROM emaj.emaj_mark
-          WHERE mark_group = v_groupName;
-        IF NOT FOUND THEN
-           RAISE EXCEPTION 'emaj_detailed_log_stat_group: No mark can be used as ''EMAJ_LAST_MARK'' for group % ', v_groupName;
-        END IF;
-      ELSE
--- otherwise, check the requested first mark exists and get its timestamp
-        SELECT mark_datetime INTO v_tsFirstMark
-          FROM emaj.emaj_mark
-          WHERE mark_group = v_groupName AND mark_name = v_firstMark;
-        IF NOT FOUND THEN
+-- check and retrieve the timestamp of the start mark for the group
+      SELECT emaj._get_mark_datetime(v_groupName,v_firstMark) INTO v_tsFirstMark;
+      IF v_tsFirstMark IS NULL THEN
           RAISE EXCEPTION 'emaj_detailed_log_stat_group: Start mark % is unknown for group %', v_firstMark, v_groupName;
-        END IF;
       END IF;
     END IF;
 -- catch the timestamp of the last mark
     IF v_lastMark IS NOT NULL THEN
--- else, if last mark = 'EMAJ_LAST_MARK', retrieve the timestamp of the last mark for the group
-      IF v_lastMark = 'EMAJ_LAST_MARK' THEN
-        SELECT MAX(mark_datetime) INTO v_tsLastMark FROM emaj.emaj_mark
-          WHERE mark_group = v_groupName;
-        IF NOT FOUND THEN
-           RAISE EXCEPTION 'emaj_detailed_log_stat_group: No mark can ge used as ''EMAJ_LAST_MARK'' for group % ', v_groupName;
-        END IF;
-      ELSE
--- otherwise, check the requested last mark exists and get its timestamp
-        SELECT mark_datetime INTO v_tsLastMark
-          FROM emaj.emaj_mark
-          WHERE mark_group = v_groupName AND mark_name = v_lastMark;
-        IF NOT FOUND THEN
-          RAISE EXCEPTION 'emaj_detailed_log_stat_group: End mark % is unknown for group %', v_lastMark, v_groupName;
-        END IF;
+-- else, check and retrieve the timestamp of the end mark for the group
+      SELECT emaj._get_mark_datetime(v_groupName,v_lastMark) INTO v_tsLastMark;
+      IF v_tsLastMark IS NULL THEN
+        RAISE EXCEPTION 'emaj_detailed_log_stat_group: End mark % is unknown for group %', v_lastMark, v_groupName;
       END IF;
     END IF;
 -- check that the first_mark < end_mark
@@ -2675,6 +2613,8 @@ GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_stat  TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_hist_hist_id_seq TO emaj_adm;
 
 -- revoke grants on all function from PUBLIC
+REVOKE ALL ON FUNCTION emaj._get_mark_name(TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT) FROM PUBLIC;
@@ -2717,6 +2657,8 @@ REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) FROM P
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 
 -- and give appropriate rights on functions to emaj_adm role
+GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT) TO emaj_adm;
@@ -2759,6 +2701,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) TO 
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 
 -- and give appropriate rights on functions to emaj_viewer role
+GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer; 
