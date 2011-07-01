@@ -1204,8 +1204,8 @@ $_drop_group$
       END IF;
       v_nbTb = v_nbTb + 1;
     END LOOP;
--- delete group row from the emaj_group table. 
---   By cascade, it also deletes rows from emaj_relation, emaj_mark, emaj_sequence and emaj_fk tables
+-- delete group row from the emaj_group table.
+--   By cascade, it also deletes rows from emaj_relation, emaj_mark and emaj_fk tables
     DELETE FROM emaj.emaj_group WHERE group_name = v_groupName;
     RETURN v_nbTb;
   END;
