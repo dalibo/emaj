@@ -9,6 +9,14 @@ Enhancements:
     tables, and a logged rollback can be ... rollbacked too! Two marks are 
     automatically set to represent both before and after rollback states of 
     the table group.
+  - a new emaj_delete_before_mark_group() function that all marks prior (and
+    not including) a given mark. With this functions, it is easy to let 
+    groups in LOGGING state during a long period, without being limited by 
+    the disk space for log tables. The drawback is the time needed to 
+    delete large amount of logs, as log tables cannot be TRUNCATEd.
+  - a new emaj_find_previous_mark_group() function returns the name of the 
+    mark that immediately precedes a given date and time for a group. This 
+    may help in using the emaj_delete_before_mark_group() function.
   - in emaj_estime_rollback_duration(), check that the group is in LOGGING
     state.
   - in emaj_create_group(), explicitely check that no table or sequence 
@@ -49,6 +57,8 @@ Bug fixes:
     NULL mark names. If the supplied mark name is NULL or empty, a name is 
     automaticaly generated as "MARK_" followed by digits from the current time.
   - fix an invalid column name referenced in emaj_delete_mark_group() function.
+  - in emaj_delete_mark_group() function, fix an erroneous information 
+    inserted into the emaj_hist table.
 
 0.9.0
 -----
