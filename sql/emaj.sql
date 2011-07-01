@@ -529,7 +529,7 @@ $_delete_log$
     v_rlbkFnctName     TEXT;
     v_logTriggerName   TEXT;
     v_truncTriggerName TEXT;
-
+    v_seqName          TEXT;
   BEGIN
     v_fullTableName    := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
     v_logTableName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
@@ -537,7 +537,7 @@ $_delete_log$
     v_rlbkFnctName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_rlbk_fnct');
     v_logTriggerName   := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_log_trg');
     v_truncTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_trunc_trg');
-
+    v_seqName          := v_schemaName || '_' || v_tableName || '_log_emaj_id_seq';
 -- delete the log trigger on the application table
     EXECUTE 'DROP TRIGGER IF EXISTS ' || v_logTriggerName || ' ON ' || v_fullTableName;
 -- delete the truncate trigger on the application table
@@ -549,7 +549,10 @@ $_delete_log$
     EXECUTE 'DROP FUNCTION IF EXISTS ' || v_rlbkFnctName || '(bigint)';
 -- delete the log table
     EXECUTE 'DROP TABLE IF EXISTS ' || v_logTableName || ' CASCADE';
-
+-- delete rows related to the log sequence from emaj_sequence table
+    DELETE FROM emaj.emaj_sequence WHERE sequ_schema = 'emaj' AND sequ_name = v_seqName;
+-- delete rows related to the table from emaj_seq_hole table
+    DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = quote_ident(v_schemaName) AND sqhl_table = quote_ident(v_tableName);
     RETURN;
   END;
 $_delete_log$;
