@@ -823,22 +823,20 @@ $emaj_verify_all$
       RETURN NEXT r_object.msg;
       v_finalMsg = '';
     END LOOP;
--- verify that all log functions correspond to a row in the groups table
+-- verify that all log, rollback and truncate functions correspond to a row in the groups table
     FOR r_object IN 
       SELECT 'Function ' || proname  || ' is not linked to an application table declared in the emaj_relation table' AS msg
         FROM pg_proc, pg_namespace
-        WHERE pronamespace = pg_namespace.oid AND nspname = v_emajSchema AND proname LIKE '%_log_fnct'
-          AND proname NOT IN (SELECT rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation)
-    LOOP
-      RETURN NEXT r_object.msg;
-      v_finalMsg = '';
-    END LOOP;
--- verify that all rollback functions correspond to a row in the groups table
-    FOR r_object IN 
-      SELECT 'Function ' || proname  || ' is not linked to an application table declared in the emaj_relation table' AS msg
-        FROM pg_proc, pg_namespace
-        WHERE pronamespace = pg_namespace.oid AND nspname = v_emajSchema AND proname LIKE '%_rlbk_fnct'
-          AND proname NOT IN (SELECT rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation)
+        WHERE pronamespace = pg_namespace.oid AND nspname = v_emajSchema AND 
+          ((proname LIKE '%_log_fnct' AND proname NOT IN (
+            SELECT rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation))
+           OR
+           (proname LIKE '%_rlbk_fnct' AND proname NOT IN (
+            SELECT rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation))
+           OR
+           (proname LIKE '%_trunc_fnct' AND proname NOT IN (
+            SELECT rel_schema || '_' || rel_tblseq || '_trunc_fnct' FROM emaj.emaj_relation))
+          )
     LOOP
       RETURN NEXT r_object.msg;
       v_finalMsg = '';
