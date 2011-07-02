@@ -29,6 +29,7 @@ Enhancements:
 Bug fixes:
   - during emaj_start_group() avoid double lock of tables and reoder events
     in the emaj_hist table.
+  - in emaj_verify_all() function, add a check on orphan truncate functions.
 
 0.9.1
 -----
