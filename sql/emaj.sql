@@ -932,6 +932,7 @@ $_verify_group$
         END IF;
 --   -> check that the log tables structure is consistent with the application tables structure
 --      (same columns and same formats)
+--      - added or changed column in application table
         PERFORM attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace 
           WHERE nspname = r_tblsq.rel_schema AND relnamespace = pg_namespace.oid AND relname = r_tblsq.rel_tblseq
             AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
@@ -942,7 +943,17 @@ $_verify_group$
         IF FOUND THEN
           RAISE EXCEPTION '_verify_group: The structure of log table % is not coherent with %' ,v_logTableName,v_fullTableName;
         END IF;
-        ELSEIF r_tblsq.rel_kind = 'S' THEN
+--      - missing or changed column in application table
+        PERFORM attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace
+          WHERE nspname = v_emajSchema AND relnamespace = pg_namespace.oid AND relname = v_logTableName
+            AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
+        EXCEPT
+        SELECT attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace 
+          WHERE nspname = r_tblsq.rel_schema AND relnamespace = pg_namespace.oid AND relname = r_tblsq.rel_tblseq
+            AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false;
+        IF FOUND THEN
+          RAISE EXCEPTION '_verify_group: The structure of log table % is not coherent with %' ,v_logTableName,v_fullTableName;
+        END IF;
 -- if it is a sequence, nothing to do
       END IF;
     END LOOP;
