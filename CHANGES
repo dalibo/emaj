@@ -25,6 +25,8 @@ Enhancements:
     transaction. 
   - a new emaj_find_previous_mark_group() function returns the name of the 
     mark that immediately precedes a given date and time for a group.
+  - a comment has been added to all E-Maj tables, types and roles, as well 
+    as to all functions callable by users.
 
 Bug fixes:
   - during emaj_start_group() avoid double lock of tables and reoder events
