@@ -2156,7 +2156,8 @@ $_rlbk_group_step4$
           AND r.rel_group = v_groupName AND r.rel_subgroup = v_subGroup;
 --    and drop all these foreign keys
     FOR r_fk IN
-      SELECT fk_schema, fk_table, fk_name FROM emaj.emaj_fk WHERE fk_group = v_groupName  AND fk_subgroup = v_subGroup
+      SELECT fk_schema, fk_table, fk_name FROM emaj.emaj_fk 
+        WHERE fk_group = v_groupName  AND fk_subgroup = v_subGroup ORDER BY fk_schema, fk_table, fk_name
       LOOP
         RAISE NOTICE '_rlbk_group_step4: group %, sub-group % -> foreign key constraint % dropped for table %.%', v_groupName, v_subGroup, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
         EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' DROP CONSTRAINT ' || quote_ident(r_fk.fk_name);
@@ -2177,11 +2178,12 @@ $_rlbk_group_step5$
     IF v_timestampMark IS NULL THEN
       RAISE EXCEPTION '_rlbk_group_step5: Internal error - mark % not found for group % ', v_mark, v_groupName;
     END IF;
--- rollback all tables of the sub-group, having rows to rollback (sequences are processed later)
+-- rollback all tables of the sub-group, having rows to rollback, in priority order (sequences are processed later)
 -- (the disableTrigger boolean for the _rlbk_table() function always equal unloggedRlbk boolean)
     PERFORM emaj._rlbk_table(rel_schema, rel_tblseq, v_timestampMark, v_unloggedRlbk, v_deleteLog)
-      FROM emaj.emaj_relation 
-      WHERE rel_group = v_groupName AND rel_subgroup = v_subGroup AND rel_kind = 'r' AND rel_rows > 0;
+      FROM (SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
+              WHERE rel_group = v_groupName AND rel_subgroup = v_subGroup AND rel_kind = 'r' AND rel_rows > 0
+              ORDER BY rel_priority, rel_schema, rel_tblseq) as t;
 -- and return the number of processed tables
     GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
     RETURN v_nbTbl;
@@ -2204,6 +2206,7 @@ $_rlbk_group_step6$
         FROM emaj.emaj_fk, pg_namespace, pg_class
         WHERE fk_group = v_groupName AND fk_subgroup = v_subGroup AND                         -- restrictions
               pg_namespace.oid = relnamespace AND relname = fk_table AND nspname = fk_schema  -- joins
+        ORDER BY fk_schema, fk_table, fk_name
       LOOP
 -- record the time at the alter table start
         SELECT clock_timestamp() INTO v_ts_start;
