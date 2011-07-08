@@ -1048,12 +1048,12 @@ $_check_fk_group$
   END;
 $_check_fk_group$;
 
-CREATE or REPLACE FUNCTION emaj._lock_group(v_groupName TEXT, v_lockMode TEXT)
+CREATE or REPLACE FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT)
 RETURNS void LANGUAGE plpgsql AS 
-$_lock_group$
--- This function locks all tables of a group. 
+$_lock_groups$
+-- This function locks all tables of a groups array. 
 -- The lock mode is provided by the calling function
--- Input: group name, lock mode
+-- Input: array of group names, lock mode
   DECLARE
     v_nbRetry       SMALLINT := 0;
     v_nbTbl         INT;
@@ -1064,7 +1064,7 @@ $_lock_group$
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('LOCK_GROUP' ,'BEGIN', v_groupName);
+      VALUES ('LOCK_GROUPS' ,'BEGIN', array_to_string(v_groupNames,', '));
 -- set the value for the lock mode that will be used in the LOCK statement
     IF v_lockMode = '' THEN
       v_mode = 'ACCESS EXCLUSIVE';
@@ -1079,7 +1079,8 @@ $_lock_group$
         v_nbTbl = 0;
         FOR r_tblsq IN
             SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
-               WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq
+               WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' 
+               ORDER BY rel_priority, rel_schema, rel_tblseq
             LOOP
 -- lock the table
           v_fullTableName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
@@ -1091,18 +1092,18 @@ $_lock_group$
       EXCEPTION
         WHEN deadlock_detected THEN
           v_nbRetry = v_nbRetry + 1;
-          RAISE NOTICE '_lock_group: a deadlock has been trapped while locking tables of group %.', v_groupName;
+          RAISE NOTICE '_lock_groups: a deadlock has been trapped while locking tables of group %.', v_groupNames;
       END;
     END LOOP;
     IF NOT v_ok THEN
-      RAISE EXCEPTION '_lock_group: too many (5) deadlocks encountered while locking tables of group %.',v_groupName;
+      RAISE EXCEPTION '_lock_groups: too many (5) deadlocks encountered while locking tables of group %.',v_groupNames;
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('LOCK_GROUP', 'END', v_groupName, v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
+      VALUES ('LOCK_GROUPS', 'END', array_to_string(v_groupNames,', '), v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
     RETURN;
   END;
-$_lock_group$;
+$_lock_groups$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT) 
 RETURNS INT LANGUAGE plpgsql AS 
@@ -1351,7 +1352,7 @@ $emaj_start_group$
     END IF;
 -- OK, lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
-    PERFORM emaj._lock_group(v_groupName,'');
+    PERFORM emaj._lock_groups(array[v_groupName],'');
 -- ... and enable all log triggers for the group
 -- for each relation of the group,
     FOR r_tblsq IN
@@ -1417,7 +1418,7 @@ $emaj_stop_group$
     ELSE
 -- OK, lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
-      PERFORM emaj._lock_group(v_groupName,'');
+      PERFORM emaj._lock_groups(array[v_groupName],'');
 -- for each relation of the group,
       FOR r_tblsq IN
           SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
@@ -1495,7 +1496,7 @@ $emaj_set_mark_group$
     END IF;
 -- OK, lock all tables to get a stable point ...
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
-    PERFORM emaj._lock_group(v_groupName,'ROW EXCLUSIVE');
+    PERFORM emaj._lock_groups(array[v_groupName],'ROW EXCLUSIVE');
 -- Effectively set the mark using the internal _set_mark_group() function
     SELECT emaj._set_mark_group(v_groupName, v_markName) into v_nbTb;
     RETURN v_nbTb;
@@ -2846,7 +2847,7 @@ REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT,
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_group(v_groupName TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj._check_fk_group (v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._lock_group(v_groupName TEXT, v_lockMode TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) FROM PUBLIC;
@@ -2892,7 +2893,7 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TE
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj._check_fk_group (v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._lock_group(v_groupName TEXT, v_lockMode TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) TO emaj_adm;
