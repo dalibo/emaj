@@ -1,6 +1,6 @@
 --
 -- E-Maj : logs and rollbacks table updates : V 0.10.0
--- 
+--
 -- This software is distributed under the GNU General Public License.
 --
 -- This script creates all objects needed to log and rollback table updates.
@@ -123,7 +123,7 @@ CREATE TABLE emaj.emaj_relation (
     rel_schema               TEXT        NOT NULL,
     rel_tblseq               TEXT        NOT NULL,
     rel_group                TEXT        NOT NULL,
-    rel_rank                 INTEGER,                    -- rank of processing inside the group
+    rel_priority             INTEGER,                    -- priority level of processing inside the group
     rel_kind                 TEXT,                       -- similar to the relkind column of pg_class table 
                                                          --   ('r' = table, 'S' = sequence) 
     rel_subgroup             INT,                        -- subgroup id, computed at rollback time
@@ -932,8 +932,8 @@ $_verify_group$
     SELECT param_value_boolean INTO v_logOnly FROM emaj.emaj_param WHERE param_key = 'log_only';
 -- per table verifications
     FOR r_tblsq IN
-        SELECT rel_rank, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-          WHERE rel_group = v_groupName ORDER BY rel_rank
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 -- check the class is unchanged
       IF r_tblsq.rel_kind <> emaj._check_class(r_tblsq.rel_schema, r_tblsq.rel_tblseq) THEN
@@ -1078,8 +1078,8 @@ $_lock_group$
 -- scan all tables of the group
         v_nbTbl = 0;
         FOR r_tblsq IN
-            SELECT rel_rank, rel_schema, rel_tblseq FROM emaj.emaj_relation 
-               WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_rank
+            SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
+               WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq
             LOOP
 -- lock the table
           v_fullTableName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
@@ -1113,7 +1113,6 @@ $emaj_create_group$
   DECLARE
     v_nbTbl         INT := 0;
     v_nbSeq         INT := 0;
-    v_rank          INT := 0;
     v_msg           TEXT;
     v_logOnly       BOOLEAN := false;          -- emaj parameter telling if rollback functions have to be skipped (for Emaj test)
     v_relkind       TEXT;
@@ -1163,9 +1162,8 @@ $emaj_create_group$
          v_nbSeq = v_nbSeq + 1;
       END IF;
 -- record this table or sequence in the emaj_relation table
-      v_rank = v_rank + 1;
-      INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_rank, rel_kind)
-          VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, v_rank, v_relkind);
+      INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
+          VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_relkind);
     END LOOP;
     IF v_nbTbl + v_nbSeq = 0 THEN
        RAISE EXCEPTION 'emaj_create_group: Group % is unknown in emaj_relation table', v_groupName;
@@ -1261,8 +1259,8 @@ $_drop_group$
     END IF;
 -- OK, delete the emaj objets for each table of the group
     FOR r_tblsq IN
-        SELECT rel_rank, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-          WHERE rel_group = v_groupName ORDER BY rel_rank
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
@@ -1357,8 +1355,8 @@ $emaj_start_group$
 -- ... and enable all log triggers for the group
 -- for each relation of the group,
     FOR r_tblsq IN
-       SELECT rel_rank, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-         WHERE rel_group = v_groupName ORDER BY rel_rank
+       SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
+         WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
        LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
@@ -1422,8 +1420,8 @@ $emaj_stop_group$
       PERFORM emaj._lock_group(v_groupName,'');
 -- for each relation of the group,
       FOR r_tblsq IN
-          SELECT rel_rank, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-            WHERE rel_group = v_groupName ORDER BY rel_rank
+          SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
+            WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
           LOOP
         IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, disable the emaj log and truncate triggers
@@ -1533,8 +1531,8 @@ $_set_mark_group$
       VALUES (v_groupName, v_mark, v_timestamp, 'ACTIVE');
 -- then, examine the group's definition
     FOR r_tblsq IN
-        SELECT rel_rank, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-          WHERE rel_group = v_groupName ORDER BY rel_rank
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, record the emaj_id associated sequence parameters in the emaj sequence table
@@ -1762,8 +1760,8 @@ $_delete_log_before_group$
   BEGIN
 -- loop on all tables of the group
     FOR r_tblsq IN
-        SELECT rel_rank, rel_schema, rel_tblseq FROM emaj.emaj_relation 
-          WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_rank
+        SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq
     LOOP
       v_seqName      := r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log_emaj_id_seq';
       v_logTableName := quote_ident(v_emajSchema) || '.' || quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log');
@@ -2080,8 +2078,9 @@ $_rlbk_group_step2$
       BEGIN
 -- scan all tables of the sub-group
         FOR r_tblsq IN
-            SELECT rel_rank, rel_schema, rel_tblseq FROM emaj.emaj_relation 
-              WHERE rel_group = v_groupName AND rel_subgroup = v_subGroup AND rel_kind = 'r' ORDER BY rel_rank
+            SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
+              WHERE rel_group = v_groupName AND rel_subgroup = v_subGroup AND rel_kind = 'r' 
+              ORDER BY rel_priority, rel_schema, rel_tblseq
             LOOP
 --   lock each table
           EXECUTE 'LOCK TABLE ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
@@ -2334,8 +2333,8 @@ $_rst_group$
       WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table;
 -- then, truncate log tables
     FOR r_tblsq IN
-        SELECT rel_rank, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-          WHERE rel_group = v_groupName ORDER BY rel_rank
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, 
@@ -2419,8 +2418,8 @@ $emaj_log_stat_group$
     END IF;
 -- for each table of the emaj_relation table, get the number of log rows and return the statistic
     FOR r_tblsq IN
-        SELECT rel_rank, rel_schema, rel_tblseq, emaj._log_stat_table(rel_schema, rel_tblseq, v_tsFirstMark, v_tsLastMark) AS nb_rows FROM emaj.emaj_relation 
-          WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_rank
+        SELECT rel_priority, rel_schema, rel_tblseq, emaj._log_stat_table(rel_schema, rel_tblseq, v_tsFirstMark, v_tsLastMark) AS nb_rows FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       SELECT v_groupName, r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.nb_rows INTO r_stat;
       RETURN NEXT r_stat;
@@ -2478,8 +2477,8 @@ $emaj_detailed_log_stat_group$
     END IF;
 -- for each table of the emaj_relation table
     FOR r_tblsq IN
-        SELECT rel_rank, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-          WHERE rel_group = v_groupName ORDER BY rel_rank
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, count the number of operation per type (INSERT, UPDATE and DELETE) and role
@@ -2684,8 +2683,8 @@ $emaj_snap_group$
     END IF;
 -- for each table/sequence of the emaj_relation table
     FOR r_tblsq IN
-        SELECT rel_rank, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-          WHERE rel_group = v_groupName ORDER BY rel_rank
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       v_fileName := v_dir || '/' || r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap';
       v_fullTableName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
