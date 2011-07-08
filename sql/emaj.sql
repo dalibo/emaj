@@ -2725,20 +2725,20 @@ COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT) IS $$
 Snaps all application tables of an E-Maj group into a given directory.
 $$;
 
--- Set comments for all internal functions
+-- Set comments for all internal functions, 
+-- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
 INSERT INTO pg_description (objoid, classoid, objsubid, description)
   SELECT pg_proc.oid, pg_class.oid, 0 , 'E-Maj internal function'
     FROM pg_proc, pg_class
     WHERE pg_class.relname = 'pg_proc'
-      AND pg_proc.oid IN
+      AND pg_proc.oid IN               -- list all emaj functions that do not have yet a comment in pg_description
        (SELECT pg_proc.oid 
           FROM pg_proc
                JOIN pg_namespace ON (pronamespace=pg_namespace.oid)
                LEFT OUTER JOIN pg_description ON (pg_description.objoid = pg_proc.oid 
                                      AND classoid = (SELECT oid FROM pg_class WHERE relname = 'pg_proc')
                                      AND objsubid=0)
-          WHERE nspname = 'emaj' 
-            AND (proname LIKE 'emaj_%' OR proname LIKE '_%')
+          WHERE nspname = 'emaj' AND (proname LIKE 'emaj_%' OR proname LIKE '_%')
             AND pg_description.description IS NULL
        );
 
