@@ -278,8 +278,8 @@ $$
         (
                  -- compute the least recent start_group time of groups in logging state
           (SELECT MIN(hist_datetime) FROM emaj.emaj_group, emaj.emaj_hist 
-             WHERE group_name = hist_object AND group_state = 'LOGGING' AND 
-                   hist_function = 'START_GROUP' AND hist_event = 'BEGIN')
+             WHERE group_name = ANY (string_to_array(hist_object,',')) AND group_state = 'LOGGING' AND 
+                   (hist_function = 'START_GROUP' OR hist_function = 'START_GROUPS') AND hist_event = 'BEGIN')
          UNION 
                  -- compute the timestamp of now minus the history_retention
           (SELECT current_timestamp - 
@@ -339,6 +339,45 @@ $_check_class$
     RETURN v_relkind;
   END;
 $_check_class$;
+
+CREATE or REPLACE FUNCTION emaj._check_new_mark(v_mark TEXT, v_groupNames TEXT[]) 
+RETURNS TEXT LANGUAGE plpgsql AS 
+$_check_new_mark$
+-- This function verifies that a new mark name supplied in emaj_start_group(s) or emaj_set_mark_group(s) is valid.
+-- It processes the possible NULL mark value and the replacement of % wild characters.
+-- It also checks that the mark name do not already exist for any group.
+-- Input: name of the mark to set, array of group names 
+--        The array of group names may be NULL to avoid the check against groups
+-- Output: internal name of the mark
+  DECLARE
+    v_i             INT;
+    v_markName      TEXT := v_mark;
+  BEGIN
+-- check the mark name is not 'EMAJ_LAST_MARK'
+    IF v_mark = 'EMAJ_LAST_MARK' THEN
+       RAISE EXCEPTION '_check_new_mark: % is not an allowed name for a new mark', v_mark;
+    END IF;
+-- process null or empty supplied mark name
+    IF v_markName = '' OR v_markName IS NULL THEN
+      v_markName = 'MARK_%';
+    END IF;
+-- process % wild characters in mark name
+    v_markName = replace(v_markName, '%', to_char(current_timestamp, 'HH24.MI.SS.MS'));
+-- if requested, check the existence of the mark in groups
+    IF v_groupNames IS NOT NULL THEN
+-- for each group of the array,
+      FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+-- ... if a mark with the same name already exists for the group, stop
+        PERFORM 1 FROM emaj.emaj_mark
+          WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
+        IF FOUND THEN
+           RAISE EXCEPTION '_check_new_mark: Group % already contains a mark named %.', v_groupNames[v_i], v_markName;
+        END IF;
+      END LOOP;
+    END IF;
+    RETURN v_markName;
+  END;
+$_check_new_mark$;
 
 CREATE or REPLACE FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
@@ -917,7 +956,7 @@ CREATE or REPLACE FUNCTION emaj._forbid_truncate_fnct() RETURNS TRIGGER AS $_for
 -- It can only be called with postgresql in a version greater or equal 8.4
 BEGIN
   IF (TG_OP = 'TRUNCATE') THEN
-    RAISE EXCEPTION 'emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (%) are currently protected by E-Maj. Consider tomay stop the group before issuing a TRUNCATE.', TG_TABLE_NAME;
+    RAISE EXCEPTION 'emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (%) are currently protected by E-Maj. Consider stopping the group before issuing a TRUNCATE.', TG_TABLE_NAME;
   END IF;
   RETURN NULL;
 END;
@@ -1082,7 +1121,7 @@ $_lock_groups$
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('LOCK_GROUPS' ,'BEGIN', array_to_string(v_groupNames,', '));
+      VALUES ('LOCK_GROUPS' ,'BEGIN', array_to_string(v_groupNames,','));
 -- set the value for the lock mode that will be used in the LOCK statement
     IF v_lockMode = '' THEN
       v_mode = 'ACCESS EXCLUSIVE';
@@ -1118,7 +1157,7 @@ $_lock_groups$
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('LOCK_GROUPS', 'END', array_to_string(v_groupNames,', '), v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
+      VALUES ('LOCK_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
     RETURN;
   END;
 $_lock_groups$;
@@ -1298,20 +1337,47 @@ $_drop_group$
 $_drop_group$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) 
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
+RETURNS INT LANGUAGE plpgsql AS 
 $emaj_start_group$
 -- This function activates the log triggers of all the tables for a group and set a first mark
 -- It also delete oldest rows in emaj_hist table
 -- Input: group name, name of the mark to set
 --        '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
 --        a null or '' mark is transformed into 'MARK_%'
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_nbTblSeq         INT;
+  BEGIN
+-- purge the emaj history, if needed
+    PERFORM emaj._purge_hist();
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES ('START_GROUP', 'BEGIN', v_groupName);
+-- call the common _start_groups function
+    SELECT emaj._start_groups(array[v_groupName], v_mark, false) INTO v_nbTblSeq;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('START_GROUP', 'END', v_groupName, v_nbTblSeq || ' tables/sequences processed');
+    RETURN v_nbTblSeq;
+  END;
+$emaj_start_group$;
+COMMENT ON FUNCTION emaj.emaj_start_group(TEXT,TEXT) IS $$
+Starts an E-Maj group.
+$$;
+
+CREATE or REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) 
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
+$_start_groups$
+-- This function activates the log triggers of all the tables for one or several groups and set a first mark
+-- Input: array of group names, name of the mark to set, boolean indicating if the function is called by a multi group function
 -- Output: number of processed tables
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
     v_pgversion        TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_i                INT;
     v_groupState       TEXT;
-    v_markName         TEXT;
     v_nbTb             INT := 0;
+    v_markName         TEXT;
     v_logOnly          BOOLEAN;
     v_logTableName     TEXT;
     v_fullTableName    TEXT;
@@ -1320,53 +1386,45 @@ $emaj_start_group$
     v_cpt              BIGINT;
     r_tblsq            RECORD;
   BEGIN
--- purge the emaj history, if needed
-    PERFORM emaj._purge_hist();
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('START_GROUP', 'BEGIN', v_groupName);
--- check that the group is recorded in emaj_group table
-    SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_start_group: group % has not been created', v_groupName;
-    END IF;
--- check that the group is IDLE (i.e. not in a LOGGING) state
-    IF v_groupState <> 'IDLE' THEN
-      RAISE EXCEPTION 'emaj_start_group: The group % cannot be started because it is not in idle state. An emaj_stop_group function must be previously executed', v_groupName;
-    END IF;
--- check if the emaj group is OK
-    PERFORM emaj._verify_group(v_groupName);
--- check the mark name is not 'EMAJ_LAST_MARK'
-    IF v_mark = 'EMAJ_LAST_MARK' THEN
-      RAISE EXCEPTION 'emaj_start_group: % is not an allowed name for a mark', v_mark;
-    END IF;
--- process % wild characters in mark name
-    v_markName = replace(v_mark, '%', to_char(current_timestamp, 'HH24.MI.SS.MS'));
--- process null or empty supplied mark name
-    IF v_markName = '' OR v_markName IS NULL THEN
-      v_markName = 'MARK_' || to_char(current_timestamp, 'HH24.MI.SS.MS');
-    END IF;
--- call the emaj_reset_group function to erase remaining traces from previous logs if any
-    SELECT emaj._rst_group(v_groupName) INTO v_nbTb;
-    IF v_nbTb = 0 THEN
-      RAISE EXCEPTION 'emaj_start_group: Internal error - emaj_res_group for group % returned 0', v_groupName;
-    END IF;
--- check foreign keys with tables outside the group
-    PERFORM emaj._check_fk_group (v_groupName);
-    v_nbTb = 0;
+-- check that each group is recorded in emaj_group table
+    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+      SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION '_start_group: group % has not been created', v_groupNames[v_i];
+      END IF;
+-- ... and is in IDLE (i.e. not in a LOGGING) state
+      IF v_groupState <> 'IDLE' THEN
+        RAISE EXCEPTION '_start_group: The group % cannot be started because it is not in idle state. An emaj_stop_group function must be previously executed', v_groupNames[v_i];
+      END IF;
+-- ... and is not damaged
+      PERFORM emaj._verify_group(v_groupNames[v_i]);
+    END LOOP;
+-- check and process the supplied mark name
+-- (the group names array is set to NULL to not check the existence of the mark against groups as groups may have old deleted marks)
+    SELECT emaj._check_new_mark(v_mark, NULL) INTO v_markName;
 -- get the log_only parameter and issue a warning if emaj is in log_only mode
     SELECT param_value_boolean INTO v_logOnly FROM emaj.emaj_param WHERE param_key = 'log_only';
     if v_logOnly THEN
-      RAISE WARNING 'emaj_start_group: E-maj is in log_only mode. Rollback operations are disabled.';
+      RAISE WARNING '_start_group: E-maj is in log_only mode. Rollback operations are disabled.';
     END IF;
+-- for each group, call the emaj_reset_group function to erase remaining traces from previous logs if any
+    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+      SELECT emaj._rst_group(v_groupNames[v_i]) INTO v_nbTb;
+      IF v_nbTb = 0 THEN
+        RAISE EXCEPTION '_start_group: Internal error - emaj_res_group for group % returned 0', v_groupNames[v_i];
+      END IF;
+-- ... and check foreign keys with tables outside the group
+      PERFORM emaj._check_fk_group (v_groupNames[v_i]);
+    END LOOP;
 -- OK, lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
-    PERFORM emaj._lock_groups(array[v_groupName],'');
+    PERFORM emaj._lock_groups(v_groupNames,'');
 -- ... and enable all log triggers for the group
+    v_nbTb = 0;
 -- for each relation of the group,
     FOR r_tblsq IN
        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-         WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
+         WHERE rel_group = ANY (v_groupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
        LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
@@ -1383,29 +1441,50 @@ $emaj_start_group$
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- update the state of the group row from the emaj_group table
-    UPDATE emaj.emaj_group SET group_state = 'LOGGING' WHERE group_name = v_groupName;
--- Set the first mark
-    PERFORM emaj._set_mark_group(v_groupName, v_markName);
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('START_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
+    UPDATE emaj.emaj_group SET group_state = 'LOGGING' WHERE group_name = ANY (v_groupNames);
+-- Set the first mark for each group
+    PERFORM emaj._set_mark_groups(v_groupNames, v_markName,v_multiGroup);
+--
     RETURN v_nbTb;
   END;
-$emaj_start_group$;
-COMMENT ON FUNCTION emaj.emaj_start_group(TEXT,TEXT) IS $$
-Starts an E-Maj group.
-$$;
+$_start_groups$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_stop_group(v_groupName TEXT) 
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
+RETURNS INT LANGUAGE plpgsql AS 
 $emaj_stop_group$
 -- This function de-activates the log triggers of all the tables for a group. 
 -- Execute several emaj_stop_group functions for the same group doesn't produce any error.
 -- Input: group name
 -- Output: number of processed tables and sequences
+  DECLARE
+    v_nbTblSeq         INT;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES ('STOP_GROUP', 'BEGIN', v_groupName);
+-- call the common _stop_groups function
+    SELECT emaj._stop_groups(array[v_groupName], false) INTO v_nbTblSeq;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('STOP_GROUP', 'END', v_groupName, v_nbTblSeq || ' tables/sequences processed');
+    RETURN v_nbTblSeq;
+  END;
+$emaj_stop_group$;
+COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS $$
+Stops an E-Maj group.
+$$;
+
+CREATE or REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) 
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
+$_stop_groups$
+-- This function effectively de-activates the log triggers of all the tables for a group. 
+-- Input: array of group names, boolean indicating if the function is called by a multi group function
+-- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
     v_pgversion        TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_validGroupNames  TEXT[];
+    v_i                INT;
     v_groupState       TEXT;
     v_nbTb             INT := 0;
     v_fullTableName    TEXT;
@@ -1413,25 +1492,28 @@ $emaj_stop_group$
     v_truncTriggerName TEXT;
     r_tblsq            RECORD;
   BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('STOP_GROUP', 'BEGIN', v_groupName);
+    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
 -- check that the group is recorded in emaj_group table
-    SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_stop_group: group % has not been created', v_groupName;
-    END IF;
+      SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION '_stop_group: group % has not been created', v_groupNames[v_i];
+      END IF;
 -- check that the group is in LOGGING state
-    IF v_groupState <> 'LOGGING' THEN
-      RAISE WARNING 'emaj_stop_group: Group % cannot be stopped because it is not in logging state.', v_groupName;
-    ELSE
+      IF v_groupState <> 'LOGGING' THEN
+        RAISE WARNING '_stop_group: Group % cannot be stopped because it is not in logging state.', v_groupNames[v_i];
+      ELSE
+-- if OK, add the group into the array of groups to process
+        v_validGroupNames = v_validGroupNames || array[v_groupNames[v_i]];
+      END IF;
+    END LOOP;
+    IF v_validGroupNames IS NOT NULL THEN
 -- OK, lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
-      PERFORM emaj._lock_groups(array[v_groupName],'');
--- for each relation of the group,
+      PERFORM emaj._lock_groups(v_validGroupNames,'');
+-- for each relation of the groups to process,
       FOR r_tblsq IN
           SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-            WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
+            WHERE rel_group = ANY (v_validGroupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
           LOOP
         IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, disable the emaj log and truncate triggers
@@ -1447,20 +1529,14 @@ $emaj_stop_group$
         END IF;
         v_nbTb = v_nbTb + 1;
       END LOOP;
--- set all marks for the group from the emaj_mark table in deleted state to avoid any further rollback
-      UPDATE emaj.emaj_mark SET mark_state = 'DELETED' WHERE mark_group = v_groupName; 
--- update the state of the group row from the emaj_group table
-      UPDATE emaj.emaj_group SET group_state = 'IDLE' WHERE group_name = v_groupName;
+-- set all marks for the groups from the emaj_mark table in deleted state to avoid any further rollback
+      UPDATE emaj.emaj_mark SET mark_state = 'DELETED' WHERE mark_group = ANY (v_validGroupNames); 
+-- update the state of the groups rows from the emaj_group table
+      UPDATE emaj.emaj_group SET group_state = 'IDLE' WHERE group_name = ANY (v_validGroupNames);
     END IF;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('STOP_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
     RETURN v_nbTb;
   END;
-$emaj_stop_group$;
-COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS $$
-Stops an E-Maj group.
-$$;
+$_stop_groups$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS int LANGUAGE plpgsql AS
@@ -1487,27 +1563,13 @@ $emaj_set_mark_group$
     END IF;
 -- check if the emaj group is OK
     PERFORM emaj._verify_group(v_groupName);
--- check the mark name is not 'EMAJ_LAST_MARK'
-    IF v_mark = 'EMAJ_LAST_MARK' THEN
-       RAISE EXCEPTION 'emaj_set_mark_group: % is not an allowed name for a new mark', v_mark;
-    END IF;
--- process % wild characters in mark name
-    v_markName = replace(v_mark, '%', to_char(current_timestamp, 'HH24.MI.SS.MS'));
--- process null or empty supplied mark name
-    IF v_markName = '' OR v_markName IS NULL THEN
-      v_markName = 'MARK_' || to_char(current_timestamp, 'HH24.MI.SS.MS');
-    END IF;
--- if a mark with the same name already exists for the group, stop
-    PERFORM 1 FROM emaj.emaj_mark
-      WHERE mark_group = v_groupName AND mark_name = v_markName;
-    IF FOUND THEN
-       RAISE EXCEPTION 'emaj_set_mark_group: Group % already contains a mark named %.', v_groupName, v_markName;
-    END IF;
+-- check and process the supplied mark name
+    SELECT emaj._check_new_mark(v_mark, array[v_groupName]) INTO v_markName;
 -- OK, lock all tables to get a stable point ...
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
     PERFORM emaj._lock_groups(array[v_groupName],'ROW EXCLUSIVE');
--- Effectively set the mark using the internal _set_mark_group() function
-    SELECT emaj._set_mark_group(v_groupName, v_markName) into v_nbTb;
+-- Effectively set the mark using the internal _set_mark_groups() function
+    SELECT emaj._set_mark_groups(array[v_groupName], v_markName, false) into v_nbTb;
     RETURN v_nbTb;
   END;
 $emaj_set_mark_group$;
@@ -1515,12 +1577,12 @@ COMMENT ON FUNCTION emaj.emaj_set_mark_group(TEXT,TEXT) IS $$
 Sets a mark on an E-Maj group.
 $$;
 
-CREATE or REPLACE FUNCTION emaj._set_mark_group(v_groupName TEXT, v_mark TEXT) 
+CREATE or REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) 
 RETURNS int LANGUAGE plpgsql AS
-$_set_mark_group$
--- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the group.
--- It is called by emaj_set_mark_group function but may be called by other functions to set an internal mark.
--- Input: group name, mark to set
+$_set_mark_groups$
+-- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
+-- It is called by emaj_set_mark_group and emaj_set_mark_groups functions but may be called by other functions to set an internal mark.
+-- Input: group names array, mark to set, boolean indicating if the function is called by a multi group function
 -- Output: number of processed tables and sequences
   DECLARE
     v_pgversion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
@@ -1533,16 +1595,23 @@ $_set_mark_group$
     r_tblsq         RECORD;
   BEGIN
 -- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('SET_MARK_GROUP', 'BEGIN', v_groupName, v_mark);
+    IF v_multiGroup THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES ('SET_MARK_GROUPS', 'BEGIN', array_to_string(v_groupNames,', '), v_mark);
+    ELSE
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES ('SET_MARK_GROUP', 'BEGIN', array_to_string(v_groupNames,', '), v_mark);
+    END IF;
 -- look at the clock and insert the mark into the emaj_mark table
     v_timestamp = clock_timestamp();
-    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_state) 
-      VALUES (v_groupName, v_mark, v_timestamp, 'ACTIVE');
+    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_state) 
+        VALUES (v_groupNames[v_i], v_mark, v_timestamp, 'ACTIVE');
+    END LOOP;
 -- then, examine the group's definition
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
-          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
+          WHERE rel_group = ANY (v_groupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, record the emaj_id associated sequence parameters in the emaj sequence table
@@ -1583,11 +1652,16 @@ $_set_mark_group$
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('SET_MARK_GROUP', 'END', v_groupName, v_mark);
+    IF v_multiGroup THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES ('SET_MARK_GROUPS', 'END', array_to_string(v_groupNames,', '), v_mark);
+    ELSE
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES ('SET_MARK_GROUP', 'END', array_to_string(v_groupNames,', '), v_mark);
+    END IF;
     RETURN v_nbTb;
   END;
-$_set_mark_group$;
+$_set_mark_groups$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) 
 RETURNS text LANGUAGE plpgsql AS
@@ -2130,7 +2204,7 @@ $_rlbk_group_step3$
         RAISE EXCEPTION '_rlbk_group_step3: Internal error - mark % not found for group % ', v_mark, v_groupName;
       END IF;
 -- set the mark
-      PERFORM emaj._set_mark_group(v_groupName, 'RLBK_' || v_realMark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START');
+      PERFORM emaj._set_mark_groups(array[v_groupName], 'RLBK_' || v_realMark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START', false);
     END IF;
     RETURN;
   END;
@@ -2276,7 +2350,7 @@ $_rlbk_group_step7$
         RAISE EXCEPTION '_rlbk_group_step7: Internal error - rollback start mark not found for group % ', v_groupName;
       END IF;
 -- set the mark, replacing the '_START' suffix of the rollback start mark by '_DONE'
-      PERFORM emaj._set_mark_group(v_groupName, substring(v_markName from '(.*)_START$') || '_DONE');
+      PERFORM emaj._set_mark_groups(array[v_groupName], substring(v_markName from '(.*)_START$') || '_DONE', false);
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -2848,6 +2922,7 @@ REVOKE ALL ON FUNCTION emaj._purge_hist() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_name(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._delete_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
@@ -2855,6 +2930,7 @@ REVOKE ALL ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_t
 REVOKE ALL ON FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_group(v_groupName TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj._check_fk_group (v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT) FROM PUBLIC;
@@ -2863,9 +2939,11 @@ REVOKE ALL ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
@@ -2895,6 +2973,7 @@ GRANT EXECUTE ON FUNCTION emaj._purge_hist() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
@@ -2902,6 +2981,7 @@ GRANT EXECUTE ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, 
 GRANT EXECUTE ON FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj._check_fk_group (v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT) TO emaj_adm;
@@ -2910,9 +2990,11 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
