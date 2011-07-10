@@ -17,6 +17,18 @@ Enhancements:
   - a new emaj_find_previous_mark_group() function returns the name of the 
     mark that immediately precedes a given date and time for a group. This 
     may help in using the emaj_delete_before_mark_group() function.
+  - the E-Maj administrator can set priority order between tables when he 
+    describes a group content in emaj_grpdef table. This lets the emaj 
+    administrator manage a processing order that minimize deadlock risks. 
+    A new column, named grpdef_priority, and that can be left to NULL, 
+    handles this concept. In emaj operations and in particular when locks 
+    are set on tables, tables are processed in ascending order of priority, 
+    NULLs being processed last, and in alphabetic order for schema name + 
+    table name for tables described with same priority level. 
+  - a new set of functions give the E-Maj administrator to start, stop or 
+    set a mark on a set of groups in a single operation and transaction. 
+    emaj_start_groups, emaj_stop_groups and emaj_set_mark_groups take as 
+    first argument an array of group names.
   - in emaj_estime_rollback_duration(), check that the group is in LOGGING
     state.
   - in emaj_create_group(), explicitely check that no table or sequence 
@@ -27,14 +39,6 @@ Enhancements:
     mark that immediately precedes a given date and time for a group.
   - a comment has been added to all E-Maj tables, types and roles, as well 
     as to all functions callable by users.
-  - the E-Maj administrator can set priority order between tables when he 
-    describes a group content in emaj_grpdef table. This lets the emaj 
-    administrator manage a processing order that minimize deadlock risks. 
-    A new column, named grpdef_priority, and that can be left to NULL, 
-    handles this concept. In emaj operations and in particular when locks 
-    are set on tables, tables are processed in ascending order of priority, 
-    NULLs being processed last, and in alphabetic order for schema name + 
-    table name for tables described with same priority level. 
 
 Bug fixes:
   - during emaj_start_group() avoid double lock of tables and reoder events
