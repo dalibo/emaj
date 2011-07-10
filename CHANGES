@@ -84,6 +84,8 @@ Bug fixes:
   - set appropriate grants to internal functions _forbid_truncate_fnct().
   - fix the postgres version detection for alpha or beta releases version 
     patterns.
+  - fix a minor bug in reporting list of existing triggers on application 
+    table at emaj_create_group time.
 
 0.9.0
 -----

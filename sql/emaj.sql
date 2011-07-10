@@ -598,12 +598,12 @@ $_create_log$
 -- This check is not done for postgres 8.2 because column tgconstraint doesn't exist
     IF v_pgversion >= '8.3' THEN
       FOR r_trigger IN 
-        SELECT tgname FROM pg_trigger WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE '%emaj_log_trg'
+        SELECT tgname FROM pg_trigger WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE '%emaj_%_trg'
       LOOP
         IF v_triggerList = '' THEN
           v_triggerList = v_triggerList || r_trigger.tgname;
         ELSE
-          v_triggerList = ', ' || v_triggerList || r_trigger.tgname;
+          v_triggerList = v_triggerList || ', ' || r_trigger.tgname;
         END IF;
       END LOOP;
 -- if yes, issue a warning (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
