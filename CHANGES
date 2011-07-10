@@ -81,6 +81,9 @@ Bug fixes:
   - fix a bug in the E-Maj history table purge. If a group is in logging state 
     for a longer period than the history retention delay ('history_retention' 
     parameter), the oldest events in the history were unintentionly purged.
+  - set appropriate grants to internal functions _forbid_truncate_fnct().
+  - fix the postgres version detection for alpha or beta releases version 
+    patterns.
 
 0.9.0
 -----
