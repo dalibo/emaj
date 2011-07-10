@@ -43,7 +43,7 @@ CREATE or REPLACE FUNCTION emaj.tmp()
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
-    v_pgversion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_pgversion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
     v_stmt          TEXT;
   BEGIN
     v_stmt = 'CREATE or REPLACE FUNCTION emaj.emaj_txid_current() RETURNS BIGINT LANGUAGE SQL AS $$ SELECT ';
@@ -269,6 +269,12 @@ INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_tab
 -- Low level Functions            --
 --                                --
 ------------------------------------
+CREATE or REPLACE FUNCTION emaj._pg_version() returns TEXT language sql IMMUTABLE as
+$$
+-- This functions returns as a string the 2 major parts of the current postgresql version (x.y)
+SELECT substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
+$$;
+
 CREATE or REPLACE FUNCTION emaj._purge_hist() returns void language sql as
 $$
 -- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter 
@@ -408,7 +414,7 @@ $_create_log$
 -- other variables
     v_attname          TEXT;
     v_relhaspkey       BOOLEAN;
-    v_pgversion        TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_pgversion        TEXT := emaj._pg_version();
     r_trigger          RECORD;
     v_triggerList      TEXT := '';
 -- cursor to retrieve all columns of the application table
@@ -622,7 +628,7 @@ $_delete_log$
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_emajSchema       TEXT := 'emaj';
-    v_pgversion        TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_pgversion        TEXT := emaj._pg_version();
     v_fullTableName    TEXT;
     v_logTableName     TEXT;
     v_logFnctName      TEXT;
@@ -775,7 +781,7 @@ $_rlbk_sequence$
 -- Input: schema name and table name, mark
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application sequence.
   DECLARE
-    v_pgversion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_pgversion     TEXT := emaj._pg_version();
     v_fullSeqName   TEXT;
     v_stmt          TEXT;
     mark_seq_rec    RECORD;
@@ -975,7 +981,7 @@ $_verify_group$
 -- It generates an error if the check fails
   DECLARE
     v_emajSchema       TEXT := 'emaj';
-    v_pgversion        TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_pgversion        TEXT := emaj._pg_version();
     v_fullTableName    TEXT;
     v_logTableName     TEXT;
     v_logFnctName      TEXT;
@@ -1402,7 +1408,7 @@ $_start_groups$
 -- Output: number of processed tables
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
-    v_pgversion        TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_pgversion        TEXT := emaj._pg_version();
     v_i                INT;
     v_groupState       TEXT;
     v_nbTb             INT := 0;
@@ -1536,7 +1542,7 @@ $_stop_groups$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
-    v_pgversion        TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_pgversion        TEXT := emaj._pg_version();
     v_validGroupNames  TEXT[];
     v_i                INT;
     v_groupState       TEXT;
@@ -1680,7 +1686,7 @@ $_set_mark_groups$
 -- Input: group names array, mark to set, boolean indicating if the function is called by a multi group function
 -- Output: number of processed tables and sequences
   DECLARE
-    v_pgversion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)\\.');
+    v_pgversion     TEXT := emaj._pg_version();
     v_emajSchema    TEXT := 'emaj';
     v_nbTb          INT := 0;
     v_fullSeqName   TEXT;
@@ -3013,6 +3019,7 @@ GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_stat  TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_hist_hist_id_seq TO emaj_adm;
 
 -- revoke grants on all function from PUBLIC
+REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._purge_hist() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_name(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) FROM PUBLIC;
@@ -3067,6 +3074,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) FROM P
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 
 -- and give appropriate rights on functions to emaj_adm role
+GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._purge_hist() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_adm;
@@ -3121,6 +3129,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) TO 
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 
 -- and give appropriate rights on functions to emaj_viewer role
+GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
