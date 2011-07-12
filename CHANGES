@@ -33,6 +33,8 @@ Enhancements:
     state.
   - in emaj_create_group(), explicitely check that no table or sequence 
     already belong to another created group.
+  - in emaj_create_group(), check the supplied group name is not null, not 
+    empty and don't contain any ',' character.
   - in emaj_hist table, add a column containing the id of the insertion 
     transaction. 
   - a new emaj_find_previous_mark_group() function returns the name of the 
