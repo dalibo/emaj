@@ -1668,6 +1668,14 @@ $emaj_set_mark_groups$
     v_markName      TEXT;
     v_nbTb          INT;
   BEGIN
+-- if the group names array is null, immediately return 0
+    IF v_groupNames IS NULL THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES ('SET_MARK_GROUPS', 'BEGIN', NULL, v_mark);
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES ('SET_MARK_GROUPS', 'END', NULL, v_mark);
+      RETURN 0;
+    END IF;
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
 -- check that the group is recorded in emaj_group table
 -- (the SELECT is coded FOR UPDATE to lock the accessed group, avoiding any operation on this group at the same time)
@@ -1713,17 +1721,13 @@ $_set_mark_groups$
     v_stmt          TEXT;
     r_tblsq         RECORD;
   BEGIN
--- if the group names array is null, immediately return 0
-    IF v_groupNames IS NULL THEN
-      RETURN 0;
-    END IF;
 -- insert begin in the history
     IF v_multiGroup THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('SET_MARK_GROUPS', 'BEGIN', array_to_string(v_groupNames,', '), v_mark);
+        VALUES ('SET_MARK_GROUPS', 'BEGIN', array_to_string(v_groupNames,','), v_mark);
     ELSE
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('SET_MARK_GROUP', 'BEGIN', array_to_string(v_groupNames,', '), v_mark);
+        VALUES ('SET_MARK_GROUP', 'BEGIN', array_to_string(v_groupNames,','), v_mark);
     END IF;
 -- look at the clock and insert the mark into the emaj_mark table
     v_timestamp = clock_timestamp();
@@ -1777,10 +1781,10 @@ $_set_mark_groups$
 -- insert end in the history
     IF v_multiGroup THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('SET_MARK_GROUPS', 'END', array_to_string(v_groupNames,', '), v_mark);
+        VALUES ('SET_MARK_GROUPS', 'END', array_to_string(v_groupNames,','), v_mark);
     ELSE
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('SET_MARK_GROUP', 'END', array_to_string(v_groupNames,', '), v_mark);
+        VALUES ('SET_MARK_GROUP', 'END', array_to_string(v_groupNames,','), v_mark);
     END IF;
     RETURN v_nbTb;
   END;
