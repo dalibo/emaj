@@ -1187,6 +1187,16 @@ $emaj_create_group$
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
       VALUES ('CREATE_GROUP', 'BEGIN', v_groupName);
+-- check that the group name is valid (not '' and not containing ',' characters)
+    IF v_groupName IS NULL THEN
+      RAISE EXCEPTION 'emaj_create_group: group name can''t be NULL';
+    END IF;
+    IF v_groupName = '' THEN
+      RAISE EXCEPTION 'emaj_create_group: group name must at least contain 1 character';
+    END IF;
+    IF v_groupName LIKE '%,%' THEN
+      RAISE EXCEPTION 'emaj_create_group: group name can''t contain '','' character';
+    END IF;
 -- check that the group is not yet recorded in emaj_group table
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF FOUND THEN
@@ -1387,12 +1397,12 @@ $emaj_start_groups$
     PERFORM emaj._purge_hist();
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('START_GROUPS', 'BEGIN', array_to_string(v_groupNames,', '));
+      VALUES ('START_GROUPS', 'BEGIN', array_to_string(v_groupNames,','));
 -- call the common _start_groups function
     SELECT emaj._start_groups(v_groupNames, v_mark, true) INTO v_nbTblSeq;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('START_GROUPS', 'END', array_to_string(v_groupNames,', '), v_nbTblSeq || ' tables/sequences processed');
+      VALUES ('START_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
     RETURN v_nbTblSeq;
   END;
 $emaj_start_groups$;
@@ -1421,6 +1431,10 @@ $_start_groups$
     v_cpt              BIGINT;
     r_tblsq            RECORD;
   BEGIN
+-- if the group names array is null, immediately return 0
+    IF v_groupNames IS NULL THEN
+      RETURN 0;
+    END IF;
 -- check that each group is recorded in emaj_group table
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
       SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
@@ -1509,7 +1523,7 @@ COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS $$
 Stops an E-Maj group.
 $$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_stop_groups(v_groupName TEXT[]) 
+CREATE or REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) 
 RETURNS INT LANGUAGE plpgsql AS 
 $emaj_stop_groups$
 -- This function de-activates the log triggers of all the tables for a groups array.
@@ -1552,6 +1566,10 @@ $_stop_groups$
     v_truncTriggerName TEXT;
     r_tblsq            RECORD;
   BEGIN
+-- if the group names array is null, immediately return 0
+    IF v_groupNames IS NULL THEN
+      RETURN 0;
+    END IF;
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
 -- check that the group is recorded in emaj_group table
       SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
@@ -1695,6 +1713,10 @@ $_set_mark_groups$
     v_stmt          TEXT;
     r_tblsq         RECORD;
   BEGIN
+-- if the group names array is null, immediately return 0
+    IF v_groupNames IS NULL THEN
+      RETURN 0;
+    END IF;
 -- insert begin in the history
     IF v_multiGroup THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -3041,13 +3063,13 @@ REVOKE ALL ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_start_groups(v_groupName TEXT[], v_mark TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupName TEXT[]) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupName TEXT[], v_mark TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
@@ -3096,13 +3118,13 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_start_groups(v_groupName TEXT[], v_mark TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupName TEXT[]) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupName TEXT[], v_mark TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
