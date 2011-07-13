@@ -29,6 +29,8 @@ Enhancements:
     set a mark on a set of groups in a single operation and transaction. 
     emaj_start_groups, emaj_stop_groups and emaj_set_mark_groups take as 
     first argument an array of group names.
+  - in parallel rollback processing, "subgroups" are now named "sessions" 
+    to avoid confusion in multi-groups rollbacks.
   - in emaj_estime_rollback_duration(), check that the group is in LOGGING
     state.
   - in emaj_create_group(), explicitely check that no table or sequence 
