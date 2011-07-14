@@ -90,6 +90,7 @@ Bug fixes:
     patterns.
   - fix a minor bug in reporting list of existing triggers on application 
     table at emaj_create_group time.
+  - use a more robust lack of primary key detection.
 
 0.9.0
 -----
