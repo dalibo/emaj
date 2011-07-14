@@ -202,14 +202,13 @@ $$;
 -- working storage table containing foreign key definition
 -- (used at table rollback time to drop and later recreate foreign keys)
 CREATE TABLE emaj.emaj_fk (
-    fk_group                 TEXT        NOT NULL,
+    fk_groups                TEXT[]      NOT NULL,
     fk_session               INT         NOT NULL,
     fk_name                  TEXT        NOT NULL,
     fk_schema                TEXT        NOT NULL,
     fk_table                 TEXT        NOT NULL,
     fk_def                   TEXT        NOT NULL,
-    PRIMARY KEY (fk_group, fk_name),
-    FOREIGN KEY (fk_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
+    PRIMARY KEY (fk_groups, fk_name, fk_schema, fk_table)
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_fk IS $$
 Contains temporary description of foreign keys suppressed by E-Maj rollback operations.
@@ -1070,45 +1069,47 @@ $_verify_group$
   END;
 $_verify_group$;
 
-CREATE or REPLACE FUNCTION emaj._check_fk_group (v_groupName TEXT) 
+CREATE or REPLACE FUNCTION emaj._check_fk_groups(v_groupNames TEXT[]) 
 RETURNS void LANGUAGE plpgsql AS 
-$_check_fk_group$
--- this function checks foreign key constraints for tables of a group:
--- Input: group name
+$_check_fk_groups$
+-- this function checks foreign key constraints for tables of a groups array:
+-- Input: group names array
   DECLARE
     r_fk             RECORD;
   BEGIN
--- issue a warning if a table of the group has a foreign key that reference a table outside the group
+-- issue a warning if a table of the groups has a foreign key that reference a table outside the groups
     FOR r_fk IN
       SELECT c.conname,r.rel_schema,r.rel_tblseq,nf.nspname,tf.relname 
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace nf,pg_class tf, emaj.emaj_relation r
         WHERE contype = 'f'                                      -- FK constraints only
           AND c.conrelid  = t.oid  AND t.relnamespace  = n.oid   -- join for table and namespace 
           AND c.confrelid = tf.oid AND tf.relnamespace = nf.oid  -- join for referenced table and namespace
-          AND n.nspname = r.rel_schema AND t.relname = r.rel_tblseq AND r.rel_group = v_groupName  -- join with emaj_relation table
-          AND (nf.nspname,tf.relname) NOT IN
-              (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = v_groupName)    -- referenced table outside the group
+                                                                 -- join with emaj_relation table
+          AND n.nspname = r.rel_schema AND t.relname = r.rel_tblseq AND r.rel_group = ANY (v_groupNames)  
+          AND (nf.nspname,tf.relname) NOT IN                     -- referenced table outside the groups
+              (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames))
       LOOP
-      RAISE WARNING '_check_fk_group: Foreign key %, for %.% references %.% that is outside the group %',
-                r_fk.conname,r_fk.rel_schema,r_fk.rel_tblseq,r_fk.nspname,r_fk.relname,v_groupName;
+      RAISE WARNING '_check_fk_groups: Foreign key %, from table %.%, references %.% that is outside groups (%)',
+                r_fk.conname,r_fk.rel_schema,r_fk.rel_tblseq,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
     END LOOP;
--- issue a warning if a table of the group is referenced by a table outside the group
+-- issue a warning if a table of the groups is referenced by a table outside the groups
     FOR r_fk IN
       SELECT c.conname,n.nspname,t.relname,r.rel_schema,r.rel_tblseq 
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace nf,pg_class tf, emaj.emaj_relation r
         WHERE contype = 'f'                                      -- FK constraints only
           AND c.conrelid  = t.oid  AND t.relnamespace  = n.oid   -- join for table and namespace 
           AND c.confrelid = tf.oid AND tf.relnamespace = nf.oid  -- join for referenced table and namespace
-          AND nf.nspname = r.rel_schema AND tf.relname = r.rel_tblseq AND r.rel_group = v_groupName  -- join with emaj_relation table
-          AND (n.nspname,t.relname) NOT IN
-              (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = v_groupName)    -- referenced table outside the group
+                                                                 -- join with emaj_relation table
+          AND nf.nspname = r.rel_schema AND tf.relname = r.rel_tblseq AND r.rel_group = ANY (v_groupNames)
+          AND (n.nspname,t.relname) NOT IN                       -- referenced table outside the groups
+              (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames))
       LOOP
-      RAISE WARNING '_check_fk_group: table %.% is referenced by foreign key % of %.% that is outside the group %',
-                r_fk.rel_schema,r_fk.rel_tblseq,r_fk.conname,r_fk.nspname,r_fk.relname,v_groupName;
+      RAISE WARNING '_check_fk_groups: table %.% is referenced by foreign key % from table %.% that is outside groups (%)',
+                r_fk.rel_schema,r_fk.rel_tblseq,r_fk.conname,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
     END LOOP;
     RETURN;
   END;
-$_check_fk_group$;
+$_check_fk_groups$;
 
 CREATE or REPLACE FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT)
 RETURNS void LANGUAGE plpgsql AS 
@@ -1245,7 +1246,7 @@ $emaj_create_group$
     UPDATE emaj.emaj_group SET group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
       WHERE group_name = v_groupName;
 -- check foreign keys with tables outside the group
-    PERFORM emaj._check_fk_group (v_groupName);
+    PERFORM emaj._check_fk_groups (array[v_groupName]);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('CREATE_GROUP', 'END', v_groupName, v_nbTbl + v_nbSeq || ' tables/sequences processed');
@@ -1344,8 +1345,10 @@ $_drop_group$
       END IF;
       v_nbTb = v_nbTb + 1;
     END LOOP;
+-- delete group rows from the emaj_fk table.
+    DELETE FROM emaj.emaj_fk WHERE v_groupName = ANY (fk_groups);
 -- delete group row from the emaj_group table.
---   By cascade, it also deletes rows from emaj_relation, emaj_mark and emaj_fk tables
+--   By cascade, it also deletes rows from emaj_relation and emaj_mark
     DELETE FROM emaj.emaj_group WHERE group_name = v_groupName;
     RETURN v_nbTb;
   END;
@@ -1462,7 +1465,7 @@ $_start_groups$
         RAISE EXCEPTION '_start_group: Internal error - emaj_res_group for group % returned 0', v_groupNames[v_i];
       END IF;
 -- ... and check foreign keys with tables outside the group
-      PERFORM emaj._check_fk_group (v_groupNames[v_i]);
+      PERFORM emaj._check_fk_groups(array[v_groupNames[v_i]]);
     END LOOP;
 -- OK, lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
@@ -2048,7 +2051,8 @@ $emaj_rollback_group$
 -- Output: number of processed tables and sequences
   BEGIN
 -- just (unlogged) rollback the group, with log table deletion
-    return emaj._rlbk_group(v_groupName, v_mark, true, true);
+--   (with boolean: unloggedRlbk = true, deleteLog = true, multiGroup = false)
+    return emaj._rlbk_groups(array[v_groupName], v_mark, true, true, false);
   END;
 $emaj_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT) IS $$
@@ -2067,7 +2071,8 @@ $emaj_rollback_and_stop_group$
     v_ret_stop       INT;
   BEGIN
 -- (unlogged) rollback the group without log table deletion
-    SELECT emaj._rlbk_group(v_groupName, v_mark, true, false) INTO v_ret_rollback;
+--   (with boolean: unloggedRlbk = true, deleteLog = false, multiGroup = false)
+    SELECT emaj._rlbk_groups(array[v_groupName], v_mark, true, false, false) INTO v_ret_rollback;
 -- and stop
     SELECT emaj.emaj_stop_group(v_groupName) INTO v_ret_stop;
 -- return the number of rollbacked tables and sequences
@@ -2090,17 +2095,18 @@ $emaj_logged_rollback_group$
 -- Output: number of processed tables and sequences
   BEGIN
 -- just "logged-rollback" the group, with log table deletion
-    return emaj._rlbk_group(v_groupName, v_mark, false, false);
+--   (with boolean: unloggedRlbk = false, deleteLog = false, multiGroup = false)
+    return emaj._rlbk_groups(array[v_groupName], v_mark, false, false, false);
   END;
 $emaj_logged_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT) IS $$
 Performs a logged (cancellable) rollbacks an E-Maj group to a given mark.
 $$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
-$_rlbk_group$
--- The function rollbacks all tables and sequences of a group up to a mark in the history.
+$_rlbk_groups$
+-- The function rollbacks all tables and sequences of a groups array up to a mark in the history.
 -- It is called by emaj_rollback_group and emaj_rollback_and_stop_group.
 -- It effectively manages the rollback operation for each table or sequence, deleting rows from log tables 
 -- only when asked by the calling functions.
@@ -2114,37 +2120,40 @@ $_rlbk_group$
     v_nbSeq             INT;
   BEGIN
 -- Step 1: prepare the rollback operation
-    SELECT emaj._rlbk_group_step1(v_groupName, v_mark, v_unloggedRlbk, 1) INTO v_nbTblInGroup;
+    SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup) INTO v_nbTblInGroup;
 -- Step 2: lock all tables
-    PERFORM emaj._rlbk_group_step2(v_groupName, 1);
+    PERFORM emaj._rlbk_groups_step2(v_groupNames, 1);
 -- Step 3: set a rollback start mark if logged rollback
-    PERFORM emaj._rlbk_group_step3(v_groupName, v_mark, v_unloggedRlbk);
+    PERFORM emaj._rlbk_groups_step3(v_groupNames, v_mark, v_unloggedRlbk);
 -- Step 4: record and drop foreign keys
-    PERFORM emaj._rlbk_group_step4(v_groupName, 1);
+    PERFORM emaj._rlbk_groups_step4(v_groupNames, 1);
 -- Step 5: effectively rollback tables
-    SELECT emaj._rlbk_group_step5(v_groupName, v_mark, 1, v_unloggedRlbk, v_deleteLog) INTO v_nbTbl;
+    SELECT emaj._rlbk_groups_step5(v_groupNames, v_mark, 1, v_unloggedRlbk, v_deleteLog) INTO v_nbTbl;
 -- checks that we have the expected number of processed tables
     IF v_nbTbl <> v_nbTblInGroup THEN
        RAISE EXCEPTION '_rlbk_group: Internal error 1 (%,%)',v_nbTbl,v_nbTblInGroup;
     END IF;
 -- Step 6: recreate foreign keys
-    PERFORM emaj._rlbk_group_step6(v_groupName, 1);
+    PERFORM emaj._rlbk_groups_step6(v_groupNames, 1);
 -- Step 7: process sequences and complete the rollback operation record
-    SELECT emaj._rlbk_group_step7(v_groupName, v_mark, v_nbTbl, v_unloggedRlbk, v_deleteLog) INTO v_nbSeq;
+    SELECT emaj._rlbk_groups_step7(v_groupNames, v_mark, v_nbTbl, v_unloggedRlbk, v_deleteLog, v_multiGroup) INTO v_nbSeq;
     RETURN v_nbTbl + v_nbSeq;
   END;
-$_rlbk_group$;
+$_rlbk_groups$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step1(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSession INT) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN) 
 RETURNS INT LANGUAGE plpgsql AS
-$_rlbk_group_step1$
+$_rlbk_groups_step1$
 -- This is the first step of a rollback group processing.
 -- It tests the environment, the supplied parameters and the foreign key constraints.
 -- It builds the requested number of sessions with the list of tables to process, trying to spread the load over all sessions.
 -- It finaly inserts into the history the event about the rollback start
   DECLARE
     v_logOnly             BOOLEAN;
+    v_i                   INT;
     v_groupState          TEXT;
+    v_markName            TEXT;
+    v_cpt                 INT;
     v_nbTblInGroup        INT;
     v_nbUnchangedTbl      INT;
     v_timestampMark       TIMESTAMPTZ;
@@ -2160,34 +2169,52 @@ $_rlbk_group_step1$
 -- check emaj is not configured in log_only mode
     SELECT param_value_boolean INTO v_logOnly FROM emaj.emaj_param WHERE param_key = 'log_only';
     IF v_logOnly THEN
-      RAISE EXCEPTION '_rlbk_group_step1: Emaj is configured in LogOnly mode. It cannot perform any rollback operation';
+      RAISE EXCEPTION '_rlbk_groups_step1: Emaj is configured in LogOnly mode. It cannot perform any rollback operation';
     END IF;
--- check that the group is recorded in emaj_group table and get the total number of tables for this group
-    SELECT group_state, group_nb_table INTO v_groupState, v_nbTblInGroup FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION '_rlbk_group_step1: group % has not been created', v_groupName;
+-- check that each group ...
+-- ...is recorded in emaj_group table
+    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+      SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION '_rlbk_groups_step1: group % has not been created', v_groupNames[v_i];
+      END IF;
+-- ... is in LOGGING state
+      IF v_groupState <> 'LOGGING' THEN
+        RAISE EXCEPTION '_rlbk_groups_step1: Group % cannot be rollbacked because it is not in logging state.', v_groupNames[v_i];
+      END IF;
+-- ... is not damaged
+      PERFORM emaj._verify_group(v_groupNames[v_i]);
+-- ... and the requested mark exists for this group
+      SELECT emaj._get_mark_name(v_groupNames[v_i],v_mark) INTO v_markName;
+      IF NOT FOUND OR v_markName IS NULL THEN
+        RAISE EXCEPTION '_rlbk_groups_step1: No mark % exists for group % ', v_mark, v_groupNames[v_i];
+      END IF;
+    END LOOP;
+-- get the mark timestamp and check it is the same for all groups of the array
+    SELECT count(distinct emaj._get_mark_datetime(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
+      WHERE group_name = ANY (v_groupNames);
+    IF v_cpt > 1 THEN
+      RAISE EXCEPTION '_rlbk_groups_step1: Mark % does not represent the same point in time for all groups', v_mark;
     END IF;
--- check that the group is in LOGGING state
-    IF v_groupState <> 'LOGGING' THEN
-      RAISE EXCEPTION '_rlbk_group_step1: Group % cannot be rollbacked because it is not in logging state. An emaj_start_group function must be previously executed', v_groupName;
-    END IF;
--- check the requested mark exists and get its timestamp
-    SELECT emaj._get_mark_datetime(v_groupName,v_mark) INTO v_timestampMark;
-    IF v_timestampMark IS NULL THEN
-      RAISE EXCEPTION '_rlbk_group_step1: No mark % exists for group % ', v_mark, v_groupName;
-    END IF;
+-- get the mark timestamp for the 1st group (as we know this timestamp is the same for all groups of the array)
+    SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
 -- insert begin in the history
     IF v_unloggedRlbk THEN
       v_msg = 'Unlogged';
     ELSE
       v_msg = 'Logged';
     END IF;
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('ROLLBACK_GROUP', 'BEGIN', v_groupName, v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
--- check that emaj group is OK 
-    PERFORM emaj._verify_group(v_groupName);
--- check foreign keys with tables outside the group
-    PERFORM emaj._check_fk_group (v_groupName);
+    IF v_multiGroup THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES ('ROLLBACK_GROUPS', 'BEGIN', array_to_string(v_groupNames,','), v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
+    ELSE
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES ('ROLLBACK_GROUP', 'BEGIN', array_to_string(v_groupNames,','), v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
+    END IF;
+-- get the total number of tables for these groups
+    SELECT sum(group_nb_table) INTO v_nbTblInGroup FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames) ;
+-- issue warnings in case of foreign keys with tables outside the groups
+    PERFORM emaj._check_fk_groups(v_groupNames);
 -- create sessions, using the number of sessions requested by the caller
 -- session id for sequences will remain NULL
 --   initialisation
@@ -2195,22 +2222,26 @@ $_rlbk_group_step1$
     FOR v_session IN 1 .. v_nbSession LOOP
       v_sessionLoad [v_session] = 0;
     END LOOP;
+    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
 --     fkey table
-    DELETE FROM emaj.emaj_fk WHERE fk_group = v_groupName;
---     relation table: session set to NULL and numbers of log rows computed by emaj_log_stat_group function
-    UPDATE emaj.emaj_relation SET rel_session = NULL, rel_rows = stat_rows 
-      FROM emaj.emaj_log_stat_group (v_groupName, v_mark, NULL) stat
-      WHERE rel_group = v_groupName
-        AND rel_group = stat_group AND rel_schema = stat_schema AND rel_tblseq = stat_table;
+      DELETE FROM emaj.emaj_fk WHERE v_groupNames[v_i] = ANY (fk_groups);
+--     relation table: for each group, session set to NULL and 
+--       numbers of log rows computed by emaj_log_stat_group function
+      UPDATE emaj.emaj_relation SET rel_session = NULL, rel_rows = stat_rows 
+        FROM emaj.emaj_log_stat_group (v_groupNames[v_i], v_mark, NULL) stat
+        WHERE rel_group = v_groupNames[v_i]
+          AND rel_group = stat_group AND rel_schema = stat_schema AND rel_tblseq = stat_table;
+    END LOOP;
 --   count the number of tables that have no update to rollback
-    SELECT count(*) INTO v_nbUnchangedTbl FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_rows = 0;
---   allocate tables with rows to rollback to sessions starting with the heaviest to rollback tables as reported by emaj_log_stat_group function
+    SELECT count(*) INTO v_nbUnchangedTbl FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_rows = 0;
+--   allocate tables with rows to rollback to sessions starting with the heaviest to rollback tables
+--     as reported by emaj_log_stat_group function
     FOR r_tbl IN
-        SELECT * FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_rows DESC
+        SELECT * FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' ORDER BY rel_rows DESC
         LOOP
 --   is the table already allocated to a session (it may have been already allocated because of a fkey link) ?
       PERFORM 1 FROM emaj.emaj_relation 
-        WHERE rel_group = v_groupName AND rel_schema = r_tbl.rel_schema AND rel_tblseq = r_tbl.rel_tblseq 
+        WHERE rel_group = ANY (v_groupNames) AND rel_schema = r_tbl.rel_schema AND rel_tblseq = r_tbl.rel_tblseq 
           AND rel_session IS NULL;
 --   no, 
       IF FOUND THEN
@@ -2224,16 +2255,16 @@ $_rlbk_group_step1$
         END LOOP;
 --   allocate the table to the session, with all other tables linked by foreign key constraints
         v_sessionLoad [v_minSession] = v_sessionLoad [v_minSession] + 
-                 emaj._rlbk_group_set_session(v_groupName, r_tbl.rel_schema, r_tbl.rel_tblseq, v_minSession, r_tbl.rel_rows);
+                 emaj._rlbk_groups_set_session(v_groupNames, r_tbl.rel_schema, r_tbl.rel_tblseq, v_minSession, r_tbl.rel_rows);
       END IF;
     END LOOP;
     RETURN v_nbTblInGroup - v_nbUnchangedTbl;
   END;
-$_rlbk_group_step1$;
+$_rlbk_groups_step1$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_set_session(v_groupName TEXT, v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql AS
-$_rlbk_group_set_session$
+$_rlbk_groups_set_session$
 -- This function updates the emaj_relation table and set the predefined session id for one table. 
 -- It also looks for all tables that are linked to this table by foreign keys to force them to be allocated to the same session.
 -- As those linked table can also be linked to other tables by other foreign keys, the function has to be recursiley called.
@@ -2246,14 +2277,14 @@ $_rlbk_group_set_session$
     v_cumRows=v_rows;
 -- first set the session of the emaj_relation table for this application table
     UPDATE emaj.emaj_relation SET rel_session = v_session 
-      WHERE rel_group = v_groupName AND rel_schema = v_schema AND rel_tblseq = v_table;
+      WHERE rel_group = ANY (v_groupNames) AND rel_schema = v_schema AND rel_tblseq = v_table;
 -- then look for other application tables linked by foreign key relationships
     v_fullTableName := quote_ident(v_schema) || '.' || quote_ident(v_table);
     FOR r_tbl IN
         SELECT rel_schema, rel_tblseq, rel_rows FROM emaj.emaj_relation 
-          WHERE rel_group = v_groupName
+          WHERE rel_group = ANY (v_groupNames)
             AND rel_session IS NULL                          -- not yet allocated
-            AND (rel_schema, rel_tblseq) IN (                 -- list of (schema,table) linked to the original table by foreign keys
+            AND (rel_schema, rel_tblseq) IN (                -- list of (schema,table) linked to the original table by foreign keys
             SELECT nspname, relname FROM pg_constraint, pg_class t, pg_namespace n 
               WHERE contype = 'f' AND confrelid = v_fullTableName::regclass 
                 AND t.oid = conrelid AND relnamespace = n.oid
@@ -2264,16 +2295,16 @@ $_rlbk_group_set_session$
             ) 
         LOOP
 -- recursive call to allocate these linked tables to the same session id and get the accumulated number of rows to rollback
-      SELECT v_cumRows + emaj._rlbk_group_set_session(v_groupName, r_tbl.rel_schema, r_tbl.rel_tblseq, v_session, r_tbl.rel_rows) INTO v_cumRows;
+      SELECT v_cumRows + emaj._rlbk_groups_set_session(v_groupNames, r_tbl.rel_schema, r_tbl.rel_tblseq, v_session, r_tbl.rel_rows) INTO v_cumRows;
     END LOOP;
     RETURN v_cumRows;
   END;
-$_rlbk_group_set_session$;
+$_rlbk_groups_set_session$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step2(v_groupName TEXT, v_session INT) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT) 
 RETURNS void LANGUAGE plpgsql AS
-$_rlbk_group_step2$
--- This is the second step of a rollback group processing. It just locks the table for a session.
+$_rlbk_groups_step2$
+-- This is the second step of a rollback group processing. It just locks the tables for a session.
   DECLARE
     v_nbRetry       SMALLINT := 0;
     v_ok            BOOLEAN := false;
@@ -2281,7 +2312,7 @@ $_rlbk_group_step2$
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('LOCK_SESSION', 'BEGIN', v_groupName, 'Session #' || v_session);
+      VALUES ('LOCK_SESSION', 'BEGIN', array_to_string(v_groupNames,','), 'Session #' || v_session);
 -- acquire lock on all tables
 -- in case of deadlock, retry up to 5 times
     WHILE NOT v_ok AND v_nbRetry < 5 LOOP
@@ -2289,7 +2320,7 @@ $_rlbk_group_step2$
 -- scan all tables of the session
         FOR r_tblsq IN
             SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
-              WHERE rel_group = v_groupName AND rel_session = v_session AND rel_kind = 'r' 
+              WHERE rel_group = ANY (v_groupNames) AND rel_session = v_session AND rel_kind = 'r' 
               ORDER BY rel_priority, rel_schema, rel_tblseq
             LOOP
 --   lock each table
@@ -2300,7 +2331,7 @@ $_rlbk_group_step2$
       EXCEPTION
         WHEN deadlock_detected THEN
           v_nbRetry = v_nbRetry + 1;
-          RAISE NOTICE '_rlbk_group_step2: a deadlock has been trapped while locking tables of group %.', v_groupName;
+          RAISE NOTICE '_rlbk_group_step2: a deadlock has been trapped while locking tables for groups %.', array_to_string(v_groupNames,',');
       END;
     END LOOP;
     IF NOT v_ok THEN
@@ -2308,14 +2339,14 @@ $_rlbk_group_step2$
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('LOCK_SESSION', 'END', v_groupName, 'Session #' || v_session || ' ; ' ||v_nbRetry || ' deadlock(s)');
+      VALUES ('LOCK_SESSION', 'END', array_to_string(v_groupNames,','), 'Session #' || v_session || ' ; ' ||v_nbRetry || ' deadlock(s)');
     RETURN;
   END;
-$_rlbk_group_step2$;
+$_rlbk_groups_step2$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step3(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN) 
 RETURNS VOID LANGUAGE plpgsql AS
-$_rlbk_group_step3$
+$_rlbk_groups_step3$
 -- This is the third step of a rollback group processing.
 -- For logged rollback, it sets a mark that materialize the point in time just before the tables rollback. 
 -- All concerned tables are already locked.
@@ -2325,20 +2356,22 @@ $_rlbk_group_step3$
     IF NOT v_unloggedRlbk THEN
 -- if rollback is "logged" rollback, build a mark name with the pattern:
 -- 'RLBK_<mark name to rollback to>_%_START', where % represents the current time
-      SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+-- Get the real mark name (using first supplied group name, as check that all groups 
+--   can use the same name has already been done at step 1) 
+      SELECT emaj._get_mark_name(v_groupNames[1],v_mark) INTO v_realMark;
       IF v_realMark IS NULL THEN
-        RAISE EXCEPTION '_rlbk_group_step3: Internal error - mark % not found for group % ', v_mark, v_groupName;
+        RAISE EXCEPTION '_rlbk_groups_step3: Internal error - mark % not found for group % ', v_mark, v_groupNames[1];
       END IF;
--- set the mark
-      PERFORM emaj._set_mark_groups(array[v_groupName], 'RLBK_' || v_realMark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START', false);
+-- ... and set the mark
+      PERFORM emaj._set_mark_groups(v_groupNames, 'RLBK_' || v_realMark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START', false);
     END IF;
     RETURN;
   END;
-$_rlbk_group_step3$;
+$_rlbk_groups_step3$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step4(v_groupName TEXT, v_session INT) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
-$_rlbk_group_step4$
+$_rlbk_groups_step4$
 -- This is the fourth step of a rollback group processing. It drops all foreign keys involved in a rollback session.
 -- Before dropping, it records them to be able to recreate them at step 5.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables.
@@ -2346,63 +2379,62 @@ $_rlbk_group_step4$
     r_fk                RECORD;
   BEGIN
 -- record and drop the foreign keys involved in all tables of the group, if any
-    DELETE FROM emaj.emaj_fk WHERE fk_group = v_groupName and fk_session = v_session;
-    INSERT INTO emaj.emaj_fk (fk_group, fk_session, fk_name, fk_schema, fk_table, fk_def)
+    INSERT INTO emaj.emaj_fk (fk_groups, fk_session, fk_name, fk_schema, fk_table, fk_def)
 --    record the foreign keys of the session's tables
-      SELECT v_groupName, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid)
+      SELECT v_groupNames, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid)
         FROM pg_constraint c, pg_namespace n, pg_class t, emaj.emaj_relation r
         WHERE c.contype = 'f'                                            -- FK constraints only
           AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace 
           AND n.nspname = r.rel_schema AND t.relname = r.rel_tblseq      -- join on group table
-          AND r.rel_group = v_groupName AND r.rel_session = v_session
+          AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session
       UNION
 --           and the foreign keys referencing the session's tables
-      SELECT v_groupName, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid)
+      SELECT v_groupNames, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid)
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_relation r
         WHERE c.contype = 'f'                                            -- FK constraints only
           AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace 
           AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace 
           AND rn.nspname = r.rel_schema AND rt.relname = r.rel_tblseq    -- join on group table
-          AND r.rel_group = v_groupName AND r.rel_session = v_session;
+          AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session;
 --    and drop all these foreign keys
     FOR r_fk IN
       SELECT fk_schema, fk_table, fk_name FROM emaj.emaj_fk 
-        WHERE fk_group = v_groupName  AND fk_session = v_session ORDER BY fk_schema, fk_table, fk_name
+        WHERE fk_groups = v_groupNames  AND fk_session = v_session ORDER BY fk_schema, fk_table, fk_name
       LOOP
-        RAISE NOTICE '_rlbk_group_step4: group %, session #% -> foreign key constraint % dropped for table %.%', v_groupName, v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
+        RAISE NOTICE '_rlbk_groups_step4: groups (%), session #% -> foreign key constraint % dropped for table %.%', array_to_string(v_groupNames,','), v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
         EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' DROP CONSTRAINT ' || quote_ident(r_fk.fk_name);
     END LOOP;
   END;
-$_rlbk_group_step4$;
+$_rlbk_groups_step4$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step5(v_groupName TEXT, v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
-$_rlbk_group_step5$
+$_rlbk_groups_step5$
 -- This is the fifth step of a rollback group processing. It performs the rollback of all tables of a session.
   DECLARE
     v_nbTbl             INT := 0;
     v_timestampMark     TIMESTAMPTZ;
   BEGIN
 -- fetch the timestamp mark again
-    SELECT emaj._get_mark_datetime(v_groupName,v_mark) INTO v_timestampMark;
+    SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
     IF v_timestampMark IS NULL THEN
-      RAISE EXCEPTION '_rlbk_group_step5: Internal error - mark % not found for group % ', v_mark, v_groupName;
+      RAISE EXCEPTION '_rlbk_groups_step5: Internal error - mark % not found for group % ', v_mark, v_groupNames[1];
     END IF;
 -- rollback all tables of the session, having rows to rollback, in priority order (sequences are processed later)
 -- (the disableTrigger boolean for the _rlbk_table() function always equal unloggedRlbk boolean)
     PERFORM emaj._rlbk_table(rel_schema, rel_tblseq, v_timestampMark, v_unloggedRlbk, v_deleteLog)
       FROM (SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
-              WHERE rel_group = v_groupName AND rel_session = v_session AND rel_kind = 'r' AND rel_rows > 0
+              WHERE rel_group = ANY (v_groupNames) AND rel_session = v_session AND rel_kind = 'r' AND rel_rows > 0
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t;
 -- and return the number of processed tables
     GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
     RETURN v_nbTbl;
   END;
-$_rlbk_group_step5$;
+$_rlbk_groups_step5$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step6(v_groupName TEXT, v_session INT) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
-$_rlbk_group_step6$
+$_rlbk_groups_step6$
 -- This is the sixth step of a rollback group processing. It recreates the previously deleted foreign keys.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables.
   DECLARE
@@ -2414,7 +2446,7 @@ $_rlbk_group_step6$
 -- get all recorded fk plus the number of rows of the related table as estimated by postgresql (pg_class.reltuples)
       SELECT fk_schema, fk_table, fk_name, fk_def, pg_class.reltuples 
         FROM emaj.emaj_fk, pg_namespace, pg_class
-        WHERE fk_group = v_groupName AND fk_session = v_session AND                         -- restrictions
+        WHERE fk_groups = v_groupNames AND fk_session = v_session AND                         -- restrictions
               pg_namespace.oid = relnamespace AND relname = fk_table AND nspname = fk_schema  -- joins
         ORDER BY fk_schema, fk_table, fk_name
       LOOP
@@ -2427,15 +2459,15 @@ $_rlbk_group_step6$
         INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
            VALUES ('add_fk', r_fk.fk_schema, r_fk.fk_name, v_ts_start, r_fk.reltuples, v_ts_end - v_ts_start);
 -- send a message about the fk creation completion 
-        RAISE NOTICE '_rlbk_group_step6: group %, session #% -> foreign key constraint % recreated for table %.%', v_groupName, v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
+        RAISE NOTICE '_rlbk_group_step6: groups (%), session #% -> foreign key constraint % recreated for table %.%', array_to_string(v_groupNames,','), v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
     END LOOP;
     RETURN;
   END;
-$_rlbk_group_step6$;
+$_rlbk_groups_step6$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_group_step7(v_groupName TEXT, v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step7(v_groupNames TEXT[], v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
-$_rlbk_group_step7$
+$_rlbk_groups_step7$
 -- This is the last step of a rollback group processing. It :
 --    - deletes the marks that are no longer available,
 --    - rollbacks all sequences of the group.
@@ -2446,24 +2478,24 @@ $_rlbk_group_step7$
     v_markName          TEXT;
   BEGIN
 -- fetch the timestamp mark again
-    SELECT emaj._get_mark_datetime(v_groupName,v_mark) INTO v_timestampMark;
+    SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
     IF v_timestampMark IS NULL THEN
-      RAISE EXCEPTION '_rlbk_group_step7: Internal error - mark % not found for group % ', v_mark, v_groupName;
+      RAISE EXCEPTION '_rlbk_groups_step7: Internal error - mark % not found for group % ', v_mark, v_groupNames[1];
     END IF;
 -- if "unlogged" rollback, delete all marks and sequence holes later than the now rollbacked mark
 -- (not needed if mark = 'EMAJ_LAST_MARK')
     IF v_unloggedRlbk AND v_mark <> 'EMAJ_LAST_MARK' THEN
 -- log in the history the name of all marks that must be deleted due to the rollback
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        SELECT 'ROLLBACK_GROUP', 'MARK DELETED', v_groupName, 'mark ' || mark_name || ' has been deleted' FROM emaj.emaj_mark 
-          WHERE mark_group = v_groupName AND mark_datetime > v_timestampMark;
+        SELECT 'ROLLBACK_GROUP', 'MARK DELETED', mark_group, 'mark ' || mark_name || ' has been deleted' FROM emaj.emaj_mark 
+          WHERE mark_group = ANY (v_groupNames) AND mark_datetime > v_timestampMark;
 -- and finaly delete these useless marks (the related sequences have been already deleted by rollback functions)
-      DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_datetime > v_timestampMark; 
+      DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_datetime > v_timestampMark; 
     END IF;
 -- rollback the application sequences belonging to the group
 -- warning, this operation is not transaction safe (that's why it is placed at the end of the operation)!
     PERFORM emaj._rlbk_sequence(rel_schema, rel_tblseq, v_timestampMark, v_deleteLog) 
-       FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'S';
+       FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S';
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
 -- if rollback is "logged" rollback, automaticaly set a mark representing the tables state just after the rollback.
 -- this mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the current time
@@ -2471,19 +2503,24 @@ $_rlbk_group_step7$
 -- get the mark name set at the beginning of the rollback operation
       SELECT mark_name INTO v_markName 
         FROM emaj.emaj_mark
-        WHERE mark_group = v_groupName ORDER BY mark_datetime DESC LIMIT 1;
+        WHERE mark_group = v_groupNames[1] ORDER BY mark_datetime DESC LIMIT 1;
       IF NOT FOUND OR substr(v_markName,1,5) <> 'RLBK_' THEN
-        RAISE EXCEPTION '_rlbk_group_step7: Internal error - rollback start mark not found for group % ', v_groupName;
+        RAISE EXCEPTION '_rlbk_groups_step7: Internal error - rollback start mark not found for group % ', v_groupNames[1];
       END IF;
 -- set the mark, replacing the '_START' suffix of the rollback start mark by '_DONE'
-      PERFORM emaj._set_mark_groups(array[v_groupName], substring(v_markName from '(.*)_START$') || '_DONE', false);
+      PERFORM emaj._set_mark_groups(v_groupNames, substring(v_markName from '(.*)_START$') || '_DONE', false);
     END IF;
 -- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('ROLLBACK_GROUP', 'END', v_groupName, v_nbTb || ' tables and ' || v_nbSeq || ' sequences effectively processed');
+    IF v_multiGroup THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES ('ROLLBACK_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTb || ' tables and ' || v_nbSeq || ' sequences effectively processed');
+    ELSE
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES ('ROLLBACK_GROUP', 'END', array_to_string(v_groupNames,','), v_nbTb || ' tables and ' || v_nbSeq || ' sequences effectively processed');
+    END IF;
     RETURN v_nbSeq;
   END;
-$_rlbk_group_step7$;
+$_rlbk_groups_step7$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_reset_group(v_groupName TEXT) 
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
@@ -3059,7 +3096,7 @@ REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT,
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_group(v_groupName TEXT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj._check_fk_group (v_groupName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) FROM PUBLIC;
@@ -3082,15 +3119,15 @@ REVOKE ALL ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_and_stop_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_group(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step1(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbsession INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_group_set_session(v_groupName TEXT, v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step2(v_groupName TEXT, v_session INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step3(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step4(v_groupName TEXT, v_session INT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step5(v_groupName TEXT, v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step6(v_groupName TEXT, v_session INT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj._rlbk_group_step7(v_groupName TEXT, v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbsession INT, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_step7(v_groupNames TEXT[], v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj._rst_group(v_groupName TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC; 
@@ -3114,7 +3151,7 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TE
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT) TO emaj_adm; 
-GRANT EXECUTE ON FUNCTION emaj._check_fk_group (v_groupName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) TO emaj_adm;
@@ -3137,15 +3174,15 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark T
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_and_stop_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step1(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSession INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_set_session(v_groupName TEXT, v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step2(v_groupName TEXT, v_session INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step3(v_groupName TEXT, v_mark TEXT, v_unloggedRlbk BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step4(v_groupName TEXT, v_session INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step5(v_groupName TEXT, v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step6(v_groupName TEXT, v_session INT) TO emaj_adm; 
-GRANT EXECUTE ON FUNCTION emaj._rlbk_group_step7(v_groupName TEXT, v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step7(v_groupNames TEXT[], v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj._rst_group(v_groupName TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm; 
