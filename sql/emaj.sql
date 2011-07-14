@@ -431,13 +431,12 @@ $_create_log$
           AND attnum > 0 AND attisdropped = false;
   BEGIN
 -- check the table has a primary key
-    BEGIN
-      SELECT relhaspkey INTO v_relhaspkey FROM pg_class, pg_namespace WHERE 
-        relnamespace = pg_namespace.oid AND nspname = v_schemaName AND relname = v_tableName;
-      IF NOT FOUND THEN
-        RAISE EXCEPTION '_create_log: Internal error - schema.table not found in pg_class';
-      END IF;
-    END;
+    SELECT true INTO v_relhaspkey FROM pg_class, pg_namespace, pg_constraint WHERE 
+        relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid AND
+        contype = 'p' AND nspname = v_schemaName AND relname = v_tableName;
+    IF NOT FOUND THEN
+      v_relhaspkey = false;
+    END IF;
     IF NOT v_logOnly AND v_relhaspkey = FALSE THEN
       RAISE EXCEPTION '_create_log : table % has no PRIMARY KEY', v_tableName;
     END IF;
@@ -2887,7 +2886,6 @@ $emaj_snap_group$
     r_col             RECORD;
     v_colList         TEXT;
     v_fileName        TEXT;
-    v_relhaspkey      BOOLEAN;
     v_stmt text;
   BEGIN
 -- check that the group is recorded in emaj_group table
@@ -2906,9 +2904,10 @@ $emaj_snap_group$
 -- if it is a table,
 --   first build the order by column list
         v_colList := '';
-        SELECT relhaspkey INTO v_relhaspkey FROM pg_class, pg_namespace WHERE 
-          relnamespace = pg_namespace.oid AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
-        IF v_relhaspkey THEN
+        PERFORM 0 FROM pg_class, pg_namespace, pg_constraint 
+          WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid AND
+                contype = 'p' AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
+        IF FOUND THEN
 --   the table has a pkey,
           FOR r_col IN
               SELECT attname FROM pg_attribute, pg_index 
