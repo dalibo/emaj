@@ -106,7 +106,6 @@
 //   There is 1 session per corridor, the first being used also for global dialog with pg
 //   They all use the same connection parameters.
 //   Connection parameters are optional. If not supplied, the environment variables and PostgreSQL default values are used
-
   for ($i=1;$i<=$nbSession;$i++){
     if ($verbose) echo date("d/m/Y - H:i:s.u")." Opening session #$i...\n";
     $dbconn[$i] = pg_connect($conn_string,PGSQL_CONNECT_FORCE_NEW)
@@ -133,13 +132,13 @@
   if ($markState<>'ACTIVE') die("The supplied mark $mark is not in ACTIVE state\n");
   pg_free_result($result);
  
-// Call for _rlbk_group_step1 on first session
-// This prepares the parallel rollback by creating well balanced sub_groups
+// Call for _rlbk_groups_step1 on first session
+// This prepares the parallel rollback by creating well balanced sessions
 
-  $query="SELECT emaj._rlbk_group_step1 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$unlogged,$nbSession)";
-  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step1 for group $group and mark $mark...\n";
+  $query="SELECT emaj._rlbk_groups_step1 (array['".pg_escape_string($group)."'],'".pg_escape_string($mark)."',$unlogged,$nbSession, false)";
+  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step1 for group $group and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
-      or die('Call for _rlbk_group_step1 function failed '.pg_last_error()."\n");
+      or die('Call for _rlbk_groups_step1 function failed '.pg_last_error()."\n");
   $totalNbTbl=pg_fetch_result($result,0,0);
   pg_free_result($result);
   echo "Number of tables needing rollback for group '$group' = $totalNbTbl\n";
@@ -154,52 +153,52 @@
     }
   pg_free_result($result);
 
-// For each session, synchronous call for _rlbk_group_step2 to lock all tables
+// For each session, synchronous call for _rlbk_groups_step2 to lock all tables
 
   for ($i=1;$i<=$nbSession;$i++){
-    $query="SELECT emaj._rlbk_group_step2 ('".pg_escape_string($group)."',$i)";
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step2 for session #$i -> lock tables...\n";
+    $query="SELECT emaj._rlbk_groups_step2 (array['".pg_escape_string($group)."'],$i)";
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step2 for session #$i -> lock tables...\n";
     $result = pg_query($dbconn[$i],$query) 
-        or die('Call for _rlbk_group_step2 function for #'.$i.' failed: '.pg_last_error()."\n");
+        or die('Call for _rlbk_groups_step2 function for #'.$i.' failed: '.pg_last_error()."\n");
     }
   pg_free_result($result);
 
 // Call for _rlbk_group_step3 on first session
 // This set a rollback start mark if logged rollback
 
-  $query="SELECT emaj._rlbk_group_step3 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$unlogged)";
-  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step3 for group $group and mark $mark...\n";
+  $query="SELECT emaj._rlbk_groups_step3 (array['".pg_escape_string($group)."'],'".pg_escape_string($mark)."',$unlogged)";
+  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step3 for group $group and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call for _rlbk_group_step3 function failed '.pg_last_error()."\n");
   pg_free_result($result);
 
-// Once all tables are locked, synchronous call for _rlbk_group_step4 to drop all foreign keys involved 
+// Once all tables are locked, synchronous call for _rlbk_groups_step4 to drop all foreign keys involved 
 // in the session before rollback
 
   for ($i=1;$i<=$nbSession;$i++){
-    $query="SELECT emaj._rlbk_group_step4 ('".pg_escape_string($group)."',$i)";
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step4 for session #$i -> drop foreign keys...\n";
+    $query="SELECT emaj._rlbk_groups_step4 (array['".pg_escape_string($group)."'],$i)";
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step4 for session #$i -> drop foreign keys...\n";
     $result = pg_query($dbconn[$i],$query)
-        or die('Call for j_rlbk_group_step4 function for #'.$i.' failed '.pg_last_error()."\n");
+        or die('Call for j_rlbk_groups_step4 function for #'.$i.' failed '.pg_last_error()."\n");
     }
   pg_free_result($result);
 
-// For each session, asynchronous call for _rlbk_group_step5 to rollback tables
+// For each session, asynchronous call for _rlbk_groups_step5 to rollback tables
 
   for ($i=1;$i<=$nbSession;$i++){
-    $query="SELECT emaj._rlbk_group_step5 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$i,$unlogged,$deleteLog)";
+    $query="SELECT emaj._rlbk_groups_step5 (array['".pg_escape_string($group)."'],'".pg_escape_string($mark)."',$i,$unlogged,$deleteLog)";
     if (pg_connection_busy($dbconn[$i]))
-      die("Session #$i is busy. Unable to call for _rlbk_group_step5\n");
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step5 for session #$i -> rollback tables...\n";
+      die("Session #$i is busy. Unable to call for _rlbk_groups_step5\n");
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step5 for session #$i -> rollback tables...\n";
     pg_send_query($dbconn[$i],$query) 
-        or die('Call for _rlbk_group_step5 function for #'.$i.' failed: '.pg_last_error()."\n");
+        or die('Call for _rlbk_groups_step5 function for #'.$i.' failed: '.pg_last_error()."\n");
     }
 
-// For each session, get the result of the previous call for _rlbk_group_step5
+// For each session, get the result of the previous call for _rlbk_groups_step5
   $cumNbTbl=0;
   for ($i=1;$i<=$nbSession;$i++){
     $result = pg_get_result($dbconn[$i]);
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." get result of _rlbk_group_step5 call for session #$i...\n";
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." get result of _rlbk_groups_step5 call for session #$i...\n";
     $nbTbl=pg_fetch_result($result,0,0);
     if ($verbose) echo "     => Number of rollbacked tables for the session = $nbTbl\n";
     $cumNbTbl=$cumNbTbl+$nbTbl;
@@ -212,22 +211,22 @@
     die("Internal error: sum of processed tables/sequences by sessions ($cumNbTbl) is not equal the number of tables/sequences of the group ($totalNbTbl) !\n");
   }
 
-// Once all tables are restored, synchronous call for _rlbk_group_step6 to recreate all foreign keys
+// Once all tables are restored, synchronous call for _rlbk_groups_step6 to recreate all foreign keys
 
   for ($i=1;$i<=$nbSession;$i++){
-    $query="SELECT emaj._rlbk_group_step6 ('".pg_escape_string($group)."',$i)";
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step6 for session #$i -> recreate foreign keys...\n";
+    $query="SELECT emaj._rlbk_groups_step6 (array['".pg_escape_string($group)."'],$i)";
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step6 for session #$i -> recreate foreign keys...\n";
     $result = pg_query($dbconn[$i],$query)
-        or die('Call for _rlbk_group_step6 function for #'.$i.' failed '.pg_last_error()."\n");
+        or die('Call for _rlbk_groups_step6 function for #'.$i.' failed '.pg_last_error()."\n");
     }
   pg_free_result($result);
 
-// Call for emaj_rlbk_group_step7 on first session to complete the rollback operation
+// Call for emaj_rlbk_groups_step7 on first session to complete the rollback operation
 
-  $query="SELECT emaj._rlbk_group_step7 ('".pg_escape_string($group)."','".pg_escape_string($mark)."',$totalNbTbl,$unlogged,$deleteLog)";
-  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_group_step7 -> complete rollback operation...\n";
+  $query="SELECT emaj._rlbk_groups_step7 (array['".pg_escape_string($group)."'],'".pg_escape_string($mark)."',$totalNbTbl,$unlogged,$deleteLog,false)";
+  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step7 -> complete rollback operation...\n";
   $result = pg_query($dbconn[1],$query)
-      or die('Call for _rlbk_group_step7 function failed '.pg_last_error()."\n");
+      or die('Call for _rlbk_groups_step7 function failed '.pg_last_error()."\n");
   $nbSeq=pg_fetch_result($result,0,0);
   pg_free_result($result);
   if ($verbose) echo "     => Number of rollbacked sequences for group '$group' = $nbSeq\n";
