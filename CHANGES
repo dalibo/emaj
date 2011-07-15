@@ -25,13 +25,15 @@ Enhancements:
     are set on tables, tables are processed in ascending order of priority, 
     NULLs being processed last, and in alphabetic order for schema name + 
     table name for tables described with same priority level. 
-  - a new set of functions give the E-Maj administrator to start, stop or 
-    set a mark on a set of groups in a single operation and transaction. 
-    emaj_start_groups, emaj_stop_groups and emaj_set_mark_groups take as 
-    first argument an array of group names.
+  - a new set of functions give the E-Maj administrator to start, stop,  
+    set marks or rollback on a set of groups in a single operation and 
+    transaction. emaj_start_groups, emaj_stop_groups, emaj_set_mark_groups, 
+    emaj_rollback_groups, emaj_logged_rollback_groups and 
+    emaj_rollback_and_stop_groups take as first argument an array of group 
+    names.
   - in parallel rollback processing, "subgroups" are now named "sessions" 
     to avoid confusion in multi-groups rollbacks.
-  - in emaj_estime_rollback_duration(), check that the group is in LOGGING
+  - in emaj_estimate_rollback_duration(), check that the group is in LOGGING 
     state.
   - in emaj_create_group(), explicitely check that no table or sequence 
     already belong to another created group.
