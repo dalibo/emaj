@@ -1724,13 +1724,8 @@ $_set_mark_groups$
     r_tblsq         RECORD;
   BEGIN
 -- insert begin in the history
-    IF v_multiGroup THEN
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('SET_MARK_GROUPS', 'BEGIN', array_to_string(v_groupNames,','), v_mark);
-    ELSE
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('SET_MARK_GROUP', 'BEGIN', array_to_string(v_groupNames,','), v_mark);
-    END IF;
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','), v_mark);
 -- look at the clock and insert the mark into the emaj_mark table
     v_timestamp = clock_timestamp();
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
@@ -1781,13 +1776,8 @@ $_set_mark_groups$
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- insert end in the history
-    IF v_multiGroup THEN
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('SET_MARK_GROUPS', 'END', array_to_string(v_groupNames,','), v_mark);
-    ELSE
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('SET_MARK_GROUP', 'END', array_to_string(v_groupNames,','), v_mark);
-    END IF;
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'END', array_to_string(v_groupNames,','), v_mark);
     RETURN v_nbTb;
   END;
 $_set_mark_groups$;
@@ -2268,13 +2258,9 @@ $_rlbk_groups_step1$
     ELSE
       v_msg = 'Logged';
     END IF;
-    IF v_multiGroup THEN
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('ROLLBACK_GROUPS', 'BEGIN', array_to_string(v_groupNames,','), v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
-    ELSE
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('ROLLBACK_GROUP', 'BEGIN', array_to_string(v_groupNames,','), v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
-    END IF;
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'BEGIN', 
+              array_to_string(v_groupNames,','), v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
 -- get the total number of tables for these groups
     SELECT sum(group_nb_table) INTO v_nbTblInGroup FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames) ;
 -- issue warnings in case of foreign keys with tables outside the groups
@@ -2551,7 +2537,8 @@ $_rlbk_groups_step7$
     IF v_unloggedRlbk AND v_mark <> 'EMAJ_LAST_MARK' THEN
 -- log in the history the name of all marks that must be deleted due to the rollback
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        SELECT 'ROLLBACK_GROUP', 'MARK DELETED', mark_group, 'mark ' || mark_name || ' has been deleted' FROM emaj.emaj_mark 
+        SELECT CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 
+               'MARK DELETED', mark_group, 'mark ' || mark_name || ' has been deleted' FROM emaj.emaj_mark 
           WHERE mark_group = ANY (v_groupNames) AND mark_datetime > v_timestampMark;
 -- and finaly delete these useless marks (the related sequences have been already deleted by rollback functions)
       DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_datetime > v_timestampMark; 
@@ -2575,13 +2562,9 @@ $_rlbk_groups_step7$
       PERFORM emaj._set_mark_groups(v_groupNames, substring(v_markName from '(.*)_START$') || '_DONE', false);
     END IF;
 -- insert end in the history
-    IF v_multiGroup THEN
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('ROLLBACK_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTb || ' tables and ' || v_nbSeq || ' sequences effectively processed');
-    ELSE
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-        VALUES ('ROLLBACK_GROUP', 'END', array_to_string(v_groupNames,','), v_nbTb || ' tables and ' || v_nbSeq || ' sequences effectively processed');
-    END IF;
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'END', 
+              array_to_string(v_groupNames,','), v_nbTb || ' tables and ' || v_nbSeq || ' sequences effectively processed');
     RETURN v_nbSeq;
   END;
 $_rlbk_groups_step7$;
