@@ -317,6 +317,40 @@ SELECT case
        end
 $$;
 
+CREATE or REPLACE FUNCTION emaj._check_group_names_array(v_groupNames TEXT[])
+RETURNS TEXT[] LANGUAGE plpgsql AS
+$_check_group_names_array$
+-- This function build a array of group names similar to the supplied array, except that NULL 
+-- values, empty string and duplicate names are suppressed. Issue a warning if the result array is NULL.
+-- Input: group names array
+-- Output: validated group names array
+  DECLARE
+    v_gn           TEXT[];
+    v_i            INT;
+  BEGIN
+    IF array_upper(v_groupNames,1) >= 1 THEN
+-- if there are elements, build the result array
+      FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+-- look for not NULL & not empty group name
+        IF v_groupNames[v_i] IS NULL OR v_groupNames[v_i] = '' THEN
+          RAISE WARNING '_check_group_names_array: a group name is NULL or empty';
+-- look for duplicate name
+        ELSEIF v_gn IS NOT NULL AND v_groupNames[v_i] = ANY (v_gn) THEN
+          RAISE WARNING '_check_group_names_array: duplicate group name %',v_groupNames[v_i];
+        ELSE
+-- OK, keep the name
+          v_gn = array_append (v_gn, v_groupNames[v_i]);
+        END IF;
+      END LOOP;
+    END IF;
+-- check for NULL result
+    IF v_gn IS NULL THEN
+      RAISE WARNING '_check_group_names_array: No group name to process';
+    END IF;
+    RETURN v_gn;
+  END;
+$_check_group_names_array$;
+
 CREATE or REPLACE FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) 
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_class$
@@ -330,16 +364,16 @@ $_check_class$
     v_schemaOid    OID;
   BEGIN
     IF v_schemaName = 'emaj' THEN
-      RAISE EXCEPTION '_check_class : object from schema % cannot be managed by EMAJ', v_schemaName;
+      RAISE EXCEPTION '_check_class: object from schema % cannot be managed by EMAJ', v_schemaName;
     END IF;
     SELECT oid INTO v_schemaOid FROM pg_namespace WHERE nspname = v_schemaName;
     IF NOT found THEN
-      RAISE EXCEPTION '_check_class : schema % doesn''t exist', v_schemaName;
+      RAISE EXCEPTION '_check_class: schema % doesn''t exist', v_schemaName;
     END IF;
     SELECT relkind INTO v_relkind FROM pg_class 
       WHERE relNameSpace = v_schemaOid AND relName = v_className AND relkind in ('r','S');
     IF NOT found THEN
-      RAISE EXCEPTION '_check_class : table or sequence % doesn''t exist', v_className;
+      RAISE EXCEPTION '_check_class: table or sequence % doesn''t exist', v_className;
     END IF; 
     RETURN v_relkind;
   END;
@@ -1401,7 +1435,7 @@ $emaj_start_groups$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
       VALUES ('START_GROUPS', 'BEGIN', array_to_string(v_groupNames,','));
 -- call the common _start_groups function
-    SELECT emaj._start_groups(v_groupNames, v_mark, true) INTO v_nbTblSeq;
+	    SELECT emaj._start_groups(emaj._check_group_names_array(v_groupNames), v_mark, true) INTO v_nbTblSeq;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('START_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
@@ -1507,18 +1541,9 @@ $emaj_stop_group$
 -- Execute several emaj_stop_group functions for the same group doesn't produce any error.
 -- Input: group name
 -- Output: number of processed tables and sequences
-  DECLARE
-    v_nbTblSeq         INT;
   BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('STOP_GROUP', 'BEGIN', v_groupName);
--- call the common _stop_groups function
-    SELECT emaj._stop_groups(array[v_groupName], false) INTO v_nbTblSeq;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('STOP_GROUP', 'END', v_groupName, v_nbTblSeq || ' tables/sequences processed');
-    RETURN v_nbTblSeq;
+-- just call the common _stop_groups function
+    RETURN emaj._stop_groups(array[v_groupName], false);
   END;
 $emaj_stop_group$;
 COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS $$
@@ -1532,18 +1557,9 @@ $emaj_stop_groups$
 -- Groups already in IDDLE state are simply not processed.
 -- Input: array of group names
 -- Output: number of processed tables and sequences
-  DECLARE
-    v_nbTblSeq         INT;
   BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('STOP_GROUPS', 'BEGIN', array_to_string(v_groupNames,','));
--- call the common _stop_groups function
-    SELECT emaj._stop_groups(v_groupNames, true) INTO v_nbTblSeq;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('STOP_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
-    RETURN v_nbTblSeq;
+-- just call the common _stop_groups function
+    RETURN emaj._stop_groups(emaj._check_group_names_array(v_groupNames), true);
   END;
 $emaj_stop_groups$;
 COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[]) IS $$
@@ -1572,17 +1588,22 @@ $_stop_groups$
     IF v_groupNames IS NULL THEN
       RETURN 0;
     END IF;
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES (CASE WHEN v_multiGroup THEN 'STOP_GROUPS' ELSE 'STOP_GROUP' END, 'BEGIN', 
+              array_to_string(v_groupNames,','));
+-- for each group of the array,
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
--- check that the group is recorded in emaj_group table
+-- ... check that the group is recorded in emaj_group table
       SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
         RAISE EXCEPTION '_stop_group: group % has not been created', v_groupNames[v_i];
       END IF;
--- check that the group is in LOGGING state
+-- ... check that the group is in LOGGING state
       IF v_groupState <> 'LOGGING' THEN
         RAISE WARNING '_stop_group: Group % cannot be stopped because it is not in logging state.', v_groupNames[v_i];
       ELSE
--- if OK, add the group into the array of groups to process
+-- ... if OK, add the group into the array of groups to process
         v_validGroupNames = v_validGroupNames || array[v_groupNames[v_i]];
       END IF;
     END LOOP;
@@ -1614,6 +1635,10 @@ $_stop_groups$
 -- update the state of the groups rows from the emaj_group table
       UPDATE emaj.emaj_group SET group_state = 'IDLE' WHERE group_name = ANY (v_validGroupNames);
     END IF;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES (CASE WHEN v_multiGroup THEN 'STOP_GROUPS' ELSE 'STOP_GROUP' END, 'END', 
+              array_to_string(v_groupNames,','), v_nbTb || ' tables/sequences processed');
     RETURN v_nbTb;
   END;
 $_stop_groups$;
@@ -1666,39 +1691,42 @@ $emaj_set_mark_groups$
 --        a null or '' mark is transformed into 'MARK_%'
 -- Output: number of processed tables and sequences
   DECLARE
-    v_groupState    TEXT;
-    v_markName      TEXT;
-    v_nbTb          INT;
+    v_validGroupNames TEXT[];
+    v_groupState      TEXT;
+    v_markName        TEXT;
+    v_nbTb            INT;
   BEGIN
+-- validate the group names array
+    v_validGroupNames=emaj._check_group_names_array(v_groupNames);
 -- if the group names array is null, immediately return 0
-    IF v_groupNames IS NULL THEN
+    IF v_validGroupNames IS NULL THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
         VALUES ('SET_MARK_GROUPS', 'BEGIN', NULL, v_mark);
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
         VALUES ('SET_MARK_GROUPS', 'END', NULL, v_mark);
       RETURN 0;
     END IF;
-    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+    FOR v_i in 1 .. array_upper(v_validGroupNames,1) LOOP
 -- check that the group is recorded in emaj_group table
 -- (the SELECT is coded FOR UPDATE to lock the accessed group, avoiding any operation on this group at the same time)
-      SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
+      SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_validGroupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION 'emaj_set_mark_groups: group % has not been created', v_groupNames[v_i];
+        RAISE EXCEPTION 'emaj_set_mark_groups: group % has not been created', v_validGroupNames[v_i];
       END IF;
 -- check that the group is in LOGGING state
       IF v_groupState <> 'LOGGING' THEN
-        RAISE EXCEPTION 'emaj_set_mark_groups: A mark cannot be set for group % because it is not in logging state. An emaj_start_group function must be previously executed', v_groupNames[v_i];
+        RAISE EXCEPTION 'emaj_set_mark_groups: A mark cannot be set for group % because it is not in logging state. An emaj_start_group function must be previously executed', v_validGroupNames[v_i];
       END IF;
 -- check if the group is OK
-      PERFORM emaj._verify_group(v_groupNames[v_i]);
+      PERFORM emaj._verify_group(v_validGroupNames[v_i]);
     END LOOP;
 -- check and process the supplied mark name
-    SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
+    SELECT emaj._check_new_mark(v_mark, v_validGroupNames) INTO v_markName;
 -- OK, lock all tables to get a stable point ...
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
-    PERFORM emaj._lock_groups(v_groupNames,'ROW EXCLUSIVE');
+    PERFORM emaj._lock_groups(v_validGroupNames,'ROW EXCLUSIVE');
 -- Effectively set the mark using the internal _set_mark_groups() function
-    SELECT emaj._set_mark_groups(v_groupNames, v_markName, true) into v_nbTb;
+    SELECT emaj._set_mark_groups(v_validGroupNames, v_markName, true) into v_nbTb;
     RETURN v_nbTb;
   END;
 $emaj_set_mark_groups$;
@@ -2058,7 +2086,7 @@ $emaj_rollback_groups$
   BEGIN
 -- just (unlogged) rollback the groups, with log table deletion
 --   (with boolean: unloggedRlbk = true, deleteLog = true, multiGroup = true)
-    return emaj._rlbk_groups(v_groupNames, v_mark, true, true, true);
+    return emaj._rlbk_groups(emaj._check_group_names_array(v_groupNames), v_mark, true, true, true);
   END;
 $emaj_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT) IS $$
@@ -2097,14 +2125,17 @@ $emaj_rollback_and_stop_groups$
 -- Input: array of group names, mark to rollback to
 -- Output: number of tables and sequences processed by the rollback function
   DECLARE
-    v_ret_rollback   INT;
-    v_ret_stop       INT;
+    v_ret_rollback    INT;
+    v_ret_stop        INT;
+    v_validGroupNames TEXT[];
   BEGIN
+-- check mark names array
+    v_validGroupNames = emaj._check_group_names_array(v_groupNames);
 -- (unlogged) rollback the groups without log table deletion
 --   (with boolean: unloggedRlbk = true, deleteLog = false, multiGroup = true)
-    SELECT emaj._rlbk_groups(v_groupNames, v_mark, true, false, true) INTO v_ret_rollback;
+    SELECT emaj._rlbk_groups(v_validGroupNames, v_mark, true, false, true) INTO v_ret_rollback;
 -- and stop them
-    SELECT emaj.emaj_stop_groups(v_groupNames) INTO v_ret_stop;
+    SELECT emaj.emaj_stop_groups(v_validGroupNames) INTO v_ret_stop;
 -- return the number of rollbacked tables and sequences
     RETURN v_ret_rollback;
   END;
@@ -2146,7 +2177,7 @@ $emaj_logged_rollback_groups$
   BEGIN
 -- just "logged-rollback" the groups, with log table deletion
 --   (with boolean: unloggedRlbk = false, deleteLog = false, multiGroup = true)
-    return emaj._rlbk_groups(v_groupNames, v_mark, false, false, true);
+    return emaj._rlbk_groups(emaj._check_group_names_array(v_groupNames), v_mark, false, false, true);
   END;
 $emaj_logged_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT) IS $$
@@ -3132,6 +3163,7 @@ REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._purge_hist() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_name(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) FROM PUBLIC;
@@ -3190,6 +3222,7 @@ GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._purge_hist() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) TO emaj_adm;
