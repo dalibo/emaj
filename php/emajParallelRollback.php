@@ -36,10 +36,10 @@
   $port='';                         // -p PostgreSQL server ip port
   $username='';                     // -U user name for the connection to PostgreSQL database
   $password='';                     // -W user password
-  $group='';                        // -g E-maj group name (mandatory)
+  $groups='';                        // -g E-maj group name (mandatory)
   $mark='';                         // -m E-maj mark name to rollback to (mandatory)
   $nbSession=1;                     // -s number of parallel E-maj sessions to use for rollback (default=1)
-  $verbose='false';                 // -v flag for verbose mode
+  $verbose=false;                   // -v flag for verbose mode
   $unlogged='true';                 // -l flag for logged rollback mode
 
 // Get supplied parameters
@@ -71,7 +71,7 @@
       $conn_string=$conn_string.'password='.$username.' ';
       break;
     case 'g':
-      $group=$options['g'];
+      $groups="'".str_replace(",","','",$options['g'])."'";
       break;
     case 'l':
       $unlogged='false';
@@ -94,8 +94,8 @@
       break;
   }
 // check the group name has been supplied
-  if ($group==''){
-    die("a group name must be supplied with -g parameter !\n");
+  if ($groups==''){
+    die("at least one group name must be supplied with -g parameter !\n");
   }
 // check the mark has been supplied
   if ($mark==''){
@@ -113,38 +113,19 @@
     }
   echo "$nbSession connected sessions\n";
 
-// Check the existence of the supplied group and its state
-//		select mark_state from emaj.emaj_mark where mark_group = xxx and mark_name = yyy => doit être ACTIVE
-  $query="SELECT group_state FROM emaj.emaj_group WHERE group_name = '".pg_escape_string($group)."'";
-  $result = pg_query($dbconn[1],$query)
-      or die('Check group name failed '.pg_last_error()."\n");
-  if (pg_num_rows($result)==0) die("The supplied group $group doesn't exist\n");
-  $groupState=pg_fetch_result($result,0,0);
-  if ($groupState<>'LOGGING') die("The supplied group $group is not in LOGGING state\n");
-  pg_free_result($result);
-
-// Check the existence of the supplied mark and verify its state
-  $query="SELECT mark_state FROM emaj.emaj_mark WHERE mark_group = '".pg_escape_string($group)."' AND mark_name = '".pg_escape_string($mark)."'";
-  $result = pg_query($dbconn[1],$query)
-      or die('Check mark name failed '.pg_last_error()."\n");
-  if (pg_num_rows($result)==0) die("The supplied mark $mark doesn't exist\n");
-  $markState=pg_fetch_result($result,0,0);
-  if ($markState<>'ACTIVE') die("The supplied mark $mark is not in ACTIVE state\n");
-  pg_free_result($result);
- 
 // Call for _rlbk_groups_step1 on first session
-// This prepares the parallel rollback by creating well balanced sessions
+// This checks the groups and mark, and prepares the parallel rollback by creating well balanced sessions
 
-  $query="SELECT emaj._rlbk_groups_step1 (array['".pg_escape_string($group)."'],'".pg_escape_string($mark)."',$unlogged,$nbSession, false)";
-  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step1 for group $group and mark $mark...\n";
+  $query="SELECT emaj._rlbk_groups_step1 (array[".$groups."],'".pg_escape_string($mark)."',$unlogged,$nbSession, false)";
+  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step1 for groups $groups and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call for _rlbk_groups_step1 function failed '.pg_last_error()."\n");
   $totalNbTbl=pg_fetch_result($result,0,0);
   pg_free_result($result);
-  echo "Number of tables needing rollback for group '$group' = $totalNbTbl\n";
+  echo "Number of tables needing rollback for groups $groups = $totalNbTbl\n";
   echo "Rollback to mark '$mark' in progress...\n";
 
-// For each sub_group, start transactions 
+// For each session, start transactions 
 
   for ($i=1;$i<=$nbSession;$i++){
     if ($verbose) echo date("d/m/Y - H:i:s.u")." Start transaction #$i...\n";
@@ -156,7 +137,7 @@
 // For each session, synchronous call for _rlbk_groups_step2 to lock all tables
 
   for ($i=1;$i<=$nbSession;$i++){
-    $query="SELECT emaj._rlbk_groups_step2 (array['".pg_escape_string($group)."'],$i)";
+    $query="SELECT emaj._rlbk_groups_step2 (array[".$groups."],$i)";
     if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step2 for session #$i -> lock tables...\n";
     $result = pg_query($dbconn[$i],$query) 
         or die('Call for _rlbk_groups_step2 function for #'.$i.' failed: '.pg_last_error()."\n");
@@ -166,8 +147,8 @@
 // Call for _rlbk_group_step3 on first session
 // This set a rollback start mark if logged rollback
 
-  $query="SELECT emaj._rlbk_groups_step3 (array['".pg_escape_string($group)."'],'".pg_escape_string($mark)."',$unlogged)";
-  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step3 for group $group and mark $mark...\n";
+  $query="SELECT emaj._rlbk_groups_step3 (array[".$groups."],'".pg_escape_string($mark)."',$unlogged)";
+  if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step3 for groups $groups and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call for _rlbk_group_step3 function failed '.pg_last_error()."\n");
   pg_free_result($result);
@@ -176,7 +157,7 @@
 // in the session before rollback
 
   for ($i=1;$i<=$nbSession;$i++){
-    $query="SELECT emaj._rlbk_groups_step4 (array['".pg_escape_string($group)."'],$i)";
+    $query="SELECT emaj._rlbk_groups_step4 (array[".$groups."],$i)";
     if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step4 for session #$i -> drop foreign keys...\n";
     $result = pg_query($dbconn[$i],$query)
         or die('Call for j_rlbk_groups_step4 function for #'.$i.' failed '.pg_last_error()."\n");
@@ -186,7 +167,7 @@
 // For each session, asynchronous call for _rlbk_groups_step5 to rollback tables
 
   for ($i=1;$i<=$nbSession;$i++){
-    $query="SELECT emaj._rlbk_groups_step5 (array['".pg_escape_string($group)."'],'".pg_escape_string($mark)."',$i,$unlogged,$deleteLog)";
+    $query="SELECT emaj._rlbk_groups_step5 (array[".$groups."],'".pg_escape_string($mark)."',$i,$unlogged,$deleteLog)";
     if (pg_connection_busy($dbconn[$i]))
       die("Session #$i is busy. Unable to call for _rlbk_groups_step5\n");
     if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step5 for session #$i -> rollback tables...\n";
@@ -214,7 +195,7 @@
 // Once all tables are restored, synchronous call for _rlbk_groups_step6 to recreate all foreign keys
 
   for ($i=1;$i<=$nbSession;$i++){
-    $query="SELECT emaj._rlbk_groups_step6 (array['".pg_escape_string($group)."'],$i)";
+    $query="SELECT emaj._rlbk_groups_step6 (array[".$groups."],$i)";
     if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step6 for session #$i -> recreate foreign keys...\n";
     $result = pg_query($dbconn[$i],$query)
         or die('Call for _rlbk_groups_step6 function for #'.$i.' failed '.pg_last_error()."\n");
@@ -223,13 +204,13 @@
 
 // Call for emaj_rlbk_groups_step7 on first session to complete the rollback operation
 
-  $query="SELECT emaj._rlbk_groups_step7 (array['".pg_escape_string($group)."'],'".pg_escape_string($mark)."',$totalNbTbl,$unlogged,$deleteLog,false)";
+  $query="SELECT emaj._rlbk_groups_step7 (array[".$groups."],'".pg_escape_string($mark)."',$totalNbTbl,$unlogged,$deleteLog,false)";
   if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step7 -> complete rollback operation...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call for _rlbk_groups_step7 function failed '.pg_last_error()."\n");
   $nbSeq=pg_fetch_result($result,0,0);
   pg_free_result($result);
-  if ($verbose) echo "     => Number of rollbacked sequences for group '$group' = $nbSeq\n";
+  if ($verbose) echo "     => Number of rollbacked sequences for groups '$groups' = $nbSeq\n";
 
 // Commit with 2PC to be sure that all sessions can either commit or rollback in a single transaction
 
@@ -264,9 +245,9 @@ function print_help(){
   global $progName,$EmajVersion;
  
   echo "$progName belongs to the E-Maj PostgreSQL contrib (version $EmajVersion).\n";
-  echo "It performs E-Maj rollback for a group and a previously set mark, processing tables in parallel.\n\n";
+  echo "It performs E-Maj rollback for one or several groups and a previously set mark, processing tables in parallel.\n\n";
   echo "Usage:\n";
-  echo "  $progName -g <E-Maj group name> -m <E-Maj mark> -s <number of sessions> [OPTION]... \n";
+  echo "  $progName -g <comma separated list of E-Maj group names> -m <E-Maj mark> -s <number of sessions> [OPTION]... \n";
   echo "\nOptions:\n";
   echo "  -v          verbose mode; writes more information about the processing\n";
   echo "  -l          logged rollback mode (i.e. 'rollbackable' rollback)\n";
@@ -278,6 +259,13 @@ function print_help(){
   echo "  -p,         database server port\n";
   echo "  -U,         user name to connect as\n";
   echo "  -W,         password associated to the user, if needed\n";
+  echo "\nExamples:\n";
+  echo "  php/emajParallelRollback.php -g myGroup1 -m myMark -s 3 \n";
+  echo "              performs a parallel rollback of table group myGroup1 to mark\n";
+  echo "              myMark using 3 parallel sessions.\n";
+  echo "  php/emajParallelRollback.php -h localhost -p 5432 -d myDb -U emajadm -l -g \"myGroup1,myGroup2\" -m myMark -s 5 -v\n";
+  echo "              lets role emajadm perform a parallel logged rollback of 2 table\n";
+  echo "              groups to mark myMark using 5 parallel sessions, in verbose mode.\n";
 }
 function print_version(){
   global $progName,$EmajVersion;
