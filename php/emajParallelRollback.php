@@ -36,19 +36,20 @@
   $port='';                         // -p PostgreSQL server ip port
   $username='';                     // -U user name for the connection to PostgreSQL database
   $password='';                     // -W user password
-  $groups='';                        // -g E-maj group name (mandatory)
+  $groups='';                       // -g E-maj group names (mandatory)
   $mark='';                         // -m E-maj mark name to rollback to (mandatory)
   $nbSession=1;                     // -s number of parallel E-maj sessions to use for rollback (default=1)
   $verbose=false;                   // -v flag for verbose mode
   $unlogged='true';                 // -l flag for logged rollback mode
 
 // Get supplied parameters
-  $shortOptions="d:h:p:U:W:g:l:m:s:v";
+  $shortOptions="d:h:p:U:W:g:m:s:vl";
   $options = getopt($shortOptions);
 
 // ... and process them
   $conn_string = '';
   $deleteLog = 'true';
+  $msgRlbk='Rollback';
   foreach (array_keys($options) as $opt) switch ($opt) {
     case 'd':
       $dbname=$options['d'];
@@ -76,6 +77,7 @@
     case 'l':
       $unlogged='false';
       $deleteLog='false';
+      $msgRlbk='Logged rollback';
       break;
     case 'm':
       $mark=$options['m'];
@@ -95,11 +97,11 @@
   }
 // check the group name has been supplied
   if ($groups==''){
-    die("at least one group name must be supplied with -g parameter !\n");
+    die("At least one group name must be supplied with -g parameter !\n");
   }
 // check the mark has been supplied
   if ($mark==''){
-    die("a mark must be supplied with -m parameter !\n");
+    die("A mark must be supplied with -m parameter !\n");
   }
 
 // Open all required sessions
@@ -123,7 +125,7 @@
   $totalNbTbl=pg_fetch_result($result,0,0);
   pg_free_result($result);
   echo "Number of tables needing rollback for groups $groups = $totalNbTbl\n";
-  echo "Rollback to mark '$mark' in progress...\n";
+  echo "$msgRlbk to mark '$mark' in progress...\n";
 
 // For each session, start transactions 
 
@@ -242,7 +244,7 @@
 
 // And issue the final message
 
-  echo "Rollback completed\n";
+  echo "$msgRlbk of $totalNbTbl tables and $nbSeq sequences completed\n";
 
 function print_help(){
   global $progName,$EmajVersion;
