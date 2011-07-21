@@ -24,8 +24,8 @@
     exit(0);
   }
 
-  echo " E-Maj (version ".$EmajVersion.") - launching parallel rollbacks for a group\n";
-  echo "------------------------------------------------------------------\n";
+  echo " E-Maj (version ".$EmajVersion.") - launching parallel rollbacks for groups\n";
+  echo "-------------------------------------------------------------------\n";
 
 // Collect and prepare parameters
 //   long options (with -- ) are not used for portability reasons
@@ -178,8 +178,11 @@
 // For each session, get the result of the previous call for _rlbk_groups_step5
   $cumNbTbl=0;
   for ($i=1;$i<=$nbSession;$i++){
-    $result = pg_get_result($dbconn[$i]);
+    $result = pg_get_result($dbconn[$i])
+      or die('Get result for _rlbk_group_step5 function failed '.pg_last_error()."\n");
     if ($verbose) echo date("d/m/Y - H:i:s.u")." get result of _rlbk_groups_step5 call for session #$i...\n";
+    if (pg_result_error($result)) 
+      die("Execution of _rlbk_group_step5 function failed \n".pg_result_error($result)."\n");
     $nbTbl=pg_fetch_result($result,0,0);
     if ($verbose) echo "     => Number of rollbacked tables for the session = $nbTbl\n";
     $cumNbTbl=$cumNbTbl+$nbTbl;
@@ -189,7 +192,7 @@
 // Check the right number of tables and sequences have been processed
 
   if ($cumNbTbl!=$totalNbTbl){
-    die("Internal error: sum of processed tables/sequences by sessions ($cumNbTbl) is not equal the number of tables/sequences of the group ($totalNbTbl) !\n");
+    die("Internal error: sum of processed tables/sequences by all sessions ($cumNbTbl) is not equal to the number of tables/sequences of the group ($totalNbTbl) !\n");
   }
 
 // Once all tables are restored, synchronous call for _rlbk_groups_step6 to recreate all foreign keys
