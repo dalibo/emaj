@@ -247,7 +247,7 @@ $$;
 -- Default parameters             --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.9');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.10.0');
 -- The history_retention parameter defines the time interval when a row remains in the emaj history table - default is 1 month
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 month'::interval);
 -- The log_only parameter defines if the rollback capability is activated or not. 
