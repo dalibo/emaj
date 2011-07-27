@@ -17,6 +17,9 @@ Enhancements:
   - a new emaj_find_previous_mark_group() function returns the name of the 
     mark that immediately precedes a given date and time for a group. This 
     may help in using the emaj_delete_before_mark_group() function.
+  - emaj_delete_mark_group() function now returns 1 (i.e. the number of 
+    deleted mark), to be consistent with the data returned by the new 
+    emaj_delete_before_mark_group() function.
   - the E-Maj administrator can set priority order between tables when he 
     describes a group content in emaj_grpdef table. This lets the emaj 
     administrator manage a processing order that minimize deadlock risks. 
@@ -45,6 +48,7 @@ Enhancements:
     mark that immediately precedes a given date and time for a group.
   - a comment has been added to all E-Maj tables, types and roles, as well 
     as to all functions callable by users.
+
 
 Bug fixes:
   - during emaj_start_group() avoid double lock of tables and reoder events
