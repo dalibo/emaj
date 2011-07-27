@@ -3295,6 +3295,23 @@ INSERT INTO emaj.emaj_hist (hist_function, hist_wording) VALUES ('EMAJ_INIT','E-
 
 COMMIT;
 
+-- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
+CREATE or REPLACE FUNCTION emaj.tmp() 
+RETURNS VOID LANGUAGE plpgsql AS
+$tmp$
+  DECLARE
+    v_mpt           INTEGER;
+  BEGIN
+    SELECT setting INTO v_mpt FROM pg_settings WHERE name = 'max_prepared_transactions';
+    IF v_mpt <= 1 THEN
+      RAISE WARNING 'As the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible',v_mpt;
+    END IF;
+    RETURN;
+  END;
+$tmp$;
+SELECT emaj.tmp();
+DROP FUNCTION emaj.tmp();
+
 SET client_min_messages TO default;
 \echo '>>> E-Maj objects successfully created'
 
