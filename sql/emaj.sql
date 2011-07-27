@@ -2695,9 +2695,10 @@ $emaj_log_stat_group$
 -- It is used to quickly get simple statistics of updates logged between 2 marks (i.e. for one or several processing) 
 -- It is also used to estimate the cost of a rollback to a specified mark
 -- These statistics are computed using the serial id of log tables and holes is sequences recorded into emaj_seq_hole at rollback time
--- Input: group name, the 2 marks names defining a range 
---   a NULL value as first_mark indicates the first recorded mark ; a NULL value as last_mark indicates the current situation
---   Use a NULL as last_mark to know the number of rows to rollback to reach the mark specified by the first_mark parameter.
+-- Input: group name, the 2 mark names defining a range 
+--   a NULL value or an empty string as first_mark indicates the first recorded mark
+--   a NULL value or an empty string as last_mark indicates the current situation
+--   Use a NULL or an empty string as last_mark to know the number of rows to rollback to reach the mark specified by the first_mark parameter.
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: table of log rows by table (including tables with 0 rows to rollback)
   DECLARE
@@ -2717,8 +2718,8 @@ $emaj_log_stat_group$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_log_stat_group: group % has not been created', v_groupName;
     END IF;
--- if first mark is NULL, retrieve the timestamp of the first mark for the group
-    IF v_firstMark IS NULL THEN
+-- if first mark is NULL or empty, retrieve the timestamp of the first mark for the group
+    IF v_firstMark IS NULL OR v_firstMark = '' THEN
       SELECT MIN(mark_datetime) INTO v_tsFirstMark FROM emaj.emaj_mark
         WHERE mark_group = v_groupName;
       IF NOT FOUND THEN
@@ -2731,8 +2732,8 @@ $emaj_log_stat_group$
         RAISE EXCEPTION 'emaj_log_stat_group: Start mark % is unknown for group %', v_firstMark, v_groupName;
       END IF;
     END IF;
--- if last mark is NULL, there is no timestamp to register
-    IF v_lastMark IS NULL THEN
+-- if last mark is NULL or empty, there is no timestamp to register
+    IF v_lastMark IS NULL OR v_lastMark = '' THEN
       v_tsLastMark = NULL;
     ELSE
 -- else, check and retrieve the timestamp of the end mark for the group
@@ -2766,7 +2767,9 @@ $emaj_detailed_log_stat_group$
 -- This function returns statistics on row updates executed between 2 marks as viewed through the log tables
 -- It provides more information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
 -- So the response time may be much longer.
--- Input: group name, the 2 marks names defining a range (either one or both marks can be NULL)
+-- Input: group name, the 2 marks names defining a range
+--   a NULL value or an empty string as first_mark indicates the first recorded mark
+--   a NULL value or an empty string as last_mark indicates the current situation
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: table of updates by user and table
   DECLARE
@@ -2785,7 +2788,7 @@ $emaj_detailed_log_stat_group$
       RAISE EXCEPTION 'emaj_detailed_log_stat_group: group % has not been created', v_groupName;
     END IF;
 -- catch the timestamp of the first mark
-    IF v_firstMark IS NOT NULL THEN
+    IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
 -- check and retrieve the timestamp of the start mark for the group
       SELECT emaj._get_mark_datetime(v_groupName,v_firstMark) INTO v_tsFirstMark;
       IF v_tsFirstMark IS NULL THEN
@@ -2793,7 +2796,7 @@ $emaj_detailed_log_stat_group$
       END IF;
     END IF;
 -- catch the timestamp of the last mark
-    IF v_lastMark IS NOT NULL THEN
+    IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
 -- else, check and retrieve the timestamp of the end mark for the group
       SELECT emaj._get_mark_datetime(v_groupName,v_lastMark) INTO v_tsLastMark;
       IF v_tsLastMark IS NULL THEN
@@ -2801,7 +2804,7 @@ $emaj_detailed_log_stat_group$
       END IF;
     END IF;
 -- check that the first_mark < end_mark
-    IF v_firstMark IS NOT NULL AND v_LastMark IS NOT NULL AND v_tsFirstMark > v_tsLastMark THEN
+    IF v_firstMark IS NOT NULL AND v_firstMark <> '' AND v_LastMark IS NOT NULL AND v_lastMark <> '' AND v_tsFirstMark > v_tsLastMark THEN
       RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark time for % (%) is greater than mark time for % (%)', v_firstMark, v_tsFirstMark, v_lastMark, v_tsLastMark;
     END IF;
 -- for each table of the emaj_relation table
@@ -2823,10 +2826,10 @@ $emaj_detailed_log_stat_group$
              || ' count(*) as emaj_rows'
              || ' FROM ' || v_logTableName 
              || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'')';
-        IF v_firstMark IS NOT NULL THEN v_stmt = v_stmt 
+        IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN v_stmt = v_stmt 
              || ' AND emaj_changed >= timestamp '''|| v_tsFirstMark || '''';
         END IF;
-        IF v_lastMark IS NOT NULL THEN v_stmt = v_stmt
+        IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN v_stmt = v_stmt
              || ' AND emaj_changed < timestamp '''|| v_tsLastMark || '''';
         END IF;
         v_stmt = v_stmt

@@ -48,7 +48,9 @@ Enhancements:
     mark that immediately precedes a given date and time for a group.
   - a comment has been added to all E-Maj tables, types and roles, as well 
     as to all functions callable by users.
-
+  - in emaj_log_stat_group() and emaj_detailed_log_stat_group(), empty 
+    strings can be supplied as mark names. In such a case, there are 
+    processed as NULL values.
 
 Bug fixes:
   - during emaj_start_group() avoid double lock of tables and reoder events
