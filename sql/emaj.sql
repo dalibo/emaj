@@ -1846,7 +1846,7 @@ Returns the latest mark name preceeding a point in time.
 $$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) 
-RETURNS void LANGUAGE plpgsql AS
+RETURNS integer LANGUAGE plpgsql AS
 $emaj_delete_mark_group$
 -- This function deletes all traces from a previous set_mark_group function. 
 -- Then, any rollback on the deleted mark will not be possible.
@@ -1855,6 +1855,7 @@ $emaj_delete_mark_group$
 -- At least one mark must remain after the operation (otherwise it is not worth having a group in LOGGING state !).
 -- Input: group name, mark to delete
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark to delete to specify the last set mark.
+-- Output: number of deleted marks, i.e. 1
   DECLARE
 --    v_emajSchema     TEXT := 'emaj';
     v_groupState     TEXT;
@@ -1906,7 +1907,7 @@ $emaj_delete_mark_group$
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('DELETE_MARK_GROUP', 'END', v_groupName, v_mark);
-    RETURN;
+    RETURN 1;
   END;
 $emaj_delete_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_delete_mark_group(TEXT,TEXT) IS $$
@@ -1923,7 +1924,7 @@ $emaj_delete_before_mark_group$
 -- Input: group name, name of the new first mark
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark name.
 -- Output: number of deleted marks
---   or NULL if provided the mark name is NULL
+--   or NULL if the provided mark name is NULL
   DECLARE
     v_groupState     TEXT;
     v_realMark       TEXT;

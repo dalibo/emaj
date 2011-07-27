@@ -423,7 +423,7 @@ select group_name, emaj.emaj_drop_group(group_name) from emaj.emaj_group;
 \echo '--- History table ---'
 select * from emaj.emaj_hist ORDER BY hist_datetime;
 
-\echo '--- test-emaj script successfuly completed ---'
+\echo '--- test-emaj script successfully completed ---'
 
 \unset ECHO
 
