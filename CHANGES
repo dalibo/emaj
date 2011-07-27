@@ -36,6 +36,9 @@ Enhancements:
     names.
   - in parallel rollback processing, "subgroups" are now named "sessions" 
     to avoid confusion in multi-groups rollbacks.
+  - a check on the max_prepared_transaction is performed at installation 
+    time and a warning is reported if the setting would block the use of the 
+    parallel rollback feature. 
   - in emaj_estimate_rollback_duration(), check that the group is in LOGGING 
     state.
   - in emaj_create_group(), explicitely check that no table or sequence 
