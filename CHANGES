@@ -34,6 +34,8 @@ Enhancements:
     emaj_rollback_groups, emaj_logged_rollback_groups and 
     emaj_rollback_and_stop_groups take as first argument an array of group 
     names.
+  - a new emaj_comment_mark_group function sets (or resets) a comment on an 
+    existing mark.
   - in parallel rollback processing, "subgroups" are now named "sessions" 
     to avoid confusion in multi-groups rollbacks.
   - a check on the max_prepared_transaction is performed at installation 

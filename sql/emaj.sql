@@ -141,6 +141,7 @@ CREATE TABLE emaj.emaj_mark (
     mark_name                TEXT        NOT NULL,
     mark_datetime            TIMESTAMPTZ NOT NULL,
     mark_state               TEXT,
+    mark_comment             TEXT,
     mark_txid                BIGINT      DEFAULT emaj.emaj_txid_current(),
     PRIMARY KEY (mark_group, mark_name),
     FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
@@ -1810,6 +1811,39 @@ $_set_mark_groups$
   END;
 $_set_mark_groups$;
 
+CREATE or REPLACE FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) 
+RETURNS void LANGUAGE plpgsql AS
+$emaj_comment_mark_group$
+-- This function sets a comment on a mark by updating the mark_comment of the emaj_mark table.
+-- Input: group name, mark to comment, comment
+--   The keyword 'EMAJ_LAST_MARK' can be used as mark to delete to specify the last set mark.
+--   To reset an existing comment for a mark, the supplied comment can be NULL.
+  DECLARE
+    v_groupState     TEXT;
+    v_realMark       TEXT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_comment_mark_group: group % has not been created', v_groupName;
+    END IF;
+-- retrieve and check the mark name
+    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION 'emaj_comment_mark_group: % is not a known mark for group %.', v_mark, v_groupName;
+    END IF;
+-- OK, update the mark_comment from emaj_mark table
+    UPDATE emaj.emaj_mark SET mark_comment = v_comment WHERE mark_group = v_groupName AND mark_name = v_realMark;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) 
+      VALUES ('COMMENT_MARK_GROUP', v_realMark, 'Performed by '|| session_user);
+    RETURN;
+  END;
+$emaj_comment_mark_group$;
+COMMENT ON FUNCTION emaj.emaj_comment_mark_group(TEXT,TEXT,TEXT) IS $$
+Sets a comment on a mark for an E-Maj group.
+$$;
+
 CREATE or REPLACE FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) 
 RETURNS text LANGUAGE plpgsql AS
 $emaj_find_previous_mark_group$
@@ -1857,7 +1891,6 @@ $emaj_delete_mark_group$
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark to delete to specify the last set mark.
 -- Output: number of deleted marks, i.e. 1
   DECLARE
---    v_emajSchema     TEXT := 'emaj';
     v_groupState     TEXT;
     v_realMark       TEXT;
     v_datetimeNewMin TIMESTAMPTZ;
@@ -3194,6 +3227,7 @@ REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLE
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
@@ -3253,6 +3287,7 @@ GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BO
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
