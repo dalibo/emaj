@@ -36,6 +36,12 @@ Enhancements:
     names.
   - a new emaj_comment_mark_group function sets (or resets) a comment on an 
     existing mark.
+  - the general log_only parameter is replaced by a parameter set at group 
+    level. A new optional boolean parameter is added to the 
+    emaj_create_group() function, indicating whether the new group supports 
+    rollback operations or not. By creating 'audit_only' groups (i.e. "non 
+    rollbackable"), it is possible to activate log on tables that do not have 
+    any primary key.
   - in parallel rollback processing, "subgroups" are now named "sessions" 
     to avoid confusion in multi-groups rollbacks.
   - a check on the max_prepared_transaction is performed at installation 

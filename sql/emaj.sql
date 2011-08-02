@@ -111,6 +111,7 @@ CREATE TABLE emaj.emaj_group (
                                                          --                     'IDLE' in other cases
     group_nb_table           INT,                        -- number of tables at emaj_create_group time
     group_nb_sequence        INT,                        -- number of sequences at emaj_create_group time
+    group_is_rollbackable    BOOLEAN,                    -- false for 'AUDIT_ONLY' groups, true for 'ROLLBACKABLE' groups
     group_creation_datetime  TIMESTAMPTZ NOT NULL DEFAULT transaction_timestamp(),
     PRIMARY KEY (group_name)
     ) TABLESPACE tspemaj;
@@ -251,10 +252,6 @@ $$;
 INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.10.0');
 -- The history_retention parameter defines the time interval when a row remains in the emaj history table - default is 1 month
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 month'::interval);
--- The log_only parameter defines if the rollback capability is activated or not. 
--- If log_only is on, the rollback functions are not created and rollback functions are not possible. 
--- This behaviour is available to test logging mechanism on tables that have no primary key.
-INSERT INTO emaj.emaj_param (param_key, param_value_boolean) VALUES ('log_only','false');
 -- The avg_row_rollback_duration parameter defines the average duration needed to rollback a row.
 -- The avg_row_delete_log_duration parameter defines the average duration needed to delete log rows.
 -- The fixed_table_rollback_duration parameter defines the fixed rollback cost for any table or sequence belonging to a group
@@ -419,17 +416,16 @@ $_check_new_mark$
   END;
 $_check_new_mark$;
 
-CREATE or REPLACE FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_create_log$
 -- This function creates all what is needed to manage the log and rollback operations for an application table
--- Input: schema name (mandatory even for the 'public' schema) and table name
+-- Input: schema name (mandatory even for the 'public' schema), table name, boolean indicating whether the table belongs to a rollbackable group
 -- Are created: 
 --    - the associated log table, with its own sequence
 --    - the function that logs the tables updates, defined as a trigger
 --    - the rollback function (one per table)
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
-
   DECLARE
 -- variables for the name of tables, functions, triggers,...
     v_fullTableName    TEXT;
@@ -471,7 +467,7 @@ $_create_log$
     IF NOT FOUND THEN
       v_relhaspkey = false;
     END IF;
-    IF NOT v_logOnly AND v_relhaspkey = FALSE THEN
+    IF v_isRollbackable AND v_relhaspkey = FALSE THEN
       RAISE EXCEPTION '_create_log : table % has no PRIMARY KEY', v_tableName;
     END IF;
 -- OK, build the different name for table, trigger, functions,...
@@ -542,9 +538,9 @@ $_create_log$
       EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_truncTriggerName;
     END IF;
 --
--- create the rollback function
+-- create the rollback function, if the table belongs to a rollbackable group 
 --
-    IF NOT v_logOnly THEN
+    IF v_isRollbackable THEN
 -- First build some pieces of the CREATE FUNCTION statement
 --   build the tables's columns list
 --     and the SET clause for the UPDATE, from the same columns list
@@ -653,7 +649,7 @@ $_create_log$
   END;
 $_create_log$;
 
-CREATE or REPLACE FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT) 
+CREATE or REPLACE FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_delete_log$
 -- The function deletes all what has been created by _create_log function
@@ -683,9 +679,11 @@ $_delete_log$
     IF v_pgversion >= '8.4' THEN
       EXECUTE 'DROP TRIGGER IF EXISTS ' || v_truncTriggerName || ' ON ' || v_fullTableName;
     END IF;
--- delete both log and rollback functions
+-- delete log and rollback functions,
     EXECUTE 'DROP FUNCTION IF EXISTS ' || v_logFnctName || '()';
-    EXECUTE 'DROP FUNCTION IF EXISTS ' || v_rlbkFnctName || '(bigint)';
+    IF v_isRollbackable THEN
+      EXECUTE 'DROP FUNCTION IF EXISTS ' || v_rlbkFnctName || '(bigint)';
+    END IF;
 -- delete the log table
     EXECUTE 'DROP TABLE IF EXISTS ' || v_logTableName || ' CASCADE';
 -- delete rows related to the log sequence from emaj_sequence table
@@ -1021,11 +1019,11 @@ $_verify_group$
     v_rlbkFnctName     TEXT;
     v_logTriggerName   TEXT;
     v_truncTriggerName TEXT;
-    v_logOnly          BOOLEAN := false;          -- emaj parameter telling if rollback functions have to be skipped (for test)
+    v_isRollbackable   BOOLEAN;
     r_tblsq            RECORD;
   BEGIN
--- get the log_only parameter
-    SELECT param_value_boolean INTO v_logOnly FROM emaj.emaj_param WHERE param_key = 'log_only';
+-- get the group type
+    SELECT group_is_rollbackable INTO v_isRollbackable FROM emaj.emaj_group WHERE group_name = v_groupName;
 -- per table verifications
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
@@ -1055,7 +1053,7 @@ $_verify_group$
         IF NOT FOUND THEN
           RAISE EXCEPTION '_verify_group: Log function % not found',v_logFnctName;
         END IF;
-        IF NOT v_logOnly THEN
+        IF v_isRollbackable THEN
            PERFORM proname FROM pg_proc , pg_namespace WHERE 
              pronamespace = pg_namespace.oid AND nspname = v_emajSchema AND proname = v_rlbkFnctName;
            IF NOT FOUND THEN
@@ -1206,22 +1204,36 @@ $_lock_groups$;
 CREATE or REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT) 
 RETURNS INT LANGUAGE plpgsql AS 
 $emaj_create_group$
--- This function creates emaj objects for all tables of a group
+-- This function is the simplified form of the emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) function
+-- The created groups are considered 'rollbackable'
 -- Input: group name
+-- Output: number of processed tables and sequences
+  BEGIN
+    RETURN emaj.emaj_create_group(v_groupName,true);
+  END;
+$emaj_create_group$;
+COMMENT ON FUNCTION emaj.emaj_create_group(TEXT) IS $$
+Creates a rollbackable E-Maj group.
+$$;
+
+CREATE or REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) 
+RETURNS INT LANGUAGE plpgsql AS 
+$emaj_create_group$
+-- This function creates emaj objects for all tables of a group
+-- Input: group name, boolean indicating wether the group is rollbackable or not
 -- Output: number of processed tables and sequences
   DECLARE
     v_nbTbl         INT := 0;
     v_nbSeq         INT := 0;
     v_msg           TEXT;
-    v_logOnly       BOOLEAN := false;          -- emaj parameter telling if rollback functions have to be skipped (for Emaj test)
     v_relkind       TEXT;
     v_stmt          TEXT;
     v_nb_trg        INT;
     r_tblsq         RECORD;
   BEGIN
 -- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('CREATE_GROUP', 'BEGIN', v_groupName);
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('CREATE_GROUP', 'BEGIN', v_groupName, CASE WHEN v_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
 -- check that the group name is valid (not '' and not containing ',' characters)
     IF v_groupName IS NULL THEN
       RAISE EXCEPTION 'emaj_create_group: group name can''t be NULL';
@@ -1252,9 +1264,7 @@ $emaj_create_group$
       RAISE EXCEPTION 'emaj_create_group: one or several tables already belong to another group (%)', v_msg;
     END IF;
 -- OK, insert group row in the emaj_group table
-    INSERT INTO emaj.emaj_group (group_name, group_state) VALUES (v_groupName, 'IDLE');
--- get the log_only parameter
-    SELECT param_value_boolean INTO v_logOnly FROM emaj.emaj_param WHERE param_key = 'log_only';
+    INSERT INTO emaj.emaj_group (group_name, group_state, group_is_rollbackable) VALUES (v_groupName, 'IDLE',v_isRollbackable);
 -- scan all classes of the group (in priority order, NULLS being processed last)
     FOR r_tblsq IN
         SELECT grpdef_priority, grpdef_schema, grpdef_tblseq FROM emaj.emaj_group_def 
@@ -1264,7 +1274,7 @@ $emaj_create_group$
       v_relkind = emaj._check_class(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq);
       IF v_relkind = 'r' THEN
 -- if it is a table, create the related emaj objects
-         PERFORM emaj._create_log (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logOnly);
+         PERFORM emaj._create_log (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_isRollbackable);
          v_nbTbl = v_nbTbl + 1;
         ELSEIF v_relkind = 'S' THEN
 -- if it is a sequence, just count
@@ -1350,12 +1360,13 @@ $_drop_group$
 -- Input: group name, and a boolean indicating whether the group's state has to be checked 
 -- Output: number of processed tables and sequences
   DECLARE
-    v_groupState    TEXT;
-    v_nbTb          INT := 0;
-    r_tblsq         RECORD; 
+    v_groupState     TEXT;
+    v_isRollbackable BOOLEAN;
+    v_nbTb           INT := 0;
+    r_tblsq          RECORD; 
   BEGIN
 -- check that the group is recorded in emaj_group table
-    SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    SELECT group_state, group_is_rollbackable INTO v_groupState, v_isRollbackable FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
       RAISE EXCEPTION '_drop_group: group % has not been created', v_groupName;
     END IF;
@@ -1373,7 +1384,7 @@ $_drop_group$
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
-        PERFORM emaj._delete_log (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+        PERFORM emaj._delete_log (r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_isRollbackable);
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
           PERFORM emaj._delete_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
@@ -1460,7 +1471,6 @@ $_start_groups$
     v_groupState       TEXT;
     v_nbTb             INT := 0;
     v_markName         TEXT;
-    v_logOnly          BOOLEAN;
     v_logTableName     TEXT;
     v_fullTableName    TEXT;
     v_logTriggerName   TEXT;
@@ -1488,11 +1498,6 @@ $_start_groups$
 -- check and process the supplied mark name
 -- (the group names array is set to NULL to not check the existence of the mark against groups as groups may have old deleted marks)
     SELECT emaj._check_new_mark(v_mark, NULL) INTO v_markName;
--- get the log_only parameter and issue a warning if emaj is in log_only mode
-    SELECT param_value_boolean INTO v_logOnly FROM emaj.emaj_param WHERE param_key = 'log_only';
-    if v_logOnly THEN
-      RAISE WARNING '_start_group: E-maj is in log_only mode. Rollback operations are disabled.';
-    END IF;
 -- for each group, call the emaj_reset_group function to erase remaining traces from previous logs if any
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
       SELECT emaj._rst_group(v_groupNames[v_i]) INTO v_nbTb;
@@ -2268,9 +2273,9 @@ $_rlbk_groups_step1$
 -- It builds the requested number of sessions with the list of tables to process, trying to spread the load over all sessions.
 -- It finaly inserts into the history the event about the rollback start
   DECLARE
-    v_logOnly             BOOLEAN;
     v_i                   INT;
     v_groupState          TEXT;
+    v_isRollbackable      BOOLEAN;
     v_markName            TEXT;
     v_cpt                 INT;
     v_nbTblInGroup        INT;
@@ -2285,15 +2290,10 @@ $_rlbk_groups_step1$
     r_tbl                 RECORD;
     r_tbl2                RECORD;
   BEGIN
--- check emaj is not configured in log_only mode
-    SELECT param_value_boolean INTO v_logOnly FROM emaj.emaj_param WHERE param_key = 'log_only';
-    IF v_logOnly THEN
-      RAISE EXCEPTION '_rlbk_groups_step1: Emaj is configured in LogOnly mode. It cannot perform any rollback operation';
-    END IF;
 -- check that each group ...
 -- ...is recorded in emaj_group table
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
-      SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
+      SELECT group_state, group_is_rollbackable INTO v_groupState, v_isRollbackable FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
         RAISE EXCEPTION '_rlbk_groups_step1: group % has not been created', v_groupNames[v_i];
       END IF;
@@ -2301,19 +2301,23 @@ $_rlbk_groups_step1$
       IF v_groupState <> 'LOGGING' THEN
         RAISE EXCEPTION '_rlbk_groups_step1: Group % cannot be rollbacked because it is not in logging state.', v_groupNames[v_i];
       END IF;
+-- ... is ROLLBACKABLE
+      IF NOT v_isRollbackable THEN
+        RAISE EXCEPTION '_rlbk_groups_step1: Group % has been created for audit only purpose. It cannot be rollbacked.', v_groupNames[v_i];
+      END IF;
 -- ... is not damaged
       PERFORM emaj._verify_group(v_groupNames[v_i]);
 -- ... and the requested mark exists for this group
       SELECT emaj._get_mark_name(v_groupNames[v_i],v_mark) INTO v_markName;
       IF NOT FOUND OR v_markName IS NULL THEN
-        RAISE EXCEPTION '_rlbk_groups_step1: No mark % exists for group % ', v_mark, v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_groups_step1: No mark % exists for group %', v_mark, v_groupNames[v_i];
       END IF;
     END LOOP;
 -- get the mark timestamp and check it is the same for all groups of the array
     SELECT count(distinct emaj._get_mark_datetime(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
       WHERE group_name = ANY (v_groupNames);
     IF v_cpt > 1 THEN
-      RAISE EXCEPTION '_rlbk_groups_step1: Mark % does not represent the same point in time for all groups', v_mark;
+      RAISE EXCEPTION '_rlbk_groups_step1: Mark % does not represent the same point in time for all groups.', v_mark;
     END IF;
 -- get the mark timestamp for the 1st group (as we know this timestamp is the same for all groups of the array)
     SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
@@ -2333,7 +2337,7 @@ $_rlbk_groups_step1$
 -- create sessions, using the number of sessions requested by the caller
 -- session id for sequences will remain NULL
 --   initialisation
---     accumulated counters of number of log rows to rollback for each parallel connection 
+--     accumulated counters of number of log rows to rollback for each parallel session 
     FOR v_session IN 1 .. v_nbSession LOOP
       v_sessionLoad [v_session] = 0;
     END LOOP;
@@ -3019,7 +3023,7 @@ $emaj_snap_group$
 -- For sequences, they contain a single row describing the sequence.
 -- It is used for test purpose. It creates a snap of the group that can be compared to another snap.
 -- To do its job, the function performs COPY TO statement, with all default parameters.
--- For table without primary key (in log_only mode), rows are sorted on all columns.
+-- For table without primary key, rows are sorted on all columns.
 -- There is no need for the group to be in IDLE state.
 -- As all COPY statements are executed inside a single transaction:
 --   - the function can be called while other transactions are running,
@@ -3203,8 +3207,8 @@ REVOKE ALL ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._delete_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) FROM PUBLIC;
@@ -3215,6 +3219,7 @@ REVOKE ALL ON FUNCTION emaj._verify_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) FROM PUBLIC;
@@ -3263,8 +3268,8 @@ GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_logOnly BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) TO emaj_adm;
@@ -3275,6 +3280,7 @@ GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) TO emaj_adm;
