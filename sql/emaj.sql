@@ -799,7 +799,7 @@ $_rlbk_table$
    END IF;
 -- insert end event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('ROLLBACK_TABLE', 'END', v_fullTableName, v_nb_rows || ' rollbacked rows ');
+      VALUES ('ROLLBACK_TABLE', 'END', v_fullTableName, v_nb_rows || ' rollbacked rows');
     RETURN;
   END;
 $_rlbk_table$;
@@ -1841,7 +1841,7 @@ $emaj_comment_mark_group$
     UPDATE emaj.emaj_mark SET mark_comment = v_comment WHERE mark_group = v_groupName AND mark_name = v_realMark;
 -- insert event in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) 
-      VALUES ('COMMENT_MARK_GROUP', v_realMark, 'Performed by '|| session_user);
+      VALUES ('COMMENT_MARK_GROUP', v_groupName, 'Mark ' || v_realMark);
     RETURN;
   END;
 $emaj_comment_mark_group$;
