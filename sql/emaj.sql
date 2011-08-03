@@ -331,10 +331,10 @@ $_check_group_names_array$
       FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
 -- look for not NULL & not empty group name
         IF v_groupNames[v_i] IS NULL OR v_groupNames[v_i] = '' THEN
-          RAISE WARNING '_check_group_names_array: a group name is NULL or empty';
+          RAISE WARNING '_check_group_names_array: a group name is NULL or empty.';
 -- look for duplicate name
         ELSEIF v_gn IS NOT NULL AND v_groupNames[v_i] = ANY (v_gn) THEN
-          RAISE WARNING '_check_group_names_array: duplicate group name %',v_groupNames[v_i];
+          RAISE WARNING '_check_group_names_array: duplicate group name %.',v_groupNames[v_i];
         ELSE
 -- OK, keep the name
           v_gn = array_append (v_gn, v_groupNames[v_i]);
@@ -343,7 +343,7 @@ $_check_group_names_array$
     END IF;
 -- check for NULL result
     IF v_gn IS NULL THEN
-      RAISE WARNING '_check_group_names_array: No group name to process';
+      RAISE WARNING '_check_group_names_array: No group name to process.';
     END IF;
     RETURN v_gn;
   END;
@@ -362,16 +362,16 @@ $_check_class$
     v_schemaOid    OID;
   BEGIN
     IF v_schemaName = 'emaj' THEN
-      RAISE EXCEPTION '_check_class: object from schema % cannot be managed by EMAJ', v_schemaName;
+      RAISE EXCEPTION '_check_class: object from schema % cannot be managed by EMAJ.', v_schemaName;
     END IF;
     SELECT oid INTO v_schemaOid FROM pg_namespace WHERE nspname = v_schemaName;
     IF NOT found THEN
-      RAISE EXCEPTION '_check_class: schema % doesn''t exist', v_schemaName;
+      RAISE EXCEPTION '_check_class: schema % doesn''t exist.', v_schemaName;
     END IF;
     SELECT relkind INTO v_relkind FROM pg_class 
       WHERE relNameSpace = v_schemaOid AND relName = v_className AND relkind in ('r','S');
     IF NOT found THEN
-      RAISE EXCEPTION '_check_class: table or sequence % doesn''t exist', v_className;
+      RAISE EXCEPTION '_check_class: table or sequence % doesn''t exist.', v_className;
     END IF; 
     RETURN v_relkind;
   END;
@@ -392,7 +392,7 @@ $_check_new_mark$
   BEGIN
 -- check the mark name is not 'EMAJ_LAST_MARK'
     IF v_mark = 'EMAJ_LAST_MARK' THEN
-       RAISE EXCEPTION '_check_new_mark: % is not an allowed name for a new mark', v_mark;
+       RAISE EXCEPTION '_check_new_mark: % is not an allowed name for a new mark.', v_mark;
     END IF;
 -- process null or empty supplied mark name
     IF v_markName = '' OR v_markName IS NULL THEN
@@ -468,7 +468,7 @@ $_create_log$
       v_relhaspkey = false;
     END IF;
     IF v_isRollbackable AND v_relhaspkey = FALSE THEN
-      RAISE EXCEPTION '_create_log : table % has no PRIMARY KEY', v_tableName;
+      RAISE EXCEPTION '_create_log : table % has no PRIMARY KEY.', v_tableName;
     END IF;
 -- OK, build the different name for table, trigger, functions,...
     v_fullTableName    := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
@@ -607,18 +607,18 @@ $_create_log$
 --         || '          RAISE NOTICE ''emaj_id = % ; DEL'', rec_log.emaj_id;'
            || '          INSERT INTO ' || v_fullTableName || ' VALUES (' || v_colList || ');'
            || '      ELSE'
-           || '          RAISE EXCEPTION ''' || v_rlbkFnctName || ': internal error - emaj_verb = % unknown, emaj_id = %'','
+           || '          RAISE EXCEPTION ''' || v_rlbkFnctName || ': internal error - emaj_verb = % unknown, emaj_id = %.'','
            || '            rec_log.emaj_verb, rec_log.emaj_id;' 
            || '      END IF;'
            || '      GET DIAGNOSTICS v_nb_proc_rows = ROW_COUNT;'
            || '      IF v_nb_proc_rows <> 1 THEN'
-           || '        RAISE EXCEPTION ''' || v_rlbkFnctName || ': internal error - emaj_verb = %, emaj_id = %, # processed rows = % '''
+           || '        RAISE EXCEPTION ''' || v_rlbkFnctName || ': internal error - emaj_verb = %, emaj_id = %, # processed rows = % .'''
            || '           ,rec_log.emaj_verb, rec_log.emaj_id, v_nb_proc_rows;' 
            || '      END IF;'
            || '      v_nb_rows := v_nb_rows + 1;'
            || '    END LOOP;'
            || '    CLOSE log_curs;'
---         || '    RAISE NOTICE ''Table ' || v_fullTableName || ' -> % rollbacked rows'', v_nb_rows;'
+--         || '    RAISE NOTICE ''Table ' || v_fullTableName || ' -> % rollbacked rows.'', v_nb_rows;'
            || '    RETURN v_nb_rows;'
            || '  END;'
            || '$rlbkfnct$ LANGUAGE plpgsql;';
@@ -745,7 +745,7 @@ $_rlbk_table$
       FROM emaj.emaj_sequence
       WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_timestamp;
     IF NOT FOUND THEN
-       RAISE EXCEPTION '_rlbk_table: internal error - sequence for % and % not found in emaj_sequence',v_seqName, v_timestamp;
+       RAISE EXCEPTION '_rlbk_table: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_timestamp;
     END IF;
 -- insert begin event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -828,9 +828,9 @@ $_rlbk_sequence$
         WHERE sequ_schema = v_schemaName AND sequ_name = v_seqName AND sequ_datetime = v_timestamp;
       EXCEPTION
         WHEN NO_DATA_FOUND THEN
-          RAISE EXCEPTION '_rlbk_sequence: Mark at % not found for sequence %.%', v_timestamp, v_schemaName, v_seqName;
+          RAISE EXCEPTION '_rlbk_sequence: Mark at % not found for sequence %.%.', v_timestamp, v_schemaName, v_seqName;
         WHEN TOO_MANY_ROWS THEN
-          RAISE EXCEPTION '_rlbk_sequence: Internal error 1';
+          RAISE EXCEPTION '_rlbk_sequence: Internal error 1.';
     END;
 -- Read the current sequence's characteristics
     v_fullSeqName := quote_ident(v_schemaName) || '.' || quote_ident(v_seqName);
@@ -1031,7 +1031,7 @@ $_verify_group$
         LOOP
 -- check the class is unchanged
       IF r_tblsq.rel_kind <> emaj._check_class(r_tblsq.rel_schema, r_tblsq.rel_tblseq) THEN
-        RAISE EXCEPTION '_verify_group: The relation type for %.% has changed (was ''%'' at emaj_create_group time)', r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_kind;
+        RAISE EXCEPTION '_verify_group: The relation type for %.% has changed (was ''%'' at emaj_create_group time).', r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_kind;
       END IF;
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, ...
@@ -1045,30 +1045,30 @@ $_verify_group$
         PERFORM relname FROM pg_class, pg_namespace WHERE 
           relnamespace = pg_namespace.oid AND nspname = v_emajSchema AND relkind = 'r' AND relname = v_logTableName;
         IF NOT FOUND THEN
-          RAISE EXCEPTION '_verify_group: Log table % not found',v_logTableName;
+          RAISE EXCEPTION '_verify_group: Log table % not found.',v_logTableName;
         END IF;
 --   -> check boths functions exists
         PERFORM proname FROM pg_proc , pg_namespace WHERE 
           pronamespace = pg_namespace.oid AND nspname = v_emajSchema AND proname = v_logFnctName;
         IF NOT FOUND THEN
-          RAISE EXCEPTION '_verify_group: Log function % not found',v_logFnctName;
+          RAISE EXCEPTION '_verify_group: Log function % not found.',v_logFnctName;
         END IF;
         IF v_isRollbackable THEN
            PERFORM proname FROM pg_proc , pg_namespace WHERE 
              pronamespace = pg_namespace.oid AND nspname = v_emajSchema AND proname = v_rlbkFnctName;
            IF NOT FOUND THEN
-             RAISE EXCEPTION '_verify_group: Rollback function % not found',v_rlbkFnctName;
+             RAISE EXCEPTION '_verify_group: Rollback function % not found.',v_rlbkFnctName;
            END IF;
         END IF;
 --   -> check both triggers exist
         PERFORM tgname FROM pg_trigger WHERE tgname = v_logTriggerName;
         IF NOT FOUND THEN
-          RAISE EXCEPTION '_verify_group: Log trigger % not found',v_logTriggerName;
+          RAISE EXCEPTION '_verify_group: Log trigger % not found.',v_logTriggerName;
         END IF;
         IF v_pgversion >= '8.4' THEN
           PERFORM tgname FROM pg_trigger WHERE tgname = v_truncTriggerName;
           IF NOT FOUND THEN
-            RAISE EXCEPTION '_verify_group: Truncate trigger % not found',v_truncTriggerName;
+            RAISE EXCEPTION '_verify_group: Truncate trigger % not found.',v_truncTriggerName;
           END IF;
         END IF;
 --   -> check that the log tables structure is consistent with the application tables structure
@@ -1082,7 +1082,7 @@ $_verify_group$
           WHERE nspname = v_emajSchema AND relnamespace = pg_namespace.oid AND relname = v_logTableName
             AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%';
         IF FOUND THEN
-          RAISE EXCEPTION '_verify_group: The structure of log table % is not coherent with %' ,v_logTableName,v_fullTableName;
+          RAISE EXCEPTION '_verify_group: The structure of log table % is not coherent with %.' ,v_logTableName,v_fullTableName;
         END IF;
 --      - missing or changed column in application table
         PERFORM attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace
@@ -1093,7 +1093,7 @@ $_verify_group$
           WHERE nspname = r_tblsq.rel_schema AND relnamespace = pg_namespace.oid AND relname = r_tblsq.rel_tblseq
             AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false;
         IF FOUND THEN
-          RAISE EXCEPTION '_verify_group: The structure of log table % is not coherent with %' ,v_logTableName,v_fullTableName;
+          RAISE EXCEPTION '_verify_group: The structure of log table % is not coherent with %.' ,v_logTableName,v_fullTableName;
         END IF;
 -- if it is a sequence, nothing to do
       END IF;
@@ -1122,7 +1122,7 @@ $_check_fk_groups$
           AND (nf.nspname,tf.relname) NOT IN                     -- referenced table outside the groups
               (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames))
       LOOP
-      RAISE WARNING '_check_fk_groups: Foreign key %, from table %.%, references %.% that is outside groups (%)',
+      RAISE WARNING '_check_fk_groups: Foreign key %, from table %.%, references %.% that is outside groups (%).',
                 r_fk.conname,r_fk.rel_schema,r_fk.rel_tblseq,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
     END LOOP;
 -- issue a warning if a table of the groups is referenced by a table outside the groups
@@ -1137,7 +1137,7 @@ $_check_fk_groups$
           AND (n.nspname,t.relname) NOT IN                       -- referenced table outside the groups
               (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames))
       LOOP
-      RAISE WARNING '_check_fk_groups: table %.% is referenced by foreign key % from table %.% that is outside groups (%)',
+      RAISE WARNING '_check_fk_groups: table %.% is referenced by foreign key % from table %.% that is outside groups (%).',
                 r_fk.rel_schema,r_fk.rel_tblseq,r_fk.conname,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
     END LOOP;
     RETURN;
@@ -1236,18 +1236,18 @@ $emaj_create_group$
       VALUES ('CREATE_GROUP', 'BEGIN', v_groupName, CASE WHEN v_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
 -- check that the group name is valid (not '' and not containing ',' characters)
     IF v_groupName IS NULL THEN
-      RAISE EXCEPTION 'emaj_create_group: group name can''t be NULL';
+      RAISE EXCEPTION 'emaj_create_group: group name can''t be NULL.';
     END IF;
     IF v_groupName = '' THEN
-      RAISE EXCEPTION 'emaj_create_group: group name must at least contain 1 character';
+      RAISE EXCEPTION 'emaj_create_group: group name must at least contain 1 character.';
     END IF;
     IF v_groupName LIKE '%,%' THEN
-      RAISE EXCEPTION 'emaj_create_group: group name can''t contain '','' character';
+      RAISE EXCEPTION 'emaj_create_group: group name can''t contain '','' character.';
     END IF;
 -- check that the group is not yet recorded in emaj_group table
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF FOUND THEN
-      RAISE EXCEPTION 'emaj_create_group: group % is already created', v_groupName;
+      RAISE EXCEPTION 'emaj_create_group: group % is already created.', v_groupName;
     END IF;
 -- check that no table or sequence of the new group already belong to another created group
     v_msg = '';
@@ -1261,7 +1261,7 @@ $emaj_create_group$
       v_msg = v_msg || r_tblsq.grpdef_schema || '.' || r_tblsq.grpdef_tblseq || ' in ' || r_tblsq.rel_group;
     END LOOP;
     IF v_msg <> '' THEN
-      RAISE EXCEPTION 'emaj_create_group: one or several tables already belong to another group (%)', v_msg;
+      RAISE EXCEPTION 'emaj_create_group: one or several tables already belong to another group (%).', v_msg;
     END IF;
 -- OK, insert group row in the emaj_group table
     INSERT INTO emaj.emaj_group (group_name, group_state, group_is_rollbackable) VALUES (v_groupName, 'IDLE',v_isRollbackable);
@@ -1285,7 +1285,7 @@ $emaj_create_group$
           VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_relkind);
     END LOOP;
     IF v_nbTbl + v_nbSeq = 0 THEN
-       RAISE EXCEPTION 'emaj_create_group: Group % is unknown in emaj_relation table', v_groupName;
+       RAISE EXCEPTION 'emaj_create_group: Group % is unknown in emaj_relation table.', v_groupName;
     END IF;
 -- update tables and sequences counters in the emaj_group table
     UPDATE emaj.emaj_group SET group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
@@ -1368,13 +1368,13 @@ $_drop_group$
 -- check that the group is recorded in emaj_group table
     SELECT group_state, group_is_rollbackable INTO v_groupState, v_isRollbackable FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION '_drop_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION '_drop_group: group % has not been created.', v_groupName;
     END IF;
 -- if the state of the group has to be checked,
     IF v_checkState THEN
 --   check that the group is IDLE (i.e. not in a LOGGING) state
       IF v_groupState <> 'IDLE' THEN
-        RAISE EXCEPTION '_drop_group: The group % cannot be deleted because it is not in idle state', v_groupName;
+        RAISE EXCEPTION '_drop_group: The group % cannot be deleted because it is not in idle state.', v_groupName;
       END IF;
     END IF;
 -- OK, delete the emaj objets for each table of the group
@@ -1486,11 +1486,11 @@ $_start_groups$
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
       SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_start_group: group % has not been created', v_groupNames[v_i];
+        RAISE EXCEPTION '_start_group: group % has not been created.', v_groupNames[v_i];
       END IF;
 -- ... and is in IDLE (i.e. not in a LOGGING) state
       IF v_groupState <> 'IDLE' THEN
-        RAISE EXCEPTION '_start_group: The group % cannot be started because it is not in idle state. An emaj_stop_group function must be previously executed', v_groupNames[v_i];
+        RAISE EXCEPTION '_start_group: The group % cannot be started because it is not in idle state. An emaj_stop_group function must be previously executed.', v_groupNames[v_i];
       END IF;
 -- ... and is not damaged
       PERFORM emaj._verify_group(v_groupNames[v_i]);
@@ -1502,7 +1502,7 @@ $_start_groups$
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
       SELECT emaj._rst_group(v_groupNames[v_i]) INTO v_nbTb;
       IF v_nbTb = 0 THEN
-        RAISE EXCEPTION '_start_group: Internal error - emaj_res_group for group % returned 0', v_groupNames[v_i];
+        RAISE EXCEPTION '_start_group: Internal error - emaj_res_group for group % returned 0.', v_groupNames[v_i];
       END IF;
 -- ... and check foreign keys with tables outside the group
       PERFORM emaj._check_fk_groups(array[v_groupNames[v_i]]);
@@ -1603,7 +1603,7 @@ $_stop_groups$
 -- ... check that the group is recorded in emaj_group table
       SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_stop_group: group % has not been created', v_groupNames[v_i];
+        RAISE EXCEPTION '_stop_group: group % has not been created.', v_groupNames[v_i];
       END IF;
 -- ... check that the group is in LOGGING state
       IF v_groupState <> 'LOGGING' THEN
@@ -1666,11 +1666,11 @@ $emaj_set_mark_group$
 -- (the SELECT is coded FOR UPDATE to lock the accessed group, avoiding any operation on this group at the same time)
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_set_mark_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_set_mark_group: group % has not been created.', v_groupName;
     END IF;
 -- check that the group is in LOGGING state
     IF v_groupState <> 'LOGGING' THEN
-      RAISE EXCEPTION 'emaj_set_mark_group: A mark cannot be set for group % because it is not in logging state. An emaj_start_group function must be previously executed', v_groupName;
+      RAISE EXCEPTION 'emaj_set_mark_group: A mark cannot be set for group % because it is not in logging state. An emaj_start_group function must be previously executed.', v_groupName;
     END IF;
 -- check if the emaj group is OK
     PERFORM emaj._verify_group(v_groupName);
@@ -1717,11 +1717,11 @@ $emaj_set_mark_groups$
 -- (the SELECT is coded FOR UPDATE to lock the accessed group, avoiding any operation on this group at the same time)
       SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_validGroupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION 'emaj_set_mark_groups: group % has not been created', v_validGroupNames[v_i];
+        RAISE EXCEPTION 'emaj_set_mark_groups: group % has not been created.', v_validGroupNames[v_i];
       END IF;
 -- check that the group is in LOGGING state
       IF v_groupState <> 'LOGGING' THEN
-        RAISE EXCEPTION 'emaj_set_mark_groups: A mark cannot be set for group % because it is not in logging state. An emaj_start_group function must be previously executed', v_validGroupNames[v_i];
+        RAISE EXCEPTION 'emaj_set_mark_groups: A mark cannot be set for group % because it is not in logging state. An emaj_start_group function must be previously executed.', v_validGroupNames[v_i];
       END IF;
 -- check if the group is OK
       PERFORM emaj._verify_group(v_validGroupNames[v_i]);
@@ -1830,7 +1830,7 @@ $emaj_comment_mark_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_comment_mark_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_comment_mark_group: group % has not been created.', v_groupName;
     END IF;
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
@@ -1863,11 +1863,11 @@ $emaj_find_previous_mark_group$
 -- check that the group is recorded in emaj_group table
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_find_previous_mark_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_find_previous_mark_group: group % has not been created.', v_groupName;
     END IF;
 -- check that the group is in LOGGING state
     IF v_groupState <> 'LOGGING' THEN
-      RAISE EXCEPTION 'emaj_find_previous_mark_group: group % is not in logging state', v_groupName;
+      RAISE EXCEPTION 'emaj_find_previous_mark_group: group % is not in logging state.', v_groupName;
     END IF;
 -- find the requested mark
     SELECT mark_name INTO v_markName FROM emaj.emaj_mark 
@@ -1908,11 +1908,11 @@ $emaj_delete_mark_group$
 -- check that the group is recorded in emaj_group table
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_delete_mark_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_delete_mark_group: group % has not been created.', v_groupName;
     END IF;
 -- check that the group is in LOGGING state
     IF v_groupState <> 'LOGGING' THEN
-      RAISE EXCEPTION 'emaj_delete_mark_group: A mark cannot be deleted for group % because it is not in logging state. A emaj_reset_group function can be performed if you wish to reclaim disk space', v_groupName;
+      RAISE EXCEPTION 'emaj_delete_mark_group: A mark cannot be deleted for group % because it is not in logging state. An emaj_reset_group function can be performed if you wish to reclaim disk space.', v_groupName;
     END IF;
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
@@ -1975,11 +1975,11 @@ $emaj_delete_before_mark_group$
 -- check that the group is recorded in emaj_group table
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_delete_before_mark_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_delete_before_mark_group: group % has not been created.', v_groupName;
     END IF;
 -- check that the group is in LOGGING state
     IF v_groupState <> 'LOGGING' THEN
-      RAISE EXCEPTION 'emaj_delete_before_mark_group: Marks cannot be deleted for group % because it is not in logging state. A emaj_reset_group function can be performed if you wish to reclaim disk space', v_groupName;
+      RAISE EXCEPTION 'emaj_delete_before_mark_group: Marks cannot be deleted for group % because it is not in logging state. An emaj_reset_group function can be performed if you wish to reclaim disk space.', v_groupName;
     END IF;
 -- return NULL if mark name is NULL
     IF v_mark IS NULL THEN
@@ -2040,7 +2040,7 @@ $_delete_log_before_group$
         FROM emaj.emaj_sequence
         WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_datetime;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_delete_log_before_group: internal error - sequence for % and % not found in emaj_sequence',v_seqName, v_datetime;
+        RAISE EXCEPTION '_delete_log_before_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_datetime;
       END IF;
 -- delete log rows prior to the new first mark
       EXECUTE 'DELETE FROM ' || v_logTableName || ' WHERE emaj_id < ' || v_emaj_id;
@@ -2067,7 +2067,7 @@ $emaj_rename_mark_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_rename_mark_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_rename_mark_group: group % has not been created.', v_groupName;
     END IF;
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
@@ -2076,7 +2076,7 @@ $emaj_rename_mark_group$
     END IF;
 -- check the new mark name is not 'EMAJ_LAST_MARK'
     IF v_newName = 'EMAJ_LAST_MARK' THEN
-       RAISE EXCEPTION 'emaj_rename_mark_group: % is not an allowed name for a new mark', v_newName;
+       RAISE EXCEPTION 'emaj_rename_mark_group: % is not an allowed name for a new mark.', v_newName;
     END IF;
 -- check if the new mark name doesn't exist for the group 
     PERFORM 1 FROM emaj.emaj_mark
@@ -2255,7 +2255,7 @@ $_rlbk_groups$
     SELECT emaj._rlbk_groups_step5(v_groupNames, v_mark, 1, v_unloggedRlbk, v_deleteLog) INTO v_nbTbl;
 -- checks that we have the expected number of processed tables
     IF v_nbTbl <> v_nbTblInGroup THEN
-       RAISE EXCEPTION '_rlbk_group: Internal error 1 (%,%)',v_nbTbl,v_nbTblInGroup;
+       RAISE EXCEPTION '_rlbk_group: Internal error 1 (%,%).',v_nbTbl,v_nbTblInGroup;
     END IF;
 -- Step 6: recreate foreign keys
     PERFORM emaj._rlbk_groups_step6(v_groupNames, 1);
@@ -2295,7 +2295,7 @@ $_rlbk_groups_step1$
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
       SELECT group_state, group_is_rollbackable INTO v_groupState, v_isRollbackable FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_rlbk_groups_step1: group % has not been created', v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_groups_step1: group % has not been created.', v_groupNames[v_i];
       END IF;
 -- ... is in LOGGING state
       IF v_groupState <> 'LOGGING' THEN
@@ -2310,7 +2310,7 @@ $_rlbk_groups_step1$
 -- ... and the requested mark exists for this group
       SELECT emaj._get_mark_name(v_groupNames[v_i],v_mark) INTO v_markName;
       IF NOT FOUND OR v_markName IS NULL THEN
-        RAISE EXCEPTION '_rlbk_groups_step1: No mark % exists for group %', v_mark, v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_groups_step1: No mark % exists for group %.', v_mark, v_groupNames[v_i];
       END IF;
     END LOOP;
 -- get the mark timestamp and check it is the same for all groups of the array
@@ -2479,7 +2479,7 @@ $_rlbk_groups_step3$
 --   can use the same name has already been done at step 1) 
       SELECT emaj._get_mark_name(v_groupNames[1],v_mark) INTO v_realMark;
       IF v_realMark IS NULL THEN
-        RAISE EXCEPTION '_rlbk_groups_step3: Internal error - mark % not found for group % ', v_mark, v_groupNames[1];
+        RAISE EXCEPTION '_rlbk_groups_step3: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
       END IF;
 -- ... and set the mark
       PERFORM emaj._set_mark_groups(v_groupNames, 'RLBK_' || v_realMark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START', false);
@@ -2520,7 +2520,7 @@ $_rlbk_groups_step4$
       SELECT fk_schema, fk_table, fk_name FROM emaj.emaj_fk 
         WHERE fk_groups = v_groupNames  AND fk_session = v_session ORDER BY fk_schema, fk_table, fk_name
       LOOP
-        RAISE NOTICE '_rlbk_groups_step4: groups (%), session #% -> foreign key constraint % dropped for table %.%', array_to_string(v_groupNames,','), v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
+        RAISE NOTICE '_rlbk_groups_step4: groups (%), session #% -> foreign key constraint % dropped for table %.%.', array_to_string(v_groupNames,','), v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
         EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' DROP CONSTRAINT ' || quote_ident(r_fk.fk_name);
     END LOOP;
   END;
@@ -2537,7 +2537,7 @@ $_rlbk_groups_step5$
 -- fetch the timestamp mark again
     SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
     IF v_timestampMark IS NULL THEN
-      RAISE EXCEPTION '_rlbk_groups_step5: Internal error - mark % not found for group % ', v_mark, v_groupNames[1];
+      RAISE EXCEPTION '_rlbk_groups_step5: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
     END IF;
 -- rollback all tables of the session, having rows to rollback, in priority order (sequences are processed later)
 -- (the disableTrigger boolean for the _rlbk_table() function always equal unloggedRlbk boolean)
@@ -2578,7 +2578,7 @@ $_rlbk_groups_step6$
         INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
            VALUES ('add_fk', r_fk.fk_schema, r_fk.fk_name, v_ts_start, r_fk.reltuples, v_ts_end - v_ts_start);
 -- send a message about the fk creation completion 
-        RAISE NOTICE '_rlbk_group_step6: groups (%), session #% -> foreign key constraint % recreated for table %.%', array_to_string(v_groupNames,','), v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
+        RAISE NOTICE '_rlbk_group_step6: groups (%), session #% -> foreign key constraint % recreated for table %.%.', array_to_string(v_groupNames,','), v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
     END LOOP;
     RETURN;
   END;
@@ -2599,7 +2599,7 @@ $_rlbk_groups_step7$
 -- fetch the timestamp mark again
     SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
     IF v_timestampMark IS NULL THEN
-      RAISE EXCEPTION '_rlbk_groups_step7: Internal error - mark % not found for group % ', v_mark, v_groupNames[1];
+      RAISE EXCEPTION '_rlbk_groups_step7: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
     END IF;
 -- if "unlogged" rollback, delete all marks and sequence holes later than the now rollbacked mark
 -- (not needed if mark = 'EMAJ_LAST_MARK')
@@ -2625,7 +2625,7 @@ $_rlbk_groups_step7$
         FROM emaj.emaj_mark
         WHERE mark_group = v_groupNames[1] ORDER BY mark_datetime DESC LIMIT 1;
       IF NOT FOUND OR substr(v_markName,1,5) <> 'RLBK_' THEN
-        RAISE EXCEPTION '_rlbk_groups_step7: Internal error - rollback start mark not found for group % ', v_groupNames[1];
+        RAISE EXCEPTION '_rlbk_groups_step7: Internal error - rollback start mark not found for group %.', v_groupNames[1];
       END IF;
 -- set the mark, replacing the '_START' suffix of the rollback start mark by '_DONE'
       PERFORM emaj._set_mark_groups(v_groupNames, substring(v_markName from '(.*)_START$') || '_DONE', false);
@@ -2656,16 +2656,16 @@ $emaj_reset_group$
 -- check that the group is recorded in emaj_group table
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_reset_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_reset_group: group % has not been created.', v_groupName;
     END IF;
 -- check that the group is in IDLE state (i.e. not in LOGGING) state
     IF v_groupState <> 'IDLE' THEN
-      RAISE EXCEPTION 'emaj_reset_group: Group % cannot be reset because it is not in idle state. An emaj_stop_group function must be previously executed', v_groupName;
+      RAISE EXCEPTION 'emaj_reset_group: Group % cannot be reset because it is not in idle state. An emaj_stop_group function must be previously executed.', v_groupName;
     END IF;
 -- perform the reset operation
     SELECT emaj._rst_group(v_groupName) INTO v_nbTb;
     IF v_nbTb = 0 THEN
-       RAISE EXCEPTION 'emaj_reset_group: Group % is unknown', v_groupName;
+       RAISE EXCEPTION 'emaj_reset_group: Group % is unknown.', v_groupName;
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -2719,7 +2719,7 @@ $_rst_group$
       v_nbTb = v_nbTb + 1;
     END LOOP;
     IF v_nbTb = 0 THEN
-       RAISE EXCEPTION '_rst_group: Internal error (Group % is empty)', v_groupName;
+       RAISE EXCEPTION '_rst_group: Internal error (Group % is empty).', v_groupName;
     END IF;
     RETURN v_nbTb;
   END;
@@ -2753,20 +2753,20 @@ $emaj_log_stat_group$
 -- check that the group is recorded in emaj_group table
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_log_stat_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_log_stat_group: group % has not been created.', v_groupName;
     END IF;
 -- if first mark is NULL or empty, retrieve the timestamp of the first mark for the group
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
       SELECT MIN(mark_datetime) INTO v_tsFirstMark FROM emaj.emaj_mark
         WHERE mark_group = v_groupName;
       IF NOT FOUND THEN
-         RAISE EXCEPTION 'emaj_log_stat_group: No initial mark can be found for group % ', v_groupName;
+         RAISE EXCEPTION 'emaj_log_stat_group: No initial mark can be found for group %.', v_groupName;
       END IF;
     ELSE
 -- else, check and retrieve the timestamp of the start mark for the group
       SELECT emaj._get_mark_datetime(v_groupName,v_firstMark) INTO v_tsFirstMark;
       IF v_tsFirstMark IS NULL THEN
-        RAISE EXCEPTION 'emaj_log_stat_group: Start mark % is unknown for group %', v_firstMark, v_groupName;
+        RAISE EXCEPTION 'emaj_log_stat_group: Start mark % is unknown for group %.', v_firstMark, v_groupName;
       END IF;
     END IF;
 -- if last mark is NULL or empty, there is no timestamp to register
@@ -2776,12 +2776,12 @@ $emaj_log_stat_group$
 -- else, check and retrieve the timestamp of the end mark for the group
       SELECT emaj._get_mark_datetime(v_groupName,v_lastMark) INTO v_tsLastMark;
       IF v_tsLastMark IS NULL THEN
-        RAISE EXCEPTION 'emaj_log_stat_group: End mark % is unknown for group %', v_lastMark, v_groupName;
+        RAISE EXCEPTION 'emaj_log_stat_group: End mark % is unknown for group %.', v_lastMark, v_groupName;
       END IF;
     END IF;
 -- check that the first_mark < end_mark
     IF v_tsLastMark IS NOT NULL AND v_tsFirstMark > v_tsLastMark THEN
-      RAISE EXCEPTION 'emaj_log_stat_group: mark time for % (%) is greater than mark time for % (%)', v_firstMark, v_tsFirstMark, v_lastMark, v_tsLastMark;
+      RAISE EXCEPTION 'emaj_log_stat_group: mark time for % (%) is greater than mark time for % (%).', v_firstMark, v_tsFirstMark, v_lastMark, v_tsLastMark;
     END IF;
 -- for each table of the emaj_relation table, get the number of log rows and return the statistic
     FOR r_tblsq IN
@@ -2822,14 +2822,14 @@ $emaj_detailed_log_stat_group$
 -- check that the group is recorded in emaj_group table
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_detailed_log_stat_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_detailed_log_stat_group: group % has not been created.', v_groupName;
     END IF;
 -- catch the timestamp of the first mark
     IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
 -- check and retrieve the timestamp of the start mark for the group
       SELECT emaj._get_mark_datetime(v_groupName,v_firstMark) INTO v_tsFirstMark;
       IF v_tsFirstMark IS NULL THEN
-          RAISE EXCEPTION 'emaj_detailed_log_stat_group: Start mark % is unknown for group %', v_firstMark, v_groupName;
+          RAISE EXCEPTION 'emaj_detailed_log_stat_group: Start mark % is unknown for group %.', v_firstMark, v_groupName;
       END IF;
     END IF;
 -- catch the timestamp of the last mark
@@ -2837,12 +2837,12 @@ $emaj_detailed_log_stat_group$
 -- else, check and retrieve the timestamp of the end mark for the group
       SELECT emaj._get_mark_datetime(v_groupName,v_lastMark) INTO v_tsLastMark;
       IF v_tsLastMark IS NULL THEN
-        RAISE EXCEPTION 'emaj_detailed_log_stat_group: End mark % is unknown for group %', v_lastMark, v_groupName;
+        RAISE EXCEPTION 'emaj_detailed_log_stat_group: End mark % is unknown for group %.', v_lastMark, v_groupName;
       END IF;
     END IF;
 -- check that the first_mark < end_mark
     IF v_firstMark IS NOT NULL AND v_firstMark <> '' AND v_LastMark IS NOT NULL AND v_lastMark <> '' AND v_tsFirstMark > v_tsLastMark THEN
-      RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark time for % (%) is greater than mark time for % (%)', v_firstMark, v_tsFirstMark, v_lastMark, v_tsLastMark;
+      RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark time for % (%) is greater than mark time for % (%).', v_firstMark, v_tsFirstMark, v_lastMark, v_tsLastMark;
     END IF;
 -- for each table of the emaj_relation table
     FOR r_tblsq IN
@@ -2909,7 +2909,7 @@ $emaj_estimate_rollback_duration$
     SELECT group_nb_table + group_nb_sequence INTO v_nbTblSeq FROM emaj.emaj_group 
       WHERE group_name = v_groupName and group_state = 'LOGGING';
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_estimate_rollback_duration: group % has not been created or is not in LOGGING state', v_groupName;
+      RAISE EXCEPTION 'emaj_estimate_rollback_duration: group % has not been created or is not in LOGGING state.', v_groupName;
     END IF;
 -- get all needed duration parameters from emaj_param table
     SELECT param_value_interval INTO v_avg_row_rlbk FROM emaj.emaj_param 
@@ -2985,7 +2985,6 @@ $emaj_estimate_rollback_duration$
           AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace 
           AND rn.nspname = s.stat_schema AND rt.relname = s.stat_table   -- join on group tables to effectively rollback
         LOOP
---raise notice 'schema % table % (% tuples) -> fkey %',r_fkey.nspname, r_fkey.relname, r_fkey.reltuples, r_fkey.conname;
 -- estimate the recreation duration of a fkey 
       IF r_fkey.reltuples = 0 THEN
 -- empty table (or table not analyzed) => duration = 0
@@ -3047,7 +3046,7 @@ $emaj_snap_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_snap_group: group % has not been created', v_groupName;
+      RAISE EXCEPTION 'emaj_snap_group: group % has not been created.', v_groupName;
     END IF;
 -- for each table/sequence of the emaj_relation table
     FOR r_tblsq IN
@@ -3345,7 +3344,7 @@ $tmp$
   BEGIN
     SELECT setting INTO v_mpt FROM pg_settings WHERE name = 'max_prepared_transactions';
     IF v_mpt <= 1 THEN
-      RAISE WARNING 'As the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible',v_mpt;
+      RAISE WARNING 'As the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
     END IF;
     RETURN;
   END;
