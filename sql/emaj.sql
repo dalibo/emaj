@@ -1298,7 +1298,7 @@ $emaj_create_group$
     RETURN v_nbTbl + v_nbSeq;
   END;
 $emaj_create_group$;
-COMMENT ON FUNCTION emaj.emaj_create_group(TEXT) IS $$
+COMMENT ON FUNCTION emaj.emaj_create_group(TEXT, BOOLEAN) IS $$
 Creates an E-Maj group.
 $$;
 
