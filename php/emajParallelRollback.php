@@ -49,6 +49,7 @@
 // ... and process them
   $conn_string = '';
   $deleteLog = 'true';
+  $multiGroup = 'false';
   $msgRlbk='Rollback';
   foreach (array_keys($options) as $opt) switch ($opt) {
     case 'd':
@@ -73,6 +74,9 @@
       break;
     case 'g':
       $groups="'".str_replace(",","','",$options['g'])."'";
+      if (strpos($options['g'],',')) {
+        $multiGroup='true';
+      }
       break;
     case 'l':
       $unlogged='false';
@@ -118,7 +122,7 @@
 // Call for _rlbk_groups_step1 on first session
 // This checks the groups and mark, and prepares the parallel rollback by creating well balanced sessions
 
-  $query="SELECT emaj._rlbk_groups_step1 (array[".$groups."],'".pg_escape_string($mark)."',$unlogged,$nbSession, false)";
+  $query="SELECT emaj._rlbk_groups_step1 (array[".$groups."],'".pg_escape_string($mark)."',$unlogged,$nbSession, $multiGroup)";
   if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step1 for groups $groups and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call for _rlbk_groups_step1 function failed '.pg_last_error()."\n");
@@ -149,7 +153,7 @@
 // Call for _rlbk_group_step3 on first session
 // This set a rollback start mark if logged rollback
 
-  $query="SELECT emaj._rlbk_groups_step3 (array[".$groups."],'".pg_escape_string($mark)."',$unlogged, false)";
+  $query="SELECT emaj._rlbk_groups_step3 (array[".$groups."],'".pg_escape_string($mark)."',$unlogged, $multiGroup)";
   if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step3 for groups $groups and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call for _rlbk_group_step3 function failed '.pg_last_error()."\n");
@@ -209,7 +213,7 @@
 
 // Call for emaj_rlbk_groups_step7 on first session to complete the rollback operation
 
-  $query="SELECT emaj._rlbk_groups_step7 (array[".$groups."],'".pg_escape_string($mark)."',$totalNbTbl,$unlogged,$deleteLog,false)";
+  $query="SELECT emaj._rlbk_groups_step7 (array[".$groups."],'".pg_escape_string($mark)."',$totalNbTbl,$unlogged,$deleteLog,$multiGroup)";
   if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step7 -> complete rollback operation...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call for _rlbk_groups_step7 function failed '.pg_last_error()."\n");
