@@ -1144,12 +1144,12 @@ $_check_fk_groups$
   END;
 $_check_fk_groups$;
 
-CREATE or REPLACE FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT)
+CREATE or REPLACE FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN)
 RETURNS void LANGUAGE plpgsql AS 
 $_lock_groups$
 -- This function locks all tables of a groups array. 
 -- The lock mode is provided by the calling function
--- Input: array of group names, lock mode
+-- Input: array of group names, lock mode, flag indicating whether the function is called to processed several groups
   DECLARE
     v_nbRetry       SMALLINT := 0;
     v_nbTbl         INT;
@@ -1160,7 +1160,7 @@ $_lock_groups$
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('LOCK_GROUPS' ,'BEGIN', array_to_string(v_groupNames,','));
+      VALUES (CASE WHEN v_multiGroup THEN 'LOCK_GROUPS' ELSE 'LOCK_GROUP' END,'BEGIN', array_to_string(v_groupNames,','));
 -- set the value for the lock mode that will be used in the LOCK statement
     IF v_lockMode = '' THEN
       v_mode = 'ACCESS EXCLUSIVE';
@@ -1196,7 +1196,7 @@ $_lock_groups$
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('LOCK_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
+      VALUES (CASE WHEN v_multiGroup THEN 'LOCK_GROUPS' ELSE 'LOCK_GROUP' END, 'END', array_to_string(v_groupNames,','), v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
     RETURN;
   END;
 $_lock_groups$;
@@ -1506,7 +1506,7 @@ $_start_groups$
     END LOOP;
 -- OK, lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
-    PERFORM emaj._lock_groups(v_groupNames,'');
+    PERFORM emaj._lock_groups(v_groupNames,'',v_multiGroup);
 -- ... and enable all log triggers for the group
     v_nbTb = 0;
 -- for each relation of the group,
@@ -1617,7 +1617,7 @@ $_stop_groups$
     IF v_validGroupNames IS NOT NULL THEN
 -- OK, lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
-      PERFORM emaj._lock_groups(v_validGroupNames,'');
+      PERFORM emaj._lock_groups(v_validGroupNames,'',v_multiGroup);
 -- for each relation of the groups to process,
       FOR r_tblsq IN
           SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
@@ -1682,7 +1682,7 @@ $emaj_set_mark_group$
     SELECT emaj._check_new_mark(v_mark, array[v_groupName]) INTO v_markName;
 -- OK, lock all tables to get a stable point ...
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
-    PERFORM emaj._lock_groups(array[v_groupName],'ROW EXCLUSIVE');
+    PERFORM emaj._lock_groups(array[v_groupName],'ROW EXCLUSIVE',false);
 -- Effectively set the mark using the internal _set_mark_groups() function
     SELECT emaj._set_mark_groups(array[v_groupName], v_markName) into v_nbTb;
 -- insert end into the history
@@ -1742,7 +1742,7 @@ $emaj_set_mark_groups$
     SELECT emaj._check_new_mark(v_mark, v_validGroupNames) INTO v_markName;
 -- OK, lock all tables to get a stable point ...
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
-    PERFORM emaj._lock_groups(v_validGroupNames,'ROW EXCLUSIVE');
+    PERFORM emaj._lock_groups(v_validGroupNames,'ROW EXCLUSIVE',true);
 -- Effectively set the mark using the internal _set_mark_groups() function
     SELECT emaj._set_mark_groups(v_validGroupNames, v_markName) into v_nbTb;
 -- insert end into the history
@@ -3241,7 +3241,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_group(v_groupName TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) FROM PUBLIC;
@@ -3302,7 +3302,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) TO emaj_adm;
