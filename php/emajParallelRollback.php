@@ -149,7 +149,7 @@
 // Call for _rlbk_group_step3 on first session
 // This set a rollback start mark if logged rollback
 
-  $query="SELECT emaj._rlbk_groups_step3 (array[".$groups."],'".pg_escape_string($mark)."',$unlogged)";
+  $query="SELECT emaj._rlbk_groups_step3 (array[".$groups."],'".pg_escape_string($mark)."',$unlogged, false)";
   if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step3 for groups $groups and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call for _rlbk_group_step3 function failed '.pg_last_error()."\n");
