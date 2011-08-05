@@ -1241,9 +1241,6 @@ $emaj_create_group$
     IF v_groupName = '' THEN
       RAISE EXCEPTION 'emaj_create_group: group name must at least contain 1 character.';
     END IF;
-    IF v_groupName LIKE '%,%' THEN
-      RAISE EXCEPTION 'emaj_create_group: group name can''t contain '','' character.';
-    END IF;
 -- check that the group is not yet recorded in emaj_group table
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF FOUND THEN
