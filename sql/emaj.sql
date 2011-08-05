@@ -1531,7 +1531,11 @@ $_start_groups$
 -- update the state of the group row from the emaj_group table
     UPDATE emaj.emaj_group SET group_state = 'LOGGING' WHERE group_name = ANY (v_groupNames);
 -- Set the first mark for each group
-    PERFORM emaj._set_mark_groups(v_groupNames, v_markName,v_multiGroup);
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','), v_markName);
+    PERFORM emaj._set_mark_groups(v_groupNames, v_markName);
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'END', array_to_string(v_groupNames,','), v_markName);
 --
     RETURN v_nbTb;
   END;
@@ -1659,6 +1663,9 @@ $emaj_set_mark_group$
     v_markName      TEXT;
     v_nbTb          INT;
   BEGIN
+-- insert begin into the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('SET_MARK_GROUP', 'BEGIN', v_groupName, v_markName);
 -- check that the group is recorded in emaj_group table
 -- (the SELECT is coded FOR UPDATE to lock the accessed group, avoiding any operation on this group at the same time)
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
@@ -1677,7 +1684,11 @@ $emaj_set_mark_group$
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
     PERFORM emaj._lock_groups(array[v_groupName],'ROW EXCLUSIVE');
 -- Effectively set the mark using the internal _set_mark_groups() function
-    SELECT emaj._set_mark_groups(array[v_groupName], v_markName, false) into v_nbTb;
+    SELECT emaj._set_mark_groups(array[v_groupName], v_markName) into v_nbTb;
+-- insert end into the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('SET_MARK_GROUP', 'END', v_groupName, v_markName);
+--
     RETURN v_nbTb;
   END;
 $emaj_set_mark_group$;
@@ -1709,18 +1720,22 @@ $emaj_set_mark_groups$
         VALUES ('SET_MARK_GROUPS', 'END', NULL, v_mark);
       RETURN 0;
     END IF;
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('SET_MARK_GROUPS', 'BEGIN', array_to_string(v_groupNames,','), v_mark);
+-- for each group...
     FOR v_i in 1 .. array_upper(v_validGroupNames,1) LOOP
--- check that the group is recorded in emaj_group table
+-- ... check that the group is recorded in emaj_group table
 -- (the SELECT is coded FOR UPDATE to lock the accessed group, avoiding any operation on this group at the same time)
       SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_validGroupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
         RAISE EXCEPTION 'emaj_set_mark_groups: group % has not been created.', v_validGroupNames[v_i];
       END IF;
--- check that the group is in LOGGING state
+-- ... check that the group is in LOGGING state
       IF v_groupState <> 'LOGGING' THEN
         RAISE EXCEPTION 'emaj_set_mark_groups: A mark cannot be set for group % because it is not in logging state. An emaj_start_group function must be previously executed.', v_validGroupNames[v_i];
       END IF;
--- check if the group is OK
+-- ... check if the group is OK
       PERFORM emaj._verify_group(v_validGroupNames[v_i]);
     END LOOP;
 -- check and process the supplied mark name
@@ -1729,7 +1744,11 @@ $emaj_set_mark_groups$
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
     PERFORM emaj._lock_groups(v_validGroupNames,'ROW EXCLUSIVE');
 -- Effectively set the mark using the internal _set_mark_groups() function
-    SELECT emaj._set_mark_groups(v_validGroupNames, v_markName, true) into v_nbTb;
+    SELECT emaj._set_mark_groups(v_validGroupNames, v_markName) into v_nbTb;
+-- insert end into the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('SET_MARK_GROUPS', 'END', array_to_string(v_groupNames,','), v_mark);
+--
     RETURN v_nbTb;
   END;
 $emaj_set_mark_groups$;
@@ -1737,13 +1756,14 @@ COMMENT ON FUNCTION emaj.emaj_set_mark_groups(TEXT[],TEXT) IS $$
 Sets a mark on several E-Maj groups.
 $$;
 
-CREATE or REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT) 
 RETURNS int LANGUAGE plpgsql AS
 $_set_mark_groups$
 -- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
 -- It is called by emaj_set_mark_group and emaj_set_mark_groups functions but also by other functions that set internal marks, like functions that start or rollback groups.
 -- Input: group names array, mark to set, boolean indicating if the function is called by a multi group function
 -- Output: number of processed tables and sequences
+-- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
     v_pgversion     TEXT := emaj._pg_version();
     v_emajSchema    TEXT := 'emaj';
@@ -1754,9 +1774,6 @@ $_set_mark_groups$
     v_stmt          TEXT;
     r_tblsq         RECORD;
   BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','), v_mark);
 -- look at the clock and insert the mark into the emaj_mark table
     v_timestamp = clock_timestamp();
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
@@ -1806,9 +1823,7 @@ $_set_mark_groups$
       EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'END', array_to_string(v_groupNames,','), v_mark);
+--
     RETURN v_nbTb;
   END;
 $_set_mark_groups$;
@@ -2245,7 +2260,7 @@ $_rlbk_groups$
 -- Step 2: lock all tables
     PERFORM emaj._rlbk_groups_step2(v_groupNames, 1);
 -- Step 3: set a rollback start mark if logged rollback
-    PERFORM emaj._rlbk_groups_step3(v_groupNames, v_mark, v_unloggedRlbk);
+    PERFORM emaj._rlbk_groups_step3(v_groupNames, v_mark, v_unloggedRlbk, v_multiGroup);
 -- Step 4: record and drop foreign keys
     PERFORM emaj._rlbk_groups_step4(v_groupNames, 1);
 -- Step 5: effectively rollback tables
@@ -2460,7 +2475,7 @@ $_rlbk_groups_step2$
   END;
 $_rlbk_groups_step2$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_multiGroup BOOLEAN) 
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_groups_step3$
 -- This is the third step of a rollback group processing.
@@ -2468,18 +2483,25 @@ $_rlbk_groups_step3$
 -- All concerned tables are already locked.
   DECLARE
     v_realMark       TEXT;
+    v_markName       TEXT;
   BEGIN
     IF NOT v_unloggedRlbk THEN
--- if rollback is "logged" rollback, build a mark name with the pattern:
+-- If rollback is "logged" rollback, build a mark name with the pattern:
 -- 'RLBK_<mark name to rollback to>_%_START', where % represents the current time
--- Get the real mark name (using first supplied group name, as check that all groups 
+-- Get the real mark name (using first supplied group name, and check that all groups 
 --   can use the same name has already been done at step 1) 
       SELECT emaj._get_mark_name(v_groupNames[1],v_mark) INTO v_realMark;
       IF v_realMark IS NULL THEN
         RAISE EXCEPTION '_rlbk_groups_step3: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
       END IF;
--- ... and set the mark
-      PERFORM emaj._set_mark_groups(v_groupNames, 'RLBK_' || v_realMark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START', false);
+--   compute the generated mark name
+      v_markName = 'RLBK_' || v_realMark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START';
+-- ...  and set it
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','), v_markName);
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName);
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'END', array_to_string(v_groupNames,','), v_markName);
     END IF;
     RETURN;
   END;
@@ -2624,8 +2646,14 @@ $_rlbk_groups_step7$
       IF NOT FOUND OR substr(v_markName,1,5) <> 'RLBK_' THEN
         RAISE EXCEPTION '_rlbk_groups_step7: Internal error - rollback start mark not found for group %.', v_groupNames[1];
       END IF;
--- set the mark, replacing the '_START' suffix of the rollback start mark by '_DONE'
-      PERFORM emaj._set_mark_groups(v_groupNames, substring(v_markName from '(.*)_START$') || '_DONE', false);
+-- compute the mark name that ends the rollback operation, replacing the '_START' suffix of the rollback start mark by '_DONE'
+      v_markName = substring(v_markName FROM '(.*)_START$') || '_DONE';
+-- ...  and set it
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','), v_markName);
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName);
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+        VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'END', array_to_string(v_groupNames,','), v_markName);
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -3227,7 +3255,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
@@ -3244,7 +3272,7 @@ REVOKE ALL ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_unl
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbsession INT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT) FROM PUBLIC; 
@@ -3288,7 +3316,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) TO emaj_adm
 GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
@@ -3305,7 +3333,7 @@ GRANT EXECUTE ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT) TO emaj_adm; 
