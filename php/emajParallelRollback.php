@@ -143,7 +143,7 @@
 // For each session, synchronous call for _rlbk_groups_step2 to lock all tables
 
   for ($i=1;$i<=$nbSession;$i++){
-    $query="SELECT emaj._rlbk_groups_step2 (array[".$groups."],$i)";
+    $query="SELECT emaj._rlbk_groups_step2 (array[".$groups."],$i,$multiGroup)";
     if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step2 for session #$i -> lock tables...\n";
     $result = pg_query($dbconn[$i],$query) 
         or die('Call for _rlbk_groups_step2 function for #'.$i.' failed: '.pg_last_error()."\n");
@@ -153,7 +153,7 @@
 // Call for _rlbk_group_step3 on first session
 // This set a rollback start mark if logged rollback
 
-  $query="SELECT emaj._rlbk_groups_step3 (array[".$groups."],'".pg_escape_string($mark)."',$unlogged, $multiGroup)";
+  $query="SELECT emaj._rlbk_groups_step3 (array[".$groups."],'".pg_escape_string($mark)."',$unlogged,$multiGroup)";
   if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_groups_step3 for groups $groups and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call for _rlbk_group_step3 function failed '.pg_last_error()."\n");
