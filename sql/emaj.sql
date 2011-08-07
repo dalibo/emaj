@@ -6,26 +6,62 @@
 -- This script creates all objects needed to log and rollback table updates.
 --
 -- These objects are recorded into a specific schema, named "emaj". 
--- It mainly contains few technical tables, few types, a set of functions, and one "log table" per processed application table.
+-- It mainly contains some technical tables, few types, a set of functions, 
+-- and one "log table" per processed application table.
 --
 -- This script must be executed by a role having SUPERUSER privileges.
 -- Before its execution:
 -- 	-> the concerned cluster must contain a tablespace named "tspemaj", for instance previously created by
 --	   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
---	-> the plpgsql language must have been created in the concerned database.
+--	-> the plpgsql language must have been created in the concerned database,
+--  -> the dblink contrib/extension must have been installed.
 
 \set ON_ERROR_STOP ON
 \set QUIET ON
 SET client_min_messages TO WARNING;
-\echo 'E-maj objects creation...'
+
+\echo 'E-Maj objects creation...'
+
+-- create, execute and drop a specific plpgsql function to check the environment
+-- If all pre-requisites are not met, it generates an error that blocks the E-Maj installation. 
+CREATE or REPLACE FUNCTION public.emaj_tmp_check_envir() 
+RETURNS VOID LANGUAGE plpgsql AS 
+$tmp$
+  DECLARE
+    v_stmt          TEXT;
+  BEGIN
+-- the creation of the function implicitely validates that plpgsql language is created!
+-- check the current role is a superuser
+    PERFORM 0 FROM pg_roles WHERE rolname = current_user AND rolsuper;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
+    END IF;
+-- check the tspemaj tablespace is already created
+    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'E-Maj installation: the "tspemaj" tablespace doesn''t exist.';
+    END IF;
+-- check the dblink contrib is installed
+    PERFORM 0 FROM pg_proc WHERE proname = 'dblink';
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'E-Maj installation: dblink contrib/extension is not installed.';
+    END IF;
+--
+    RETURN; 
+  END;
+$tmp$;
+SELECT public.emaj_tmp_check_envir();
+DROP FUNCTION public.emaj_tmp_check_envir();
+
+-- OK, now create E-Maj objects in a single transaction
 
 BEGIN TRANSACTION;
 
-------------------------------------
---                                --
--- emaj schema and tables         --
---                                --
-------------------------------------
+------------------------------------------
+--                                      --
+-- emaj schema and environment checking --
+--                                      --
+------------------------------------------
 
 -- (re)creation of the schema 'emaj' containing all the needed objets
 
@@ -35,17 +71,33 @@ COMMENT ON SCHEMA emaj IS $$
 Holds all the functionality needed for using E-Maj.
 $$;
 
--- uncomment the next line to let emaj schema visible to all user (for test purpose)
---GRANT USAGE ON SCHEMA emaj TO PUBLIC;
-
--- creation of a specific function to create a dummy txid_current function with postgres 8.2
-CREATE or REPLACE FUNCTION emaj.tmp() 
+-- create, execute and drop a specific plpgsql function to create emaj roles and the emaj_txid_current() function
+CREATE or REPLACE FUNCTION emaj.emaj_tmp_create_some_components() 
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
     v_pgversion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
     v_stmt          TEXT;
   BEGIN
+-- create emaj roles (NOLOGIN), if they do not exist 
+-- does 'emaj_adm' already exist ?
+    PERFORM 1 FROM pg_roles WHERE rolname = 'emaj_adm';
+-- if no, create it
+    IF NOT FOUND THEN
+      CREATE ROLE emaj_adm;
+      COMMENT ON ROLE emaj_adm IS
+        $$This role may be granted to other roles in charge of E-Maj administration.$$;
+    END IF;
+-- does 'emaj_viewer' already exist ?
+    PERFORM 1 FROM pg_roles WHERE rolname = 'emaj_viewer';
+-- if no, create it
+    IF NOT FOUND THEN
+      CREATE ROLE emaj_viewer;
+      COMMENT ON ROLE emaj_viewer IS 
+        $$This role may be granted to other roles allowed to view E-Maj objects content.$$;
+    END IF;
+-- create a SQL emaj_txid_function that encapsulates the standart txid_current function with postgres 8.3+
+-- or just returns 0 with postgres 8.2
     v_stmt = 'CREATE or REPLACE FUNCTION emaj.emaj_txid_current() RETURNS BIGINT LANGUAGE SQL AS $$ SELECT ';
     IF v_pgversion < '8.3' THEN
       v_stmt = v_stmt || '0::BIGINT;$$';
@@ -53,13 +105,18 @@ $tmp$
       v_stmt = v_stmt || 'txid_current();$$';
     END IF;
     EXECUTE v_stmt;
-    RETURN;
+--
+    RETURN; 
   END;
 $tmp$;
-SELECT emaj.tmp();
-DROP FUNCTION emaj.tmp();
+SELECT emaj.emaj_tmp_create_some_components();
+DROP FUNCTION emaj.emaj_tmp_create_some_components();
 
--- creation of the technical tables
+------------------------------------
+--                                --
+-- emaj technical tables          --
+--                                --
+------------------------------------
 
 -- table containing Emaj parameters
 CREATE TABLE emaj.emaj_param (
@@ -3153,42 +3210,9 @@ INSERT INTO pg_description (objoid, classoid, objsubid, description)
 
 ------------------------------------
 --                                --
--- emaj roles and rights          --
+-- rights to emaj roles           --
 --                                --
 ------------------------------------
-
--- Create the emaj NOLOGIN roles and give them the appropriate rights, using a temporary function
-
-CREATE or REPLACE FUNCTION emaj.tmp_create_role() 
-RETURNS VOID LANGUAGE plpgsql AS 
-$tmp_create_role$
--- This temporary function verifies if emaj roles already exist. If not, it creates them.
-  BEGIN
--- Does 'emaj_adm' already exist ?
-    PERFORM 1 FROM pg_roles WHERE rolname = 'emaj_adm';
--- If no, create it
-    IF NOT FOUND THEN
-      CREATE ROLE emaj_adm;
-      COMMENT ON ROLE emaj_adm IS
-        $$This role may be granted to other roles in charge of E-Maj administration.$$;
-    END IF;
--- Does 'emaj_viewer' already exist ?
-    PERFORM 1 FROM pg_roles WHERE rolname = 'emaj_viewer';
--- If no, create it
-    IF NOT FOUND THEN
-      CREATE ROLE emaj_viewer;
-      COMMENT ON ROLE emaj_viewer IS 
-        $$This role may be granted to other roles allowed to view E-Maj objects content.$$;
-    END IF;
-    RETURN;
-  END;
-$tmp_create_role$;
-
-SELECT emaj.tmp_create_role();
-
-DROP FUNCTION emaj.tmp_create_role();
-
--- Give rights to emaj roles
 
 -- -> emaj_viewer can view the emaj objects (content of emaj and log tables)
 GRANT USAGE ON SCHEMA emaj TO emaj_viewer;
@@ -3361,7 +3385,7 @@ INSERT INTO emaj.emaj_hist (hist_function, hist_wording) VALUES ('EMAJ_INIT','E-
 COMMIT;
 
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
-CREATE or REPLACE FUNCTION emaj.tmp() 
+CREATE or REPLACE FUNCTION emaj.emaj_tmp_check_setting() 
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
@@ -3374,8 +3398,8 @@ $tmp$
     RETURN;
   END;
 $tmp$;
-SELECT emaj.tmp();
-DROP FUNCTION emaj.tmp();
+SELECT emaj.emaj_tmp_check_setting();
+DROP FUNCTION emaj.emaj_tmp_check_setting();
 
 SET client_min_messages TO default;
 \echo '>>> E-Maj objects successfully created'
