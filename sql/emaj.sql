@@ -634,7 +634,7 @@ $_create_tbl$
 --  It will insert the old deleted rows, delete the new inserted row 
 --  and update the new rows by setting back the old rows
 -- The function returns the number of rollbacked elementary operations or rows
--- All these functions will be called by the emaj_rlbk_table function, which is activated by the
+-- All these functions will be called by the emaj_rlbk_tbl function, which is activated by the
 --  emaj_rollback_group function
       EXECUTE 'CREATE or REPLACE FUNCTION ' || v_rlbkFnctName || ' (v_rollback_id_limit bigint)'
            || ' RETURNS bigint AS $rlbkfnct$'
@@ -763,9 +763,9 @@ $_drop_seq$
   END;
 $_drop_seq$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ,  v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN)
+CREATE or REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ,  v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
-$_rlbk_table$
+$_rlbk_tbl$
 -- This function rollbacks one table to a given timestamp
 -- The function is called by emaj.emaj_rollback_group
 -- Input: schema name and table name, timestamp limit for rollback, flag to specify if log trigger 
@@ -802,7 +802,7 @@ $_rlbk_table$
       FROM emaj.emaj_sequence
       WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_timestamp;
     IF NOT FOUND THEN
-       RAISE EXCEPTION '_rlbk_table: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_timestamp;
+       RAISE EXCEPTION '_rlbk_tbl: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_timestamp;
     END IF;
 -- insert begin event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -859,11 +859,11 @@ $_rlbk_table$
       VALUES ('ROLLBACK_TABLE', 'END', v_fullTableName, v_nb_rows || ' rollbacked rows');
     RETURN;
   END;
-$_rlbk_table$;
+$_rlbk_tbl$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
-$_rlbk_sequence$
+$_rlbk_seq$
 -- This function rollbacks one sequence to a given mark
 -- The function is used by emaj.emaj_rollback_group
 -- Input: schema name and table name, mark
@@ -885,9 +885,9 @@ $_rlbk_sequence$
         WHERE sequ_schema = v_schemaName AND sequ_name = v_seqName AND sequ_datetime = v_timestamp;
       EXCEPTION
         WHEN NO_DATA_FOUND THEN
-          RAISE EXCEPTION '_rlbk_sequence: Mark at % not found for sequence %.%.', v_timestamp, v_schemaName, v_seqName;
+          RAISE EXCEPTION '_rlbk_seq: Mark at % not found for sequence %.%.', v_timestamp, v_schemaName, v_seqName;
         WHEN TOO_MANY_ROWS THEN
-          RAISE EXCEPTION '_rlbk_sequence: Internal error 1.';
+          RAISE EXCEPTION '_rlbk_seq: Internal error 1.';
     END;
 -- Read the current sequence's characteristics
     v_fullSeqName := quote_ident(v_schemaName) || '.' || quote_ident(v_seqName);
@@ -947,7 +947,7 @@ $_rlbk_sequence$
       VALUES ('ROLLBACK_SEQUENCE', v_fullSeqName, substr(v_stmt,2));
     RETURN;
   END;
-$_rlbk_sequence$;
+$_rlbk_seq$;
 
 CREATE or REPLACE FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) 
 RETURNS BIGINT LANGUAGE plpgsql AS 
@@ -2616,8 +2616,8 @@ $_rlbk_groups_step5$
       RAISE EXCEPTION '_rlbk_groups_step5: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
     END IF;
 -- rollback all tables of the session, having rows to rollback, in priority order (sequences are processed later)
--- (the disableTrigger boolean for the _rlbk_table() function always equal unloggedRlbk boolean)
-    PERFORM emaj._rlbk_table(rel_schema, rel_tblseq, v_timestampMark, v_unloggedRlbk, v_deleteLog)
+-- (the disableTrigger boolean for the _rlbk_tbl() function always equal unloggedRlbk boolean)
+    PERFORM emaj._rlbk_tbl(rel_schema, rel_tblseq, v_timestampMark, v_unloggedRlbk, v_deleteLog)
       FROM (SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
               WHERE rel_group = ANY (v_groupNames) AND rel_session = v_session AND rel_kind = 'r' AND rel_rows > 0
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t;
@@ -2690,7 +2690,7 @@ $_rlbk_groups_step7$
     END IF;
 -- rollback the application sequences belonging to the group
 -- warning, this operation is not transaction safe (that's why it is placed at the end of the operation)!
-    PERFORM emaj._rlbk_sequence(rel_schema, rel_tblseq, v_timestampMark, v_deleteLog) 
+    PERFORM emaj._rlbk_seq(rel_schema, rel_tblseq, v_timestampMark, v_deleteLog) 
        FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S';
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
 -- if rollback is "logged" rollback, automaticaly set a mark representing the tables state just after the rollback.
@@ -3258,8 +3258,8 @@ REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
@@ -3319,8 +3319,8 @@ GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames T
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
