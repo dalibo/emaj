@@ -60,6 +60,9 @@ Enhancements:
   - in emaj_log_stat_group() and emaj_detailed_log_stat_group(), empty 
     strings can be supplied as mark names. In such a case, there are 
     processed as NULL values.
+  - a check is performed at the beginning of the E-Maj installation to be 
+    sure that the user performing the installation is a superuser, tspemaj 
+    tablespace exists and dblink extension is installed.
 
 Bug fixes:
   - in emaj_create_group(), check the supplied group name is not null, and 
