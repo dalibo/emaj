@@ -473,9 +473,9 @@ $_check_new_mark$
   END;
 $_check_new_mark$;
 
-CREATE or REPLACE FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
-$_create_log$
+$_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table
 -- Input: schema name (mandatory even for the 'public' schema), table name, boolean indicating whether the table belongs to a rollbackable group
 -- Are created: 
@@ -525,7 +525,7 @@ $_create_log$
       v_relhaspkey = false;
     END IF;
     IF v_isRollbackable AND v_relhaspkey = FALSE THEN
-      RAISE EXCEPTION '_create_log : table % has no PRIMARY KEY.', v_tableName;
+      RAISE EXCEPTION '_create_tbl: table % has no PRIMARY KEY.', v_tableName;
     END IF;
 -- OK, build the different name for table, trigger, functions,...
     v_fullTableName    := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
@@ -694,7 +694,7 @@ $_create_log$
       END LOOP;
 -- if yes, issue a warning (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
       IF v_triggerList <> '' THEN
-        RAISE WARNING '_create_log: table % has triggers (%). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.', v_fullTableName, v_triggerList;
+        RAISE WARNING '_create_tbl: table % has triggers (%). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.', v_fullTableName, v_triggerList;
       END IF;
     END IF;
 -- grant appropriate rights to both emaj roles
@@ -704,12 +704,12 @@ $_create_log$
     EXECUTE 'GRANT ALL PRIVILEGES ON SEQUENCE ' || v_sequenceName || ' TO emaj_adm';
     RETURN;
   END;
-$_create_log$;
+$_create_tbl$;
 
-CREATE or REPLACE FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
-$_delete_log$
--- The function deletes all what has been created by _create_log function
+$_drop_tbl$
+-- The function deletes all what has been created by _create_tbl function
 -- Required inputs: schema name (mandatory even if "public") and table name
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
@@ -749,11 +749,11 @@ $_delete_log$
     DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = quote_ident(v_schemaName) AND sqhl_table = quote_ident(v_tableName);
     RETURN;
   END;
-$_delete_log$;
+$_drop_tbl$;
 
-CREATE or REPLACE FUNCTION emaj._delete_seq(v_schemaName TEXT, v_seqName TEXT) 
+CREATE or REPLACE FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) 
 RETURNS void LANGUAGE plpgsql AS 
-$_delete_seq$
+$_drop_seq$
 -- The function deletes the rows stored into emaj_sequence for a particular sequence
 -- Required inputs: schema name and sequence name
   BEGIN
@@ -761,7 +761,7 @@ $_delete_seq$
     EXECUTE 'DELETE FROM emaj.emaj_sequence WHERE sequ_schema = ''' || v_schemaName || ''' AND sequ_name = ''' || v_seqName || '''';
     RETURN;
   END;
-$_delete_seq$;
+$_drop_seq$;
 
 CREATE or REPLACE FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ,  v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
@@ -1328,7 +1328,7 @@ $emaj_create_group$
       v_relkind = emaj._check_class(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq);
       IF v_relkind = 'r' THEN
 -- if it is a table, create the related emaj objects
-         PERFORM emaj._create_log (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_isRollbackable);
+         PERFORM emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_isRollbackable);
          v_nbTbl = v_nbTbl + 1;
         ELSEIF v_relkind = 'S' THEN
 -- if it is a sequence, just count
@@ -1438,10 +1438,10 @@ $_drop_group$
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
-        PERFORM emaj._delete_log (r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_isRollbackable);
+        PERFORM emaj._drop_tbl (r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_isRollbackable);
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
-          PERFORM emaj._delete_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+          PERFORM emaj._drop_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
       END IF;
       v_nbTb = v_nbTb + 1;
     END LOOP;
@@ -2796,7 +2796,7 @@ $_rst_group$
         PERFORM setval(quote_ident(v_emajSchema) || '.' || quote_ident(v_fullSeqName), 1, false);
       ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
-        PERFORM emaj._delete_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+        PERFORM emaj._drop_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
       END IF;
       v_nbTb = v_nbTb + 1;
     END LOOP;
@@ -3255,9 +3255,9 @@ REVOKE ALL ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._delete_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) FROM PUBLIC;
@@ -3316,9 +3316,9 @@ GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._create_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._delete_log(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._delete_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_table(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_sequence(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) TO emaj_adm;
