@@ -71,6 +71,9 @@ Bug fixes:
     in the emaj_hist table.
   - in emaj_verify_all() function, add a check on orphan truncate functions.
   - a missing check has been added in internal _verify_group() function.
+  - to avoid potential data corruption at rollback time if the system time 
+    changes during E-Maj activity period, use serial id instead of timestamp 
+    for emaj_sequence and emaj_seq_hole tables content management.
 
 0.9.1
 -----

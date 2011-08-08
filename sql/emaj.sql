@@ -193,7 +193,7 @@ COMMENT ON TABLE emaj.emaj_relation IS $$
 Contains the content (tables and sequences) of created E-Maj groups.
 $$;
 
--- table containing the marks
+-- table containing the marksl
 CREATE TABLE emaj.emaj_mark (
     mark_group               TEXT        NOT NULL,
     mark_name                TEXT        NOT NULL,
@@ -201,6 +201,7 @@ CREATE TABLE emaj.emaj_mark (
     mark_state               TEXT,
     mark_comment             TEXT,
     mark_txid                BIGINT      DEFAULT emaj.emaj_txid_current(),
+    mark_last_seq_hole_id    BIGINT,                                       -- last sqhl_id at set mark time 
     PRIMARY KEY (mark_group, mark_name),
     FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
     ) TABLESPACE tspemaj;
@@ -233,6 +234,7 @@ $$;
 -- these holes are due to rollback operations that do not adjust log sequences
 -- the hole size = difference of sequence's current last_value and last value at the rollback mark
 CREATE TABLE emaj.emaj_seq_hole (
+    sqhl_id                  SERIAL      NOT NULL,
     sqhl_schema              TEXT        NOT NULL,
     sqhl_table               TEXT        NOT NULL,
     sqhl_datetime            TIMESTAMPTZ NOT NULL DEFAULT transaction_timestamp(),
@@ -763,7 +765,7 @@ $_drop_seq$
   END;
 $_drop_seq$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ,  v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN)
+CREATE or REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ,  v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSeqHoleId BIGINT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_rlbk_tbl$
 -- This function rollbacks one table to a given timestamp
@@ -834,7 +836,7 @@ $_rlbk_tbl$
 --   function (and indirectly by emaj_estimate_rollback_duration())
 -- first delete, if exist, sequence holes that have disappeared with the rollback
       DELETE FROM emaj.emaj_seq_hole
-        WHERE sqhl_schema = v_schemaName AND sqhl_table = v_tableName AND sqhl_datetime > v_timestamp;
+        WHERE sqhl_schema = v_schemaName AND sqhl_table = v_tableName AND sqhl_id > v_lastSeqHoleId;
 -- and then insert the new sequence hole
       EXECUTE 'INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_hole_size) VALUES (''' 
         || v_schemaName || ''',''' || v_tableName || ''', ('
@@ -949,13 +951,13 @@ $_rlbk_seq$
   END;
 $_rlbk_seq$;
 
-CREATE or REPLACE FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) 
+CREATE or REPLACE FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) 
 RETURNS BIGINT LANGUAGE plpgsql AS 
 $_log_stat_table$
 -- This function returns the number of log rows for a single table between 2 marks or between a mark and the current situation.
 -- It is called by emaj_log_stat_group function
 -- These statistics are computed using the serial id of log tables and holes is sequences recorded into emaj_seq_hole at rollback time
--- Input: schema name and table name, the timestamps of both marks 
+-- Input: schema name and table name, the timestamps of both marks, the emaj_seq_hole last id of both marks
 --   a NULL value as last timestamp mark indicates the current situation
 -- Output: number of log rows between both marks for the table
   DECLARE
@@ -978,7 +980,7 @@ $_log_stat_table$
 --   and count the sum of hole from the start mark time until now
       SELECT coalesce(sum(sqhl_hole_size),0) INTO v_sumHole FROM emaj.emaj_seq_hole 
         WHERE sqhl_schema = v_schemaName AND sqhl_table = v_tableName
-          AND sqhl_datetime >= v_tsFirstMark;
+          AND sqhl_id > v_firstLastSeqHoleId;
     ELSE
 -- last mark is not NULL, so get the log table id at last mark time
       SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO v_endLastValue
@@ -989,7 +991,7 @@ $_log_stat_table$
 --   and count the sum of hole from the start mark time to the end mark time
       SELECT coalesce(sum(sqhl_hole_size),0) INTO v_sumHole FROM emaj.emaj_seq_hole 
         WHERE sqhl_schema = v_schemaName AND sqhl_table = v_tableName
-          AND sqhl_datetime BETWEEN v_tsFirstMark AND v_tsLastMark;
+          AND sqhl_id > v_firstLastSeqHoleId AND sqhl_id <= v_lastLastSeqHoleId;
     END IF;
 -- return the stat row for the table
     RETURN (v_endLastValue - v_beginLastValue - v_sumHole)/2;
@@ -1822,20 +1824,23 @@ $_set_mark_groups$
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
-    v_pgversion     TEXT := emaj._pg_version();
-    v_emajSchema    TEXT := 'emaj';
-    v_nbTb          INT := 0;
-    v_fullSeqName   TEXT;
-    v_seqName       TEXT;
-    v_timestamp     TIMESTAMPTZ;
-    v_stmt          TEXT;
-    r_tblsq         RECORD;
+    v_pgversion       TEXT := emaj._pg_version();
+    v_emajSchema      TEXT := 'emaj';
+    v_nbTb            INT := 0;
+    v_timestamp       TIMESTAMPTZ;
+    v_lastSeqHoleId   BIGINT;
+    v_fullSeqName     TEXT;
+    v_seqName         TEXT;
+    v_stmt            TEXT;
+    r_tblsq           RECORD;
   BEGIN
 -- look at the clock and insert the mark into the emaj_mark table
     v_timestamp = clock_timestamp();
+    SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END INTO v_lastSeqHoleId 
+      FROM emaj.emaj_seq_hole_sqhl_id_seq;
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
-      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_state) 
-        VALUES (v_groupNames[v_i], v_mark, v_timestamp, 'ACTIVE');
+      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_state, mark_last_seq_hole_id) 
+        VALUES (v_groupNames[v_i], v_mark, v_timestamp, 'ACTIVE', v_lastSeqHoleId);
     END LOOP;
 -- then, examine the group's definition
     FOR r_tblsq IN
@@ -1880,7 +1885,7 @@ $_set_mark_groups$
       EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;
---
+-- 
     RETURN v_nbTb;
   END;
 $_set_mark_groups$;
@@ -2005,7 +2010,7 @@ $emaj_delete_mark_group$
 -- delete all sequence holes that are prior the new first mark for the tables of the group
       DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
         WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
-          AND sqhl_datetime < v_datetimeNewMin;
+          AND sqhl_id <= (SELECT mark_last_seq_hole_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_mark);
     END IF;
 -- now the sequences related to the mark to delete can be suppressed
     DELETE FROM emaj.emaj_sequence WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark;
@@ -2066,7 +2071,8 @@ $emaj_delete_before_mark_group$
 -- delete all sequence holes that are prior the new first mark for the tables of the group
     DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
-        AND sqhl_datetime < v_datetimeMark;
+--        AND sqhl_datetime < v_datetimeMark;
+        AND sqhl_id <= (SELECT mark_last_seq_hole_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark);
 -- now the sequences related to the mark to delete can be suppressed
     DELETE FROM emaj.emaj_sequence WHERE (sequ_mark, sequ_datetime) IN 
       (SELECT mark_name, mark_datetime FROM emaj.emaj_mark 
@@ -2609,15 +2615,19 @@ $_rlbk_groups_step5$
   DECLARE
     v_nbTbl             INT := 0;
     v_timestampMark     TIMESTAMPTZ;
+    v_lastSeqHoleId     BIGINT;
   BEGIN
 -- fetch the timestamp mark again
     SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
     IF v_timestampMark IS NULL THEN
       RAISE EXCEPTION '_rlbk_groups_step5: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
     END IF;
+-- fetch the last id value of emaj_seq_hole table at set mark time
+    SELECT mark_last_seq_hole_id INTO v_lastSeqHoleId FROM emaj.emaj_mark 
+      WHERE mark_group = v_groupNames[1] AND mark_name = emaj._get_mark_name(v_groupNames[1],v_mark);
 -- rollback all tables of the session, having rows to rollback, in priority order (sequences are processed later)
 -- (the disableTrigger boolean for the _rlbk_tbl() function always equal unloggedRlbk boolean)
-    PERFORM emaj._rlbk_tbl(rel_schema, rel_tblseq, v_timestampMark, v_unloggedRlbk, v_deleteLog)
+    PERFORM emaj._rlbk_tbl(rel_schema, rel_tblseq, v_timestampMark, v_unloggedRlbk, v_deleteLog, v_lastSeqHoleId)
       FROM (SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
               WHERE rel_group = ANY (v_groupNames) AND rel_session = v_session AND rel_kind = 'r' AND rel_rows > 0
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t;
@@ -2821,45 +2831,54 @@ $emaj_log_stat_group$
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: table of log rows by table (including tables with 0 rows to rollback)
   DECLARE
-    v_groupState      TEXT;
-    v_emajSchema      TEXT := 'emaj';
-    v_tsFirstMark     TIMESTAMPTZ;
-    v_tsLastMark      TIMESTAMPTZ;
-    v_fullSeqName     TEXT;
-    v_beginLastValue  BIGINT;
-    v_endLastValue    BIGINT;
-    v_sumHole         BIGINT;
-    r_tblsq           RECORD;
-    r_stat            RECORD;
+    v_groupState         TEXT;
+    v_emajSchema         TEXT := 'emaj';
+    v_realFirstMark      TEXT;
+    v_realLastMark       TEXT;
+    v_tsFirstMark        TIMESTAMPTZ;
+    v_tsLastMark         TIMESTAMPTZ;
+    v_firstLastSeqHoleId BIGINT;
+    v_lastLastSeqHoleId  BIGINT;
+    v_fullSeqName        TEXT;
+    v_beginLastValue     BIGINT;
+    v_endLastValue       BIGINT;
+    v_sumHole            BIGINT;
+    r_tblsq              RECORD;
+    r_stat               RECORD;
   BEGIN
 -- check that the group is recorded in emaj_group table
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_log_stat_group: group % has not been created.', v_groupName;
     END IF;
--- if first mark is NULL or empty, retrieve the timestamp of the first mark for the group
+-- if first mark is NULL or empty, retrieve the name, timestamp and last sequ_hole id of the first recorded mark for the group
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
-      SELECT MIN(mark_datetime) INTO v_tsFirstMark FROM emaj.emaj_mark
-        WHERE mark_group = v_groupName;
+      SELECT mark_name, mark_datetime, mark_last_seq_hole_id INTO v_realFirstMark, v_tsFirstMark, v_firstLastSeqHoleId
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_datetime LIMIT 1;
       IF NOT FOUND THEN
          RAISE EXCEPTION 'emaj_log_stat_group: No initial mark can be found for group %.', v_groupName;
       END IF;
     ELSE
--- else, check and retrieve the timestamp of the start mark for the group
-      SELECT emaj._get_mark_datetime(v_groupName,v_firstMark) INTO v_tsFirstMark;
-      IF v_tsFirstMark IS NULL THEN
+-- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied first mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
+      IF v_realFirstMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: Start mark % is unknown for group %.', v_firstMark, v_groupName;
       END IF;
+      SELECT mark_datetime, mark_last_seq_hole_id INTO v_tsFirstMark, v_firstLastSeqHoleId FROM emaj.emaj_mark 
+        WHERE mark_group = v_groupName AND mark_name = v_realFirstMark;
     END IF;
 -- if last mark is NULL or empty, there is no timestamp to register
     IF v_lastMark IS NULL OR v_lastMark = '' THEN
       v_tsLastMark = NULL;
+      v_lastLastSeqHoleId = NULL;
     ELSE
--- else, check and retrieve the timestamp of the end mark for the group
-      SELECT emaj._get_mark_datetime(v_groupName,v_lastMark) INTO v_tsLastMark;
-      IF v_tsLastMark IS NULL THEN
+-- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
+      IF v_realLastMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: End mark % is unknown for group %.', v_lastMark, v_groupName;
       END IF;
+      SELECT mark_datetime, mark_last_seq_hole_id INTO v_tsLastMark, v_lastLastSeqHoleId FROM emaj.emaj_mark 
+        WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
     END IF;
 -- check that the first_mark < end_mark
     IF v_tsLastMark IS NOT NULL AND v_tsFirstMark > v_tsLastMark THEN
@@ -2867,7 +2886,7 @@ $emaj_log_stat_group$
     END IF;
 -- for each table of the emaj_relation table, get the number of log rows and return the statistic
     FOR r_tblsq IN
-        SELECT rel_priority, rel_schema, rel_tblseq, emaj._log_stat_table(rel_schema, rel_tblseq, v_tsFirstMark, v_tsLastMark) AS nb_rows FROM emaj.emaj_relation 
+        SELECT rel_priority, rel_schema, rel_tblseq, emaj._log_stat_table(rel_schema, rel_tblseq, v_tsFirstMark, v_tsLastMark, v_firstLastSeqHoleId, v_lastLastSeqHoleId) AS nb_rows FROM emaj.emaj_relation 
           WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       SELECT v_groupName, r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.nb_rows INTO r_stat;
@@ -3232,7 +3251,7 @@ GRANT SELECT ON emaj.emaj_rlbk_stat  TO emaj_viewer;
 
 GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
 
-GRANT ALL   ON SCHEMA emaj TO emaj_adm;
+GRANT ALL ON SCHEMA emaj TO emaj_adm;
 
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_param      TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_hist       TO emaj_adm;
@@ -3246,6 +3265,7 @@ GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_fk         TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_stat  TO emaj_adm;
 
 GRANT ALL ON SEQUENCE emaj.emaj_hist_hist_id_seq TO emaj_adm;
+GRANT ALL ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_adm;
 
 -- revoke grants on all function from PUBLIC
 REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
@@ -3258,9 +3278,9 @@ REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_group(v_groupName TEXT) FROM PUBLIC; 
@@ -3319,9 +3339,9 @@ GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames T
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT) TO emaj_adm; 
@@ -3374,7 +3394,7 @@ GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
