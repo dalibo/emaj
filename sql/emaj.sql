@@ -120,27 +120,30 @@ DROP FUNCTION emaj.emaj_tmp_create_some_components();
 
 -- table containing Emaj parameters
 CREATE TABLE emaj.emaj_param (
-    param_key                TEXT        NOT NULL,
-    param_value_text         TEXT,
-    param_value_int          BIGINT,
-    param_value_boolean      BOOLEAN,
-    param_value_interval     INTERVAL,
+    param_key                TEXT        NOT NULL,       -- parameter key
+    param_value_text         TEXT,                       -- value if type is text, otherwise NULL
+    param_value_int          BIGINT,                     -- value if type is bigint, otherwise NULL
+    param_value_boolean      BOOLEAN,                    -- value if type is boolean, otherwise NULL
+    param_value_interval     INTERVAL,                   -- value if type is interval, otherwise NULL
     PRIMARY KEY (param_key) 
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_param IS $$
 Contains E-Maj parameters.
 $$;
 
--- table containing the history of operations 
-CREATE TABLE emaj.emaj_hist (
-    hist_id                  SERIAL      NOT NULL,
-    hist_datetime            TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
-    hist_function            TEXT        NOT NULL,
-    hist_event               TEXT,
-    hist_object              TEXT,
-    hist_wording             TEXT,
-    hist_user                TEXT        DEFAULT session_user,
-    hist_txid                BIGINT      DEFAULT emaj.emaj_txid_current(),
+-- table containing the history of all E-Maj events  
+CREATE TABLE emaj.emaj_hist (                            -- records the history of 
+    hist_id                  SERIAL      NOT NULL,       -- internal id
+    hist_datetime            TIMESTAMPTZ NOT NULL 
+                             DEFAULT clock_timestamp(),  -- insertion time
+    hist_function            TEXT        NOT NULL,       -- main E-Maj function generating the event
+    hist_event               TEXT,                       -- type of event (often BEGIN or END)
+    hist_object              TEXT,                       -- object supporting the event (often the group name)
+    hist_wording             TEXT,                       -- additional comment
+    hist_user                TEXT
+                             DEFAULT session_user,       -- the user who call the E-Maj function
+    hist_txid                BIGINT
+                             DEFAULT emaj.emaj_txid_current(), -- and its tx_id
     PRIMARY KEY (hist_id)
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_hist IS $$
@@ -164,12 +167,14 @@ $$;
 --     rows are created at emaj_create_group time and deleted at emaj_drop_group time
 CREATE TABLE emaj.emaj_group (
     group_name               TEXT        NOT NULL,
-    group_state              TEXT        NOT NULL,       -- 2 possibles states: 'LOGGING' between emaj_start_group and emaj_stop_group
-                                                         --                     'IDLE' in other cases
+    group_state              TEXT        NOT NULL,       -- 2 possibles states: 
+                                                         --   'LOGGING' between emaj_start_group and emaj_stop_group
+                                                         --   'IDLE' in other cases
     group_nb_table           INT,                        -- number of tables at emaj_create_group time
     group_nb_sequence        INT,                        -- number of sequences at emaj_create_group time
     group_is_rollbackable    BOOLEAN,                    -- false for 'AUDIT_ONLY' groups, true for 'ROLLBACKABLE' groups
-    group_creation_datetime  TIMESTAMPTZ NOT NULL DEFAULT transaction_timestamp(),
+    group_creation_datetime  TIMESTAMPTZ NOT NULL 
+                             DEFAULT transaction_timestamp(),
     PRIMARY KEY (group_name)
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_group IS $$
@@ -178,9 +183,9 @@ $$;
 
 -- table containing the relations (tables and sequences) of created tables groups
 CREATE TABLE emaj.emaj_relation (
-    rel_schema               TEXT        NOT NULL,
-    rel_tblseq               TEXT        NOT NULL,
-    rel_group                TEXT        NOT NULL,
+    rel_schema               TEXT        NOT NULL,       -- schema name containing the relation
+    rel_tblseq               TEXT        NOT NULL,       -- table or sequence name
+    rel_group                TEXT        NOT NULL,       -- name of the group that owns the relation
     rel_priority             INTEGER,                    -- priority level of processing inside the group
     rel_kind                 TEXT,                       -- similar to the relkind column of pg_class table 
                                                          --   ('r' = table, 'S' = sequence) 
@@ -195,13 +200,16 @@ $$;
 
 -- table containing the marksl
 CREATE TABLE emaj.emaj_mark (
-    mark_group               TEXT        NOT NULL,
-    mark_name                TEXT        NOT NULL,
-    mark_datetime            TIMESTAMPTZ NOT NULL,
-    mark_state               TEXT,
-    mark_comment             TEXT,
-    mark_txid                BIGINT      DEFAULT emaj.emaj_txid_current(),
-    mark_last_seq_hole_id    BIGINT,                                       -- last sqhl_id at set mark time 
+    mark_group               TEXT        NOT NULL,       -- group for which the mark has been set
+    mark_name                TEXT        NOT NULL,       -- mark name
+    mark_datetime            TIMESTAMPTZ NOT NULL,       -- precise timestamp of the mark creation, used as a reference
+                                                         --   for other tables as emaj_sequence and all log tables
+    mark_state               TEXT,                       -- state of the mark, with 2 possible values:
+                                                         --   'ACTIVE' and 'DELETED'
+    mark_comment             TEXT,                       -- optional user comment
+    mark_txid                BIGINT                      -- id of the tx that has set the mark
+                             DEFAULT emaj.emaj_txid_current(),
+    mark_last_seq_hole_id    BIGINT,                     -- last sqhl_id at set mark time 
     PRIMARY KEY (mark_group, mark_name),
     FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
     ) TABLESPACE tspemaj;
@@ -209,21 +217,22 @@ COMMENT ON TABLE emaj.emaj_mark IS $$
 Contains marks set on E-Maj tables groups.
 $$;
 
--- table containing the sequences log 
--- (to record the state at mark time of application sequences and sequences used by log tables) 
+-- table containing the sequences characteristics log 
+-- (to record at mark time the state of application sequences and sequences used by log tables) 
 CREATE TABLE emaj.emaj_sequence (
-    sequ_schema              TEXT        NOT NULL,
-    sequ_name                TEXT        NOT NULL,
-    sequ_datetime            TIMESTAMPTZ NOT NULL,
-    sequ_mark                TEXT        NOT NULL,
-    sequ_last_val            BIGINT      NOT NULL,
-    sequ_start_val           BIGINT      NOT NULL,
-    sequ_increment           BIGINT      NOT NULL,
-    sequ_max_val             BIGINT      NOT NULL,
-    sequ_min_val             BIGINT      NOT NULL,
-    sequ_cache_val           BIGINT      NOT NULL,
-    sequ_is_cycled           BOOLEAN     NOT NULL,
-    sequ_is_called           BOOLEAN     NOT NULL,
+    sequ_schema              TEXT        NOT NULL,       -- application or 'emaj' schema or that owns the sequence
+    sequ_name                TEXT        NOT NULL,       -- application or emaj sequence name
+    sequ_datetime            TIMESTAMPTZ NOT NULL,       -- timestamp the sequence characteristics have been recorded
+                                                         --   the same timestamp as referenced in emaj_mark table 
+    sequ_mark                TEXT        NOT NULL,       -- name of the mark associated to the insertion timestamp 
+    sequ_last_val            BIGINT      NOT NULL,       -- sequence last value
+    sequ_start_val           BIGINT      NOT NULL,       -- sequence start value, (0 with postgres 8.2)
+    sequ_increment           BIGINT      NOT NULL,       -- sequence increment
+    sequ_max_val             BIGINT      NOT NULL,       -- sequence max value
+    sequ_min_val             BIGINT      NOT NULL,       -- sequence min value
+    sequ_cache_val           BIGINT      NOT NULL,       -- sequence cache value
+    sequ_is_cycled           BOOLEAN     NOT NULL,       -- sequence flag 'is cycled ?'
+    sequ_is_called           BOOLEAN     NOT NULL,       -- sequence flag 'is called ?'
     PRIMARY KEY (sequ_schema, sequ_name, sequ_datetime)
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_sequence IS $$
@@ -234,11 +243,14 @@ $$;
 -- these holes are due to rollback operations that do not adjust log sequences
 -- the hole size = difference of sequence's current last_value and last value at the rollback mark
 CREATE TABLE emaj.emaj_seq_hole (
-    sqhl_id                  SERIAL      NOT NULL,
-    sqhl_schema              TEXT        NOT NULL,
-    sqhl_table               TEXT        NOT NULL,
-    sqhl_datetime            TIMESTAMPTZ NOT NULL DEFAULT transaction_timestamp(),
-    sqhl_hole_size           BIGINT      NOT NULL,
+    sqhl_id                  SERIAL      NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
+                                                         -- on timestamps that are not safe if system time changes)
+    sqhl_schema              TEXT        NOT NULL,       -- schema that owns the table
+    sqhl_table               TEXT        NOT NULL,       -- application table for which a sequence hole is recorded
+                                                         --   in the associated log table
+    sqhl_datetime            TIMESTAMPTZ NOT NULL        -- timestamp of the rollback operation that generated the hole
+                             DEFAULT transaction_timestamp(),
+    sqhl_hole_size           BIGINT      NOT NULL,       -- hole size computed as the difference of 2 sequence last-values
     PRIMARY KEY (sqhl_schema, sqhl_table, sqhl_datetime)
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_seq_hole IS $$
@@ -248,12 +260,12 @@ $$;
 -- table containing statistics about previously executed rollback operations
 -- and used to estimate rollback durations 
 CREATE TABLE emaj.emaj_rlbk_stat (
-    rlbk_operation           TEXT        NOT NULL,     -- can contains 'rlbk', 'del_log', 'cre_fk'
-    rlbk_schema              TEXT        NOT NULL,
-    rlbk_tbl_fk              TEXT        NOT NULL,     -- table name of fk name
-    rlbk_datetime            TIMESTAMPTZ NOT NULL,
-    rlbk_nb_rows             BIGINT      NOT NULL,
-    rlbk_duration            INTERVAL    NOT NULL,
+    rlbk_operation           TEXT        NOT NULL,       -- type of operation, can contains 'rlbk', 'del_log', 'cre_fk'
+    rlbk_schema              TEXT        NOT NULL,       -- schema that owns the table or the foreign key
+    rlbk_tbl_fk              TEXT        NOT NULL,       -- table or foreign key name
+    rlbk_datetime            TIMESTAMPTZ NOT NULL,       -- timestamp of the rollback that has generated the statistic
+    rlbk_nb_rows             BIGINT      NOT NULL,       -- number of rows processed by the operation
+    rlbk_duration            INTERVAL    NOT NULL,       -- duration of the elementary operation
     PRIMARY KEY (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime)
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_rlbk_stat IS $$
@@ -263,12 +275,12 @@ $$;
 -- working storage table containing foreign key definition
 -- (used at table rollback time to drop and later recreate foreign keys)
 CREATE TABLE emaj.emaj_fk (
-    fk_groups                TEXT[]      NOT NULL,
-    fk_session               INT         NOT NULL,
-    fk_name                  TEXT        NOT NULL,
-    fk_schema                TEXT        NOT NULL,
-    fk_table                 TEXT        NOT NULL,
-    fk_def                   TEXT        NOT NULL,
+    fk_groups                TEXT[]      NOT NULL,       -- groups for which the rollback operation is performed
+    fk_session               INT         NOT NULL,       -- session number (for parallel rollback purpose)
+    fk_name                  TEXT        NOT NULL,       -- foreign key name
+    fk_schema                TEXT        NOT NULL,       -- schema name of the table that owns the foreign key
+    fk_table                 TEXT        NOT NULL,       -- name of the table that owns the foreign key
+    fk_def                   TEXT        NOT NULL,       -- foreign key definition as reported by pg_get_constraintdef
     PRIMARY KEY (fk_groups, fk_name, fk_schema, fk_table)
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_fk IS $$
