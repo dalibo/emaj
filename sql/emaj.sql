@@ -220,6 +220,8 @@ $$;
 -- table containing the sequences characteristics log 
 -- (to record at mark time the state of application sequences and sequences used by log tables) 
 CREATE TABLE emaj.emaj_sequence (
+--    sequ_id                  SERIAL      NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
+--                                                         -- on timestamps that are not safe if system time changes)
     sequ_schema              TEXT        NOT NULL,       -- application or 'emaj' schema or that owns the sequence
     sequ_name                TEXT        NOT NULL,       -- application or emaj sequence name
     sequ_datetime            TIMESTAMPTZ NOT NULL,       -- timestamp the sequence characteristics have been recorded
@@ -2083,7 +2085,6 @@ $emaj_delete_before_mark_group$
 -- delete all sequence holes that are prior the new first mark for the tables of the group
     DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
---        AND sqhl_datetime < v_datetimeMark;
         AND sqhl_id <= (SELECT mark_last_seq_hole_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark);
 -- now the sequences related to the mark to delete can be suppressed
     DELETE FROM emaj.emaj_sequence WHERE (sequ_mark, sequ_datetime) IN 
@@ -2925,9 +2926,14 @@ $emaj_detailed_log_stat_group$
   DECLARE
     v_groupState    TEXT;
     v_emajSchema    TEXT := 'emaj';
-    v_logTableName  TEXT;
+    v_realFirstMark TEXT;
+    v_realLastMark  TEXT;
     v_tsFirstMark   TIMESTAMPTZ;
     v_tsLastMark    TIMESTAMPTZ;
+    v_firstEmajId   BIGINT;
+    v_lastEmajId    BIGINT;
+    v_logTableName  TEXT;
+    v_seqName       TEXT;
     v_stmt          TEXT;
     r_tblsq         RECORD;
     r_stat          RECORD;
@@ -2940,22 +2946,24 @@ $emaj_detailed_log_stat_group$
 -- catch the timestamp of the first mark
     IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
 -- check and retrieve the timestamp of the start mark for the group
-      SELECT emaj._get_mark_datetime(v_groupName,v_firstMark) INTO v_tsFirstMark;
-      IF v_tsFirstMark IS NULL THEN
+      SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
+      IF v_realFirstMark IS NULL THEN
           RAISE EXCEPTION 'emaj_detailed_log_stat_group: Start mark % is unknown for group %.', v_firstMark, v_groupName;
       END IF;
+      SELECT emaj._get_mark_datetime(v_groupName,v_firstMark) INTO v_tsFirstMark;
     END IF;
 -- catch the timestamp of the last mark
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
 -- else, check and retrieve the timestamp of the end mark for the group
-      SELECT emaj._get_mark_datetime(v_groupName,v_lastMark) INTO v_tsLastMark;
-      IF v_tsLastMark IS NULL THEN
+      SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
+      IF v_realLastMark IS NULL THEN
         RAISE EXCEPTION 'emaj_detailed_log_stat_group: End mark % is unknown for group %.', v_lastMark, v_groupName;
       END IF;
+      SELECT emaj._get_mark_datetime(v_groupName,v_lastMark) INTO v_tsLastMark;
     END IF;
 -- check that the first_mark < end_mark
     IF v_firstMark IS NOT NULL AND v_firstMark <> '' AND v_LastMark IS NOT NULL AND v_lastMark <> '' AND v_tsFirstMark > v_tsLastMark THEN
-      RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark time for % (%) is greater than mark time for % (%).', v_firstMark, v_tsFirstMark, v_lastMark, v_tsLastMark;
+      RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark time for % (%) is greater than mark time for % (%).', v_realFirstMark, v_tsFirstMark, v_realLastMark, v_tsLastMark;
     END IF;
 -- for each table of the emaj_relation table
     FOR r_tblsq IN
@@ -2963,8 +2971,29 @@ $emaj_detailed_log_stat_group$
           WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
--- if it is a table, count the number of operation per type (INSERT, UPDATE and DELETE) and role
+-- if it is a table, count the number of operations per type (INSERT, UPDATE and DELETE) and role
+-- compute the log table name and its sequence name for this table
+        v_seqName      := r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log_emaj_id_seq';
         v_logTableName := quote_ident(v_emajSchema) || '.' || quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log');
+-- get the next emaj_id for the first mark from the sequence
+        IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN 
+          SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END INTO v_firstEmajId
+            FROM emaj.emaj_sequence
+            WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_tsFirstMark;
+          IF NOT FOUND THEN
+             RAISE EXCEPTION 'emaj_detailed_log_stat_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_timestamp;
+          END IF;
+        END IF;
+-- get the next emaj_id for the last mark from the sequence
+        IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN 
+          SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END INTO v_lastEmajId
+            FROM emaj.emaj_sequence
+            WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_tsLastMark;
+          IF NOT FOUND THEN
+             RAISE EXCEPTION 'emaj_detailed_log_stat_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_timestamp;
+          END IF;
+        END IF;
+-- prepare and execute the statement
         v_stmt= 'SELECT ''' || v_groupName || '''::TEXT as emaj_group,'
              || ' ''' || r_tblsq.rel_schema || '''::TEXT as emaj_schema,'
              || ' ''' || r_tblsq.rel_tblseq || '''::TEXT as emaj_table,'
@@ -2977,10 +3006,10 @@ $emaj_detailed_log_stat_group$
              || ' FROM ' || v_logTableName 
              || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'')';
         IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN v_stmt = v_stmt 
-             || ' AND emaj_changed >= timestamp '''|| v_tsFirstMark || '''';
+             || ' AND emaj_id >= '|| v_firstEmajId ;
         END IF;
         IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN v_stmt = v_stmt
-             || ' AND emaj_changed < timestamp '''|| v_tsLastMark || '''';
+             || ' AND emaj_id < '|| v_lastEmajId ;
         END IF;
         v_stmt = v_stmt
              || ' GROUP BY emaj_group, emaj_schema, emaj_table, emaj_user, emaj_verb'
@@ -3278,6 +3307,7 @@ GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_stat  TO emaj_adm;
 
 GRANT ALL ON SEQUENCE emaj.emaj_hist_hist_id_seq TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_adm;
+--GRANT ALL ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_adm;
 
 -- revoke grants on all function from PUBLIC
 REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
