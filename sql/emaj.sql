@@ -200,10 +200,12 @@ $$;
 
 -- table containing the marksl
 CREATE TABLE emaj.emaj_mark (
+    mark_id                  SERIAL,                     -- serial id used to order rows (not to rely on timestamps 
+                                                         -- that are not safe if system time changes)
     mark_group               TEXT        NOT NULL,       -- group for which the mark has been set
     mark_name                TEXT        NOT NULL,       -- mark name
     mark_datetime            TIMESTAMPTZ NOT NULL,       -- precise timestamp of the mark creation, used as a reference
-                                                         --   for other tables as emaj_sequence and all log tables
+                                                         --   for other tables like emaj_sequence and all log tables
     mark_state               TEXT,                       -- state of the mark, with 2 possible values:
                                                          --   'ACTIVE' and 'DELETED'
     mark_comment             TEXT,                       -- optional user comment
@@ -1940,7 +1942,8 @@ $$;
 CREATE or REPLACE FUNCTION emaj.emaj_find_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) 
 RETURNS text LANGUAGE plpgsql AS
 $emaj_find_previous_mark_group$
--- This function returns the name of the mark that immediately precedes a given date and time. 
+-- This function returns the name of the mark that immediately precedes a given date and time.
+-- It may return unpredictable result in case of system date or time change.
 -- The function can be called by both emaj_adm and emaj_viewer roles.
 -- Input: group name, date and time
 -- Output: mark name, or NULL if there is no mark before the given date and time
@@ -1986,8 +1989,10 @@ $emaj_delete_mark_group$
   DECLARE
     v_groupState     TEXT;
     v_realMark       TEXT;
-    v_datetimeNewMin TIMESTAMPTZ;
+    v_markId         INT;
+    v_newMinId       INT;
     v_datetimeMark   TIMESTAMPTZ;
+    v_datetimeNewMin TIMESTAMPTZ;
     v_cpt            INT;
   BEGIN
 -- insert begin in the history
@@ -2013,18 +2018,20 @@ $emaj_delete_mark_group$
     IF v_cpt < 2 THEN
        RAISE EXCEPTION 'emaj_delete_mark_group: % is the only mark. It cannot be deleted.', v_mark;
     END IF;
--- OK, now get the timestamp of the mark to delete
-    SELECT emaj._get_mark_datetime(v_groupName,v_realMark) INTO v_datetimeMark;
--- OK, now get the timestamp of the future first mark
-    SELECT min (mark_datetime) INTO v_datetimeNewMin FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_realMark;
+-- OK, now get the id and timestamp of the mark to delete
+    SELECT mark_id, mark_datetime INTO v_markId, v_datetimeMark
+      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
+-- OK, now get the id and timestamp of the future first mark
+    SELECT mark_id, mark_datetime INTO v_newMinId, v_datetimeNewMin 
+      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_realMark ORDER BY mark_id LIMIT 1;
 -- if the mark to delete is the first mark, delete data from log tables and emaj_sequence that will becomes useless
-    IF v_datetimeMark < v_datetimeNewMin THEN
+    IF v_markId < v_newMinId THEN
 -- delete rows from all log tables
       PERFORM emaj._delete_log_before_group(v_groupName, v_datetimeNewMin);
 -- delete all sequence holes that are prior the new first mark for the tables of the group
       DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
         WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
-          AND sqhl_id <= (SELECT mark_last_seq_hole_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_mark);
+          AND sqhl_id <= (SELECT mark_last_seq_hole_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark);
     END IF;
 -- now the sequences related to the mark to delete can be suppressed
     DELETE FROM emaj.emaj_sequence WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark;
@@ -2054,6 +2061,7 @@ $emaj_delete_before_mark_group$
   DECLARE
     v_groupState     TEXT;
     v_realMark       TEXT;
+    v_markId         INT;
     v_datetimeMark   TIMESTAMPTZ;
     v_nbMark         INT;
   BEGIN
@@ -2078,8 +2086,9 @@ $emaj_delete_before_mark_group$
     IF v_realMark IS NULL THEN
       RAISE EXCEPTION 'emaj_delete_before_mark_group: % is not a known mark for group %.', v_mark, v_groupName;
     END IF;
--- retrieve the datetime of the new first mark
-    SELECT emaj._get_mark_datetime(v_groupName,v_realMark) INTO v_datetimeMark;
+-- retrieve the id and datetime of the new first mark
+    SELECT mark_id, mark_datetime INTO v_markId, v_datetimeMark
+      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
 -- delete rows from all log tables
     PERFORM emaj._delete_log_before_group(v_groupName, v_datetimeMark);
 -- delete all sequence holes that are prior the new first mark for the tables of the group
@@ -2089,9 +2098,9 @@ $emaj_delete_before_mark_group$
 -- now the sequences related to the mark to delete can be suppressed
     DELETE FROM emaj.emaj_sequence WHERE (sequ_mark, sequ_datetime) IN 
       (SELECT mark_name, mark_datetime FROM emaj.emaj_mark 
-         WHERE mark_group = v_groupName AND mark_datetime < v_datetimeMark);
+         WHERE mark_group = v_groupName AND mark_id < v_markId);
 -- and finaly delete marks
-    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_datetime < v_datetimeMark;
+    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id < v_markId;
     GET DIAGNOSTICS v_nbMark = ROW_COUNT;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -2639,7 +2648,7 @@ $_rlbk_groups_step5$
     SELECT mark_last_seq_hole_id INTO v_lastSeqHoleId FROM emaj.emaj_mark 
       WHERE mark_group = v_groupNames[1] AND mark_name = emaj._get_mark_name(v_groupNames[1],v_mark);
 -- rollback all tables of the session, having rows to rollback, in priority order (sequences are processed later)
--- (the disableTrigger boolean for the _rlbk_tbl() function always equal unloggedRlbk boolean)
+-- (for the _rlbk_tbl() function call, the disableTrigger boolean always equals unloggedRlbk boolean)
     PERFORM emaj._rlbk_tbl(rel_schema, rel_tblseq, v_timestampMark, v_unloggedRlbk, v_deleteLog, v_lastSeqHoleId)
       FROM (SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
               WHERE rel_group = ANY (v_groupNames) AND rel_session = v_session AND rel_kind = 'r' AND rel_rows > 0
@@ -2692,37 +2701,45 @@ $_rlbk_groups_step7$
 -- It returns the number of processed sequences.
   DECLARE
     v_timestampMark     TIMESTAMPTZ;
+    v_realMark          TEXT;
+    v_markId            INT;
     v_nbSeq             INT;
     v_markName          TEXT;
   BEGIN
--- fetch the timestamp mark again
-    SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
-    IF v_timestampMark IS NULL THEN
+-- get the real mark name
+    SELECT emaj._get_mark_name(v_groupNames[1],v_mark) INTO v_realMark;
+    IF NOT FOUND OR v_realMark IS NULL THEN
       RAISE EXCEPTION '_rlbk_groups_step7: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
     END IF;
 -- if "unlogged" rollback, delete all marks and sequence holes later than the now rollbacked mark
 -- (not needed if mark = 'EMAJ_LAST_MARK')
-    IF v_unloggedRlbk AND v_mark <> 'EMAJ_LAST_MARK' THEN
+    IF v_unloggedRlbk THEN
+-- get the highest mark id for all groups
+      SELECT max(mark_id) INTO v_markId
+        FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_name = v_realMark;
 -- log in the history the name of all marks that must be deleted due to the rollback
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
         SELECT CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 
                'MARK DELETED', mark_group, 'mark ' || mark_name || ' has been deleted' FROM emaj.emaj_mark 
-          WHERE mark_group = ANY (v_groupNames) AND mark_datetime > v_timestampMark;
+          WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId;
 -- and finaly delete these useless marks (the related sequences have been already deleted by rollback functions)
-      DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_datetime > v_timestampMark; 
+      DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId; 
     END IF;
 -- rollback the application sequences belonging to the group
 -- warning, this operation is not transaction safe (that's why it is placed at the end of the operation)!
+--   get the mark timestamp for the 1st group
+    SELECT emaj._get_mark_datetime(v_groupNames[1],v_realMark) INTO v_timestampMark;
+--   and rollback
     PERFORM emaj._rlbk_seq(rel_schema, rel_tblseq, v_timestampMark, v_deleteLog) 
        FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S';
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
 -- if rollback is "logged" rollback, automaticaly set a mark representing the tables state just after the rollback.
 -- this mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the current time
     IF NOT v_unloggedRlbk THEN
--- get the mark name set at the beginning of the rollback operation
+-- get the mark name set at the beginning of the rollback operation (i.e. the last set mark)
       SELECT mark_name INTO v_markName 
         FROM emaj.emaj_mark
-        WHERE mark_group = v_groupNames[1] ORDER BY mark_datetime DESC LIMIT 1;
+        WHERE mark_group = v_groupNames[1] ORDER BY mark_id DESC LIMIT 1;
       IF NOT FOUND OR substr(v_markName,1,5) <> 'RLBK_' THEN
         RAISE EXCEPTION '_rlbk_groups_step7: Internal error - rollback start mark not found for group %.', v_groupNames[1];
       END IF;
@@ -2867,7 +2884,7 @@ $emaj_log_stat_group$
 -- if first mark is NULL or empty, retrieve the name, timestamp and last sequ_hole id of the first recorded mark for the group
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
       SELECT mark_name, mark_datetime, mark_last_seq_hole_id INTO v_realFirstMark, v_tsFirstMark, v_firstLastSeqHoleId
-        FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_datetime LIMIT 1;
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_id LIMIT 1;
       IF NOT FOUND THEN
          RAISE EXCEPTION 'emaj_log_stat_group: No initial mark can be found for group %.', v_groupName;
       END IF;
@@ -3306,6 +3323,7 @@ GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_fk         TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_stat  TO emaj_adm;
 
 GRANT ALL ON SEQUENCE emaj.emaj_hist_hist_id_seq TO emaj_adm;
+GRANT ALL ON SEQUENCE emaj.emaj_mark_mark_id_seq TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_adm;
 --GRANT ALL ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_adm;
 
