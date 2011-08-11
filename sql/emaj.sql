@@ -173,7 +173,7 @@ CREATE TABLE emaj.emaj_group (
     group_nb_table           INT,                        -- number of tables at emaj_create_group time
     group_nb_sequence        INT,                        -- number of sequences at emaj_create_group time
     group_is_rollbackable    BOOLEAN,                    -- false for 'AUDIT_ONLY' groups, true for 'ROLLBACKABLE' groups
-    group_creation_datetime  TIMESTAMPTZ NOT NULL 
+    group_creation_datetime  TIMESTAMPTZ NOT NULL        -- start time of the transaction that created the group
                              DEFAULT transaction_timestamp(),
     PRIMARY KEY (group_name)
     ) TABLESPACE tspemaj;
@@ -2719,9 +2719,9 @@ $_rlbk_groups_step7$
     IF NOT FOUND OR v_realMark IS NULL THEN
       RAISE EXCEPTION '_rlbk_groups_step7: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
     END IF;
--- if "unlogged" rollback, delete all marks and sequence holes later than the now rollbacked mark
+-- if "unlogged" rollback, delete all marks later than the now rollbacked mark
     IF v_unloggedRlbk THEN
--- get the highest mark id for all groups
+-- get the highest mark id of the mark used for rollback, for all groups
       SELECT max(mark_id) INTO v_markId
         FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_name = v_realMark;
 -- log in the history the name of all marks that must be deleted due to the rollback
@@ -2873,6 +2873,8 @@ $emaj_log_stat_group$
     v_emajSchema         TEXT := 'emaj';
     v_realFirstMark      TEXT;
     v_realLastMark       TEXT;
+    v_firstMarkId        BIGINT;
+    v_lastMarkId         BIGINT;
     v_tsFirstMark        TIMESTAMPTZ;
     v_tsLastMark         TIMESTAMPTZ;
     v_firstLastSeqHoleId BIGINT;
@@ -2891,7 +2893,7 @@ $emaj_log_stat_group$
     END IF;
 -- if first mark is NULL or empty, retrieve the name, timestamp and last sequ_hole id of the first recorded mark for the group
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
-      SELECT mark_name, mark_datetime, mark_last_seq_hole_id INTO v_realFirstMark, v_tsFirstMark, v_firstLastSeqHoleId
+      SELECT mark_id, mark_name, mark_datetime, mark_last_seq_hole_id INTO v_firstMarkId, v_realFirstMark, v_tsFirstMark, v_firstLastSeqHoleId
         FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_id LIMIT 1;
       IF NOT FOUND THEN
          RAISE EXCEPTION 'emaj_log_stat_group: No initial mark can be found for group %.', v_groupName;
@@ -2902,11 +2904,12 @@ $emaj_log_stat_group$
       IF v_realFirstMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: Start mark % is unknown for group %.', v_firstMark, v_groupName;
       END IF;
-      SELECT mark_datetime, mark_last_seq_hole_id INTO v_tsFirstMark, v_firstLastSeqHoleId FROM emaj.emaj_mark 
-        WHERE mark_group = v_groupName AND mark_name = v_realFirstMark;
+      SELECT mark_id, mark_datetime, mark_last_seq_hole_id INTO v_firstMarkId, v_tsFirstMark, v_firstLastSeqHoleId
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realFirstMark;
     END IF;
 -- if last mark is NULL or empty, there is no timestamp to register
     IF v_lastMark IS NULL OR v_lastMark = '' THEN
+      v_lastMarkId = NULL;
       v_tsLastMark = NULL;
       v_lastLastSeqHoleId = NULL;
     ELSE
@@ -2915,12 +2918,12 @@ $emaj_log_stat_group$
       IF v_realLastMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: End mark % is unknown for group %.', v_lastMark, v_groupName;
       END IF;
-      SELECT mark_datetime, mark_last_seq_hole_id INTO v_tsLastMark, v_lastLastSeqHoleId FROM emaj.emaj_mark 
-        WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
+      SELECT mark_id, mark_datetime, mark_last_seq_hole_id INTO v_lastMarkId, v_tsLastMark, v_lastLastSeqHoleId 
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
     END IF;
 -- check that the first_mark < end_mark
-    IF v_tsLastMark IS NOT NULL AND v_tsFirstMark > v_tsLastMark THEN
-      RAISE EXCEPTION 'emaj_log_stat_group: mark time for % (%) is greater than mark time for % (%).', v_firstMark, v_tsFirstMark, v_lastMark, v_tsLastMark;
+    IF v_lastMarkId IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
+      RAISE EXCEPTION 'emaj_log_stat_group: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMark, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
     END IF;
 -- for each table of the emaj_relation table, get the number of log rows and return the statistic
     FOR r_tblsq IN
@@ -2949,19 +2952,21 @@ $emaj_detailed_log_stat_group$
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: table of updates by user and table
   DECLARE
-    v_groupState    TEXT;
-    v_emajSchema    TEXT := 'emaj';
-    v_realFirstMark TEXT;
-    v_realLastMark  TEXT;
-    v_tsFirstMark   TIMESTAMPTZ;
-    v_tsLastMark    TIMESTAMPTZ;
-    v_firstEmajId   BIGINT;
-    v_lastEmajId    BIGINT;
-    v_logTableName  TEXT;
-    v_seqName       TEXT;
-    v_stmt          TEXT;
-    r_tblsq         RECORD;
-    r_stat          RECORD;
+    v_groupState         TEXT;
+    v_emajSchema         TEXT := 'emaj';
+    v_realFirstMark      TEXT;
+    v_realLastMark       TEXT;
+    v_firstMarkId        BIGINT;
+    v_lastMarkId         BIGINT;
+    v_tsFirstMark        TIMESTAMPTZ;
+    v_tsLastMark         TIMESTAMPTZ;
+    v_firstEmajId        BIGINT;
+    v_lastEmajId         BIGINT;
+    v_logTableName       TEXT;
+    v_seqName            TEXT;
+    v_stmt               TEXT;
+    r_tblsq              RECORD;
+    r_stat               RECORD;
   BEGIN
 -- check that the group is recorded in emaj_group table
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName;
@@ -2975,7 +2980,8 @@ $emaj_detailed_log_stat_group$
       IF v_realFirstMark IS NULL THEN
           RAISE EXCEPTION 'emaj_detailed_log_stat_group: Start mark % is unknown for group %.', v_firstMark, v_groupName;
       END IF;
-      SELECT emaj._get_mark_datetime(v_groupName,v_firstMark) INTO v_tsFirstMark;
+      SELECT mark_id, mark_datetime INTO v_firstMarkId, v_tsFirstMark
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realFirstMark;
     END IF;
 -- catch the timestamp of the last mark
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
@@ -2984,11 +2990,12 @@ $emaj_detailed_log_stat_group$
       IF v_realLastMark IS NULL THEN
         RAISE EXCEPTION 'emaj_detailed_log_stat_group: End mark % is unknown for group %.', v_lastMark, v_groupName;
       END IF;
-      SELECT emaj._get_mark_datetime(v_groupName,v_lastMark) INTO v_tsLastMark;
+      SELECT mark_id, mark_datetime INTO v_lastMarkId, v_tsLastMark
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
     END IF;
 -- check that the first_mark < end_mark
-    IF v_firstMark IS NOT NULL AND v_firstMark <> '' AND v_LastMark IS NOT NULL AND v_lastMark <> '' AND v_tsFirstMark > v_tsLastMark THEN
-      RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark time for % (%) is greater than mark time for % (%).', v_realFirstMark, v_tsFirstMark, v_realLastMark, v_tsLastMark;
+    IF v_realFirstMark IS NOT NULL AND v_realLastMark IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
+      RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark id for % (% = %) is greater than mark id for % (% = %).', v_realFirstMark, v_firstMarkId, v_tsFirstMark, v_realLastMark, v_lastMarkId, v_tsLastMark;
     END IF;
 -- for each table of the emaj_relation table
     FOR r_tblsq IN
