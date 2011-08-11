@@ -52,7 +52,7 @@ Enhancements:
   - in emaj_create_group(), explicitely check that no table or sequence 
     already belong to another created group.
   - in emaj_hist table, add a column containing the id of the insertion 
-    transaction. 
+    transaction.
   - a new emaj_find_previous_mark_group() function returns the name of the 
     mark that immediately precedes a given date and time for a group.
   - a comment has been added to all E-Maj tables, types and roles, as well 
