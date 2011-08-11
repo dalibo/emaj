@@ -2530,6 +2530,7 @@ $_rlbk_groups_step2$
   DECLARE
     v_nbRetry       SMALLINT := 0;
     v_ok            BOOLEAN := false;
+    v_nbTbl         INT;
     r_tblsq         RECORD;
   BEGIN
 -- insert begin in the history
@@ -2539,6 +2540,7 @@ $_rlbk_groups_step2$
 -- in case of deadlock, retry up to 5 times
     WHILE NOT v_ok AND v_nbRetry < 5 LOOP
       BEGIN
+        v_nbTbl = 0;
 -- scan all tables of the session
         FOR r_tblsq IN
             SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
@@ -2547,6 +2549,7 @@ $_rlbk_groups_step2$
             LOOP
 --   lock each table
           EXECUTE 'LOCK TABLE ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+          v_nbTbl = v_nbTbl + 1;
         END LOOP;
 -- ok, all tables locked
         v_ok = true;
@@ -2561,7 +2564,7 @@ $_rlbk_groups_step2$
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES (CASE WHEN v_multiGroup THEN 'LOCK_SESSIONS' ELSE 'LOCK_SESSION' END, 'END', array_to_string(v_groupNames,','), 'Session #' || v_session || ' ; ' ||v_nbRetry || ' deadlock(s)');
+      VALUES (CASE WHEN v_multiGroup THEN 'LOCK_SESSIONS' ELSE 'LOCK_SESSION' END, 'END', array_to_string(v_groupNames,','), 'Session #' || v_session || ' : ' || v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
     RETURN;
   END;
 $_rlbk_groups_step2$;
