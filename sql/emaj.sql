@@ -133,7 +133,7 @@ $$;
 
 -- table containing the history of all E-Maj events  
 CREATE TABLE emaj.emaj_hist (                            -- records the history of 
-    hist_id                  SERIAL      NOT NULL,       -- internal id
+    hist_id                  BIGSERIAL   NOT NULL,       -- internal id
     hist_datetime            TIMESTAMPTZ NOT NULL 
                              DEFAULT clock_timestamp(),  -- insertion time
     hist_function            TEXT        NOT NULL,       -- main E-Maj function generating the event
@@ -200,7 +200,7 @@ $$;
 
 -- table containing the marksl
 CREATE TABLE emaj.emaj_mark (
-    mark_id                  SERIAL,                     -- serial id used to order rows (not to rely on timestamps 
+    mark_id                  BIGSERIAL   NOT NULL,       -- serial id used to order rows (not to rely on timestamps 
                                                          -- that are not safe if system time changes)
     mark_group               TEXT        NOT NULL,       -- group for which the mark has been set
     mark_name                TEXT        NOT NULL,       -- mark name
@@ -211,8 +211,8 @@ CREATE TABLE emaj.emaj_mark (
     mark_comment             TEXT,                       -- optional user comment
     mark_txid                BIGINT                      -- id of the tx that has set the mark
                              DEFAULT emaj.emaj_txid_current(),
-    mark_last_sequence_id    INT,                        -- last sequ_id for the group at the end of the _set_mark_groups operation
-    mark_last_seq_hole_id    INT,                        -- last sqhl_id for the group at _set_mark_groups time 
+    mark_last_sequence_id    BIGINT,                     -- last sequ_id for the group at the end of the _set_mark_groups operation
+    mark_last_seq_hole_id    BIGINT,                     -- last sqhl_id for the group at _set_mark_groups time 
     PRIMARY KEY (mark_group, mark_name),
     FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
     ) TABLESPACE tspemaj;
@@ -223,7 +223,7 @@ $$;
 -- table containing the sequences characteristics log 
 -- (to record at mark time the state of application sequences and sequences used by log tables) 
 CREATE TABLE emaj.emaj_sequence (
-    sequ_id                  SERIAL      NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
+    sequ_id                  BIGSERIAL   NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
                                                          -- on timestamps that are not safe if system time changes)
     sequ_schema              TEXT        NOT NULL,       -- application or 'emaj' schema or that owns the sequence
     sequ_name                TEXT        NOT NULL,       -- application or emaj sequence name
@@ -248,7 +248,7 @@ $$;
 -- these holes are due to rollback operations that do not adjust log sequences
 -- the hole size = difference of sequence's current last_value and last value at the rollback mark
 CREATE TABLE emaj.emaj_seq_hole (
-    sqhl_id                  SERIAL      NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
+    sqhl_id                  BIGSERIAL   NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
                                                          -- on timestamps that are not safe if system time changes)
     sqhl_schema              TEXT        NOT NULL,       -- schema that owns the table
     sqhl_table               TEXT        NOT NULL,       -- application table for which a sequence hole is recorded
@@ -782,7 +782,7 @@ $_drop_seq$
   END;
 $_drop_seq$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ,  v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId INT, v_lastSeqHoleId INT)
+CREATE or REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ,  v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_rlbk_tbl$
 -- This function rollbacks one table to a given timestamp
@@ -880,7 +880,7 @@ $_rlbk_tbl$
   END;
 $_rlbk_tbl$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId INT) 
+CREATE or REPLACE FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_rlbk_seq$
 -- This function rollbacks one sequence to a given mark
@@ -1845,8 +1845,8 @@ $_set_mark_groups$
     v_emajSchema      TEXT := 'emaj';
     v_nbTb            INT := 0;
     v_timestamp       TIMESTAMPTZ;
-    v_lastSequenceId  INT;
-    v_lastSeqHoleId   INT;
+    v_lastSequenceId  BIGINT;
+    v_lastSeqHoleId   BIGINT;
     v_fullSeqName     TEXT;
     v_seqName         TEXT;
     v_stmt            TEXT;
@@ -1995,8 +1995,8 @@ $emaj_delete_mark_group$
   DECLARE
     v_groupState     TEXT;
     v_realMark       TEXT;
-    v_markId         INT;
-    v_newMinId       INT;
+    v_markId         BIGINT;
+    v_newMinId       BIGINT;
     v_datetimeMark   TIMESTAMPTZ;
     v_datetimeNewMin TIMESTAMPTZ;
     v_cpt            INT;
@@ -2067,7 +2067,7 @@ $emaj_delete_before_mark_group$
   DECLARE
     v_groupState     TEXT;
     v_realMark       TEXT;
-    v_markId         INT;
+    v_markId         BIGINT;
     v_datetimeMark   TIMESTAMPTZ;
     v_nbMark         INT;
   BEGIN
@@ -2643,8 +2643,8 @@ $_rlbk_groups_step5$
   DECLARE
     v_nbTbl             INT := 0;
     v_timestampMark     TIMESTAMPTZ;
-    v_lastSequenceId    INT;
-    v_lastSeqHoleId     INT;
+    v_lastSequenceId    BIGINT;
+    v_lastSeqHoleId     BIGINT;
   BEGIN
 -- fetch the timestamp mark again
     SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
@@ -2708,9 +2708,9 @@ $_rlbk_groups_step7$
 -- It returns the number of processed sequences.
   DECLARE
     v_realMark          TEXT;
-    v_markId            INT;
+    v_markId            BIGINT;
     v_timestampMark     TIMESTAMPTZ;
-    v_lastSequenceId    INT;
+    v_lastSequenceId    BIGINT;
     v_nbSeq             INT;
     v_markName          TEXT;
   BEGIN
@@ -2720,7 +2720,6 @@ $_rlbk_groups_step7$
       RAISE EXCEPTION '_rlbk_groups_step7: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
     END IF;
 -- if "unlogged" rollback, delete all marks and sequence holes later than the now rollbacked mark
--- (not needed if mark = 'EMAJ_LAST_MARK')
     IF v_unloggedRlbk THEN
 -- get the highest mark id for all groups
       SELECT max(mark_id) INTO v_markId
@@ -2729,7 +2728,7 @@ $_rlbk_groups_step7$
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
         SELECT CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 
                'MARK DELETED', mark_group, 'mark ' || mark_name || ' has been deleted' FROM emaj.emaj_mark 
-          WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId;
+          WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId ORDER BY mark_id;
 -- and finaly delete these useless marks (the related sequences have been already deleted by rollback functions)
       DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId; 
     END IF;
@@ -3347,8 +3346,8 @@ REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId INT, v_lastSeqHoleId INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId INT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
@@ -3408,8 +3407,8 @@ GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames T
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId INT, v_lastSeqHoleId INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId INT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
