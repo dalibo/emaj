@@ -42,10 +42,10 @@ $tmp$
       RAISE EXCEPTION 'E-Maj installation: the "tspemaj" tablespace doesn''t exist.';
     END IF;
 -- check the dblink contrib is installed
-    PERFORM 0 FROM pg_proc WHERE proname = 'dblink';
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj installation: dblink contrib/extension is not installed.';
-    END IF;
+--    PERFORM 0 FROM pg_proc WHERE proname = 'dblink';
+--    IF NOT FOUND THEN
+--      RAISE EXCEPTION 'E-Maj installation: dblink contrib/extension is not installed.';
+--    END IF;
 --
     RETURN; 
   END;

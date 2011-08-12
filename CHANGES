@@ -62,7 +62,7 @@ Enhancements:
     processed as NULL values.
   - a check is performed at the beginning of the E-Maj installation to be 
     sure that the user performing the installation is a superuser, tspemaj 
-    tablespace exists and dblink extension is installed.
+    tablespace exists.
 
 Bug fixes:
   - in emaj_create_group(), check the supplied group name is not null, and 
