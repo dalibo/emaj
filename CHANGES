@@ -14,7 +14,7 @@ Enhancements:
     groups in LOGGING state during a long period, without being limited by 
     the disk space for log tables. The drawback is the time needed to 
     delete large amount of logs, as log tables cannot be TRUNCATEd.
-  - a new emaj_find_previous_mark_group() function returns the name of the 
+  - a new emaj_get_previous_mark_group() function returns the name of the 
     mark that immediately precedes a given date and time for a group. This 
     may help in using the emaj_delete_before_mark_group() function.
   - emaj_delete_mark_group() function now returns 1 (i.e. the number of 
@@ -53,8 +53,6 @@ Enhancements:
     already belong to another created group.
   - in emaj_hist table, add a column containing the id of the insertion 
     transaction.
-  - a new emaj_find_previous_mark_group() function returns the name of the 
-    mark that immediately precedes a given date and time for a group.
   - a comment has been added to all E-Maj tables, types and roles, as well 
     as to all functions callable by users.
   - in emaj_log_stat_group() and emaj_detailed_log_stat_group(), empty 
