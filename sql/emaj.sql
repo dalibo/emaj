@@ -71,7 +71,7 @@ COMMENT ON SCHEMA emaj IS $$
 Holds all the functionality needed for using E-Maj.
 $$;
 
--- create, execute and drop a specific plpgsql function to create emaj roles and the emaj_txid_current() function
+-- create, execute and drop a specific plpgsql function to create emaj roles and the _txid_current() function
 CREATE or REPLACE FUNCTION emaj.emaj_tmp_create_some_components() 
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
@@ -98,7 +98,7 @@ $tmp$
     END IF;
 -- create a SQL emaj_txid_function that encapsulates the standart txid_current function with postgres 8.3+
 -- or just returns 0 with postgres 8.2
-    v_stmt = 'CREATE or REPLACE FUNCTION emaj.emaj_txid_current() RETURNS BIGINT LANGUAGE SQL AS $$ SELECT ';
+    v_stmt = 'CREATE or REPLACE FUNCTION emaj._txid_current() RETURNS BIGINT LANGUAGE SQL AS $$ SELECT ';
     IF v_pgversion < '8.3' THEN
       v_stmt = v_stmt || '0::BIGINT;$$';
     ELSE
@@ -143,7 +143,7 @@ CREATE TABLE emaj.emaj_hist (                            -- records the history 
     hist_user                TEXT
                              DEFAULT session_user,       -- the user who call the E-Maj function
     hist_txid                BIGINT
-                             DEFAULT emaj.emaj_txid_current(), -- and its tx_id
+                             DEFAULT emaj._txid_current(), -- and its tx_id
     PRIMARY KEY (hist_id)
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_hist IS $$
@@ -210,7 +210,7 @@ CREATE TABLE emaj.emaj_mark (
                                                          --   'ACTIVE' and 'DELETED'
     mark_comment             TEXT,                       -- optional user comment
     mark_txid                BIGINT                      -- id of the tx that has set the mark
-                             DEFAULT emaj.emaj_txid_current(),
+                             DEFAULT emaj._txid_current(),
     mark_last_sequence_id    BIGINT,                     -- last sequ_id for the group at the end of the _set_mark_groups operation
     mark_last_seq_hole_id    BIGINT,                     -- last sqhl_id for the group at _set_mark_groups time 
     PRIMARY KEY (mark_group, mark_name),
@@ -568,7 +568,7 @@ $_create_tbl$
     EXECUTE 'ALTER TABLE ' || v_logTableName
          || ' ADD COLUMN emaj_changed TIMESTAMPTZ DEFAULT clock_timestamp()';
     EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_txid BIGINT DEFAULT emaj.emaj_txid_current()';
+         || ' ADD COLUMN emaj_txid BIGINT DEFAULT emaj._txid_current()';
     EXECUTE 'ALTER TABLE ' || v_logTableName
          || ' ADD COLUMN emaj_user VARCHAR(32) DEFAULT session_user';
 -- alter the sequence associated to the emaj_id column to set the increment to 2 (so that an update operation can safely have its 2 log rows)
@@ -3346,6 +3346,7 @@ GRANT ALL ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_adm;
 
 -- revoke grants on all function from PUBLIC
+REVOKE ALL ON FUNCTION emaj._txid_current() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._purge_hist() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_name(TEXT, TEXT) FROM PUBLIC;
@@ -3407,6 +3408,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) FROM P
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 
 -- and give appropriate rights on functions to emaj_adm role
+GRANT EXECUTE ON FUNCTION emaj._txid_current() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._purge_hist() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_adm;
