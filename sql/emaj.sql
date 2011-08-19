@@ -1046,9 +1046,6 @@ $emaj_verify_all$
            OR
            (proname LIKE '%_rlbk_fnct' AND proname NOT IN (
             SELECT rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation))
-           OR
-           (proname LIKE '%_trunc_fnct' AND proname NOT IN (
-            SELECT rel_schema || '_' || rel_tblseq || '_trunc_fnct' FROM emaj.emaj_relation))
           )
     LOOP
       RETURN NEXT r_object.msg;
