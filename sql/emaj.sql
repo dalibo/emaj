@@ -1993,8 +1993,9 @@ $emaj_delete_mark_group$
     v_groupState     TEXT;
     v_realMark       TEXT;
     v_markId         BIGINT;
-    v_newMinId       BIGINT;
     v_datetimeMark   TIMESTAMPTZ;
+    v_idNewMin       BIGINT;
+    v_markNewMin     TEXT;
     v_datetimeNewMin TIMESTAMPTZ;
     v_cpt            INT;
   BEGIN
@@ -2005,10 +2006,6 @@ $emaj_delete_mark_group$
     SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_delete_mark_group: group % has not been created.', v_groupName;
-    END IF;
--- check that the group is in LOGGING state
-    IF v_groupState <> 'LOGGING' THEN
-      RAISE EXCEPTION 'emaj_delete_mark_group: A mark cannot be deleted for group % because it is not in logging state. An emaj_reset_group function can be performed if you wish to reclaim disk space.', v_groupName;
     END IF;
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
@@ -2025,21 +2022,19 @@ $emaj_delete_mark_group$
     SELECT mark_id, mark_datetime INTO v_markId, v_datetimeMark
       FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
 -- OK, now get the id and timestamp of the future first mark
-    SELECT mark_id, mark_datetime INTO v_newMinId, v_datetimeNewMin 
+    SELECT mark_id, mark_name, mark_datetime INTO v_idNewMin, v_markNewMin, v_datetimeNewMin 
       FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_realMark ORDER BY mark_id LIMIT 1;
--- if the mark to delete is the first mark, delete data from log tables and emaj_sequence that will becomes useless
-    IF v_markId < v_newMinId THEN
--- delete rows from all log tables
-      PERFORM emaj._delete_log_before_group(v_groupName, v_datetimeNewMin);
--- delete all sequence holes that are prior the new first mark for the tables of the group
-      DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
-        WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
-          AND sqhl_id <= (SELECT mark_last_seq_hole_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark);
+    IF v_markId < v_idNewMin THEN
+-- if the mark to delete is the first one, 
+--   ... process its deletion with _delete_before_mark_group(), as the first rows of log tables become useless
+      PERFORM emaj._delete_before_mark_group(v_groupName, v_markNewMin);
+    ELSE
+-- otherwise, 
+--   ... the sequences related to the mark to delete can be suppressed
+      DELETE FROM emaj.emaj_sequence WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark;
+--   ... and the mark to delete can be physicaly deleted
+      DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
     END IF;
--- now the sequences related to the mark to delete can be suppressed
-    DELETE FROM emaj.emaj_sequence WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark;
--- and the mark to delete can be physicaly deleted
-    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('DELETE_MARK_GROUP', 'END', v_groupName, v_mark);
@@ -2076,10 +2071,6 @@ $emaj_delete_before_mark_group$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_delete_before_mark_group: group % has not been created.', v_groupName;
     END IF;
--- check that the group is in LOGGING state
-    IF v_groupState <> 'LOGGING' THEN
-      RAISE EXCEPTION 'emaj_delete_before_mark_group: Marks cannot be deleted for group % because it is not in logging state. An emaj_reset_group function can be performed if you wish to reclaim disk space.', v_groupName;
-    END IF;
 -- return NULL if mark name is NULL
     IF v_mark IS NULL THEN
       RETURN NULL;
@@ -2089,22 +2080,8 @@ $emaj_delete_before_mark_group$
     IF v_realMark IS NULL THEN
       RAISE EXCEPTION 'emaj_delete_before_mark_group: % is not a known mark for group %.', v_mark, v_groupName;
     END IF;
--- retrieve the id and datetime of the new first mark
-    SELECT mark_id, mark_datetime INTO v_markId, v_datetimeMark
-      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
--- delete rows from all log tables
-    PERFORM emaj._delete_log_before_group(v_groupName, v_datetimeMark);
--- delete all sequence holes that are prior the new first mark for the tables of the group
-    DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
-        AND sqhl_id <= (SELECT mark_last_seq_hole_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark);
--- now the sequences related to the mark to delete can be suppressed
-    DELETE FROM emaj.emaj_sequence WHERE (sequ_mark, sequ_datetime) IN 
-      (SELECT mark_name, mark_datetime FROM emaj.emaj_mark 
-         WHERE mark_group = v_groupName AND mark_id < v_markId);
--- and finaly delete marks
-    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id < v_markId;
-    GET DIAGNOSTICS v_nbMark = ROW_COUNT;
+-- effectively delete all marks before the supplied mark
+    SELECT emaj._delete_before_mark_group(v_groupName, v_realMark) INTO v_nbMark;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('DELETE_BEFORE_MARK_GROUP', 'END', v_groupName,  v_nbMark || ' marks deleted');
@@ -2115,19 +2092,28 @@ COMMENT ON FUNCTION emaj.emaj_delete_before_mark_group(TEXT,TEXT) IS $$
 Deletes all marks preceeding a given mark for an E-Maj group.
 $$;
 
-CREATE or REPLACE FUNCTION emaj._delete_log_before_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) 
-RETURNS void LANGUAGE plpgsql AS
-$_delete_log_before_group$
--- This function deletes from all log tables related to a group rows prior to a given datetime.
--- It is called by emaj_delete_mark_group() and emaj_delete_before_mark_group() functions.
--- Input: group name, timestamp corresponding to a future first mark
+CREATE or REPLACE FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) 
+RETURNS integer LANGUAGE plpgsql AS
+$_delete_before_mark_group$
+-- This function effectively deletes all marks set before a given mark. 
+-- It deletes rows corresponding to the marks to delete from emaj_mark, emaj_sequence, emaj_seq_hole.  
+-- It also deletes rows from all concerned log tables.
+-- Input: group name, name of the new first mark
+-- Output: number of deleted marks
   DECLARE
+    v_markId         BIGINT;
+    v_datetimeMark   TIMESTAMPTZ;
     v_emajSchema     TEXT := 'emaj';
     v_seqName        TEXT;
     v_logTableName   TEXT;
     v_emaj_id        BIGINT;
+    v_nbMark         INT;
     r_tblsq          RECORD;
   BEGIN
+-- retrieve the id and datetime of the new first mark
+    SELECT mark_id, mark_datetime INTO v_markId, v_datetimeMark
+      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_mark;
+-- delete rows from all log tables
 -- loop on all tables of the group
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
@@ -2138,16 +2124,27 @@ $_delete_log_before_group$
 -- get the emaj_id corresponding to the new first mark
       SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END INTO v_emaj_id
         FROM emaj.emaj_sequence
-        WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_datetime;
+        WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_datetimeMark;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_delete_log_before_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_datetime;
+        RAISE EXCEPTION '_delete_before_mark_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_datetime;
       END IF;
 -- delete log rows prior to the new first mark
       EXECUTE 'DELETE FROM ' || v_logTableName || ' WHERE emaj_id < ' || v_emaj_id;
     END LOOP;
-    RETURN;
+-- delete all sequence holes that are prior the new first mark for the tables of the group
+    DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
+        AND sqhl_id <= (SELECT mark_last_seq_hole_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_mark);
+-- now the sequences related to the mark to delete can be suppressed
+    DELETE FROM emaj.emaj_sequence WHERE (sequ_mark, sequ_datetime) IN 
+      (SELECT mark_name, mark_datetime FROM emaj.emaj_mark 
+         WHERE mark_group = v_groupName AND mark_id < v_markId);
+-- and finaly delete marks
+    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id < v_markId;
+    GET DIAGNOSTICS v_nbMark = ROW_COUNT;
+    RETURN v_nbMark;
   END;
-$_delete_log_before_group$;
+$_delete_before_mark_group$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT)
 RETURNS void LANGUAGE plpgsql AS
@@ -3380,7 +3377,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEX
 REVOKE ALL ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._delete_log_before_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC; 
@@ -3442,7 +3439,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark 
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._delete_log_before_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm; 
