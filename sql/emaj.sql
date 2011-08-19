@@ -1959,10 +1959,6 @@ $emaj_get_previous_mark_group$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_get_previous_mark_group: group % has not been created.', v_groupName;
     END IF;
--- check that the group is in LOGGING state
-    IF v_groupState <> 'LOGGING' THEN
-      RAISE EXCEPTION 'emaj_get_previous_mark_group: group % is not in logging state.', v_groupName;
-    END IF;
 -- find the requested mark
     SELECT mark_name INTO v_markName FROM emaj.emaj_mark 
       WHERE mark_group = v_groupName AND mark_datetime < v_datetime
@@ -2151,11 +2147,10 @@ RETURNS void LANGUAGE plpgsql AS
 $emaj_rename_mark_group$
 -- This function renames an existing mark.
 -- The group can be either in LOGGING or IDLE state.
--- Rows from emaj_mark and emaj_sequence tables are updated accordingly t is not worth having a group in LOGGING state !).
+-- Rows from emaj_mark and emaj_sequence tables are updated accordingly.
 -- Input: group name, mark to rename, new name for the mark
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark to rename to specify the last set mark.
   DECLARE
---    v_emajSchema    TEXT := 'emaj';
     v_realMark       TEXT;
   BEGIN
 -- insert begin in the history
