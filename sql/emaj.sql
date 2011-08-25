@@ -175,6 +175,7 @@ CREATE TABLE emaj.emaj_group (
     group_is_rollbackable    BOOLEAN,                    -- false for 'AUDIT_ONLY' groups, true for 'ROLLBACKABLE' groups
     group_creation_datetime  TIMESTAMPTZ NOT NULL        -- start time of the transaction that created the group
                              DEFAULT transaction_timestamp(),
+    group_comment            TEXT,                       -- optional user comment
     PRIMARY KEY (group_name)
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_group IS $$
@@ -1372,6 +1373,31 @@ COMMENT ON FUNCTION emaj.emaj_create_group(TEXT, BOOLEAN) IS $$
 Creates an E-Maj group.
 $$;
 
+CREATE or REPLACE FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT) 
+RETURNS void LANGUAGE plpgsql AS
+$emaj_comment_group$
+-- This function sets or modifies a comment on a group by updating the group_comment of the emaj_group table.
+-- Input: group name, comment
+--   To reset an existing comment for a group, the supplied comment can be NULL.
+  DECLARE
+    v_groupState     TEXT;
+  BEGIN
+-- attempt to update the group_comment column from emaj_group table
+    UPDATE emaj.emaj_group SET group_comment = v_comment WHERE group_name = v_groupName;
+-- check that the group has been found
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_comment_group: group % has not been created.', v_groupName;
+    END IF;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object) 
+      VALUES ('COMMENT_GROUP', v_groupName);
+    RETURN;
+  END;
+$emaj_comment_group$;
+COMMENT ON FUNCTION emaj.emaj_comment_group(TEXT,TEXT) IS $$
+Sets a comment on an E-Maj group.
+$$;
+
 CREATE or REPLACE FUNCTION emaj.emaj_drop_group(v_groupName TEXT) 
 RETURNS INT LANGUAGE plpgsql AS 
 $emaj_drop_group$
@@ -1912,7 +1938,7 @@ $_set_mark_groups$;
 CREATE or REPLACE FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) 
 RETURNS void LANGUAGE plpgsql AS
 $emaj_comment_mark_group$
--- This function sets a comment on a mark by updating the mark_comment of the emaj_mark table.
+-- This function sets or modifies a comment on a mark by updating the mark_comment of the emaj_mark table.
 -- Input: group name, mark to comment, comment
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark to delete to specify the last set mark.
 --   To reset an existing comment for a mark, the supplied comment can be NULL.
@@ -3356,6 +3382,7 @@ REVOKE ALL ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) FROM PUBLIC;
@@ -3418,6 +3445,7 @@ GRANT EXECUTE ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) TO emaj_adm;
