@@ -31,6 +31,11 @@ $tmp$
     v_stmt          TEXT;
   BEGIN
 -- the creation of the function implicitely validates that plpgsql language is created!
+-- check postgres version is >= 8.2 
+--   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') < '8.2' THEN
+      RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
+    END IF;
 -- check the current role is a superuser
     PERFORM 0 FROM pg_roles WHERE rolname = current_user AND rolsuper;
     IF NOT FOUND THEN
@@ -76,7 +81,7 @@ CREATE or REPLACE FUNCTION emaj.emaj_tmp_create_some_components()
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
-    v_pgversion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
+    v_pgVersion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
     v_stmt          TEXT;
   BEGIN
 -- create emaj roles (NOLOGIN), if they do not exist 
@@ -99,7 +104,7 @@ $tmp$
 -- create a SQL emaj_txid_function that encapsulates the standart txid_current function with postgres 8.3+
 -- or just returns 0 with postgres 8.2
     v_stmt = 'CREATE or REPLACE FUNCTION emaj._txid_current() RETURNS BIGINT LANGUAGE SQL AS $$ SELECT ';
-    IF v_pgversion < '8.3' THEN
+    IF v_pgVersion < '8.3' THEN
       v_stmt = v_stmt || '0::BIGINT;$$';
     ELSE
       v_stmt = v_stmt || 'txid_current();$$';
@@ -175,6 +180,8 @@ CREATE TABLE emaj.emaj_group (
     group_is_rollbackable    BOOLEAN,                    -- false for 'AUDIT_ONLY' groups, true for 'ROLLBACKABLE' groups
     group_creation_datetime  TIMESTAMPTZ NOT NULL        -- start time of the transaction that created the group
                              DEFAULT transaction_timestamp(),
+    group_pg_version         TEXT        NOT NULL        -- postgres version at emaj_create_group() time
+                             DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
     group_comment            TEXT,                       -- optional user comment
     PRIMARY KEY (group_name)
     ) TABLESPACE tspemaj;
@@ -521,7 +528,7 @@ $_create_tbl$
 -- other variables
     v_attname          TEXT;
     v_relhaspkey       BOOLEAN;
-    v_pgversion        TEXT := emaj._pg_version();
+    v_pgVersion        TEXT := emaj._pg_version();
     r_trigger          RECORD;
     v_triggerList      TEXT := '';
 -- cursor to retrieve all columns of the application table
@@ -607,7 +614,7 @@ $_create_tbl$
     EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
 -- creation of the trigger that blocks any TRUNCATE on the application table, using the common _forbid_truncate_fnct() function 
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
-    IF v_pgversion >= '8.4' THEN
+    IF v_pgVersion >= '8.4' THEN
       EXECUTE 'DROP TRIGGER IF EXISTS ' || v_truncTriggerName || ' ON ' || v_fullTableName;
       EXECUTE 'CREATE TRIGGER ' || v_truncTriggerName
            || ' BEFORE TRUNCATE ON ' || v_fullTableName
@@ -702,7 +709,7 @@ $_create_tbl$
       END IF;
 -- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger,
 -- This check is not done for postgres 8.2 because column tgconstraint doesn't exist
-    IF v_pgversion >= '8.3' THEN
+    IF v_pgVersion >= '8.3' THEN
       FOR r_trigger IN 
         SELECT tgname FROM pg_trigger WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE '%emaj_%_trg'
       LOOP
@@ -734,7 +741,7 @@ $_drop_tbl$
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_emajSchema       TEXT := 'emaj';
-    v_pgversion        TEXT := emaj._pg_version();
+    v_pgVersion        TEXT := emaj._pg_version();
     v_fullTableName    TEXT;
     v_logTableName     TEXT;
     v_logFnctName      TEXT;
@@ -753,7 +760,7 @@ $_drop_tbl$
 -- delete the log trigger on the application table
     EXECUTE 'DROP TRIGGER IF EXISTS ' || v_logTriggerName || ' ON ' || v_fullTableName;
 -- delete the truncate trigger on the application table
-    IF v_pgversion >= '8.4' THEN
+    IF v_pgVersion >= '8.4' THEN
       EXECUTE 'DROP TRIGGER IF EXISTS ' || v_truncTriggerName || ' ON ' || v_fullTableName;
     END IF;
 -- delete log and rollback functions,
@@ -889,7 +896,7 @@ $_rlbk_seq$
 -- Input: schema name and table name, mark
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application sequence.
   DECLARE
-    v_pgversion     TEXT := emaj._pg_version();
+    v_pgVersion     TEXT := emaj._pg_version();
     v_fullSeqName   TEXT;
     v_stmt          TEXT;
     mark_seq_rec    RECORD;
@@ -912,7 +919,7 @@ $_rlbk_seq$
 -- Read the current sequence's characteristics
     v_fullSeqName := quote_ident(v_schemaName) || '.' || quote_ident(v_seqName);
     v_stmt = 'SELECT last_value, ';
-    IF v_pgversion <= '8.3' THEN
+    IF v_pgVersion <= '8.3' THEN
        v_stmt = v_stmt || '0 as start_value, '; 
     ELSE
        v_stmt = v_stmt || 'start_value, ';
@@ -1085,19 +1092,34 @@ $_verify_group$
 -- The function verifies the consistency between log and application tables for a group
 -- It generates an error if the check fails
   DECLARE
-    v_emajSchema       TEXT := 'emaj';
-    v_pgversion        TEXT := emaj._pg_version();
-    v_fullTableName    TEXT;
-    v_logTableName     TEXT;
-    v_logFnctName      TEXT;
-    v_rlbkFnctName     TEXT;
-    v_logTriggerName   TEXT;
-    v_truncTriggerName TEXT;
-    v_isRollbackable   BOOLEAN;
-    r_tblsq            RECORD;
+    v_emajSchema        TEXT := 'emaj';
+    v_pgVersion         TEXT := emaj._pg_version();
+    v_isRollbackable    BOOLEAN;
+    v_creationPgVersion TEXT;
+    v_fullTableName     TEXT;
+    v_logTableName      TEXT;
+    v_logFnctName       TEXT;
+    v_rlbkFnctName      TEXT;
+    v_logTriggerName    TEXT;
+    v_truncTriggerName  TEXT;
+    r_tblsq             RECORD;
   BEGIN
--- get the group type
-    SELECT group_is_rollbackable INTO v_isRollbackable FROM emaj.emaj_group WHERE group_name = v_groupName;
+-- get some characteristics of the group
+    SELECT group_is_rollbackable, group_pg_version INTO v_isRollbackable, v_creationPgVersion 
+      FROM emaj.emaj_group WHERE group_name = v_groupName;
+-- check the postgres version at creation time is compatible with the current version
+-- warning: Comparisons on version numbers are alphanumeric. 
+--          But we suppose these tests will not be useful anymore when 10.0 will appear!
+--   for 8.1-, E-Maj is not compatible
+    IF v_pgVersion < '8.2' THEN
+      RAISE EXCEPTION '_verify_group: The current postgres version (%) is not compatible with E-Maj.',version();
+    END IF;
+--   for 8.2 and 8.3, both major versions must be the same
+    IF ((v_pgVersion = '8.2' OR v_pgVersion = '8.3') AND substring (v_creationPgVersion FROM E'(\\d+\\.\\d+)') <> v_pgVersion) OR
+--   for 8.4+, both major versions must be 8.4+
+       (v_pgVersion >= '8.4' AND substring (v_creationPgVersion FROM E'(\\d+\\.\\d+)') < '8.4') THEN
+      RAISE EXCEPTION '_verify_group: Group % has been created with a non compatible postgresql version (%). It must be dropped and recreated.',v_groupName,v_creationPgVersion;
+    END IF;
 -- per table verifications
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
@@ -1139,7 +1161,7 @@ $_verify_group$
         IF NOT FOUND THEN
           RAISE EXCEPTION '_verify_group: Log trigger % not found.',v_logTriggerName;
         END IF;
-        IF v_pgversion >= '8.4' THEN
+        IF v_pgVersion >= '8.4' THEN
           PERFORM tgname FROM pg_trigger WHERE tgname = v_truncTriggerName;
           IF NOT FOUND THEN
             RAISE EXCEPTION '_verify_group: Truncate trigger % not found.',v_truncTriggerName;
@@ -1562,7 +1584,7 @@ $_start_groups$
 -- Output: number of processed tables
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
-    v_pgversion        TEXT := emaj._pg_version();
+    v_pgVersion        TEXT := emaj._pg_version();
     v_i                INT;
     v_groupState       TEXT;
     v_nbTb             INT := 0;
@@ -1619,7 +1641,7 @@ $_start_groups$
         v_logTriggerName := quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_emaj_log_trg');
         v_truncTriggerName := quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_emaj_trunc_trg');
         EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || v_logTriggerName;
-        IF v_pgversion >= '8.4' THEN
+        IF v_pgVersion >= '8.4' THEN
           EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || v_truncTriggerName;
         END IF;
         ELSEIF r_tblsq.rel_kind = 'S' THEN
@@ -1680,7 +1702,7 @@ $_stop_groups$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
-    v_pgversion        TEXT := emaj._pg_version();
+    v_pgVersion        TEXT := emaj._pg_version();
     v_validGroupNames  TEXT[];
     v_i                INT;
     v_groupState       TEXT;
@@ -1728,7 +1750,7 @@ $_stop_groups$
           v_logTriggerName := quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_emaj_log_trg');
           v_truncTriggerName := quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_emaj_trunc_trg');
           EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
-          IF v_pgversion >= '8.4' THEN
+          IF v_pgVersion >= '8.4' THEN
             EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_truncTriggerName;
           END IF;
           ELSEIF r_tblsq.rel_kind = 'S' THEN
@@ -1864,7 +1886,7 @@ $_set_mark_groups$
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
-    v_pgversion       TEXT := emaj._pg_version();
+    v_pgVersion       TEXT := emaj._pg_version();
     v_emajSchema      TEXT := 'emaj';
     v_nbTb            INT := 0;
     v_timestamp       TIMESTAMPTZ;
@@ -1891,7 +1913,7 @@ $_set_mark_groups$
                  'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
                  ') SELECT '''|| v_emajSchema || ''', ''' || v_seqName || ''', ''' || v_timestamp || ''', ''' || v_mark || 
                  ''', ' || 'last_value, ';
-        IF v_pgversion <= '8.3' THEN
+        IF v_pgVersion <= '8.3' THEN
            v_stmt = v_stmt || '0, ';
         ELSE
            v_stmt = v_stmt || 'start_value, ';
@@ -1908,7 +1930,7 @@ $_set_mark_groups$
                  ') SELECT ''' || r_tblsq.rel_schema || ''', ''' || 
                  r_tblsq.rel_tblseq || ''', ''' || v_timestamp || ''', ''' || v_mark || ''', ' ||
                  'last_value, ';
-        IF v_pgversion <= '8.3' THEN
+        IF v_pgVersion <= '8.3' THEN
            v_stmt = v_stmt || '0, ';
         ELSE
            v_stmt = v_stmt || 'start_value, ';

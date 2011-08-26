@@ -47,9 +47,6 @@ Enhancements:
     any primary key.
   - in parallel rollback processing, "subgroups" are now named "sessions" 
     to avoid confusion in multi-groups rollbacks.
-  - a check on the max_prepared_transaction is performed at installation 
-    time and a warning is reported if the setting would block the use of the 
-    parallel rollback feature. 
   - in emaj_estimate_rollback_duration(), check that the group is in LOGGING 
     state.
   - in emaj_create_group(), explicitely check that no table or sequence 
@@ -62,8 +59,14 @@ Enhancements:
     strings can be supplied as mark names. In such a case, there are 
     processed as NULL values.
   - a check is performed at the beginning of the E-Maj installation to be 
-    sure that the user performing the installation is a superuser, tspemaj 
-    tablespace exists.
+    sure that the current postgres version is compatible with E-Maj, the user 
+    performing the installation is a superuser and tspemaj tablespace exists.
+  - a check on the max_prepared_transaction is performed at installation 
+    time and a warning is reported if the setting would block the use of the 
+    parallel rollback feature. 
+  - Add a check at group creation, set mark and rollback times to verify that 
+    the group has been created with a compatible postgres version (for 
+    instance, a group created in 8.3 should not be directly used in 8.4).
 
 Bug fixes:
   - in emaj_create_group(), check the supplied group name is not null, and 
