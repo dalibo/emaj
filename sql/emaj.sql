@@ -1206,7 +1206,7 @@ $_check_fk_groups$
   DECLARE
     r_fk             RECORD;
   BEGIN
--- issue a warning if a table of the groups has a foreign key that reference a table outside the groups
+-- issue a warning if a table of the groups has a foreign key that references a table outside the groups
     FOR r_fk IN
       SELECT c.conname,r.rel_schema,r.rel_tblseq,nf.nspname,tf.relname 
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace nf,pg_class tf, emaj.emaj_relation r
@@ -1758,8 +1758,8 @@ $_stop_groups$
         END IF;
         v_nbTb = v_nbTb + 1;
       END LOOP;
--- set all marks for the groups from the emaj_mark table in deleted state to avoid any further rollback
-      UPDATE emaj.emaj_mark SET mark_state = 'DELETED' WHERE mark_group = ANY (v_validGroupNames); 
+-- set all marks for the groups from the emaj_mark table in 'DELETED' state to avoid any further rollback
+      UPDATE emaj.emaj_mark SET mark_state = 'DELETED' WHERE mark_group = ANY (v_validGroupNames) AND mark_state <> 'DELETED';
 -- update the state of the groups rows from the emaj_group table
       UPDATE emaj.emaj_group SET group_state = 'IDLE' WHERE group_name = ANY (v_validGroupNames);
     END IF;
