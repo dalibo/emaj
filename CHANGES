@@ -34,6 +34,10 @@ Enhancements:
     emaj_rollback_groups, emaj_logged_rollback_groups and 
     emaj_rollback_and_stop_groups take as first argument an array of group 
     names.
+  - emaj_param rows describing parameters default values are no longer 
+    inserted at installation time. The default values are only set when 
+    needed in functions. To change the default values, E-Maj administrator 
+    needs to insert rows into emaj_param (instead of update them).
   - a new emaj_comment_group function sets (or resets) a comment on an 
     existing group.
   - a new emaj_comment_mark_group function sets (or resets) a comment on an 
@@ -63,7 +67,7 @@ Enhancements:
     performing the installation is a superuser and tspemaj tablespace exists.
   - a check on the max_prepared_transaction is performed at installation 
     time and a warning is reported if the setting would block the use of the 
-    parallel rollback feature. 
+    parallel rollback feature.
   - Add a check at group creation, set mark and rollback times to verify that 
     the group has been created with a compatible postgres version (for 
     instance, a group created in 8.3 should not be directly used in 8.4).
