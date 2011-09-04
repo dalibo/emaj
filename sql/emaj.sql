@@ -14,7 +14,7 @@
 -- 	-> the concerned cluster must contain a tablespace named "tspemaj", for instance previously created by
 --	   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
 --	-> the plpgsql language must have been created in the concerned database,
---  -> the dblink contrib/extension must have been installed.
+--  (-> the dblink contrib/extension must have been installed.)
 
 \set ON_ERROR_STOP ON
 \set QUIET ON
@@ -68,9 +68,14 @@ BEGIN TRANSACTION;
 --                                      --
 ------------------------------------------
 
--- (re)creation of the schema 'emaj' containing all the needed objets
-
+-- if an emaj schema already exists, drop it
 DROP SCHEMA IF EXISTS emaj CASCADE;
+
+
+
+
+-- creation of the schema 'emaj' containing all the needed objets
+
 CREATE SCHEMA emaj;
 COMMENT ON SCHEMA emaj IS $$
 Holds all the functionality needed for using E-Maj.
@@ -330,21 +335,25 @@ $$;
 
 ------------------------------------
 --                                --
--- Default parameters             --
+-- 'Fixed' parameters             --
 --                                --
 ------------------------------------
 INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.10.0');
+
+-- Other parameters are optional. They are set by users if needed.
+
 -- The history_retention parameter defines the time interval when a row remains in the emaj history table - default is 1 month
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 month'::interval);
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 month'::interval);
+
+-- 4 parameters are used by the emaj_estimate_rollback_duration function as a default value to compute the approximate duration of a rollback operation.
 -- The avg_row_rollback_duration parameter defines the average duration needed to rollback a row.
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','100 microsecond'::interval);
 -- The avg_row_delete_log_duration parameter defines the average duration needed to delete log rows.
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','10 -microsecond'::interval);
 -- The fixed_table_rollback_duration parameter defines the fixed rollback cost for any table or sequence belonging to a group
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','5 millisecond'::interval);
 -- The fixed_table_with_rollback_duration parameter defines the additional fixed rollback cost for any table that has effective rows to rollback
--- They are used by the emaj_estimate_rollback_duration function as a default value to compute the approximate duration of a rollback operation.
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','100 microsecond'::interval);
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','10 microsecond'::interval);
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','5 millisecond'::interval);
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_with_rollback_duration','2.5 millisecond'::interval);
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_with_rollback_duration','2.5 millisecond'::interval);
 ------------------------------------
 --                                --
 -- Low level Functions            --
@@ -368,9 +377,9 @@ $$
              WHERE group_name = ANY (string_to_array(hist_object,',')) AND group_state = 'LOGGING' AND 
                    (hist_function = 'START_GROUP' OR hist_function = 'START_GROUPS') AND hist_event = 'BEGIN')
          UNION 
-                 -- compute the timestamp of now minus the history_retention
+                 -- compute the timestamp of now minus the history_retention (1 month by default)
           (SELECT current_timestamp - 
-                  (SELECT param_value_interval FROM emaj.emaj_param WHERE param_key = 'history_retention'))
+                  coalesce((SELECT param_value_interval FROM emaj.emaj_param WHERE param_key = 'history_retention'),'1 MONTH'))
         ) AS tmst(datetime));
 $$;
 
@@ -3148,15 +3157,17 @@ $emaj_estimate_rollback_duration$
     IF v_markState <> 'ACTIVE' THEN
       RAISE EXCEPTION 'emaj_estimate_rollback_duration: mark % for group % is not in ACTIVE state.', v_markName, v_groupName;
     END IF;
--- get all needed duration parameters from emaj_param table
-    SELECT param_value_interval INTO v_avg_row_rlbk FROM emaj.emaj_param 
-        WHERE param_key = 'avg_row_rollback_duration';
-    SELECT param_value_interval INTO v_avg_row_del_log FROM emaj.emaj_param 
-        WHERE param_key = 'avg_row_delete_log_duration';
-    SELECT param_value_interval INTO v_fixed_table_rlbk FROM emaj.emaj_param 
-        WHERE param_key = 'fixed_table_rollback_duration';
-    SELECT param_value_interval INTO v_fixed_table_with_rlbk FROM emaj.emaj_param 
-        WHERE param_key = 'fixed_table_with_rollback_duration';
+-- get all needed duration parameters from emaj_param table, 
+--   or get default values for rows that are not present in epaj_param table
+    SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
+                        WHERE param_key = 'avg_row_rollback_duration'),'100 microsecond'::interval),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
+                        WHERE param_key = 'avg_row_delete_log_duration'),'10 microsecond'::interval),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
+                        WHERE param_key = 'fixed_table_rollback_duration'),'5 millisecond'::interval),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
+                        WHERE param_key = 'fixed_table_with_rollback_duration'),'2.5 millisecond'::interval)
+           INTO v_avg_row_rlbk, v_avg_row_del_log, v_fixed_table_rlbk, v_fixed_table_with_rlbk;
 -- compute the fixed cost for the group
     v_estim_duration = v_nbTblSeq * v_fixed_table_rlbk;
 --
@@ -3544,8 +3555,6 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT,
 -- and insert the init record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_wording) VALUES ('EMAJ_INIT','E-Maj initialisation completed');
 
-COMMIT;
-
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 CREATE or REPLACE FUNCTION emaj.emaj_tmp_check_setting() 
 RETURNS VOID LANGUAGE plpgsql AS
@@ -3562,6 +3571,11 @@ $tmp$
 $tmp$;
 SELECT emaj.emaj_tmp_check_setting();
 DROP FUNCTION emaj.emaj_tmp_check_setting();
+
+
+
+
+COMMIT;
 
 SET client_min_messages TO default;
 \echo '>>> E-Maj objects successfully created'
