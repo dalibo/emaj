@@ -1,9 +1,22 @@
+This script is the common source for both E-Maj installation scripts used:
+- either for a direct direct psql installation
+- or for a CREATE EXTENSION in pg9.1+
+Special patterns #gen_xxx placed at the beginning of lines controls the generation
+This file must be processed by gen_emaj.pl perl script to get both usable script.
+
+#gen_psql_start#
+#gen_extension_start#
 --
 -- E-Maj : logs and rollbacks table updates : V 0.10.0
 --
 -- This software is distributed under the GNU General Public License.
 --
+#gen_extension_stop#
 -- This script installs E-Maj extension for PostgreSQL version prior 9.1
+#gen_psql_stop#
+#gen_extension_start#
+-- This script is automatically called by a "CREATE EXTENSION emaj;" statement in postgres 9.1+.
+#gen_psql_start#
 --
 -- This script must be executed by a role having SUPERUSER privileges.
 -- Before its execution:
@@ -12,6 +25,7 @@
 --	-> the plpgsql language must have been created in the concerned database,
 --  (-> the dblink contrib/extension must have been installed.)
 
+#gen_extension_stop#
 \set ON_ERROR_STOP ON
 \set QUIET ON
 SET client_min_messages TO WARNING;
@@ -70,13 +84,19 @@ DROP SCHEMA IF EXISTS emaj CASCADE;
 -- creation of the schema 'emaj' containing all the needed objets
 CREATE SCHEMA emaj;
 
+#gen_extension_start#
 COMMENT ON SCHEMA emaj IS $$
 Holds all the functionality needed for using E-Maj.
 $$;
 
 -- create, execute and drop a specific plpgsql function to create emaj roles and the _txid_current() function
+#gen_extension_stop#
 CREATE or REPLACE FUNCTION emaj._tmp_create_some_components() 
 RETURNS VOID LANGUAGE plpgsql AS
+#gen_psql_stop#
+#gen_extension_start#
+DO LANGUAGE plpgsql
+#gen_psql_start#
 $tmp$
   DECLARE
     v_pgVersion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
@@ -112,8 +132,10 @@ $tmp$
     RETURN; 
   END;
 $tmp$;
+#gen_extension_stop#
 SELECT emaj._tmp_create_some_components();
 DROP FUNCTION emaj._tmp_create_some_components();
+#gen_extension_start#
 
 ------------------------------------
 --                                --
@@ -3545,12 +3567,36 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
 
+#gen_psql_stop#
+--------------------------------------
+--                                  --
+-- specific operation for extension --
+--                                  --
+--------------------------------------
+-- register emaj tables content as candidate for pg_dump
+SELECT pg_catalog.pg_extension_config_dump('emaj_param','WHERE param_key <> ''emaj_version''');
+SELECT pg_catalog.pg_extension_config_dump('emaj_hist','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_group_def','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_seq_hole','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_fk','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
+
+#gen_psql_start#
 -- and insert the init record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_wording) VALUES ('EMAJ_INIT','E-Maj initialisation completed');
 
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
+#gen_extension_stop#
 CREATE or REPLACE FUNCTION emaj._tmp_check_setting() 
 RETURNS VOID LANGUAGE plpgsql AS
+#gen_psql_stop#
+#gen_extension_start#
+DO LANGUAGE plpgsql
+#gen_psql_start#
 $tmp$
   DECLARE
     v_mpt           INTEGER;
@@ -3562,6 +3608,7 @@ $tmp$
     RETURN;
   END;
 $tmp$;
+#gen_extension_stop#
 SELECT emaj._tmp_check_setting();
 DROP FUNCTION emaj._tmp_check_setting();
 
@@ -3570,3 +3617,5 @@ COMMIT;
 
 SET client_min_messages TO default;
 \echo '>>> E-Maj objects successfully created'
+#gen_psql_stop#
+
