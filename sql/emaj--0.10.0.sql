@@ -479,9 +479,12 @@ $_create_tbl$
           AND attnum > 0
           AND attisdropped = false;
 -- cursor to retrieve all columns of table's primary key
+-- (taking column names in pg_attribute from the table's definition instead of index definition is mandatory 
+--  starting from pg9.0, joining tables with indkey instead of indexrelid)
     col2_curs CURSOR (tbl regclass) FOR 
       SELECT attname FROM pg_attribute, pg_index 
-        WHERE pg_attribute.attrelid = pg_index.indexrelid 
+        WHERE pg_attribute.attrelid = pg_index.indrelid
+          AND attnum = ANY (indkey) 
           AND indrelid = tbl AND indisprimary
           AND attnum > 0 AND attisdropped = false;
   BEGIN

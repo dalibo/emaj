@@ -3,6 +3,9 @@ E-Maj - Release notes
 0.10.0
 ------
 Enhancements:
+  - on PostgreSQL 9.1 and later, E-Maj can be installed with a SQL "CREATE 
+    EXTENSION" statement. If this version is already installed using the 
+    usual script, it can also be transformed into EXTENSION.
   - create a new type of rollback: logged rollback, i.e. rollback executed 
     without disabling the log triggers. As a result, the application table 
     updates performed by the logged rollback are also recorded in emaj log 
@@ -83,6 +86,10 @@ Bug fixes:
     and time changes during E-Maj activity period, use serial id instead of 
     timestamp for emaj_mark, emaj_sequence and emaj_seq_hole tables content 
     management.
+  - change the primary key columns identification. Starting from pg 9.0, 
+    column names must be read from pg_attribute with the table's definition, 
+    using pg_index.indkey, as the column names with the index definition is 
+    not safe anymore in case of column renaming.
 
 0.9.1
 -----
