@@ -585,7 +585,7 @@ $_create_tbl$
     EXECUTE 'ALTER TABLE ' || v_logTableName
          || ' ADD COLUMN emaj_user VARCHAR(32) DEFAULT session_user';
     EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_inet_addr INET DEFAULT inet_client_addr()';
+         || ' ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr()';
 -- alter the sequence associated to the emaj_id column to set the increment to 2 (so that an update operation can safely have its 2 log rows)
     EXECUTE 'ALTER SEQUENCE ' || v_sequenceName || ' INCREMENT 2';
 
