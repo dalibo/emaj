@@ -45,13 +45,19 @@ Enhancements:
     existing group.
   - a new emaj_comment_mark_group function sets (or resets) a comment on an 
     existing mark.
-  - allow use of searching or deleting marks for groups in IDLE state.
   - the general log_only parameter is replaced by a parameter set at group 
     level. A new optional boolean parameter is added to the 
     emaj_create_group() function, indicating whether the new group supports 
     rollback operations or not. By creating 'audit_only' groups (i.e. "non 
     rollbackable"), it is possible to activate log on tables that do not have 
     any primary key.
+  - in each log table created by emaj_create_group() function, add an 
+    emaj_inet_addr column, as a complement to the emaj_user column, to 
+    register the ip address of the user who has generated the table update.
+  - in emaj_log_stat_group() and emaj_detailed_log_stat_group(), empty 
+    strings can be supplied as mark names. In such a case, there are 
+    processed as NULL values.
+  - allow use of searching or deleting marks for groups in IDLE state.
   - in parallel rollback processing, "subgroups" are now named "sessions" 
     to avoid confusion in multi-groups rollbacks.
   - in emaj_estimate_rollback_duration(), check that the group is in LOGGING 
@@ -62,16 +68,13 @@ Enhancements:
     transaction.
   - a comment has been added to all E-Maj tables, types and roles, as well 
     as to all functions callable by users.
-  - in emaj_log_stat_group() and emaj_detailed_log_stat_group(), empty 
-    strings can be supplied as mark names. In such a case, there are 
-    processed as NULL values.
   - a check is performed at the beginning of the E-Maj installation to be 
     sure that the current postgres version is compatible with E-Maj, the user 
     performing the installation is a superuser and tspemaj tablespace exists.
   - a check on the max_prepared_transaction is performed at installation 
     time and a warning is reported if the setting would block the use of the 
     parallel rollback feature.
-  - Add a check at group creation, set mark and rollback times to verify that 
+  - add a check at group creation, set mark and rollback times to verify that 
     the group has been created with a compatible postgres version (for 
     instance, a group created in 8.3 should not be directly used in 8.4).
 
