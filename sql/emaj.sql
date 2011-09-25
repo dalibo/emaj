@@ -71,7 +71,7 @@ DROP SCHEMA IF EXISTS emaj CASCADE;
 CREATE SCHEMA emaj;
 
 COMMENT ON SCHEMA emaj IS $$
-Holds all the functionality needed for using E-Maj.
+Contains all E-Maj related objects.
 $$;
 
 -- create, execute and drop a specific plpgsql function to create emaj roles and the _txid_current() function
