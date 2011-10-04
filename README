@@ -41,9 +41,9 @@ It brings a good alternative to the management of several disk images.
 - sql/uninstall.sql                 uninstallation script
 - sql/demo.sql                      demonstration psql script
 - sql/prep-pr.sql                   psql script to prepare parallel rollback demonstration
-- doc/emaj_overview_en.pdf			E-Maj overview
-- doc/emaj_0.10.0_doc_en.pdf        E-Maj user's guide in English
-- doc/emaj_0.10.0_doc_fr.pdf        E-Maj user's guide in French
+- doc/emaj.0.10.0_pres_en.pdf		E-Maj presentation in English
+- doc/emaj.0.10.0_doc_en.pdf        E-Maj user's guide in English
+- doc/emaj.0.10.0_doc_fr.pdf        E-Maj user's guide in French
 - php/emajParallelRollback.php      external client for parallel rollback
 
 
@@ -61,7 +61,7 @@ Remark: The user's guide also presents an emaj plugin for phpPgAdmin. In its cur
 
 5- Support
 
-For additional support or bug report, please contact Philippe BEAUDOIN (phb07 <at> apra <dot> asso <dot> fr).
+For additional support or bug report, please contact Philippe BEAUDOIN (phb <dot> emaj <at> free <dot> fr).
 
 Any feedback is welcome, even to just notice you use E-Maj.
 

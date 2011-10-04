@@ -1,7 +1,7 @@
 The list of contributors, in alphabetical order, is as follows.  The
 principal areas that each contributed to are listed in addition.
 
-Philippe Beaudoin		<phb07@apra.asso.fr>
+Philippe Beaudoin		<phb.emaj@free.fr>
 		implementation in plpgsql (initial idea taken from
         Andreas Scherbaum's table_log contrib)
 
