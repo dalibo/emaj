@@ -68,13 +68,13 @@ $emaj_uninstall$
 -- Check if the schema 'myschema' used by test scripts exists.
     PERFORM 1 FROM pg_namespace WHERE nspname = 'myschema';
     IF FOUND THEN
-      RAISE WARNING 'emaj_uninstall: A schema myschema exists on the database. It may have been created by an emaj test script. You can drop it if you wish using a \'DROP SCHEMA myschema cascade;\' command.';
+      RAISE WARNING 'emaj_uninstall: A schema myschema exists on the database. It may have been created by an emaj test script. You can drop it if you wish using a "DROP SCHEMA myschema cascade;" command.';
     END IF;
 --
 -- Check if the role 'myuser' used by test scripts exists.
     PERFORM 1 FROM pg_roles WHERE rolname = 'myuser';
     IF FOUND THEN
-      RAISE WARNING 'emaj_uninstall: A role myuser exists on the cluster. It may have been created by an emaj test script. You can drop it if you wish using a \'DROP ROLE myuser;\' command.';
+      RAISE WARNING 'emaj_uninstall: A role myuser exists on the cluster. It may have been created by an emaj test script. You can drop it if you wish using a "DROP ROLE myuser;" command.';
     END IF;
 --
 -- Are emaj roles granted to other roles ?
@@ -159,7 +159,7 @@ $emaj_uninstall$
       END IF;
     END IF;
 -- Tablespace tspemaj is not dropped
-    RAISE WARNING 'emaj_uninstall: The tablespace tspemaj is not dropped by this procedure. You can drop it if you wish using a \'DROP TABLESPACE tspemaj\' command.';
+    RAISE WARNING 'emaj_uninstall: The tablespace tspemaj is not dropped by this procedure. You can drop it if you wish using a "DROP TABLESPACE tspemaj" command.';
 --
     RETURN;
   END;
