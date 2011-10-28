@@ -70,9 +70,8 @@ DROP SCHEMA IF EXISTS emaj CASCADE;
 -- creation of the schema 'emaj' containing all the needed objets
 CREATE SCHEMA emaj;
 
-COMMENT ON SCHEMA emaj IS $$
-Contains all E-Maj related objects.
-$$;
+COMMENT ON SCHEMA emaj IS
+$$Contains all E-Maj related objects.$$;
 
 -- create, execute and drop a specific plpgsql function to create emaj roles and the _txid_current() function
 CREATE or REPLACE FUNCTION emaj._tmp_create_some_components() 
@@ -130,9 +129,8 @@ CREATE TABLE emaj.emaj_param (
     param_value_interval     INTERVAL,                   -- value if type is interval, otherwise NULL
     PRIMARY KEY (param_key) 
     ) TABLESPACE tspemaj;
-COMMENT ON TABLE emaj.emaj_param IS $$
-Contains E-Maj parameters.
-$$;
+COMMENT ON TABLE emaj.emaj_param IS 
+$$Contains E-Maj parameters.$$;
 
 -- table containing the history of all E-Maj events  
 CREATE TABLE emaj.emaj_hist (                            -- records the history of 
@@ -149,9 +147,8 @@ CREATE TABLE emaj.emaj_hist (                            -- records the history 
                              DEFAULT emaj._txid_current(), -- and its tx_id
     PRIMARY KEY (hist_id)
     ) TABLESPACE tspemaj;
-COMMENT ON TABLE emaj.emaj_hist IS $$
-Contains E-Maj events history.
-$$;
+COMMENT ON TABLE emaj.emaj_hist IS
+$$Contains E-Maj events history.$$;
 
 -- table containing the definition of groups' content. Filled and maintained by the user, it is used by emaj_create_group function.
 CREATE TABLE emaj.emaj_group_def (
@@ -162,9 +159,8 @@ CREATE TABLE emaj.emaj_group_def (
                                                          --   order, with NULL last)
     PRIMARY KEY (grpdef_group, grpdef_schema, grpdef_tblseq)
     ) TABLESPACE tspemaj;
-COMMENT ON TABLE emaj.emaj_group_def IS $$
-Contains E-Maj groups definition, supplied by the E-Maj administrator.
-$$;
+COMMENT ON TABLE emaj.emaj_group_def IS
+$$Contains E-Maj groups definition, supplied by the E-Maj administrator.$$;
 
 -- table containing the defined groups
 --     rows are created at emaj_create_group time and deleted at emaj_drop_group time
@@ -183,9 +179,8 @@ CREATE TABLE emaj.emaj_group (
     group_comment            TEXT,                       -- optional user comment
     PRIMARY KEY (group_name)
     ) TABLESPACE tspemaj;
-COMMENT ON TABLE emaj.emaj_group IS $$
-Contains created E-Maj groups.
-$$;
+COMMENT ON TABLE emaj.emaj_group IS
+$$Contains created E-Maj groups.$$;
 
 -- table containing the relations (tables and sequences) of created tables groups
 CREATE TABLE emaj.emaj_relation (
@@ -200,9 +195,8 @@ CREATE TABLE emaj.emaj_relation (
     PRIMARY KEY (rel_schema, rel_tblseq),
     FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
     ) TABLESPACE tspemaj;
-COMMENT ON TABLE emaj.emaj_relation IS $$
-Contains the content (tables and sequences) of created E-Maj groups.
-$$;
+COMMENT ON TABLE emaj.emaj_relation IS
+$$Contains the content (tables and sequences) of created E-Maj groups.$$;
 
 -- table containing the marksl
 CREATE TABLE emaj.emaj_mark (
@@ -222,9 +216,8 @@ CREATE TABLE emaj.emaj_mark (
     PRIMARY KEY (mark_group, mark_name),
     FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
     ) TABLESPACE tspemaj;
-COMMENT ON TABLE emaj.emaj_mark IS $$
-Contains marks set on E-Maj tables groups.
-$$;
+COMMENT ON TABLE emaj.emaj_mark IS
+$$Contains marks set on E-Maj tables groups.$$;
 
 -- table containing the sequences characteristics log 
 -- (to record at mark time the state of application sequences and sequences used by log tables) 
@@ -246,9 +239,8 @@ CREATE TABLE emaj.emaj_sequence (
     sequ_is_called           BOOLEAN     NOT NULL,       -- sequence flag 'is called ?'
     PRIMARY KEY (sequ_schema, sequ_name, sequ_datetime)
     ) TABLESPACE tspemaj;
-COMMENT ON TABLE emaj.emaj_sequence IS $$
-Contains values of sequences at E-Maj set_mark times.
-$$;
+COMMENT ON TABLE emaj.emaj_sequence IS
+$$Contains values of sequences at E-Maj set_mark times.$$;
 
 -- table containing the holes in sequences log
 -- these holes are due to rollback operations that do not adjust log sequences
@@ -264,9 +256,8 @@ CREATE TABLE emaj.emaj_seq_hole (
     sqhl_hole_size           BIGINT      NOT NULL,       -- hole size computed as the difference of 2 sequence last-values
     PRIMARY KEY (sqhl_schema, sqhl_table, sqhl_datetime)
     ) TABLESPACE tspemaj;
-COMMENT ON TABLE emaj.emaj_seq_hole IS $$
-Contains description of holes in sequence values for E-Maj log tables.
-$$;
+COMMENT ON TABLE emaj.emaj_seq_hole IS
+$$Contains description of holes in sequence values for E-Maj log tables.$$;
 
 -- table containing statistics about previously executed rollback operations
 -- and used to estimate rollback durations 
@@ -279,9 +270,8 @@ CREATE TABLE emaj.emaj_rlbk_stat (
     rlbk_duration            INTERVAL    NOT NULL,       -- duration of the elementary operation
     PRIMARY KEY (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime)
     ) TABLESPACE tspemaj;
-COMMENT ON TABLE emaj.emaj_rlbk_stat IS $$
-Contains statistics about previous E-Maj rollback durations.
-$$;
+COMMENT ON TABLE emaj.emaj_rlbk_stat IS
+$$Contains statistics about previous E-Maj rollback durations.$$;
 
 -- working storage table containing foreign key definition
 -- (used at table rollback time to drop and later recreate foreign keys)
@@ -294,9 +284,8 @@ CREATE TABLE emaj.emaj_fk (
     fk_def                   TEXT        NOT NULL,       -- foreign key definition as reported by pg_get_constraintdef
     PRIMARY KEY (fk_groups, fk_name, fk_schema, fk_table)
     ) TABLESPACE tspemaj;
-COMMENT ON TABLE emaj.emaj_fk IS $$
-Contains temporary description of foreign keys suppressed by E-Maj rollback operations.
-$$;
+COMMENT ON TABLE emaj.emaj_fk IS
+$$Contains temporary description of foreign keys suppressed by E-Maj rollback operations.$$;
 
 ------------------------------------
 --                                --
@@ -310,9 +299,8 @@ CREATE TYPE emaj.emaj_log_stat_type AS (
     stat_table     TEXT,
     stat_rows      BIGINT
     );
-COMMENT ON TYPE emaj.emaj_log_stat_type IS $$
-Represents the structure of rows returned by the emaj_log_stat_group() function.
-$$;
+COMMENT ON TYPE emaj.emaj_log_stat_type IS
+$$Represents the structure of rows returned by the emaj_log_stat_group() function.$$;
 
 CREATE TYPE emaj.emaj_detailed_log_stat_type AS (
     stat_group     TEXT,
@@ -322,9 +310,8 @@ CREATE TYPE emaj.emaj_detailed_log_stat_type AS (
     stat_verb      VARCHAR(6),
     stat_rows      BIGINT
     );
-COMMENT ON TYPE emaj.emaj_detailed_log_stat_type IS $$
-Represents the structure of rows returned by the emaj_detailed_log_stat_group() function.
-$$;
+COMMENT ON TYPE emaj.emaj_detailed_log_stat_type IS
+$$Represents the structure of rows returned by the emaj_detailed_log_stat_group() function.$$;
 
 ------------------------------------
 --                                --
@@ -1072,9 +1059,8 @@ $emaj_verify_all$
     RETURN;
   END;
 $emaj_verify_all$;
-COMMENT ON FUNCTION emaj.emaj_verify_all() IS $$
-Verifies the consistency between existing E-Maj and application objects.
-$$;
+COMMENT ON FUNCTION emaj.emaj_verify_all() IS
+$$Verifies the consistency between existing E-Maj and application objects.$$;
 
 CREATE or REPLACE FUNCTION emaj._forbid_truncate_fnct() RETURNS TRIGGER AS $_forbid_truncate_fnct$
 -- The function is triggered by the execution of TRUNCATE SQL verb on tables of a group in logging mode.
@@ -1315,9 +1301,8 @@ $emaj_create_group$
     RETURN emaj.emaj_create_group(v_groupName,true);
   END;
 $emaj_create_group$;
-COMMENT ON FUNCTION emaj.emaj_create_group(TEXT) IS $$
-Creates a rollbackable E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_create_group(TEXT) IS
+$$Creates a rollbackable E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) 
 RETURNS INT LANGUAGE plpgsql AS 
@@ -1398,9 +1383,8 @@ $emaj_create_group$
     RETURN v_nbTbl + v_nbSeq;
   END;
 $emaj_create_group$;
-COMMENT ON FUNCTION emaj.emaj_create_group(TEXT, BOOLEAN) IS $$
-Creates an E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_create_group(TEXT, BOOLEAN) IS
+$$Creates an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT) 
 RETURNS void LANGUAGE plpgsql AS
@@ -1423,9 +1407,8 @@ $emaj_comment_group$
     RETURN;
   END;
 $emaj_comment_group$;
-COMMENT ON FUNCTION emaj.emaj_comment_group(TEXT,TEXT) IS $$
-Sets a comment on an E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_comment_group(TEXT,TEXT) IS
+$$Sets a comment on an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_drop_group(v_groupName TEXT) 
 RETURNS INT LANGUAGE plpgsql AS 
@@ -1447,9 +1430,8 @@ $emaj_drop_group$
     RETURN v_nbTb;
   END;
 $emaj_drop_group$;
-COMMENT ON FUNCTION emaj.emaj_drop_group(TEXT) IS $$
-Drops an E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_drop_group(TEXT) IS
+$$Drops an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) 
 RETURNS INT LANGUAGE plpgsql AS 
@@ -1474,9 +1456,8 @@ $emaj_force_drop_group$
     RETURN v_nbTb;
   END;
 $emaj_force_drop_group$;
-COMMENT ON FUNCTION emaj.emaj_force_drop_group(TEXT) IS $$
-Drops an E-Maj group, even in LOGGING state.
-$$;
+COMMENT ON FUNCTION emaj.emaj_force_drop_group(TEXT) IS
+$$Drops an E-Maj group, even in LOGGING state.$$;
 
 CREATE or REPLACE FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) 
 RETURNS INT LANGUAGE plpgsql AS 
@@ -1550,9 +1531,8 @@ $emaj_start_group$
     RETURN v_nbTblSeq;
   END;
 $emaj_start_group$;
-COMMENT ON FUNCTION emaj.emaj_start_group(TEXT,TEXT) IS $$
-Starts an E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_start_group(TEXT,TEXT) IS
+$$Starts an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT) 
 RETURNS INT LANGUAGE plpgsql AS 
@@ -1579,9 +1559,8 @@ $emaj_start_groups$
     RETURN v_nbTblSeq;
   END;
 $emaj_start_groups$;
-COMMENT ON FUNCTION emaj.emaj_start_groups(TEXT[],TEXT) IS $$
-Starts several E-Maj groups.
-$$;
+COMMENT ON FUNCTION emaj.emaj_start_groups(TEXT[],TEXT) IS
+$$Starts several E-Maj groups.$$;
 
 CREATE or REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_reset BOOLEAN) 
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
@@ -1684,9 +1663,8 @@ $emaj_stop_group$
     RETURN emaj._stop_groups(array[v_groupName], false);
   END;
 $emaj_stop_group$;
-COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS $$
-Stops an E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS
+$$Stops an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) 
 RETURNS INT LANGUAGE plpgsql AS 
@@ -1700,9 +1678,8 @@ $emaj_stop_groups$
     RETURN emaj._stop_groups(emaj._check_group_names_array(v_groupNames), true);
   END;
 $emaj_stop_groups$;
-COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[]) IS $$
-Stops several E-Maj groups.
-$$;
+COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[]) IS
+$$Stops several E-Maj groups.$$;
 
 CREATE or REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) 
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
@@ -1823,9 +1800,8 @@ $emaj_set_mark_group$
     RETURN v_nbTb;
   END;
 $emaj_set_mark_group$;
-COMMENT ON FUNCTION emaj.emaj_set_mark_group(TEXT,TEXT) IS $$
-Sets a mark on an E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_set_mark_group(TEXT,TEXT) IS
+$$Sets a mark on an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) 
 RETURNS int LANGUAGE plpgsql AS
@@ -1883,9 +1859,8 @@ $emaj_set_mark_groups$
     RETURN v_nbTb;
   END;
 $emaj_set_mark_groups$;
-COMMENT ON FUNCTION emaj.emaj_set_mark_groups(TEXT[],TEXT) IS $$ 
-Sets a mark on several E-Maj groups.
-$$;
+COMMENT ON FUNCTION emaj.emaj_set_mark_groups(TEXT[],TEXT) IS 
+$$Sets a mark on several E-Maj groups.$$;
 
 CREATE or REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT) 
 RETURNS int LANGUAGE plpgsql AS
@@ -1996,9 +1971,8 @@ $emaj_comment_mark_group$
     RETURN;
   END;
 $emaj_comment_mark_group$;
-COMMENT ON FUNCTION emaj.emaj_comment_mark_group(TEXT,TEXT,TEXT) IS $$
-Sets a comment on a mark for an E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_comment_mark_group(TEXT,TEXT,TEXT) IS
+$$Sets a comment on a mark for an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) 
 RETURNS text LANGUAGE plpgsql AS
@@ -2028,9 +2002,8 @@ $emaj_get_previous_mark_group$
     END IF;
   END;
 $emaj_get_previous_mark_group$;
-COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TIMESTAMPTZ) IS $$
-Returns the latest mark name preceeding a point in time.
-$$;
+COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TIMESTAMPTZ) IS
+$$Returns the latest mark name preceeding a point in time.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS integer LANGUAGE plpgsql AS
@@ -2095,9 +2068,8 @@ $emaj_delete_mark_group$
     RETURN 1;
   END;
 $emaj_delete_mark_group$;
-COMMENT ON FUNCTION emaj.emaj_delete_mark_group(TEXT,TEXT) IS $$
-Deletes a mark for an E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_delete_mark_group(TEXT,TEXT) IS
+$$Deletes a mark for an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS integer LANGUAGE plpgsql AS
@@ -2142,9 +2114,8 @@ $emaj_delete_before_mark_group$
     RETURN v_nbMark;
   END;
 $emaj_delete_before_mark_group$;
-COMMENT ON FUNCTION emaj.emaj_delete_before_mark_group(TEXT,TEXT) IS $$
-Deletes all marks preceeding a given mark for an E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_delete_before_mark_group(TEXT,TEXT) IS
+$$Deletes all marks preceeding a given mark for an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS integer LANGUAGE plpgsql AS
@@ -2246,9 +2217,8 @@ $emaj_rename_mark_group$
     RETURN;
   END;
 $emaj_rename_mark_group$;
-COMMENT ON FUNCTION emaj.emaj_rename_mark_group(TEXT,TEXT,TEXT) IS $$
-Renames a mark for an E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_rename_mark_group(TEXT,TEXT,TEXT) IS
+$$Renames a mark for an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS INT LANGUAGE plpgsql AS
@@ -2262,9 +2232,8 @@ $emaj_rollback_group$
     return emaj._rlbk_groups(array[v_groupName], v_mark, true, true, false);
   END;
 $emaj_rollback_group$;
-COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT) IS $$
-Rollbacks an E-Maj group to a given mark.
-$$;
+COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT) IS
+$$Rollbacks an E-Maj group to a given mark.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) 
 RETURNS INT LANGUAGE plpgsql AS
@@ -2278,9 +2247,8 @@ $emaj_rollback_groups$
     return emaj._rlbk_groups(emaj._check_group_names_array(v_groupNames), v_mark, true, true, true);
   END;
 $emaj_rollback_groups$;
-COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT) IS $$
-Rollbacks an set of E-Maj groups to a given mark.
-$$;
+COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT) IS
+$$Rollbacks an set of E-Maj groups to a given mark.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_rollback_and_stop_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS INT LANGUAGE plpgsql AS
@@ -2302,9 +2270,8 @@ $emaj_rollback_and_stop_group$
     RETURN v_ret_rollback;
   END;
 $emaj_rollback_and_stop_group$;
-COMMENT ON FUNCTION emaj.emaj_rollback_and_stop_group(TEXT,TEXT) IS $$
-Rollbacks an E-Maj group to a given mark and stops the group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_rollback_and_stop_group(TEXT,TEXT) IS
+$$Rollbacks an E-Maj group to a given mark and stops the group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_rollback_and_stop_groups(v_groupNames TEXT[], v_mark TEXT) 
 RETURNS INT LANGUAGE plpgsql AS
@@ -2329,9 +2296,8 @@ $emaj_rollback_and_stop_groups$
     RETURN v_ret_rollback;
   END;
 $emaj_rollback_and_stop_groups$;
-COMMENT ON FUNCTION emaj.emaj_rollback_and_stop_groups(TEXT[],TEXT) IS $$
-Rollbacks an E-Maj set of groups to a given mark and stops the groups.
-$$;
+COMMENT ON FUNCTION emaj.emaj_rollback_and_stop_groups(TEXT[],TEXT) IS
+$$Rollbacks an E-Maj set of groups to a given mark and stops the groups.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS INT LANGUAGE plpgsql AS
@@ -2349,9 +2315,8 @@ $emaj_logged_rollback_group$
     return emaj._rlbk_groups(array[v_groupName], v_mark, false, false, false);
   END;
 $emaj_logged_rollback_group$;
-COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT) IS $$
-Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark.
-$$;
+COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT) IS
+$$Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) 
 RETURNS INT LANGUAGE plpgsql AS
@@ -2369,9 +2334,8 @@ $emaj_logged_rollback_groups$
     return emaj._rlbk_groups(emaj._check_group_names_array(v_groupNames), v_mark, false, false, true);
   END;
 $emaj_logged_rollback_groups$;
-COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT) IS $$
-Performs a logged (cancellable) rollbacks for a set of E-Maj groups to a given mark.
-$$;
+COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT) IS
+$$Performs a logged (cancellable) rollbacks for a set of E-Maj groups to a given mark.$$;
 
 CREATE or REPLACE FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
@@ -2860,9 +2824,8 @@ $emaj_reset_group$
     RETURN v_nbTb;
   END;
 $emaj_reset_group$;
-COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS $$
-Resets all log tables content of a stopped E-Maj group.
-$$;
+COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS
+$$Resets all log tables content of a stopped E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj._rst_group(v_groupName TEXT) 
 RETURNS INT LANGUAGE plpgsql AS 
@@ -2993,9 +2956,8 @@ $emaj_log_stat_group$
     RETURN;
   END;
 $emaj_log_stat_group$;
-COMMENT ON FUNCTION emaj.emaj_log_stat_group(TEXT,TEXT,TEXT) IS $$
-Returns global statistics about logged events for an E-Maj group between 2 marks.
-$$;
+COMMENT ON FUNCTION emaj.emaj_log_stat_group(TEXT,TEXT,TEXT) IS
+$$Returns global statistics about logged events for an E-Maj group between 2 marks.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) 
 RETURNS SETOF emaj.emaj_detailed_log_stat_type LANGUAGE plpgsql AS 
@@ -3111,9 +3073,8 @@ $emaj_detailed_log_stat_group$
     RETURN;
   END;
 $emaj_detailed_log_stat_group$;
-COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT,TEXT,TEXT) IS $$
-Returns detailed statistics about logged events for an E-Maj group between 2 marks.
-$$;
+COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT,TEXT,TEXT) IS
+$$Returns detailed statistics about logged events for an E-Maj group between 2 marks.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) 
 RETURNS interval LANGUAGE plpgsql AS 
@@ -3256,9 +3217,8 @@ $emaj_estimate_rollback_duration$
     RETURN v_estim_duration;
   END;
 $emaj_estimate_rollback_duration$;
-COMMENT ON FUNCTION emaj.emaj_estimate_rollback_duration(TEXT,TEXT) IS $$
-Estimates the duration of a potential rollback of an E-Maj group to a given mark.
-$$;
+COMMENT ON FUNCTION emaj.emaj_estimate_rollback_duration(TEXT,TEXT) IS
+$$Estimates the duration of a potential rollback of an E-Maj group to a given mark.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) 
 RETURNS INT LANGUAGE plpgsql AS 
@@ -3351,9 +3311,8 @@ $emaj_snap_group$
     RETURN v_nbTb;
   END;
 $emaj_snap_group$;
-COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT) IS $$
-Snaps all application tables of an E-Maj group into a given directory.
-$$;
+COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT) IS
+$$Snaps all application tables of an E-Maj group into a given directory.$$;
 
 -- Set comments for all internal functions, 
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
