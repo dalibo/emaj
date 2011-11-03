@@ -52,9 +52,7 @@ It brings a good alternative to the management of several disk images.
 All the information detrails needed to install and use E-Maj are provided in the user's guide that is included in the supplied .tar file.
 
 To reach this user's guide, just untar the supplied file by :
-- creating a main directory to host the file tree,
-- from this directory, issuing a command like:
-tar -xvzf Emaj.<version>.tar.gz
+tar -xvzf emaj-<version>.tar.gz
 
 Remark: The user's guide also presents an emaj plugin for phpPgAdmin. In its current implementation, this plugin is very invasive inside phpPgAdmin code. For this reason, this plugin is currently not yet available on pgfoundry. But if you wish to get a copy, simply ask me.
 
