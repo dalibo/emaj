@@ -1,0 +1,16 @@
+emaj-0.10.0/README
+emaj-0.10.0/CHANGES
+emaj-0.10.0/LICENSE
+emaj-0.10.0/AUTHORS
+emaj-0.10.0/META.json
+emaj-0.10.0/sql/emaj.sql
+emaj-0.10.0/sql/emaj.control_base
+emaj-0.10.0/sql/emaj--0.10.0.sql
+emaj-0.10.0/sql/emaj--unpackaged--0.10.0.sql
+emaj-0.10.0/sql/demo.sql
+emaj-0.10.0/sql/prep-pr.sql
+emaj-0.10.0/sql/uninstall.sql
+emaj-0.10.0/doc/Emaj.0.10.0_doc_en.pdf
+emaj-0.10.0/doc/Emaj.0.10.0_doc_fr.pdf
+emaj-0.10.0/doc/Emaj.0.10.0_pres_en.pdf
+emaj-0.10.0/php/emajParallelRollback.php
