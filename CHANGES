@@ -5,6 +5,8 @@ E-Maj - Release notes
 Enhancements:
 
 Bug fixes:
+  - fix a possible "division by zero" error in 
+    emaj_estimate_rollback_duration() function.
 
 0.10.0
 ------
