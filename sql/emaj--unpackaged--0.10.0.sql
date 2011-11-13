@@ -1,6 +1,6 @@
--- emaj--unpackaged--0.10.0.sql
+-- emaj--unpackaged--0.10.1.sql
 --
--- This script registers as an EXTENSION an already installed version of E-Maj 0.10.0 
+-- This script registers as an EXTENSION an already installed version of E-Maj 0.10.1 
 
 -- link emaj schema
 

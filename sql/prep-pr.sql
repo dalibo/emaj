@@ -1,4 +1,4 @@
--- prep-pr.sql : V 0.10.0
+-- prep-pr.sql : V 0.10.1
 --
 -- This script prepares an application and E-Maj context to test parallel rollback 
 -- using emajParallelRollback PHP module. It must be executed with a superuser role.  
