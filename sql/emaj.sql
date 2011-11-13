@@ -788,7 +788,7 @@ CREATE or REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_rlbk_tbl$
 -- This function rollbacks one table to a given timestamp
--- The function is called by emaj.emaj_rollback_group
+-- The function is called by emaj._rlbk_groups_step5()
 -- Input: schema name and table name, timestamp limit for rollback, flag to specify if log trigger 
 --        must be disable during rollback operation and flag to specify if rollbacked log rows must be deleted.
 -- These flags must be respectively:
@@ -840,6 +840,10 @@ $_rlbk_tbl$
     SELECT clock_timestamp() INTO v_tsrlbk_end;
     INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
        VALUES ('rlbk', v_schemaName, v_tableName, v_tsrlbk_start, v_nb_rows, v_tsrlbk_end - v_tsrlbk_start);
+-- check at least 1 row has been rollbacked
+    IF v_nb_rows <= 0 THEN
+      RAISE EXCEPTION 'Rollback table %: unexpected % rows rollbacked', v_tableName, v_nb_rows;
+    END IF;
 -- if the caller requires it, suppress the rollbacked log part 
     IF v_deleteLog THEN
 -- record the time at the delete start
@@ -886,7 +890,7 @@ CREATE or REPLACE FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_t
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_rlbk_seq$
 -- This function rollbacks one sequence to a given mark
--- The function is used by emaj.emaj_rollback_group
+-- The function is called by emaj.emaj._rlbk_groups_step7()
 -- Input: schema name and table name, mark
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application sequence.
   DECLARE
@@ -3117,7 +3121,7 @@ $emaj_estimate_rollback_duration$
       RAISE EXCEPTION 'emaj_estimate_rollback_duration: mark % for group % is not in ACTIVE state.', v_markName, v_groupName;
     END IF;
 -- get all needed duration parameters from emaj_param table, 
---   or get default values for rows that are not present in epaj_param table
+--   or get default values for rows that are not present in emaj_param table
     SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
                         WHERE param_key = 'avg_row_rollback_duration'),'100 microsecond'::interval),
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
@@ -3132,7 +3136,7 @@ $emaj_estimate_rollback_duration$
 --
 -- walk through the list of tables with their number of rows to rollback as returned by the emaj_log_stat_group function
 --
--- for each table
+-- for each table with content to rollback
     FOR r_tblsq IN
         SELECT stat_schema, stat_table, stat_rows FROM emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) WHERE stat_rows > 0
         LOOP
@@ -3141,12 +3145,14 @@ $emaj_estimate_rollback_duration$
 --
 -- first look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude)
       SELECT sum(rlbk_duration) * r_tblsq.stat_rows / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat 
-        WHERE rlbk_operation = 'rlbk' AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table
+        WHERE rlbk_operation = 'rlbk' AND rlbk_nb_rows > 0
+          AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table
           AND rlbk_nb_rows / r_tblsq.stat_rows < 10 AND r_tblsq.stat_rows / rlbk_nb_rows < 10;
       IF v_estim IS NULL THEN
 -- if there is no previous rollback operation with similar volume, take statistics for the table with all available volumes
         SELECT sum(rlbk_duration) * r_tblsq.stat_rows / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat 
-          WHERE rlbk_operation = 'rlbk' AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table;
+          WHERE rlbk_operation = 'rlbk' AND rlbk_nb_rows > 0
+            AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table;
         IF v_estim IS NULL THEN
 -- if there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table
           v_estim = v_avg_row_rlbk * r_tblsq.stat_rows;
@@ -3158,12 +3164,14 @@ $emaj_estimate_rollback_duration$
 --
 -- first look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude)
       SELECT sum(rlbk_duration) * r_tblsq.stat_rows / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat 
-        WHERE rlbk_operation = 'del_log' AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table
+        WHERE rlbk_operation = 'del_log' AND rlbk_nb_rows > 0
+          AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table
           AND rlbk_nb_rows / r_tblsq.stat_rows < 10 AND r_tblsq.stat_rows / rlbk_nb_rows < 10;
       IF v_estim IS NULL THEN
 -- if there is no previous rollback operation with similar volume, take statistics for the table with all available volumes
         SELECT sum(rlbk_duration) * r_tblsq.stat_rows / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat 
-          WHERE rlbk_operation = 'del_log' AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table;
+          WHERE rlbk_operation = 'del_log' AND rlbk_nb_rows > 0 
+            AND rlbk_schema = r_tblsq.stat_schema AND rlbk_tbl_fk = r_tblsq.stat_table;
         IF v_estim IS NULL THEN
 -- if there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table
           v_estim = v_avg_row_del_log * r_tblsq.stat_rows;
@@ -3199,7 +3207,8 @@ $emaj_estimate_rollback_duration$
 	  ELSE
 -- non empty table and statistics (with at least one row) are available
         SELECT sum(rlbk_duration) * r_fkey.reltuples / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat
-          WHERE rlbk_operation = 'add_fk' AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname AND rlbk_nb_rows > 0;
+          WHERE rlbk_operation = 'add_fk' AND rlbk_nb_rows > 0
+            AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname;
         IF v_estim IS NULL THEN
 -- non empty table, but no statistics with at least one row are available => take the last duration for this fkey, if any
           SELECT rlbk_duration INTO v_estim FROM emaj.emaj_rlbk_stat
