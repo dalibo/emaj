@@ -1,5 +1,5 @@
 --
--- E-Maj : logs and rollbacks table updates : V 0.10.0
+-- E-Maj : logs and rollbacks table updates : V 0.10.1
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -318,7 +318,7 @@ $$Represents the structure of rows returned by the emaj_detailed_log_stat_group(
 -- 'Fixed' parameters             --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.10.0');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.10.1');
 
 -- Other parameters are optional. They are set by users if needed.
 
