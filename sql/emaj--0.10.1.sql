@@ -729,7 +729,8 @@ $_rlbk_tbl$
 -- This function rollbacks one table to a given timestamp
 -- The function is called by emaj._rlbk_groups_step5()
 -- Input: schema name and table name, timestamp limit for rollback, flag to specify if log trigger 
---        must be disable during rollback operation and flag to specify if rollbacked log rows must be deleted.
+--        must be disable during rollback operation, flag to specify if rollbacked log rows must be deleted,
+--        last sequence and last hole identifiers to keep (greater ones being to be deleted)
 -- These flags must be respectively:
 --   - true and true   for common (unlogged) rollback,
 --   - false and false for logged rollback, 
@@ -775,13 +776,12 @@ $_rlbk_tbl$
     SELECT clock_timestamp() INTO v_tsrlbk_start;
 -- rollback the table
     EXECUTE 'SELECT ' || v_rlbkFnctName || '(' || v_emaj_id || ')' INTO v_nb_rows;
--- record the time at the rollback and insert rollback duration into the emaj_rlbk_stat table
+-- record the time at the rollback
     SELECT clock_timestamp() INTO v_tsrlbk_end;
-    INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
-       VALUES ('rlbk', v_schemaName, v_tableName, v_tsrlbk_start, v_nb_rows, v_tsrlbk_end - v_tsrlbk_start);
--- check at least 1 row has been rollbacked
-    IF v_nb_rows <= 0 THEN
-      RAISE EXCEPTION 'Rollback table %: unexpected % rows rollbacked', v_tableName, v_nb_rows;
+-- insert rollback duration into the emaj_rlbk_stat table, if at least 1 row has been processed
+    IF v_nb_rows > 0 THEN
+      INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
+         VALUES ('rlbk', v_schemaName, v_tableName, v_tsrlbk_start, v_nb_rows, v_tsrlbk_end - v_tsrlbk_start);
     END IF;
 -- if the caller requires it, suppress the rollbacked log part 
     IF v_deleteLog THEN
@@ -809,15 +809,18 @@ $_rlbk_tbl$
         || ' sequ_schema = ''' || v_emajSchema 
         || ''' AND sequ_name = ''' || v_seqName 
         || ''' AND sequ_datetime = ''' || v_timestamp || '''))';
--- record the time at the delete and insert delete duration into the emaj_rlbk_stat table
+-- record the time at the delete
       SELECT clock_timestamp() INTO v_tsdel_end;
-      INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
-         VALUES ('del_log', v_schemaName, v_tableName, v_tsrlbk_start, v_nb_rows, v_tsdel_end - v_tsdel_start);
-   END IF;
+-- insert delete duration into the emaj_rlbk_stat table, if at least 1 row has been processed
+      IF v_nb_rows > 0 THEN
+        INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
+           VALUES ('del_log', v_schemaName, v_tableName, v_tsrlbk_start, v_nb_rows, v_tsdel_end - v_tsdel_start);
+      END IF;
+    END IF;
 -- re-activate the log trigger on the application table, if previously disabled
-   IF v_disableTrigger THEN
+    IF v_disableTrigger THEN
       EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || v_logTriggerName;
-   END IF;
+    END IF;
 -- insert end event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('ROLLBACK_TABLE', 'END', v_fullTableName, v_nb_rows || ' rollbacked rows');
