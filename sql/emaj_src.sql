@@ -2037,7 +2037,7 @@ $$Returns the latest mark name preceeding a point in time.$$;
 CREATE or REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS integer LANGUAGE plpgsql AS
 $emaj_delete_mark_group$
--- This function deletes all traces from a previous set_mark_group function. 
+-- This function deletes all traces from a previous set_mark_group(s) function. 
 -- Then, any rollback on the deleted mark will not be possible.
 -- It deletes rows corresponding to the mark to delete from emaj_mark and emaj_sequence 
 -- If this mark is the first mark, it also deletes rows from all concerned log tables and holes from emaj_seq_hole.
@@ -2077,7 +2077,7 @@ $emaj_delete_mark_group$
 -- OK, now get the id and timestamp of the mark to delete
     SELECT mark_id, mark_datetime INTO v_markId, v_datetimeMark
       FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
--- OK, now get the id and timestamp of the future first mark
+-- ... and the id and timestamp of the future first mark
     SELECT mark_id, mark_name, mark_datetime INTO v_idNewMin, v_markNewMin, v_datetimeNewMin 
       FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_realMark ORDER BY mark_id LIMIT 1;
     IF v_markId < v_idNewMin THEN
@@ -2087,7 +2087,16 @@ $emaj_delete_mark_group$
     ELSE
 -- otherwise, 
 --   ... the sequences related to the mark to delete can be suppressed
-      DELETE FROM emaj.emaj_sequence WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark;
+--         Delete first application sequences related data for the group
+      DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation 
+        WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark
+          AND rel_group = v_groupName AND rel_kind = 'S'
+          AND sequ_schema = rel_schema AND sequ_name = rel_tblseq;
+--         Delete then emaj sequences related data for the group
+      DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation 
+        WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark
+          AND rel_group = v_groupName AND rel_kind = 'r'
+          AND sequ_schema = 'emaj' AND sequ_name = rel_schema || '_' || rel_tblseq || '_log_emaj_id_seq';
 --   ... and the mark to delete can be physicaly deleted
       DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
     END IF;
@@ -2190,9 +2199,20 @@ $_delete_before_mark_group$
       WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
         AND sqhl_id <= (SELECT mark_last_seq_hole_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_mark);
 -- now the sequences related to the mark to delete can be suppressed
-    DELETE FROM emaj.emaj_sequence WHERE (sequ_mark, sequ_datetime) IN 
-      (SELECT mark_name, mark_datetime FROM emaj.emaj_mark 
-         WHERE mark_group = v_groupName AND mark_id < v_markId);
+--   Delete first application sequences related data for the group
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'S'
+        AND sequ_schema = rel_schema AND sequ_name = rel_tblseq
+        AND (sequ_mark, sequ_datetime) IN 
+            (SELECT mark_name, mark_datetime FROM emaj.emaj_mark 
+              WHERE mark_group = v_groupName AND mark_id < v_markId);
+--   Delete then emaj sequences related data for the group
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation 
+      WHERE rel_group = v_groupName AND rel_kind = 'r'
+        AND sequ_schema = 'emaj' AND sequ_name = rel_schema || '_' || rel_tblseq || '_log_emaj_id_seq'
+        AND (sequ_mark, sequ_datetime) IN 
+            (SELECT mark_name, mark_datetime FROM emaj.emaj_mark 
+              WHERE mark_group = v_groupName AND mark_id < v_markId);
 -- and finaly delete marks
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id < v_markId;
     GET DIAGNOSTICS v_nbMark = ROW_COUNT;
