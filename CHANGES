@@ -5,6 +5,11 @@ E-Maj - Release notes
 Enhancements:
 
 Bug fixes:
+  - fix emaj_delete_mark_group() and emaj_delete_before_mark_group() 
+    operations. When a mark set for several groups by an 
+    emaj_set_mark_groups() function, is deleted for a single group, it was 
+    not usable anymore (in particular for rollback) for the other groups 
+    for which the mark remained active.
   - fix a possible "division by zero" error in 
     emaj_estimate_rollback_duration() function.
 
