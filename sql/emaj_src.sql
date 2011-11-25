@@ -3061,7 +3061,7 @@ $emaj_detailed_log_stat_group$
             FROM emaj.emaj_sequence
             WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_tsFirstMark;
           IF NOT FOUND THEN
-             RAISE EXCEPTION 'emaj_detailed_log_stat_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_timestamp;
+             RAISE EXCEPTION 'emaj_detailed_log_stat_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_tsFirstMark;
           END IF;
         END IF;
 -- get the next emaj_id for the last mark from the sequence
@@ -3070,7 +3070,7 @@ $emaj_detailed_log_stat_group$
             FROM emaj.emaj_sequence
             WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_tsLastMark;
           IF NOT FOUND THEN
-             RAISE EXCEPTION 'emaj_detailed_log_stat_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_timestamp;
+             RAISE EXCEPTION 'emaj_detailed_log_stat_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_tsLastMark;
           END IF;
         END IF;
 -- prepare and execute the statement
