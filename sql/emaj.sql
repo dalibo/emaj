@@ -2075,7 +2075,6 @@ $emaj_delete_mark_group$
         WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark
           AND rel_group = v_groupName AND rel_kind = 'r'
           AND sequ_schema = 'emaj' AND sequ_name = rel_schema || '_' || rel_tblseq || '_log_emaj_id_seq';
---      DELETE FROM emaj.emaj_sequence WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark;
 --   ... and the mark to delete can be physicaly deleted
       DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
     END IF;
@@ -2192,9 +2191,6 @@ $_delete_before_mark_group$
         AND (sequ_mark, sequ_datetime) IN 
             (SELECT mark_name, mark_datetime FROM emaj.emaj_mark 
               WHERE mark_group = v_groupName AND mark_id < v_markId);
---    DELETE FROM emaj.emaj_sequence WHERE (sequ_mark, sequ_datetime) IN 
---      (SELECT mark_name, mark_datetime FROM emaj.emaj_mark 
---         WHERE mark_group = v_groupName AND mark_id < v_markId);
 -- and finaly delete marks
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id < v_markId;
     GET DIAGNOSTICS v_nbMark = ROW_COUNT;
@@ -3257,7 +3253,7 @@ COMMENT ON FUNCTION emaj.emaj_estimate_rollback_duration(TEXT,TEXT) IS
 $$Estimates the duration of a potential rollback of an E-Maj group to a given mark.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) 
-RETURNS INT LANGUAGE plpgsql AS 
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
 $emaj_snap_group$
 -- This function creates a file for each table and sequence belonging to the group.
 -- For tables, these files contain all rows sorted on primary key.
@@ -3275,6 +3271,7 @@ $emaj_snap_group$
 --   - maintain its content outside E-maj.
 -- Input: group name, the absolute pathname of the directory where the files are to be created
 -- Output: number of processed tables and sequences
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
     v_emajSchema      TEXT := 'emaj';
     v_nbTb            INT := 0;
@@ -3285,6 +3282,9 @@ $emaj_snap_group$
     v_fileName        TEXT;
     v_stmt text;
   BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES ('SNAP_GROUP', 'BEGIN', v_groupName);
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
@@ -3344,11 +3344,14 @@ $emaj_snap_group$
       EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('SNAP_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
     RETURN v_nbTb;
   END;
 $emaj_snap_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT) IS
-$$Snaps all application tables of an E-Maj group into a given directory.$$;
+$$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 -- Set comments for all internal functions, 
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
@@ -3387,7 +3390,7 @@ GRANT SELECT ON emaj.emaj_seq_hole   TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_fk         TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_rlbk_stat  TO emaj_viewer;
 
--- -> emaj_adm can execute all emaj functions (except emaj_snap_group)
+-- -> emaj_adm can execute all emaj functions
 
 GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
 
@@ -3469,8 +3472,8 @@ REVOKE ALL ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rst_group(v_groupName TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) FROM PUBLIC; 
 
 -- and give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj._txid_current() TO emaj_adm;
@@ -3532,8 +3535,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rst_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) TO emaj_adm; 
 
 -- and give appropriate rights on functions to emaj_viewer role
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
