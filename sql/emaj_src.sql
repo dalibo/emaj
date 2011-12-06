@@ -3280,7 +3280,6 @@ $emaj_snap_group$
 -- This function creates a file for each table and sequence belonging to the group.
 -- For tables, these files contain all rows sorted on primary key.
 -- For sequences, they contain a single row describing the sequence.
--- It is used for test purpose. It creates a snap of the group that can be compared to another snap.
 -- To do its job, the function performs COPY TO statement, with all default parameters.
 -- For table without primary key, rows are sorted on all columns.
 -- There is no need for the group to be in IDLE state.
@@ -3373,6 +3372,156 @@ $emaj_snap_group$
   END;
 $emaj_snap_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT) IS
+$$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
+
+CREATE or REPLACE FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT) 
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
+$emaj_snap_log_group$
+-- This function creates a file for each log table belonging to the group.
+-- It also creates 2 files containing the state of sequences respectively at start mark and end mark
+-- For log tables, files contain all rows related to the time frame, sorted on emaj_id.
+-- For sequences, files are names sequences_at_<mark>. They contain one row per sequence.
+-- To do its job, the function performs COPY TO statement, using the CSV option.
+-- There is no need for the group to be in IDLE state.
+-- As all COPY statements are executed inside a single transaction:
+--   - the function can be called while other transactions are running,
+--   - the snap files will present a coherent state of tables.
+-- It's users responsability :
+--   - to create the directory (with proper permissions allowing the cluster to write into) before 
+-- emaj_snap_log_group function call, and 
+--   - maintain its content outside E-maj.
+-- Input: group name, the 2 mark names defining a range, the absolute pathname of the directory where the files are to be created
+--   a NULL value or an empty string as first_mark indicates the first recorded mark
+--   a NULL value or an empty string can NOT be used as last_mark (the current sequences state is not recorded in to the emaj_sequence table)
+--   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
+-- Output: number of processed tables and sequences
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
+  DECLARE
+    v_emajSchema      TEXT := 'emaj';
+    v_nbTb            INT := 0;
+    r_tblsq           RECORD;
+    v_seqName         TEXT;
+    v_realFirstMark   TEXT;
+    v_realLastMark    TEXT;
+    v_firstMarkId     BIGINT;
+    v_lastMarkId      BIGINT;
+    v_tsFirstMark     TIMESTAMPTZ;
+    v_tsLastMark      TIMESTAMPTZ;
+    v_firstEmajId     BIGINT;
+    v_lastEmajId      BIGINT;
+    v_logTableName    TEXT;
+    v_fileName        TEXT;
+    v_stmt text;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES ('SNAP_LOG_GROUP', 'BEGIN', v_groupName);
+-- check that the group is recorded in emaj_group table
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: group % has not been created.', v_groupName;
+    END IF;
+-- catch the timestamp of the first mark
+    IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
+-- check and retrieve the timestamp of the start mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
+      IF v_realFirstMark IS NULL THEN
+          RAISE EXCEPTION 'emaj_snap_log_group: Start mark % is unknown for group %.', v_firstMark, v_groupName;
+      END IF;
+      SELECT mark_id, mark_datetime INTO v_firstMarkId, v_tsFirstMark
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realFirstMark;
+    ELSE
+      SELECT mark_name, mark_id, mark_datetime INTO v_realFirstMark, v_firstMarkId, v_tsFirstMark
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_id LIMIT 1;
+    END IF;
+-- catch the timestamp of the last mark
+    IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
+-- else, check and retrieve the timestamp of the end mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
+      IF v_realLastMark IS NULL THEN
+        RAISE EXCEPTION 'emaj_snap_log_group: End mark % is unknown for group %.', v_lastMark, v_groupName;
+      END IF;
+      SELECT mark_id, mark_datetime INTO v_lastMarkId, v_tsLastMark
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
+    ELSE
+      RAISE EXCEPTION 'emaj_snap_log_group: an explicit end mark must be supplied.';
+    END IF;
+-- check that the first_mark < end_mark
+    IF v_realFirstMark IS NOT NULL AND v_realLastMark IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: mark id for % (% = %) is greater than mark id for % (% = %).', v_realFirstMark, v_firstMarkId, v_tsFirstMark, v_realLastMark, v_lastMarkId, v_tsLastMark;
+    END IF;
+-- process all log tables of the emaj_relation table
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+      IF r_tblsq.rel_kind = 'r' THEN
+-- process tables
+-- compute names
+        v_fileName     := v_dir || '/' || r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log.snap';
+        v_logTableName := quote_ident(v_emajSchema) || '.' || quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log');
+        v_seqName      := r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log_emaj_id_seq';
+-- get the next emaj_id for the first mark from the sequence
+        IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN 
+          SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END INTO v_firstEmajId
+            FROM emaj.emaj_sequence
+            WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_tsFirstMark;
+          IF NOT FOUND THEN
+             RAISE EXCEPTION 'emaj_snap_log_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_tsFirstMark;
+          END IF;
+        END IF;
+-- get the next emaj_id for the last mark from the sequence
+        IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN 
+          SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END INTO v_lastEmajId
+            FROM emaj.emaj_sequence
+            WHERE sequ_schema = v_emajSchema AND sequ_name = v_seqName AND sequ_datetime = v_tsLastMark;
+          IF NOT FOUND THEN
+             RAISE EXCEPTION 'emaj_snap_log_group: internal error - sequence for % and % not found in emaj_sequence.',v_seqName, v_tsLastMark;
+          END IF;
+        END IF;
+--   prepare the COPY statement
+        v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE TRUE';
+        IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN 
+          v_stmt = v_stmt || ' AND emaj_id >= '|| v_firstEmajId ;
+        END IF;
+        IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN 
+          v_stmt = v_stmt || ' AND emaj_id < '|| v_lastEmajId ;
+        END IF;
+        v_stmt = v_stmt || ' ORDER BY emaj_id ASC) TO ''' || v_fileName || ''' CSV';
+-- and finaly perform the COPY
+--      raise notice 'emaj_snap_log_group: Executing %',v_stmt;
+        EXECUTE v_stmt;
+      END IF;
+-- for sequences, just adjust the counter
+      v_nbTb = v_nbTb + 1;
+    END LOOP;
+-- generate the file for sequences state at start mark
+    v_fileName := v_dir || '/sequences_at_' || v_realFirstMark;
+    v_stmt= 'COPY (SELECT emaj_sequence.*' ||
+            ' FROM ' || v_emajSchema || '.emaj_sequence, ' || v_emajSchema || '.emaj_relation' ||
+            ' WHERE sequ_mark = ' || quote_literal(v_realFirstMark) || ' AND ' || 
+            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+            ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
+            ' ORDER BY sequ_schema, sequ_name) TO ''' || v_fileName || ''' CSV';
+--  raise notice 'emaj_snap_log_group: Executing %',v_stmt;
+    EXECUTE v_stmt;
+-- generate the file for sequences state at end mark
+    v_fileName := v_dir || '/sequences_at_' || v_realLastMark;
+    v_stmt= 'COPY (SELECT emaj_sequence.*' ||
+            ' FROM ' || v_emajSchema || '.emaj_sequence, ' || v_emajSchema || '.emaj_relation' ||
+            ' WHERE sequ_mark = ' || quote_literal(v_realLastMark) || ' AND ' || 
+            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+            ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
+            ' ORDER BY sequ_schema, sequ_name) TO ''' || v_fileName || ''' CSV';
+--  raise notice 'emaj_snap_log_group: Executing %',v_stmt;
+    EXECUTE v_stmt;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('SNAP_LOG_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
+    RETURN v_nbTb;
+  END;
+$emaj_snap_log_group$;
+COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 -- Set comments for all internal functions, 
@@ -3496,6 +3645,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TE
 REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT) FROM PUBLIC;
 
 -- and give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj._txid_current() TO emaj_adm;
@@ -3559,6 +3709,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT) TO emaj_adm; 
 
 -- and give appropriate rights on functions to emaj_viewer role
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
