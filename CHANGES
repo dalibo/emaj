@@ -3,6 +3,9 @@ E-Maj - Release notes
 0.10.1
 ------
 Enhancements:
+  - enhance emaj_snap_group() function so that it can be used by emaj_adm 
+    granted role. The use of the function is also recorded into the emaj_hist 
+    table.
 
 Bug fixes:
   - fix emaj_delete_mark_group() and emaj_delete_before_mark_group() 
