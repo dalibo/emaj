@@ -3272,13 +3272,13 @@ $emaj_snap_group$
           END LOOP;
         END IF;
 --   prepare the COPY statement
-        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ''' || v_fileName || '''';
+        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ''' || v_fileName || ''' CSV';
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, the statement has no order by
-        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ') TO ''' || v_fileName || '''';
+        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ') TO ''' || v_fileName || ''' CSV';
       END IF;
 -- and finaly perform the COPY
-      raise notice 'emaj_snap_group: Executing %',v_stmt;
+--    raise notice 'emaj_snap_group: Executing %',v_stmt;
       EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;
