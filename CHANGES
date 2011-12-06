@@ -5,11 +5,12 @@ E-Maj - Release notes
 Enhancements:
   - enhance emaj_snap_group() function so that it can be used by emaj_adm 
     granted role. The use of the function is also recorded into the emaj_hist 
-    table.
+    table. The files are now created in CSV format.
   - create a new emaj_snap_log_group() function to snap all log tables 
     related to a group into a supplied directory. Only rows corresponding 
-    to a mark interval are snapped. Sequences state at starting mark and 
-    ending mark are also stored into 2 specific files.
+    to a mark interval are snapped. One CSV file is created for each table. 
+    Sequences state at starting mark and ending mark are also stored into 
+    2 specific files.
 
 Bug fixes:
   - fix emaj_delete_mark_group() and emaj_delete_before_mark_group() 
