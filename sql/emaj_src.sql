@@ -179,7 +179,8 @@ CREATE TABLE emaj.emaj_group_def (
     grpdef_tblseq            TEXT        NOT NULL,       -- table or sequence name
     grpdef_priority          INTEGER,                    -- priority level (tables are processed in ascending 
                                                          --   order, with NULL last)
-    PRIMARY KEY (grpdef_group, grpdef_schema, grpdef_tblseq)
+    PRIMARY KEY (grpdef_group, grpdef_schema, grpdef_tblseq) 
+-- the group name is included in the pkey so that a table/sequence can be temporarily assigned to several groups 
     ) TABLESPACE tspemaj;
 COMMENT ON TABLE emaj.emaj_group_def IS
 $$Contains E-Maj groups definition, supplied by the E-Maj administrator.$$;
