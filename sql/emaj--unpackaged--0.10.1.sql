@@ -43,6 +43,7 @@ ALTER EXTENSION emaj ADD FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tabl
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_verify_all();
 ALTER EXTENSION emaj ADD FUNCTION emaj._forbid_truncate_fnct();
 ALTER EXTENSION emaj ADD FUNCTION emaj._verify_group(v_groupName TEXT); 
+ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_verify_group(v_groupName TEXT); 
 ALTER EXTENSION emaj ADD FUNCTION emaj._check_fk_groups(v_groupName TEXT[]);
 ALTER EXTENSION emaj ADD FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_create_group(v_groupName TEXT);
