@@ -3431,7 +3431,7 @@ $emaj_snap_log_group$
 -- This function creates a file for each log table belonging to the group.
 -- It also creates 2 files containing the state of sequences respectively at start mark and end mark
 -- For log tables, files contain all rows related to the time frame, sorted on emaj_id.
--- For sequences, files are names sequences_at_<mark>. They contain one row per sequence.
+-- For sequences, files are names <group>_sequences_at_<mark>. They contain one row per sequence.
 -- To do its job, the function performs COPY TO statement, using the CSV option.
 -- There is no need for the group to be in IDLE state.
 -- As all COPY statements are executed inside a single transaction:
@@ -3547,7 +3547,7 @@ $emaj_snap_log_group$
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- generate the file for sequences state at start mark
-    v_fileName := v_dir || '/sequences_at_' || v_realFirstMark;
+    v_fileName := v_dir || '/' || v_groupName || '_sequences_at_' || v_realFirstMark;
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM ' || v_emajSchema || '.emaj_sequence, ' || v_emajSchema || '.emaj_relation' ||
             ' WHERE sequ_mark = ' || quote_literal(v_realFirstMark) || ' AND ' || 
@@ -3557,7 +3557,7 @@ $emaj_snap_log_group$
 --  raise notice 'emaj_snap_log_group: Executing %',v_stmt;
     EXECUTE v_stmt;
 -- generate the file for sequences state at end mark
-    v_fileName := v_dir || '/sequences_at_' || v_realLastMark;
+    v_fileName := v_dir || '/' || v_groupName || '_sequences_at_' || v_realLastMark;
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM ' || v_emajSchema || '.emaj_sequence, ' || v_emajSchema || '.emaj_relation' ||
             ' WHERE sequ_mark = ' || quote_literal(v_realLastMark) || ' AND ' || 
