@@ -524,25 +524,26 @@ $_create_tbl$
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
 -- variables for the name of tables, functions, triggers,...
-    v_fullTableName    TEXT;
-    v_emajSchema       TEXT := 'emaj';
-    v_emajTblSpace     TEXT := 'tspemaj';
-    v_logTableName     TEXT;
-    v_logFnctName      TEXT;
-    v_rlbkFnctName     TEXT;
-    v_logTriggerName   TEXT;
-    v_truncTriggerName TEXT;
-    v_sequenceName     TEXT;
+    v_fullTableName         TEXT;
+    v_emajSchema            TEXT := 'emaj';
+    v_emajTblSpace          TEXT := 'tspemaj';
+    v_logTableName          TEXT;
+    v_logFnctName           TEXT;
+    v_rlbkFnctName          TEXT;
+    v_exceptionRlbkFnctName TEXT;
+    v_logTriggerName        TEXT;
+    v_truncTriggerName      TEXT;
+    v_sequenceName          TEXT;
 -- variables to hold pieces of SQL
-    v_pkCondList       TEXT;
-    v_colList          TEXT;
-    v_setList          TEXT;
+    v_pkCondList            TEXT;
+    v_colList               TEXT;
+    v_setList               TEXT;
 -- other variables
-    v_attname          TEXT;
-    v_relhaspkey       BOOLEAN;
-    v_pgVersion        TEXT := emaj._pg_version();
-    r_trigger          RECORD;
-    v_triggerList      TEXT := '';
+    v_attname               TEXT;
+    v_relhaspkey            BOOLEAN;
+    v_pgVersion             TEXT := emaj._pg_version();
+    r_trigger               RECORD;
+    v_triggerList           TEXT := '';
 -- cursor to retrieve all columns of the application table
     col1_curs CURSOR (tbl regclass) FOR 
       SELECT attname FROM pg_attribute 
@@ -574,6 +575,7 @@ $_create_tbl$
     v_logTableName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
     v_logFnctName      := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log_fnct');
     v_rlbkFnctName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_rlbk_fnct');
+    v_exceptionRlbkFnctName=substring(quote_literal(v_rlbkFnctName) from '^.(.*).$');
     v_logTriggerName   := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_log_trg');
     v_truncTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_trunc_trg');
     v_sequenceName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log_emaj_id_seq');
@@ -610,7 +612,7 @@ $_create_tbl$
          || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
          || '    RETURN OLD;'
          || '  ELSIF (TG_OP = ''UPDATE'') THEN'
-         || '    SELECT NEXTVAL(''' || v_sequenceName || ''') INTO V_EMAJ_ID;'
+         || '    SELECT NEXTVAL(' || quote_literal(v_sequenceName) || ') INTO V_EMAJ_ID;'
          || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'', V_EMAJ_ID;'
          || '    V_EMAJ_ID = V_EMAJ_ID + 1;'
          || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', V_EMAJ_ID;'
@@ -652,11 +654,11 @@ $_create_tbl$
         FETCH col1_curs INTO v_attname;
         EXIT WHEN NOT FOUND;
         IF v_colList = '' THEN
-           v_colList := 'rec_log.' || v_attname;
-           v_setList := v_attname || ' = rec_old_log.' || v_attname;
+           v_colList := 'rec_log.' || quote_ident(v_attname);
+           v_setList := quote_ident(v_attname) || ' = rec_old_log.' || quote_ident(v_attname);
         ELSE
-           v_colList := v_colList || ', rec_log.' || v_attname;
-           v_setList := v_setList || ', ' || v_attname || ' = rec_old_log.' || v_attname;
+           v_colList := v_colList || ', rec_log.' || quote_ident(v_attname);
+           v_setList := v_setList || ', ' || quote_ident(v_attname) || ' = rec_old_log.' || quote_ident(v_attname);
         END IF;
       END LOOP;
       CLOSE col1_curs;
@@ -667,9 +669,9 @@ $_create_tbl$
         FETCH col2_curs INTO v_attname;
         EXIT WHEN NOT FOUND;
         IF v_pkCondList = '' THEN
-           v_pkCondList := v_attname || ' = rec_log.' || v_attname;
+           v_pkCondList := quote_ident(v_attname) || ' = rec_log.' || quote_ident(v_attname);
         ELSE
-           v_pkCondList := v_pkCondList || ' AND ' || v_attname || ' = rec_log.' || v_attname;
+           v_pkCondList := v_pkCondList || ' AND ' || quote_ident(v_attname) || ' = rec_log.' || quote_ident(v_attname);
         END IF;
       END LOOP;
       CLOSE col2_curs;
@@ -708,12 +710,12 @@ $_create_tbl$
 --         || '          RAISE NOTICE ''emaj_id = % ; DEL'', rec_log.emaj_id;'
            || '          INSERT INTO ' || v_fullTableName || ' VALUES (' || v_colList || ');'
            || '      ELSE'
-           || '          RAISE EXCEPTION ''' || v_rlbkFnctName || ': internal error - emaj_verb = % unknown, emaj_id = %.'','
+           || '          RAISE EXCEPTION ''' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = % unknown, emaj_id = %.'','
            || '            rec_log.emaj_verb, rec_log.emaj_id;' 
            || '      END IF;'
            || '      GET DIAGNOSTICS v_nb_proc_rows = ROW_COUNT;'
            || '      IF v_nb_proc_rows <> 1 THEN'
-           || '        RAISE EXCEPTION ''' || v_rlbkFnctName || ': internal error - emaj_verb = %, emaj_id = %, # processed rows = % .'''
+           || '        RAISE EXCEPTION ''' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = %, emaj_id = %, # processed rows = % .'''
            || '           ,rec_log.emaj_verb, rec_log.emaj_id, v_nb_proc_rows;' 
            || '      END IF;'
            || '      v_nb_rows := v_nb_rows + 1;'
@@ -802,7 +804,7 @@ $_drop_seq$
 -- Required inputs: schema name and sequence name
   BEGIN
 -- delete rows from emaj_sequence 
-    EXECUTE 'DELETE FROM emaj.emaj_sequence WHERE sequ_schema = ''' || v_schemaName || ''' AND sequ_name = ''' || v_seqName || '''';
+    EXECUTE 'DELETE FROM emaj.emaj_sequence WHERE sequ_schema = ' || quote_literal(v_schemaName) || ' AND sequ_name = ' || quote_literal(v_seqName);
     RETURN;
   END;
 $_drop_seq$;
@@ -884,15 +886,15 @@ $_rlbk_tbl$
       DELETE FROM emaj.emaj_seq_hole
         WHERE sqhl_schema = v_schemaName AND sqhl_table = v_tableName AND sqhl_id > v_lastSeqHoleId;
 -- and then insert the new sequence hole
-      EXECUTE 'INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_hole_size) VALUES (''' 
-        || v_schemaName || ''',''' || v_tableName || ''', ('
+      EXECUTE 'INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_hole_size) VALUES (' 
+        || quote_literal(v_schemaName) || ',' || quote_literal(v_tableName) || ', ('
         || ' SELECT CASE WHEN is_called THEN last_value + increment_by ELSE last_value END FROM ' 
         || v_emajSchema || '.' || v_fullSeqName || ')-('
         || ' SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM '
         || ' emaj.emaj_sequence WHERE'
         || ' sequ_schema = ''' || v_emajSchema 
-        || ''' AND sequ_name = ''' || v_seqName 
-        || ''' AND sequ_datetime = ''' || v_timestamp || '''))';
+        || ''' AND sequ_name = ' || quote_literal(v_seqName) 
+        || ' AND sequ_datetime = ' || quote_literal(v_timestamp) || '))';
 -- record the time at the delete
       SELECT clock_timestamp() INTO v_tsdel_end;
 -- insert delete duration into the emaj_rlbk_stat table, if at least 1 row has been processed
@@ -1974,8 +1976,8 @@ $_set_mark_groups$
         v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
                  'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' || 
                  'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                 ') SELECT '''|| v_emajSchema || ''', ''' || v_seqName || ''', ''' || v_timestamp || ''', ''' || v_mark || 
-                 ''', ' || 'last_value, ';
+                 ') SELECT '|| quote_literal(v_emajSchema) || ', ' || quote_literal(v_seqName) || ', ' ||
+                 quote_literal(v_timestamp) || ', ' || quote_literal(v_mark) || ', ' || 'last_value, ';
         IF v_pgVersion <= '8.3' THEN
            v_stmt = v_stmt || '0, ';
         ELSE
@@ -1990,9 +1992,9 @@ $_set_mark_groups$
         v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
                  'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' || 
                  'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                 ') SELECT ''' || r_tblsq.rel_schema || ''', ''' || 
-                 r_tblsq.rel_tblseq || ''', ''' || v_timestamp || ''', ''' || v_mark || ''', ' ||
-                 'last_value, ';
+                 ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' || 
+                 quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) || 
+                 ', ' || quote_literal(v_mark) || ', last_value, ';
         IF v_pgVersion <= '8.3' THEN
            v_stmt = v_stmt || '0, ';
         ELSE
@@ -3143,9 +3145,9 @@ $emaj_detailed_log_stat_group$
           END IF;
         END IF;
 -- prepare and execute the statement
-        v_stmt= 'SELECT ''' || v_groupName || '''::TEXT as emaj_group,'
-             || ' ''' || r_tblsq.rel_schema || '''::TEXT as emaj_schema,'
-             || ' ''' || r_tblsq.rel_tblseq || '''::TEXT as emaj_table,'
+        v_stmt= 'SELECT ' || quote_literal(v_groupName) || '::TEXT as emaj_group,'
+             || ' ' || quote_literal(r_tblsq.rel_schema) || '::TEXT as emaj_schema,'
+             || ' ' || quote_literal(r_tblsq.rel_tblseq) || '::TEXT as emaj_table,'
              || ' emaj_user,'
              || ' CASE WHEN emaj_verb = ''INS'' THEN ''INSERT'''
              ||      ' WHEN emaj_verb = ''UPD'' THEN ''UPDATE'''
@@ -3404,10 +3406,10 @@ $emaj_snap_group$
           END LOOP;
         END IF;
 --   prepare the COPY statement
-        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ''' || v_fileName || ''' CSV';
+        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ' || quote_literal(v_fileName) || ' CSV';
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, the statement has no order by
-        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ') TO ''' || v_fileName || ''' CSV';
+        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ') TO ' || quote_literal(v_fileName) || ' CSV';
       END IF;
 -- and finaly perform the COPY
 --    raise notice 'emaj_snap_group: Executing %',v_stmt;
@@ -3536,7 +3538,7 @@ $emaj_snap_log_group$
         IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN 
           v_stmt = v_stmt || ' AND emaj_id < '|| v_lastEmajId ;
         END IF;
-        v_stmt = v_stmt || ' ORDER BY emaj_id ASC) TO ''' || v_fileName || ''' CSV';
+        v_stmt = v_stmt || ' ORDER BY emaj_id ASC) TO ' || quote_literal(v_fileName) || ' CSV';
 -- and finaly perform the COPY
 --      raise notice 'emaj_snap_log_group: Executing %',v_stmt;
         EXECUTE v_stmt;
@@ -3551,7 +3553,7 @@ $emaj_snap_log_group$
             ' WHERE sequ_mark = ' || quote_literal(v_realFirstMark) || ' AND ' || 
             ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
-            ' ORDER BY sequ_schema, sequ_name) TO ''' || v_fileName || ''' CSV';
+            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' CSV';
 --  raise notice 'emaj_snap_log_group: Executing %',v_stmt;
     EXECUTE v_stmt;
 -- generate the file for sequences state at end mark
@@ -3561,7 +3563,7 @@ $emaj_snap_log_group$
             ' WHERE sequ_mark = ' || quote_literal(v_realLastMark) || ' AND ' || 
             ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
-            ' ORDER BY sequ_schema, sequ_name) TO ''' || v_fileName || ''' CSV';
+            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' CSV';
 --  raise notice 'emaj_snap_log_group: Executing %',v_stmt;
     EXECUTE v_stmt;
 -- insert end in the history
