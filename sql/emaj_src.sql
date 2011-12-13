@@ -3355,8 +3355,8 @@ $emaj_snap_group$
     v_stmt text;
   BEGIN
 -- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('SNAP_GROUP', 'BEGIN', v_groupName);
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('SNAP_GROUP', 'BEGIN', v_groupName, v_dir);
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
@@ -3465,8 +3465,8 @@ $emaj_snap_log_group$
     v_stmt text;
   BEGIN
 -- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES ('SNAP_LOG_GROUP', 'BEGIN', v_groupName);
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_LOG_GROUP', 'BEGIN', v_groupName, v_dir);
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
