@@ -15,7 +15,7 @@ Enhancements:
     given tables group to verify its consistency and its ability to be safely 
     managed by E-Maj functions.
 
-Bug fixes:
+Bug fixes: 
   - fix emaj_delete_mark_group() and emaj_delete_before_mark_group() 
     operations. When a mark set for several groups by an 
     emaj_set_mark_groups() function, is deleted for a single group, it was 
@@ -25,6 +25,9 @@ Bug fixes:
     unusual characters like apostrophs or commas.
   - fix a possible "division by zero" error in 
     emaj_estimate_rollback_duration() function.
+  - fix a bug in emaj_snap_group() function in building the list of the 
+    columns belonging to the table's pkey, after one of these columns has 
+    been renamed.
 
 0.10.0
 ------
