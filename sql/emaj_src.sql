@@ -575,7 +575,7 @@ $_create_tbl$
     v_logTableName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
     v_logFnctName      := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log_fnct');
     v_rlbkFnctName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_rlbk_fnct');
-    v_exceptionRlbkFnctName=substring(quote_literal(v_rlbkFnctName) from '^.(.*).$');
+    v_exceptionRlbkFnctName=substring(quote_literal(v_rlbkFnctName) FROM '^.(.*).$');
     v_logTriggerName   := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_log_trg');
     v_truncTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_trunc_trg');
     v_sequenceName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log_emaj_id_seq');
@@ -3380,7 +3380,8 @@ $emaj_snap_group$
 --   the table has a pkey,
           FOR r_col IN
               SELECT attname FROM pg_attribute, pg_index 
-                WHERE pg_attribute.attrelid = pg_index.indexrelid 
+                WHERE pg_attribute.attrelid = pg_index.indrelid 
+                  AND attnum = ANY (indkey) 
                   AND indrelid = v_fullTableName::regclass AND indisprimary
                   AND attnum > 0 AND attisdropped = false
               LOOP
@@ -3393,10 +3394,9 @@ $emaj_snap_group$
         ELSE
 --   the table has no pkey
           FOR r_col IN
-              SELECT attname FROM pg_attribute 
+              SELECT attname FROM pg_attribute
                 WHERE attrelid = v_fullTableName::regclass
-                  AND attnum > 0
-                  AND attisdropped = false
+                  AND attnum > 0  AND attisdropped = false
               LOOP
             IF v_colList = '' THEN
                v_colList := r_col.attname;
@@ -3416,6 +3416,10 @@ $emaj_snap_group$
       EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;
+-- create the _INFO file to keep general information about the snap operation
+    EXECUTE 'COPY (SELECT ' || 
+            quote_literal('E-Maj snap of tables group ' || v_groupName || ' at ' || to_char(transaction_timestamp(),'DD/MM/YYYY HH24:MI:SS')) || 
+            ') TO ' || quote_literal(v_dir || '/_INFO');
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('SNAP_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
@@ -3566,6 +3570,10 @@ $emaj_snap_log_group$
             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' CSV';
 --  raise notice 'emaj_snap_log_group: Executing %',v_stmt;
     EXECUTE v_stmt;
+-- create the _INFO file to keep general information about the snap operation
+    EXECUTE 'COPY (SELECT ' || 
+            quote_literal('E-Maj log tables snap of group ' || v_groupName || ' between marks ' || v_realFirstMark || ' and ' || v_realLastMark || ' at ' || to_char(transaction_timestamp(),'DD/MM/YYYY HH24:MI:SS')) || 
+            ') TO ' || quote_literal(v_dir || '/_INFO');
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('SNAP_LOG_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
