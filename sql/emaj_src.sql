@@ -1126,11 +1126,12 @@ $_verify_group$
 -- The checks are performed by calling emaj_verify_group()
   DECLARE
     v_msg               TEXT;
-    v_expectedMsg       TEXT := 'No error encountered';
+    v_expectedMsg       TEXT;
   BEGIN
 -- call emaj_verify_group() to perform checks
     SELECT * INTO v_msg FROM emaj.emaj_verify_group(v_groupName) LIMIT 1;
 -- check result
+    v_expectedMsg = 'Checking ' || v_groupName || ': no error encountered';
     IF v_msg <> v_expectedMsg THEN
       RAISE EXCEPTION '_verify_group: %',v_msg;
     END IF;
@@ -1146,9 +1147,11 @@ $emaj_verify_group$
   DECLARE
     v_emajSchema        TEXT := 'emaj';
     v_pgVersion         TEXT := emaj._pg_version();
-    v_finalMsg          TEXT := 'No error encountered';
+    v_finalMsg          TEXT;
     v_isRollbackable    BOOLEAN;
     v_creationPgVersion TEXT;
+    v_msgPrefix         TEXT;
+    v_msg               TEXT;
     v_fullTableName     TEXT;
     v_logTableName      TEXT;
     v_logFnctName       TEXT;
@@ -1157,25 +1160,28 @@ $emaj_verify_group$
     v_truncTriggerName  TEXT;
     r_tblsq             RECORD;
   BEGIN
+-- for 8.1-, E-Maj is not compatible
+    IF v_pgVersion < '8.2' THEN
+      RAISE EXCEPTION 'The current postgres version (%) is not compatible with E-Maj.', version();
+    END IF;
 -- get some characteristics of the group
     SELECT group_is_rollbackable, group_pg_version INTO v_isRollbackable, v_creationPgVersion 
       FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_verify_group: group % has not been created.', v_groupName;
     END IF;
+-- Build message parts
+    v_msgPrefix = 'Checking ' || v_groupName || ': ';
+    v_finalMsg = v_msgPrefix || 'no error encountered';
 -- check the postgres version at creation time is compatible with the current version
--- warning: Comparisons on version numbers are alphanumeric. 
+-- Warning: comparisons on version numbers are alphanumeric. 
 --          But we suppose these tests will not be useful anymore when pg 10.0 will appear!
---   for 8.1-, E-Maj is not compatible
-    IF v_pgVersion < '8.2' THEN
-      RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with E-Maj.';
-      v_finalMsg = '';
-    END IF;
 --   for 8.2 and 8.3, both major versions must be the same
     IF ((v_pgVersion = '8.2' OR v_pgVersion = '8.3') AND substring (v_creationPgVersion FROM E'(\\d+\\.\\d+)') <> v_pgVersion) OR
 --   for 8.4+, both major versions must be 8.4+
        (v_pgVersion >= '8.4' AND substring (v_creationPgVersion FROM E'(\\d+\\.\\d+)') < '8.4') THEN
-      RETURN NEXT 'Group ' || v_groupName || ' has been created with a non compatible postgresql version (' || v_creationPgVersion || '). It must be dropped and recreated.';
+      v_msg = v_msgPrefix || 'the group has been created with a non compatible postgresql version (' || v_creationPgVersion || '). It must be dropped and recreated.';
+      RETURN NEXT v_msg;
       v_finalMsg = '';
     END IF;
 -- per table verifications
@@ -1185,7 +1191,8 @@ $emaj_verify_group$
         LOOP
 -- check the class is unchanged
       IF r_tblsq.rel_kind <> emaj._check_class(r_tblsq.rel_schema, r_tblsq.rel_tblseq) THEN
-        RETURN NEXT 'The relation type for ' || r_tblsq.rel_schema || '.' || r_tblsq.rel_tblseq || ' has changed (was ''' || r_tblsq.rel_kind || ''' at emaj_create_group time).';
+        v_msg = v_msgPrefix || 'the relation type for ' || r_tblsq.rel_schema || '.' || r_tblsq.rel_tblseq || ' has changed (was ''' || r_tblsq.rel_kind || ''' at emaj_create_group time).';
+        RETURN NEXT v_msg;
         v_finalMsg = '';
       END IF;
       IF r_tblsq.rel_kind = 'r' THEN
@@ -1200,27 +1207,31 @@ $emaj_verify_group$
         PERFORM proname FROM pg_proc , pg_namespace WHERE 
           pronamespace = pg_namespace.oid AND nspname = v_emajSchema AND proname = v_logFnctName;
         IF NOT FOUND THEN
-          RETURN NEXT 'Log function ' || v_logFnctName || ' not found.';
+          v_msg = v_msgPrefix || 'log function ' || v_logFnctName || ' not found.';
+          RETURN NEXT v_msg;
           v_finalMsg = '';
         END IF;
         IF v_isRollbackable THEN
           PERFORM proname FROM pg_proc , pg_namespace WHERE 
             pronamespace = pg_namespace.oid AND nspname = v_emajSchema AND proname = v_rlbkFnctName;
           IF NOT FOUND THEN
-            RETURN NEXT 'Rollback function ' || v_rlbkFnctName || ' not found.';
+            v_msg = v_msgPrefix || 'rollback function ' || v_rlbkFnctName || ' not found.';
+            RETURN NEXT v_msg;
             v_finalMsg = '';
           END IF;
         END IF;
 --   -> check both triggers exist
         PERFORM tgname FROM pg_trigger WHERE tgname = v_logTriggerName;
         IF NOT FOUND THEN
-          RETURN NEXT 'Log trigger ' || v_logTriggerName || ' not found.';
+          v_msg = v_msgPrefix || 'log trigger ' || v_logTriggerName || ' not found.';
+          RETURN NEXT v_msg;
           v_finalMsg = '';
         END IF;
         IF v_pgVersion >= '8.4' THEN
           PERFORM tgname FROM pg_trigger WHERE tgname = v_truncTriggerName;
           IF NOT FOUND THEN
-            RETURN NEXT 'Truncate trigger ' || v_truncTriggerName || ' not found.';
+            v_msg = v_msgPrefix || 'truncate trigger ' || v_truncTriggerName || ' not found.';
+            RETURN NEXT v_msg;
             v_finalMsg = '';
           END IF;
         END IF;
@@ -1228,7 +1239,8 @@ $emaj_verify_group$
         PERFORM relname FROM pg_class, pg_namespace WHERE 
           relnamespace = pg_namespace.oid AND nspname = v_emajSchema AND relkind = 'r' AND relname = v_logTableName;
         IF NOT FOUND THEN
-          RETURN NEXT 'Log table ' || v_logTableName || ' not found.';
+          v_msg = v_msg;
+          RETURN NEXT v_msgPrefix || 'log table ' || v_logTableName || ' not found.';
           v_finalMsg = '';
         ELSE
 --   -> check that the log tables structure is consistent with the application tables structure
@@ -1242,7 +1254,8 @@ $emaj_verify_group$
             WHERE nspname = v_emajSchema AND relnamespace = pg_namespace.oid AND relname = v_logTableName
               AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%';
           IF FOUND THEN
-            RETURN NEXT 'The structure of log table ' || v_logTableName || ' is not coherent with ' || v_fullTableName || '(added or changed column?).';
+            v_msg = v_msgPrefix || 'the structure of log table ' || v_logTableName || ' is not coherent with ' || v_fullTableName || ' (added or changed column?).';
+            RETURN NEXT v_msg;
             v_finalMsg = '';
           END IF;
 --      - missing or changed column in application table
@@ -1254,7 +1267,8 @@ $emaj_verify_group$
             WHERE nspname = r_tblsq.rel_schema AND relnamespace = pg_namespace.oid AND relname = r_tblsq.rel_tblseq
               AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false;
           IF FOUND THEN
-            RETURN NEXT 'The structure of log table ' || v_logTableName || ' is not coherent with ' || v_fullTableName || '(dropped or changed column?).';
+            v_msg = v_msgPrefix || 'the structure of log table ' || v_logTableName || ' is not coherent with ' || v_fullTableName || ' (dropped or changed column?).';
+            RETURN NEXT v_msg;
             v_finalMsg = '';
           END IF;
         END IF;
