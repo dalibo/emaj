@@ -11,9 +11,9 @@ Enhancements:
     to a mark interval are snapped. One CSV file is created for each table. 
     Sequences state at starting mark and ending mark are also stored into 
     2 specific files.
-  - add a emaj_verify_group() function that performs various checks on a 
-    given tables group to verify its consistency and its ability to be safely 
-    managed by E-Maj functions.
+  - the emaj_verify_all() function also performs various checks on all tables 
+    groups to verify their consistency and ability to be safely managed by 
+    E-Maj functions.
 
 Bug fixes: 
   - fix emaj_delete_mark_group() and emaj_delete_before_mark_group() 
