@@ -42,8 +42,7 @@ ALTER EXTENSION emaj ADD FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TE
 ALTER EXTENSION emaj ADD FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_verify_all();
 ALTER EXTENSION emaj ADD FUNCTION emaj._forbid_truncate_fnct();
-ALTER EXTENSION emaj ADD FUNCTION emaj._verify_group(v_groupName TEXT); 
-ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_verify_group(v_groupName TEXT); 
+ALTER EXTENSION emaj ADD FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean);
 ALTER EXTENSION emaj ADD FUNCTION emaj._check_fk_groups(v_groupName TEXT[]);
 ALTER EXTENSION emaj ADD FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_create_group(v_groupName TEXT);
