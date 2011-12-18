@@ -88,7 +88,7 @@ CREATE SCHEMA emaj;
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 
--- create, execute and drop a specific plpgsql function to create emaj roles and the _txid_current() function
+-- create emaj roles and the _txid_current() function
 #gen_extension_stop#
 CREATE or REPLACE FUNCTION emaj._tmp_create_some_components() 
 RETURNS VOID LANGUAGE plpgsql AS
