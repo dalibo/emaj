@@ -589,7 +589,7 @@ $_create_tbl$
     EXECUTE 'ALTER TABLE ' || v_logTableName
          || ' ADD COLUMN emaj_tuple VARCHAR(3)';
     EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_id BIGSERIAL';
+         || ' ADD COLUMN emaj_id BIGSERIAL PRIMARY KEY';
     EXECUTE 'ALTER TABLE ' || v_logTableName
          || ' ADD COLUMN emaj_changed TIMESTAMPTZ DEFAULT clock_timestamp()';
     EXECUTE 'ALTER TABLE ' || v_logTableName
