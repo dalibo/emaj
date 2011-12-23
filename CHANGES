@@ -14,6 +14,9 @@ Enhancements:
   - the emaj_verify_all() function also performs various checks on all tables 
     groups to verify their consistency and ability to be safely managed by 
     E-Maj functions.
+  - add a primary key (and its associated index) to log tables to speed up 
+    the rollback operations or detailed statistics requests on large log 
+    tables.
 
 Bug fixes: 
   - fix emaj_delete_mark_group() and emaj_delete_before_mark_group() 
