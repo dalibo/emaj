@@ -3779,7 +3779,7 @@ GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_vi
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_viewer;
 
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_wording) VALUES ('EMAJ_INIT','E-Maj initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INIT','E-Maj 0.10.1', 'Initialisation completed');
 
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 CREATE or REPLACE FUNCTION emaj._tmp_check_setting() 
