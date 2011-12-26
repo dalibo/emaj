@@ -4,7 +4,8 @@
 directory = '<directory containing installation scripts, if not SHAREDIR>'
 
 default_version = '0.10.1'
-comment = 'E-Maj extension helps log and rollback updates on set of tables.'
+comment = 'E-Maj extension helps log and rollback updates on sets of tables.'
+superuser = true
 relocatable = false
 schema = 'emaj'
 
