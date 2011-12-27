@@ -3820,7 +3820,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
 
 #gen_psql_start#
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INIT','E-Maj 0.10.1', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 0.10.1', 'Initialisation completed');
 
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 #gen_extension_stop#
