@@ -1,9 +1,9 @@
-# File:	emaj--0.10.1.control
+# File:	emaj--0.11.0.control
 # E-Maj extension
 
 directory = '<directory containing installation scripts, if not SHAREDIR>'
 
-default_version = '0.10.1'
+default_version = '0.11.0'
 comment = 'E-Maj extension helps log and rollback updates on sets of tables.'
 superuser = true
 relocatable = false

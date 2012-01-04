@@ -1,5 +1,5 @@
 --
--- E-MAJ uninstall script : V 0.10.1
+-- E-MAJ uninstall script : V 0.11.0
 -- 
 -- This software is distributed under the GNU General Public License.
 --
