@@ -3,7 +3,7 @@ README
 
 E-Maj: logs and rollbacks table updates
 
-Version: 0.10.1
+Version: 0.11.0
 
 
 1- License
@@ -38,15 +38,15 @@ In both environments, being able to examine the history of updates performed on 
 - AUTHORS                           who is behind E-Maj
 - META.json                         meta file for PGXN
 - sql/emaj.sql                      psql installation script 
-- sql/emaj--0.10.1.sql              script used to create E-Maj as an extension
+- sql/emaj--0.11.0.sql              script used to create E-Maj as an extension
 - sql/emaj.control_base             base control file to create E-Maj as an extension
-- sql/emaj--unpackaged--0.10.1.sql  script to registered an existing installation as an extension
+- sql/emaj--unpackaged--0.11.0.sql  script to registered an existing installation as an extension
 - sql/uninstall.sql                 uninstallation script
 - sql/demo.sql                      demonstration psql script
 - sql/prep-pr.sql                   psql script to prepare parallel rollback demonstration
-- doc/emaj.0.10.1_pres_en.pdf		E-Maj presentation in English
-- doc/emaj.0.10.1_doc_en.pdf        E-Maj user's guide in English
-- doc/emaj.0.10.1_doc_fr.pdf        E-Maj user's guide in French
+- doc/emaj.0.11.0_pres_en.pdf		E-Maj presentation in English
+- doc/emaj.0.11.0_doc_en.pdf        E-Maj user's guide in English
+- doc/emaj.0.11.0_doc_fr.pdf        E-Maj user's guide in French
 - php/emajParallelRollback.php      external client for parallel rollback
 
 
