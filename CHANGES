@@ -3,6 +3,10 @@ E-Maj - Release notes
 0.11.0
 ------
 Enhancements:
+  - add a column into the emaj_mark table to maintain statistics about the 
+    total number of log rows recorded between the mark and the following one.
+    This is useful to speedup the retrieval of this data, for instance by the 
+    phpPgAdmin plugin.
 
 Bug fixes:
 
