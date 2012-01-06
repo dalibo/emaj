@@ -201,19 +201,20 @@ $$Contains the content (tables and sequences) of created E-Maj groups.$$;
 
 -- table containing the marksl
 CREATE TABLE emaj.emaj_mark (
-    mark_id                  BIGSERIAL   NOT NULL,       -- serial id used to order rows (not to rely on timestamps 
+    mark_id                   BIGSERIAL   NOT NULL,      -- serial id used to order rows (not to rely on timestamps 
                                                          -- that are not safe if system time changes)
-    mark_group               TEXT        NOT NULL,       -- group for which the mark has been set
-    mark_name                TEXT        NOT NULL,       -- mark name
-    mark_datetime            TIMESTAMPTZ NOT NULL,       -- precise timestamp of the mark creation, used as a reference
+    mark_group                TEXT        NOT NULL,      -- group for which the mark has been set
+    mark_name                 TEXT        NOT NULL,      -- mark name
+    mark_datetime             TIMESTAMPTZ NOT NULL,      -- precise timestamp of the mark creation, used as a reference
                                                          --   for other tables like emaj_sequence and all log tables
-    mark_state               TEXT,                       -- state of the mark, with 2 possible values:
+    mark_state                TEXT,                      -- state of the mark, with 2 possible values:
                                                          --   'ACTIVE' and 'DELETED'
-    mark_comment             TEXT,                       -- optional user comment
-    mark_txid                BIGINT                      -- id of the tx that has set the mark
-                             DEFAULT emaj._txid_current(),
-    mark_last_sequence_id    BIGINT,                     -- last sequ_id for the group at the end of the _set_mark_groups operation
-    mark_last_seq_hole_id    BIGINT,                     -- last sqhl_id for the group at _set_mark_groups time 
+    mark_comment              TEXT,                      -- optional user comment
+    mark_txid                 BIGINT                     -- id of the tx that has set the mark
+                              DEFAULT emaj._txid_current(),
+    mark_last_sequence_id     BIGINT,                    -- last sequ_id for the group at the end of the _set_mark_groups operation
+    mark_last_seq_hole_id     BIGINT,                    -- last sqhl_id for the group at _set_mark_groups time
+    mark_log_rows_before_next BIGINT,                    -- number of log rows recorded for the group between the mark and the next one (NULL if last mark) - used to speedup marks lists display in phpPgAdmin plugin
     PRIMARY KEY (mark_group, mark_name),
     FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
     ) TABLESPACE tspemaj;
@@ -1936,7 +1937,8 @@ $$Sets a mark on several E-Maj groups.$$;
 CREATE or REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT) 
 RETURNS int LANGUAGE plpgsql AS
 $_set_mark_groups$
--- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
+-- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups. 
+-- It also updates the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into all log tables between this previous mark and the new mark.
 -- It is called by emaj_set_mark_group and emaj_set_mark_groups functions but also by other functions that set internal marks, like functions that start or rollback groups.
 -- Input: group names array, mark to set, boolean indicating if the function is called by a multi group function
 -- Output: number of processed tables and sequences
@@ -1955,6 +1957,14 @@ $_set_mark_groups$
   BEGIN
 -- look at the clock to get the 'official' timestamp representing the mark
     v_timestamp = clock_timestamp();
+-- record the number of log rows for the old last mark of each group
+--   the statement returns no row in case of emaj_start_group(s)
+    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = 
+      coalesce( (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(m.mark_group,'EMAJ_LAST_MARK',NULL)) ,0)
+      WHERE mark_group = ANY (v_groupNames) 
+        AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
+            (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark 
+             WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
 -- for each member of the groups, ...
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
@@ -2083,6 +2093,7 @@ $emaj_delete_mark_group$
 -- Then, any rollback on the deleted mark will not be possible.
 -- It deletes rows corresponding to the mark to delete from emaj_mark and emaj_sequence 
 -- If this mark is the first mark, it also deletes rows from all concerned log tables and holes from emaj_seq_hole.
+-- The statistical mark_log_rows_before_next column's content of the previous mark is also maintained
 -- At least one mark must remain after the operation (otherwise it is not worth having a group in LOGGING state !).
 -- Input: group name, mark to delete
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark to delete to specify the last set mark.
@@ -2096,6 +2107,8 @@ $emaj_delete_mark_group$
     v_markNewMin     TEXT;
     v_datetimeNewMin TIMESTAMPTZ;
     v_cpt            INT;
+    v_previousMark   TEXT;
+    v_nextMark       TEXT;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -2139,8 +2152,25 @@ $emaj_delete_mark_group$
         WHERE sequ_mark = v_realMark AND sequ_datetime = v_datetimeMark
           AND rel_group = v_groupName AND rel_kind = 'r'
           AND sequ_schema = 'emaj' AND sequ_name = rel_schema || '_' || rel_tblseq || '_log_emaj_id_seq';
---   ... and the mark to delete can be physicaly deleted
+--   ... the mark to delete can be physicaly deleted
       DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
+--   ... adjust the mark_log_rows_before_next column of the previous mark
+--       get the name of the mark immediately preceeding the mark to delete
+      SELECT mark_name INTO v_previousMark FROM emaj.emaj_mark
+        WHERE mark_group = v_groupName AND mark_id < v_markId ORDER BY mark_id DESC LIMIT 1;
+--       get the name of the first mark succeeding the mark to delete
+      SELECT mark_name INTO v_nextMark FROM emaj.emaj_mark 
+        WHERE mark_group = v_groupName AND mark_id > v_markId ORDER BY mark_id LIMIT 1;
+      IF NOT FOUND THEN
+--       no next mark, so update the previous mark with NULL
+         UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL 
+           WHERE mark_group = v_groupName AND mark_name = v_previousMark;
+      ELSE
+--       update the previous mark with the emaj_log_stat_group() call's result
+         UPDATE emaj.emaj_mark SET mark_log_rows_before_next = 
+             (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(v_groupName, v_previousMark, v_nextMark))
+           WHERE mark_group = v_groupName AND mark_name = v_previousMark;
+      END IF;
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -2841,8 +2871,14 @@ $_rlbk_groups_step7$
         SELECT CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 
                'MARK DELETED', mark_group, 'mark ' || mark_name || ' has been deleted' FROM emaj.emaj_mark 
           WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId ORDER BY mark_id;
--- and finaly delete these useless marks (the related sequences have been already deleted by rollback functions)
-      DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId; 
+-- delete these useless marks (the related sequences have been already deleted by rollback functions)
+      DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId;
+-- and finaly reset the mark_log_rows_before_next column for the new last mark
+      UPDATE emaj.emaj_mark set mark_log_rows_before_next = NULL
+        WHERE mark_group = ANY (v_groupNames) 
+          AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
+              (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark 
+               WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
     END IF;
 -- rollback the application sequences belonging to the group
 -- warning, this operation is not transaction safe (that's why it is placed at the end of the operation)!
