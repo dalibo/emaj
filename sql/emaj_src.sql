@@ -543,8 +543,10 @@ $_create_tbl$
     v_attname               TEXT;
     v_relhaspkey            BOOLEAN;
     v_pgVersion             TEXT := emaj._pg_version();
-    r_trigger               RECORD;
+    v_stmt                  TEXT := '';
     v_triggerList           TEXT := '';
+    r_column                RECORD;
+    r_trigger               RECORD;
 -- cursor to retrieve all columns of the application table
     col1_curs CURSOR (tbl regclass) FOR 
       SELECT attname FROM pg_attribute 
@@ -580,7 +582,6 @@ $_create_tbl$
     v_logTriggerName   := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_log_trg');
     v_truncTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_trunc_trg');
     v_sequenceName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log_emaj_id_seq');
-
 -- creation of the log table: the log table looks like the application table, with some additional technical columns
     EXECUTE 'DROP TABLE IF EXISTS ' || v_logTableName;
     EXECUTE 'CREATE TABLE ' || v_logTableName
@@ -593,6 +594,23 @@ $_create_tbl$
          || ' ADD COLUMN emaj_txid    BIGINT      DEFAULT emaj._txid_current(),'
          || ' ADD COLUMN emaj_user    VARCHAR(32) DEFAULT session_user,'
          || ' ADD COLUMN emaj_user_ip INET        DEFAULT inet_client_addr()';
+-- remove the NOT NULL constraints. They are useless and blocking to store truncate event for tables belonging to audit_only tables
+    FOR r_column IN
+      SELECT ' ALTER COLUMN ' || attname || ' DROP NOT NULL' AS action 
+        FROM pg_attribute, pg_class, pg_namespace 
+        WHERE relnamespace = pg_namespace.oid AND attrelid = pg_class.oid 
+          AND nspname = v_emajSchema AND relname = quote_ident(v_schemaName || '_' || v_tableName || '_log') 
+          AND attnum > 0 AND attnotnull AND attisdropped = false AND attname NOT LIKE 'emaj%'
+    LOOP
+      IF v_stmt = '' THEN
+        v_stmt = v_stmt || r_column.action;
+      ELSE
+        v_stmt = v_stmt || ',' || r_column.action;
+      END IF;
+    END LOOP;
+    IF v_stmt <> '' THEN
+      EXECUTE 'ALTER TABLE ' || v_logTableName || v_stmt;
+    END IF;
 -- alter the sequence associated to the emaj_id column to set the increment to 2 (so that an update operation can safely have its 2 log rows)
     EXECUTE 'ALTER SEQUENCE ' || v_sequenceName || ' INCREMENT 2';
 -- creation of the log fonction that will be mapped to the log trigger later
