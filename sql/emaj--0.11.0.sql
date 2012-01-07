@@ -1205,7 +1205,8 @@ $_verify_group$;
 CREATE or REPLACE FUNCTION emaj._check_fk_groups(v_groupNames TEXT[]) 
 RETURNS void LANGUAGE plpgsql AS 
 $_check_fk_groups$
--- this function checks foreign key constraints for tables of a groups array:
+-- this function checks foreign key constraints for tables of a groups array.
+-- tables from audit_only groups are ignored in this check because they will never be rollbacked. 
 -- Input: group names array
   DECLARE
     r_fk             RECORD;
@@ -1213,13 +1214,16 @@ $_check_fk_groups$
 -- issue a warning if a table of the groups has a foreign key that references a table outside the groups
     FOR r_fk IN
       SELECT c.conname,r.rel_schema,r.rel_tblseq,nf.nspname,tf.relname 
-        FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace nf,pg_class tf, emaj.emaj_relation r
-        WHERE contype = 'f'                                      -- FK constraints only
-          AND c.conrelid  = t.oid  AND t.relnamespace  = n.oid   -- join for table and namespace 
-          AND c.confrelid = tf.oid AND tf.relnamespace = nf.oid  -- join for referenced table and namespace
-                                                                 -- join with emaj_relation table
-          AND n.nspname = r.rel_schema AND t.relname = r.rel_tblseq AND r.rel_group = ANY (v_groupNames)  
-          AND (nf.nspname,tf.relname) NOT IN                     -- referenced table outside the groups
+        FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace nf,pg_class tf, 
+             emaj.emaj_relation r, emaj.emaj_group g
+        WHERE contype = 'f'                                         -- FK constraints only
+          AND c.conrelid  = t.oid  AND t.relnamespace  = n.oid      -- join for table and namespace 
+          AND c.confrelid = tf.oid AND tf.relnamespace = nf.oid     -- join for referenced table and namespace
+          AND n.nspname = r.rel_schema AND t.relname = r.rel_tblseq -- join on emaj_relation table
+          AND r.rel_group = g.group_name                            -- join on emaj_group table
+          AND r.rel_group = ANY (v_groupNames)                      -- only tables of the selected groups
+          AND g.group_is_rollbackable                               -- only tables from rollbackable groups
+          AND (nf.nspname,tf.relname) NOT IN                        -- referenced table outside the groups
               (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames))
       LOOP
       RAISE WARNING '_check_fk_groups: Foreign key %, from table %.%, references %.% that is outside groups (%).',
@@ -1228,13 +1232,16 @@ $_check_fk_groups$
 -- issue a warning if a table of the groups is referenced by a table outside the groups
     FOR r_fk IN
       SELECT c.conname,n.nspname,t.relname,r.rel_schema,r.rel_tblseq 
-        FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace nf,pg_class tf, emaj.emaj_relation r
-        WHERE contype = 'f'                                      -- FK constraints only
-          AND c.conrelid  = t.oid  AND t.relnamespace  = n.oid   -- join for table and namespace 
-          AND c.confrelid = tf.oid AND tf.relnamespace = nf.oid  -- join for referenced table and namespace
-                                                                 -- join with emaj_relation table
-          AND nf.nspname = r.rel_schema AND tf.relname = r.rel_tblseq AND r.rel_group = ANY (v_groupNames)
-          AND (n.nspname,t.relname) NOT IN                       -- referenced table outside the groups
+        FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace nf,pg_class tf, 
+             emaj.emaj_relation r, emaj.emaj_group g
+        WHERE contype = 'f'                                           -- FK constraints only
+          AND c.conrelid  = t.oid  AND t.relnamespace  = n.oid        -- join for table and namespace 
+          AND c.confrelid = tf.oid AND tf.relnamespace = nf.oid       -- join for referenced table and namespace
+          AND nf.nspname = r.rel_schema AND tf.relname = r.rel_tblseq -- join with emaj_relation table
+          AND r.rel_group = g.group_name                              -- join on emaj_group table
+          AND r.rel_group = ANY (v_groupNames)                        -- only tables of the selected groups
+          AND g.group_is_rollbackable                                 -- only tables from rollbackable groups
+          AND (n.nspname,t.relname) NOT IN                            -- referenced table outside the groups
               (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames))
       LOOP
       RAISE WARNING '_check_fk_groups: table %.% is referenced by foreign key % from table %.% that is outside groups (%).',

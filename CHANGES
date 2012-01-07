@@ -7,6 +7,11 @@ Enhancements:
     total number of log rows recorded between the mark and the following one.
     This is useful to speedup the retrieval of this data, for instance by the 
     phpPgAdmin plugin.
+  - in groups creation, start or rollback functions, improve the detection of 
+    foreign keys referencing tables outside the groups or tables referenced 
+    by foreign keys from tables outside the groups: tables from audit_only 
+    groups are now ignored because the potential problem detected with 
+    foreign keys only concerns rollback operations.
 
 Bug fixes:
 
