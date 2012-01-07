@@ -501,24 +501,17 @@ $_create_tbl$
 -- creation of the log table: the log table looks like the application table, with some additional technical columns
     EXECUTE 'DROP TABLE IF EXISTS ' || v_logTableName;
     EXECUTE 'CREATE TABLE ' || v_logTableName
-         || '( LIKE ' || v_fullTableName || ') TABLESPACE ' || v_emajTblSpace ;
+         || ' ( LIKE ' || v_fullTableName || ') TABLESPACE ' || v_emajTblSpace ;
     EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_verb VARCHAR(3)';
-    EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_tuple VARCHAR(3)';
-    EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_id BIGSERIAL PRIMARY KEY';
-    EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_changed TIMESTAMPTZ DEFAULT clock_timestamp()';
-    EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_txid BIGINT DEFAULT emaj._txid_current()';
-    EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_user VARCHAR(32) DEFAULT session_user';
-    EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr()';
+         || ' ADD COLUMN emaj_verb    VARCHAR(3),'
+         || ' ADD COLUMN emaj_tuple   VARCHAR(3),'
+         || ' ADD COLUMN emaj_id      BIGSERIAL   PRIMARY KEY,'
+         || ' ADD COLUMN emaj_changed TIMESTAMPTZ DEFAULT clock_timestamp(),'
+         || ' ADD COLUMN emaj_txid    BIGINT      DEFAULT emaj._txid_current(),'
+         || ' ADD COLUMN emaj_user    VARCHAR(32) DEFAULT session_user,'
+         || ' ADD COLUMN emaj_user_ip INET        DEFAULT inet_client_addr()';
 -- alter the sequence associated to the emaj_id column to set the increment to 2 (so that an update operation can safely have its 2 log rows)
     EXECUTE 'ALTER SEQUENCE ' || v_sequenceName || ' INCREMENT 2';
-
 -- creation of the log fonction that will be mapped to the log trigger later
 -- The new row is logged for each INSERT, the old row is logged for each DELETE 
 -- and the old and the new rows are logged for each UPDATE
