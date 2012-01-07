@@ -513,11 +513,11 @@ $_create_tbl$
          || ' ADD COLUMN emaj_user_ip INET        DEFAULT inet_client_addr()';
 -- remove the NOT NULL constraints. They are useless and blocking to store truncate event for tables belonging to audit_only tables
     FOR r_column IN
-      SELECT ' ALTER COLUMN ' || attname || ' DROP NOT NULL' AS action 
+      SELECT ' ALTER COLUMN ' || quote_ident(attname) || ' DROP NOT NULL' AS action 
         FROM pg_attribute, pg_class, pg_namespace 
         WHERE relnamespace = pg_namespace.oid AND attrelid = pg_class.oid 
-          AND nspname = v_emajSchema AND relname = quote_ident(v_schemaName || '_' || v_tableName || '_log') 
-          AND attnum > 0 AND attnotnull AND attisdropped = false AND attname NOT LIKE 'emaj%'
+          AND nspname = v_emajSchema AND relname = v_schemaName || '_' || v_tableName || '_log' 
+          AND attnum > 0 AND attnotnull AND attisdropped = false AND attname NOT LIKE E'emaj\\_%'
     LOOP
       IF v_stmt = '' THEN
         v_stmt = v_stmt || r_column.action;
@@ -560,13 +560,21 @@ $_create_tbl$
          || ' AFTER INSERT OR UPDATE OR DELETE ON ' || v_fullTableName
          || '  FOR EACH ROW EXECUTE PROCEDURE ' || v_logFnctName || '()';
     EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
--- creation of the trigger that blocks any TRUNCATE on the application table, using the common _forbid_truncate_fnct() function 
+-- creation of the trigger that manage any TRUNCATE on the application table
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
     IF v_pgVersion >= '8.4' THEN
       EXECUTE 'DROP TRIGGER IF EXISTS ' || v_truncTriggerName || ' ON ' || v_fullTableName;
-      EXECUTE 'CREATE TRIGGER ' || v_truncTriggerName
-           || ' BEFORE TRUNCATE ON ' || v_fullTableName
-           || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._forbid_truncate_fnct()';
+      IF v_isRollbackable THEN
+-- For rollbackable groups, use the common _forbid_truncate_fnct() function that blocks the operation
+        EXECUTE 'CREATE TRIGGER ' || v_truncTriggerName
+             || ' BEFORE TRUNCATE ON ' || v_fullTableName
+             || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._forbid_truncate_fnct()';
+      ELSE
+-- For audit_only groups, use the common _log_truncate_fnct() function that records the operation into the log table
+        EXECUTE 'CREATE TRIGGER ' || v_truncTriggerName
+             || ' BEFORE TRUNCATE ON ' || v_fullTableName
+             || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._log_truncate_fnct()';
+      END IF;
       EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_truncTriggerName;
     END IF;
 --
@@ -1041,16 +1049,35 @@ $emaj_verify_all$;
 COMMENT ON FUNCTION emaj.emaj_verify_all() IS
 $$Verifies the consistency between existing E-Maj and application objects.$$;
 
-CREATE or REPLACE FUNCTION emaj._forbid_truncate_fnct() RETURNS TRIGGER AS $_forbid_truncate_fnct$
--- The function is triggered by the execution of TRUNCATE SQL verb on tables of a group in logging mode.
+CREATE or REPLACE FUNCTION emaj._forbid_truncate_fnct() RETURNS TRIGGER AS 
+$_forbid_truncate_fnct$
+-- The function is triggered by the execution of TRUNCATE SQL verb on tables of a rollbackable group 
+-- in logging mode.
 -- It can only be called with postgresql in a version greater or equal 8.4
-BEGIN
-  IF (TG_OP = 'TRUNCATE') THEN
-    RAISE EXCEPTION 'emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (%) are currently protected by E-Maj. Consider stopping the group before issuing a TRUNCATE.', TG_TABLE_NAME;
-  END IF;
-  RETURN NULL;
-END;
+  BEGIN
+    IF (TG_OP = 'TRUNCATE') THEN
+      RAISE EXCEPTION 'emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (%.%) are currently protected by E-Maj. Consider stopping the group before issuing a TRUNCATE.', TG_TABLE_SCHEMA, TG_TABLE_NAME;
+    END IF;
+    RETURN NULL;
+  END;
 $_forbid_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE or REPLACE FUNCTION emaj._log_truncate_fnct() RETURNS TRIGGER AS 
+$_log_truncate_fnct$
+-- The function is triggered by the execution of TRUNCATE SQL verb on tables of an audit_only group 
+-- in logging mode.
+-- It can only be called with postgresql in a version greater or equal 8.4
+  DECLARE
+    v_emajSchema     TEXT := 'emaj';
+    v_logTableName   TEXT;
+  BEGIN
+    IF (TG_OP = 'TRUNCATE') THEN
+      v_logTableName := quote_ident(v_emajSchema) || '.' || quote_ident(TG_TABLE_SCHEMA || '_' || TG_TABLE_NAME || '_log');
+      EXECUTE 'INSERT INTO ' || v_logTableName || ' (emaj_verb) VALUES (''TRU'')';
+    END IF;
+    RETURN NULL;
+  END;
+$_log_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ------------------------------------------------
 ----                                        ----
@@ -3643,6 +3670,7 @@ REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_times
 REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._log_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
@@ -3707,6 +3735,7 @@ GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_ti
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._log_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
