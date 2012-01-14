@@ -3,6 +3,14 @@ E-Maj - Release notes
 0.11.0
 ------
 Enhancements:
+  - add an optional "resetLog" boolean parameter to the emaj_start_group() 
+    and emaj_start_groups() functions, indicating if the old log records must 
+    be physicaly deleted or not. By default, or when this third parameter is 
+    set to true, old log records of a group are deleted (i.e. the group is 
+    reset) at start group time. If the group is not reset at start time, all 
+    old related marks and log tables rows cannot be used for any rollback 
+    operation anymore. Nevertheless, log rows remain visible, old marks can 
+    be deleted, renamed or commented, and log statistics can be requested.
   - a TRUNCATE sql verb is now allowed on audit_only tables group even in 
     logging state. The execution of a truncate statement on a table is 
     recorded in the associated log table, the emaj_verb column being set to 
