@@ -495,7 +495,7 @@ $_create_tbl$
     v_logTableName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
     v_logFnctName      := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log_fnct');
     v_rlbkFnctName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_rlbk_fnct');
-    v_exceptionRlbkFnctName=substring(quote_literal(v_rlbkFnctName) FROM '^.(.*).$');
+    v_exceptionRlbkFnctName=substring(quote_literal(v_rlbkFnctName) FROM '^(.*).$');   -- suppress last character
     v_logTriggerName   := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_log_trg');
     v_truncTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_trunc_trg');
     v_sequenceName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log_emaj_id_seq');
@@ -647,12 +647,12 @@ $_create_tbl$
 --         || '          RAISE NOTICE ''emaj_id = % ; DEL'', rec_log.emaj_id;'
            || '          INSERT INTO ' || v_fullTableName || ' VALUES (' || v_colList || ');'
            || '      ELSE'
-           || '          RAISE EXCEPTION ''' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = % unknown, emaj_id = %.'','
+           || '          RAISE EXCEPTION ' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = % is unknown, emaj_id = %.'','
            || '            rec_log.emaj_verb, rec_log.emaj_id;' 
            || '      END IF;'
            || '      GET DIAGNOSTICS v_nb_proc_rows = ROW_COUNT;'
            || '      IF v_nb_proc_rows <> 1 THEN'
-           || '        RAISE EXCEPTION ''' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = %, emaj_id = %, # processed rows = % .'''
+           || '        RAISE EXCEPTION ' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = %, emaj_id = %, # processed rows = % .'''
            || '           ,rec_log.emaj_verb, rec_log.emaj_id, v_nb_proc_rows;' 
            || '      END IF;'
            || '      v_nb_rows := v_nb_rows + 1;'

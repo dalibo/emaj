@@ -26,6 +26,8 @@ Enhancements:
     foreign keys only concerns rollback operations.
 
 Bug fixes:
+  - fix rollback function generation for cases when a table name includes an 
+    antislash character.
 
 0.10.1
 ------
