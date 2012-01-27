@@ -1119,7 +1119,7 @@ $_verify_group$
       RAISE EXCEPTION '_verify_group: group % has not been created.', v_groupName;
     END IF;
 -- Build message parts
-    v_msgPrefix = 'Checking ' || v_groupName || ': ';
+    v_msgPrefix = 'Checking tables group ' || v_groupName || ': ';
     v_finalMsg = v_msgPrefix || 'no error encountered';
 -- check the postgres version at creation time is compatible with the current version
 -- Warning: comparisons on version numbers are alphanumeric. 
