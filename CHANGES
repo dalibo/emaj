@@ -24,6 +24,7 @@ Enhancements:
     by foreign keys from tables outside the groups: tables from audit_only 
     groups are now ignored because the potential problem detected with 
     foreign keys only concerns rollback operations.
+  - Minor improvement in messages produced by emaj.emaj_verify_all() function.
 
 Bug fixes:
   - fix rollback function generation for cases when a table name includes an 
