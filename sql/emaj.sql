@@ -3479,9 +3479,9 @@ $emaj_snap_group$
                   AND attnum > 0 AND attisdropped = false
               LOOP
             IF v_colList = '' THEN
-               v_colList := r_col.attname;
+               v_colList := quote_ident(r_col.attname);
             ELSE
-               v_colList := v_colList || ',' || r_col.attname;
+               v_colList := v_colList || ',' || quote_ident(r_col.attname);
             END IF;
           END LOOP;
         ELSE
@@ -3492,9 +3492,9 @@ $emaj_snap_group$
                   AND attnum > 0  AND attisdropped = false
               LOOP
             IF v_colList = '' THEN
-               v_colList := r_col.attname;
+               v_colList := quote_ident(r_col.attname);
             ELSE
-               v_colList := v_colList || ',' || r_col.attname;
+               v_colList := v_colList || ',' || quote_ident(r_col.attname);
             END IF;
           END LOOP;
         END IF;
@@ -3676,6 +3676,367 @@ $emaj_snap_log_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
+CREATE or REPLACE FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) 
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
+$emaj_generate_sql$
+-- This function generates a SQL script representing all updates performed on a tables group between 2 marks
+-- or beetween a mark and the current situation. The result is stored into an external file.
+-- The function can process groups that are in IDLE state.
+-- The sql statements are placed between a BEGIN TRANSACTION and a COMMIT statements.
+-- The output file can be reused as input file to a psql command to replay the updates scenario. Just '\\' 
+-- character strings (double antislash), if any, must be replaced by '\' (single antislash) before feeding 
+-- the psql command.
+-- Input: - tables group
+--        - start mark, NULL representing the first mark
+--        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
+--        - absolute pathname describing the file that will hold the result
+-- Output: number of generated SQL statements
+  DECLARE
+    v_pgVersion             TEXT := emaj._pg_version();
+    v_groupState            TEXT;
+    v_emajSchema            TEXT := 'emaj';
+    v_cpt                   INT;
+    v_realFirstMark         TEXT;
+    v_realLastMark          TEXT;
+    v_firstMarkId           BIGINT;
+    v_lastMarkId            BIGINT;
+    v_tsFirstMark           TIMESTAMPTZ;
+    v_tsLastMark            TIMESTAMPTZ;
+    v_beginLastValue        BIGINT;
+    v_endLastValue          BIGINT;
+    v_nbSQL                 INT;
+    v_cumNbSQL              INT;
+    v_fullTableName         TEXT;
+    v_logTableName          TEXT;
+    v_fullSeqName           TEXT;
+    v_unquotedType          TEXT[] := array['smallint','integer','bigint','numeric','decimal',
+                                            'int2','int4','int8','serial','bigserial',
+                                            'real','double precision','float','float4','float8','oid'];
+    v_endComment            TEXT;
+-- variables to hold pieces of SQL
+    v_conditions            TEXT;
+    v_rqInsert              TEXT;
+    v_rqUpdate              TEXT;
+    v_rqDelete              TEXT;
+    v_rqTruncate            TEXT;
+    v_valList               TEXT;
+    v_setList               TEXT;
+    v_pkCondList            TEXT;
+    v_rqSeq                 TEXT;
+-- other
+    r_tblsq                 RECORD;
+    r_col                   RECORD;
+  BEGIN
+-- this parameter should be moved in the create function clause once 8.2 will not be supported anymore by E-Maj
+    SET standard_conforming_strings = ON;
+--raise notice '%','abd\ndef'; 
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('GENERATE_SQL', 'BEGIN', v_groupName, 'From mark ' || coalesce (v_firstMark, 'NULL') || ' to mark ' || coalesce (v_lastMark, 'NULL') || ' towards ' || v_location);
+-- check postgres version is >= 8.3 
+--   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
+    IF v_pgVersion < '8.3' THEN
+      RAISE EXCEPTION 'emaj_generate_sql: this function needs a PostgreSQL version 8.3+.';
+    END IF;
+-- check that the group is recorded in emaj_group table
+    SELECT group_state INTO v_groupState 
+      FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_generate_sql: group % has not been created.', v_groupName;
+    END IF;
+-- check all tables of the group have a pkey
+    SELECT count(*) INTO v_cpt FROM pg_class, pg_namespace, emaj.emaj_relation
+      WHERE relnamespace = pg_namespace.oid
+        AND nspname = rel_schema AND relname =  rel_tblseq 
+        AND rel_group = v_groupName AND rel_kind = 'r' 
+        AND relhaspkey = false;
+    IF v_cpt > 0 THEN
+      RAISE EXCEPTION 'emaj_generate_sql: Tables group % contains % tables without pkey.', v_groupName, v_cpt;
+    END IF;
+-- if first mark is NULL or empty, retrieve the name, timestamp and last sequ_hole id of the first recorded mark for the group
+    IF v_firstMark IS NULL OR v_firstMark = '' THEN
+      SELECT mark_id, mark_name, mark_datetime INTO v_firstMarkId, v_realFirstMark, v_tsFirstMark
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_id LIMIT 1;
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'emaj_generate_sql: No initial mark can be found for group %.', v_groupName;
+      END IF;
+    ELSE
+-- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied first mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
+      IF v_realFirstMark IS NULL THEN
+        RAISE EXCEPTION 'emaj_generate_sql: Start mark % is unknown for group %.', v_firstMark, v_groupName;
+      END IF;
+      SELECT mark_id, mark_datetime INTO v_firstMarkId, v_tsFirstMark
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realFirstMark;
+    END IF;
+-- if last mark is NULL or empty, there is no timestamp to register
+    IF v_lastMark IS NULL OR v_lastMark = '' THEN
+      v_lastMarkId = NULL;
+      v_tsLastMark = NULL;
+    ELSE
+-- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
+      IF v_realLastMark IS NULL THEN
+        RAISE EXCEPTION 'emaj_generate_sql: End mark % is unknown for group %.', v_lastMark, v_groupName;
+      END IF;
+      SELECT mark_id, mark_datetime INTO v_lastMarkId, v_tsLastMark 
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
+    END IF;
+-- check that the first_mark < end_mark
+    IF v_lastMarkId IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
+      RAISE EXCEPTION 'emaj_generate_sql: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMark, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
+    END IF;
+-- test the supplied output file name by inserting a temporary line (trap NULL or bad file name)
+    BEGIN
+      EXECUTE 'COPY (SELECT ''-- emaj_generate_sql() function in progress - started at ' 
+                     || statement_timestamp() || ''') TO ' || quote_literal(v_location);
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE EXCEPTION 'emaj_generate_sql: file % cannot be used as script output file.', v_location;
+    END;
+-- create temporary table
+    DROP TABLE IF EXISTS emaj_temp_script;
+    CREATE TEMP TABLE emaj_temp_script (
+      scr_emaj_changed      TIMESTAMPTZ,
+      scr_emaj_txid         BIGINT,
+      scr_sql               TEXT
+    );
+-- for each application table referenced in the emaj_relation table, build SQL statements and process the related log table
+    v_cumNbSQL = 0;
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+-- process one application table
+      v_fullTableName    := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+      v_logTableName     := quote_ident(v_emajSchema) || '.' || quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log');
+-- build the restriction conditions on emaj_id, depending on supplied mark range
+--   get the log table id at first mark time to build the first condition
+      SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO v_beginLastValue
+         FROM emaj.emaj_sequence
+         WHERE sequ_schema = v_emajSchema 
+           AND sequ_name = r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log_emaj_id_seq'
+           AND sequ_datetime = v_tsFirstMark;
+      v_conditions = 'o.emaj_id >= ' || v_beginLastValue;
+--   get the log table id at last mark time 
+      IF v_tsLastMark IS NOT NULL THEN
+--   last mark is not NULL, so get the log table id at last mark time and build the emaj_id end range
+        SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO v_endLastValue
+           FROM emaj.emaj_sequence
+           WHERE sequ_schema = v_emajSchema 
+             AND sequ_name = r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log_emaj_id_seq'
+             AND sequ_datetime = v_tsLastMark;
+        v_conditions = v_conditions || ' AND o.emaj_id < ' || v_endLastValue;
+      END IF;
+-- retrieve from pg_attribute all columns of the application table and build :
+-- - the VALUES list used in the INSERT statements
+-- - the SET list used in the UPDATE statements
+      v_valList = '';
+      v_setList = '';
+      FOR r_col IN
+        SELECT attname, format_type(atttypid,atttypmod) FROM pg_attribute 
+         WHERE attrelid = v_fullTableName ::regclass
+           AND attnum > 0 AND NOT attisdropped
+         ORDER BY attnum
+      LOOP
+-- test if the column format (at least up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric data types)
+        IF regexp_replace (r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
+-- literal for this column can remain as is
+--          v_valList = v_valList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::text,''NULL'') || ''::' || r_col.format_type || ', ';
+          v_valList = v_valList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::text,''NULL'') || '', ';
+--          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.' || quote_ident(r_col.attname) || ' ::text,''NULL'') || ''::' || r_col.format_type || ', ';
+          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.' || quote_ident(r_col.attname) || ' ::text,''NULL'') || '', ';
+        ELSE
+-- literal for this column must be quoted
+--          v_valList = v_valList || ''' || coalesce(quote_literal(o.' || quote_ident(r_col.attname) || '),''NULL'') || ''::' || r_col.format_type || ', ';
+          v_valList = v_valList || ''' || coalesce(quote_literal(o.' || quote_ident(r_col.attname) || '),''NULL'') || '', ';
+--          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(quote_literal(n.' || quote_ident(r_col.attname) || '),''NULL'') || ''::' || r_col.format_type || ', ';
+          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(quote_literal(n.' || quote_ident(r_col.attname) || '),''NULL'') || '', ';
+        END IF;
+      END LOOP;
+-- suppress the final separators
+      v_valList = substring(v_valList FROM 1 FOR char_length(v_valList) - 2);
+      v_setList = substring(v_setList FROM 1 FOR char_length(v_setList) - 2);
+-- retrieve all columns that represents the pkey and build the "pkey equal" conditions set that will be used in UPDATE and DELETE statements
+-- (taking column names in pg_attribute from the table's definition instead of index definition is mandatory 
+--  starting from pg9.0, joining tables with indkey instead of indexrelid)
+      v_pkCondList = '';
+      FOR r_col IN
+        SELECT attname, format_type(atttypid,atttypmod) FROM pg_attribute, pg_index 
+          WHERE pg_attribute.attrelid = pg_index.indrelid
+            AND attnum = ANY (indkey) 
+            AND indrelid = v_fullTableName ::regclass AND indisprimary
+            AND attnum > 0 AND NOT attisdropped
+      LOOP
+-- test if the column format (at least up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric data types)
+        IF regexp_replace (r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
+-- literal for this column can remain as is
+--          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || o.' || quote_ident(r_col.attname) || ' || ''::' || r_col.format_type || ' AND ';
+          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || o.' || quote_ident(r_col.attname) || ' || '' AND ';
+        ELSE
+-- literal for this column must be quoted
+--          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(r_col.attname) || ') || ''::' || r_col.format_type || ' AND ';
+          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(r_col.attname) || ') || '' AND ';
+        END IF;
+      END LOOP;
+-- suppress the final separator
+      v_pkCondList = substring(v_pkCondList FROM 1 FOR char_length(v_pkCondList) - 5);
+-- prepare sql skeletons for each statement type
+      v_rqInsert = '''INSERT INTO ' || replace(v_fullTableName,'''','''''') || ' VALUES (' || v_valList || ');''';
+      v_rqUpdate = '''UPDATE ONLY ' || replace(v_fullTableName,'''','''''') || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';''';
+      v_rqDelete = '''DELETE FROM ONLY ' || replace(v_fullTableName,'''','''''') || ' WHERE ' || v_pkCondList || ';''';
+      v_rqTruncate = '''TRUNCATE ' || replace(v_fullTableName,'''','''''') || ';''';
+-- now scan the log table to process all statement types at once
+      EXECUTE 'INSERT INTO emaj_temp_script ' 
+           || 'SELECT o.emaj_changed, o.emaj_txid, CASE '
+           ||   ' WHEN o.emaj_verb = ''INS'' THEN ' || v_rqInsert 
+           ||   ' WHEN o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''OLD'' THEN ' || v_rqUpdate
+           ||   ' WHEN o.emaj_verb = ''DEL'' THEN ' || v_rqDelete 
+           ||   ' WHEN o.emaj_verb = ''TRU'' THEN ' || v_rqTruncate 
+           || ' END '
+           || ' FROM ' || v_logTableName || ' o'
+           ||   ' LEFT OUTER JOIN ' || v_logTableName || ' n ON n.emaj_id = o.emaj_id + 1 '
+           || ' WHERE NOT (o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''NEW'') AND ' || v_conditions;
+      GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
+      v_cumNbSQL = v_cumNbSQL + v_nbSQL;
+/*
+-- Now scan the log table twice: first to process UPDATEs and then to process all other statement types
+-- processing all UPDATE statements recorded in log table
+      EXECUTE 'INSERT INTO emaj_temp_script ' 
+           || 'SELECT o.emaj_changed, o.emaj_txid, ' || v_rqUpdate 
+           || ' FROM ' || v_logTableName || ' o '
+           || '   LEFT OUTER JOIN ' || v_logTableName || ' n ON n.emaj_id = o.emaj_id + 1 '
+           || ' WHERE o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''OLD'' AND  AND '
+           || v_conditions;
+      GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
+      v_cumNbSQL = v_cumNbSQL + v_nbSQL;
+-- processing all other statements recorded in log table
+      EXECUTE 'INSERT INTO emaj_temp_script ' 
+           || 'SELECT emaj_changed, emaj_txid, CASE '
+           || '   WHEN o.emaj_verb = ''INS'' THEN ' || v_rqInsert 
+           || '   WHEN o.emaj_verb = ''DEL'' THEN ' || v_rqDelete 
+           || '   WHEN o.emaj_verb = ''TRU'' THEN ' || v_rqTruncate 
+           || ' END '
+           || ' FROM ' || v_logTableName || ' o'
+           || ' WHERE ' || v_conditions;
+      GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
+      v_cumNbSQL = v_cumNbSQL + v_nbSQL;
+*/
+/*
+-- Now scan 4 times the log table to process each statement type
+-- It has been estimated less costly to perform 4 'simple' scans 
+-- rather than perform complex procedural processing for each row returned by a single scan 
+-- processing all INSERT statements recorded in log table
+      EXECUTE 'INSERT INTO emaj_temp_script ' 
+           || 'SELECT emaj_changed, emaj_txid, ' || v_rqInsert 
+           || ' FROM ' || v_logTableName || ' o'
+           || ' WHERE emaj_verb = ''INS'' AND emaj_tuple = ''NEW'' AND ' 
+           || v_conditions;
+      GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
+      v_cumNbSQL = v_cumNbSQL + v_nbSQL;
+-- processing all UPDATE statements recorded in log table
+      EXECUTE 'INSERT INTO emaj_temp_script ' 
+           || 'SELECT o.emaj_changed, o.emaj_txid, ' || v_rqUpdate 
+           || ' FROM ' || v_logTableName || ' o, ' || v_logTableName || ' n'
+           || ' WHERE o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''OLD'' AND n.emaj_id = o.emaj_id + 1 AND '
+           || v_conditions;
+      GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
+      v_cumNbSQL = v_cumNbSQL + v_nbSQL;
+-- processing all DELETE statements recorded in log table
+      EXECUTE 'INSERT INTO emaj_temp_script ' 
+           || 'SELECT o.emaj_changed, o.emaj_txid, ' || v_rqDelete
+           || ' FROM ' || v_logTableName || ' o'
+           || ' WHERE emaj_verb = ''DEL'' AND emaj_tuple = ''OLD'' AND ' 
+           || v_conditions;
+      GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
+      v_cumNbSQL = v_cumNbSQL + v_nbSQL;
+-- processing all TRUNCATE statements recorded in log table
+      EXECUTE 'INSERT INTO emaj_temp_script ' 
+           || 'SELECT emaj_changed, emaj_txid, ' || v_rqTruncate 
+           || ' FROM ' || v_logTableName || ' o'
+           || ' WHERE emaj_verb = ''TRU'' AND ' 
+           || v_conditions;
+      GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
+      v_cumNbSQL = v_cumNbSQL + v_nbSQL;
+*/
+    END LOOP;
+-- process sequences
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
+          WHERE rel_group = v_groupName AND rel_kind = 'S' ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+      v_fullSeqName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+      IF v_tsLastMark IS NULL THEN
+-- no supplied last mark, so get current sequence characteritics
+        IF v_pgVersion <= '8.3' THEN
+-- .. in pg 8.3-
+          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
+               || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
+               || 'FROM ' || v_fullSeqName INTO v_rqSeq;
+--raise notice '1 - sequence % -> %',v_fullSeqName,v_rqSeq;
+        ELSE
+-- .. in pg 8.4+
+          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
+               || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
+               || 'FROM ' || v_fullSeqName INTO v_rqSeq;
+--raise notice '2 - sequence % -> %',v_fullSeqName,v_rqSeq;
+        END IF;
+      ELSE
+-- a last mark is supplied, so get sequence characteristics from emaj_sequence table
+        IF v_pgVersion <= '8.3' THEN
+-- .. in pg 8.3-
+          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
+               || ''' || '' RESTART '' || CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END || '' INCREMENT '' || sequ_increment  || '' MAXVALUE '' || sequ_max_val  || '' MINVALUE '' || sequ_min_val || '' CACHE '' || sequ_cache_val || CASE WHEN NOT sequ_is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
+               || 'FROM emaj.emaj_sequence '
+               || 'WHERE sequ_schema = ' || quote_literal(r_tblsq.rel_schema) 
+               || '  AND sequ_name = ' || quote_literal(r_tblsq.rel_tblseq) 
+               || '  AND sequ_datetime = ''' || v_tsLastMark || '''' INTO v_rqSeq;
+--raise notice '3 - sequence % -> %',v_fullSeqName,v_rqSeq;
+        ELSE
+-- .. in pg 8.4+
+          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
+               || ''' || '' RESTART '' || CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END || '' START '' || sequ_start_val || '' INCREMENT '' || sequ_increment  || '' MAXVALUE '' || sequ_max_val  || '' MINVALUE '' || sequ_min_val || '' CACHE '' || sequ_cache_val || CASE WHEN NOT sequ_is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
+               || 'FROM emaj.emaj_sequence '
+               || 'WHERE sequ_schema = ' || quote_literal(r_tblsq.rel_schema) 
+               || '  AND sequ_name = ' || quote_literal(r_tblsq.rel_tblseq) 
+               || '  AND sequ_datetime = ''' || v_tsLastMark || '''' INTO v_rqSeq;
+--raise notice '4 - sequence % -> %',v_fullSeqName,v_rqSeq;
+        END IF;
+      END IF;
+-- insert into temp table
+      EXECUTE 'INSERT INTO emaj_temp_script ' 
+           || 'SELECT clock_timestamp(), txid_current(), ' || quote_literal(v_rqSeq);
+      v_cumNbSQL = v_cumNbSQL + 1;
+    END LOOP;
+-- add initial comment, BEGIN TRANSACTION and COMMIT statements 
+    IF v_tsLastMark IS NOT NULL THEN
+      v_endComment = ' and mark ' || v_realLastMark;
+    ELSE
+      v_endComment = ' and the current situation';
+    END IF;
+    INSERT INTO emaj_temp_script SELECT 'epoch'::timestamp, 0,
+         '-- file generated at ' || statement_timestamp()
+      || ' by the emaj_generate_sql() function, for tables group ' || v_groupName
+      || ', processing logs between mark ' || v_realFirstMark || v_endComment;
+    INSERT INTO emaj_temp_script SELECT 'epoch'::timestamp + '1 second'::interval, 0, 'SET standard_conforming_strings = ON;';
+    INSERT INTO emaj_temp_script SELECT 'epoch'::timestamp + '2 second'::interval, 0, 'BEGIN TRANSACTION;';
+    INSERT INTO emaj_temp_script SELECT clock_timestamp(), txid_current(), 'COMMIT;';
+    INSERT INTO emaj_temp_script SELECT clock_timestamp(), txid_current(), 'RESET standard_conforming_strings;';
+-- write the SQL script on the external file
+    EXECUTE 'COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_changed ) TO ' || quote_literal(v_location);
+-- drop temporary table ?
+--    DROP TABLE IF EXISTS emaj_temp_script;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('GENERATE_SQL', 'END', v_groupName, v_cumNbSQL || ' generated statements');
+-- this line should be removed once 8.2 will not be supported anymore by E-Maj (and the SET will be put as create function clause
+    RESET standard_conforming_strings;
+    RETURN v_cumNbSQL;
+  END;
+$emaj_generate_sql$;
+COMMENT ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
+$$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
+
 -- Set comments for all internal functions, 
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
 INSERT INTO pg_description (objoid, classoid, objsubid, description)
@@ -3801,7 +4162,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_fir
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT) FROM PUBLIC;
-
+REVOKE ALL ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 -- and give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj._txid_current() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_adm;
@@ -3868,6 +4229,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 
 -- and give appropriate rights on functions to emaj_viewer role
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
