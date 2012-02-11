@@ -11,6 +11,10 @@ Enhancements:
     old related marks and log tables rows cannot be used for any rollback 
     operation anymore. Nevertheless, log rows remain visible, old marks can 
     be deleted, renamed or commented, and log statistics can be requested.
+  - add a new emaj_generate_sql function that generates a sql script 
+    corresponding to all updates performed on a tables group between two 
+    marks or between a mark and the current situation, and stores it into a 
+    given file.
   - a TRUNCATE sql verb is now allowed on audit_only tables group even in 
     logging state. The execution of a truncate statement on a table is 
     recorded in the associated log table, the emaj_verb column being set to 
@@ -24,11 +28,14 @@ Enhancements:
     by foreign keys from tables outside the groups: tables from audit_only 
     groups are now ignored because the potential problem detected with 
     foreign keys only concerns rollback operations.
-  - Minor improvement in messages produced by emaj.emaj_verify_all() function.
+  - minor improvement in messages produced by emaj.emaj_verify_all() function.
 
 Bug fixes:
   - fix rollback function generation for cases when a table name includes an 
     antislash character.
+  - fix emaj_snap_group for cases when any column from the pkey contains at 
+    least one special character that obliged to quote the column name in 
+    queries.
 
 0.10.1
 ------
