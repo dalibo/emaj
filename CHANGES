@@ -14,7 +14,7 @@ Enhancements:
   - add a new emaj_generate_sql function that generates a sql script 
     corresponding to all updates performed on a tables group between two 
     marks or between a mark and the current situation, and stores it into a 
-    given file.
+    given file (only available in postgres 8.3+).
   - a TRUNCATE sql verb is now allowed on audit_only tables group even in 
     logging state. The execution of a truncate statement on a table is 
     recorded in the associated log table, the emaj_verb column being set to 
@@ -22,6 +22,9 @@ Enhancements:
   - in emaj_snap_group() and emaj_snap_log_group() functions, improve the 
     format of the _INFO file: the timestamp is now reported with the date and 
     time format of the client.
+  - in emaj_snap_group() function, improve the format of the sequences files:
+    remove the useless log_cnt column and use the same columns list for all 
+    postgres versions.
   - add a column into the emaj_mark table to maintain statistics about the 
     total number of log rows recorded between the mark and the following one.
     This is useful to speedup the retrieval of this data, for instance by the 

@@ -3438,6 +3438,7 @@ $emaj_snap_group$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
+    v_pgVersion       TEXT := emaj._pg_version();
     v_emajSchema      TEXT := 'emaj';
     v_nbTb            INT := 0;
     r_tblsq           RECORD;
@@ -3445,7 +3446,8 @@ $emaj_snap_group$
     r_col             RECORD;
     v_colList         TEXT;
     v_fileName        TEXT;
-    v_stmt text;
+    v_stmt            TEXT;
+    v_seqCol          TEXT;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -3502,7 +3504,12 @@ $emaj_snap_group$
         v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ' || quote_literal(v_fileName) || ' CSV';
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, the statement has no order by
-        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ') TO ' || quote_literal(v_fileName) || ' CSV';
+        IF v_pgVersion <= '8.3' THEN
+          v_seqCol = 'sequence_name, last_value, 0, increment_by, max_value, min_value, cache_value, is_cycled, is_called';
+        ELSE
+          v_seqCol = 'sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called';
+        END IF;
+        v_stmt= 'COPY (SELECT ' || v_seqCol || ' FROM ' || v_fullTableName || ') TO ' || quote_literal(v_fileName) || ' CSV';
       END IF;
 -- and finaly perform the COPY
 --    raise notice 'emaj_snap_group: Executing %',v_stmt;
