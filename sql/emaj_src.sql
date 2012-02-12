@@ -3533,7 +3533,7 @@ $emaj_snap_group$
     END LOOP;
 -- create the _INFO file to keep general information about the snap operation
     EXECUTE 'COPY (SELECT ' || 
-            quote_literal('E-Maj snap of tables group ' || v_groupName || ' at ' || to_char(transaction_timestamp(),'DD/MM/YYYY HH24:MI:SS')) || 
+            quote_literal('E-Maj snap of tables group ' || v_groupName || ' at ' || transaction_timestamp()) || 
             ') TO ' || quote_literal(v_dir || '/_INFO');
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -3687,7 +3687,7 @@ $emaj_snap_log_group$
     EXECUTE v_stmt;
 -- create the _INFO file to keep general information about the snap operation
     EXECUTE 'COPY (SELECT ' || 
-            quote_literal('E-Maj log tables snap of group ' || v_groupName || ' between marks ' || v_realFirstMark || ' and ' || v_realLastMark || ' at ' || to_char(transaction_timestamp(),'DD/MM/YYYY HH24:MI:SS')) || 
+            quote_literal('E-Maj log tables snap of group ' || v_groupName || ' between marks ' || v_realFirstMark || ' and ' || v_realLastMark || ' at ' || transaction_timestamp()) || 
             ') TO ' || quote_literal(v_dir || '/_INFO');
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 

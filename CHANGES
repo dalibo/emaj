@@ -19,6 +19,9 @@ Enhancements:
     logging state. The execution of a truncate statement on a table is 
     recorded in the associated log table, the emaj_verb column being set to 
     'TRU'.
+  - in emaj_snap_group() and emaj_snap_log_group() functions, improve the 
+    format of the _INFO file: the timestamp is now reported with the date and 
+    time format of the client.
   - add a column into the emaj_mark table to maintain statistics about the 
     total number of log rows recorded between the mark and the following one.
     This is useful to speedup the retrieval of this data, for instance by the 
