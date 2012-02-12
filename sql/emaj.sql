@@ -3457,6 +3457,10 @@ $emaj_snap_group$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_snap_group: group % has not been created.', v_groupName;
     END IF;
+-- check the supplied directory is not null
+    IF v_dir IS NULL THEN
+      RAISE EXCEPTION 'emaj_snap_group: directory parameter cannot be NULL';
+    END IF;
 -- for each table/sequence of the emaj_relation table
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
@@ -3602,11 +3606,17 @@ $emaj_snap_log_group$
       SELECT mark_id, mark_datetime INTO v_lastMarkId, v_tsLastMark
         FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
     ELSE
-      RAISE EXCEPTION 'emaj_snap_log_group: an explicit end mark must be supplied.';
+      v_lastMarkId = NULL;
+      v_tsLastMark = NULL;
+--      RAISE EXCEPTION 'emaj_snap_log_group: an explicit end mark must be supplied.';
     END IF;
 -- check that the first_mark < end_mark
-    IF v_realFirstMark IS NOT NULL AND v_realLastMark IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
+    IF v_lastMarkId IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
       RAISE EXCEPTION 'emaj_snap_log_group: mark id for % (% = %) is greater than mark id for % (% = %).', v_realFirstMark, v_firstMarkId, v_tsFirstMark, v_realLastMark, v_lastMarkId, v_tsLastMark;
+    END IF;
+-- check the supplied directory is not null
+    IF v_dir IS NULL THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: directory parameter cannot be NULL';
     END IF;
 -- process all log tables of the emaj_relation table
     FOR r_tblsq IN
@@ -3648,7 +3658,6 @@ $emaj_snap_log_group$
         v_stmt = v_stmt || ' ORDER BY emaj_id ASC) TO ' || quote_literal(v_fileName) || ' ' 
                         || coalesce (v_copyOptions, '');
 -- and finaly perform the COPY
---      raise notice 'emaj_snap_log_group: Executing %',v_stmt;
         EXECUTE v_stmt;
       END IF;
 -- for sequences, just adjust the counter
@@ -3663,22 +3672,28 @@ $emaj_snap_log_group$
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' || 
             coalesce (v_copyOptions, '');
---  raise notice 'emaj_snap_log_group: Executing %',v_stmt;
     EXECUTE v_stmt;
--- generate the file for sequences state at end mark
-    v_fileName := v_dir || '/' || v_groupName || '_sequences_at_' || v_realLastMark;
-    v_stmt= 'COPY (SELECT emaj_sequence.*' ||
-            ' FROM ' || v_emajSchema || '.emaj_sequence, ' || v_emajSchema || '.emaj_relation' ||
-            ' WHERE sequ_mark = ' || quote_literal(v_realLastMark) || ' AND ' || 
-            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
-            ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
-            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' || 
-            coalesce (v_copyOptions, '');
---  raise notice 'emaj_snap_log_group: Executing %',v_stmt;
-    EXECUTE v_stmt;
+    IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN 
+-- generate the file for sequences state at end mark, if specified
+      v_fileName := v_dir || '/' || v_groupName || '_sequences_at_' || v_realLastMark;
+      v_stmt= 'COPY (SELECT emaj_sequence.*' ||
+              ' FROM ' || v_emajSchema || '.emaj_sequence, ' || v_emajSchema || '.emaj_relation' ||
+              ' WHERE sequ_mark = ' || quote_literal(v_realLastMark) || ' AND ' || 
+              ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+              ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
+              ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' || 
+              coalesce (v_copyOptions, '');
+      EXECUTE v_stmt;
+--  ELSE
+-- generate the file for sequences in their current state, if no end_mark is specified
+-- *************** TO BE DEVELOPPED ********************
+
+    END IF;
 -- create the _INFO file to keep general information about the snap operation
     EXECUTE 'COPY (SELECT ' || 
-            quote_literal('E-Maj log tables snap of group ' || v_groupName || ' between marks ' || v_realFirstMark || ' and ' || v_realLastMark || ' at ' || transaction_timestamp()) || 
+            quote_literal('E-Maj log tables snap of group ' || v_groupName || 
+            ' between marks ' || v_realFirstMark || ' and ' || 
+            coalesce(v_realLastMark,'current state') || ' at ' || transaction_timestamp()) || 
             ') TO ' || quote_literal(v_dir || '/_INFO') || ' ' || coalesce (v_copyOptions, '');
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
