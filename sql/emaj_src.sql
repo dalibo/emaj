@@ -3440,7 +3440,7 @@ $emaj_estimate_rollback_duration$;
 COMMENT ON FUNCTION emaj.emaj_estimate_rollback_duration(TEXT,TEXT) IS
 $$Estimates the duration of a potential rollback of an E-Maj group to a given mark.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) 
+CREATE or REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) 
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
 $emaj_snap_group$
 -- This function creates a file for each table and sequence belonging to the group.
@@ -3456,7 +3456,7 @@ $emaj_snap_group$
 --   - to create the directory (with proper permissions allowing the cluster to write into) before 
 -- emaj_snap_group function call, and 
 --   - maintain its content outside E-maj.
--- Input: group name, the absolute pathname of the directory where the files are to be created
+-- Input: group name, the absolute pathname of the directory where the files are to be created and the options to used in the COPY TO statements
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
@@ -3523,7 +3523,8 @@ $emaj_snap_group$
           END LOOP;
         END IF;
 --   prepare the COPY statement
-        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ' || quote_literal(v_fileName) || ' CSV';
+        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ' 
+                || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, the statement has no order by
         IF v_pgVersion <= '8.3' THEN
@@ -3531,7 +3532,8 @@ $emaj_snap_group$
         ELSE
           v_seqCol = 'sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called';
         END IF;
-        v_stmt= 'COPY (SELECT ' || v_seqCol || ' FROM ' || v_fullTableName || ') TO ' || quote_literal(v_fileName) || ' CSV';
+        v_stmt= 'COPY (SELECT ' || v_seqCol || ' FROM ' || v_fullTableName || ') TO '
+                || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
       END IF;
 -- and finaly perform the COPY
 --    raise notice 'emaj_snap_group: Executing %',v_stmt;
@@ -3540,7 +3542,8 @@ $emaj_snap_group$
     END LOOP;
 -- create the _INFO file to keep general information about the snap operation
     EXECUTE 'COPY (SELECT ' || 
-            quote_literal('E-Maj snap of tables group ' || v_groupName || ' at ' || transaction_timestamp()) || 
+            quote_literal('E-Maj snap of tables group ' || v_groupName || 
+            ' at ' || transaction_timestamp()) || 
             ') TO ' || quote_literal(v_dir || '/_INFO');
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -3548,7 +3551,7 @@ $emaj_snap_group$
     RETURN v_nbTb;
   END;
 $emaj_snap_group$;
-COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) 
@@ -3567,7 +3570,7 @@ $emaj_snap_log_group$
 --   - to create the directory (with proper permissions allowing the cluster to write into) before 
 -- emaj_snap_log_group function call, and 
 --   - maintain its content outside E-maj.
--- Input: group name, the 2 mark names defining a range, the absolute pathname of the directory where the files are to be created, options for COPY
+-- Input: group name, the 2 mark names defining a range, the absolute pathname of the directory where the files are to be created, options for COPY TO statements
 --   a NULL value or an empty string as first_mark indicates the first recorded mark
 --   a NULL value or an empty string can NOT be used as last_mark (the current sequences state is not recorded in to the emaj_sequence table)
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
@@ -4192,7 +4195,7 @@ REVOKE ALL ON FUNCTION emaj._rst_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 -- and give appropriate rights on functions to emaj_adm role
@@ -4259,7 +4262,7 @@ GRANT EXECUTE ON FUNCTION emaj._rst_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 

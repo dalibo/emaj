@@ -22,6 +22,9 @@ Enhancements:
   - in emaj_snap_group() and emaj_snap_log_group() functions, improve the 
     format of the _INFO file: the timestamp is now reported with the date and 
     time format of the client.
+  - in emaj_snap_group() and emaj_snap_log_group() functions, add an input 
+    parameter to specify the options to used in COPY TO statements, like CSV, 
+    HEADER,...
   - in emaj_snap_group() function, improve the format of the sequences files:
     remove the useless log_cnt column and use the same columns list for all 
     postgres versions.
