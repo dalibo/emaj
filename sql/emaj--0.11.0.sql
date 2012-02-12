@@ -3468,14 +3468,14 @@ $emaj_snap_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT) 
+CREATE or REPLACE FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) 
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
 $emaj_snap_log_group$
 -- This function creates a file for each log table belonging to the group.
 -- It also creates 2 files containing the state of sequences respectively at start mark and end mark
 -- For log tables, files contain all rows related to the time frame, sorted on emaj_id.
 -- For sequences, files are names <group>_sequences_at_<mark>. They contain one row per sequence.
--- To do its job, the function performs COPY TO statement, using the CSV option.
+-- To do its job, the function performs COPY TO statement, using the options provided by the caller.
 -- There is no need for the group to be in IDLE state.
 -- As all COPY statements are executed inside a single transaction:
 --   - the function can be called while other transactions are running,
@@ -3484,7 +3484,7 @@ $emaj_snap_log_group$
 --   - to create the directory (with proper permissions allowing the cluster to write into) before 
 -- emaj_snap_log_group function call, and 
 --   - maintain its content outside E-maj.
--- Input: group name, the 2 mark names defining a range, the absolute pathname of the directory where the files are to be created
+-- Input: group name, the 2 mark names defining a range, the absolute pathname of the directory where the files are to be created, options for COPY
 --   a NULL value or an empty string as first_mark indicates the first recorded mark
 --   a NULL value or an empty string can NOT be used as last_mark (the current sequences state is not recorded in to the emaj_sequence table)
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
@@ -3581,7 +3581,8 @@ $emaj_snap_log_group$
         IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN 
           v_stmt = v_stmt || ' AND emaj_id < '|| v_lastEmajId ;
         END IF;
-        v_stmt = v_stmt || ' ORDER BY emaj_id ASC) TO ' || quote_literal(v_fileName) || ' CSV';
+        v_stmt = v_stmt || ' ORDER BY emaj_id ASC) TO ' || quote_literal(v_fileName) || ' ' 
+                        || coalesce (v_copyOptions, '');
 -- and finaly perform the COPY
 --      raise notice 'emaj_snap_log_group: Executing %',v_stmt;
         EXECUTE v_stmt;
@@ -3596,7 +3597,8 @@ $emaj_snap_log_group$
             ' WHERE sequ_mark = ' || quote_literal(v_realFirstMark) || ' AND ' || 
             ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
-            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' CSV';
+            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' || 
+            coalesce (v_copyOptions, '');
 --  raise notice 'emaj_snap_log_group: Executing %',v_stmt;
     EXECUTE v_stmt;
 -- generate the file for sequences state at end mark
@@ -3606,20 +3608,21 @@ $emaj_snap_log_group$
             ' WHERE sequ_mark = ' || quote_literal(v_realLastMark) || ' AND ' || 
             ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
-            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' CSV';
+            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' || 
+            coalesce (v_copyOptions, '');
 --  raise notice 'emaj_snap_log_group: Executing %',v_stmt;
     EXECUTE v_stmt;
 -- create the _INFO file to keep general information about the snap operation
     EXECUTE 'COPY (SELECT ' || 
             quote_literal('E-Maj log tables snap of group ' || v_groupName || ' between marks ' || v_realFirstMark || ' and ' || v_realLastMark || ' at ' || transaction_timestamp()) || 
-            ') TO ' || quote_literal(v_dir || '/_INFO');
+            ') TO ' || quote_literal(v_dir || '/_INFO') || ' ' || coalesce (v_copyOptions, '');
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('SNAP_LOG_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
     RETURN v_nbTb;
   END;
 $emaj_snap_log_group$;
-COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) 
@@ -4107,7 +4110,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TE
 REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 -- and give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj._txid_current() TO emaj_adm;
@@ -4174,7 +4177,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT) TO emaj_adm; 
-GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 
 -- and give appropriate rights on functions to emaj_viewer role
