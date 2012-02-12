@@ -28,6 +28,9 @@ Enhancements:
   - in emaj_snap_group() function, improve the format of the sequences files:
     remove the useless log_cnt column and use the same columns list for all 
     postgres versions.
+  - in emaj_snap_log_group() function, allow a NULL or empty string as last 
+    mark, indicating the current state. In such a case, no file containing 
+    sequences characteristics at end-mark is generated.
   - add a column into the emaj_mark table to maintain statistics about the 
     total number of log rows recorded between the mark and the following one.
     This is useful to speedup the retrieval of this data, for instance by the 
