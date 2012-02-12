@@ -89,7 +89,7 @@ ALTER EXTENSION emaj ADD FUNCTION emaj._rst_group(v_groupName TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT); 
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT);
-ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT); 
+ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT); 
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT);
 
