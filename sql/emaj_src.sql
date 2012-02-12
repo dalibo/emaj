@@ -3595,7 +3595,7 @@ $emaj_snap_log_group$
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('SNAP_LOG_GROUP', 'BEGIN', v_groupName, v_dir);
+      VALUES ('SNAP_LOG_GROUP', 'BEGIN', v_groupName, 'From mark ' || coalesce (v_firstMark, 'NULL') || ' to mark ' || coalesce (v_lastMark, 'NULL') || ' towards ' || v_dir);
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
@@ -3764,7 +3764,6 @@ $emaj_generate_sql$
   BEGIN
 -- this parameter should be moved in the create function clause once 8.2 will not be supported anymore by E-Maj
     SET standard_conforming_strings = ON;
---raise notice '%','abd\ndef'; 
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('GENERATE_SQL', 'BEGIN', v_groupName, 'From mark ' || coalesce (v_firstMark, 'NULL') || ' to mark ' || coalesce (v_lastMark, 'NULL') || ' towards ' || v_location);
