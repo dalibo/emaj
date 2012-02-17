@@ -3542,7 +3542,8 @@ $emaj_snap_log_group$
 -- This function creates a file for each log table belonging to the group.
 -- It also creates 2 files containing the state of sequences respectively at start mark and end mark
 -- For log tables, files contain all rows related to the time frame, sorted on emaj_id.
--- For sequences, files are names <group>_sequences_at_<mark>. They contain one row per sequence.
+-- For sequences, files are names <group>_sequences_at_<mark>, or <group>_sequences_at_<time> if no 
+--   end mark is specified. They contain one row per sequence.
 -- To do its job, the function performs COPY TO statement, using the options provided by the caller.
 -- There is no need for the group to be in IDLE state.
 -- As all COPY statements are executed inside a single transaction:
@@ -3554,11 +3555,12 @@ $emaj_snap_log_group$
 --   - maintain its content outside E-maj.
 -- Input: group name, the 2 mark names defining a range, the absolute pathname of the directory where the files are to be created, options for COPY TO statements
 --   a NULL value or an empty string as first_mark indicates the first recorded mark
---   a NULL value or an empty string can NOT be used as last_mark (the current sequences state is not recorded in to the emaj_sequence table)
+--   a NULL value or an empty string can be used as last_mark indicating the current state
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
+    v_pgVersion       TEXT := emaj._pg_version();
     v_emajSchema      TEXT := 'emaj';
     v_nbTb            INT := 0;
     r_tblsq           RECORD;
@@ -3573,11 +3575,17 @@ $emaj_snap_log_group$
     v_lastEmajId      BIGINT;
     v_logTableName    TEXT;
     v_fileName        TEXT;
-    v_stmt text;
+    v_stmt            TEXT;
+    v_timestamp       TIMESTAMPTZ;
+    v_pseudoMark      TEXT;
+    v_fullSeqName     TEXT;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('SNAP_LOG_GROUP', 'BEGIN', v_groupName, 'From mark ' || coalesce (v_firstMark, 'NULL') || ' to mark ' || coalesce (v_lastMark, 'NULL') || ' towards ' || v_dir);
+      VALUES ('SNAP_LOG_GROUP', 'BEGIN', v_groupName, 
+       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END || 
+       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards ' 
+       || v_dir);
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
@@ -3684,10 +3692,52 @@ $emaj_snap_log_group$
               ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' || 
               coalesce (v_copyOptions, '');
       EXECUTE v_stmt;
---  ELSE
--- generate the file for sequences in their current state, if no end_mark is specified
--- *************** TO BE DEVELOPPED ********************
-
+    ELSE
+-- generate the file for sequences in their current state, if no end_mark is specified,
+--   by using emaj_sequence table to create temporary rows as if a mark had been set
+-- look at the clock to get the 'official' timestamp representing this point in time 
+--   and build a pseudo mark name with it
+      v_timestamp = clock_timestamp();
+      v_pseudoMark = to_char(v_timestamp,'HH24.MI.SS.MS');
+-- for each sequence of the groups, ...
+      FOR r_tblsq IN
+          SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
+            WHERE rel_group = v_groupName AND rel_kind = 'S' ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+-- ... temporary record the sequence parameters in the emaj sequence table
+        v_fullSeqName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+        v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
+                 'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' || 
+                 'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                 ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' || 
+                 quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) || 
+                 ', ' || quote_literal(v_pseudoMark) || ', last_value, ';
+        IF v_pgVersion <= '8.3' THEN
+           v_stmt = v_stmt || '0, ';
+        ELSE
+           v_stmt = v_stmt || 'start_value, ';
+        END IF;
+        v_stmt = v_stmt || 
+                 'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+                 'FROM ' || v_fullSeqName;
+        EXECUTE v_stmt;
+      END LOOP;
+-- generate the file for sequences current state
+      v_fileName := v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_timestamp,'HH24.MI.SS.MS');
+      v_stmt= 'COPY (SELECT emaj_sequence.*' ||
+              ' FROM ' || v_emajSchema || '.emaj_sequence, ' || v_emajSchema || '.emaj_relation' ||
+              ' WHERE sequ_mark = ' || quote_literal(v_pseudoMark) || ' AND ' || 
+              ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+              ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
+              ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' || 
+              coalesce (v_copyOptions, '');
+      EXECUTE v_stmt;
+-- delete sequences state that have just been inserted into the emaj_sequence table.
+      EXECUTE 'DELETE FROM ' || v_emajSchema || '.emaj_sequence' ||
+              ' USING ' || v_emajSchema || '.emaj_relation' ||
+              ' WHERE sequ_mark = ' || quote_literal(v_pseudoMark) || ' AND' || 
+              ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+              ' sequ_schema = rel_schema AND sequ_name = rel_tblseq';
     END IF;
 -- create the _INFO file to keep general information about the snap operation
     EXECUTE 'COPY (SELECT ' || 
@@ -3759,7 +3809,11 @@ $emaj_generate_sql$
     SET standard_conforming_strings = ON;
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GENERATE_SQL', 'BEGIN', v_groupName, 'From mark ' || coalesce (v_firstMark, 'NULL') || ' to mark ' || coalesce (v_lastMark, 'NULL') || ' towards ' || v_location);
+--      VALUES ('GENERATE_SQL', 'BEGIN', v_groupName, 'From mark ' || coalesce (v_firstMark, 'NULL') || ' to mark ' || coalesce (v_lastMark, 'NULL') || ' towards ' || v_location);
+      VALUES ('GENERATE_SQL', 'BEGIN', v_groupName, 
+       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END || 
+       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards ' 
+       || v_location);
 -- check postgres version is >= 8.3 
 --   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
     IF v_pgVersion < '8.3' THEN
