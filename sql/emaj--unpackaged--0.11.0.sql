@@ -6,7 +6,9 @@
 
 ALTER EXTENSION emaj ADD SCHEMA emaj;
 
--- link emaj technical tables
+-- link emaj technical tables and sequence
+
+ALTER EXTENSION emaj ADD SEQUENCE emaj.emaj_global_seq;
 
 ALTER EXTENSION emaj ADD TABLE emaj.emaj_param;
 ALTER EXTENSION emaj ADD TABLE emaj.emaj_hist;
@@ -31,13 +33,14 @@ ALTER EXTENSION emaj ADD FUNCTION emaj._pg_version();
 ALTER EXTENSION emaj ADD FUNCTION emaj._purge_hist();
 ALTER EXTENSION emaj ADD FUNCTION emaj._get_mark_name(TEXT, TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj._get_mark_datetime(TEXT, TEXT);
+ALTER EXTENSION emaj ADD FUNCTION emaj._build_log_seq_name(TEXT, TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]);
 ALTER EXTENSION emaj ADD FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]);
 ALTER EXTENSION emaj ADD FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN);
 ALTER EXTENSION emaj ADD FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN);
 ALTER EXTENSION emaj ADD FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT);
-ALTER EXTENSION emaj ADD FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT);
+ALTER EXTENSION emaj ADD FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT);
 ALTER EXTENSION emaj ADD FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT);
 ALTER EXTENSION emaj ADD FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_verify_all();
