@@ -736,8 +736,8 @@ $_drop_tbl$
     v_rlbkFnctName     TEXT;
     v_logTriggerName   TEXT;
     v_truncTriggerName TEXT;
-    v_sequenceName     TEXT;
     v_seqName          TEXT;
+    v_fullSeqName      TEXT;
   BEGIN
     v_fullTableName    := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
     v_logTableName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
@@ -746,7 +746,7 @@ $_drop_tbl$
     v_logTriggerName   := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_log_trg');
     v_truncTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_trunc_trg');
     v_seqName          := emaj._build_log_seq_name(v_schemaName, v_tableName);
-    v_sequenceName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_seqName);
+    v_fullSeqName      := quote_ident(v_emajSchema) || '.' || quote_ident(v_seqName);
 -- delete the log trigger on the application table
     EXECUTE 'DROP TRIGGER IF EXISTS ' || v_logTriggerName || ' ON ' || v_fullTableName;
 -- delete the truncate trigger on the application table
@@ -759,7 +759,7 @@ $_drop_tbl$
       EXECUTE 'DROP FUNCTION IF EXISTS ' || v_rlbkFnctName || '(bigint)';
     END IF;
 -- delete the sequence associated to the log table
-    EXECUTE 'DROP SEQUENCE IF EXISTS ' || v_sequenceName;
+    EXECUTE 'DROP SEQUENCE IF EXISTS ' || v_fullSeqName;
 -- delete the log table
     EXECUTE 'DROP TABLE IF EXISTS ' || v_logTableName || ' CASCADE';
 -- delete rows related to the log sequence from emaj_sequence table
@@ -801,8 +801,8 @@ $_rlbk_tbl$
     v_logTableName   TEXT;
     v_rlbkFnctName   TEXT;
     v_logTriggerName TEXT;
-    v_fullSeqName    TEXT;
     v_seqName        TEXT;
+    v_fullSeqName    TEXT;
     v_nb_rows        BIGINT;
     v_tsrlbk_start   TIMESTAMP;
     v_tsrlbk_end     TIMESTAMP;
@@ -815,7 +815,7 @@ $_rlbk_tbl$
                         quote_ident(v_schemaName || '_' || v_tableName || '_rlbk_fnct');
     v_logTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_log_trg');
     v_seqName        := emaj._build_log_seq_name(v_schemaName, v_tableName);
-    v_fullSeqName    := quote_ident(v_seqName);
+    v_fullSeqName    := quote_ident(v_emajSchema) || '.' || quote_ident(v_seqName);
 -- insert begin event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_lastGlobalSeq);
@@ -853,8 +853,8 @@ $_rlbk_tbl$
 -- and then insert the new sequence hole
       EXECUTE 'INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_hole_size) VALUES (' 
         || quote_literal(v_schemaName) || ',' || quote_literal(v_tableName) || ', ('
-        || ' SELECT CASE WHEN is_called THEN last_value + increment_by ELSE last_value END FROM ' 
-        || v_emajSchema || '.' || v_fullSeqName || ')-('
+        || ' SELECT CASE WHEN is_called THEN last_value + increment_by ELSE last_value END FROM ' || v_fullSeqName 
+        || ')-('
         || ' SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM '
         || ' emaj.emaj_sequence WHERE'
         || ' sequ_schema = ''' || v_emajSchema 
@@ -2997,7 +2997,7 @@ $_rst_group$
     v_nbTb          INT  := 0;
     v_emajSchema    TEXT := 'emaj';
     v_logTableName  TEXT;
-    v_fullSeqName   TEXT;
+    v_seqName       TEXT;
     r_tblsq         RECORD;
   BEGIN
 -- delete all marks for the group from the emaj_mark table
@@ -3016,10 +3016,10 @@ $_rst_group$
         v_logTableName := quote_ident(v_emajSchema) || '.' || quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log');
         EXECUTE 'TRUNCATE ' || v_logTableName;
 --   delete rows from emaj_sequence related to the associated log sequence
-        v_fullSeqName := emaj._build_log_seq_name(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
-        DELETE FROM emaj.emaj_sequence WHERE sequ_name = v_fullSeqName;
+        v_seqName := emaj._build_log_seq_name(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+        DELETE FROM emaj.emaj_sequence WHERE sequ_name = v_seqName;
 --   and reset the log sequence
-        PERFORM setval(quote_ident(v_emajSchema) || '.' || quote_ident(v_fullSeqName), 1, false);
+        PERFORM setval(quote_ident(v_emajSchema) || '.' || quote_ident(v_seqName), 1, false);
       ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
         PERFORM emaj._drop_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
