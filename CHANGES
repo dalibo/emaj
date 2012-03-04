@@ -37,11 +37,11 @@ Enhancements:
     This is useful to speedup the retrieval of this data, for instance by the 
     phpPgAdmin plugin.
   - rework the internal emaj sequences mechanism. Using a unique global 
-    sequence, it is now possible to sort log rows for all tables by their 
+    sequence. It is now possible to sort log rows for all tables by their 
     creation order, so that emaj_generate_sql() function result remains safe 
     even in case of system time change. The sequence associated to each log 
     table remains to speed up the statistics delivery but its increment is now 
-    1.
+    1. In log tables, the emaj_id column is renamed emaj_gid.
   - in groups creation, start or rollback functions, improve the detection of 
     foreign keys referencing tables outside the groups or tables referenced 
     by foreign keys from tables outside the groups: tables from audit_only 
