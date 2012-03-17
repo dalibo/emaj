@@ -210,7 +210,7 @@ CREATE TABLE emaj.emaj_relation (
 COMMENT ON TABLE emaj.emaj_relation IS
 $$Contains the content (tables and sequences) of created E-Maj groups.$$;
 
--- table containing the marksl
+-- table containing the marks
 CREATE TABLE emaj.emaj_mark (
     mark_group                TEXT        NOT NULL,      -- group for which the mark has been set
     mark_name                 TEXT        NOT NULL,      -- mark name
@@ -4056,7 +4056,7 @@ INSERT INTO pg_description (objoid, classoid, objsubid, description)
                JOIN pg_namespace ON (pronamespace=pg_namespace.oid)
                LEFT OUTER JOIN pg_description ON (pg_description.objoid = pg_proc.oid 
                                      AND classoid = (SELECT oid FROM pg_class WHERE relname = 'pg_proc')
-                                     AND objsubid=0)
+                                     AND objsubid = 0)
           WHERE nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
             AND pg_description.description IS NULL
        );
