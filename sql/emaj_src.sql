@@ -559,6 +559,7 @@ $_create_tbl$
 -- variables to hold pieces of SQL
     v_pkCondList            TEXT;
     v_colList               TEXT;
+    v_valList               TEXT;
     v_setList               TEXT;
 -- other variables
     v_attname               TEXT;
@@ -573,7 +574,8 @@ $_create_tbl$
       SELECT attname FROM pg_attribute 
         WHERE attrelid = tbl 
           AND attnum > 0
-          AND attisdropped = false;
+          AND attisdropped = false
+      ORDER BY attnum;
 -- cursor to retrieve all columns of table's primary key
 -- (taking column names in pg_attribute from the table's definition instead of index definition is mandatory 
 --  starting from pg9.0, joining tables with indkey instead of indexrelid)
@@ -700,16 +702,19 @@ $_create_tbl$
 --   build the tables's columns list
 --     and the SET clause for the UPDATE, from the same columns list
       v_colList := '';
+      v_valList := '';
       v_setList := '';
       OPEN col1_curs (v_fullTableName);
       LOOP
         FETCH col1_curs INTO v_attname;
         EXIT WHEN NOT FOUND;
         IF v_colList = '' THEN
-           v_colList := 'rec_log.' || quote_ident(v_attname);
+           v_colList := quote_ident(v_attname);
+           v_valList := 'rec_log.' || quote_ident(v_attname);
            v_setList := quote_ident(v_attname) || ' = rec_old_log.' || quote_ident(v_attname);
         ELSE
-           v_colList := v_colList || ', rec_log.' || quote_ident(v_attname);
+           v_colList := v_colList || ', ' || quote_ident(v_attname);
+           v_valList := v_valList || ', rec_log.' || quote_ident(v_attname);
            v_setList := v_setList || ', ' || quote_ident(v_attname) || ' = rec_old_log.' || quote_ident(v_attname);
         END IF;
       END LOOP;
@@ -760,7 +765,7 @@ $_create_tbl$
            || '          UPDATE ' || v_fullTableName || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';'
            || '      ELSIF rec_log.emaj_verb = ''DEL'' THEN'
 --         || '          RAISE NOTICE ''emaj_gid = % ; DEL'', rec_log.emaj_gid;'
-           || '          INSERT INTO ' || v_fullTableName || ' VALUES (' || v_colList || ');'
+           || '          INSERT INTO ' || v_fullTableName || ' (' || v_colList || ') VALUES (' || v_valList || ');'
            || '      ELSE'
            || '          RAISE EXCEPTION ' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = % is unknown, emaj_gid = %.'','
            || '            rec_log.emaj_verb, rec_log.emaj_gid;' 

@@ -56,7 +56,10 @@ Bug fixes:
     least one special character that obliged to quote the column name in 
     queries.
   - in emaj_snap_group() and emaj_snap_log_group() functions, verify that the 
-    supplied directory parameter is not null.  
+    supplied directory parameter is not null.
+  - avoid potential problem with the generated rollback functions, by 
+    explicitely fixing the columns list in the INSERT statement that reverts 
+    recorded DELETE events.
 
 0.10.1
 ------
