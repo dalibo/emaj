@@ -2935,7 +2935,7 @@ $_rlbk_groups_step7$
       SELECT mark_name INTO v_markName 
         FROM emaj.emaj_mark
         WHERE mark_group = v_groupNames[1] ORDER BY mark_id DESC LIMIT 1;
-      IF NOT FOUND OR substr(v_markName,1,5) <> 'RLBK_' THEN
+      IF NOT FOUND OR v_markName NOT LIKE 'RLBK%START' THEN
         RAISE EXCEPTION '_rlbk_groups_step7: Internal error - rollback start mark not found for group %.', v_groupNames[1];
       END IF;
 -- compute the mark name that ends the rollback operation, replacing the '_START' suffix of the rollback start mark by '_DONE'
