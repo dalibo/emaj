@@ -50,6 +50,8 @@ Enhancements:
   - minor improvement in messages produced by emaj.emaj_verify_all() function.
 
 Bug fixes:
+  - fix a bad error message in emaj_create_group() function when the group 
+    to create is not referenced in emaj_group_def table.
   - fix rollback function generation for cases when a table name includes an 
     antislash character.
   - fix emaj_snap_group for cases when any column from the pkey contains at 
