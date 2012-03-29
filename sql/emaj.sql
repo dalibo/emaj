@@ -1520,7 +1520,7 @@ $emaj_create_group$
           VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_relkind);
     END LOOP;
     IF v_nbTbl + v_nbSeq = 0 THEN
-       RAISE EXCEPTION 'emaj_create_group: Group % is unknown in emaj_relation table.', v_groupName;
+       RAISE EXCEPTION 'emaj_create_group: Group % is unknown in emaj_group_def table.', v_groupName;
     END IF;
 -- update tables and sequences counters in the emaj_group table
     UPDATE emaj.emaj_group SET group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
