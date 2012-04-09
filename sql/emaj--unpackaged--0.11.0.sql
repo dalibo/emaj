@@ -4,7 +4,7 @@
 
 -- link emaj schema
 
-ALTER EXTENSION emaj ADD SCHEMA emaj;
+--ALTER EXTENSION emaj ADD SCHEMA emaj;
 
 -- link emaj technical tables and sequence
 
