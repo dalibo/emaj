@@ -25,13 +25,16 @@ RETURNS VOID LANGUAGE plpgsql AS
 $emaj_uninstall$
 -- This temporary function verifies if current role is superuser, and if all created group are in IDLE state.
   DECLARE
-    v_flgSuper           BOOLEAN;
-    r_group              RECORD;
-    v_nonIdleGroupList   TEXT    = '';
-    r_role               RECORD;
-    v_granteeRoleList    TEXT;
-    r_class              RECORD;
-    v_granteeClassList   TEXT;
+    v_flgSuper              BOOLEAN;
+    r_group                 RECORD;
+    v_nonIdleGroupList      TEXT;
+    v_roleToDrop            BOOLEAN;
+    r_database              RECORD;
+    v_dbList                TEXT;
+    r_role                  RECORD;
+    v_granteeRoleList       TEXT;
+    r_class                 RECORD;
+    v_granteeClassList      TEXT;
   BEGIN
 --
 -- Is the current role superuser ?
@@ -45,25 +48,31 @@ $emaj_uninstall$
     PERFORM 1 FROM pg_namespace WHERE nspname = 'emaj';
     IF NOT FOUND THEN
 -- If no, stop
-      RAISE WARNING 'emaj_uninstall: The schema ''emaj'' doesn''t exist';
+      RAISE EXCEPTION 'emaj_uninstall: The schema ''emaj'' doesn''t exist';
     ELSE
 -- If yes, check there are no remaining emaj group not in IDLE state.
 -- This check is performed just to be sure that the script is not called at the bad moment.
+      v_nonIdleGroupList = '';
       FOR r_group IN 
         SELECT group_name FROM emaj.emaj_group WHERE group_state <> 'IDLE'
       LOOP
         IF v_nonIdleGroupList = '' THEN
-          v_nonIdleGroupList = v_nonIdleGroupList || r_group.group_name;
+          v_nonIdleGroupList = r_group.group_name;
         ELSE
-          v_nonIdleGroupList = ', ' || v_nonIdleGroupList || r_group.group_name;
+          v_nonIdleGroupList = v_nonIdleGroupList || ', ' || r_group.group_name;
         END IF;
       END LOOP;
       IF v_nonIdleGroupList <> '' THEN
         RAISE EXCEPTION 'emaj_uninstall: There are remaining active groups (not in IDLE state): %. Stop them before restarting the uninstall script',v_nonIdleGroupList;
       END IF;
--- then drop the schema. This will drop all tables groups. So no need to call emaj_drop_group() function.
-      DROP SCHEMA IF EXISTS emaj CASCADE;
     END IF;
+-- OK, drop the schema. This will drop all tables groups. So no need to call emaj_drop_group() function.
+    DROP SCHEMA IF EXISTS emaj CASCADE;
+-- Also revoke grants given on postgres function to both emaj roles
+    REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_viewer;
+    REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_viewer;
+    REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_adm;
+    REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_adm;
 --
 -- Check if the schema 'myschema' used by test scripts exists.
     PERFORM 1 FROM pg_namespace WHERE nspname = 'myschema';
@@ -77,87 +86,125 @@ $emaj_uninstall$
       RAISE WARNING 'emaj_uninstall: A role myuser exists on the cluster. It may have been created by an emaj test script. You can drop it if you wish using a "DROP ROLE myuser;" command.';
     END IF;
 --
+-- Check if emaj roles can be dropped
+    v_roleToDrop = true;
+--
+-- Are emaj_roles also used in other databases of the cluster ?
+    v_dbList = '';
+    FOR r_database IN
+      SELECT DISTINCT datname FROM pg_shdepend shd, pg_database db, pg_roles r 
+        WHERE db.oid = dbid AND r.oid = refobjid AND rolname = 'emaj_adm' AND datname <> current_database()
+    LOOP
+      IF v_dbList = '' THEN
+        v_dbList = r_database.datname;
+      ELSE
+        v_dbList = v_dbList || ', ' || r_database.datname;
+      END IF;
+    END LOOP;
+    IF v_dbList <> '' THEN
+      RAISE WARNING 'emaj_uninstall: emaj_adm role is also referenced in some other databases (%)',v_dbList;
+      v_roleToDrop = false;
+    END IF;
+--
+    v_dbList = '';
+    FOR r_database IN
+      SELECT DISTINCT datname FROM pg_shdepend shd, pg_database db, pg_roles r 
+        WHERE db.oid = dbid AND r.oid = refobjid AND rolname = 'emaj_viewer' AND datname <> current_database()
+    LOOP
+      IF v_dbList = '' THEN
+        v_dbList = r_database.datname;
+      ELSE
+        v_dbList = v_dbList || ', ' || r_database.datname;
+      END IF;
+    END LOOP;
+    IF v_dbList <> '' THEN
+      RAISE WARNING 'emaj_uninstall: emaj_viewer role is also referenced in some other databases (%)',v_dbList;
+      v_roleToDrop = false;
+    END IF;
+--
 -- Are emaj roles granted to other roles ?
--- And are emaj roles granted to relations (tables, views, sequences) other than emaj ones ?
--- If yes for one of these questions, roles are not automatically dropped.
--- First look at the emaj_viewer role and other granted roles
     v_granteeRoleList = '';
     FOR r_role IN 
    	  SELECT q.rolname FROM pg_auth_members m, pg_roles r, pg_roles q 
         WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_viewer'
     LOOP
       IF v_granteeRoleList = '' THEN
-        v_granteeRoleList = v_granteeRoleList || r_role.rolname;
+        v_granteeRoleList = r_role.rolname;
       ELSE
         v_granteeRoleList = v_granteeRoleList || ', ' || r_role.rolname;
       END IF;
     END LOOP;
     IF v_granteeRoleList <> '' THEN
-      RAISE WARNING 'emaj_uninstall: There are remaining roles (%) who have been granted emaj_viewer role. REVOKE emaj_viewer from them and then DROP the emaj_viewer role',v_granteeRoleList;
-    ELSE
--- Then check emaj_viewer has no application relations' grants
-      v_granteeClassList = '';
-      FOR r_class IN 
-        SELECT nspname, relname FROM pg_namespace, pg_class 
-          WHERE pg_namespace.oid = relnamespace
-            AND substr(relname,1,5) <> 'emaj_' AND array_to_string (relacl,';') LIKE '%emaj_viewer=%'
-      LOOP
-        IF v_granteeClassList = '' THEN
-          v_granteeClassList = v_granteeClassList || r_class.nspname || '.' || r_class.relname;
-        ELSE
-          v_granteeClassList = v_granteeClassList || ', ' || r_class.nspname || '.' || r_class.relname;
-        END IF;
-      END LOOP;
-      IF v_granteeClassList <> '' THEN
-        IF length(v_granteeClassList) > 200 THEN
-          v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
-        END IF;
-        RAISE WARNING 'emaj_uninstall: emaj_viewer role has some remaining grants on tables, views or sequences (%). REVOKE these grants before dropping the emaj_viewer role',v_granteeClassList;
-      ELSE
--- OK, drop the emaj_viewer role
-        REVOKE ALL ON TABLESPACE tspemaj FROM emaj_viewer;
-        DROP ROLE emaj_viewer;
-      END IF;
+      RAISE WARNING 'emaj_uninstall: There are remaining roles (%) who have been granted emaj_viewer role.', v_granteeRoleList;
+      v_roleToDrop = false;
     END IF;
--- Then look at the emaj_adm role and other granted roles
+--
     v_granteeRoleList = '';
     FOR r_role IN 
    	  SELECT q.rolname FROM pg_auth_members m, pg_roles r, pg_roles q 
         WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_adm'
     LOOP
       IF v_granteeRoleList = '' THEN
-        v_granteeRoleList = v_granteeRoleList || r_role.rolname;
+        v_granteeRoleList = r_role.rolname;
       ELSE
         v_granteeRoleList = v_granteeRoleList || ', ' || r_role.rolname;
       END IF;
     END LOOP;
     IF v_granteeRoleList <> '' THEN
-      RAISE WARNING 'emaj_uninstall: There are remaining roles (%) who have been granted emaj_adm role. REVOKE emaj_adm from them and then DROP the emaj_adm role',v_granteeRoleList;
-    ELSE
--- Then check emaj_adm has no application relations' grants
-      v_granteeClassList = '';
-      FOR r_class IN 
-        SELECT nspname, relname FROM pg_namespace, pg_class 
-          WHERE pg_namespace.oid = relnamespace
-            AND substr(relname,1,5) <> 'emaj_' AND array_to_string (relacl,';') LIKE '%emaj_adm=%'
-      LOOP
-        IF v_granteeClassList = '' THEN
-          v_granteeClassList = v_granteeClassList || r_class.nspname || '.' || r_class.relname;
-        ELSE
-          v_granteeClassList = v_granteeClassList || ', ' || r_class.nspname || '.' || r_class.relname;
-        END IF;
-      END LOOP;
-      IF v_granteeClassList <> '' THEN
-        IF length(v_granteeClassList) > 200 THEN
-          v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
-        END IF;
-        RAISE WARNING 'emaj_uninstall: emaj_adm role has some remaining grants on tables, views or sequences (%). REVOKE these grants before dropping the emaj_adm role',v_granteeClassList;
-      ELSE
--- OK, drop the emaj_adm role
-        REVOKE ALL ON TABLESPACE tspemaj FROM emaj_adm;
-        DROP ROLE emaj_adm;
-      END IF;
+      RAISE WARNING 'emaj_uninstall: There are remaining roles (%) who have been granted emaj_adm role.', v_granteeRoleList;
+      v_roleToDrop = false;
     END IF;
+--
+-- Are emaj roles granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
+    v_granteeClassList = '';
+    FOR r_class IN 
+      SELECT nspname, relname FROM pg_namespace, pg_class 
+        WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_viewer=%'
+    LOOP
+      IF v_granteeClassList = '' THEN
+        v_granteeClassList = r_class.nspname || '.' || r_class.relname;
+      ELSE
+        v_granteeClassList = v_granteeClassList || ', ' || r_class.nspname || '.' || r_class.relname;
+      END IF;
+    END LOOP;
+    IF v_granteeClassList <> '' THEN
+      IF length(v_granteeClassList) > 200 THEN
+        v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_uninstall: emaj_viewer role has some remaining grants on tables, views or sequences (%).', v_granteeClassList;
+      v_roleToDrop = false;
+    END IF;
+--
+    v_granteeClassList = '';
+    FOR r_class IN 
+      SELECT nspname, relname FROM pg_namespace, pg_class 
+        WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_adm=%'
+    LOOP
+      IF v_granteeClassList = '' THEN
+        v_granteeClassList = r_class.nspname || '.' || r_class.relname;
+      ELSE
+        v_granteeClassList = v_granteeClassList || ', ' || r_class.nspname || '.' || r_class.relname;
+      END IF;
+    END LOOP;
+    IF v_granteeClassList <> '' THEN
+      IF length(v_granteeClassList) > 200 THEN
+        v_granteeClassList = substr(v_granteeClassList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_uninstall: emaj_adm role has some remaining grants on tables, views or sequences (%).', v_granteeClassList;
+      v_roleToDrop = false;
+    END IF;
+-- If emaj roles can be dropped, drop them
+    IF v_roleToDrop THEN
+-- OK, drop both emaj_viewer and emaj_adm roles
+      REVOKE ALL ON TABLESPACE tspemaj FROM emaj_viewer;
+      DROP ROLE emaj_viewer;
+      REVOKE ALL ON TABLESPACE tspemaj FROM emaj_adm;
+      DROP ROLE emaj_adm;
+      RAISE WARNING 'emaj_uninstall: emaj_adm and emaj_viewer roles have been dropped.';
+    ELSE
+      RAISE WARNING 'emaj_uninstall: For these reasons, emaj roles are not dropped by this procedure.';
+    END IF;
+--
 -- Tablespace tspemaj is not dropped
     RAISE WARNING 'emaj_uninstall: The tablespace tspemaj is not dropped by this procedure. You can drop it if you wish using a "DROP TABLESPACE tspemaj" command.';
 --
