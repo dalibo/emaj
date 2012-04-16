@@ -1919,6 +1919,13 @@ $_stop_groups$
         END IF;
         v_nbTb = v_nbTb + 1;
       END LOOP;
+-- record the number of log rows for the old last mark of each group
+    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = 
+      (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(m.mark_group,'EMAJ_LAST_MARK',NULL))
+      WHERE mark_group = ANY (v_groupNames) 
+        AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
+            (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark 
+             WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
 -- set all marks for the groups from the emaj_mark table in 'DELETED' state to avoid any further rollback
       UPDATE emaj.emaj_mark SET mark_state = 'DELETED' WHERE mark_group = ANY (v_validGroupNames) AND mark_state <> 'DELETED';
 -- update the state of the groups rows from the emaj_group table
