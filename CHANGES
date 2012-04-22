@@ -11,6 +11,11 @@ Enhancements:
     old related marks and log tables rows cannot be used for any rollback 
     operation anymore. Nevertheless, log rows remain visible, old marks can 
     be deleted, renamed or commented, and log statistics can be requested.
+  - the emaj_rollback_and_stop_group() and emaj_rollback_and_stop_groups()
+    functions are suppressed. They were not really useful and they left 
+    inconsistent data in log tables, which may lead to trouble now that 
+    it is possible to start a tables group without deleting old log rows and 
+    marks. 
   - add a new emaj_generate_sql function that generates a sql script 
     corresponding to all updates performed on a tables group between two 
     marks or between a mark and the current situation, and stores it into a 

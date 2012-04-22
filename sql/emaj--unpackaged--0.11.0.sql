@@ -74,8 +74,6 @@ ALTER EXTENSION emaj ADD FUNCTION emaj._delete_before_mark_group(v_groupName TEX
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT); 
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT); 
-ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_rollback_and_stop_group(v_groupName TEXT, v_mark TEXT); 
-ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_rollback_and_stop_groups(v_groupNames TEXT[], v_mark TEXT); 
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN);

@@ -853,13 +853,14 @@ RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_tbl$
 -- This function rollbacks one table to a given timestamp
 -- The function is called by emaj._rlbk_groups_step5()
--- Input: schema name and table name, global sequence value limit for rollback, mark timestamp, flag to specify if log trigger 
---        must be disable during rollback operation, flag to specify if rollbacked log rows must be deleted,
+-- Input: schema name and table name, global sequence value limit for rollback, mark timestamp, 
+--        flag to specify if log trigger must be disable during rollback operation,
+--        flag to specify if rollbacked log rows must be deleted,
 --        last sequence and last hole identifiers to keep (greater ones being to be deleted)
 -- These flags must be respectively:
 --   - true and true   for common (unlogged) rollback,
 --   - false and false for logged rollback, 
---   - true and false  for unlogged rollback with undeleted log rows (for emaj_rollback_and_stop_group function)
+--   - true and false  for unlogged rollback with undeleted log rows (now deleted emaj_rollback_and_stop_group function)
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_emajSchema     TEXT := 'emaj';
@@ -2475,55 +2476,6 @@ $emaj_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT) IS
 $$Rollbacks an set of E-Maj groups to a given mark.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_rollback_and_stop_group(v_groupName TEXT, v_mark TEXT) 
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_rollback_and_stop_group$
--- The function rollbacks all tables and sequences of a group up to a mark in the history
--- and then stop the group without deleting log tables.
--- Input: group name, mark to rollback to
--- Output: number of tables and sequences processed by the rollback function
-  DECLARE
-    v_ret_rollback   INT;
-    v_ret_stop       INT;
-  BEGIN
--- (unlogged) rollback the group without log table deletion
---   (with boolean: unloggedRlbk = true, deleteLog = false, multiGroup = false)
-    SELECT emaj._rlbk_groups(array[v_groupName], v_mark, true, false, false) INTO v_ret_rollback;
--- and stop
-    SELECT emaj.emaj_stop_group(v_groupName) INTO v_ret_stop;
--- return the number of rollbacked tables and sequences
-    RETURN v_ret_rollback;
-  END;
-$emaj_rollback_and_stop_group$;
-COMMENT ON FUNCTION emaj.emaj_rollback_and_stop_group(TEXT,TEXT) IS
-$$Rollbacks an E-Maj group to a given mark and stops the group.$$;
-
-CREATE or REPLACE FUNCTION emaj.emaj_rollback_and_stop_groups(v_groupNames TEXT[], v_mark TEXT) 
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_rollback_and_stop_groups$
--- The function rollbacks all tables and sequences of a group array up to a mark in the history
--- and then stop the group array without deleting log tables.
--- Input: array of group names, mark to rollback to
--- Output: number of tables and sequences processed by the rollback function
-  DECLARE
-    v_ret_rollback    INT;
-    v_ret_stop        INT;
-    v_validGroupNames TEXT[];
-  BEGIN
--- check mark names array
-    v_validGroupNames = emaj._check_group_names_array(v_groupNames);
--- (unlogged) rollback the groups without log table deletion
---   (with boolean: unloggedRlbk = true, deleteLog = false, multiGroup = true)
-    SELECT emaj._rlbk_groups(v_validGroupNames, v_mark, true, false, true) INTO v_ret_rollback;
--- and stop them
-    SELECT emaj.emaj_stop_groups(v_validGroupNames) INTO v_ret_stop;
--- return the number of rollbacked tables and sequences
-    RETURN v_ret_rollback;
-  END;
-$emaj_rollback_and_stop_groups$;
-COMMENT ON FUNCTION emaj.emaj_rollback_and_stop_groups(TEXT[],TEXT) IS
-$$Rollbacks an E-Maj set of groups to a given mark and stops the groups.$$;
-
 CREATE or REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_logged_rollback_group$
@@ -2566,7 +2518,7 @@ CREATE or REPLACE FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_groups$
 -- The function rollbacks all tables and sequences of a groups array up to a mark in the history.
--- It is called by emaj_rollback_group and emaj_rollback_and_stop_group.
+-- It is called by emaj_rollback_group.
 -- It effectively manages the rollback operation for each table or sequence, deleting rows from log tables 
 -- only when asked by the calling functions.
 -- Its activity is split into 6 smaller functions that are also called by the parallel restore php function
@@ -4166,8 +4118,6 @@ REVOKE ALL ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark T
 REVOKE ALL ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj.emaj_rollback_and_stop_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj.emaj_rollback_and_stop_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC;
@@ -4234,8 +4184,6 @@ GRANT EXECUTE ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mar
 GRANT EXECUTE ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm; 
-GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_and_stop_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
-GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_and_stop_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm;
