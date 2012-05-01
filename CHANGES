@@ -11,6 +11,10 @@ Enhancements:
     old related marks and log tables rows cannot be used for any rollback 
     operation anymore. Nevertheless, log rows remain visible, old marks can 
     be deleted, renamed or commented, and log statistics can be requested.
+  - now that logs may survive to a group start, a mark is automaticaly set 
+    at group stop time so that this operation is clearly visible in the marks 
+    list; This mark is named STOP_xxx where this suffix represents the time 
+    of the day.
   - the emaj_rollback_and_stop_group() and emaj_rollback_and_stop_groups()
     functions are suppressed. They were not really useful and they left 
     inconsistent data in log tables, which may lead to trouble now that 

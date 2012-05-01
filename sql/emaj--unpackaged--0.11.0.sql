@@ -62,7 +62,7 @@ ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_
 ALTER EXTENSION emaj ADD FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_stop_group(v_groupName TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]);
-ALTER EXTENSION emaj ADD FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN);
+ALTER EXTENSION emaj ADD FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT);
 ALTER EXTENSION emaj ADD FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT);
