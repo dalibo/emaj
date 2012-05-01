@@ -475,7 +475,7 @@ $_check_class$;
 CREATE or REPLACE FUNCTION emaj._check_new_mark(v_mark TEXT, v_groupNames TEXT[]) 
 RETURNS TEXT LANGUAGE plpgsql AS 
 $_check_new_mark$
--- This function verifies that a new mark name supplied in emaj_start_group(s) or emaj_set_mark_group(s) is valid.
+-- This function verifies that a new mark name supplied the user is valid.
 -- It processes the possible NULL mark value and the replacement of % wild characters.
 -- It also checks that the mark name do not already exist for any group.
 -- Input: name of the mark to set, array of group names 
@@ -1792,7 +1792,7 @@ $_start_groups$
 -- OK, lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
     PERFORM emaj._lock_groups(v_groupNames,'',v_multiGroup);
--- ... and enable all log triggers for the group
+-- ... and enable all log triggers for the groups
     v_nbTb = 0;
 -- for each relation of the group,
     FOR r_tblsq IN
@@ -1835,7 +1835,7 @@ $emaj_stop_group$
 -- Output: number of processed tables and sequences
   BEGIN
 -- just call the common _stop_groups function
-    RETURN emaj._stop_groups(array[v_groupName], false);
+    RETURN emaj._stop_groups(array[v_groupName], 'STOP_%', false);
   END;
 $emaj_stop_group$;
 COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS
@@ -1850,17 +1850,17 @@ $emaj_stop_groups$
 -- Output: number of processed tables and sequences
   BEGIN
 -- just call the common _stop_groups function
-    RETURN emaj._stop_groups(emaj._check_group_names_array(v_groupNames), true);
+    RETURN emaj._stop_groups(emaj._check_group_names_array(v_groupNames), 'STOP_%', true);
   END;
 $emaj_stop_groups$;
 COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[]) IS
 $$Stops several E-Maj groups.$$;
 
-CREATE or REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) 
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
 $_stop_groups$
 -- This function effectively de-activates the log triggers of all the tables for a group. 
--- Input: array of group names, boolean indicating if the function is called by a multi group function
+-- Input: array of group names, a mark name to set, and a boolean indicating if the function is called by a multi group function
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
@@ -1869,6 +1869,7 @@ $_stop_groups$
     v_i                INT;
     v_groupState       TEXT;
     v_nbTb             INT := 0;
+    v_markName         TEXT;
     v_fullTableName    TEXT;
     v_logTriggerName   TEXT;
     v_truncTriggerName TEXT;
@@ -1897,6 +1898,9 @@ $_stop_groups$
         v_validGroupNames = v_validGroupNames || array[v_groupNames[v_i]];
       END IF;
     END LOOP;
+-- check and process the supplied mark name
+    SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
+--
     IF v_validGroupNames IS NOT NULL THEN
 -- OK, lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
@@ -1932,6 +1936,10 @@ $_stop_groups$
 -- update the state of the groups rows from the emaj_group table
       UPDATE emaj.emaj_group SET group_state = 'IDLE' WHERE group_name = ANY (v_validGroupNames);
     END IF;
+-- Set the first mark for each group
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','), v_markName);
+    PERFORM emaj._set_mark_groups(v_groupNames, v_markName);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES (CASE WHEN v_multiGroup THEN 'STOP_GROUPS' ELSE 'STOP_GROUP' END, 'END', 
@@ -4106,7 +4114,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT, 
 REVOKE ALL ON FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT) FROM PUBLIC;
@@ -4172,7 +4180,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEX
 GRANT EXECUTE ON FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT) TO emaj_adm;
