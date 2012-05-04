@@ -57,6 +57,7 @@ Enhancements:
     groups are now ignored because the potential problem detected with 
     foreign keys only concerns rollback operations.
   - minor improvement in messages produced by emaj.emaj_verify_all() function.
+  - minor improvements in the code and in comments.
 
 Bug fixes:
   - fix a bad error message in emaj_create_group() function when the group 
