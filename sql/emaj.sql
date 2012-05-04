@@ -4242,7 +4242,7 @@ $tmp$
   BEGIN
     SELECT setting INTO v_mpt FROM pg_settings WHERE name = 'max_prepared_transactions';
     IF v_mpt <= 1 THEN
-      RAISE WARNING 'As the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
+      RAISE WARNING 'E-Maj installation: as the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
     END IF;
     RETURN;
   END;
