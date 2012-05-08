@@ -37,22 +37,32 @@ In both environments, being able to examine the history of updates performed on 
 - LICENSE                           license information 
 - AUTHORS                           who is behind E-Maj
 - META.json                         meta file for PGXN
+
 - sql/emaj.sql                      psql installation script 
-- sql/emaj--0.11.0.sql              script used to create E-Maj as an extension
 - sql/emaj.control_base             base control file to create E-Maj as an extension
+- sql/emaj--0.11.0.sql              script used to create E-Maj as an extension
 - sql/emaj--unpackaged--0.11.0.sql  script to registered an existing installation as an extension
+- sql/check-0.10.1-to-0.11.0-conditions.sql   psql script to check that all conditions allowing a 
+                                    direct migration from 0.10.1 to 0.11.0 are met
+- sql/emaj-0.10.0-to-0.10.1.sql     psql migration script from 0.10.0 to 0.10.1
+- sql/emaj--0.10.0--0.10.1.sql      script used to migration a 0.10.0 extension into 0.11.0
+- sql/emaj-0.10.1-to-0.11.0.sql     psql migration script from 0.10.1 to 0.11.0
+- sql/emaj--0.10.1--unpackaged.sql  script used to unregister a 0.10.1 E-Maj extension
 - sql/uninstall.sql                 uninstallation script
 - sql/demo.sql                      demonstration psql script
 - sql/prep-pr.sql                   psql script to prepare parallel rollback demonstration
-- doc/emaj.0.11.0_pres_en.pdf		E-Maj presentation in English
+
 - doc/emaj.0.11.0_doc_en.pdf        E-Maj user's guide in English
 - doc/emaj.0.11.0_doc_fr.pdf        E-Maj user's guide in French
+- doc/emaj.0.11.0_pres_en.pdf		E-Maj presentation in English
+- doc/emaj.0.11.0_pres_fr.pdf		E-Maj presentation in French
+
 - php/emajParallelRollback.php      external client for parallel rollback
 
 
 4- How to install and use E-Maj
 
-All the information detrails needed to install and use E-Maj are provided in the user's guide that is included in the supplied .tar file.
+All the information details needed to install and use E-Maj are provided in the user's guide that is included in the supplied .tar file.
 
 To reach this user's guide, just untar the supplied file by :
 tar -xvzf emaj-<version>.tar.gz
