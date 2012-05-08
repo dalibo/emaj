@@ -11,8 +11,8 @@
 \set QUIET ON
 SET client_min_messages TO WARNING;
 --SET client_min_messages TO NOTICE;
-\echo 'E-maj upgrade from version 0.10.1 to version 0.11.0...'
-
+\echo 'E-maj upgrade from version 0.10.1 to version 0.11.0'
+\echo 'Checking...'
 ------------------------------------
 --                                --
 -- checks                         --
@@ -30,7 +30,9 @@ $tmp$
     v_prev_mark_name     TEXT;
     v_prev_mark_group    TEXT;
     v_prev_emaj_id       BIGINT;
+    v_prev_emaj_verb     TEXT;
     v_prev_emaj_changed  TIMESTAMPTZ;
+    v_prev_emaj_txid     BIGINT;
     v_emaj_id            BIGINT;
     v_emaj_changed       TIMESTAMPTZ;
     r_mark               RECORD;
@@ -67,16 +69,26 @@ $tmp$
       LOOP
       v_logTableName := r_table.rel_schema || '_' || r_table.rel_tblseq || '_log';
 -- scan log table in emaj_id order and check emaj_changed is also increasing
+-- (discarding the UPD NEW rows that can be inserted after another rows from another txid)
       v_prev_emaj_changed = '-infinity';
       FOR r_log IN
-        EXECUTE 'SELECT emaj_id, emaj_changed FROM emaj.' || quote_ident(v_logTableName) || ' ORDER BY emaj_id'
+        EXECUTE 'SELECT emaj_id, emaj_changed, emaj_verb, emaj_txid FROM emaj.' || quote_ident(v_logTableName) || ' WHERE emaj_id % 2 = 1 ORDER BY emaj_id'
         LOOP
         IF r_log.emaj_changed < v_prev_emaj_changed THEN
-          RAISE EXCEPTION 'In log table %, time change detected between rows % (%) and % (%). E-Maj upgrade is not possible.', 
-          quote_literal(v_logTableName), v_prev_emaj_id, v_prev_emaj_changed, r_log.emaj_id, r_log.emaj_changed;
+-- time of the log row is less than the time the previous log row
+-- are considered as normal cases when an update and another statement for another tx id are involved with a short time interval 
+          IF v_prev_emaj_verb <> 'UPD' OR v_prev_emaj_txid = r_log.emaj_txid 
+              OR v_prev_emaj_changed - r_log.emaj_changed > '1 millisecond'::interval THEN
+            RAISE EXCEPTION 'In log table % (group %), negative time shift detected between emaj_id % (% at % txid %) and % (% at % txid %).',
+              quote_literal(v_logTableName), r_table.rel_group, 
+              v_prev_emaj_id, v_prev_emaj_verb, v_prev_emaj_changed, r_log.emaj_txid, 
+              r_log.emaj_id, r_log.emaj_verb, r_log.emaj_changed, v_prev_emaj_txid;
+          END IF;
         END IF;
         v_prev_emaj_id = r_log.emaj_id;
+        v_prev_emaj_verb = r_log.emaj_verb;
         v_prev_emaj_changed = r_log.emaj_changed;
+        v_prev_emaj_txid = r_log.emaj_txid;
       END LOOP;
 -- check for rare cases when time change occurred between a mark set and the next recorded log row.
 -- get log sequence values at each mark
@@ -106,8 +118,11 @@ SELECT emaj.tmp();
 DROP FUNCTION emaj.tmp();
 
 -- OK, upgrade...
+\echo '... OK, Migration start...'
 
 BEGIN TRANSACTION;
+
+\echo 'Locking...'
 
 -- lock emaj_group table to avoid any concurrent E-Maj activity
 LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
@@ -137,6 +152,7 @@ $tmp$;
 SELECT emaj.tmp();
 DROP FUNCTION emaj.tmp();
 
+\echo 'Updating E-Maj internal objects (1/2)...'
 
 UPDATE emaj.emaj_param SET param_value_text = '0.11.0' WHERE param_key = 'emaj_version';
 
@@ -2557,6 +2573,9 @@ INSERT INTO pg_description (objoid, classoid, objsubid, description)
 -- log tables content's change    --
 --                                --
 ------------------------------------
+
+\echo 'Updating log tables...'
+
 -- create a temporary table to hold the timestamp of all log rows
 CREATE TABLE emaj.emaj_tmp (
     emaj_log_table_name      TEXT,             -- log table name
@@ -2682,6 +2701,9 @@ DROP FUNCTION emaj.tmp();
 -- emaj tables and sequences (2)  --
 --                                --
 ------------------------------------
+
+\echo 'Updating E-Maj internal objects (2/2)...'
+
 --
 -- update emaj_sequence table
 --
