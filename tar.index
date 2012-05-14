@@ -4,12 +4,9 @@ emaj-0.11.0/LICENSE
 emaj-0.11.0/AUTHORS
 emaj-0.11.0/META.json
 emaj-0.11.0/sql/emaj.sql
-emaj-0.11.0/sql/emaj.control_base
-emaj-0.11.0/sql/emaj--0.11.0.sql
-emaj-0.11.0/sql/emaj--unpackaged--0.11.0.sql
 emaj-0.11.0/sql/emaj-0.10.0-to-0.10.1.sql
-emaj-0.11.0/sql/emaj--0.10.0--0.10.1.sql
 emaj-0.11.0/sql/emaj-0.10.1-to-0.11.0.sql
+emaj-0.11.0/sql/emaj--0.10.0--unpackaged.sql
 emaj-0.11.0/sql/emaj--0.10.1--unpackaged.sql
 emaj-0.11.0/sql/demo.sql
 emaj-0.11.0/sql/prep-pr.sql
