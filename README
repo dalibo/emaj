@@ -39,14 +39,11 @@ In both environments, being able to examine the history of updates performed on 
 - META.json                         meta file for PGXN
 
 - sql/emaj.sql                      psql installation script 
-- sql/emaj.control_base             base control file to create E-Maj as an extension
-- sql/emaj--0.11.0.sql              script used to create E-Maj as an extension
-- sql/emaj--unpackaged--0.11.0.sql  script to registered an existing installation as an extension
 - sql/check-0.10.1-to-0.11.0-conditions.sql   psql script to check that all conditions allowing a 
                                     direct migration from 0.10.1 to 0.11.0 are met
 - sql/emaj-0.10.0-to-0.10.1.sql     psql migration script from 0.10.0 to 0.10.1
-- sql/emaj--0.10.0--0.10.1.sql      script used to migration a 0.10.0 extension into 0.11.0
 - sql/emaj-0.10.1-to-0.11.0.sql     psql migration script from 0.10.1 to 0.11.0
+- sql/emaj--0.10.0--unpackaged.sql  script used to unregister a 0.10.0 E-Maj extension
 - sql/emaj--0.10.1--unpackaged.sql  script used to unregister a 0.10.1 E-Maj extension
 - sql/uninstall.sql                 uninstallation script
 - sql/demo.sql                      demonstration psql script
