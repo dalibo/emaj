@@ -9,7 +9,7 @@
 // Users must supply the name of the E-Maj group and the number of parallel connections/sessions to use.
 // The tables to process are then affected to sessions.
  
-  $EmajVersion='0.11.0';
+  $EmajVersion='0.11.1';
   $progName='emajParallelRollback';
 
 // Just asking for help
