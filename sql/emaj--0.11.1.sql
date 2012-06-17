@@ -1,22 +1,9 @@
-This script is the common source for both E-Maj installation scripts used:
-- either for a direct direct psql installation
-- or for a CREATE EXTENSION in pg9.1+
-Special patterns #gen_xxx placed at the beginning of lines control the generation.
-This file must be processed by tools/gen_emaj.pl perl script to get both usable scripts.
-
-#gen_psql_start#
-#gen_extension_start#
 --
 -- E-Maj : logs and rollbacks table updates : V 0.11.1
 --
 -- This software is distributed under the GNU General Public License.
 --
-#gen_extension_stop#
--- This script installs E-Maj extension for PostgreSQL version prior 9.1
-#gen_psql_stop#
-#gen_extension_start#
 -- This script is automatically called by a "CREATE EXTENSION emaj;" statement in postgres 9.1+.
-#gen_psql_start#
 --
 -- This script must be executed by a role having SUPERUSER privileges.
 -- Before its execution:
@@ -25,77 +12,11 @@ This file must be processed by tools/gen_emaj.pl perl script to get both usable 
 --	-> the plpgsql language must have been created in the concerned database,
 --  (-> the dblink contrib/extension must have been installed.)
 
-#gen_extension_stop#
-\set ON_ERROR_STOP ON
-\set QUIET ON
-SET client_min_messages TO WARNING;
-
-\echo 'E-Maj objects creation...'
-
--- create, execute and drop a specific plpgsql function to check the environment
--- If all pre-requisites are not met, it generates an error that blocks the E-Maj installation. 
-CREATE or REPLACE FUNCTION public.emaj_tmp_check_envir() 
-RETURNS VOID LANGUAGE plpgsql AS 
-$tmp$
-  DECLARE
-    v_stmt          TEXT;
-  BEGIN
--- the creation of the function implicitely validates that plpgsql language is created!
--- check postgres version is >= 8.2 
---   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') < '8.2' THEN
-      RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
-    END IF;
--- check the current role is a superuser
-    PERFORM 0 FROM pg_roles WHERE rolname = current_user AND rolsuper;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
-    END IF;
--- check the tspemaj tablespace is already created
-    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj installation: the "tspemaj" tablespace doesn''t exist.';
-    END IF;
--- check the dblink contrib is installed
---    PERFORM 0 FROM pg_proc WHERE proname = 'dblink';
---    IF NOT FOUND THEN
---      RAISE EXCEPTION 'E-Maj installation: dblink contrib/extension is not installed.';
---    END IF;
---
-    RETURN; 
-  END;
-$tmp$;
-SELECT public.emaj_tmp_check_envir();
-DROP FUNCTION public.emaj_tmp_check_envir();
-
--- OK, now create E-Maj objects in a single transaction
-
-BEGIN TRANSACTION;
-
-------------------------------------------
---                                      --
--- emaj schema and environment checking --
---                                      --
-------------------------------------------
-
--- if an emaj schema already exists, drop it
-DROP SCHEMA IF EXISTS emaj CASCADE;
-
--- creation of the schema 'emaj' containing all the needed objets
-CREATE SCHEMA emaj;
-
-#gen_extension_start#
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 
 -- create emaj roles and the _txid_current() function
-#gen_extension_stop#
-CREATE or REPLACE FUNCTION emaj._tmp_create_some_components() 
-RETURNS VOID LANGUAGE plpgsql AS
-#gen_psql_stop#
-#gen_extension_start#
 DO LANGUAGE plpgsql
-#gen_psql_start#
 $tmp$
   DECLARE
     v_pgVersion     TEXT := substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
@@ -131,10 +52,6 @@ $tmp$
     RETURN; 
   END;
 $tmp$;
-#gen_extension_stop#
-SELECT emaj._tmp_create_some_components();
-DROP FUNCTION emaj._tmp_create_some_components();
-#gen_extension_start#
 
 -----------------------------------------
 --                                     --
@@ -4258,7 +4175,6 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT,
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_viewer;
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_viewer;
 
-#gen_psql_stop#
 --------------------------------------
 --                                  --
 -- specific operation for extension --
@@ -4276,18 +4192,11 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_seq_hole','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_fk','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
 
-#gen_psql_start#
 -- and insert the init record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 0.11.1', 'Initialisation completed');
 
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
-#gen_extension_stop#
-CREATE or REPLACE FUNCTION emaj._tmp_check_setting() 
-RETURNS VOID LANGUAGE plpgsql AS
-#gen_psql_stop#
-#gen_extension_start#
 DO LANGUAGE plpgsql
-#gen_psql_start#
 $tmp$
   DECLARE
     v_mpt           INTEGER;
@@ -4299,14 +4208,3 @@ $tmp$
     RETURN;
   END;
 $tmp$;
-#gen_extension_stop#
-SELECT emaj._tmp_check_setting();
-DROP FUNCTION emaj._tmp_check_setting();
-
-
-COMMIT;
-
-SET client_min_messages TO default;
-\echo '>>> E-Maj objects successfully created'
-#gen_psql_stop#
-
