@@ -5,6 +5,8 @@ E-Maj - Release notes
 Enhancements:
 
 Bug fixes:
+  - fix a SQL injection hole in 2 functions by testing more carefuly supplied 
+    parameters.
 
 0.11.0
 ------

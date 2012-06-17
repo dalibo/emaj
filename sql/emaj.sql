@@ -3437,6 +3437,10 @@ $emaj_snap_group$
     IF v_dir IS NULL THEN
       RAISE EXCEPTION 'emaj_snap_group: directory parameter cannot be NULL';
     END IF;
+-- check the copy options parameter doesn't contain unquoted ; that could be used for sql injection
+    IF regexp_replace(v_copyOptions,'''.*''','') LIKE '%;%' THEN
+      RAISE EXCEPTION 'emaj_snap_group: invalid COPY options parameter format';
+    END IF;
 -- for each table/sequence of the emaj_relation table
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation 
@@ -3565,6 +3569,10 @@ $emaj_snap_log_group$
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_snap_log_group: group % has not been created.', v_groupName;
+    END IF;
+-- check the copy options parameter doesn't contain unquoted ; that could be used for sql injection
+    IF regexp_replace(v_copyOptions,'''.*''','') LIKE '%;%'  THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: invalid COPY options parameter format';
     END IF;
 -- catch the global sequence value and the timestamp of the first mark
     IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
