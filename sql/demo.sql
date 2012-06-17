@@ -1,4 +1,4 @@
--- demo.sql : V 0.11.0
+-- demo.sql : V 0.11.1
 --
 -- This test script must be executed with a superuser role.
 -- E-Maj extension must have been previously installed.
