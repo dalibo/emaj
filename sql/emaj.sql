@@ -2435,8 +2435,8 @@ $emaj_rename_mark_group$
     IF v_realMark IS NULL THEN
       RAISE EXCEPTION 'emaj_rename_mark_group: mark % doesn''t exist for group %.', v_mark, v_groupName;
     END IF;
--- check the new mark name is not 'EMAJ_LAST_MARK'
-    IF v_newName = 'EMAJ_LAST_MARK' THEN
+-- check the new mark name is not 'EMAJ_LAST_MARK' or NULL
+    IF v_newName = 'EMAJ_LAST_MARK' OR v_newName IS NULL THEN
        RAISE EXCEPTION 'emaj_rename_mark_group: % is not an allowed name for a new mark.', v_newName;
     END IF;
 -- check if the new mark name doesn't exist for the group 
