@@ -3,10 +3,16 @@ E-Maj - Release notes
 0.11.1
 ------
 Enhancements:
+  - tspemaj tablespace is now optional. If it exists at emaj installation 
+    time, technical tables are stored on it. If it exists at  
+    emaj_create_group() time, log tables and index are stored on it. If 
+    tspemaj doesn't exist, default_tablespace is used.
   - improve the error message returned by emaj_rename_mark_group() if the 
     supplied new mark name is NULL.
 
 Bug fixes:
+  - indexes of technical emaj tables are now also located on tspemaj 
+    tablespace (if exists)
   - fix a SQL injection hole in 2 functions by testing more carefuly supplied 
     parameters.
 

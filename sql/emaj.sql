@@ -37,11 +37,6 @@ $tmp$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
     END IF;
--- check the tspemaj tablespace is already created
-    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj installation: the "tspemaj" tablespace doesn''t exist.';
-    END IF;
 -- check the dblink contrib is installed
 --    PERFORM 0 FROM pg_proc WHERE proname = 'dblink';
 --    IF NOT FOUND THEN
@@ -74,6 +69,7 @@ COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 
 -- create emaj roles and the _txid_current() function
+-- and set tspemaj as current_tablespace if exists
 CREATE or REPLACE FUNCTION emaj._tmp_create_some_components() 
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
@@ -107,6 +103,11 @@ $tmp$
       v_stmt = v_stmt || 'txid_current();$$';
     END IF;
     EXECUTE v_stmt;
+-- if tspemaj tablespace exists, use it as default_tablespace for emaj tables creation
+    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
+    IF FOUND THEN
+      SET LOCAL default_tablespace TO tspemaj;
+    END IF;
 --
     RETURN; 
   END;
@@ -139,7 +140,7 @@ CREATE TABLE emaj.emaj_param (
     param_value_boolean      BOOLEAN,                    -- value if type is boolean, otherwise NULL
     param_value_interval     INTERVAL,                   -- value if type is interval, otherwise NULL
     PRIMARY KEY (param_key) 
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_param IS 
 $$Contains E-Maj parameters.$$;
 
@@ -157,7 +158,7 @@ CREATE TABLE emaj.emaj_hist (                            -- records the history 
     hist_txid                BIGINT
                              DEFAULT emaj._txid_current(), -- and its tx_id
     PRIMARY KEY (hist_id)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_hist IS
 $$Contains E-Maj events history.$$;
 
@@ -170,7 +171,7 @@ CREATE TABLE emaj.emaj_group_def (
                                                          --   order, with NULL last)
     PRIMARY KEY (grpdef_group, grpdef_schema, grpdef_tblseq) 
 -- the group name is included in the pkey so that a table/sequence can be temporarily assigned to several groups 
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_group_def IS
 $$Contains E-Maj groups definition, supplied by the E-Maj administrator.$$;
 
@@ -190,7 +191,7 @@ CREATE TABLE emaj.emaj_group (
                              DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
     group_comment            TEXT,                       -- optional user comment
     PRIMARY KEY (group_name)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_group IS
 $$Contains created E-Maj groups.$$;
 
@@ -206,7 +207,7 @@ CREATE TABLE emaj.emaj_relation (
     rel_rows                 BIGINT,                     -- number of rows to rollback, computed at rollback time
     PRIMARY KEY (rel_schema, rel_tblseq),
     FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_relation IS
 $$Contains the content (tables and sequences) of created E-Maj groups.$$;
 
@@ -229,7 +230,7 @@ CREATE TABLE emaj.emaj_mark (
     mark_log_rows_before_next BIGINT,                    -- number of log rows recorded for the group between the mark and the next one (NULL if last mark) - used to speedup marks lists display in phpPgAdmin plugin
     PRIMARY KEY (mark_group, mark_name),
     FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_mark IS
 $$Contains marks set on E-Maj tables groups.$$;
 
@@ -252,7 +253,7 @@ CREATE TABLE emaj.emaj_sequence (
     sequ_is_cycled           BOOLEAN     NOT NULL,       -- sequence flag 'is cycled ?'
     sequ_is_called           BOOLEAN     NOT NULL,       -- sequence flag 'is called ?'
     PRIMARY KEY (sequ_schema, sequ_name, sequ_datetime)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_sequence IS
 $$Contains values of sequences at E-Maj set_mark times.$$;
 
@@ -269,7 +270,7 @@ CREATE TABLE emaj.emaj_seq_hole (
                              DEFAULT transaction_timestamp(),
     sqhl_hole_size           BIGINT      NOT NULL,       -- hole size computed as the difference of 2 sequence last-values
     PRIMARY KEY (sqhl_schema, sqhl_table, sqhl_datetime)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_seq_hole IS
 $$Contains description of holes in sequence values for E-Maj log tables.$$;
 
@@ -283,7 +284,7 @@ CREATE TABLE emaj.emaj_rlbk_stat (
     rlbk_nb_rows             BIGINT      NOT NULL,       -- number of rows processed by the operation
     rlbk_duration            INTERVAL    NOT NULL,       -- duration of the elementary operation
     PRIMARY KEY (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_rlbk_stat IS
 $$Contains statistics about previous E-Maj rollback durations.$$;
 
@@ -297,7 +298,7 @@ CREATE TABLE emaj.emaj_fk (
     fk_table                 TEXT        NOT NULL,       -- name of the table that owns the foreign key
     fk_def                   TEXT        NOT NULL,       -- foreign key definition as reported by pg_get_constraintdef
     PRIMARY KEY (fk_groups, fk_name, fk_schema, fk_table)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_fk IS
 $$Contains temporary description of foreign keys suppressed by E-Maj rollback operations.$$;
 
@@ -525,7 +526,8 @@ $_create_tbl$
 -- variables for the name of tables, functions, triggers,...
     v_fullTableName         TEXT;
     v_emajSchema            TEXT := 'emaj';
-    v_emajTblSpace          TEXT := 'tspemaj';
+    v_dataTblSpace          TEXT;
+    v_idxTblSpace           TEXT;
     v_logTableName          TEXT;
     v_logIdxName            TEXT;
     v_logFnctName           TEXT;
@@ -574,7 +576,15 @@ $_create_tbl$
     IF v_isRollbackable AND v_relhaspkey = FALSE THEN
       RAISE EXCEPTION '_create_tbl: table % has no PRIMARY KEY.', v_tableName;
     END IF;
--- OK, build the different name for table, trigger, functions,...
+-- if tspemaj tablespace exists, use it for the log table and its index
+    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
+    IF FOUND THEN
+      v_dataTblSpace = 'TABLESPACE tspemaj '; v_idxTblSpace = 'TABLESPACE tspemaj ';
+    ELSE
+      v_dataTblSpace = ''; v_idxTblSpace = '';
+    END IF;
+
+-- build the different name for table, trigger, functions,...
     v_fullTableName    := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
     v_logTableName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
     v_logIdxName       := quote_ident(v_schemaName || '_' || v_tableName || '_log_idx');
@@ -587,7 +597,7 @@ $_create_tbl$
 -- creation of the log table: the log table looks like the application table, with some additional technical columns
     EXECUTE 'DROP TABLE IF EXISTS ' || v_logTableName;
     EXECUTE 'CREATE TABLE ' || v_logTableName
-         || ' ( LIKE ' || v_fullTableName || ') TABLESPACE ' || v_emajTblSpace;
+         || ' ( LIKE ' || v_fullTableName || ') ' || v_dataTblSpace;
     EXECUTE 'ALTER TABLE ' || v_logTableName
          || ' ADD COLUMN emaj_verb    VARCHAR(3),'
          || ' ADD COLUMN emaj_tuple   VARCHAR(3),'
@@ -599,12 +609,12 @@ $_create_tbl$
 -- creation of the index on the log table
     IF v_pgVersion >= '8.3' THEN
       EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON ' 
-           ||  v_logTableName || ' (emaj_gid, emaj_tuple DESC) TABLESPACE ' || v_emajTblSpace;
+           ||  v_logTableName || ' (emaj_gid, emaj_tuple DESC) ' || v_idxTblSpace;
     ELSE
 --   in 8.2, DESC clause doesn't exist. So the index cannot be used at rollback time. 
 --   It only enforces the uniqueness of (emaj_gid, emaj_tuple)
       EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON ' 
-           ||  v_logTableName || ' (emaj_gid, emaj_tuple) TABLESPACE ' || v_emajTblSpace;
+           ||  v_logTableName || ' (emaj_gid, emaj_tuple) ' || v_idxTblSpace;
     END IF;
 -- remove the NOT NULL constraints of application columns. 
 --   They are useless and blocking to store truncate event for tables belonging to audit_only tables
@@ -4063,7 +4073,7 @@ GRANT SELECT ON emaj.emaj_rlbk_stat  TO emaj_viewer;
 
 -- -> emaj_adm can execute all emaj functions
 
-GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
+--GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
 
 GRANT ALL ON SCHEMA emaj TO emaj_adm;
 
@@ -4255,7 +4265,6 @@ $tmp$
 $tmp$;
 SELECT emaj._tmp_check_setting();
 DROP FUNCTION emaj._tmp_check_setting();
-
 
 COMMIT;
 
