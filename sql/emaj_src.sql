@@ -2847,17 +2847,8 @@ $_rlbk_groups_step4$
   DECLARE
     r_fk                RECORD;
   BEGIN
--- record and drop the foreign keys involved in all tables of the group, if any
+-- record and drop the foreign keys referencing the session's tables of the group, if any
     INSERT INTO emaj.emaj_fk (fk_groups, fk_session, fk_name, fk_schema, fk_table, fk_def)
---    record the foreign keys of the session's tables
-      SELECT v_groupNames, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid)
-        FROM pg_constraint c, pg_namespace n, pg_class t, emaj.emaj_relation r
-        WHERE c.contype = 'f'                                            -- FK constraints only
-          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace 
-          AND n.nspname = r.rel_schema AND t.relname = r.rel_tblseq      -- join on group table
-          AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session
-      UNION
---           and the foreign keys referencing the session's tables
       SELECT v_groupNames, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid)
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_relation r
         WHERE c.contype = 'f'                                            -- FK constraints only
@@ -3379,16 +3370,8 @@ $emaj_estimate_rollback_duration$
 --
 -- walk through the list of foreign key constraints concerned by the estimated rollback
 --
--- for each foreign key
+-- for each foreign key referencing tables that are concerned by the rollback operation
     FOR r_fkey IN
-      SELECT c.conname, n.nspname, t.relname, t.reltuples
-        FROM pg_constraint c, pg_namespace n, pg_class t, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
-        WHERE c.contype = 'f'                                            -- FK constraints only
-          AND stat_rows > 0                                              -- table to effectively rollback only
-          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace 
-          AND n.nspname = s.stat_schema AND t.relname = s.stat_table     -- join on group tables to effectively rollback
-      UNION
---           and the foreign keys referenced by tables that are concerned by the rollback operation
       SELECT c.conname, n.nspname, t.relname, t.reltuples
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
         WHERE c.contype = 'f'                                            -- FK constraints only
