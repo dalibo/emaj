@@ -9,6 +9,9 @@ Enhancements:
     tspemaj doesn't exist, default_tablespace is used.
   - improve the error message returned by emaj_rename_mark_group() if the 
     supplied new mark name is NULL.
+  - during rollbacks, avoid to drop and recreate foreign keys belonging to 
+    impacted tables but referencing tables that are not involved in the 
+    rollback operation.
 
 Bug fixes:
   - indexes of technical emaj tables are now also located on tspemaj 
