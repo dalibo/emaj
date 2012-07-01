@@ -12,6 +12,7 @@ Enhancements:
   - during rollbacks, avoid to drop and recreate foreign keys belonging to 
     impacted tables but referencing tables that are not involved in the 
     rollback operation.
+  - minor internal improvements in rollback operations management.
 
 Bug fixes:
   - indexes of technical emaj tables are now also located on tspemaj 
