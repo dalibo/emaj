@@ -1895,7 +1895,8 @@ $_stop_groups$
     SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
 --
     IF v_validGroupNames IS NOT NULL THEN
--- OK, lock all tables to get a stable point ...
+-- OK (no error detected and at least one group in logging state)
+-- lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
       PERFORM emaj._lock_groups(v_validGroupNames,'',v_multiGroup);
 -- for each relation of the groups to process,
@@ -1918,19 +1919,19 @@ $_stop_groups$
         v_nbTb = v_nbTb + 1;
       END LOOP;
 -- record the number of log rows for the old last mark of each group
-    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = 
-      (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(m.mark_group,'EMAJ_LAST_MARK',NULL))
-      WHERE mark_group = ANY (v_groupNames) 
-        AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
-            (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark 
-             WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
+      UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = 
+        (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(m.mark_group,'EMAJ_LAST_MARK',NULL))
+        WHERE mark_group = ANY (v_groupNames) 
+          AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
+              (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark 
+               WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
+-- Set the stop mark for each group
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
 -- set all marks for the groups from the emaj_mark table in 'DELETED' state to avoid any further rollback
       UPDATE emaj.emaj_mark SET mark_state = 'DELETED' WHERE mark_group = ANY (v_validGroupNames) AND mark_state <> 'DELETED';
 -- update the state of the groups rows from the emaj_group table
       UPDATE emaj.emaj_group SET group_state = 'IDLE' WHERE group_name = ANY (v_validGroupNames);
     END IF;
--- Set the stop mark for each group
-    PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES (CASE WHEN v_multiGroup THEN 'STOP_GROUPS' ELSE 'STOP_GROUP' END, 'END', 
