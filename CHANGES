@@ -15,6 +15,10 @@ Enhancements:
   - minor internal improvements in rollback operations management.
 
 Bug fixes:
+  - fix an incorrect state for marks generated at stop_group(s) time. Being 
+    previously left as ACTIVE after the emaj_stop_group() or 
+    emaj_stop_groups() functions calls, a rollback to this mark after a 
+    restart of the group led to sequence values corruption.
   - indexes of technical emaj tables are now also located on tspemaj 
     tablespace (if exists)
   - fix a SQL injection hole in 2 functions by testing more carefuly supplied 
