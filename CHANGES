@@ -12,7 +12,8 @@ Enhancements:
   - during rollbacks, avoid to drop and recreate foreign keys belonging to 
     impacted tables but referencing tables that are not involved in the 
     rollback operation.
-  - minor internal improvements in rollback operations management.
+  - minor internal improvements in rollback functions, and in 
+    emaj_delete_mark_group() and emaj_delete_before_mark_group() functions.
 
 Bug fixes:
   - fix an incorrect state for marks generated at stop_group(s) time. Being 
