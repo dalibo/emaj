@@ -2322,7 +2322,7 @@ $emaj_delete_mark_group$
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('DELETE_MARK_GROUP', 'END', v_groupName, v_mark);
+      VALUES ('DELETE_MARK_GROUP', 'END', v_groupName, v_realMark);
     RETURN 1;
   END;
 $emaj_delete_mark_group$;
@@ -2368,7 +2368,7 @@ $emaj_delete_before_mark_group$
     SELECT emaj._delete_before_mark_group(v_groupName, v_realMark) INTO v_nbMark;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('DELETE_BEFORE_MARK_GROUP', 'END', v_groupName,  v_nbMark || ' marks deleted');
+      VALUES ('DELETE_BEFORE_MARK_GROUP', 'END', v_groupName,  v_nbMark || ' marks deleted ; ' || v_realMark || ' is now the initial mark' );
     RETURN v_nbMark;
   END;
 $emaj_delete_before_mark_group$;
