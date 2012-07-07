@@ -2779,7 +2779,8 @@ $_rlbk_groups_step4$
       SELECT v_groupNames, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid)
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_relation r
         WHERE c.contype = 'f'                                            -- FK constraints only
-          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace 
+          AND r.rel_rows > 0                                             -- table to effectively rollback only
+          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
           AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace 
           AND rn.nspname = r.rel_schema AND rt.relname = r.rel_tblseq    -- join on group table
           AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session;
@@ -2838,6 +2839,12 @@ $_rlbk_groups_step6$
     r_fk                RECORD;
     r_tbl               RECORD;
   BEGIN
+-- process now the foreign key checks on rollbacked rows
+-- This is performed now to avoid the 'cannot ALTER TABLE % because it has pending trigger events' error
+--   at enable log trigger time
+-- To be enhanced to record individual fkey check duration into emaj_rlbk_stat table
+    SET CONSTRAINTS ALL IMMEDIATE;
+--
     FOR r_fk IN
 -- get all recorded fk plus the number of rows of the related table as estimated by postgresql (pg_class.reltuples)
       SELECT fk_schema, fk_table, fk_name, fk_def, pg_class.reltuples 
