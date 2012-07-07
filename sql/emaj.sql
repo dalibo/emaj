@@ -297,6 +297,8 @@ CREATE TABLE emaj.emaj_fk (
     fk_schema                TEXT        NOT NULL,       -- schema name of the table that owns the foreign key
     fk_table                 TEXT        NOT NULL,       -- name of the table that owns the foreign key
     fk_def                   TEXT        NOT NULL,       -- foreign key definition as reported by pg_get_constraintdef
+    fk_action                TEXT        NOT NULL,       -- action to perform at the end of the rollback operation
+                                                         --   can contain 'create_fk' or 'set immediate"
     PRIMARY KEY (fk_groups, fk_name, fk_schema, fk_table)
     );
 COMMENT ON TABLE emaj.emaj_fk IS
@@ -2831,8 +2833,8 @@ $_rlbk_groups_step4$
       END LOOP;
     END IF;
 -- record and drop the foreign keys referencing the session's tables of the group, if any
-    INSERT INTO emaj.emaj_fk (fk_groups, fk_session, fk_name, fk_schema, fk_table, fk_def)
-      SELECT v_groupNames, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid)
+    INSERT INTO emaj.emaj_fk (fk_groups, fk_session, fk_name, fk_schema, fk_table, fk_def, fk_action)
+      SELECT v_groupNames, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid), 'create_fk'
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_relation r
         WHERE c.contype = 'f'                                            -- FK constraints only
           AND r.rel_rows > 0                                             -- table to effectively rollback only
@@ -2903,7 +2905,7 @@ $_rlbk_groups_step6$
 --
     FOR r_fk IN
 -- get all recorded fk plus the number of rows of the related table as estimated by postgresql (pg_class.reltuples)
-      SELECT fk_schema, fk_table, fk_name, fk_def, pg_class.reltuples 
+      SELECT fk_schema, fk_table, fk_name, fk_def, fk_action, pg_class.reltuples 
         FROM emaj.emaj_fk, pg_namespace, pg_class
         WHERE fk_groups = v_groupNames AND fk_session = v_session AND                         -- restrictions
               pg_namespace.oid = relnamespace AND relname = fk_table AND nspname = fk_schema  -- joins
@@ -2911,8 +2913,12 @@ $_rlbk_groups_step6$
       LOOP
 -- record the time at the alter table start
         SELECT clock_timestamp() INTO v_ts_start;
+        IF r_fk.fk_action = 'create_fk' THEN
 -- recreate the foreign key
-        EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' ADD CONSTRAINT ' || quote_ident(r_fk.fk_name) || ' ' || r_fk.fk_def;
+          EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' ADD CONSTRAINT ' || quote_ident(r_fk.fk_name) || ' ' || r_fk.fk_def;
+        ELSE
+          RAISE EXCEPTION 'emaj._rlbk_groups_step6: internal error #1';
+        END IF;
 -- record the time after the alter table and insert FK creation duration into the emaj_rlbk_stat table
         SELECT clock_timestamp() INTO v_ts_end;
         INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
