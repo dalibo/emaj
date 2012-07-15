@@ -240,9 +240,9 @@ CREATE TABLE emaj.emaj_fk (
     fk_name                  TEXT        NOT NULL,       -- foreign key name
     fk_schema                TEXT        NOT NULL,       -- schema name of the table that owns the foreign key
     fk_table                 TEXT        NOT NULL,       -- name of the table that owns the foreign key
-    fk_def                   TEXT        NOT NULL,       -- foreign key definition as reported by pg_get_constraintdef
     fk_action                TEXT        NOT NULL,       -- action to perform at the end of the rollback operation
-                                                         --   can contain 'create_fk' or 'set immediate"
+                                                         --   can contain 'create_fk' or 'set_fk_immediate"
+    fk_def                   TEXT        ,               -- foreign key definition as reported by pg_get_constraintdef
     PRIMARY KEY (fk_groups, fk_name, fk_schema, fk_table)
     );
 COMMENT ON TABLE emaj.emaj_fk IS
@@ -286,11 +286,13 @@ INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version'
 -- The history_retention parameter defines the time interval when a row remains in the emaj history table - default is 1 month
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 month'::interval);
 
--- 4 parameters are used by the emaj_estimate_rollback_duration function as a default value to compute the approximate duration of a rollback operation.
+-- 5 parameters are used by the emaj_estimate_rollback_duration function as a default value to compute the approximate duration of a rollback operation.
 -- The avg_row_rollback_duration parameter defines the average duration needed to rollback a row.
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','100 microsecond'::interval);
 -- The avg_row_delete_log_duration parameter defines the average duration needed to delete log rows.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','10 -microsecond'::interval);
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','10 microsecond'::interval);
+-- The avg_fkey_check_duration parameter defines the average duration needed to check a foreign key.
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_fkey_check_duration','20 microsecond'::interval);
 -- The fixed_table_rollback_duration parameter defines the fixed rollback cost for any table or sequence belonging to a group
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','5 millisecond'::interval);
 -- The fixed_table_with_rollback_duration parameter defines the additional fixed rollback cost for any table that has effective rows to rollback
@@ -2756,7 +2758,9 @@ $_rlbk_groups_step4$
 -- This is the fourth step of a rollback group processing. 
 -- If the rollback is unlogged, it disables log triggers for tables involved in the rollback session.
 -- Then, it processes all foreign keys involved in the rollback session.
--- Before dropping fkeys, it records them to be able to recreate them at step 6.
+--   Non deferrable fkeys and deferrable fkeys with an action for UPDATE or DELETE other than 'no action' are dropped
+--   Others are just set deferred if needed
+--   For all fkeys, the action do be performed at step 6 is recorded in emaj_fk table (with either 'add_fk' or 'set_fk_immediate' action).
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables.
   DECLARE
     v_fullTableName     TEXT;
@@ -2776,23 +2780,42 @@ $_rlbk_groups_step4$
         EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
       END LOOP;
     END IF;
--- record and drop the foreign keys referencing the session's tables of the group, if any
-    INSERT INTO emaj.emaj_fk (fk_groups, fk_session, fk_name, fk_schema, fk_table, fk_def, fk_action)
-      SELECT v_groupNames, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid), 'create_fk'
+-- select all foreign keys belonging to or referencing the session's tables of the group, if any
+    FOR r_fk IN
+      SELECT c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid) AS def, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
+        FROM pg_constraint c, pg_namespace n, pg_class t, emaj.emaj_relation r
+        WHERE c.contype = 'f'                                            -- FK constraints only
+          AND r.rel_rows > 0                                             -- table to effectively rollback only
+          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
+          AND n.nspname = r.rel_schema AND t.relname = r.rel_tblseq      -- join on groups table
+          AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session
+      UNION
+      SELECT c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid) AS def, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_relation r
         WHERE c.contype = 'f'                                            -- FK constraints only
           AND r.rel_rows > 0                                             -- table to effectively rollback only
           AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
           AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace 
-          AND rn.nspname = r.rel_schema AND rt.relname = r.rel_tblseq    -- join on group table
-          AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session;
---    and drop all these foreign keys
-    FOR r_fk IN
-      SELECT fk_schema, fk_table, fk_name FROM emaj.emaj_fk 
-        WHERE fk_groups = v_groupNames  AND fk_session = v_session ORDER BY fk_schema, fk_table, fk_name
+          AND rn.nspname = r.rel_schema AND rt.relname = r.rel_tblseq    -- join on groups table
+          AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session
+      ORDER BY nspname, relname, conname
       LOOP
-        RAISE NOTICE '_rlbk_groups_step4: groups (%), session #% -> foreign key constraint % dropped for table %.%.', array_to_string(v_groupNames,','), v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
-        EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' DROP CONSTRAINT ' || quote_ident(r_fk.fk_name);
+-- depending on the foreign key characteristics, drop it or set it deffered or just record it as 'to be reset immediate'
+      IF NOT r_fk.condeferrable OR r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
+-- non deferrable fkeys and deferrable fkeys with an action for UPDATE or DELETE other than 'no action' need to be dropped
+        EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.nspname) || '.' || quote_ident(r_fk.relname) || ' DROP CONSTRAINT ' || quote_ident(r_fk.conname);
+        RAISE NOTICE '_rlbk_groups_step4: groups (%), session #% -> foreign key constraint % dropped for table %.%.', array_to_string(v_groupNames,','), v_session, r_fk.conname, r_fk.nspname, r_fk.relname;
+        INSERT INTO emaj.emaj_fk (fk_groups, fk_session, fk_name, fk_schema, fk_table, fk_action, fk_def)
+          VALUES (v_groupNames, v_session, r_fk.conname, r_fk.nspname, r_fk.relname, 'add_fk', r_fk.def);
+      ELSE
+-- other deferrable but not deferred fkeys need to be set deferred
+        IF NOT r_fk.condeferred THEN
+          EXECUTE 'SET CONSTRAINTS ' || quote_ident(r_fk.nspname) || '.' || quote_ident(r_fk.conname) || ' DEFERRED';
+        END IF;
+-- deferrable fkeys are recorded as 'to be set immediate at the end of the rollback operation'
+        INSERT INTO emaj.emaj_fk (fk_groups, fk_session, fk_name, fk_schema, fk_table, fk_action, fk_def)
+          VALUES (v_groupNames, v_session, r_fk.conname, r_fk.nspname, r_fk.relname, 'set_fk_immediate', r_fk.def);
+      END IF;
     END LOOP;
   END;
 $_rlbk_groups_step4$;
@@ -2831,38 +2854,66 @@ $_rlbk_groups_step5$;
 CREATE or REPLACE FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_groups_step6$
--- This is the sixth step of a rollback group processing. It recreates the previously deleted foreign keys.
+-- This is the sixth step of a rollback group processing. It recreates the previously deleted foreign keys and 'set immediate' the others.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables.
   DECLARE
     v_ts_start          TIMESTAMP;
     v_ts_end            TIMESTAMP;
     v_fullTableName     TEXT;
     v_logTriggerName    TEXT;
+    v_rows              BIGINT;
     r_fk                RECORD;
     r_tbl               RECORD;
   BEGIN
--- process now the foreign key checks on rollbacked rows
--- This is performed now to avoid the 'cannot ALTER TABLE % because it has pending trigger events' error
---   at enable log trigger time
--- To be enhanced to record individual fkey check duration into emaj_rlbk_stat table
-    SET CONSTRAINTS ALL IMMEDIATE;
---
+-- set recorded foreign keys as IMMEDIATE
     FOR r_fk IN
--- get all recorded fk plus the number of rows of the related table as estimated by postgresql (pg_class.reltuples)
-      SELECT fk_schema, fk_table, fk_name, fk_def, fk_action, pg_class.reltuples 
+-- get all recorded fk
+      SELECT fk_schema, fk_table, fk_name
+        FROM emaj.emaj_fk
+        WHERE fk_action = 'set_fk_immediate' AND fk_groups = v_groupNames AND fk_session = v_session
+        ORDER BY fk_schema, fk_table, fk_name
+      LOOP
+-- record the time at the alter table start
+        SELECT clock_timestamp() INTO v_ts_start;
+-- set the fkey constraint as immediate
+        EXECUTE 'SET CONSTRAINTS ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_name) || ' IMMEDIATE';
+-- record the time after the alter table and insert FK creation duration into the emaj_rlbk_stat table
+        SELECT clock_timestamp() INTO v_ts_end;
+-- compute the total number of fk that has been checked. 
+-- (this is in fact overestimated because inserts in the referecing table and deletes in the referenced table should not be taken into account. But the required log table scan would be too costly).
+        SELECT (
+--   get the number of rollbacked rows in the referencing table
+        SELECT rel_rows 
+          FROM emaj.emaj_relation
+          WHERE rel_schema = r_fk.fk_schema AND rel_tblseq = r_fk.fk_table
+               ) + (
+--   get the number of rollbacked rows in the referenced table
+        SELECT rel_rows
+          FROM pg_constraint c, pg_namespace n, pg_namespace rn, pg_class rt, emaj.emaj_relation r
+          WHERE c.conname = r_fk.fk_name                                   -- constraint id (name + schema)
+            AND c.connamespace = n.oid AND n.nspname = r_fk.fk_schema
+            AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
+            AND rn.nspname = r.rel_schema AND rt.relname = r.rel_tblseq    -- join on groups table
+               ) INTO v_rows;
+-- record the set_fk_immediate duration into the rollbacks statistics table
+        INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
+           VALUES ('set_fk_immediate', r_fk.fk_schema, r_fk.fk_name, v_ts_start, v_rows, v_ts_end - v_ts_start);
+
+    END LOOP;
+-- process foreign key recreation
+    FOR r_fk IN
+-- get all recorded fk to recreate, plus the number of rows of the related table as estimated by postgres (pg_class.reltuples)
+      SELECT fk_schema, fk_table, fk_name, fk_def, pg_class.reltuples 
         FROM emaj.emaj_fk, pg_namespace, pg_class
-        WHERE fk_groups = v_groupNames AND fk_session = v_session AND                         -- restrictions
+        WHERE fk_action = 'add_fk' AND
+              fk_groups = v_groupNames AND fk_session = v_session AND                         -- restrictions
               pg_namespace.oid = relnamespace AND relname = fk_table AND nspname = fk_schema  -- joins
         ORDER BY fk_schema, fk_table, fk_name
       LOOP
 -- record the time at the alter table start
         SELECT clock_timestamp() INTO v_ts_start;
-        IF r_fk.fk_action = 'create_fk' THEN
--- recreate the foreign key
-          EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' ADD CONSTRAINT ' || quote_ident(r_fk.fk_name) || ' ' || r_fk.fk_def;
-        ELSE
-          RAISE EXCEPTION 'emaj._rlbk_groups_step6: internal error #1';
-        END IF;
+-- ... recreate the foreign key
+        EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' ADD CONSTRAINT ' || quote_ident(r_fk.fk_name) || ' ' || r_fk.fk_def;
 -- record the time after the alter table and insert FK creation duration into the emaj_rlbk_stat table
         SELECT clock_timestamp() INTO v_ts_end;
         INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
@@ -3239,9 +3290,11 @@ $emaj_estimate_rollback_duration$
     v_estim_duration        INTERVAL;
     v_avg_row_rlbk          INTERVAL;
     v_avg_row_del_log       INTERVAL;
+    v_avg_fkey_check        INTERVAL;
     v_fixed_table_rlbk      INTERVAL;
     v_fixed_table_with_rlbk INTERVAL;
     v_estim                 INTERVAL;
+    v_checks                BIGINT;
     r_tblsq                 RECORD;
     r_fkey		            RECORD;
   BEGIN
@@ -3269,10 +3322,12 @@ $emaj_estimate_rollback_duration$
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
                         WHERE param_key = 'avg_row_delete_log_duration'),'10 microsecond'::interval),
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
+                        WHERE param_key = 'avg_fkey_check_duration'),'20 microsecond'::interval),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
                         WHERE param_key = 'fixed_table_rollback_duration'),'5 millisecond'::interval),
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
                         WHERE param_key = 'fixed_table_with_rollback_duration'),'2.5 millisecond'::interval)
-           INTO v_avg_row_rlbk, v_avg_row_del_log, v_fixed_table_rlbk, v_fixed_table_with_rlbk;
+           INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_table_rlbk, v_fixed_table_with_rlbk;
 -- compute the fixed cost for the group
     v_estim_duration = v_nbTblSeq * v_fixed_table_rlbk;
 --
@@ -3326,32 +3381,77 @@ $emaj_estimate_rollback_duration$
 --
 -- for each foreign key referencing tables that are concerned by the rollback operation
     FOR r_fkey IN
-      SELECT c.conname, n.nspname, t.relname, t.reltuples
+      SELECT c.conname, n.nspname, t.relname, t.reltuples, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
+        FROM pg_constraint c, pg_namespace n, pg_class t, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
+        WHERE c.contype = 'f'                                            -- FK constraints only
+          AND s.stat_rows > 0                                              -- table to effectively rollback only
+          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
+          AND n.nspname = s.stat_schema AND t.relname = s.stat_table     -- join on log_stat results
+      UNION
+      SELECT c.conname, n.nspname, t.relname, t.reltuples, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
         WHERE c.contype = 'f'                                            -- FK constraints only
-          AND stat_rows > 0                                              -- table to effectively rollback only
-          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace 
+          AND s.stat_rows > 0                                            -- table to effectively rollback only
+          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
           AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace 
-          AND rn.nspname = s.stat_schema AND rt.relname = s.stat_table   -- join on group tables to effectively rollback
+          AND rn.nspname = s.stat_schema AND rt.relname = s.stat_table   -- join on log_stat results
+      ORDER BY nspname, relname, conname
         LOOP
--- estimate the recreation duration of a fkey 
-      IF r_fkey.reltuples = 0 THEN
+      IF NOT r_fkey.condeferrable OR r_fkey.confupdtype <> 'a' OR r_fkey.confdeltype <> 'a' THEN
+-- the fkey is non deferrable fkeys or has an action for UPDATE or DELETE other than 'no action'. 
+-- So estimate its re-creation duration.
+        IF r_fkey.reltuples = 0 THEN
 -- empty table (or table not analyzed) => duration = 0
-        v_estim = 0;
-	  ELSE
+          v_estim = 0;
+	    ELSE
 -- non empty table and statistics (with at least one row) are available
-        SELECT sum(rlbk_duration) * r_fkey.reltuples / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat
-          WHERE rlbk_operation = 'add_fk' AND rlbk_nb_rows > 0
-            AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname;
-        IF v_estim IS NULL THEN
--- non empty table, but no statistics with at least one row are available => take the last duration for this fkey, if any
-          SELECT rlbk_duration INTO v_estim FROM emaj.emaj_rlbk_stat
-            WHERE rlbk_operation = 'add_fk' AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname AND rlbk_datetime =
-             (SELECT max(rlbk_datetime) FROM emaj.emaj_rlbk_stat
-                WHERE rlbk_operation = 'add_fk' AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname);
+          SELECT sum(rlbk_duration) * r_fkey.reltuples / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat
+            WHERE rlbk_operation = 'add_fk' AND rlbk_nb_rows > 0
+              AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname;
           IF v_estim IS NULL THEN
--- definitely no statistics available
-            v_estim = 0;
+-- non empty table, but no statistics with at least one row are available => take the last duration for this fkey, if any
+            SELECT rlbk_duration INTO v_estim FROM emaj.emaj_rlbk_stat
+              WHERE rlbk_operation = 'add_fk' AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname AND rlbk_datetime =
+               (SELECT max(rlbk_datetime) FROM emaj.emaj_rlbk_stat
+                  WHERE rlbk_operation = 'add_fk' AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname);
+            IF v_estim IS NULL THEN
+-- definitely no statistics available, compute with the avg_fkey_check_duration parameter
+              v_estim = r_fkey.reltuples * v_avg_fkey_check;
+            END IF;
+          END IF;
+        END IF;
+      ELSE
+-- the fkey is really deferrable. So estimate the keys checks duration.
+-- compute the total number of fk that would be checked
+-- (this is in fact overestimated because inserts in the referecing table and deletes in the referenced table should not be taken into account. But the required log table scan would be too costly).
+        SELECT (
+--   get the number of rollbacked rows in the referencing table
+        SELECT s.stat_rows
+          FROM pg_constraint c, pg_namespace n, pg_class r, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
+          WHERE c.conname = r_fkey.conname                                 -- constraint id (name + schema)
+            AND c.connamespace = n.oid AND n.nspname = r_fkey.nspname
+            AND c.conrelid  = r.oid AND r.relnamespace  = n.oid            -- joins for referencing table and namespace
+            AND n.nspname = s.stat_schema AND r.relname = s.stat_table     -- join on groups table
+               ) + (
+--   get the number of rollbacked rows in the referenced table
+        SELECT s.stat_rows
+          FROM pg_constraint c, pg_namespace n, pg_namespace rn, pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
+          WHERE c.conname = r_fkey.conname                                 -- constraint id (name + schema)
+            AND c.connamespace = n.oid AND n.nspname = r_fkey.nspname
+            AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
+            AND rn.nspname = s.stat_schema AND rt.relname = s.stat_table   -- join on groups table
+               ) INTO v_checks;
+        IF v_checks = 0 THEN
+-- No check to perform
+          RAISE EXCEPTION 'estimate_rollback_duration: no check to perform. One should not find this case !!!';
+        ELSE
+-- if fkey checks statistics are available for this fkey, compute an average cost
+          SELECT sum(rlbk_duration) * v_checks / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat
+            WHERE rlbk_operation = 'set_fk_immediate' AND rlbk_nb_rows > 0
+              AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname;
+          IF v_estim IS NULL THEN
+-- if no statistics are available for this fkey, use the avg_fkey_check parameter
+            v_estim = v_checks * v_avg_fkey_check;
           END IF;
         END IF;
       END IF;
