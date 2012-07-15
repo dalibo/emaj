@@ -3,15 +3,16 @@ E-Maj - Release notes
 0.11.1
 ------
 Enhancements:
+  - largely improve the processing of foreing keys during rollback operations:
+    foreign keys are only dropped and recreated when this is really needed 
+    and the rollback functions take benefit of foreign keys declared as 
+    DEFERRABLE.
   - tspemaj tablespace is now optional. If it exists at emaj installation 
     time, technical tables are stored on it. If it exists at  
     emaj_create_group() time, log tables and index are stored on it. If 
     tspemaj doesn't exist, default_tablespace is used.
   - improve the error message returned by emaj_rename_mark_group() if the 
     supplied new mark name is NULL.
-  - during rollbacks, avoid to drop and recreate foreign keys belonging to 
-    impacted tables but referencing tables that are not involved in the 
-    rollback operation.
   - minor internal improvements in rollback functions, and in 
     emaj_delete_mark_group() and emaj_delete_before_mark_group() functions.
 
