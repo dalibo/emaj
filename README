@@ -39,10 +39,10 @@ In both environments, being able to examine the history of updates performed on 
 - META.json                         meta file for PGXN
 
 - sql/emaj.sql                      psql installation script 
-- sql/check-0.10.1-to-0.11.1-conditions.sql   psql script to check that all conditions allowing a 
-                                    direct migration from 0.10.1 to 0.11.1 are met
+- sql/check-0.10.1-to-0.11.0-conditions.sql   psql script to check that all conditions allowing a 
+                                    direct migration from 0.10.1 to 0.11.0 are met
 - sql/emaj-0.10.0-to-0.10.1.sql     psql migration script from 0.10.0 to 0.10.1
-- sql/emaj-0.10.1-to-0.11.1.sql     psql migration script from 0.10.1 to 0.11.1
+- sql/emaj-0.10.1-to-0.11.0.sql     psql migration script from 0.10.1 to 0.11.0
 - sql/emaj--0.10.0--unpackaged.sql  script used to unregister a 0.10.0 E-Maj extension
 - sql/emaj--0.10.1--unpackaged.sql  script used to unregister a 0.10.1 E-Maj extension
 - sql/uninstall.sql                 uninstallation script
@@ -63,6 +63,8 @@ All the information details needed to install and use E-Maj are provided in the 
 
 To reach this user's guide, just untar the supplied file by :
 tar -xvzf emaj-<version>.tar.gz
+
+Unfortunately, due to current limitations in EXTENSION management by PostgreSQL, it is not possible to install E-Maj as a standart EXTENSION.
 
 Remark: The user's guide also presents an emaj plugin for phpPgAdmin. In its current implementation, this plugin is very invasive inside phpPgAdmin code. For this reason, this plugin is currently not yet available on pgfoundry. But if you wish to get a copy, simply ask me.
 
