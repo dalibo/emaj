@@ -103,10 +103,13 @@ $tmp$
       v_stmt = v_stmt || 'txid_current();$$';
     END IF;
     EXECUTE v_stmt;
--- if tspemaj tablespace exists, use it as default_tablespace for emaj tables creation
+-- if tspemaj tablespace exists, 
+--   use it as default_tablespace for emaj tables creation
+--   and grant the create rights on it to emaj_adm
     PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
     IF FOUND THEN
       SET LOCAL default_tablespace TO tspemaj;
+      GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
     END IF;
 --
     RETURN; 
@@ -4184,8 +4187,6 @@ GRANT SELECT ON emaj.emaj_fk         TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_rlbk_stat  TO emaj_viewer;
 
 -- -> emaj_adm can execute all emaj functions
-
---GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
 
 GRANT ALL ON SCHEMA emaj TO emaj_adm;
 
