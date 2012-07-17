@@ -7,7 +7,8 @@
 --
 -- This script must be executed by a role having SUPERUSER privileges.
 -- Before its execution:
--- 	-> the concerned cluster must contain a tablespace named "tspemaj", for instance previously created by
+-- 	-> the concerned cluster may contain a tablespace named "tspemaj" to hold E-Maj files,
+--     for instance previously created by
 --	   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
 --	-> the plpgsql language must have been created in the concerned database,
 --  (-> the dblink contrib/extension must have been installed.)
@@ -2956,7 +2957,6 @@ $_rlbk_groups_step6$
 -- record the set_fk_immediate duration into the rollbacks statistics table
         INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
            VALUES ('set_fk_immediate', r_fk.fk_schema, r_fk.fk_name, v_ts_start, v_rows, v_ts_end - v_ts_start);
-
     END LOOP;
 -- process foreign key recreation
     FOR r_fk IN
