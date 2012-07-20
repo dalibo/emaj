@@ -3322,7 +3322,7 @@ $emaj_estimate_rollback_duration$
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
                         WHERE param_key = 'avg_row_delete_log_duration'),'10 microsecond'::interval),
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
-                        WHERE param_key = 'avg_fkey_check_duration'),'20 microsecond'::interval),
+                        WHERE param_key = 'avg_fkey_check_duration'),'5 microsecond'::interval),
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
                         WHERE param_key = 'fixed_table_rollback_duration'),'5 millisecond'::interval),
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 

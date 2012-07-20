@@ -6,7 +6,9 @@ Enhancements:
   - largely improve the processing of foreing keys during rollback operations:
     foreign keys are only dropped and recreated when this is really needed 
     and the rollback functions take benefit of foreign keys declared as 
-    DEFERRABLE.
+    DEFERRABLE. The emaj_estimate_rollback_duration() function is adjusted 
+    accordingly, using a new optional parameter, avg_fkey_check_duration, 
+    used when no statistics from previous rollbacks is available.
   - tspemaj tablespace is now optional. If it exists at emaj installation 
     time, technical tables are stored on it. If it exists at  
     emaj_create_group() time, log tables and index are stored on it. If 
