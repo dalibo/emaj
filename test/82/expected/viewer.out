@@ -1,0 +1,193 @@
+-- viewer.sql : test use of functions by an emaj_viewer role
+--
+-----------------------------
+-- grant emaj_viewer role
+-----------------------------
+grant emaj_viewer to emaj_regression_tests_viewer_user;
+--
+set role emaj_regression_tests_viewer_user;
+--
+-----------------------------
+-- authorized table accesses
+-----------------------------
+select count(*) from emaj.emaj_param;
+ count 
+-------
+     3
+(1 row)
+
+select count(*) from emaj.emaj_hist;
+ count 
+-------
+     0
+(1 row)
+
+select count(*) from emaj.emaj_group_def;
+ count 
+-------
+    21
+(1 row)
+
+select count(*) from emaj.emaj_group;
+ count 
+-------
+     3
+(1 row)
+
+select count(*) from emaj.emaj_relation;
+ count 
+-------
+    17
+(1 row)
+
+select count(*) from emaj.emaj_mark;
+ count 
+-------
+     6
+(1 row)
+
+select count(*) from emaj.emaj_sequence;
+ count 
+-------
+    39
+(1 row)
+
+select count(*) from emaj.emaj_seq_hole;
+ count 
+-------
+     0
+(1 row)
+
+select count(*) from emaj.emaj_rlbk_stat;
+ count 
+-------
+     0
+(1 row)
+
+select count(*) from emaj.emaj_fk;
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from emaj.mySchema1_myTbl1_log;
+ count 
+-------
+     0
+(1 row)
+
+-----------------------------
+-- authorized functions
+-----------------------------
+select * from emaj.emaj_verify_all();
+                       emaj_verify_all                        
+--------------------------------------------------------------
+ Global checking: no error encountered
+ Checking tables group myGroup1: no error encountered
+ Checking tables group myGroup2: no error encountered
+ Checking tables group phil's group#3",: no error encountered
+(4 rows)
+
+select substring(emaj.emaj_get_previous_mark_group('myGroup1', current_timestamp) FOR 5 FROM 1);
+ substring 
+-----------
+ STOP_
+(1 row)
+
+select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
+ stat_group | stat_schema | stat_table | stat_rows 
+------------+-------------+------------+-----------
+ myGroup1   | myschema1   | myTbl3     |         0
+ myGroup1   | myschema1   | mytbl1     |         0
+ myGroup1   | myschema1   | mytbl4     |         0
+ myGroup1   | myschema1   | mytbl2     |         0
+ myGroup1   | myschema1   | mytbl2b    |         0
+(5 rows)
+
+select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
+ stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------+-----------+-----------
+(0 rows)
+
+select emaj.emaj_estimate_rollback_duration('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp));
+ERROR:  emaj_estimate_rollback_duration: group myGroup1 has not been created or is not in LOGGING state.
+select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
+ substr 
+--------
+ 
+(1 row)
+
+-----------------------------
+-- forbiden table accesses
+-----------------------------
+delete from emaj.emaj_param;
+ERROR:  permission denied for relation emaj_param
+delete from emaj.emaj_hist;
+ERROR:  permission denied for relation emaj_hist
+delete from emaj.emaj_group_def;
+ERROR:  permission denied for relation emaj_group_def
+delete from emaj.emaj_group;
+ERROR:  permission denied for relation emaj_group
+delete from emaj.emaj_relation;
+ERROR:  permission denied for relation emaj_relation
+delete from emaj.emaj_mark;
+ERROR:  permission denied for relation emaj_mark
+delete from emaj.emaj_sequence;
+ERROR:  permission denied for relation emaj_sequence
+delete from emaj.emaj_seq_hole;
+ERROR:  permission denied for relation emaj_seq_hole
+delete from emaj.emaj_rlbk_stat;
+ERROR:  permission denied for relation emaj_rlbk_stat
+delete from emaj.emaj_fk;
+ERROR:  permission denied for relation emaj_fk
+delete from emaj.mySchema1_myTbl1_log;
+ERROR:  permission denied for relation myschema1_mytbl1_log
+-----------------------------
+-- forbiden functions
+-----------------------------
+select emaj.emaj_create_group('myGroup1');
+ERROR:  permission denied for function emaj_create_group
+select emaj.emaj_create_group('myGroup1',true);
+ERROR:  permission denied for function emaj_create_group
+select emaj.emaj_drop_group('myGroup1');
+ERROR:  permission denied for function emaj_drop_group
+select emaj.emaj_force_drop_group('myGroup1');
+ERROR:  permission denied for function emaj_force_drop_group
+select emaj.emaj_start_group('myGroup1','mark');
+ERROR:  permission denied for function emaj_start_group
+select emaj.emaj_start_groups(array['myGroup1'],'mark');
+ERROR:  permission denied for function emaj_start_groups
+select emaj.emaj_stop_group('myGroup1');
+ERROR:  permission denied for function emaj_stop_group
+select emaj.emaj_stop_groups(array['myGroup1']);
+ERROR:  permission denied for function emaj_stop_groups
+select emaj.emaj_set_mark_group('myGroup1','mark');
+ERROR:  permission denied for function emaj_set_mark_group
+select emaj.emaj_set_mark_groups(array['myGroup1'],'mark');
+ERROR:  permission denied for function emaj_set_mark_groups
+select emaj.emaj_comment_mark_group('myGroup1','mark',NULL);
+ERROR:  permission denied for function emaj_comment_mark_group
+select emaj.emaj_delete_mark_group('myGroup1','mark'); 
+ERROR:  permission denied for function emaj_delete_mark_group
+select emaj.emaj_delete_before_mark_group('myGroup1','mark');
+ERROR:  permission denied for function emaj_delete_before_mark_group
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','mark');
+ERROR:  permission denied for function emaj_rename_mark_group
+select emaj.emaj_rollback_group('myGroup1','mark'); 
+ERROR:  permission denied for function emaj_rollback_group
+select emaj.emaj_rollback_groups(array['myGroup1'],'mark'); 
+ERROR:  permission denied for function emaj_rollback_groups
+select emaj.emaj_logged_rollback_group('myGroup1','mark');
+ERROR:  permission denied for function emaj_logged_rollback_group
+select emaj.emaj_logged_rollback_groups(array['myGroup1'],'mark');
+ERROR:  permission denied for function emaj_logged_rollback_groups
+select emaj.emaj_reset_group('myGroup1');
+ERROR:  permission denied for function emaj_reset_group
+select emaj.emaj_snap_group('myGroup1','/tmp',NULL);
+ERROR:  permission denied for function emaj_snap_group
+select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp',NULL);
+ERROR:  permission denied for function emaj_snap_log_group
+select emaj.emaj_generate_sql('myGroup1',NULL,NULL,'/tmp/dummy');
+ERROR:  permission denied for function emaj_generate_sql
+--
+reset role;
