@@ -1,0 +1,34 @@
+# E-Maj 0.11.1 
+# Schedule file for regression tests, with E-Maj installed as a simple psql script
+
+# E-Maj installation
+test: instPsql
+
+# Regression tests setup
+test: setup
+
+# Prepare application objects and test create and drop group functions
+test: createDrop
+
+# test start and stop group function
+test: startStop
+
+# test mark functions
+test: mark
+
+# test log and rollback functions
+test: rollback
+
+# test miscellaneous functions (statistics + reset + snap)
+test: misc
+
+# test emaj_viewer role
+test: viewer
+
+# test complex scenario using emaj_adm role
+test: adm1
+test: adm2
+
+# cleanup regression tests environment
+test: cleanup
+

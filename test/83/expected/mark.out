@@ -1,0 +1,802 @@
+-- mark.sql : test emaj_set_mark_group(), emaj_set_mark_groups(), emaj_comment_mark_group(),
+-- emaj_rename_mark_group(), emaj_get_previous_mark_group() and emaj_delete_mark_group() functions
+--
+select emaj.emaj_start_group('myGroup1','Mark1');
+ emaj_start_group 
+------------------
+                6
+(1 row)
+
+select emaj.emaj_start_group('myGroup2','Mark2');
+ emaj_start_group 
+------------------
+                8
+(1 row)
+
+-----------------------------
+-- emaj_set_mark_group() tests
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_set_mark_group(NULL,NULL);
+ERROR:  emaj_set_mark_group: group <NULL> has not been created.
+select emaj.emaj_set_mark_group('unknownGroup',NULL);
+ERROR:  emaj_set_mark_group: group unknownGroup has not been created.
+-- reserved mark name
+select emaj.emaj_set_mark_group('myGroup1','EMAJ_LAST_MARK');
+ERROR:  _check_new_mark: EMAJ_LAST_MARK is not an allowed name for a new mark.
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 , array[ $2 ])"
+PL/pgSQL function "emaj_set_mark_group" line 27 at SQL statement
+-- should be OK
+select emaj.emaj_set_mark_group('myGroup1','SM1');
+ emaj_set_mark_group 
+---------------------
+                   6
+(1 row)
+
+select emaj.emaj_set_mark_group('myGroup2','SM1');
+ emaj_set_mark_group 
+---------------------
+                   8
+(1 row)
+
+select emaj.emaj_set_mark_group('myGroup2','phil''s mark #1');
+ emaj_set_mark_group 
+---------------------
+                   8
+(1 row)
+
+-- duplicate mark name
+select emaj.emaj_set_mark_group('myGroup1','SM1');
+ERROR:  _check_new_mark: Group myGroup1 already contains a mark named SM1.
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 , array[ $2 ])"
+PL/pgSQL function "emaj_set_mark_group" line 27 at SQL statement
+-- mark with generated name and in a single transaction
+begin transaction;
+  select emaj.emaj_set_mark_group('myGroup1',NULL);
+ emaj_set_mark_group 
+---------------------
+                   6
+(1 row)
+
+  select emaj.emaj_set_mark_group('myGroup2','');
+ emaj_set_mark_group 
+---------------------
+                   8
+(1 row)
+
+commit;
+-- use of % in mark name
+select emaj.emaj_set_mark_group('myGroup1','Foo%Bar');
+ emaj_set_mark_group 
+---------------------
+                   6
+(1 row)
+
+-----------------------------
+-- emaj_set_mark_groups() tests
+-----------------------------
+-- NULL group names array
+select emaj.emaj_set_mark_groups(NULL,NULL);
+WARNING:  _check_group_names_array: No group name to process.
+CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
+ emaj_set_mark_groups 
+----------------------
+                    0
+(1 row)
+
+-- groups array is unknown in emaj_group_def
+select emaj.emaj_set_mark_groups('{"unknownGroup",""}',NULL);
+WARNING:  _check_group_names_array: a group name is NULL or empty.
+CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
+ERROR:  emaj_set_mark_groups: group unknownGroup has not been created.
+-- reserved mark name
+select emaj.emaj_set_mark_groups('{"myGroup1"}','EMAJ_LAST_MARK');
+ERROR:  _check_new_mark: EMAJ_LAST_MARK is not an allowed name for a new mark.
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 ,  $2 )"
+PL/pgSQL function "emaj_set_mark_groups" line 41 at SQL statement
+-- should be OK
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
+ emaj_set_mark_groups 
+----------------------
+                   14
+(1 row)
+
+-- duplicate mark name and warning on group names array content
+select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1'],'SM3');
+WARNING:  _check_group_names_array: a group name is NULL or empty.
+CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
+WARNING:  _check_group_names_array: a group name is NULL or empty.
+CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
+WARNING:  _check_group_names_array: duplicate group name myGroup2.
+CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
+WARNING:  _check_group_names_array: duplicate group name myGroup2.
+CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
+WARNING:  _check_group_names_array: duplicate group name myGroup1.
+CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
+ERROR:  _check_new_mark: Group myGroup1 already contains a mark named SM3.
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 ,  $2 )"
+PL/pgSQL function "emaj_set_mark_groups" line 41 at SQL statement
+-- generated mark name
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','');
+ emaj_set_mark_groups 
+----------------------
+                   14
+(1 row)
+
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}',NULL);
+ emaj_set_mark_groups 
+----------------------
+                   14
+(1 row)
+
+-- use of % in mark name
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
+ emaj_set_mark_groups 
+----------------------
+                   14
+(1 row)
+
+-- impact of mark set
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
+       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
+      28 | myGroup1         | Mark1          |               0 | ACTIVE     |              |                     0 |                   189 |                         0
+      29 | myGroup2         | Mark2          |               0 | ACTIVE     |              |                     0 |                   197 |                         0
+      30 | myGroup1         | SM1            |               0 | ACTIVE     |              |                     0 |                   203 |                         0
+      31 | myGroup2         | SM1            |               0 | ACTIVE     |              |                     0 |                   211 |                         0
+      32 | myGroup2         | phil's mark #1 |               0 | ACTIVE     |              |                     0 |                   219 |                         0
+      33 | myGroup1         | MARK_%         |               0 | ACTIVE     |              |                     0 |                   225 |                         0
+      34 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                     0 |                   233 |                         0
+      35 | myGroup1         | Foo%Bar        |               0 | ACTIVE     |              |                     0 |                   239 |                         0
+      36 | myGroup1         | SM3            |               0 | ACTIVE     |              |                     0 |                   253 |                         0
+      37 | myGroup2         | SM3            |               0 | ACTIVE     |              |                     0 |                   253 |                         0
+      38 | myGroup1         | MARK_%         |               0 | ACTIVE     |              |                     0 |                   267 |                         0
+      39 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                     0 |                   267 |                         0
+      40 | myGroup1         | MARK_%         |               0 | ACTIVE     |              |                     0 |                   281 |                         0
+      41 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                     0 |                   281 |                         0
+      42 | myGroup1         | Bar%Foo        |               0 | ACTIVE     |              |                     0 |                   295 |                          
+      43 | myGroup2         | Bar%Foo        |               0 | ACTIVE     |              |                     0 |                   295 |                          
+(17 rows)
+
+select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+----------------+---------------+----------------
+      33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
+      34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
+      35 | emaj           | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
+     184 | myschema1      | myTbl3_col31_seq                   | Mark1          |             1 | f
+     185 | emaj           | myschema1_myTbl3_log_seq           | Mark1          |             1 | f
+     186 | emaj           | myschema1_mytbl1_log_seq           | Mark1          |             1 | f
+     187 | emaj           | myschema1_mytbl4_log_seq           | Mark1          |             1 | f
+     188 | emaj           | myschema1_mytbl2_log_seq           | Mark1          |             1 | f
+     189 | emaj           | myschema1_mytbl2b_log_seq          | Mark1          |             1 | f
+     190 | myschema2      | myseq1                             | Mark2          |          1000 | f
+     191 | emaj           | myschema2_mytbl1_log_seq           | Mark2          |             1 | f
+     192 | emaj           | myschema2_mytbl2_log_seq           | Mark2          |             1 | f
+     193 | emaj           | myschema2_myTbl3_log_seq           | Mark2          |             1 | f
+     194 | myschema2      | myTbl3_col31_seq                   | Mark2          |             1 | f
+     195 | emaj           | myschema2_mytbl4_log_seq           | Mark2          |             1 | f
+     196 | emaj           | myschema2_mytbl5_log_seq           | Mark2          |             1 | f
+     197 | emaj           | myschema2_mytbl6_log_seq           | Mark2          |             1 | f
+     198 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
+     199 | emaj           | myschema1_myTbl3_log_seq           | SM1            |             1 | f
+     200 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
+     201 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
+     202 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
+     203 | emaj           | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
+     204 | myschema2      | myseq1                             | SM1            |          1000 | f
+     205 | emaj           | myschema2_mytbl1_log_seq           | SM1            |             1 | f
+     206 | emaj           | myschema2_mytbl2_log_seq           | SM1            |             1 | f
+     207 | emaj           | myschema2_myTbl3_log_seq           | SM1            |             1 | f
+     208 | myschema2      | myTbl3_col31_seq                   | SM1            |             1 | f
+     209 | emaj           | myschema2_mytbl4_log_seq           | SM1            |             1 | f
+     210 | emaj           | myschema2_mytbl5_log_seq           | SM1            |             1 | f
+     211 | emaj           | myschema2_mytbl6_log_seq           | SM1            |             1 | f
+     212 | myschema2      | myseq1                             | phil's mark #1 |          1000 | f
+     213 | emaj           | myschema2_mytbl1_log_seq           | phil's mark #1 |             1 | f
+     214 | emaj           | myschema2_mytbl2_log_seq           | phil's mark #1 |             1 | f
+     215 | emaj           | myschema2_myTbl3_log_seq           | phil's mark #1 |             1 | f
+     216 | myschema2      | myTbl3_col31_seq                   | phil's mark #1 |             1 | f
+     217 | emaj           | myschema2_mytbl4_log_seq           | phil's mark #1 |             1 | f
+     218 | emaj           | myschema2_mytbl5_log_seq           | phil's mark #1 |             1 | f
+     219 | emaj           | myschema2_mytbl6_log_seq           | phil's mark #1 |             1 | f
+     220 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     221 | emaj           | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     222 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     223 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     224 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     225 | emaj           | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     226 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     227 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     228 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     229 | emaj           | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     230 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     231 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     232 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     233 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     234 | myschema1      | myTbl3_col31_seq                   | Foo%Bar        |             1 | f
+     235 | emaj           | myschema1_myTbl3_log_seq           | Foo%Bar        |             1 | f
+     236 | emaj           | myschema1_mytbl1_log_seq           | Foo%Bar        |             1 | f
+     237 | emaj           | myschema1_mytbl4_log_seq           | Foo%Bar        |             1 | f
+     238 | emaj           | myschema1_mytbl2_log_seq           | Foo%Bar        |             1 | f
+     239 | emaj           | myschema1_mytbl2b_log_seq          | Foo%Bar        |             1 | f
+     240 | myschema1      | myTbl3_col31_seq                   | SM3            |             1 | f
+     241 | emaj           | myschema1_myTbl3_log_seq           | SM3            |             1 | f
+     242 | emaj           | myschema1_mytbl1_log_seq           | SM3            |             1 | f
+     243 | emaj           | myschema1_mytbl4_log_seq           | SM3            |             1 | f
+     244 | emaj           | myschema1_mytbl2_log_seq           | SM3            |             1 | f
+     245 | emaj           | myschema1_mytbl2b_log_seq          | SM3            |             1 | f
+     246 | myschema2      | myseq1                             | SM3            |          1000 | f
+     247 | emaj           | myschema2_mytbl1_log_seq           | SM3            |             1 | f
+     248 | emaj           | myschema2_mytbl2_log_seq           | SM3            |             1 | f
+     249 | emaj           | myschema2_myTbl3_log_seq           | SM3            |             1 | f
+     250 | myschema2      | myTbl3_col31_seq                   | SM3            |             1 | f
+     251 | emaj           | myschema2_mytbl4_log_seq           | SM3            |             1 | f
+     252 | emaj           | myschema2_mytbl5_log_seq           | SM3            |             1 | f
+     253 | emaj           | myschema2_mytbl6_log_seq           | SM3            |             1 | f
+     254 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     255 | emaj           | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     256 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     257 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     258 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     259 | emaj           | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     260 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     261 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     262 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     263 | emaj           | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     264 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     265 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     266 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     267 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     268 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     269 | emaj           | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     270 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     271 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     272 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     273 | emaj           | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     274 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     275 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     276 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     277 | emaj           | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     278 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     279 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     280 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     281 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     282 | myschema1      | myTbl3_col31_seq                   | Bar%Foo        |             1 | f
+     283 | emaj           | myschema1_myTbl3_log_seq           | Bar%Foo        |             1 | f
+     284 | emaj           | myschema1_mytbl1_log_seq           | Bar%Foo        |             1 | f
+     285 | emaj           | myschema1_mytbl4_log_seq           | Bar%Foo        |             1 | f
+     286 | emaj           | myschema1_mytbl2_log_seq           | Bar%Foo        |             1 | f
+     287 | emaj           | myschema1_mytbl2b_log_seq          | Bar%Foo        |             1 | f
+     288 | myschema2      | myseq1                             | Bar%Foo        |          1000 | f
+     289 | emaj           | myschema2_mytbl1_log_seq           | Bar%Foo        |             1 | f
+     290 | emaj           | myschema2_mytbl2_log_seq           | Bar%Foo        |             1 | f
+     291 | emaj           | myschema2_myTbl3_log_seq           | Bar%Foo        |             1 | f
+     292 | myschema2      | myTbl3_col31_seq                   | Bar%Foo        |             1 | f
+     293 | emaj           | myschema2_mytbl4_log_seq           | Bar%Foo        |             1 | f
+     294 | emaj           | myschema2_mytbl5_log_seq           | Bar%Foo        |             1 | f
+     295 | emaj           | myschema2_mytbl6_log_seq           | Bar%Foo        |             1 | f
+(115 rows)
+
+-----------------------------
+-- emaj_comment_mark_group() tests
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_comment_mark_group(NULL,NULL,NULL);
+ERROR:  emaj_comment_mark_group: group <NULL> has not been created.
+select emaj.emaj_comment_mark_group('unknownGroup',NULL,NULL);
+ERROR:  emaj_comment_mark_group: group unknownGroup has not been created.
+-- mark is unknown
+select emaj.emaj_comment_mark_group('myGroup1','unknownMark',NULL);
+ERROR:  emaj_comment_mark_group: unknownMark is not a known mark for group myGroup1.
+-- should be OK
+select emaj.emaj_comment_mark_group('myGroup1','SM1','a first comment for group #1');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('myGroup1','SM1','a better comment for group #1');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('myGroup2','SM1','a first comment for group #2');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('myGroup2','SM1',NULL);
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('myGroup2','EMAJ_LAST_MARK','a comment for group #2');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('myGroup2','phil''s mark #1','a good phil''s comment!');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+-----------------------------
+--emaj_get_previous_mark_group()
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_get_previous_mark_group(NULL,NULL);
+ERROR:  emaj_get_previous_mark_group: group <NULL> has not been created.
+select emaj.emaj_get_previous_mark_group('unknownGroup',NULL);
+ERROR:  emaj_get_previous_mark_group: group unknownGroup has not been created.
+-- should be OK
+select emaj.emaj_get_previous_mark_group('myGroup2',(select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM1'));
+ emaj_get_previous_mark_group 
+------------------------------
+ Mark2
+(1 row)
+
+select emaj.emaj_get_previous_mark_group('myGroup2',(select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM1')+'0.000001 SECOND'::interval);
+ emaj_get_previous_mark_group 
+------------------------------
+ SM1
+(1 row)
+
+select emaj.emaj_get_previous_mark_group('myGroup1',(select min(mark_datetime) from emaj.emaj_mark where mark_group = 'myGroup1'));
+ emaj_get_previous_mark_group 
+------------------------------
+ 
+(1 row)
+
+-----------------------------
+-- emaj_rename_mark_group() tests
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_rename_mark_group(NULL,NULL,NULL);
+ERROR:  emaj_rename_mark_group: group <NULL> has not been created.
+select emaj.emaj_rename_mark_group('unknownGroup',NULL,NULL);
+ERROR:  emaj_rename_mark_group: group unknownGroup has not been created.
+-- unknown mark name
+select emaj.emaj_rename_mark_group('myGroup1','DummyMark','new mark');
+ERROR:  emaj_rename_mark_group: mark DummyMark doesn't exist for group myGroup1.
+-- invalid new mark name
+select emaj.emaj_rename_mark_group('myGroup1','Mark1','EMAJ_LAST_MARK');
+ERROR:  emaj_rename_mark_group: EMAJ_LAST_MARK is not an allowed name for a new mark.
+select emaj.emaj_rename_mark_group('myGroup1','Mark1',NULL);
+ERROR:  emaj_rename_mark_group: <NULL> is not an allowed name for a new mark.
+-- should be OK
+select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','SM2');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+select emaj.emaj_rename_mark_group('myGroup2','phil''s mark #1','john''s mark #1');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+-- impact of mark rename
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+----------------+-----------------+------------+-------------------------------+-----------------------+-----------------------+---------------------------
+       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                     0 |                    35 |                          
+      28 | myGroup1         | First Mark     |               0 | ACTIVE     |                               |                     0 |                   189 |                         0
+      29 | myGroup2         | Mark2          |               0 | ACTIVE     |                               |                     0 |                   197 |                         0
+      30 | myGroup1         | SM1            |               0 | ACTIVE     | a better comment for group #1 |                     0 |                   203 |                         0
+      31 | myGroup2         | SM1            |               0 | ACTIVE     |                               |                     0 |                   211 |                         0
+      32 | myGroup2         | john's mark #1 |               0 | ACTIVE     | a good phil's comment!        |                     0 |                   219 |                         0
+      33 | myGroup1         | MARK_%         |               0 | ACTIVE     |                               |                     0 |                   225 |                         0
+      34 | myGroup2         | MARK_%         |               0 | ACTIVE     |                               |                     0 |                   233 |                         0
+      35 | myGroup1         | Foo%Bar        |               0 | ACTIVE     |                               |                     0 |                   239 |                         0
+      36 | myGroup1         | SM3            |               0 | ACTIVE     |                               |                     0 |                   253 |                         0
+      37 | myGroup2         | SM3            |               0 | ACTIVE     |                               |                     0 |                   253 |                         0
+      38 | myGroup1         | MARK_%         |               0 | ACTIVE     |                               |                     0 |                   267 |                         0
+      39 | myGroup2         | MARK_%         |               0 | ACTIVE     |                               |                     0 |                   267 |                         0
+      40 | myGroup1         | MARK_%         |               0 | ACTIVE     |                               |                     0 |                   281 |                         0
+      41 | myGroup2         | MARK_%         |               0 | ACTIVE     |                               |                     0 |                   281 |                         0
+      42 | myGroup1         | Bar%Foo        |               0 | ACTIVE     |                               |                     0 |                   295 |                          
+      43 | myGroup2         | SM2            |               0 | ACTIVE     | a comment for group #2        |                     0 |                   295 |                          
+(17 rows)
+
+select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+----------------+---------------+----------------
+      33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
+      34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
+      35 | emaj           | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
+     184 | myschema1      | myTbl3_col31_seq                   | First Mark     |             1 | f
+     185 | emaj           | myschema1_myTbl3_log_seq           | First Mark     |             1 | f
+     186 | emaj           | myschema1_mytbl1_log_seq           | First Mark     |             1 | f
+     187 | emaj           | myschema1_mytbl4_log_seq           | First Mark     |             1 | f
+     188 | emaj           | myschema1_mytbl2_log_seq           | First Mark     |             1 | f
+     189 | emaj           | myschema1_mytbl2b_log_seq          | First Mark     |             1 | f
+     190 | myschema2      | myseq1                             | Mark2          |          1000 | f
+     191 | emaj           | myschema2_mytbl1_log_seq           | Mark2          |             1 | f
+     192 | emaj           | myschema2_mytbl2_log_seq           | Mark2          |             1 | f
+     193 | emaj           | myschema2_myTbl3_log_seq           | Mark2          |             1 | f
+     194 | myschema2      | myTbl3_col31_seq                   | Mark2          |             1 | f
+     195 | emaj           | myschema2_mytbl4_log_seq           | Mark2          |             1 | f
+     196 | emaj           | myschema2_mytbl5_log_seq           | Mark2          |             1 | f
+     197 | emaj           | myschema2_mytbl6_log_seq           | Mark2          |             1 | f
+     198 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
+     199 | emaj           | myschema1_myTbl3_log_seq           | SM1            |             1 | f
+     200 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
+     201 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
+     202 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
+     203 | emaj           | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
+     204 | myschema2      | myseq1                             | SM1            |          1000 | f
+     205 | emaj           | myschema2_mytbl1_log_seq           | SM1            |             1 | f
+     206 | emaj           | myschema2_mytbl2_log_seq           | SM1            |             1 | f
+     207 | emaj           | myschema2_myTbl3_log_seq           | SM1            |             1 | f
+     208 | myschema2      | myTbl3_col31_seq                   | SM1            |             1 | f
+     209 | emaj           | myschema2_mytbl4_log_seq           | SM1            |             1 | f
+     210 | emaj           | myschema2_mytbl5_log_seq           | SM1            |             1 | f
+     211 | emaj           | myschema2_mytbl6_log_seq           | SM1            |             1 | f
+     212 | myschema2      | myseq1                             | john's mark #1 |          1000 | f
+     213 | emaj           | myschema2_mytbl1_log_seq           | john's mark #1 |             1 | f
+     214 | emaj           | myschema2_mytbl2_log_seq           | john's mark #1 |             1 | f
+     215 | emaj           | myschema2_myTbl3_log_seq           | john's mark #1 |             1 | f
+     216 | myschema2      | myTbl3_col31_seq                   | john's mark #1 |             1 | f
+     217 | emaj           | myschema2_mytbl4_log_seq           | john's mark #1 |             1 | f
+     218 | emaj           | myschema2_mytbl5_log_seq           | john's mark #1 |             1 | f
+     219 | emaj           | myschema2_mytbl6_log_seq           | john's mark #1 |             1 | f
+     220 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     221 | emaj           | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     222 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     223 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     224 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     225 | emaj           | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     226 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     227 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     228 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     229 | emaj           | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     230 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     231 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     232 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     233 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     234 | myschema1      | myTbl3_col31_seq                   | Foo%Bar        |             1 | f
+     235 | emaj           | myschema1_myTbl3_log_seq           | Foo%Bar        |             1 | f
+     236 | emaj           | myschema1_mytbl1_log_seq           | Foo%Bar        |             1 | f
+     237 | emaj           | myschema1_mytbl4_log_seq           | Foo%Bar        |             1 | f
+     238 | emaj           | myschema1_mytbl2_log_seq           | Foo%Bar        |             1 | f
+     239 | emaj           | myschema1_mytbl2b_log_seq          | Foo%Bar        |             1 | f
+     240 | myschema1      | myTbl3_col31_seq                   | SM3            |             1 | f
+     241 | emaj           | myschema1_myTbl3_log_seq           | SM3            |             1 | f
+     242 | emaj           | myschema1_mytbl1_log_seq           | SM3            |             1 | f
+     243 | emaj           | myschema1_mytbl4_log_seq           | SM3            |             1 | f
+     244 | emaj           | myschema1_mytbl2_log_seq           | SM3            |             1 | f
+     245 | emaj           | myschema1_mytbl2b_log_seq          | SM3            |             1 | f
+     246 | myschema2      | myseq1                             | SM3            |          1000 | f
+     247 | emaj           | myschema2_mytbl1_log_seq           | SM3            |             1 | f
+     248 | emaj           | myschema2_mytbl2_log_seq           | SM3            |             1 | f
+     249 | emaj           | myschema2_myTbl3_log_seq           | SM3            |             1 | f
+     250 | myschema2      | myTbl3_col31_seq                   | SM3            |             1 | f
+     251 | emaj           | myschema2_mytbl4_log_seq           | SM3            |             1 | f
+     252 | emaj           | myschema2_mytbl5_log_seq           | SM3            |             1 | f
+     253 | emaj           | myschema2_mytbl6_log_seq           | SM3            |             1 | f
+     254 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     255 | emaj           | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     256 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     257 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     258 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     259 | emaj           | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     260 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     261 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     262 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     263 | emaj           | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     264 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     265 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     266 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     267 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     268 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     269 | emaj           | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     270 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     271 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     272 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     273 | emaj           | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     274 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     275 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     276 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     277 | emaj           | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     278 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     279 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     280 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     281 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     282 | myschema1      | myTbl3_col31_seq                   | SM2            |             1 | f
+     283 | emaj           | myschema1_myTbl3_log_seq           | SM2            |             1 | f
+     284 | emaj           | myschema1_mytbl1_log_seq           | SM2            |             1 | f
+     285 | emaj           | myschema1_mytbl4_log_seq           | SM2            |             1 | f
+     286 | emaj           | myschema1_mytbl2_log_seq           | SM2            |             1 | f
+     287 | emaj           | myschema1_mytbl2b_log_seq          | SM2            |             1 | f
+     288 | myschema2      | myseq1                             | SM2            |          1000 | f
+     289 | emaj           | myschema2_mytbl1_log_seq           | SM2            |             1 | f
+     290 | emaj           | myschema2_mytbl2_log_seq           | SM2            |             1 | f
+     291 | emaj           | myschema2_myTbl3_log_seq           | SM2            |             1 | f
+     292 | myschema2      | myTbl3_col31_seq                   | SM2            |             1 | f
+     293 | emaj           | myschema2_mytbl4_log_seq           | SM2            |             1 | f
+     294 | emaj           | myschema2_mytbl5_log_seq           | SM2            |             1 | f
+     295 | emaj           | myschema2_mytbl6_log_seq           | SM2            |             1 | f
+(115 rows)
+
+-----------------------------
+-- emaj_delete_mark_group() tests
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_delete_mark_group(NULL,NULL);
+ERROR:  emaj_delete_mark_group: group <NULL> has not been created.
+select emaj.emaj_delete_mark_group('unknownGroup',NULL);
+ERROR:  emaj_delete_mark_group: group unknownGroup has not been created.
+-- unknown mark name
+select emaj.emaj_delete_mark_group('myGroup2',NULL);
+ERROR:  emaj_delete_mark_group: <NULL> is not a known mark for group myGroup2.
+select emaj.emaj_delete_mark_group('myGroup2','DummyMark');
+ERROR:  emaj_delete_mark_group: DummyMark is not a known mark for group myGroup2.
+-- should be OK
+select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+select emaj.emaj_delete_mark_group('myGroup1','First Mark');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark
+  where mark_group = 'myGroup1' and (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d' or mark_name = 'SM3');
+ emaj_delete_mark_group 
+------------------------
+                      1
+                      1
+                      1
+                      1
+                      1
+(5 rows)
+
+select emaj.emaj_delete_mark_group('myGroup2','john''s mark #1');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+-- at least 1 mark should remain
+select emaj.emaj_delete_mark_group('myGroup1','SM1');
+ERROR:  emaj_delete_mark_group: SM1 is the only mark. It cannot be deleted.
+-----------------------------
+-- emaj_delete_before_mark_group() tests
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_delete_before_mark_group(NULL,NULL);
+ERROR:  emaj_delete_before_mark_group: group <NULL> has not been created.
+select emaj.emaj_delete_before_mark_group('unknownGroup',NULL);
+ERROR:  emaj_delete_before_mark_group: group unknownGroup has not been created.
+-- unknown mark name
+select emaj.emaj_delete_before_mark_group('myGroup2','DummyMark');
+ERROR:  emaj_delete_before_mark_group: DummyMark is not a known mark for group myGroup2.
+-- NULL input for mark name returns NULL
+select emaj.emaj_delete_before_mark_group('myGroup2',NULL);
+ emaj_delete_before_mark_group 
+-------------------------------
+                              
+(1 row)
+
+-- should be OK
+select emaj.emaj_delete_before_mark_group('myGroup1','SM1');
+ emaj_delete_before_mark_group 
+-------------------------------
+                             0
+(1 row)
+
+select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_delete_before_mark_group 
+-------------------------------
+                             0
+(1 row)
+
+select emaj.emaj_delete_before_mark_group('myGroup2',
+      (select emaj.emaj_get_previous_mark_group('myGroup2',
+             (select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM2')+'0.000001 SECOND'::interval)));
+ emaj_delete_before_mark_group 
+-------------------------------
+                             6
+(1 row)
+
+-----------------------------
+-- test functions with group not in logging state 
+-----------------------------
+select emaj.emaj_stop_group('myGroup1');
+ emaj_stop_group 
+-----------------
+               6
+(1 row)
+
+select emaj.emaj_stop_group('myGroup2');
+ emaj_stop_group 
+-----------------
+               8
+(1 row)
+
+select emaj.emaj_set_mark_group('myGroup1','SM1');
+ERROR:  emaj_set_mark_group: A mark cannot be set for group myGroup1 because it is not in logging state. An emaj_start_group function must be previously executed.
+select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'SM1');
+ERROR:  emaj_set_mark_groups: A mark cannot be set for group myGroup1 because it is not in logging state. An emaj_start_group function must be previously executed.
+-- check marks state
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+----------------+-----------------+------------+-------------------------------+-----------------------+-----------------------+---------------------------
+       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                     0 |                    35 |                          
+      30 | myGroup1         | SM1            |               0 | DELETED    | a better comment for group #1 |                     0 |                   203 |                         0
+      43 | myGroup2         | SM2            |               0 | DELETED    | a comment for group #2        |                     0 |                   295 |                         0
+      44 | myGroup1         | STOP_%         |               0 | DELETED    |                               |                     0 |                   301 |                          
+      45 | myGroup2         | STOP_%         |               0 | DELETED    |                               |                     0 |                   309 |                          
+(5 rows)
+
+select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+----------------+---------------+----------------
+      33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
+      34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
+      35 | emaj           | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
+     198 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
+     199 | emaj           | myschema1_myTbl3_log_seq           | SM1            |             1 | f
+     200 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
+     201 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
+     202 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
+     203 | emaj           | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
+     282 | myschema1      | myTbl3_col31_seq                   | SM2            |             1 | f
+     283 | emaj           | myschema1_myTbl3_log_seq           | SM2            |             1 | f
+     284 | emaj           | myschema1_mytbl1_log_seq           | SM2            |             1 | f
+     285 | emaj           | myschema1_mytbl4_log_seq           | SM2            |             1 | f
+     286 | emaj           | myschema1_mytbl2_log_seq           | SM2            |             1 | f
+     287 | emaj           | myschema1_mytbl2b_log_seq          | SM2            |             1 | f
+     288 | myschema2      | myseq1                             | SM2            |          1000 | f
+     289 | emaj           | myschema2_mytbl1_log_seq           | SM2            |             1 | f
+     290 | emaj           | myschema2_mytbl2_log_seq           | SM2            |             1 | f
+     291 | emaj           | myschema2_myTbl3_log_seq           | SM2            |             1 | f
+     292 | myschema2      | myTbl3_col31_seq                   | SM2            |             1 | f
+     293 | emaj           | myschema2_mytbl4_log_seq           | SM2            |             1 | f
+     294 | emaj           | myschema2_mytbl5_log_seq           | SM2            |             1 | f
+     295 | emaj           | myschema2_mytbl6_log_seq           | SM2            |             1 | f
+     296 | myschema1      | myTbl3_col31_seq                   | STOP_%         |             1 | f
+     297 | emaj           | myschema1_myTbl3_log_seq           | STOP_%         |             1 | f
+     298 | emaj           | myschema1_mytbl1_log_seq           | STOP_%         |             1 | f
+     299 | emaj           | myschema1_mytbl4_log_seq           | STOP_%         |             1 | f
+     300 | emaj           | myschema1_mytbl2_log_seq           | STOP_%         |             1 | f
+     301 | emaj           | myschema1_mytbl2b_log_seq          | STOP_%         |             1 | f
+     302 | myschema2      | myseq1                             | STOP_%         |          1000 | f
+     303 | emaj           | myschema2_mytbl1_log_seq           | STOP_%         |             1 | f
+     304 | emaj           | myschema2_mytbl2_log_seq           | STOP_%         |             1 | f
+     305 | emaj           | myschema2_myTbl3_log_seq           | STOP_%         |             1 | f
+     306 | myschema2      | myTbl3_col31_seq                   | STOP_%         |             1 | f
+     307 | emaj           | myschema2_mytbl4_log_seq           | STOP_%         |             1 | f
+     308 | emaj           | myschema2_mytbl5_log_seq           | STOP_%         |             1 | f
+     309 | emaj           | myschema2_mytbl6_log_seq           | STOP_%         |             1 | f
+(37 rows)
+
+-----------------------------
+-- test end: check and reset history
+-----------------------------
+select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
+  (select * from emaj.emaj_hist order by hist_id) as t;
+ hist_id |      hist_function       | hist_event |  regexp_replace   |                regexp_replace                 | hist_user 
+---------+--------------------------+------------+-------------------+-----------------------------------------------+-----------
+    3000 | START_GROUP              | BEGIN      | myGroup1          | With log reset                                | postgres
+    3001 | LOCK_GROUP               | BEGIN      | myGroup1          |                                               | postgres
+    3002 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                | postgres
+    3003 | SET_MARK_GROUP           | BEGIN      | myGroup1          | Mark1                                         | postgres
+    3004 | SET_MARK_GROUP           | END        | myGroup1          | Mark1                                         | postgres
+    3005 | START_GROUP              | END        | myGroup1          | 6 tables/sequences processed                  | postgres
+    3006 | START_GROUP              | BEGIN      | myGroup2          | With log reset                                | postgres
+    3007 | LOCK_GROUP               | BEGIN      | myGroup2          |                                               | postgres
+    3008 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                | postgres
+    3009 | SET_MARK_GROUP           | BEGIN      | myGroup2          | Mark2                                         | postgres
+    3010 | SET_MARK_GROUP           | END        | myGroup2          | Mark2                                         | postgres
+    3011 | START_GROUP              | END        | myGroup2          | 8 tables/sequences processed                  | postgres
+    3015 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                               | postgres
+    3016 | LOCK_GROUP               | BEGIN      | myGroup1          |                                               | postgres
+    3017 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                | postgres
+    3018 | SET_MARK_GROUP           | END        | myGroup1          | SM1                                           | postgres
+    3019 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                               | postgres
+    3020 | LOCK_GROUP               | BEGIN      | myGroup2          |                                               | postgres
+    3021 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                | postgres
+    3022 | SET_MARK_GROUP           | END        | myGroup2          | SM1                                           | postgres
+    3023 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                               | postgres
+    3024 | LOCK_GROUP               | BEGIN      | myGroup2          |                                               | postgres
+    3025 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                | postgres
+    3026 | SET_MARK_GROUP           | END        | myGroup2          | phil's mark #1                                | postgres
+    3028 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                               | postgres
+    3029 | LOCK_GROUP               | BEGIN      | myGroup1          |                                               | postgres
+    3030 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                | postgres
+    3031 | SET_MARK_GROUP           | END        | myGroup1          | MARK_%                                        | postgres
+    3032 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                               | postgres
+    3033 | LOCK_GROUP               | BEGIN      | myGroup2          |                                               | postgres
+    3034 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                | postgres
+    3035 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                        | postgres
+    3036 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                               | postgres
+    3037 | LOCK_GROUP               | BEGIN      | myGroup1          |                                               | postgres
+    3038 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                | postgres
+    3039 | SET_MARK_GROUP           | END        | myGroup1          | Foo%Bar                                       | postgres
+    3040 | SET_MARK_GROUPS          | BEGIN      |                   |                                               | postgres
+    3041 | SET_MARK_GROUPS          | END        |                   |                                               | postgres
+    3044 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | SM3                                           | postgres
+    3045 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                               | postgres
+    3046 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)               | postgres
+    3047 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | SM3                                           | postgres
+    3049 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                               | postgres
+    3050 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                               | postgres
+    3051 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)               | postgres
+    3052 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                               | postgres
+    3053 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                               | postgres
+    3054 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                               | postgres
+    3055 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)               | postgres
+    3056 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                               | postgres
+    3057 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | Bar%Foo                                       | postgres
+    3058 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                               | postgres
+    3059 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)               | postgres
+    3060 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | Bar%Foo                                       | postgres
+    3061 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                      | postgres
+    3062 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                      | postgres
+    3063 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                      | postgres
+    3064 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                      | postgres
+    3065 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark Bar%Foo                                  | postgres
+    3066 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark phil's mark #1                           | postgres
+    3072 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                | postgres
+    3073 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                           | postgres
+    3074 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                         | postgres
+    3075 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                      | postgres
+    3076 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | phil's mark #1                                | postgres
+    3077 | RENAME_MARK_GROUP        | END        | myGroup2          | phil's mark #1 renamed john's mark #1         | postgres
+    3082 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                | postgres
+    3083 | DELETE_MARK_GROUP        | END        | myGroup1          | Bar%Foo                                       | postgres
+    3084 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                    | postgres
+    3085 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                    | postgres
+    3086 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                        | postgres
+    3087 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                        | postgres
+    3088 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                       | postgres
+    3089 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                       | postgres
+    3090 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM3                                           | postgres
+    3091 | DELETE_MARK_GROUP        | END        | myGroup1          | SM3                                           | postgres
+    3092 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                        | postgres
+    3093 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                        | postgres
+    3094 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                        | postgres
+    3095 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                        | postgres
+    3096 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                | postgres
+    3097 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                | postgres
+    3102 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                               | postgres
+    3103 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM1                                           | postgres
+    3104 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM1 is now the initial mark | postgres
+    3105 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                | postgres
+    3106 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM1 is now the initial mark | postgres
+    3107 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                           | postgres
+    3108 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 6 marks deleted ; SM2 is now the initial mark | postgres
+    3109 | STOP_GROUP               | BEGIN      | myGroup1          |                                               | postgres
+    3110 | LOCK_GROUP               | BEGIN      | myGroup1          |                                               | postgres
+    3111 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                | postgres
+    3112 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                        | postgres
+    3113 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                        | postgres
+    3114 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                  | postgres
+    3115 | STOP_GROUP               | BEGIN      | myGroup2          |                                               | postgres
+    3116 | LOCK_GROUP               | BEGIN      | myGroup2          |                                               | postgres
+    3117 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                | postgres
+    3118 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                        | postgres
+    3119 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                        | postgres
+    3120 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                  | postgres
+(101 rows)
+
+truncate emaj.emaj_hist;
