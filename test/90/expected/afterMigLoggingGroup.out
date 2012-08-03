@@ -197,7 +197,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
       64 | SET_MARK_GROUP           | BEGIN        | myGroup2                     | RLBK_M3_%_DONE                                       | postgres
       65 | SET_MARK_GROUP           | END          | myGroup2                     | RLBK_M3_%_DONE                                       | postgres
       66 | ROLLBACK_GROUP           | END          | myGroup2                     | 1 tables and 2 sequences effectively processed       | postgres
-      67 | EMAJ_INSTALL             |              | E-Maj 0.11.1                 | Migration from 0.11.0 completed                      | postgres
+      67 | EMAJ_INSTALL             |              | E-Maj 0.12.0                 | Migration from 0.11.0 completed                      | postgres
       68 | ROLLBACK_GROUP           | BEGIN        | myGroup1                     | Unlogged rollback to mark M2 (timestamp)             | postgres
       69 | LOCK_SESSION             | BEGIN        | myGroup1                     | Session #1                                           | postgres
       70 | LOCK_SESSION             | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres

@@ -1,4 +1,4 @@
--- instPsqlMig.sql: Migrate from E-Maj 0.11.0 to 0.11.1 while groups are not yet created. 
+-- instPsqlMig.sql: Migrate from E-Maj 0.11.0 to 0.12.0 while groups are not yet created. 
 -- Install E-Maj as simple psql script (mandatory for postgres version prior 9.1)
 --
 ------------------------------------------------------------
@@ -43,7 +43,7 @@
 -----------------------------
 -- migrate to the target version
 -----------------------------
-\i ../../sql/emaj-0.11.0-to-0.11.1.sql
+\i ../../sql/emaj-0.11.0-to-0.12.0.sql
 
 -----------------------------
 -- check installation

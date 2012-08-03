@@ -1,6 +1,6 @@
-# E-Maj 0.11.1 
+# E-Maj 0.12.0 
 # Schedule file for regression tests, with E-Maj installed as an extension
-# E-Maj 0.10.0 to 0.11.1 migration is performed while groups are in logging stat
+# E-Maj 0.10.0 to 0.12.0 migration is performed while groups are in logging stat
 
 # Previous E-Maj installation
 test: instExtPrev

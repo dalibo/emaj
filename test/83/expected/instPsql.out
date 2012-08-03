@@ -32,7 +32,7 @@ DROP FUNCTION public.emaj_tmp();
 -----------------------------
 \i sql/emaj.sql
 --
--- E-Maj : logs and rollbacks table updates : V 0.11.1
+-- E-Maj : logs and rollbacks table updates : V 0.12.0
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -357,7 +357,7 @@ $$Represents the structure of rows returned by the emaj_detailed_log_stat_group(
 -- 'Fixed' parameters             --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.11.1');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.12.0');
 -- Other parameters are optional. They are set by users if needed.
 -- The history_retention parameter defines the time interval when a row remains in the emaj history table - default is 1 month
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 month'::interval);
@@ -4297,7 +4297,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT,
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_viewer;
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_viewer;
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 0.11.1', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 0.12.0', 'Initialisation completed');
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 CREATE or REPLACE FUNCTION emaj._tmp_check_setting() 
 RETURNS VOID LANGUAGE plpgsql AS
@@ -4330,7 +4330,7 @@ SET client_min_messages TO default;
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- 0.11.1
+ 0.12.0
 (1 row)
 
 -- check history
@@ -4338,7 +4338,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id | hist_function | hist_event | hist_object  |      regexp_replace      | hist_user 
 ---------+---------------+------------+--------------+--------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 0.11.1 | Initialisation completed | postgres
+       1 | EMAJ_INSTALL  |            | E-Maj 0.12.0 | Initialisation completed | postgres
 (1 row)
 
 -- check table list

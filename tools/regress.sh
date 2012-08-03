@@ -1,11 +1,11 @@
 #!/bin/sh
-# E-Maj 0.11.1
+# E-Maj 0.12.0
 # Regression tests
 
 #---------------------------------------------#
 #            Parameters definition            #
 #---------------------------------------------#
-EMAJ_HOME="/home/postgres/proj/emaj-0.11.1"
+EMAJ_HOME="/home/postgres/proj/emaj-0.12.0"
 
 PGBIN82="/usr/local/pg8221/bin"
 PGPORT82="8221"
@@ -101,8 +101,8 @@ function migrat_test()
 cd $EMAJ_HOME
 
 # update the emaj.control files with the proper emaj version
-sed 's/<directory containing installation scripts, if not SHAREDIR>/\/home\/postgres\/proj\/emaj-0.11.1\/sql/' sql/emaj.control_base >/usr/local/pg913/share/postgresql/extension/emaj.control
-sed -i 's/0.11.1/0.10.1/g' /usr/local/pg913/share/postgresql/extension/emaj.control
+sed 's/<directory containing installation scripts, if not SHAREDIR>/\/home\/postgres\/proj\/emaj-0.12.0\/sql/' sql/emaj.control_base >/usr/local/pg913/share/postgresql/extension/emaj.control
+sed -i 's/0.12.0/0.10.1/g' /usr/local/pg913/share/postgresql/extension/emaj.control
 cp /usr/local/pg913/share/postgresql/extension/emaj.control /usr/local/pg92beta2/share/postgresql/extension/emaj.control
 
 # refresh both installation scripts before running tests
