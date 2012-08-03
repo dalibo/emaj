@@ -1,4 +1,4 @@
- E-Maj (version 0.11.1) - launching parallel rollbacks for groups
+ E-Maj (version 0.12.0) - launching parallel rollbacks for groups
 -------------------------------------------------------------------
 3 connected sessions
 Number of tables needing rollback for groups 'myGroup1','myGroup2' = 9

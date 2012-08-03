@@ -15,8 +15,8 @@
 use warnings; use strict;
 
 # The 2 variables below are to be customized
-  my $version = '0.11.1';
-  my $dir = "/home/postgres/proj/emaj-0.11.1";
+  my $version = '0.12.0';
+  my $dir = "/home/postgres/proj/emaj-0.12.0";
 
   my $fic_src = $dir."/sql/emaj_src.sql";
   my $fic_ext = $dir."/sql/emaj--".$version.".sql";

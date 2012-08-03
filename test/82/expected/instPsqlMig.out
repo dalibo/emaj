@@ -1,4 +1,4 @@
--- instPsqlMig.sql: Migrate from E-Maj 0.11.0 to 0.11.1 while groups are not yet created. 
+-- instPsqlMig.sql: Migrate from E-Maj 0.11.0 to 0.12.0 while groups are not yet created. 
 -- Install E-Maj as simple psql script (mandatory for postgres version prior 9.1)
 --
 ------------------------------------------------------------
@@ -38,9 +38,9 @@
 -----------------------------
 -- migrate to the target version
 -----------------------------
-\i ../../sql/emaj-0.11.0-to-0.11.1.sql
+\i ../../sql/emaj-0.11.0-to-0.12.0.sql
 --
--- E-Maj: migration from 0.11.0 to 0.11.1
+-- E-Maj: migration from 0.11.0 to 0.12.0
 -- 
 -- This software is distributed under the GNU General Public License.
 --
@@ -51,8 +51,8 @@
 \set QUIET ON
 SET client_min_messages TO WARNING;
 --SET client_min_messages TO NOTICE;
-\echo 'E-maj upgrade from version 0.11.0 to version 0.11.1'
-E-maj upgrade from version 0.11.0 to version 0.11.1
+\echo 'E-maj upgrade from version 0.11.0 to version 0.12.0'
+E-maj upgrade from version 0.11.0 to version 0.12.0
 \echo 'Checking...'
 Checking...
 ------------------------------------
@@ -1694,13 +1694,13 @@ GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session
 -- commit migration               --
 --                                --
 ------------------------------------
-UPDATE emaj.emaj_param SET param_value_text = '0.11.1' WHERE param_key = 'emaj_version';
+UPDATE emaj.emaj_param SET param_value_text = '0.12.0' WHERE param_key = 'emaj_version';
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 0.11.1', 'Migration from 0.11.0 completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 0.12.0', 'Migration from 0.11.0 completed');
 COMMIT;
 SET client_min_messages TO default;
-\echo '>>> E-Maj successfully migrated to 0.11.1'
->>> E-Maj successfully migrated to 0.11.1
+\echo '>>> E-Maj successfully migrated to 0.12.0'
+>>> E-Maj successfully migrated to 0.12.0
 -----------------------------
 -- check installation
 -----------------------------
@@ -1708,6 +1708,6 @@ SET client_min_messages TO default;
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- 0.11.1
+ 0.12.0
 (1 row)
 
