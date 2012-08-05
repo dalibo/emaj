@@ -2198,11 +2198,10 @@ $emaj_get_previous_mark_group$
 -- Input: group name, date and time
 -- Output: mark name, or NULL if there is no mark before the given date and time
   DECLARE
-    v_groupState    TEXT;
     v_markName      TEXT;
   BEGIN
 -- check that the group is recorded in emaj_group table
-    SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupName;
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_get_previous_mark_group: group % has not been created.', v_groupName;
     END IF;
@@ -2219,6 +2218,42 @@ $emaj_get_previous_mark_group$
 $emaj_get_previous_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TIMESTAMPTZ) IS
 $$Returns the latest mark name preceeding a point in time.$$;
+
+CREATE or REPLACE FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) 
+RETURNS text LANGUAGE plpgsql AS
+$emaj_get_previous_mark_group$
+-- This function returns the name of the mark that immediately precedes a given mark for a group.
+-- The function can be called by both emaj_adm and emaj_viewer roles.
+-- Input: group name, mark name
+-- Output: mark name, or NULL if there is no mark before the given mark
+  DECLARE
+    v_realMark       TEXT;
+    v_markName       TEXT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_get_previous_mark_group: group % has not been created.', v_groupName;
+    END IF;
+-- retrieve and check the given mark name
+    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION 'emaj_get_previous_mark_group: % is not a known mark for group %.', v_mark, v_groupName;
+    END IF;
+-- find the requested mark
+    SELECT mark_name INTO v_markName FROM emaj.emaj_mark 
+      WHERE mark_group = v_groupName AND mark_datetime < 
+        (SELECT mark_datetime FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark)
+      ORDER BY mark_datetime DESC LIMIT 1;
+    IF NOT FOUND THEN
+      RETURN NULL;
+    ELSE
+      RETURN v_markName;
+    END IF;
+  END;
+$emaj_get_previous_mark_group$;
+COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TEXT) IS
+$$Returns the latest mark name preceeding a given mark for a group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS integer LANGUAGE plpgsql AS
@@ -4249,6 +4284,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEX
 REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC; 
@@ -4315,6 +4351,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark 
 GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
+
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm; 
@@ -4350,6 +4388,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;

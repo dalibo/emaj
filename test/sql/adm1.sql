@@ -310,7 +310,11 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -----------------------------
 set search_path=myschema1;
 --
-delete from "myTbl3" where col31 between 14 and 18;
+delete from "myTbl3" where col31 = 14;
+delete from "myTbl3" where col31 = 15;
+delete from "myTbl3" where col31 = 16;
+delete from "myTbl3" where col31 = 17;
+delete from "myTbl3" where col31 = 18;
 --
 select emaj.emaj_rename_mark_group('myGroup1',mark_name,'Before logged rollback to M4') from emaj.emaj_mark where mark_name like 'RLBK_M4_%_START';
 -- 
@@ -359,6 +363,7 @@ select emaj.emaj_create_group('dummyGroup');
 select emaj.emaj_drop_group('dummyGroup');
 select emaj.emaj_force_drop_group('dummyGroup');
 select emaj.emaj_get_previous_mark_group('dummyGroup', '2010-01-01');
+select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
 select emaj.emaj_reset_group('dummyGroup');
 select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL); 
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);

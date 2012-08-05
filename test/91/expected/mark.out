@@ -328,13 +328,16 @@ select emaj.emaj_comment_mark_group('myGroup2','phil''s mark #1','a good phil''s
 (1 row)
 
 -----------------------------
---emaj_get_previous_mark_group()
+-- emaj_get_previous_mark_group()
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_get_previous_mark_group(NULL,NULL);
 ERROR:  emaj_get_previous_mark_group: group <NULL> has not been created.
 select emaj.emaj_get_previous_mark_group('unknownGroup',NULL);
 ERROR:  emaj_get_previous_mark_group: group unknownGroup has not been created.
+-- mark is unknown in emaj_mark
+select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');
+ERROR:  emaj_get_previous_mark_group: unknownMark is not a known mark for group myGroup2.
 -- should be OK
 select emaj.emaj_get_previous_mark_group('myGroup2',(select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM1'));
  emaj_get_previous_mark_group 
@@ -352,6 +355,24 @@ select emaj.emaj_get_previous_mark_group('myGroup1',(select min(mark_datetime) f
  emaj_get_previous_mark_group 
 ------------------------------
  
+(1 row)
+
+select emaj.emaj_get_previous_mark_group('myGroup2','SM1');
+ emaj_get_previous_mark_group 
+------------------------------
+ Mark2
+(1 row)
+
+select coalesce(emaj.emaj_get_previous_mark_group('myGroup2','Mark2'),'No previous mark');
+     coalesce     
+------------------
+ No previous mark
+(1 row)
+
+select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2','EMAJ_LAST_MARK')))));
+ emaj_get_previous_mark_group 
+------------------------------
+ SM3
 (1 row)
 
 -----------------------------
