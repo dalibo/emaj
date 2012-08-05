@@ -6,12 +6,12 @@ SET client_min_messages TO WARNING;
 -- prepare groups
 -----------------------------
 delete from emaj.emaj_group_def;
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20,NULL,NULL);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,'tsplog1','tsplog1');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'tsplog2','tsplog2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'tsplog1',NULL);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,'tsplog1','tsplog2');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
@@ -49,7 +49,16 @@ select emaj.emaj_create_group('dummyGrp2');
 select emaj.emaj_create_group('dummyGrp2',false);
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
-
+-- sequence with tablespace defined in the emaj_group_def table
+begin;
+  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_create_group('myGroup1');
+rollback;
+-- table with invalid tablespace
+begin;
+  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'dummyTablespace' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  select emaj.emaj_create_group('myGroup1');
+rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2',true);

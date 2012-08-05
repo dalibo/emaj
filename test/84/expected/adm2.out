@@ -450,40 +450,40 @@ set role emaj_regression_tests_adm_user;
 select emaj.emaj_create_group('phil''s group#3",',true);
 NOTICE:  table "phil's schema3_myTbl2\_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_myTbl2\_log""
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 NOTICE:  trigger "phil's schema3_myTbl2\_emaj_log_trg" for table "myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_log_trg" ON "phil's schema3"."myTbl2\""
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 NOTICE:  trigger "phil's schema3_myTbl2\_emaj_trunc_trg" for table "myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_trunc_trg" ON "phil's schema3"."myTbl2\""
-PL/pgSQL function "_create_tbl" line 154 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_phil's tbl1_log""
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function "_create_tbl" line 154 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+PL/pgSQL function "emaj_create_group" line 82 at PERFORM
 WARNING:  _check_fk_groups: table phil's schema3.phil's tbl1 is referenced by foreign key mytbl4_col44_fkey from table phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+PL/pgSQL function "emaj_create_group" line 82 at PERFORM
  emaj_create_group 
 -------------------
                  3

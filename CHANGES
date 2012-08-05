@@ -3,6 +3,10 @@ E-Maj - Release notes
 0.12.0
 ------
 Enhancements:
+  - emaj administrators can define custom tablespaces to be used for log 
+    tables or their indexes on a per table basis. Two new columns in the 
+    emaj_group_def table support this feature: grpdef_log_dat_tsp and 
+    grpdef_log_idx_tsp. If they contain NULL, tspemaj is used if it exists.
   - a new variation of the emaj_get_previous_mark_group() function returns 
     the name of the mark that immediately precedes a given mark for a group.
 
