@@ -202,6 +202,8 @@ CREATE TABLE emaj.emaj_group_def (
     grpdef_tblseq            TEXT        NOT NULL,       -- table or sequence name
     grpdef_priority          INTEGER,                    -- priority level (tables are processed in ascending 
                                                          --   order, with NULL last)
+    grpdef_log_dat_tsp       TEXT,                       -- tablespace for the log table (NULL to use default value)
+    grpdef_log_idx_tsp       TEXT,                       -- tablespace for the log index (NULL to use default value)
     PRIMARY KEY (grpdef_group, grpdef_schema, grpdef_tblseq) 
 -- the group name is included in the pkey so that a table/sequence can be temporarily assigned to several groups 
     );
@@ -232,6 +234,8 @@ CREATE TABLE emaj.emaj_relation (
     rel_tblseq               TEXT        NOT NULL,       -- table or sequence name
     rel_group                TEXT        NOT NULL,       -- name of the group that owns the relation
     rel_priority             INTEGER,                    -- priority level of processing inside the group
+    rel_log_dat_tsp          TEXT,                       -- tablespace for the log table (NULL for sequences)
+    rel_log_idx_tsp          TEXT,                       -- tablespace for the log index (NULL for sequences)
     rel_kind                 TEXT,                       -- similar to the relkind column of pg_class table 
                                                          --   ('r' = table, 'S' = sequence) 
     rel_session              INT,                        -- rollback session id
@@ -527,15 +531,15 @@ $_check_new_mark$
     RETURN v_markName;
   END;
 $_check_new_mark$;
-CREATE or REPLACE FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table
--- Input: schema name (mandatory even for the 'public' schema), table name, boolean indicating whether the table belongs to a rollbackable group
+-- Input: schema name (mandatory even for the 'public' schema), table name, data and index tablespaces for the log table, boolean indicating whether the table belongs to a rollbackable group
 -- Are created: 
 --    - the associated log table, with its own sequence
 --    - the function that logs the tables updates, defined as a trigger
---    - the rollback function (one per table)
+--    - the rollback function (one per table and only if the group is rollbackable)
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
 -- variables for the name of tables, functions, triggers,...
@@ -591,14 +595,17 @@ $_create_tbl$
     IF v_isRollbackable AND v_relhaspkey = FALSE THEN
       RAISE EXCEPTION '_create_tbl: table % has no PRIMARY KEY.', v_tableName;
     END IF;
--- if tspemaj tablespace exists, use it for the log table and its index
-    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
-    IF FOUND THEN
-      v_dataTblSpace = 'TABLESPACE tspemaj '; v_idxTblSpace = 'TABLESPACE tspemaj ';
+-- prepare TABLESPACE clauses for data and index
+    IF v_logDatTsp IS NOT NULL THEN
+      v_dataTblSpace = 'TABLESPACE ' || v_logDatTsp;
     ELSE
-      v_dataTblSpace = ''; v_idxTblSpace = '';
+      v_dataTblSpace = '';
     END IF;
-
+    IF v_logIdxTsp IS NOT NULL THEN
+      v_idxTblSpace = 'TABLESPACE ' || v_logIdxTsp;
+    ELSE
+      v_idxTblSpace = '';
+    END IF;
 -- build the different name for table, trigger, functions,...
     v_fullTableName    := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
     v_logTableName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
@@ -1464,6 +1471,9 @@ $emaj_create_group$
     v_nbSeq         INT := 0;
     v_msg           TEXT;
     v_relkind       TEXT;
+    v_logDatTsp     TEXT;
+    v_logIdxTsp     TEXT;
+    v_defTsp        TEXT;
     v_stmt          TEXT;
     v_nb_trg        INT;
     r_tblsq         RECORD;
@@ -1499,24 +1509,33 @@ $emaj_create_group$
     END IF;
 -- OK, insert group row in the emaj_group table
     INSERT INTO emaj.emaj_group (group_name, group_state, group_is_rollbackable) VALUES (v_groupName, 'IDLE',v_isRollbackable);
+-- define the default tablespace, NULL if tspemaj tablespace doesn't exist
+    SELECT 'tspemaj' INTO v_defTsp FROM pg_tablespace WHERE spcname = 'tspemaj';
 -- scan all classes of the group (in priority order, NULLS being processed last)
     FOR r_tblsq IN
-        SELECT grpdef_priority, grpdef_schema, grpdef_tblseq FROM emaj.emaj_group_def 
+        SELECT grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+          FROM emaj.emaj_group_def
           WHERE grpdef_group = v_groupName ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
         LOOP
 -- check the class is valid
       v_relkind = emaj._check_class(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq);
       IF v_relkind = 'r' THEN
 -- if it is a table, create the related emaj objects
-         PERFORM emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_isRollbackable);
-         v_nbTbl = v_nbTbl + 1;
-        ELSEIF v_relkind = 'S' THEN
--- if it is a sequence, just count
-         v_nbSeq = v_nbSeq + 1;
+        PERFORM emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable);
+-- and record the table in the emaj_relation table
+        INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind)
+            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_relkind);
+        v_nbTbl = v_nbTbl + 1;
+      ELSEIF v_relkind = 'S' THEN
+-- if it is a sequence, check no tablespace has been set as parameter in the emaj_group_def table
+        IF r_tblsq.grpdef_log_dat_tsp IS NOT NULL OR r_tblsq.grpdef_log_idx_tsp IS NOT NULL THEN
+          RAISE EXCEPTION 'emaj_create_group: Defining tablespace is not allowed for a sequence (%.%).', r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq;
+        END IF;
+-- and record it in the emaj_relation table
+        INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
+            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_relkind);
+        v_nbSeq = v_nbSeq + 1;
       END IF;
--- record this table or sequence in the emaj_relation table
-      INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
-          VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_relkind);
     END LOOP;
     IF v_nbTbl + v_nbSeq = 0 THEN
        RAISE EXCEPTION 'emaj_create_group: Group % is unknown in emaj_group_def table.', v_groupName;
@@ -4192,7 +4211,7 @@ REVOKE ALL ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
@@ -4259,7 +4278,7 @@ GRANT EXECUTE ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
@@ -4442,13 +4461,15 @@ Referenced by:
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
 
-      Table "emaj.emaj_group_def"
-     Column      |  Type   | Modifiers 
------------------+---------+-----------
- grpdef_group    | text    | not null
- grpdef_schema   | text    | not null
- grpdef_tblseq   | text    | not null
- grpdef_priority | integer | 
+       Table "emaj.emaj_group_def"
+       Column       |  Type   | Modifiers 
+--------------------+---------+-----------
+ grpdef_group       | text    | not null
+ grpdef_schema      | text    | not null
+ grpdef_tblseq      | text    | not null
+ grpdef_priority    | integer | 
+ grpdef_log_dat_tsp | text    | 
+ grpdef_log_idx_tsp | text    | 
 Indexes:
     "emaj_group_def_pkey" PRIMARY KEY, btree (grpdef_group, grpdef_schema, grpdef_tblseq)
 
@@ -4563,16 +4584,18 @@ Indexes:
  param_key | text | param_key
 primary key, btree, for table "emaj.emaj_param"
 
-     Table "emaj.emaj_relation"
-    Column    |  Type   | Modifiers 
---------------+---------+-----------
- rel_schema   | text    | not null
- rel_tblseq   | text    | not null
- rel_group    | text    | not null
- rel_priority | integer | 
- rel_kind     | text    | 
- rel_session  | integer | 
- rel_rows     | bigint  | 
+      Table "emaj.emaj_relation"
+     Column      |  Type   | Modifiers 
+-----------------+---------+-----------
+ rel_schema      | text    | not null
+ rel_tblseq      | text    | not null
+ rel_group       | text    | not null
+ rel_priority    | integer | 
+ rel_log_dat_tsp | text    | 
+ rel_log_idx_tsp | text    | 
+ rel_kind        | text    | 
+ rel_session     | integer | 
+ rel_rows        | bigint  | 
 Indexes:
     "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq)
 Foreign-key constraints:

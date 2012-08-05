@@ -4,67 +4,67 @@
 select emaj.emaj_create_group('myGroup1');
 NOTICE:  table "myschema1_myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."myschema1_myTbl3_log""
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_myTbl3_emaj_log_trg" for table "myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema1_myTbl3_emaj_log_trg" ON myschema1."myTbl3""
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl1_emaj_log_trg" for table "mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl1_emaj_log_trg ON myschema1.mytbl1"
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl4_log"
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl4_emaj_log_trg" for table "mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl4_emaj_log_trg ON myschema1.mytbl4"
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl2_log"
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl2_emaj_log_trg" for table "mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2_emaj_log_trg ON myschema1.mytbl2"
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl2b_log"
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl2b_emaj_log_trg" for table "mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2b_emaj_log_trg ON myschema1.mytbl2b"
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
@@ -74,75 +74,75 @@ PL/pgSQL function "emaj_create_group" line 6 at RETURN
 select emaj.emaj_create_group('myGroup2');
 NOTICE:  table "myschema2_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl1_log"
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema2_mytbl1_emaj_log_trg" for table "mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl1_emaj_log_trg ON myschema2.mytbl1"
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema2_mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl2_log"
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema2_mytbl2_emaj_log_trg" for table "mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl2_emaj_log_trg ON myschema2.mytbl2"
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema2_myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."myschema2_myTbl3_log""
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema2_myTbl3_emaj_log_trg" for table "myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema2_myTbl3_emaj_log_trg" ON myschema2."myTbl3""
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema2_mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl4_log"
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema2_mytbl4_emaj_log_trg" for table "mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl4_emaj_log_trg ON myschema2.mytbl4"
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema2_mytbl5_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl5_log"
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema2_mytbl5_emaj_log_trg" for table "mytbl5" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl5_emaj_log_trg ON myschema2.mytbl5"
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema2_mytbl6_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl6_log"
-PL/pgSQL function "_create_tbl" line 81 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema2_mytbl6_emaj_log_trg" for table "mytbl6" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl6_emaj_log_trg ON myschema2.mytbl6"
-PL/pgSQL function "_create_tbl" line 146 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 )"
-PL/pgSQL function "emaj_create_group" line 53 at PERFORM
+PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 , coalesce( $3 ,  $4 ), coalesce( $5 ,  $4 ),  $6 )"
+PL/pgSQL function "emaj_create_group" line 59 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
