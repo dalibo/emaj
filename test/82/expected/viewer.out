@@ -94,6 +94,12 @@ select substring(emaj.emaj_get_previous_mark_group('myGroup1', current_timestamp
  STOP_
 (1 row)
 
+select emaj.emaj_get_previous_mark_group('myGroup1', 'EMAJ_LAST_MARK');
+ emaj_get_previous_mark_group 
+------------------------------
+ Mark11
+(1 row)
+
 select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
  stat_group | stat_schema | stat_table | stat_rows 
 ------------+-------------+------------+-----------

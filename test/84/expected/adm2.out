@@ -391,11 +391,11 @@ select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3
     12 | 10.00 | UPD       | NEW        |    11998
     11 |  5.00 | UPD       | OLD        |    11999
     11 | 10.00 | UPD       | NEW        |    11999
-    18 | 10.00 | DEL       | OLD        |    12003
-    17 | 10.00 | DEL       | OLD        |    12004
+    14 | 10.00 | DEL       | OLD        |    12003
+    15 | 10.00 | DEL       | OLD        |    12004
     16 | 10.00 | DEL       | OLD        |    12005
-    15 | 10.00 | DEL       | OLD        |    12006
-    14 | 10.00 | DEL       | OLD        |    12007
+    17 | 10.00 | DEL       | OLD        |    12006
+    18 | 10.00 | DEL       | OLD        |    12007
 (45 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;

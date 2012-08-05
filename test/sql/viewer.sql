@@ -27,6 +27,7 @@ select count(*) from emaj.mySchema1_myTbl1_log;
 -----------------------------
 select * from emaj.emaj_verify_all();
 select substring(emaj.emaj_get_previous_mark_group('myGroup1', current_timestamp) FOR 5 FROM 1);
+select emaj.emaj_get_previous_mark_group('myGroup1', 'EMAJ_LAST_MARK');
 select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
 select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
 select emaj.emaj_estimate_rollback_duration('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp));

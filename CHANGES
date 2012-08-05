@@ -3,6 +3,8 @@ E-Maj - Release notes
 0.12.0
 ------
 Enhancements:
+  - a new variation of the emaj_get_previous_mark_group() function returns 
+    the name of the mark that immediately precedes a given mark for a group.
 
 Bug fixes:
 

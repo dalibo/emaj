@@ -78,16 +78,23 @@ select emaj.emaj_comment_mark_group('myGroup2','EMAJ_LAST_MARK','a comment for g
 select emaj.emaj_comment_mark_group('myGroup2','phil''s mark #1','a good phil''s comment!');
 
 -----------------------------
---emaj_get_previous_mark_group()
+-- emaj_get_previous_mark_group()
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_get_previous_mark_group(NULL,NULL);
 select emaj.emaj_get_previous_mark_group('unknownGroup',NULL);
 
+-- mark is unknown in emaj_mark
+select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');
+
 -- should be OK
 select emaj.emaj_get_previous_mark_group('myGroup2',(select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM1'));
 select emaj.emaj_get_previous_mark_group('myGroup2',(select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM1')+'0.000001 SECOND'::interval);
 select emaj.emaj_get_previous_mark_group('myGroup1',(select min(mark_datetime) from emaj.emaj_mark where mark_group = 'myGroup1'));
+
+select emaj.emaj_get_previous_mark_group('myGroup2','SM1');
+select coalesce(emaj.emaj_get_previous_mark_group('myGroup2','Mark2'),'No previous mark');
+select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2','EMAJ_LAST_MARK')))));
 
 -----------------------------
 -- emaj_rename_mark_group() tests

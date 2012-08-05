@@ -79,7 +79,8 @@ select emaj.emaj_logged_rollback_group('phil''s group#3",','M1_audit_only');
 begin;
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_start_group('myGroup1','StartMark',false);
-  select emaj.emaj_rollback_group('myGroup1', (select emaj.emaj_get_previous_mark_group('myGroup1',(select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'StartMark'))));
+  select emaj.emaj_rename_mark_group('myGroup1',(select emaj.emaj_get_previous_mark_group('myGroup1','StartMark')), 'GeneratedStopMark');
+  select emaj.emaj_rollback_group('myGroup1','GeneratedStopMark');
 rollback;
 
 -- should be OK
