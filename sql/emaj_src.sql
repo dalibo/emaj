@@ -2023,7 +2023,7 @@ $emaj_set_mark_group$
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
     PERFORM emaj._lock_groups(array[v_groupName],'ROW EXCLUSIVE',false);
 -- Effectively set the mark using the internal _set_mark_groups() function
-    SELECT emaj._set_mark_groups(array[v_groupName], v_markName, false, false) into v_nbTb;
+    SELECT emaj._set_mark_groups(array[v_groupName], v_markName, false, false) INTO v_nbTb;
 -- insert end into the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('SET_MARK_GROUP', 'END', v_groupName, v_markName);
@@ -3239,7 +3239,6 @@ $emaj_log_stat_group$
 -- Output: table of log rows by table (including tables with 0 rows to rollback)
   DECLARE
     v_groupState         TEXT;
-    v_emajSchema         TEXT := 'emaj';
     v_realFirstMark      TEXT;
     v_realLastMark       TEXT;
     v_firstMarkId        BIGINT;
@@ -3616,7 +3615,6 @@ $emaj_snap_group$
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
     v_pgVersion       TEXT := emaj._pg_version();
-    v_emajSchema      TEXT := 'emaj';
     v_nbTb            INT := 0;
     r_tblsq           RECORD;
     v_fullTableName   TEXT;
@@ -3817,7 +3815,7 @@ $emaj_snap_log_group$
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- process tables
--- compute names
+--   build names
         v_fileName     := v_dir || '/' || r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log.snap';
         v_logTableName := quote_ident(v_emajSchema) || '.' || quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log');
 --   prepare the COPY statement
