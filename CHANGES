@@ -18,8 +18,10 @@ Enhancements:
     grpdef_log_idx_tsp. If they contain NULL, tspemaj is used if it exists.
   - a new variation of the emaj_get_previous_mark_group() function returns 
     the name of the mark that immediately precedes a given mark for a group.
+  - minor improvements in the code and in comments.
 
 Bug fixes:
+
 
 0.11.1
 ------
