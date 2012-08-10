@@ -46,12 +46,12 @@ select emaj.emaj_set_mark_group('myGroup2','Different_Mark');
 -- log tables are empty
 select count(*) from emaj.myschema1_mytbl1_log;
 select count(*) from emaj.myschema1_mytbl2_log;
-select count(*) from emaj.myschema1_mytbl2b_log;
-select count(*) from emaj."myschema1_myTbl3_log";
+select count(*) from emajb.myschema1_mytbl2b_log;
+select count(*) from "emajC"."myschema1_myTbl3_log";
 select count(*) from emaj.myschema1_mytbl4_log;
 select count(*) from emaj.myschema2_mytbl1_log;
 select count(*) from emaj.myschema2_mytbl2_log;
-select count(*) from emaj."myschema2_myTbl3_log";
+select count(*) from "emajC"."myschema2_myTbl3_log";
 select count(*) from emaj.myschema2_mytbl4_log;
 
 -- unknown mark name
@@ -144,8 +144,8 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl2b_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.myschema1_mytbl2b_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 
 -- rollback #1
@@ -157,7 +157,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 select * from emaj.emaj_fk;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 select col31, col33 from myschema1."myTbl3" order by col31;
 select col41, col42, col43, col44, col45 from myschema1.myTbl4 order by col41;
@@ -174,7 +174,7 @@ select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole 
 select * from emaj.emaj_fk;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.myschema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
 select col21, col22 from myschema1.myTbl2 order by col21;
 select col20, col21 from myschema1.myTbl2b order by col20;
@@ -185,8 +185,8 @@ select emaj.emaj_start_group('myGroup1','Mark11');
 -- check the logs are empty again
 select count(*) from emaj.myschema1_mytbl1_log;
 select count(*) from emaj.myschema1_mytbl2_log;
-select count(*) from emaj.myschema1_mytbl2b_log;
-select count(*) from emaj."myschema1_myTbl3_log";
+select count(*) from emajb.myschema1_mytbl2b_log;
+select count(*) from "emajC"."myschema1_myTbl3_log";
 select count(*) from emaj.myschema1_mytbl4_log;
 
 
@@ -223,8 +223,8 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl2b_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.myschema1_mytbl2b_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 
 -- logged rollback #1
@@ -236,7 +236,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 select * from emaj.emaj_fk;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 select col31, col33 from myschema1."myTbl3" order by col31;
 select col41, col42, col43, col44, col45 from myschema1.myTbl4 order by col41;
@@ -252,7 +252,7 @@ select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole 
 select * from emaj.emaj_fk;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.myschema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
 select col21, col22 from myschema1.myTbl2 order by col21;
 select col20, col21 from myschema1.myTbl2b order by col20;
@@ -270,7 +270,7 @@ select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole 
 select * from emaj.emaj_fk;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.myschema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
 select col21, col22 from myschema1.myTbl2 order by col21;
 select col20, col21 from myschema1.myTbl2b order by col20;

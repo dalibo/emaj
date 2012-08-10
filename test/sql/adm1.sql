@@ -108,8 +108,8 @@ select * from mySchema1.myTbl4 order by col41;
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emaj.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 -----------------------------
 -- Step 2 : for myGroup2, start, update tables and set 2 marks 
@@ -162,7 +162,7 @@ select * from mySchema2.myTbl6 order by col61;
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
 select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl5_log order by emaj_gid, emaj_tuple desc;
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl6_log order by emaj_gid, emaj_tuple desc;
@@ -190,7 +190,7 @@ select * from mySchema2.myTbl6 order by col61;
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
 select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl5_log order by emaj_gid, emaj_tuple desc;
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl6_log order by emaj_gid, emaj_tuple desc;
@@ -228,8 +228,8 @@ select * from mySchema1.myTbl4 order by col41;
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 -----------------------------
 -- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
@@ -255,7 +255,7 @@ select * from mySchema2.myTbl6 order by col61;
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
 select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl5_log order by emaj_gid, emaj_tuple desc;
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl6_log order by emaj_gid, emaj_tuple desc;
@@ -302,8 +302,8 @@ select * from mySchema1.myTbl4 order by col41;
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 -----------------------------
 -- Step 7 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
@@ -331,7 +331,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
 select * from emaj.emaj_fk order by fk_groups, fk_session, fk_name;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from emaj.emaj_rlbk_stat 
-  order by rlbk_datetime, rlbk_schema, rlbk_tbl_fk, rlbk_operation;
+  order by rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_operation;
 -- user tables
 select * from mySchema1.myTbl1 order by col11,col12;
 select * from mySchema1.myTbl2 order by col21;
@@ -341,8 +341,8 @@ select * from mySchema1.myTbl4 order by col41;
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 
 --
