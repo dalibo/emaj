@@ -8,10 +8,10 @@ SET client_min_messages TO WARNING;
 delete from emaj.emaj_group_def;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20,NULL,NULL,NULL);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,NULL,'tsplog1','tsplog1');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b','tsplog2','tsplog2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b','tsp log''2','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1,NULL);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C','tsplog1',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,'tsplog1','tsplog2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,'tsplog1','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
@@ -88,8 +88,8 @@ rollback;
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'dummyTablespace' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
   select emaj.emaj_create_group('myGroup1');
-ERROR:  tablespace "dummytablespace" does not exist
-CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log ( LIKE myschema1.mytbl1) TABLESPACE dummyTablespace"
+ERROR:  tablespace "dummyTablespace" does not exist
+CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log ( LIKE myschema1.mytbl1) TABLESPACE "dummyTablespace""
 PL/pgSQL function "_create_tbl" line 85 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 91 at PERFORM
@@ -158,9 +158,9 @@ select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, r
  myschema1      | myTbl3_col31_seq | myGroup1         |            1 |                |                 |                 | S        |             |         
  myschema1      | myTbl3           | myGroup1         |           10 | emajC          | tsplog1         |                 | r        |             |         
  myschema1      | mytbl1           | myGroup1         |           20 | emaj           |                 |                 | r        |             |         
- myschema1      | mytbl4           | myGroup1         |           20 | emaj           | tsplog1         | tsplog2         | r        |             |         
+ myschema1      | mytbl4           | myGroup1         |           20 | emaj           | tsplog1         | tsp log'2       | r        |             |         
  myschema1      | mytbl2           | myGroup1         |              | emaj           | tsplog1         | tsplog1         | r        |             |         
- myschema1      | mytbl2b          | myGroup1         |              | emajb          | tsplog2         | tsplog2         | r        |             |         
+ myschema1      | mytbl2b          | myGroup1         |              | emajb          | tsp log'2       | tsp log'2       | r        |             |         
  myschema2      | myseq1           | myGroup2         |              |                |                 |                 | S        |             |         
  myschema2      | mytbl1           | myGroup2         |              | emaj           |                 |                 | r        |             |         
  myschema2      | mytbl2           | myGroup2         |              | emaj           |                 |                 | r        |             |         
@@ -190,7 +190,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emajC      | myschema1_myTbl3_log           | postgres   | tsplog1    | t          | f        | f
  emaj       | myschema1_mytbl1_log           | postgres   |            | t          | f        | f
  emaj       | myschema1_mytbl2_log           | postgres   | tsplog1    | t          | f        | f
- emajb      | myschema1_mytbl2b_log          | postgres   | tsplog2    | t          | f        | f
+ emajb      | myschema1_mytbl2b_log          | postgres   | tsp log'2  | t          | f        | f
  emaj       | myschema1_mytbl4_log           | postgres   | tsplog1    | t          | f        | f
  emajC      | myschema2_myTbl3_log           | postgres   |            | t          | f        | f
  emaj       | myschema2_mytbl1_log           | postgres   |            | t          | f        | f

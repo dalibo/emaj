@@ -329,11 +329,14 @@ select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MAR
 (1 row)
 
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
- emaj_logged_rollback_groups 
------------------------------
-                           3
-(1 row)
-
+ERROR:  duplicate key value violates unique constraint "emaj_sequence_pkey"
+CONTEXT:  SQL statement "INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ) SELECT 'myschema1', 'myTbl3_col31_seq', 'Fri Aug 10 00:30:46.821562 2012 PDT', 'RLBK_Mark1B_00.30.46.743_DONE', last_value, 0, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq""
+PL/pgSQL function "_set_mark_groups" line 76 at EXECUTE statement
+SQL statement "SELECT  emaj._set_mark_groups( $1 ,  $2 ,  $3 , true)"
+PL/pgSQL function "_rlbk_groups_step7" line 60 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step7( $1 ,  $2 ,  $3 ,  $4 ,  $5 ,  $6 )"
+PL/pgSQL function "_rlbk_groups" line 35 at SQL statement
+PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 -- restart groups
 select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
  emaj_stop_groups 
@@ -410,9 +413,9 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
        6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      70 | myGroup1         | Mark11         |               0 | ACTIVE     |              |                     0 |                   479 |                        27
-      71 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   487 |                          
-      72 | myGroup1         | Mark12         |              27 | ACTIVE     |              |                     0 |                   493 |                          
+      68 | myGroup1         | Mark11         |               0 | ACTIVE     |              |                     0 |                   466 |                        27
+      69 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   474 |                          
+      70 | myGroup1         | Mark12         |              27 | ACTIVE     |              |                     0 |                   480 |                          
 (4 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -421,26 +424,26 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
       33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
       34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
       35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
-     474 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-     475 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-     476 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-     477 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-     478 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-     479 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-     480 | myschema2      | myseq1                             | Mark21         |          1000 | f
-     481 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-     482 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-     483 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-     484 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-     485 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-     486 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
-     487 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-     488 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
-     489 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-     490 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
-     491 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-     492 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             6 | t
-     493 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             6 | t
+     461 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
+     462 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
+     463 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
+     464 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
+     465 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
+     466 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
+     467 | myschema2      | myseq1                             | Mark21         |          1000 | f
+     468 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
+     469 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
+     470 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
+     471 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
+     472 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
+     473 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+     474 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
+     475 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
+     476 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
+     477 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
+     478 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
+     479 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             6 | t
+     480 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             6 | t
 (23 rows)
 
 -- inserts/updates/deletes in myTbl3 and myTbl4
@@ -470,10 +473,10 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
        6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      70 | myGroup1         | Mark11         |               0 | ACTIVE     |              |                     0 |                   479 |                        27
-      71 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   487 |                          
-      72 | myGroup1         | Mark12         |              27 | ACTIVE     |              |                     0 |                   493 |                        12
-      73 | myGroup1         | Mark13         |              39 | ACTIVE     |              |                     0 |                   499 |                          
+      68 | myGroup1         | Mark11         |               0 | ACTIVE     |              |                     0 |                   466 |                        27
+      69 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   474 |                          
+      70 | myGroup1         | Mark12         |              27 | ACTIVE     |              |                     0 |                   480 |                        12
+      71 | myGroup1         | Mark13         |              39 | ACTIVE     |              |                     0 |                   486 |                          
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -482,32 +485,32 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
       33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
       34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
       35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
-     474 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-     475 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-     476 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-     477 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-     478 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-     479 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-     480 | myschema2      | myseq1                             | Mark21         |          1000 | f
-     481 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-     482 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-     483 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-     484 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-     485 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-     486 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
-     487 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-     488 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
-     489 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-     490 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
-     491 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-     492 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             6 | t
-     493 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             6 | t
-     494 | myschema1      | myTbl3_col31_seq                   | Mark13         |            10 | t
-     495 | emajC          | myschema1_myTbl3_log_seq           | Mark13         |            10 | t
-     496 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
-     497 | emaj           | myschema1_mytbl4_log_seq           | Mark13         |             2 | t
-     498 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             6 | t
-     499 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             6 | t
+     461 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
+     462 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
+     463 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
+     464 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
+     465 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
+     466 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
+     467 | myschema2      | myseq1                             | Mark21         |          1000 | f
+     468 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
+     469 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
+     470 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
+     471 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
+     472 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
+     473 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+     474 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
+     475 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
+     476 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
+     477 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
+     478 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
+     479 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             6 | t
+     480 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             6 | t
+     481 | myschema1      | myTbl3_col31_seq                   | Mark13         |            10 | t
+     482 | emajC          | myschema1_myTbl3_log_seq           | Mark13         |            10 | t
+     483 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
+     484 | emaj           | myschema1_mytbl4_log_seq           | Mark13         |             2 | t
+     485 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             6 | t
+     486 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             6 | t
 (29 rows)
 
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl1_log order by emaj_gid, emaj_tuple desc;
@@ -594,9 +597,9 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
        6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      70 | myGroup1         | Mark11         |               0 | ACTIVE     |              |                     0 |                   479 |                        27
-      71 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   487 |                          
-      72 | myGroup1         | Mark12         |              27 | ACTIVE     |              |                     0 |                   493 |                          
+      68 | myGroup1         | Mark11         |               0 | ACTIVE     |              |                     0 |                   466 |                        27
+      69 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   474 |                          
+      70 | myGroup1         | Mark12         |              27 | ACTIVE     |              |                     0 |                   480 |                          
 (4 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -605,29 +608,29 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
       33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
       34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
       35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
-     474 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-     475 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-     476 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-     477 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-     478 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-     479 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-     480 | myschema2      | myseq1                             | Mark21         |          1000 | f
-     481 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-     482 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-     483 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-     484 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-     485 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-     486 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
-     487 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-     488 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
-     489 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-     490 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
-     491 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-     492 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             6 | t
-     493 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             6 | t
-     496 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
-     498 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             6 | t
-     499 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             6 | t
+     461 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
+     462 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
+     463 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
+     464 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
+     465 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
+     466 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
+     467 | myschema2      | myseq1                             | Mark21         |          1000 | f
+     468 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
+     469 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
+     470 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
+     471 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
+     472 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
+     473 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+     474 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
+     475 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
+     476 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
+     477 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
+     478 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
+     479 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             6 | t
+     480 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             6 | t
+     483 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
+     485 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             6 | t
+     486 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             6 | t
 (26 rows)
 
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
@@ -684,9 +687,9 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
        6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      70 | myGroup1         | Mark11         |               0 | DELETED    |              |                     0 |                   479 |                         0
-      71 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   487 |                          
-      74 | myGroup1         | STOP_%         |              39 | DELETED    |              |                     5 |                   505 |                          
+      68 | myGroup1         | Mark11         |               0 | DELETED    |              |                     0 |                   466 |                         0
+      69 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   474 |                          
+      72 | myGroup1         | STOP_%         |              39 | DELETED    |              |                     5 |                   492 |                          
 (4 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -695,28 +698,28 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
       33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
       34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
       35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
-     474 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-     475 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-     476 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-     477 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-     478 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-     479 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-     480 | myschema2      | myseq1                             | Mark21         |          1000 | f
-     481 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-     482 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-     483 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-     484 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-     485 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-     486 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
-     487 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-     489 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-     491 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-     500 | myschema1      | myTbl3_col31_seq                   | STOP_%         |             1 | f
-     501 | emajC          | myschema1_myTbl3_log_seq           | STOP_%         |            10 | t
-     502 | emaj           | myschema1_mytbl1_log_seq           | STOP_%         |            15 | t
-     503 | emaj           | myschema1_mytbl4_log_seq           | STOP_%         |             2 | t
-     504 | emaj           | myschema1_mytbl2_log_seq           | STOP_%         |             6 | t
-     505 | emajb          | myschema1_mytbl2b_log_seq          | STOP_%         |             6 | t
+     461 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
+     462 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
+     463 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
+     464 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
+     465 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
+     466 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
+     467 | myschema2      | myseq1                             | Mark21         |          1000 | f
+     468 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
+     469 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
+     470 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
+     471 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
+     472 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
+     473 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+     474 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
+     476 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
+     478 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
+     487 | myschema1      | myTbl3_col31_seq                   | STOP_%         |             1 | f
+     488 | emajC          | myschema1_myTbl3_log_seq           | STOP_%         |            10 | t
+     489 | emaj           | myschema1_mytbl1_log_seq           | STOP_%         |            15 | t
+     490 | emaj           | myschema1_mytbl4_log_seq           | STOP_%         |             2 | t
+     491 | emaj           | myschema1_mytbl2_log_seq           | STOP_%         |             6 | t
+     492 | emajb          | myschema1_mytbl2b_log_seq          | STOP_%         |             6 | t
 (25 rows)
 
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
@@ -868,10 +871,10 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
        6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      71 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   487 |                          
-      75 | myGroup1         | Mark11         |              39 | ACTIVE     |              |                     5 |                   511 |                        19
-      76 | myGroup1         | Mark12         |              58 | ACTIVE     |              |                     5 |                   517 |                        11
-      77 | myGroup1         | Mark13         |              69 | ACTIVE     |              |                     5 |                   523 |                          
+      69 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   474 |                          
+      73 | myGroup1         | Mark11         |              39 | ACTIVE     |              |                     5 |                   498 |                        19
+      74 | myGroup1         | Mark12         |              58 | ACTIVE     |              |                     5 |                   504 |                        11
+      75 | myGroup1         | Mark13         |              69 | ACTIVE     |              |                     5 |                   510 |                          
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -880,32 +883,32 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
       33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
       34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
       35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
-     480 | myschema2      | myseq1                             | Mark21         |          1000 | f
-     481 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-     482 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-     483 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-     484 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-     485 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-     486 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
-     487 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-     506 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-     507 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-     508 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-     509 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-     510 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-     511 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-     512 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
-     513 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-     514 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
-     515 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-     516 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             2 | t
-     517 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             2 | t
-     518 | myschema1      | myTbl3_col31_seq                   | Mark13         |            10 | t
-     519 | emajC          | myschema1_myTbl3_log_seq           | Mark13         |            10 | t
-     520 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
-     521 | emaj           | myschema1_mytbl4_log_seq           | Mark13         |             1 | t
-     522 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             2 | t
-     523 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             2 | t
+     467 | myschema2      | myseq1                             | Mark21         |          1000 | f
+     468 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
+     469 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
+     470 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
+     471 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
+     472 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
+     473 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+     474 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
+     493 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
+     494 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
+     495 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
+     496 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
+     497 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
+     498 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
+     499 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
+     500 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
+     501 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
+     502 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
+     503 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             2 | t
+     504 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             2 | t
+     505 | myschema1      | myTbl3_col31_seq                   | Mark13         |            10 | t
+     506 | emajC          | myschema1_myTbl3_log_seq           | Mark13         |            10 | t
+     507 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
+     508 | emaj           | myschema1_mytbl4_log_seq           | Mark13         |             1 | t
+     509 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             2 | t
+     510 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             2 | t
 (29 rows)
 
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl1_log order by emaj_gid, emaj_tuple desc;
@@ -980,12 +983,12 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id |    mark_group    |   regexp_replace    | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+---------------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
        6 | phil's group#3", | Mark3               |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      71 | myGroup2         | Mark21              |               0 | ACTIVE     |              |                     0 |                   487 |                          
-      75 | myGroup1         | Mark11              |              39 | ACTIVE     |              |                     5 |                   511 |                        19
-      76 | myGroup1         | Mark12              |              58 | ACTIVE     |              |                     5 |                   517 |                        11
-      77 | myGroup1         | Mark13              |              69 | ACTIVE     |              |                     5 |                   523 |                         0
-      78 | myGroup1         | RLBK_Mark12_%_START |              69 | ACTIVE     |              |                     5 |                   529 |                        11
-      79 | myGroup1         | RLBK_Mark12_%_DONE  |              80 | ACTIVE     |              |                     5 |                   535 |                          
+      69 | myGroup2         | Mark21              |               0 | ACTIVE     |              |                     0 |                   474 |                          
+      73 | myGroup1         | Mark11              |              39 | ACTIVE     |              |                     5 |                   498 |                        19
+      74 | myGroup1         | Mark12              |              58 | ACTIVE     |              |                     5 |                   504 |                        11
+      75 | myGroup1         | Mark13              |              69 | ACTIVE     |              |                     5 |                   510 |                         0
+      76 | myGroup1         | RLBK_Mark12_%_START |              69 | ACTIVE     |              |                     5 |                   516 |                        11
+      77 | myGroup1         | RLBK_Mark12_%_DONE  |              80 | ACTIVE     |              |                     5 |                   522 |                          
 (7 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -994,44 +997,44 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
       33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3               |             1 | f
       34 | phil's schema3 | phil's seq\1                       | Mark3               |          1000 | f
       35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3               |             1 | f
-     480 | myschema2      | myseq1                             | Mark21              |          1000 | f
-     481 | emaj           | myschema2_mytbl1_log_seq           | Mark21              |             1 | f
-     482 | emaj           | myschema2_mytbl2_log_seq           | Mark21              |             1 | f
-     483 | emajC          | myschema2_myTbl3_log_seq           | Mark21              |             1 | f
-     484 | myschema2      | myTbl3_col31_seq                   | Mark21              |             1 | f
-     485 | emaj           | myschema2_mytbl4_log_seq           | Mark21              |             1 | f
-     486 | emaj           | myschema2_mytbl5_log_seq           | Mark21              |             1 | f
-     487 | emaj           | myschema2_mytbl6_log_seq           | Mark21              |             1 | f
-     506 | myschema1      | myTbl3_col31_seq                   | Mark11              |             1 | f
-     507 | emajC          | myschema1_myTbl3_log_seq           | Mark11              |             1 | f
-     508 | emaj           | myschema1_mytbl1_log_seq           | Mark11              |             1 | f
-     509 | emaj           | myschema1_mytbl4_log_seq           | Mark11              |             1 | f
-     510 | emaj           | myschema1_mytbl2_log_seq           | Mark11              |             1 | f
-     511 | emajb          | myschema1_mytbl2b_log_seq          | Mark11              |             1 | f
-     512 | myschema1      | myTbl3_col31_seq                   | Mark12              |             1 | f
-     513 | emajC          | myschema1_myTbl3_log_seq           | Mark12              |             1 | f
-     514 | emaj           | myschema1_mytbl1_log_seq           | Mark12              |            15 | t
-     515 | emaj           | myschema1_mytbl4_log_seq           | Mark12              |             1 | f
-     516 | emaj           | myschema1_mytbl2_log_seq           | Mark12              |             2 | t
-     517 | emajb          | myschema1_mytbl2b_log_seq          | Mark12              |             2 | t
-     518 | myschema1      | myTbl3_col31_seq                   | Mark13              |            10 | t
-     519 | emajC          | myschema1_myTbl3_log_seq           | Mark13              |            10 | t
-     520 | emaj           | myschema1_mytbl1_log_seq           | Mark13              |            15 | t
-     521 | emaj           | myschema1_mytbl4_log_seq           | Mark13              |             1 | t
-     522 | emaj           | myschema1_mytbl2_log_seq           | Mark13              |             2 | t
-     523 | emajb          | myschema1_mytbl2b_log_seq          | Mark13              |             2 | t
-     524 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_START |            10 | t
-     525 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_START |            10 | t
-     526 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_START |            15 | t
-     527 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_START |             1 | t
-     528 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_START |             2 | t
-     529 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_START |             2 | t
-     530 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_DONE  |             1 | f
-     531 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_DONE  |            20 | t
-     532 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_DONE  |            15 | t
-     533 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
-     534 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
-     535 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_DONE  |             2 | t
+     467 | myschema2      | myseq1                             | Mark21              |          1000 | f
+     468 | emaj           | myschema2_mytbl1_log_seq           | Mark21              |             1 | f
+     469 | emaj           | myschema2_mytbl2_log_seq           | Mark21              |             1 | f
+     470 | emajC          | myschema2_myTbl3_log_seq           | Mark21              |             1 | f
+     471 | myschema2      | myTbl3_col31_seq                   | Mark21              |             1 | f
+     472 | emaj           | myschema2_mytbl4_log_seq           | Mark21              |             1 | f
+     473 | emaj           | myschema2_mytbl5_log_seq           | Mark21              |             1 | f
+     474 | emaj           | myschema2_mytbl6_log_seq           | Mark21              |             1 | f
+     493 | myschema1      | myTbl3_col31_seq                   | Mark11              |             1 | f
+     494 | emajC          | myschema1_myTbl3_log_seq           | Mark11              |             1 | f
+     495 | emaj           | myschema1_mytbl1_log_seq           | Mark11              |             1 | f
+     496 | emaj           | myschema1_mytbl4_log_seq           | Mark11              |             1 | f
+     497 | emaj           | myschema1_mytbl2_log_seq           | Mark11              |             1 | f
+     498 | emajb          | myschema1_mytbl2b_log_seq          | Mark11              |             1 | f
+     499 | myschema1      | myTbl3_col31_seq                   | Mark12              |             1 | f
+     500 | emajC          | myschema1_myTbl3_log_seq           | Mark12              |             1 | f
+     501 | emaj           | myschema1_mytbl1_log_seq           | Mark12              |            15 | t
+     502 | emaj           | myschema1_mytbl4_log_seq           | Mark12              |             1 | f
+     503 | emaj           | myschema1_mytbl2_log_seq           | Mark12              |             2 | t
+     504 | emajb          | myschema1_mytbl2b_log_seq          | Mark12              |             2 | t
+     505 | myschema1      | myTbl3_col31_seq                   | Mark13              |            10 | t
+     506 | emajC          | myschema1_myTbl3_log_seq           | Mark13              |            10 | t
+     507 | emaj           | myschema1_mytbl1_log_seq           | Mark13              |            15 | t
+     508 | emaj           | myschema1_mytbl4_log_seq           | Mark13              |             1 | t
+     509 | emaj           | myschema1_mytbl2_log_seq           | Mark13              |             2 | t
+     510 | emajb          | myschema1_mytbl2b_log_seq          | Mark13              |             2 | t
+     511 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_START |            10 | t
+     512 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_START |            10 | t
+     513 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_START |            15 | t
+     514 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_START |             1 | t
+     515 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_START |             2 | t
+     516 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_START |             2 | t
+     517 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_DONE  |             1 | f
+     518 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_DONE  |            20 | t
+     519 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_DONE  |            15 | t
+     520 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
+     521 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
+     522 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_DONE  |             2 | t
 (41 rows)
 
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
@@ -1102,14 +1105,14 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id |    mark_group    |   regexp_replace    | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+---------------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
        6 | phil's group#3", | Mark3               |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      71 | myGroup2         | Mark21              |               0 | ACTIVE     |              |                     0 |                   487 |                          
-      75 | myGroup1         | Mark11              |              39 | ACTIVE     |              |                     5 |                   511 |                        19
-      76 | myGroup1         | Mark12              |              58 | ACTIVE     |              |                     5 |                   517 |                        11
-      77 | myGroup1         | Mark13              |              69 | ACTIVE     |              |                     5 |                   523 |                         0
-      78 | myGroup1         | RLBK_Mark12_%_START |              69 | ACTIVE     |              |                     5 |                   529 |                        11
-      79 | myGroup1         | RLBK_Mark12_%_DONE  |              80 | ACTIVE     |              |                     5 |                   535 |                         0
-      80 | myGroup1         | RLBK_Mark11_%_START |              80 | ACTIVE     |              |                     5 |                   541 |                        41
-      81 | myGroup1         | RLBK_Mark11_%_DONE  |             121 | ACTIVE     |              |                     5 |                   547 |                          
+      69 | myGroup2         | Mark21              |               0 | ACTIVE     |              |                     0 |                   474 |                          
+      73 | myGroup1         | Mark11              |              39 | ACTIVE     |              |                     5 |                   498 |                        19
+      74 | myGroup1         | Mark12              |              58 | ACTIVE     |              |                     5 |                   504 |                        11
+      75 | myGroup1         | Mark13              |              69 | ACTIVE     |              |                     5 |                   510 |                         0
+      76 | myGroup1         | RLBK_Mark12_%_START |              69 | ACTIVE     |              |                     5 |                   516 |                        11
+      77 | myGroup1         | RLBK_Mark12_%_DONE  |              80 | ACTIVE     |              |                     5 |                   522 |                         0
+      78 | myGroup1         | RLBK_Mark11_%_START |              80 | ACTIVE     |              |                     5 |                   528 |                        41
+      79 | myGroup1         | RLBK_Mark11_%_DONE  |             121 | ACTIVE     |              |                     5 |                   534 |                          
 (9 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1118,56 +1121,56 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
       33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3               |             1 | f
       34 | phil's schema3 | phil's seq\1                       | Mark3               |          1000 | f
       35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3               |             1 | f
-     480 | myschema2      | myseq1                             | Mark21              |          1000 | f
-     481 | emaj           | myschema2_mytbl1_log_seq           | Mark21              |             1 | f
-     482 | emaj           | myschema2_mytbl2_log_seq           | Mark21              |             1 | f
-     483 | emajC          | myschema2_myTbl3_log_seq           | Mark21              |             1 | f
-     484 | myschema2      | myTbl3_col31_seq                   | Mark21              |             1 | f
-     485 | emaj           | myschema2_mytbl4_log_seq           | Mark21              |             1 | f
-     486 | emaj           | myschema2_mytbl5_log_seq           | Mark21              |             1 | f
-     487 | emaj           | myschema2_mytbl6_log_seq           | Mark21              |             1 | f
-     506 | myschema1      | myTbl3_col31_seq                   | Mark11              |             1 | f
-     507 | emajC          | myschema1_myTbl3_log_seq           | Mark11              |             1 | f
-     508 | emaj           | myschema1_mytbl1_log_seq           | Mark11              |             1 | f
-     509 | emaj           | myschema1_mytbl4_log_seq           | Mark11              |             1 | f
-     510 | emaj           | myschema1_mytbl2_log_seq           | Mark11              |             1 | f
-     511 | emajb          | myschema1_mytbl2b_log_seq          | Mark11              |             1 | f
-     512 | myschema1      | myTbl3_col31_seq                   | Mark12              |             1 | f
-     513 | emajC          | myschema1_myTbl3_log_seq           | Mark12              |             1 | f
-     514 | emaj           | myschema1_mytbl1_log_seq           | Mark12              |            15 | t
-     515 | emaj           | myschema1_mytbl4_log_seq           | Mark12              |             1 | f
-     516 | emaj           | myschema1_mytbl2_log_seq           | Mark12              |             2 | t
-     517 | emajb          | myschema1_mytbl2b_log_seq          | Mark12              |             2 | t
-     518 | myschema1      | myTbl3_col31_seq                   | Mark13              |            10 | t
-     519 | emajC          | myschema1_myTbl3_log_seq           | Mark13              |            10 | t
-     520 | emaj           | myschema1_mytbl1_log_seq           | Mark13              |            15 | t
-     521 | emaj           | myschema1_mytbl4_log_seq           | Mark13              |             1 | t
-     522 | emaj           | myschema1_mytbl2_log_seq           | Mark13              |             2 | t
-     523 | emajb          | myschema1_mytbl2b_log_seq          | Mark13              |             2 | t
-     524 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_START |            10 | t
-     525 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_START |            10 | t
-     526 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_START |            15 | t
-     527 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_START |             1 | t
-     528 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_START |             2 | t
-     529 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_START |             2 | t
-     530 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_DONE  |             1 | f
-     531 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_DONE  |            20 | t
-     532 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_DONE  |            15 | t
-     533 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
-     534 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
-     535 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_DONE  |             2 | t
-     536 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark11_%_START |             1 | f
-     537 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark11_%_START |            20 | t
-     538 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark11_%_START |            15 | t
-     539 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark11_%_START |             2 | t
-     540 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark11_%_START |             2 | t
-     541 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark11_%_START |             2 | t
-     542 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark11_%_DONE  |             1 | f
-     543 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark11_%_DONE  |            40 | t
-     544 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark11_%_DONE  |            30 | t
-     545 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark11_%_DONE  |             4 | t
-     546 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark11_%_DONE  |             4 | t
-     547 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark11_%_DONE  |             4 | t
+     467 | myschema2      | myseq1                             | Mark21              |          1000 | f
+     468 | emaj           | myschema2_mytbl1_log_seq           | Mark21              |             1 | f
+     469 | emaj           | myschema2_mytbl2_log_seq           | Mark21              |             1 | f
+     470 | emajC          | myschema2_myTbl3_log_seq           | Mark21              |             1 | f
+     471 | myschema2      | myTbl3_col31_seq                   | Mark21              |             1 | f
+     472 | emaj           | myschema2_mytbl4_log_seq           | Mark21              |             1 | f
+     473 | emaj           | myschema2_mytbl5_log_seq           | Mark21              |             1 | f
+     474 | emaj           | myschema2_mytbl6_log_seq           | Mark21              |             1 | f
+     493 | myschema1      | myTbl3_col31_seq                   | Mark11              |             1 | f
+     494 | emajC          | myschema1_myTbl3_log_seq           | Mark11              |             1 | f
+     495 | emaj           | myschema1_mytbl1_log_seq           | Mark11              |             1 | f
+     496 | emaj           | myschema1_mytbl4_log_seq           | Mark11              |             1 | f
+     497 | emaj           | myschema1_mytbl2_log_seq           | Mark11              |             1 | f
+     498 | emajb          | myschema1_mytbl2b_log_seq          | Mark11              |             1 | f
+     499 | myschema1      | myTbl3_col31_seq                   | Mark12              |             1 | f
+     500 | emajC          | myschema1_myTbl3_log_seq           | Mark12              |             1 | f
+     501 | emaj           | myschema1_mytbl1_log_seq           | Mark12              |            15 | t
+     502 | emaj           | myschema1_mytbl4_log_seq           | Mark12              |             1 | f
+     503 | emaj           | myschema1_mytbl2_log_seq           | Mark12              |             2 | t
+     504 | emajb          | myschema1_mytbl2b_log_seq          | Mark12              |             2 | t
+     505 | myschema1      | myTbl3_col31_seq                   | Mark13              |            10 | t
+     506 | emajC          | myschema1_myTbl3_log_seq           | Mark13              |            10 | t
+     507 | emaj           | myschema1_mytbl1_log_seq           | Mark13              |            15 | t
+     508 | emaj           | myschema1_mytbl4_log_seq           | Mark13              |             1 | t
+     509 | emaj           | myschema1_mytbl2_log_seq           | Mark13              |             2 | t
+     510 | emajb          | myschema1_mytbl2b_log_seq          | Mark13              |             2 | t
+     511 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_START |            10 | t
+     512 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_START |            10 | t
+     513 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_START |            15 | t
+     514 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_START |             1 | t
+     515 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_START |             2 | t
+     516 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_START |             2 | t
+     517 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_DONE  |             1 | f
+     518 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_DONE  |            20 | t
+     519 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_DONE  |            15 | t
+     520 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
+     521 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
+     522 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_DONE  |             2 | t
+     523 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark11_%_START |             1 | f
+     524 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark11_%_START |            20 | t
+     525 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark11_%_START |            15 | t
+     526 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark11_%_START |             2 | t
+     527 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark11_%_START |             2 | t
+     528 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark11_%_START |             2 | t
+     529 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark11_%_DONE  |             1 | f
+     530 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark11_%_DONE  |            40 | t
+     531 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark11_%_DONE  |            30 | t
+     532 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark11_%_DONE  |             4 | t
+     533 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark11_%_DONE  |             4 | t
+     534 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark11_%_DONE  |             4 | t
 (53 rows)
 
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
@@ -1272,10 +1275,10 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
        6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      71 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   487 |                          
-      75 | myGroup1         | Mark11         |              39 | ACTIVE     |              |                     5 |                   511 |                        19
-      76 | myGroup1         | Mark12         |              58 | ACTIVE     |              |                     5 |                   517 |                        11
-      77 | myGroup1         | Mark13         |              69 | ACTIVE     |              |                     5 |                   523 |                          
+      69 | myGroup2         | Mark21         |               0 | ACTIVE     |              |                     0 |                   474 |                          
+      73 | myGroup1         | Mark11         |              39 | ACTIVE     |              |                     5 |                   498 |                        19
+      74 | myGroup1         | Mark12         |              58 | ACTIVE     |              |                     5 |                   504 |                        11
+      75 | myGroup1         | Mark13         |              69 | ACTIVE     |              |                     5 |                   510 |                          
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1284,32 +1287,32 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
       33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
       34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
       35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
-     480 | myschema2      | myseq1                             | Mark21         |          1000 | f
-     481 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-     482 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-     483 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-     484 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-     485 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-     486 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
-     487 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-     506 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-     507 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-     508 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-     509 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-     510 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-     511 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-     512 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
-     513 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-     514 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
-     515 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-     516 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             2 | t
-     517 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             2 | t
-     518 | myschema1      | myTbl3_col31_seq                   | Mark13         |            10 | t
-     519 | emajC          | myschema1_myTbl3_log_seq           | Mark13         |            10 | t
-     520 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
-     521 | emaj           | myschema1_mytbl4_log_seq           | Mark13         |             1 | t
-     522 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             2 | t
-     523 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             2 | t
+     467 | myschema2      | myseq1                             | Mark21         |          1000 | f
+     468 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
+     469 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
+     470 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
+     471 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
+     472 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
+     473 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+     474 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
+     493 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
+     494 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
+     495 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
+     496 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
+     497 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
+     498 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
+     499 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
+     500 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
+     501 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
+     502 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
+     503 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             2 | t
+     504 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             2 | t
+     505 | myschema1      | myTbl3_col31_seq                   | Mark13         |            10 | t
+     506 | emajC          | myschema1_myTbl3_log_seq           | Mark13         |            10 | t
+     507 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
+     508 | emaj           | myschema1_mytbl4_log_seq           | Mark13         |             1 | t
+     509 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             2 | t
+     510 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             2 | t
 (29 rows)
 
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
@@ -1526,137 +1529,126 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3226 | SET_MARK_GROUPS   | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                   | postgres
     3227 | SET_MARK_GROUPS   | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                   | postgres
     3228 | ROLLBACK_GROUPS   | END          | myGroup1,myGroup2            | 0 tables and 3 sequences effectively processed       | postgres
-    3229 | ROLLBACK_GROUPS   | BEGIN        | myGroup1,myGroup2            | Logged rollback to mark Mark1B (timestamp)           | postgres
-    3230 | LOCK_SESSIONS     | BEGIN        | myGroup1,myGroup2            | Session #1                                           | postgres
-    3231 | LOCK_SESSIONS     | END          | myGroup1,myGroup2            | Session #1 : 11 tables locked, 0 deadlock(s)         | postgres
-    3232 | SET_MARK_GROUPS   | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                  | postgres
-    3233 | SET_MARK_GROUPS   | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                  | postgres
-    3234 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" |                                                      | postgres
-    3235 | ROLLBACK_SEQUENCE |              | myschema2.myseq1             |                                                      | postgres
-    3236 | ROLLBACK_SEQUENCE |              | myschema2."myTbl3_col31_seq" |                                                      | postgres
-    3237 | SET_MARK_GROUPS   | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                   | postgres
-    3238 | SET_MARK_GROUPS   | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                   | postgres
-    3239 | ROLLBACK_GROUPS   | END          | myGroup1,myGroup2            | 0 tables and 3 sequences effectively processed       | postgres
-    3240 | STOP_GROUPS       | BEGIN        | myGroup1,myGroup2            |                                                      | postgres
-    3241 | LOCK_GROUPS       | BEGIN        | myGroup1,myGroup2            |                                                      | postgres
-    3242 | LOCK_GROUPS       | END          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                      | postgres
-    3243 | SET_MARK_GROUPS   | BEGIN        | myGroup1,myGroup2            | STOP_%                                               | postgres
-    3244 | SET_MARK_GROUPS   | END          | myGroup1,myGroup2            | STOP_%                                               | postgres
-    3245 | STOP_GROUPS       | END          | myGroup1,myGroup2            | 14 tables/sequences processed                        | postgres
-    3246 | START_GROUP       | BEGIN        | myGroup1                     | With log reset                                       | postgres
-    3247 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
-    3248 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
-    3249 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | Mark11                                               | postgres
-    3250 | SET_MARK_GROUP    | END          | myGroup1                     | Mark11                                               | postgres
-    3251 | START_GROUP       | END          | myGroup1                     | 6 tables/sequences processed                         | postgres
-    3252 | START_GROUP       | BEGIN        | myGroup2                     | With log reset                                       | postgres
-    3253 | LOCK_GROUP        | BEGIN        | myGroup2                     |                                                      | postgres
-    3254 | LOCK_GROUP        | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                       | postgres
-    3255 | SET_MARK_GROUP    | BEGIN        | myGroup2                     | Mark21                                               | postgres
-    3256 | SET_MARK_GROUP    | END          | myGroup2                     | Mark21                                               | postgres
-    3257 | START_GROUP       | END          | myGroup2                     | 8 tables/sequences processed                         | postgres
-    3258 | SET_MARK_GROUP    | BEGIN        | myGroup1                     |                                                      | postgres
-    3259 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
-    3260 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
-    3261 | SET_MARK_GROUP    | END          | myGroup1                     | Mark12                                               | postgres
-    3262 | SET_MARK_GROUP    | BEGIN        | myGroup1                     |                                                      | postgres
-    3263 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
-    3264 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
-    3265 | SET_MARK_GROUP    | END          | myGroup1                     | Mark13                                               | postgres
-    3266 | ROLLBACK_GROUP    | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark12 (timestamp)         | postgres
-    3267 | LOCK_SESSION      | BEGIN        | myGroup1                     | Session #1                                           | postgres
-    3268 | LOCK_SESSION      | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres
-    3269 | ROLLBACK_TABLE    | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 27                      | postgres
-    3270 | ROLLBACK_TABLE    | END          | myschema1."myTbl3"           | 10 rollbacked rows                                   | postgres
-    3271 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 27                      | postgres
-    3272 | ROLLBACK_TABLE    | END          | myschema1.mytbl4             | 2 rollbacked rows                                    | postgres
-    3273 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark Mark13 has been deleted                         | postgres
-    3274 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" | RESTART 1                                            | postgres
-    3275 | ROLLBACK_GROUP    | END          | myGroup1                     | 2 tables and 1 sequences effectively processed       | postgres
-    3276 | ROLLBACK_GROUP    | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark11 (timestamp)         | postgres
-    3277 | LOCK_SESSION      | BEGIN        | myGroup1                     | Session #1                                           | postgres
-    3278 | LOCK_SESSION      | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres
-    3279 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 0                       | postgres
-    3280 | ROLLBACK_TABLE    | END          | myschema1.mytbl1             | 15 rollbacked rows                                   | postgres
-    3281 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 0                       | postgres
-    3282 | ROLLBACK_TABLE    | END          | myschema1.mytbl2             | 6 rollbacked rows                                    | postgres
-    3283 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 0                       | postgres
-    3284 | ROLLBACK_TABLE    | END          | myschema1.mytbl2b            | 6 rollbacked rows                                    | postgres
-    3285 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark Mark12 has been deleted                         | postgres
-    3286 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" |                                                      | postgres
-    3287 | ROLLBACK_GROUP    | END          | myGroup1                     | 3 tables and 1 sequences effectively processed       | postgres
-    3288 | STOP_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
-    3289 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
-    3290 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
-    3291 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | STOP_%                                               | postgres
-    3292 | SET_MARK_GROUP    | END          | myGroup1                     | STOP_%                                               | postgres
-    3293 | STOP_GROUP        | END          | myGroup1                     | 6 tables/sequences processed                         | postgres
-    3294 | START_GROUP       | BEGIN        | myGroup1                     | With log reset                                       | postgres
-    3295 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
-    3296 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
-    3297 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | Mark11                                               | postgres
-    3298 | SET_MARK_GROUP    | END          | myGroup1                     | Mark11                                               | postgres
-    3299 | START_GROUP       | END          | myGroup1                     | 6 tables/sequences processed                         | postgres
-    3300 | SET_MARK_GROUP    | BEGIN        | myGroup1                     |                                                      | postgres
-    3301 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
-    3302 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
-    3303 | SET_MARK_GROUP    | END          | myGroup1                     | Mark12                                               | postgres
-    3304 | SET_MARK_GROUP    | BEGIN        | myGroup1                     |                                                      | postgres
-    3305 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
-    3306 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
-    3307 | SET_MARK_GROUP    | END          | myGroup1                     | Mark13                                               | postgres
-    3308 | ROLLBACK_GROUP    | BEGIN        | myGroup1                     | Logged rollback to mark Mark12 (timestamp)           | postgres
-    3309 | LOCK_SESSION      | BEGIN        | myGroup1                     | Session #1                                           | postgres
-    3310 | LOCK_SESSION      | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres
-    3311 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | RLBK_Mark12_%_START                                  | postgres
-    3312 | SET_MARK_GROUP    | END          | myGroup1                     | RLBK_Mark12_%_START                                  | postgres
-    3313 | ROLLBACK_TABLE    | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 58                      | postgres
-    3314 | ROLLBACK_TABLE    | END          | myschema1."myTbl3"           | 10 rollbacked rows                                   | postgres
-    3315 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 58                      | postgres
-    3316 | ROLLBACK_TABLE    | END          | myschema1.mytbl4             | 1 rollbacked rows                                    | postgres
-    3317 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" | RESTART 1                                            | postgres
-    3318 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | RLBK_Mark12_%_DONE                                   | postgres
-    3319 | SET_MARK_GROUP    | END          | myGroup1                     | RLBK_Mark12_%_DONE                                   | postgres
-    3320 | ROLLBACK_GROUP    | END          | myGroup1                     | 2 tables and 1 sequences effectively processed       | postgres
-    3321 | ROLLBACK_GROUP    | BEGIN        | myGroup1                     | Logged rollback to mark Mark11 (timestamp)           | postgres
-    3322 | LOCK_SESSION      | BEGIN        | myGroup1                     | Session #1                                           | postgres
-    3323 | LOCK_SESSION      | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres
-    3324 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | RLBK_Mark11_%_START                                  | postgres
-    3325 | SET_MARK_GROUP    | END          | myGroup1                     | RLBK_Mark11_%_START                                  | postgres
-    3326 | ROLLBACK_TABLE    | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 39                      | postgres
-    3327 | ROLLBACK_TABLE    | END          | myschema1."myTbl3"           | 20 rollbacked rows                                   | postgres
-    3328 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 39                      | postgres
-    3329 | ROLLBACK_TABLE    | END          | myschema1.mytbl1             | 15 rollbacked rows                                   | postgres
-    3330 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 39                      | postgres
-    3331 | ROLLBACK_TABLE    | END          | myschema1.mytbl4             | 2 rollbacked rows                                    | postgres
-    3332 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 39                      | postgres
-    3333 | ROLLBACK_TABLE    | END          | myschema1.mytbl2             | 2 rollbacked rows                                    | postgres
-    3334 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 39                      | postgres
-    3335 | ROLLBACK_TABLE    | END          | myschema1.mytbl2b            | 2 rollbacked rows                                    | postgres
-    3336 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" |                                                      | postgres
-    3337 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | RLBK_Mark11_%_DONE                                   | postgres
-    3338 | SET_MARK_GROUP    | END          | myGroup1                     | RLBK_Mark11_%_DONE                                   | postgres
-    3339 | ROLLBACK_GROUP    | END          | myGroup1                     | 5 tables and 1 sequences effectively processed       | postgres
-    3340 | ROLLBACK_GROUP    | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark13 (timestamp)         | postgres
-    3341 | LOCK_SESSION      | BEGIN        | myGroup1                     | Session #1                                           | postgres
-    3342 | LOCK_SESSION      | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres
-    3343 | ROLLBACK_TABLE    | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 69                      | postgres
-    3344 | ROLLBACK_TABLE    | END          | myschema1."myTbl3"           | 30 rollbacked rows                                   | postgres
-    3345 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 69                      | postgres
-    3346 | ROLLBACK_TABLE    | END          | myschema1.mytbl1             | 15 rollbacked rows                                   | postgres
-    3347 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 69                      | postgres
-    3348 | ROLLBACK_TABLE    | END          | myschema1.mytbl4             | 3 rollbacked rows                                    | postgres
-    3349 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 69                      | postgres
-    3350 | ROLLBACK_TABLE    | END          | myschema1.mytbl2             | 2 rollbacked rows                                    | postgres
-    3351 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 69                      | postgres
-    3352 | ROLLBACK_TABLE    | END          | myschema1.mytbl2b            | 2 rollbacked rows                                    | postgres
-    3353 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark RLBK_Mark12_%_START has been deleted            | postgres
-    3354 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark RLBK_Mark12_%_DONE has been deleted             | postgres
-    3355 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark RLBK_Mark11_%_START has been deleted            | postgres
-    3356 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark RLBK_Mark11_%_DONE has been deleted             | postgres
-    3357 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" | RESTART 11                                           | postgres
-    3358 | ROLLBACK_GROUP    | END          | myGroup1                     | 5 tables and 1 sequences effectively processed       | postgres
-(210 rows)
+    3238 | STOP_GROUPS       | BEGIN        | myGroup1,myGroup2            |                                                      | postgres
+    3239 | LOCK_GROUPS       | BEGIN        | myGroup1,myGroup2            |                                                      | postgres
+    3240 | LOCK_GROUPS       | END          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                      | postgres
+    3241 | SET_MARK_GROUPS   | BEGIN        | myGroup1,myGroup2            | STOP_%                                               | postgres
+    3242 | SET_MARK_GROUPS   | END          | myGroup1,myGroup2            | STOP_%                                               | postgres
+    3243 | STOP_GROUPS       | END          | myGroup1,myGroup2            | 14 tables/sequences processed                        | postgres
+    3244 | START_GROUP       | BEGIN        | myGroup1                     | With log reset                                       | postgres
+    3245 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
+    3246 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
+    3247 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | Mark11                                               | postgres
+    3248 | SET_MARK_GROUP    | END          | myGroup1                     | Mark11                                               | postgres
+    3249 | START_GROUP       | END          | myGroup1                     | 6 tables/sequences processed                         | postgres
+    3250 | START_GROUP       | BEGIN        | myGroup2                     | With log reset                                       | postgres
+    3251 | LOCK_GROUP        | BEGIN        | myGroup2                     |                                                      | postgres
+    3252 | LOCK_GROUP        | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                       | postgres
+    3253 | SET_MARK_GROUP    | BEGIN        | myGroup2                     | Mark21                                               | postgres
+    3254 | SET_MARK_GROUP    | END          | myGroup2                     | Mark21                                               | postgres
+    3255 | START_GROUP       | END          | myGroup2                     | 8 tables/sequences processed                         | postgres
+    3256 | SET_MARK_GROUP    | BEGIN        | myGroup1                     |                                                      | postgres
+    3257 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
+    3258 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
+    3259 | SET_MARK_GROUP    | END          | myGroup1                     | Mark12                                               | postgres
+    3260 | SET_MARK_GROUP    | BEGIN        | myGroup1                     |                                                      | postgres
+    3261 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
+    3262 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
+    3263 | SET_MARK_GROUP    | END          | myGroup1                     | Mark13                                               | postgres
+    3264 | ROLLBACK_GROUP    | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark12 (timestamp)         | postgres
+    3265 | LOCK_SESSION      | BEGIN        | myGroup1                     | Session #1                                           | postgres
+    3266 | LOCK_SESSION      | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres
+    3267 | ROLLBACK_TABLE    | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 27                      | postgres
+    3268 | ROLLBACK_TABLE    | END          | myschema1."myTbl3"           | 10 rollbacked rows                                   | postgres
+    3269 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 27                      | postgres
+    3270 | ROLLBACK_TABLE    | END          | myschema1.mytbl4             | 2 rollbacked rows                                    | postgres
+    3271 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark Mark13 has been deleted                         | postgres
+    3272 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" | RESTART 1                                            | postgres
+    3273 | ROLLBACK_GROUP    | END          | myGroup1                     | 2 tables and 1 sequences effectively processed       | postgres
+    3274 | ROLLBACK_GROUP    | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark11 (timestamp)         | postgres
+    3275 | LOCK_SESSION      | BEGIN        | myGroup1                     | Session #1                                           | postgres
+    3276 | LOCK_SESSION      | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres
+    3277 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 0                       | postgres
+    3278 | ROLLBACK_TABLE    | END          | myschema1.mytbl1             | 15 rollbacked rows                                   | postgres
+    3279 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 0                       | postgres
+    3280 | ROLLBACK_TABLE    | END          | myschema1.mytbl2             | 6 rollbacked rows                                    | postgres
+    3281 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 0                       | postgres
+    3282 | ROLLBACK_TABLE    | END          | myschema1.mytbl2b            | 6 rollbacked rows                                    | postgres
+    3283 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark Mark12 has been deleted                         | postgres
+    3284 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" |                                                      | postgres
+    3285 | ROLLBACK_GROUP    | END          | myGroup1                     | 3 tables and 1 sequences effectively processed       | postgres
+    3286 | STOP_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
+    3287 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
+    3288 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
+    3289 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | STOP_%                                               | postgres
+    3290 | SET_MARK_GROUP    | END          | myGroup1                     | STOP_%                                               | postgres
+    3291 | STOP_GROUP        | END          | myGroup1                     | 6 tables/sequences processed                         | postgres
+    3292 | START_GROUP       | BEGIN        | myGroup1                     | With log reset                                       | postgres
+    3293 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
+    3294 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
+    3295 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | Mark11                                               | postgres
+    3296 | SET_MARK_GROUP    | END          | myGroup1                     | Mark11                                               | postgres
+    3297 | START_GROUP       | END          | myGroup1                     | 6 tables/sequences processed                         | postgres
+    3298 | SET_MARK_GROUP    | BEGIN        | myGroup1                     |                                                      | postgres
+    3299 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
+    3300 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
+    3301 | SET_MARK_GROUP    | END          | myGroup1                     | Mark12                                               | postgres
+    3302 | SET_MARK_GROUP    | BEGIN        | myGroup1                     |                                                      | postgres
+    3303 | LOCK_GROUP        | BEGIN        | myGroup1                     |                                                      | postgres
+    3304 | LOCK_GROUP        | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                       | postgres
+    3305 | SET_MARK_GROUP    | END          | myGroup1                     | Mark13                                               | postgres
+    3306 | ROLLBACK_GROUP    | BEGIN        | myGroup1                     | Logged rollback to mark Mark12 (timestamp)           | postgres
+    3307 | LOCK_SESSION      | BEGIN        | myGroup1                     | Session #1                                           | postgres
+    3308 | LOCK_SESSION      | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres
+    3309 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | RLBK_Mark12_%_START                                  | postgres
+    3310 | SET_MARK_GROUP    | END          | myGroup1                     | RLBK_Mark12_%_START                                  | postgres
+    3311 | ROLLBACK_TABLE    | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 58                      | postgres
+    3312 | ROLLBACK_TABLE    | END          | myschema1."myTbl3"           | 10 rollbacked rows                                   | postgres
+    3313 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 58                      | postgres
+    3314 | ROLLBACK_TABLE    | END          | myschema1.mytbl4             | 1 rollbacked rows                                    | postgres
+    3315 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" | RESTART 1                                            | postgres
+    3316 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | RLBK_Mark12_%_DONE                                   | postgres
+    3317 | SET_MARK_GROUP    | END          | myGroup1                     | RLBK_Mark12_%_DONE                                   | postgres
+    3318 | ROLLBACK_GROUP    | END          | myGroup1                     | 2 tables and 1 sequences effectively processed       | postgres
+    3319 | ROLLBACK_GROUP    | BEGIN        | myGroup1                     | Logged rollback to mark Mark11 (timestamp)           | postgres
+    3320 | LOCK_SESSION      | BEGIN        | myGroup1                     | Session #1                                           | postgres
+    3321 | LOCK_SESSION      | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres
+    3322 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | RLBK_Mark11_%_START                                  | postgres
+    3323 | SET_MARK_GROUP    | END          | myGroup1                     | RLBK_Mark11_%_START                                  | postgres
+    3324 | ROLLBACK_TABLE    | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 39                      | postgres
+    3325 | ROLLBACK_TABLE    | END          | myschema1."myTbl3"           | 20 rollbacked rows                                   | postgres
+    3326 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 39                      | postgres
+    3327 | ROLLBACK_TABLE    | END          | myschema1.mytbl1             | 15 rollbacked rows                                   | postgres
+    3328 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 39                      | postgres
+    3329 | ROLLBACK_TABLE    | END          | myschema1.mytbl4             | 2 rollbacked rows                                    | postgres
+    3330 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 39                      | postgres
+    3331 | ROLLBACK_TABLE    | END          | myschema1.mytbl2             | 2 rollbacked rows                                    | postgres
+    3332 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 39                      | postgres
+    3333 | ROLLBACK_TABLE    | END          | myschema1.mytbl2b            | 2 rollbacked rows                                    | postgres
+    3334 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" |                                                      | postgres
+    3335 | SET_MARK_GROUP    | BEGIN        | myGroup1                     | RLBK_Mark11_%_DONE                                   | postgres
+    3336 | SET_MARK_GROUP    | END          | myGroup1                     | RLBK_Mark11_%_DONE                                   | postgres
+    3337 | ROLLBACK_GROUP    | END          | myGroup1                     | 5 tables and 1 sequences effectively processed       | postgres
+    3338 | ROLLBACK_GROUP    | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark13 (timestamp)         | postgres
+    3339 | LOCK_SESSION      | BEGIN        | myGroup1                     | Session #1                                           | postgres
+    3340 | LOCK_SESSION      | END          | myGroup1                     | Session #1 : 5 tables locked, 0 deadlock(s)          | postgres
+    3341 | ROLLBACK_TABLE    | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 69                      | postgres
+    3342 | ROLLBACK_TABLE    | END          | myschema1."myTbl3"           | 30 rollbacked rows                                   | postgres
+    3343 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 69                      | postgres
+    3344 | ROLLBACK_TABLE    | END          | myschema1.mytbl1             | 15 rollbacked rows                                   | postgres
+    3345 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 69                      | postgres
+    3346 | ROLLBACK_TABLE    | END          | myschema1.mytbl4             | 3 rollbacked rows                                    | postgres
+    3347 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 69                      | postgres
+    3348 | ROLLBACK_TABLE    | END          | myschema1.mytbl2             | 2 rollbacked rows                                    | postgres
+    3349 | ROLLBACK_TABLE    | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 69                      | postgres
+    3350 | ROLLBACK_TABLE    | END          | myschema1.mytbl2b            | 2 rollbacked rows                                    | postgres
+    3351 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark RLBK_Mark12_%_START has been deleted            | postgres
+    3352 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark RLBK_Mark12_%_DONE has been deleted             | postgres
+    3353 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark RLBK_Mark11_%_START has been deleted            | postgres
+    3354 | ROLLBACK_GROUP    | MARK DELETED | myGroup1                     | mark RLBK_Mark11_%_DONE has been deleted             | postgres
+    3355 | ROLLBACK_SEQUENCE |              | myschema1."myTbl3_col31_seq" | RESTART 11                                           | postgres
+    3356 | ROLLBACK_GROUP    | END          | myGroup1                     | 5 tables and 1 sequences effectively processed       | postgres
+(199 rows)
 
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 5000;
