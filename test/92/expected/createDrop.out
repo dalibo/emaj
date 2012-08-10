@@ -134,13 +134,13 @@ select emaj.emaj_create_group('myGroup2');
 ERROR:  emaj_create_group: group myGroup2 is already created.
 CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 -- impact of created groups
-select * from pg_namespace where nspname like 'emaj%' order by nspname;
- nspname  | nspowner |                               nspacl                               
-----------+----------+--------------------------------------------------------------------
- emaj     |       10 | {postgres=UC/postgres,emaj_viewer=U/postgres,emaj_adm=UC/postgres}
- emaj #'3 |       10 | {postgres=UC/postgres,emaj_adm=UC/postgres,emaj_viewer=U/postgres}
- emajC    |       10 | {postgres=UC/postgres,emaj_adm=UC/postgres,emaj_viewer=U/postgres}
- emajb    |       10 | {postgres=UC/postgres,emaj_adm=UC/postgres,emaj_viewer=U/postgres}
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+ nspname  
+----------
+ emaj
+ emaj #'3
+ emajC
+ emajb
 (4 rows)
 
 select group_name, group_state, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
@@ -350,11 +350,11 @@ select emaj.emaj_force_drop_group('myGroup2');
 -----------------------------
 -- test end: check
 -----------------------------
-select * from pg_namespace where nspname like 'emaj%' order by nspname;
- nspname  | nspowner |                               nspacl                               
-----------+----------+--------------------------------------------------------------------
- emaj     |       10 | {postgres=UC/postgres,emaj_viewer=U/postgres,emaj_adm=UC/postgres}
- emaj #'3 |       10 | {postgres=UC/postgres,emaj_adm=UC/postgres,emaj_viewer=U/postgres}
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+ nspname  
+----------
+ emaj
+ emaj #'3
 (2 rows)
 
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 

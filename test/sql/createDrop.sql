@@ -81,7 +81,7 @@ select emaj.emaj_create_group('dummyGrp3');
 select emaj.emaj_create_group('myGroup2');
 
 -- impact of created groups
-select * from pg_namespace where nspname like 'emaj%' order by nspname;
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select group_name, group_state, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
   from emaj.emaj_group order by group_name, group_state;
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq;
@@ -146,7 +146,7 @@ select emaj.emaj_force_drop_group('myGroup2');
 -----------------------------
 -- test end: check
 -----------------------------
-select * from pg_namespace where nspname like 'emaj%' order by nspname;
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
 
