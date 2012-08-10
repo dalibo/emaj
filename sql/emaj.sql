@@ -4292,23 +4292,7 @@ INSERT INTO pg_description (objoid, classoid, objsubid, description)
 --                                --
 ------------------------------------
 
--- -> emaj_viewer can view the emaj objects (content of emaj and log tables)
-GRANT USAGE ON SCHEMA emaj TO emaj_viewer;
-
-GRANT SELECT ON SEQUENCE emaj.emaj_global_seq TO emaj_viewer;
-
-GRANT SELECT ON emaj.emaj_param      TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_hist       TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_group_def  TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_group      TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_relation   TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_mark       TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_sequence   TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_seq_hole   TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_fk         TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_rlbk_stat  TO emaj_viewer;
-
--- -> emaj_adm can execute all emaj functions
+-- emaj_adm needs the appropriate rights on emaj objects to execute all emaj functions
 
 GRANT ALL ON SCHEMA emaj TO emaj_adm;
 
@@ -4329,6 +4313,28 @@ GRANT ALL ON SEQUENCE emaj.emaj_hist_hist_id_seq TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_mark_mark_id_seq TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_adm;
+
+-- emaj_viewer can only view the emaj objects (content of emaj and log tables)
+
+GRANT USAGE ON SCHEMA emaj TO emaj_viewer;
+
+GRANT SELECT ON SEQUENCE emaj.emaj_global_seq TO emaj_viewer;
+
+GRANT SELECT ON emaj.emaj_param      TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_hist       TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_group_def  TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_group      TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_relation   TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_mark       TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_sequence   TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_seq_hole   TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_fk         TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_rlbk_stat  TO emaj_viewer;
+
+GRANT SELECT ON SEQUENCE emaj.emaj_hist_hist_id_seq TO emaj_viewer;
+GRANT SELECT ON SEQUENCE emaj.emaj_mark_mark_id_seq TO emaj_viewer;
+GRANT SELECT ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_viewer;
+GRANT SELECT ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_viewer;
 
 -- revoke grants on all functions from PUBLIC
 REVOKE ALL ON FUNCTION emaj._txid_current() FROM PUBLIC;
@@ -4397,6 +4403,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
+
 -- give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj._txid_current() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_adm;
