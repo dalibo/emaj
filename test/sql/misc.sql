@@ -17,8 +17,8 @@ select emaj.emaj_stop_group('myGroup1');
 -- log tables are not yet empty
 select count(*) from emaj.myschema1_mytbl1_log;
 select count(*) from emaj.myschema1_mytbl2_log;
-select count(*) from emaj.myschema1_mytbl2b_log;
-select count(*) from emaj."myschema1_myTbl3_log";
+select count(*) from emajb.myschema1_mytbl2b_log;
+select count(*) from "emajC"."myschema1_myTbl3_log";
 select count(*) from emaj.myschema1_mytbl4_log;
 
 -- should be OK
@@ -26,8 +26,8 @@ select emaj.emaj_reset_group('myGroup1');
 
 select count(*) from emaj.myschema1_mytbl1_log;
 select count(*) from emaj.myschema1_mytbl2_log;
-select count(*) from emaj.myschema1_mytbl2b_log;
-select count(*) from emaj."myschema1_myTbl3_log";
+select count(*) from emajb.myschema1_mytbl2b_log;
+select count(*) from "emajC"."myschema1_myTbl3_log";
 select count(*) from emaj.myschema1_mytbl4_log;
 
 -----------------------------
@@ -369,12 +369,12 @@ begin;
 rollback;
 -- detection of an orphan log function
 begin;
-  create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;
+  create function emajb.dummy_log_fnct () returns int language sql as $$ select 0 $$;
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of an orphan rollback function
 begin;
-  create function emaj.dummy_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  create function "emajC".dummy_rlbk_fnct () returns int language sql as $$ select 0 $$;
   select * from emaj.emaj_verify_all();
 rollback;
 

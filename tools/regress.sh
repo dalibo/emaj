@@ -88,7 +88,7 @@ function migrat_test()
 	$RTVBIN/createdb -p $RTVPORT regression
 	$RTVBIN/psql -p $RTVPORT regression <../$2/results/regression.dump >results/restore.out
 	diff results/restore.out expected/restore.out
-	cat ../sql/afterRest.sql|$RTVBIN/psql -p $RTVPORT regression >results/afterRest.out
+	cat ../sql/afterRest.sql|$RTVBIN/psql -p $RTVPORT -a regression >results/afterRest.out
 	diff results/afterRest.out expected/afterRest.out
     cd ../..
     return

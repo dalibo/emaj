@@ -46,7 +46,7 @@ truncate myschema1.mytbl1 cascade;
 truncate "phil's schema3"."phil's tbl1" cascade;
 select "phil's col11", "phil's col12", "phil\s col13", 
        emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip 
-  from emaj."phil's schema3_phil's tbl1_log";
+  from "emaj #'3"."phil's schema3_phil's tbl1_log";
 
 -- impact of started group
 select group_name, group_state, group_nb_table, group_nb_sequence, group_comment 

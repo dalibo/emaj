@@ -3,6 +3,15 @@ E-Maj - Release notes
 0.12.0
 ------
 Enhancements:
+  - to help managing databases having a large number of tables, it is now 
+    possible to spread E-Maj objects on several schemas. E-Maj functions 
+    and technical tables remain on emaj schema (the E-Maj primary schema). 
+    But secondary schemas can hold the log table, sequence and functions 
+    for any application table. All secondary schema names start with 'emaj'. 
+    E-maj administrator can define a secondary schema for any application 
+    table though a new column in emaj_group_def table: 
+    grpdef_log_schema_suffix. E-Maj functions manage the creation and the 
+    deletion of these secondary schemas.
   - emaj administrators can define custom tablespaces to be used for log 
     tables or their indexes on a per table basis. Two new columns in the 
     emaj_group_def table support this feature: grpdef_log_dat_tsp and 

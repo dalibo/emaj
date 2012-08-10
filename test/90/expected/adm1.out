@@ -119,8 +119,8 @@ select * from emaj.emaj_group;
 (0 rows)
 
 select * from emaj.emaj_relation;
- rel_schema | rel_tblseq | rel_group | rel_priority | rel_log_dat_tsp | rel_log_idx_tsp | rel_kind | rel_session | rel_rows 
-------------+------------+-----------+--------------+-----------------+-----------------+----------+-------------+----------
+ rel_schema | rel_tblseq | rel_group | rel_priority | rel_log_schema | rel_log_dat_tsp | rel_log_idx_tsp | rel_kind | rel_session | rel_rows 
+------------+------------+-----------+--------------+----------------+-----------------+-----------------+----------+-------------+----------
 (0 rows)
 
 select * from emaj.emaj_mark;
@@ -164,98 +164,98 @@ set role emaj_regression_tests_adm_user;
 -----------------------------
 select emaj.emaj_create_group('myGroup1');
 NOTICE:  table "myschema1_myTbl3_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."myschema1_myTbl3_log""
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema1_myTbl3_log""
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_myTbl3_emaj_log_trg" for table "myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema1_myTbl3_emaj_log_trg" ON myschema1."myTbl3""
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_myTbl3_emaj_trunc_trg" for table "myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema1_myTbl3_emaj_trunc_trg" ON myschema1."myTbl3""
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl1_emaj_log_trg" for table "mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl1_emaj_log_trg ON myschema1.mytbl1"
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl1_emaj_trunc_trg" for table "mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl1_emaj_trunc_trg ON myschema1.mytbl1"
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl4_log"
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl4_emaj_log_trg" for table "mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl4_emaj_log_trg ON myschema1.mytbl4"
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl4_emaj_trunc_trg" for table "mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl4_emaj_trunc_trg ON myschema1.mytbl4"
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl2_log"
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl2_emaj_log_trg" for table "mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2_emaj_log_trg ON myschema1.mytbl2"
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl2_emaj_trunc_trg" for table "mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2_emaj_trunc_trg ON myschema1.mytbl2"
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl2b_log"
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emajb.myschema1_mytbl2b_log"
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl2b_emaj_log_trg" for table "mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2b_emaj_log_trg ON myschema1.mytbl2b"
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl2b_emaj_trunc_trg" for table "mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2b_emaj_trunc_trg ON myschema1.mytbl2b"
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
@@ -271,94 +271,94 @@ select emaj.emaj_comment_group('myGroup1','This is group #1');
 select emaj.emaj_create_group('myGroup2',true);
 NOTICE:  table "myschema2_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl1_log"
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_mytbl1_emaj_log_trg" for table "mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl1_emaj_log_trg ON myschema2.mytbl1"
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_mytbl1_emaj_trunc_trg" for table "mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl1_emaj_trunc_trg ON myschema2.mytbl1"
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  table "myschema2_mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl2_log"
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_mytbl2_emaj_log_trg" for table "mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl2_emaj_log_trg ON myschema2.mytbl2"
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_mytbl2_emaj_trunc_trg" for table "mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl2_emaj_trunc_trg ON myschema2.mytbl2"
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  table "myschema2_myTbl3_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."myschema2_myTbl3_log""
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema2_myTbl3_log""
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_myTbl3_emaj_log_trg" for table "myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema2_myTbl3_emaj_log_trg" ON myschema2."myTbl3""
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_myTbl3_emaj_trunc_trg" for table "myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema2_myTbl3_emaj_trunc_trg" ON myschema2."myTbl3""
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  table "myschema2_mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl4_log"
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_mytbl4_emaj_log_trg" for table "mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl4_emaj_log_trg ON myschema2.mytbl4"
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_mytbl4_emaj_trunc_trg" for table "mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl4_emaj_trunc_trg ON myschema2.mytbl4"
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  table "myschema2_mytbl5_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl5_log"
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_mytbl5_emaj_log_trg" for table "mytbl5" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl5_emaj_log_trg ON myschema2.mytbl5"
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_mytbl5_emaj_trunc_trg" for table "mytbl5" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl5_emaj_trunc_trg ON myschema2.mytbl5"
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  table "myschema2_mytbl6_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl6_log"
-PL/pgSQL function "_create_tbl" line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_mytbl6_emaj_log_trg" for table "mytbl6" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl6_emaj_log_trg ON myschema2.mytbl6"
-PL/pgSQL function "_create_tbl" line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 NOTICE:  trigger "myschema2_mytbl6_emaj_trunc_trg" for table "mytbl6" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl6_emaj_trunc_trg ON myschema2.mytbl6"
-PL/pgSQL function "_create_tbl" line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 59 at PERFORM
+PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -445,31 +445,31 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
  sequ_id | sequ_schema |         sequ_name         | regexp_replace | sequ_last_val | sequ_is_called 
 ---------+-------------+---------------------------+----------------+---------------+----------------
      589 | myschema1   | myTbl3_col31_seq          | M1             |            11 | f
-     590 | emaj        | myschema1_myTbl3_log_seq  | M1             |             1 | f
+     590 | emajC       | myschema1_myTbl3_log_seq  | M1             |             1 | f
      591 | emaj        | myschema1_mytbl1_log_seq  | M1             |             1 | f
      592 | emaj        | myschema1_mytbl4_log_seq  | M1             |             1 | f
      593 | emaj        | myschema1_mytbl2_log_seq  | M1             |             1 | f
-     594 | emaj        | myschema1_mytbl2b_log_seq | M1             |             1 | f
+     594 | emajb       | myschema1_mytbl2b_log_seq | M1             |             1 | f
      595 | myschema2   | myseq1                    | M1             |          1000 | f
      596 | emaj        | myschema2_mytbl1_log_seq  | M1             |             1 | f
      597 | emaj        | myschema2_mytbl2_log_seq  | M1             |             1 | f
-     598 | emaj        | myschema2_myTbl3_log_seq  | M1             |             1 | f
+     598 | emajC       | myschema2_myTbl3_log_seq  | M1             |             1 | f
      599 | myschema2   | myTbl3_col31_seq          | M1             |            10 | t
      600 | emaj        | myschema2_mytbl4_log_seq  | M1             |             1 | f
      601 | emaj        | myschema2_mytbl5_log_seq  | M1             |             1 | f
      602 | emaj        | myschema2_mytbl6_log_seq  | M1             |             1 | f
      603 | myschema1   | myTbl3_col31_seq          | M2             |            20 | t
-     604 | emaj        | myschema1_myTbl3_log_seq  | M2             |            10 | t
+     604 | emajC       | myschema1_myTbl3_log_seq  | M2             |            10 | t
      605 | emaj        | myschema1_mytbl1_log_seq  | M2             |            15 | t
      606 | emaj        | myschema1_mytbl4_log_seq  | M2             |             1 | f
      607 | emaj        | myschema1_mytbl2_log_seq  | M2             |             2 | t
-     608 | emaj        | myschema1_mytbl2b_log_seq | M2             |             1 | f
+     608 | emajb       | myschema1_mytbl2b_log_seq | M2             |             1 | f
      609 | myschema1   | myTbl3_col31_seq          | M3             |            20 | t
-     610 | emaj        | myschema1_myTbl3_log_seq  | M3             |            10 | t
+     610 | emajC       | myschema1_myTbl3_log_seq  | M3             |            10 | t
      611 | emaj        | myschema1_mytbl1_log_seq  | M3             |            18 | t
      612 | emaj        | myschema1_mytbl4_log_seq  | M3             |             8 | t
      613 | emaj        | myschema1_mytbl2_log_seq  | M3             |             2 | t
-     614 | emaj        | myschema1_mytbl2b_log_seq | M3             |             1 | f
+     614 | emajb       | myschema1_mytbl2b_log_seq | M3             |             1 | f
 (26 rows)
 
 -- user tables
@@ -557,12 +557,12 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_use
      2 | DEF   |            | INS       | NEW        |    11850 | postgres  | 
 (2 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emaj.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
  col20 | col21 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip 
 -------+-------+-----------+------------+----------+-----------+--------------
 (0 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip 
 -------+-------+-----------+------------+----------+-----------+--------------
     11 | 10.00 | INS       | NEW        |    11851 | postgres  | 
@@ -678,35 +678,35 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
  sequ_id | sequ_schema |         sequ_name         | regexp_replace | sequ_last_val | sequ_is_called 
 ---------+-------------+---------------------------+----------------+---------------+----------------
      589 | myschema1   | myTbl3_col31_seq          | M1             |            11 | f
-     590 | emaj        | myschema1_myTbl3_log_seq  | M1             |             1 | f
+     590 | emajC       | myschema1_myTbl3_log_seq  | M1             |             1 | f
      591 | emaj        | myschema1_mytbl1_log_seq  | M1             |             1 | f
      592 | emaj        | myschema1_mytbl4_log_seq  | M1             |             1 | f
      593 | emaj        | myschema1_mytbl2_log_seq  | M1             |             1 | f
-     594 | emaj        | myschema1_mytbl2b_log_seq | M1             |             1 | f
+     594 | emajb       | myschema1_mytbl2b_log_seq | M1             |             1 | f
      595 | myschema2   | myseq1                    | M1             |          1000 | f
      596 | emaj        | myschema2_mytbl1_log_seq  | M1             |             1 | f
      597 | emaj        | myschema2_mytbl2_log_seq  | M1             |             1 | f
-     598 | emaj        | myschema2_myTbl3_log_seq  | M1             |             1 | f
+     598 | emajC       | myschema2_myTbl3_log_seq  | M1             |             1 | f
      599 | myschema2   | myTbl3_col31_seq          | M1             |            10 | t
      600 | emaj        | myschema2_mytbl4_log_seq  | M1             |             1 | f
      601 | emaj        | myschema2_mytbl5_log_seq  | M1             |             1 | f
      602 | emaj        | myschema2_mytbl6_log_seq  | M1             |             1 | f
      603 | myschema1   | myTbl3_col31_seq          | M2             |            20 | t
-     604 | emaj        | myschema1_myTbl3_log_seq  | M2             |            10 | t
+     604 | emajC       | myschema1_myTbl3_log_seq  | M2             |            10 | t
      605 | emaj        | myschema1_mytbl1_log_seq  | M2             |            15 | t
      606 | emaj        | myschema1_mytbl4_log_seq  | M2             |             1 | f
      607 | emaj        | myschema1_mytbl2_log_seq  | M2             |             2 | t
-     608 | emaj        | myschema1_mytbl2b_log_seq | M2             |             1 | f
+     608 | emajb       | myschema1_mytbl2b_log_seq | M2             |             1 | f
      609 | myschema1   | myTbl3_col31_seq          | M3             |            20 | t
-     610 | emaj        | myschema1_myTbl3_log_seq  | M3             |            10 | t
+     610 | emajC       | myschema1_myTbl3_log_seq  | M3             |            10 | t
      611 | emaj        | myschema1_mytbl1_log_seq  | M3             |            18 | t
      612 | emaj        | myschema1_mytbl4_log_seq  | M3             |             8 | t
      613 | emaj        | myschema1_mytbl2_log_seq  | M3             |             2 | t
-     614 | emaj        | myschema1_mytbl2b_log_seq | M3             |             1 | f
+     614 | emajb       | myschema1_mytbl2b_log_seq | M3             |             1 | f
      615 | myschema2   | myseq1                    | M2             |          1000 | t
      616 | emaj        | myschema2_mytbl1_log_seq  | M2             |            15 | t
      617 | emaj        | myschema2_mytbl2_log_seq  | M2             |             2 | t
-     618 | emaj        | myschema2_myTbl3_log_seq  | M2             |            10 | t
+     618 | emajC       | myschema2_myTbl3_log_seq  | M2             |            10 | t
      619 | myschema2   | myTbl3_col31_seq          | M2             |            20 | t
      620 | emaj        | myschema2_mytbl4_log_seq  | M2             |             1 | f
      621 | emaj        | myschema2_mytbl5_log_seq  | M2             |             3 | t
@@ -714,7 +714,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      623 | myschema2   | myseq1                    | M3             |          1003 | t
      624 | emaj        | myschema2_mytbl1_log_seq  | M3             |            15 | t
      625 | emaj        | myschema2_mytbl2_log_seq  | M3             |             2 | t
-     626 | emaj        | myschema2_myTbl3_log_seq  | M3             |            10 | t
+     626 | emajC       | myschema2_myTbl3_log_seq  | M3             |            10 | t
      627 | myschema2   | myTbl3_col31_seq          | M3             |            20 | t
      628 | emaj        | myschema2_mytbl4_log_seq  | M3             |             4 | t
      629 | emaj        | myschema2_mytbl5_log_seq  | M3             |             4 | t
@@ -813,7 +813,7 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
      2 | DEF   |            | INS       | NEW        |    11888
 (2 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
     11 | 10.00 | INS       | NEW        |    11889
@@ -912,35 +912,35 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
  sequ_id | sequ_schema |         sequ_name         | regexp_replace  | sequ_last_val | sequ_is_called 
 ---------+-------------+---------------------------+-----------------+---------------+----------------
      589 | myschema1   | myTbl3_col31_seq          | M1              |            11 | f
-     590 | emaj        | myschema1_myTbl3_log_seq  | M1              |             1 | f
+     590 | emajC       | myschema1_myTbl3_log_seq  | M1              |             1 | f
      591 | emaj        | myschema1_mytbl1_log_seq  | M1              |             1 | f
      592 | emaj        | myschema1_mytbl4_log_seq  | M1              |             1 | f
      593 | emaj        | myschema1_mytbl2_log_seq  | M1              |             1 | f
-     594 | emaj        | myschema1_mytbl2b_log_seq | M1              |             1 | f
+     594 | emajb       | myschema1_mytbl2b_log_seq | M1              |             1 | f
      595 | myschema2   | myseq1                    | M1              |          1000 | f
      596 | emaj        | myschema2_mytbl1_log_seq  | M1              |             1 | f
      597 | emaj        | myschema2_mytbl2_log_seq  | M1              |             1 | f
-     598 | emaj        | myschema2_myTbl3_log_seq  | M1              |             1 | f
+     598 | emajC       | myschema2_myTbl3_log_seq  | M1              |             1 | f
      599 | myschema2   | myTbl3_col31_seq          | M1              |            10 | t
      600 | emaj        | myschema2_mytbl4_log_seq  | M1              |             1 | f
      601 | emaj        | myschema2_mytbl5_log_seq  | M1              |             1 | f
      602 | emaj        | myschema2_mytbl6_log_seq  | M1              |             1 | f
      603 | myschema1   | myTbl3_col31_seq          | M2              |            20 | t
-     604 | emaj        | myschema1_myTbl3_log_seq  | M2              |            10 | t
+     604 | emajC       | myschema1_myTbl3_log_seq  | M2              |            10 | t
      605 | emaj        | myschema1_mytbl1_log_seq  | M2              |            15 | t
      606 | emaj        | myschema1_mytbl4_log_seq  | M2              |             1 | f
      607 | emaj        | myschema1_mytbl2_log_seq  | M2              |             2 | t
-     608 | emaj        | myschema1_mytbl2b_log_seq | M2              |             1 | f
+     608 | emajb       | myschema1_mytbl2b_log_seq | M2              |             1 | f
      609 | myschema1   | myTbl3_col31_seq          | M3              |            20 | t
-     610 | emaj        | myschema1_myTbl3_log_seq  | M3              |            10 | t
+     610 | emajC       | myschema1_myTbl3_log_seq  | M3              |            10 | t
      611 | emaj        | myschema1_mytbl1_log_seq  | M3              |            18 | t
      612 | emaj        | myschema1_mytbl4_log_seq  | M3              |             8 | t
      613 | emaj        | myschema1_mytbl2_log_seq  | M3              |             2 | t
-     614 | emaj        | myschema1_mytbl2b_log_seq | M3              |             1 | f
+     614 | emajb       | myschema1_mytbl2b_log_seq | M3              |             1 | f
      615 | myschema2   | myseq1                    | M2              |          1000 | t
      616 | emaj        | myschema2_mytbl1_log_seq  | M2              |            15 | t
      617 | emaj        | myschema2_mytbl2_log_seq  | M2              |             2 | t
-     618 | emaj        | myschema2_myTbl3_log_seq  | M2              |            10 | t
+     618 | emajC       | myschema2_myTbl3_log_seq  | M2              |            10 | t
      619 | myschema2   | myTbl3_col31_seq          | M2              |            20 | t
      620 | emaj        | myschema2_mytbl4_log_seq  | M2              |             1 | f
      621 | emaj        | myschema2_mytbl5_log_seq  | M2              |             3 | t
@@ -948,7 +948,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      623 | myschema2   | myseq1                    | M3              |          1003 | t
      624 | emaj        | myschema2_mytbl1_log_seq  | M3              |            15 | t
      625 | emaj        | myschema2_mytbl2_log_seq  | M3              |             2 | t
-     626 | emaj        | myschema2_myTbl3_log_seq  | M3              |            10 | t
+     626 | emajC       | myschema2_myTbl3_log_seq  | M3              |            10 | t
      627 | myschema2   | myTbl3_col31_seq          | M3              |            20 | t
      628 | emaj        | myschema2_mytbl4_log_seq  | M3              |             4 | t
      629 | emaj        | myschema2_mytbl5_log_seq  | M3              |             4 | t
@@ -956,7 +956,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      631 | myschema2   | myseq1                    | RLBK_M2_%_START |          1003 | t
      632 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_START |            15 | t
      633 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_START |             2 | t
-     634 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
+     634 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
      635 | myschema2   | myTbl3_col31_seq          | RLBK_M2_%_START |            20 | t
      636 | emaj        | myschema2_mytbl4_log_seq  | RLBK_M2_%_START |             4 | t
      637 | emaj        | myschema2_mytbl5_log_seq  | RLBK_M2_%_START |             4 | t
@@ -964,7 +964,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      639 | myschema2   | myseq1                    | RLBK_M2_%_DONE  |          1001 | f
      640 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_DONE  |            15 | t
      641 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_DONE  |             2 | t
-     642 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
+     642 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
      643 | myschema2   | myTbl3_col31_seq          | RLBK_M2_%_DONE  |            20 | t
      644 | emaj        | myschema2_mytbl4_log_seq  | RLBK_M2_%_DONE  |             8 | t
      645 | emaj        | myschema2_mytbl5_log_seq  | RLBK_M2_%_DONE  |             5 | t
@@ -972,7 +972,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      647 | myschema2   | myseq1                    | RLBK_M3_%_START |          1001 | f
      648 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M3_%_START |            15 | t
      649 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M3_%_START |             2 | t
-     650 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M3_%_START |            10 | t
+     650 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M3_%_START |            10 | t
      651 | myschema2   | myTbl3_col31_seq          | RLBK_M3_%_START |            20 | t
      652 | emaj        | myschema2_mytbl4_log_seq  | RLBK_M3_%_START |             8 | t
      653 | emaj        | myschema2_mytbl5_log_seq  | RLBK_M3_%_START |             5 | t
@@ -980,7 +980,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      655 | myschema2   | myseq1                    | RLBK_M3_%_DONE  |          1004 | f
      656 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M3_%_DONE  |            15 | t
      657 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M3_%_DONE  |             2 | t
-     658 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M3_%_DONE  |            10 | t
+     658 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M3_%_DONE  |            10 | t
      659 | myschema2   | myTbl3_col31_seq          | RLBK_M3_%_DONE  |            20 | t
      660 | emaj        | myschema2_mytbl4_log_seq  | RLBK_M3_%_DONE  |            12 | t
      661 | emaj        | myschema2_mytbl5_log_seq  | RLBK_M3_%_DONE  |             6 | t
@@ -1079,7 +1079,7 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
      2 | DEF   |            | INS       | NEW        |    11888
 (2 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
     11 | 10.00 | INS       | NEW        |    11889
@@ -1221,32 +1221,32 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
  sequ_id | sequ_schema |         sequ_name         | regexp_replace  | sequ_last_val | sequ_is_called 
 ---------+-------------+---------------------------+-----------------+---------------+----------------
      589 | myschema1   | myTbl3_col31_seq          | M1              |            11 | f
-     590 | emaj        | myschema1_myTbl3_log_seq  | M1              |             1 | f
+     590 | emajC       | myschema1_myTbl3_log_seq  | M1              |             1 | f
      591 | emaj        | myschema1_mytbl1_log_seq  | M1              |             1 | f
      592 | emaj        | myschema1_mytbl4_log_seq  | M1              |             1 | f
      593 | emaj        | myschema1_mytbl2_log_seq  | M1              |             1 | f
-     594 | emaj        | myschema1_mytbl2b_log_seq | M1              |             1 | f
+     594 | emajb       | myschema1_mytbl2b_log_seq | M1              |             1 | f
      595 | myschema2   | myseq1                    | M1              |          1000 | f
      596 | emaj        | myschema2_mytbl1_log_seq  | M1              |             1 | f
      597 | emaj        | myschema2_mytbl2_log_seq  | M1              |             1 | f
-     598 | emaj        | myschema2_myTbl3_log_seq  | M1              |             1 | f
+     598 | emajC       | myschema2_myTbl3_log_seq  | M1              |             1 | f
      599 | myschema2   | myTbl3_col31_seq          | M1              |            10 | t
      600 | emaj        | myschema2_mytbl4_log_seq  | M1              |             1 | f
      601 | emaj        | myschema2_mytbl5_log_seq  | M1              |             1 | f
      602 | emaj        | myschema2_mytbl6_log_seq  | M1              |             1 | f
      603 | myschema1   | myTbl3_col31_seq          | M2              |            20 | t
-     604 | emaj        | myschema1_myTbl3_log_seq  | M2              |            10 | t
+     604 | emajC       | myschema1_myTbl3_log_seq  | M2              |            10 | t
      605 | emaj        | myschema1_mytbl1_log_seq  | M2              |            15 | t
      606 | emaj        | myschema1_mytbl4_log_seq  | M2              |             1 | f
      607 | emaj        | myschema1_mytbl2_log_seq  | M2              |             2 | t
-     608 | emaj        | myschema1_mytbl2b_log_seq | M2              |             1 | f
-     610 | emaj        | myschema1_myTbl3_log_seq  | M3              |            10 | t
+     608 | emajb       | myschema1_mytbl2b_log_seq | M2              |             1 | f
+     610 | emajC       | myschema1_myTbl3_log_seq  | M3              |            10 | t
      613 | emaj        | myschema1_mytbl2_log_seq  | M3              |             2 | t
-     614 | emaj        | myschema1_mytbl2b_log_seq | M3              |             1 | f
+     614 | emajb       | myschema1_mytbl2b_log_seq | M3              |             1 | f
      615 | myschema2   | myseq1                    | M2              |          1000 | t
      616 | emaj        | myschema2_mytbl1_log_seq  | M2              |            15 | t
      617 | emaj        | myschema2_mytbl2_log_seq  | M2              |             2 | t
-     618 | emaj        | myschema2_myTbl3_log_seq  | M2              |            10 | t
+     618 | emajC       | myschema2_myTbl3_log_seq  | M2              |            10 | t
      619 | myschema2   | myTbl3_col31_seq          | M2              |            20 | t
      620 | emaj        | myschema2_mytbl4_log_seq  | M2              |             1 | f
      621 | emaj        | myschema2_mytbl5_log_seq  | M2              |             3 | t
@@ -1254,7 +1254,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      623 | myschema2   | myseq1                    | M3              |          1003 | t
      624 | emaj        | myschema2_mytbl1_log_seq  | M3              |            15 | t
      625 | emaj        | myschema2_mytbl2_log_seq  | M3              |             2 | t
-     626 | emaj        | myschema2_myTbl3_log_seq  | M3              |            10 | t
+     626 | emajC       | myschema2_myTbl3_log_seq  | M3              |            10 | t
      627 | myschema2   | myTbl3_col31_seq          | M3              |            20 | t
      628 | emaj        | myschema2_mytbl4_log_seq  | M3              |             4 | t
      629 | emaj        | myschema2_mytbl5_log_seq  | M3              |             4 | t
@@ -1262,7 +1262,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      631 | myschema2   | myseq1                    | RLBK_M2_%_START |          1003 | t
      632 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_START |            15 | t
      633 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_START |             2 | t
-     634 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
+     634 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
      635 | myschema2   | myTbl3_col31_seq          | RLBK_M2_%_START |            20 | t
      636 | emaj        | myschema2_mytbl4_log_seq  | RLBK_M2_%_START |             4 | t
      637 | emaj        | myschema2_mytbl5_log_seq  | RLBK_M2_%_START |             4 | t
@@ -1270,7 +1270,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      639 | myschema2   | myseq1                    | RLBK_M2_%_DONE  |          1001 | f
      640 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_DONE  |            15 | t
      641 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_DONE  |             2 | t
-     642 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
+     642 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
      643 | myschema2   | myTbl3_col31_seq          | RLBK_M2_%_DONE  |            20 | t
      644 | emaj        | myschema2_mytbl4_log_seq  | RLBK_M2_%_DONE  |             8 | t
      645 | emaj        | myschema2_mytbl5_log_seq  | RLBK_M2_%_DONE  |             5 | t
@@ -1278,7 +1278,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      647 | myschema2   | myseq1                    | RLBK_M3_%_START |          1001 | f
      648 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M3_%_START |            15 | t
      649 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M3_%_START |             2 | t
-     650 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M3_%_START |            10 | t
+     650 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M3_%_START |            10 | t
      651 | myschema2   | myTbl3_col31_seq          | RLBK_M3_%_START |            20 | t
      652 | emaj        | myschema2_mytbl4_log_seq  | RLBK_M3_%_START |             8 | t
      653 | emaj        | myschema2_mytbl5_log_seq  | RLBK_M3_%_START |             5 | t
@@ -1286,29 +1286,29 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      655 | myschema2   | myseq1                    | RLBK_M3_%_DONE  |          1004 | f
      656 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M3_%_DONE  |            15 | t
      657 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M3_%_DONE  |             2 | t
-     658 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M3_%_DONE  |            10 | t
+     658 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M3_%_DONE  |            10 | t
      659 | myschema2   | myTbl3_col31_seq          | RLBK_M3_%_DONE  |            20 | t
      660 | emaj        | myschema2_mytbl4_log_seq  | RLBK_M3_%_DONE  |            12 | t
      661 | emaj        | myschema2_mytbl5_log_seq  | RLBK_M3_%_DONE  |             6 | t
      662 | emaj        | myschema2_mytbl6_log_seq  | RLBK_M3_%_DONE  |            20 | t
      663 | myschema1   | myTbl3_col31_seq          | M4              |            20 | t
-     664 | emaj        | myschema1_myTbl3_log_seq  | M4              |            10 | t
+     664 | emajC       | myschema1_myTbl3_log_seq  | M4              |            10 | t
      665 | emaj        | myschema1_mytbl1_log_seq  | M4              |            30 | t
      666 | emaj        | myschema1_mytbl4_log_seq  | M4              |             8 | t
      667 | emaj        | myschema1_mytbl2_log_seq  | M4              |             3 | t
-     668 | emaj        | myschema1_mytbl2b_log_seq | M4              |             1 | f
+     668 | emajb       | myschema1_mytbl2b_log_seq | M4              |             1 | f
      669 | myschema1   | myTbl3_col31_seq          | M5              |            20 | t
-     670 | emaj        | myschema1_myTbl3_log_seq  | M5              |            20 | t
+     670 | emajC       | myschema1_myTbl3_log_seq  | M5              |            20 | t
      671 | emaj        | myschema1_mytbl1_log_seq  | M5              |            30 | t
      672 | emaj        | myschema1_mytbl4_log_seq  | M5              |             8 | t
      673 | emaj        | myschema1_mytbl2_log_seq  | M5              |             3 | t
-     674 | emaj        | myschema1_mytbl2b_log_seq | M5              |             1 | f
+     674 | emajb       | myschema1_mytbl2b_log_seq | M5              |             1 | f
      675 | myschema1   | myTbl3_col31_seq          | M6              |            20 | t
-     676 | emaj        | myschema1_myTbl3_log_seq  | M6              |            20 | t
+     676 | emajC       | myschema1_myTbl3_log_seq  | M6              |            20 | t
      677 | emaj        | myschema1_mytbl1_log_seq  | M6              |            30 | t
      678 | emaj        | myschema1_mytbl4_log_seq  | M6              |             8 | t
      679 | emaj        | myschema1_mytbl2_log_seq  | M6              |             3 | t
-     680 | emaj        | myschema1_mytbl2b_log_seq | M6              |             1 | f
+     680 | emajb       | myschema1_mytbl2b_log_seq | M6              |             1 | f
 (89 rows)
 
 -- user tables
@@ -1414,12 +1414,12 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_
      3 | GHI   | 01-02-2010 | INS       | NEW        |    11948
 (3 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
  col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
 (0 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
     11 | 10.00 | INS       | NEW        |    11851
@@ -1496,32 +1496,32 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
  sequ_id | sequ_schema |         sequ_name         | regexp_replace  | sequ_last_val | sequ_is_called 
 ---------+-------------+---------------------------+-----------------+---------------+----------------
      589 | myschema1   | myTbl3_col31_seq          | M1              |            11 | f
-     590 | emaj        | myschema1_myTbl3_log_seq  | M1              |             1 | f
+     590 | emajC       | myschema1_myTbl3_log_seq  | M1              |             1 | f
      591 | emaj        | myschema1_mytbl1_log_seq  | M1              |             1 | f
      592 | emaj        | myschema1_mytbl4_log_seq  | M1              |             1 | f
      593 | emaj        | myschema1_mytbl2_log_seq  | M1              |             1 | f
-     594 | emaj        | myschema1_mytbl2b_log_seq | M1              |             1 | f
+     594 | emajb       | myschema1_mytbl2b_log_seq | M1              |             1 | f
      595 | myschema2   | myseq1                    | M1              |          1000 | f
      596 | emaj        | myschema2_mytbl1_log_seq  | M1              |             1 | f
      597 | emaj        | myschema2_mytbl2_log_seq  | M1              |             1 | f
-     598 | emaj        | myschema2_myTbl3_log_seq  | M1              |             1 | f
+     598 | emajC       | myschema2_myTbl3_log_seq  | M1              |             1 | f
      599 | myschema2   | myTbl3_col31_seq          | M1              |            10 | t
      600 | emaj        | myschema2_mytbl4_log_seq  | M1              |             1 | f
      601 | emaj        | myschema2_mytbl5_log_seq  | M1              |             1 | f
      602 | emaj        | myschema2_mytbl6_log_seq  | M1              |             1 | f
      603 | myschema1   | myTbl3_col31_seq          | M2              |            20 | t
-     604 | emaj        | myschema1_myTbl3_log_seq  | M2              |            10 | t
+     604 | emajC       | myschema1_myTbl3_log_seq  | M2              |            10 | t
      605 | emaj        | myschema1_mytbl1_log_seq  | M2              |            15 | t
      606 | emaj        | myschema1_mytbl4_log_seq  | M2              |             1 | f
      607 | emaj        | myschema1_mytbl2_log_seq  | M2              |             2 | t
-     608 | emaj        | myschema1_mytbl2b_log_seq | M2              |             1 | f
-     610 | emaj        | myschema1_myTbl3_log_seq  | M3              |            10 | t
+     608 | emajb       | myschema1_mytbl2b_log_seq | M2              |             1 | f
+     610 | emajC       | myschema1_myTbl3_log_seq  | M3              |            10 | t
      613 | emaj        | myschema1_mytbl2_log_seq  | M3              |             2 | t
-     614 | emaj        | myschema1_mytbl2b_log_seq | M3              |             1 | f
+     614 | emajb       | myschema1_mytbl2b_log_seq | M3              |             1 | f
      615 | myschema2   | myseq1                    | M2              |          1000 | t
      616 | emaj        | myschema2_mytbl1_log_seq  | M2              |            15 | t
      617 | emaj        | myschema2_mytbl2_log_seq  | M2              |             2 | t
-     618 | emaj        | myschema2_myTbl3_log_seq  | M2              |            10 | t
+     618 | emajC       | myschema2_myTbl3_log_seq  | M2              |            10 | t
      619 | myschema2   | myTbl3_col31_seq          | M2              |            20 | t
      620 | emaj        | myschema2_mytbl4_log_seq  | M2              |             1 | f
      621 | emaj        | myschema2_mytbl5_log_seq  | M2              |             3 | t
@@ -1529,47 +1529,47 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      623 | myschema2   | myseq1                    | M3              |          1003 | t
      624 | emaj        | myschema2_mytbl1_log_seq  | M3              |            15 | t
      625 | emaj        | myschema2_mytbl2_log_seq  | M3              |             2 | t
-     626 | emaj        | myschema2_myTbl3_log_seq  | M3              |            10 | t
+     626 | emajC       | myschema2_myTbl3_log_seq  | M3              |            10 | t
      627 | myschema2   | myTbl3_col31_seq          | M3              |            20 | t
      628 | emaj        | myschema2_mytbl4_log_seq  | M3              |             4 | t
      629 | emaj        | myschema2_mytbl5_log_seq  | M3              |             4 | t
      630 | emaj        | myschema2_mytbl6_log_seq  | M3              |            14 | t
      632 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_START |            15 | t
      633 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_START |             2 | t
-     634 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
+     634 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
      640 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_DONE  |            15 | t
      641 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_DONE  |             2 | t
-     642 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
+     642 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
      648 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M3_%_START |            15 | t
      649 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M3_%_START |             2 | t
-     650 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M3_%_START |            10 | t
+     650 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M3_%_START |            10 | t
      656 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M3_%_DONE  |            15 | t
      657 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M3_%_DONE  |             2 | t
-     658 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M3_%_DONE  |            10 | t
+     658 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M3_%_DONE  |            10 | t
      663 | myschema1   | myTbl3_col31_seq          | M4              |            20 | t
-     664 | emaj        | myschema1_myTbl3_log_seq  | M4              |            10 | t
+     664 | emajC       | myschema1_myTbl3_log_seq  | M4              |            10 | t
      665 | emaj        | myschema1_mytbl1_log_seq  | M4              |            30 | t
      666 | emaj        | myschema1_mytbl4_log_seq  | M4              |             8 | t
      667 | emaj        | myschema1_mytbl2_log_seq  | M4              |             3 | t
-     668 | emaj        | myschema1_mytbl2b_log_seq | M4              |             1 | f
+     668 | emajb       | myschema1_mytbl2b_log_seq | M4              |             1 | f
      669 | myschema1   | myTbl3_col31_seq          | M5              |            20 | t
-     670 | emaj        | myschema1_myTbl3_log_seq  | M5              |            20 | t
+     670 | emajC       | myschema1_myTbl3_log_seq  | M5              |            20 | t
      671 | emaj        | myschema1_mytbl1_log_seq  | M5              |            30 | t
      672 | emaj        | myschema1_mytbl4_log_seq  | M5              |             8 | t
      673 | emaj        | myschema1_mytbl2_log_seq  | M5              |             3 | t
-     674 | emaj        | myschema1_mytbl2b_log_seq | M5              |             1 | f
+     674 | emajb       | myschema1_mytbl2b_log_seq | M5              |             1 | f
      675 | myschema1   | myTbl3_col31_seq          | M6              |            20 | t
-     676 | emaj        | myschema1_myTbl3_log_seq  | M6              |            20 | t
+     676 | emajC       | myschema1_myTbl3_log_seq  | M6              |            20 | t
      677 | emaj        | myschema1_mytbl1_log_seq  | M6              |            30 | t
      678 | emaj        | myschema1_mytbl4_log_seq  | M6              |             8 | t
      679 | emaj        | myschema1_mytbl2_log_seq  | M6              |             3 | t
-     680 | emaj        | myschema1_mytbl2b_log_seq | M6              |             1 | f
+     680 | emajb       | myschema1_mytbl2b_log_seq | M6              |             1 | f
      682 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_START |            15 | t
      683 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_START |             2 | t
-     684 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
+     684 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
      690 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_DONE  |            15 | t
      691 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_DONE  |             2 | t
-     692 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
+     692 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
 (75 rows)
 
 select * from emaj.emaj_fk order by fk_groups, fk_session, fk_name;
@@ -1683,7 +1683,7 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
      2 | DEF   |            | INS       | NEW        |    11888
 (2 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
     11 | 10.00 | INS       | NEW        |    11889
@@ -1789,32 +1789,32 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
  sequ_id | sequ_schema |         sequ_name         | regexp_replace  | sequ_last_val | sequ_is_called 
 ---------+-------------+---------------------------+-----------------+---------------+----------------
      589 | myschema1   | myTbl3_col31_seq          | M1              |            11 | f
-     590 | emaj        | myschema1_myTbl3_log_seq  | M1              |             1 | f
+     590 | emajC       | myschema1_myTbl3_log_seq  | M1              |             1 | f
      591 | emaj        | myschema1_mytbl1_log_seq  | M1              |             1 | f
      592 | emaj        | myschema1_mytbl4_log_seq  | M1              |             1 | f
      593 | emaj        | myschema1_mytbl2_log_seq  | M1              |             1 | f
-     594 | emaj        | myschema1_mytbl2b_log_seq | M1              |             1 | f
+     594 | emajb       | myschema1_mytbl2b_log_seq | M1              |             1 | f
      595 | myschema2   | myseq1                    | M1              |          1000 | f
      596 | emaj        | myschema2_mytbl1_log_seq  | M1              |             1 | f
      597 | emaj        | myschema2_mytbl2_log_seq  | M1              |             1 | f
-     598 | emaj        | myschema2_myTbl3_log_seq  | M1              |             1 | f
+     598 | emajC       | myschema2_myTbl3_log_seq  | M1              |             1 | f
      599 | myschema2   | myTbl3_col31_seq          | M1              |            10 | t
      600 | emaj        | myschema2_mytbl4_log_seq  | M1              |             1 | f
      601 | emaj        | myschema2_mytbl5_log_seq  | M1              |             1 | f
      602 | emaj        | myschema2_mytbl6_log_seq  | M1              |             1 | f
      603 | myschema1   | myTbl3_col31_seq          | M2              |            20 | t
-     604 | emaj        | myschema1_myTbl3_log_seq  | M2              |            10 | t
+     604 | emajC       | myschema1_myTbl3_log_seq  | M2              |            10 | t
      605 | emaj        | myschema1_mytbl1_log_seq  | M2              |            15 | t
      606 | emaj        | myschema1_mytbl4_log_seq  | M2              |             1 | f
      607 | emaj        | myschema1_mytbl2_log_seq  | M2              |             2 | t
-     608 | emaj        | myschema1_mytbl2b_log_seq | M2              |             1 | f
-     610 | emaj        | myschema1_myTbl3_log_seq  | M3              |            10 | t
+     608 | emajb       | myschema1_mytbl2b_log_seq | M2              |             1 | f
+     610 | emajC       | myschema1_myTbl3_log_seq  | M3              |            10 | t
      613 | emaj        | myschema1_mytbl2_log_seq  | M3              |             2 | t
-     614 | emaj        | myschema1_mytbl2b_log_seq | M3              |             1 | f
+     614 | emajb       | myschema1_mytbl2b_log_seq | M3              |             1 | f
      615 | myschema2   | myseq1                    | M2              |          1000 | t
      616 | emaj        | myschema2_mytbl1_log_seq  | M2              |            15 | t
      617 | emaj        | myschema2_mytbl2_log_seq  | M2              |             2 | t
-     618 | emaj        | myschema2_myTbl3_log_seq  | M2              |            10 | t
+     618 | emajC       | myschema2_myTbl3_log_seq  | M2              |            10 | t
      619 | myschema2   | myTbl3_col31_seq          | M2              |            20 | t
      620 | emaj        | myschema2_mytbl4_log_seq  | M2              |             1 | f
      621 | emaj        | myschema2_mytbl5_log_seq  | M2              |             3 | t
@@ -1822,56 +1822,56 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      623 | myschema2   | myseq1                    | M3              |          1003 | t
      624 | emaj        | myschema2_mytbl1_log_seq  | M3              |            15 | t
      625 | emaj        | myschema2_mytbl2_log_seq  | M3              |             2 | t
-     626 | emaj        | myschema2_myTbl3_log_seq  | M3              |            10 | t
+     626 | emajC       | myschema2_myTbl3_log_seq  | M3              |            10 | t
      627 | myschema2   | myTbl3_col31_seq          | M3              |            20 | t
      628 | emaj        | myschema2_mytbl4_log_seq  | M3              |             4 | t
      629 | emaj        | myschema2_mytbl5_log_seq  | M3              |             4 | t
      630 | emaj        | myschema2_mytbl6_log_seq  | M3              |            14 | t
      632 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_START |            15 | t
      633 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_START |             2 | t
-     634 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
+     634 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
      640 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_DONE  |            15 | t
      641 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_DONE  |             2 | t
-     642 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
+     642 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
      648 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M3_%_START |            15 | t
      649 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M3_%_START |             2 | t
-     650 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M3_%_START |            10 | t
+     650 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M3_%_START |            10 | t
      656 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M3_%_DONE  |            15 | t
      657 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M3_%_DONE  |             2 | t
-     658 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M3_%_DONE  |            10 | t
+     658 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M3_%_DONE  |            10 | t
      663 | myschema1   | myTbl3_col31_seq          | M4              |            20 | t
-     664 | emaj        | myschema1_myTbl3_log_seq  | M4              |            10 | t
+     664 | emajC       | myschema1_myTbl3_log_seq  | M4              |            10 | t
      665 | emaj        | myschema1_mytbl1_log_seq  | M4              |            30 | t
      666 | emaj        | myschema1_mytbl4_log_seq  | M4              |             8 | t
      667 | emaj        | myschema1_mytbl2_log_seq  | M4              |             3 | t
-     668 | emaj        | myschema1_mytbl2b_log_seq | M4              |             1 | f
+     668 | emajb       | myschema1_mytbl2b_log_seq | M4              |             1 | f
      669 | myschema1   | myTbl3_col31_seq          | M5              |            20 | t
-     670 | emaj        | myschema1_myTbl3_log_seq  | M5              |            20 | t
+     670 | emajC       | myschema1_myTbl3_log_seq  | M5              |            20 | t
      671 | emaj        | myschema1_mytbl1_log_seq  | M5              |            30 | t
      672 | emaj        | myschema1_mytbl4_log_seq  | M5              |             8 | t
      673 | emaj        | myschema1_mytbl2_log_seq  | M5              |             3 | t
-     674 | emaj        | myschema1_mytbl2b_log_seq | M5              |             1 | f
-     676 | emaj        | myschema1_myTbl3_log_seq  | M6              |            20 | t
+     674 | emajb       | myschema1_mytbl2b_log_seq | M5              |             1 | f
+     676 | emajC       | myschema1_myTbl3_log_seq  | M6              |            20 | t
      679 | emaj        | myschema1_mytbl2_log_seq  | M6              |             3 | t
-     680 | emaj        | myschema1_mytbl2b_log_seq | M6              |             1 | f
+     680 | emajb       | myschema1_mytbl2b_log_seq | M6              |             1 | f
      682 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_START |            15 | t
      683 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_START |             2 | t
-     684 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
+     684 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_START |            10 | t
      690 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_DONE  |            15 | t
      691 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_DONE  |             2 | t
-     692 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
+     692 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE  |            10 | t
      697 | myschema1   | myTbl3_col31_seq          | RLBK_M4_%_START |            20 | t
-     698 | emaj        | myschema1_myTbl3_log_seq  | RLBK_M4_%_START |            20 | t
+     698 | emajC       | myschema1_myTbl3_log_seq  | RLBK_M4_%_START |            20 | t
      699 | emaj        | myschema1_mytbl1_log_seq  | RLBK_M4_%_START |            32 | t
      700 | emaj        | myschema1_mytbl4_log_seq  | RLBK_M4_%_START |            12 | t
      701 | emaj        | myschema1_mytbl2_log_seq  | RLBK_M4_%_START |             3 | t
-     702 | emaj        | myschema1_mytbl2b_log_seq | RLBK_M4_%_START |             1 | f
+     702 | emajb       | myschema1_mytbl2b_log_seq | RLBK_M4_%_START |             1 | f
      703 | myschema1   | myTbl3_col31_seq          | RLBK_M4_%_DONE  |            20 | t
-     704 | emaj        | myschema1_myTbl3_log_seq  | RLBK_M4_%_DONE  |            30 | t
+     704 | emajC       | myschema1_myTbl3_log_seq  | RLBK_M4_%_DONE  |            30 | t
      705 | emaj        | myschema1_mytbl1_log_seq  | RLBK_M4_%_DONE  |            33 | t
      706 | emaj        | myschema1_mytbl4_log_seq  | RLBK_M4_%_DONE  |            14 | t
      707 | emaj        | myschema1_mytbl2_log_seq  | RLBK_M4_%_DONE  |             3 | t
-     708 | emaj        | myschema1_mytbl2b_log_seq | RLBK_M4_%_DONE  |             1 | f
+     708 | emajb       | myschema1_mytbl2b_log_seq | RLBK_M4_%_DONE  |             1 | f
 (84 rows)
 
 -- check that mark_log_stat_before_next column is always equal to either NULL or the emaj_log_stat_rows() function's result
@@ -2014,12 +2014,12 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_
      3 | GHI   | 01-02-2010 | INS       | NEW        |    11948
 (3 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
  col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
 (0 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
     11 | 10.00 | INS       | NEW        |    11851
@@ -2141,18 +2141,18 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      595 | myschema2   | myseq1                    | M1                           |          1000 | f
      596 | emaj        | myschema2_mytbl1_log_seq  | M1                           |             1 | f
      597 | emaj        | myschema2_mytbl2_log_seq  | M1                           |             1 | f
-     598 | emaj        | myschema2_myTbl3_log_seq  | M1                           |             1 | f
+     598 | emajC       | myschema2_myTbl3_log_seq  | M1                           |             1 | f
      599 | myschema2   | myTbl3_col31_seq          | M1                           |            10 | t
      600 | emaj        | myschema2_mytbl4_log_seq  | M1                           |             1 | f
      601 | emaj        | myschema2_mytbl5_log_seq  | M1                           |             1 | f
      602 | emaj        | myschema2_mytbl6_log_seq  | M1                           |             1 | f
-     610 | emaj        | myschema1_myTbl3_log_seq  | M3                           |            10 | t
+     610 | emajC       | myschema1_myTbl3_log_seq  | M3                           |            10 | t
      613 | emaj        | myschema1_mytbl2_log_seq  | M3                           |             2 | t
-     614 | emaj        | myschema1_mytbl2b_log_seq | M3                           |             1 | f
+     614 | emajb       | myschema1_mytbl2b_log_seq | M3                           |             1 | f
      615 | myschema2   | myseq1                    | M2                           |          1000 | t
      616 | emaj        | myschema2_mytbl1_log_seq  | M2                           |            15 | t
      617 | emaj        | myschema2_mytbl2_log_seq  | M2                           |             2 | t
-     618 | emaj        | myschema2_myTbl3_log_seq  | M2                           |            10 | t
+     618 | emajC       | myschema2_myTbl3_log_seq  | M2                           |            10 | t
      619 | myschema2   | myTbl3_col31_seq          | M2                           |            20 | t
      620 | emaj        | myschema2_mytbl4_log_seq  | M2                           |             1 | f
      621 | emaj        | myschema2_mytbl5_log_seq  | M2                           |             3 | t
@@ -2160,50 +2160,50 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      623 | myschema2   | myseq1                    | M3                           |          1003 | t
      624 | emaj        | myschema2_mytbl1_log_seq  | M3                           |            15 | t
      625 | emaj        | myschema2_mytbl2_log_seq  | M3                           |             2 | t
-     626 | emaj        | myschema2_myTbl3_log_seq  | M3                           |            10 | t
+     626 | emajC       | myschema2_myTbl3_log_seq  | M3                           |            10 | t
      627 | myschema2   | myTbl3_col31_seq          | M3                           |            20 | t
      628 | emaj        | myschema2_mytbl4_log_seq  | M3                           |             4 | t
      629 | emaj        | myschema2_mytbl5_log_seq  | M3                           |             4 | t
      630 | emaj        | myschema2_mytbl6_log_seq  | M3                           |            14 | t
      632 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_START              |            15 | t
      633 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_START              |             2 | t
-     634 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_START              |            10 | t
+     634 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_START              |            10 | t
      640 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_DONE               |            15 | t
      641 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_DONE               |             2 | t
-     642 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE               |            10 | t
+     642 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE               |            10 | t
      648 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M3_%_START              |            15 | t
      649 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M3_%_START              |             2 | t
-     650 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M3_%_START              |            10 | t
+     650 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M3_%_START              |            10 | t
      656 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M3_%_DONE               |            15 | t
      657 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M3_%_DONE               |             2 | t
-     658 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M3_%_DONE               |            10 | t
+     658 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M3_%_DONE               |            10 | t
      663 | myschema1   | myTbl3_col31_seq          | M4                           |            20 | t
-     664 | emaj        | myschema1_myTbl3_log_seq  | M4                           |            10 | t
+     664 | emajC       | myschema1_myTbl3_log_seq  | M4                           |            10 | t
      665 | emaj        | myschema1_mytbl1_log_seq  | M4                           |            30 | t
      666 | emaj        | myschema1_mytbl4_log_seq  | M4                           |             8 | t
      667 | emaj        | myschema1_mytbl2_log_seq  | M4                           |             3 | t
-     668 | emaj        | myschema1_mytbl2b_log_seq | M4                           |             1 | f
+     668 | emajb       | myschema1_mytbl2b_log_seq | M4                           |             1 | f
      669 | myschema1   | myTbl3_col31_seq          | M5                           |            20 | t
-     670 | emaj        | myschema1_myTbl3_log_seq  | M5                           |            20 | t
+     670 | emajC       | myschema1_myTbl3_log_seq  | M5                           |            20 | t
      671 | emaj        | myschema1_mytbl1_log_seq  | M5                           |            30 | t
      672 | emaj        | myschema1_mytbl4_log_seq  | M5                           |             8 | t
      673 | emaj        | myschema1_mytbl2_log_seq  | M5                           |             3 | t
-     674 | emaj        | myschema1_mytbl2b_log_seq | M5                           |             1 | f
-     676 | emaj        | myschema1_myTbl3_log_seq  | M6                           |            20 | t
+     674 | emajb       | myschema1_mytbl2b_log_seq | M5                           |             1 | f
+     676 | emajC       | myschema1_myTbl3_log_seq  | M6                           |            20 | t
      679 | emaj        | myschema1_mytbl2_log_seq  | M6                           |             3 | t
-     680 | emaj        | myschema1_mytbl2b_log_seq | M6                           |             1 | f
+     680 | emajb       | myschema1_mytbl2b_log_seq | M6                           |             1 | f
      682 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_START              |            15 | t
      683 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_START              |             2 | t
-     684 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_START              |            10 | t
+     684 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_START              |            10 | t
      690 | emaj        | myschema2_mytbl1_log_seq  | RLBK_M2_%_DONE               |            15 | t
      691 | emaj        | myschema2_mytbl2_log_seq  | RLBK_M2_%_DONE               |             2 | t
-     692 | emaj        | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE               |            10 | t
+     692 | emajC       | myschema2_myTbl3_log_seq  | RLBK_M2_%_DONE               |            10 | t
      697 | myschema1   | myTbl3_col31_seq          | Before logged rollback to M4 |            20 | t
-     698 | emaj        | myschema1_myTbl3_log_seq  | Before logged rollback to M4 |            20 | t
+     698 | emajC       | myschema1_myTbl3_log_seq  | Before logged rollback to M4 |            20 | t
      699 | emaj        | myschema1_mytbl1_log_seq  | Before logged rollback to M4 |            32 | t
      700 | emaj        | myschema1_mytbl4_log_seq  | Before logged rollback to M4 |            12 | t
      701 | emaj        | myschema1_mytbl2_log_seq  | Before logged rollback to M4 |             3 | t
-     702 | emaj        | myschema1_mytbl2b_log_seq | Before logged rollback to M4 |             1 | f
+     702 | emajb       | myschema1_mytbl2b_log_seq | Before logged rollback to M4 |             1 | f
 (66 rows)
 
 select * from emaj.emaj_fk order by fk_groups, fk_session, fk_name;
@@ -2226,49 +2226,49 @@ select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole 
 (5 rows)
 
 select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from emaj.emaj_rlbk_stat 
-  order by rlbk_datetime, rlbk_schema, rlbk_tbl_fk, rlbk_operation;
+  order by rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_operation;
   rlbk_operation  | rlbk_schema |    rlbk_tbl_fk    | rlbk_nb_rows 
 ------------------+-------------+-------------------+--------------
- rlbk             | myschema2   | mytbl4            |            4
- rlbk             | myschema2   | mytbl5            |            1
- rlbk             | myschema2   | mytbl6            |            3
- set_fk_immediate | myschema2   | mytbl4_col43_fkey |            4
- add_fk           | myschema2   | mytbl4_col44_fkey |            2
- rlbk             | myschema2   | mytbl4            |            4
- rlbk             | myschema2   | mytbl5            |            1
- rlbk             | myschema2   | mytbl6            |            3
- set_fk_immediate | myschema2   | mytbl4_col43_fkey |            4
- add_fk           | myschema2   | mytbl4_col44_fkey |            2
  del_log          | myschema1   | mytbl1            |            3
  rlbk             | myschema1   | mytbl1            |            3
- del_log          | myschema1   | mytbl4            |            8
- rlbk             | myschema1   | mytbl4            |            8
- set_fk_immediate | myschema1   | mytbl4_col43_fkey |            8
- add_fk           | myschema1   | mytbl4_col44_fkey |            0
- rlbk             | myschema2   | mytbl4            |           12
- rlbk             | myschema2   | mytbl5            |            3
- rlbk             | myschema2   | mytbl6            |            9
- set_fk_immediate | myschema2   | mytbl4_col43_fkey |           12
- add_fk           | myschema2   | mytbl4_col44_fkey |            2
- del_log          | myschema2   | mytbl4            |           20
- rlbk             | myschema2   | mytbl4            |           20
- del_log          | myschema2   | mytbl5            |            5
- rlbk             | myschema2   | mytbl5            |            5
- del_log          | myschema2   | mytbl6            |           15
- rlbk             | myschema2   | mytbl6            |           15
- set_fk_immediate | myschema2   | mytbl4_col43_fkey |           20
- add_fk           | myschema2   | mytbl4_col44_fkey |            2
  del_log          | myschema1   | mytbl1            |            1
  rlbk             | myschema1   | mytbl1            |            1
+ rlbk             | myschema1   | mytbl1            |            1
+ rlbk             | myschema1   | myTbl3            |           10
+ del_log          | myschema1   | mytbl4            |            8
+ rlbk             | myschema1   | mytbl4            |            8
  del_log          | myschema1   | mytbl4            |            2
  rlbk             | myschema1   | mytbl4            |            2
- set_fk_immediate | myschema1   | mytbl4_col43_fkey |            2
- add_fk           | myschema1   | mytbl4_col44_fkey |            0
- rlbk             | myschema1   | myTbl3            |           10
- rlbk             | myschema1   | mytbl1            |            1
  rlbk             | myschema1   | mytbl4            |            2
+ set_fk_immediate | myschema1   | mytbl4_col43_fkey |            8
+ set_fk_immediate | myschema1   | mytbl4_col43_fkey |            2
  set_fk_immediate | myschema1   | mytbl4_col43_fkey |            2
  add_fk           | myschema1   | mytbl4_col44_fkey |            0
+ add_fk           | myschema1   | mytbl4_col44_fkey |            0
+ add_fk           | myschema1   | mytbl4_col44_fkey |            0
+ rlbk             | myschema2   | mytbl4            |            4
+ rlbk             | myschema2   | mytbl4            |            4
+ rlbk             | myschema2   | mytbl4            |           12
+ del_log          | myschema2   | mytbl4            |           20
+ rlbk             | myschema2   | mytbl4            |           20
+ set_fk_immediate | myschema2   | mytbl4_col43_fkey |            4
+ set_fk_immediate | myschema2   | mytbl4_col43_fkey |            4
+ set_fk_immediate | myschema2   | mytbl4_col43_fkey |           12
+ set_fk_immediate | myschema2   | mytbl4_col43_fkey |           20
+ add_fk           | myschema2   | mytbl4_col44_fkey |            2
+ add_fk           | myschema2   | mytbl4_col44_fkey |            2
+ add_fk           | myschema2   | mytbl4_col44_fkey |            2
+ add_fk           | myschema2   | mytbl4_col44_fkey |            2
+ rlbk             | myschema2   | mytbl5            |            1
+ rlbk             | myschema2   | mytbl5            |            1
+ rlbk             | myschema2   | mytbl5            |            3
+ del_log          | myschema2   | mytbl5            |            5
+ rlbk             | myschema2   | mytbl5            |            5
+ rlbk             | myschema2   | mytbl6            |            3
+ rlbk             | myschema2   | mytbl6            |            3
+ rlbk             | myschema2   | mytbl6            |            9
+ del_log          | myschema2   | mytbl6            |           15
+ rlbk             | myschema2   | mytbl6            |           15
 (40 rows)
 
 -- user tables
@@ -2338,12 +2338,12 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_
 -------+-------+-------+-----------+------------+----------
 (0 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
  col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
 (0 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
     11 | 10.00 | UPD       | OLD        |    11950
@@ -2418,10 +2418,13 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 select * from emaj.emaj_verify_all();
                    emaj_verify_all                    
 ------------------------------------------------------
- Global checking: no error encountered
+ Global checks: no error encountered
+ Checking schema emaj: no error encountered
+ Checking schema emajb: no error encountered
+ Checking schema "emajC": no error encountered
  Checking tables group myGroup1: no error encountered
  Checking tables group myGroup2: no error encountered
-(3 rows)
+(6 rows)
 
 select emaj.emaj_create_group('dummyGroup');
 ERROR:  emaj_create_group: Group dummyGroup is unknown in emaj_group_def table.
