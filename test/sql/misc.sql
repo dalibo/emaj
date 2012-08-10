@@ -364,18 +364,24 @@ select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup
 select * from emaj.emaj_verify_all();
 -- detection of an orphan log table
 begin;
-  create table emaj.dummy_log (col1 int);
-  select * from emaj.emaj_verify_all();
+  create table emaj.dummy1_log (col1 int);
+  create table emaj.dummy2_log (col1 int);
+  select * from emaj.emaj_verify_all()
+    order by 1;
 rollback;
 -- detection of an orphan log function
 begin;
-  create function emajb.dummy_log_fnct () returns int language sql as $$ select 0 $$;
-  select * from emaj.emaj_verify_all();
+  create function emajb.dummy1_log_fnct () returns int language sql as $$ select 0 $$;
+  create function emajb.dummy2_log_fnct () returns int language sql as $$ select 0 $$;
+  select * from emaj.emaj_verify_all()
+    order by 1;
 rollback;
 -- detection of an orphan rollback function
 begin;
-  create function "emajC".dummy_rlbk_fnct () returns int language sql as $$ select 0 $$;
-  select * from emaj.emaj_verify_all();
+  create function "emajC".dummy1_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  create function "emajC".dummy2_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  select * from emaj.emaj_verify_all()
+    order by 1;
 rollback;
 
 -- tests on groups errors

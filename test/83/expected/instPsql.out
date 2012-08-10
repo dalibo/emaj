@@ -1131,7 +1131,7 @@ $emaj_verify_all$
           FROM pg_class, pg_namespace
           WHERE relnamespace = pg_namespace.oid AND nspname = r_schema.rel_log_schema 
             AND relkind = 'r' AND relname LIKE E'%\\_log'
-            AND relname NOT IN (SELECT rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation) 
+            AND relname NOT IN (SELECT rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation)
       LOOP
         RETURN NEXT r_object.msg;
         v_errorFound = TRUE;
