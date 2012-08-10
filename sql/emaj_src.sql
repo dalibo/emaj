@@ -3811,7 +3811,6 @@ $emaj_snap_log_group$
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
     v_pgVersion       TEXT := emaj._pg_version();
-    v_emajSchema      TEXT := 'emaj';
     v_nbTb            INT := 0;
     r_tblsq           RECORD;
     v_realFirstMark   TEXT;
@@ -3908,7 +3907,7 @@ $emaj_snap_log_group$
 -- generate the file for sequences state at start mark
     v_fileName := v_dir || '/' || v_groupName || '_sequences_at_' || v_realFirstMark;
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
-            ' FROM ' || v_emajSchema || '.emaj_sequence, ' || v_emajSchema || '.emaj_relation' ||
+            ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_mark = ' || quote_literal(v_realFirstMark) || ' AND ' || 
             ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
@@ -3919,7 +3918,7 @@ $emaj_snap_log_group$
 -- generate the file for sequences state at end mark, if specified
       v_fileName := v_dir || '/' || v_groupName || '_sequences_at_' || v_realLastMark;
       v_stmt= 'COPY (SELECT emaj_sequence.*' ||
-              ' FROM ' || v_emajSchema || '.emaj_sequence, ' || v_emajSchema || '.emaj_relation' ||
+              ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
               ' WHERE sequ_mark = ' || quote_literal(v_realLastMark) || ' AND ' || 
               ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
               ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
@@ -3959,7 +3958,7 @@ $emaj_snap_log_group$
 -- generate the file for sequences current state
       v_fileName := v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_timestamp,'HH24.MI.SS.MS');
       v_stmt= 'COPY (SELECT emaj_sequence.*' ||
-              ' FROM ' || v_emajSchema || '.emaj_sequence, ' || v_emajSchema || '.emaj_relation' ||
+              ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
               ' WHERE sequ_mark = ' || quote_literal(v_pseudoMark) || ' AND ' || 
               ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
               ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
@@ -3967,8 +3966,7 @@ $emaj_snap_log_group$
               coalesce (v_copyOptions, '');
       EXECUTE v_stmt;
 -- delete sequences state that have just been inserted into the emaj_sequence table.
-      EXECUTE 'DELETE FROM ' || v_emajSchema || '.emaj_sequence' ||
-              ' USING ' || v_emajSchema || '.emaj_relation' ||
+      EXECUTE 'DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation' ||
               ' WHERE sequ_mark = ' || quote_literal(v_pseudoMark) || ' AND' || 
               ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
               ' sequ_schema = rel_schema AND sequ_name = rel_tblseq';
