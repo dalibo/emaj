@@ -592,12 +592,12 @@ $_create_tbl$
     END IF;
 -- prepare TABLESPACE clauses for data and index
     IF v_logDatTsp IS NOT NULL THEN
-      v_dataTblSpace = 'TABLESPACE ' || v_logDatTsp;
+      v_dataTblSpace = 'TABLESPACE ' || quote_ident(v_logDatTsp);
     ELSE
       v_dataTblSpace = '';
     END IF;
     IF v_logIdxTsp IS NOT NULL THEN
-      v_idxTblSpace = 'TABLESPACE ' || v_logIdxTsp;
+      v_idxTblSpace = 'TABLESPACE ' || quote_ident(v_logIdxTsp);
     ELSE
       v_idxTblSpace = '';
     END IF;
