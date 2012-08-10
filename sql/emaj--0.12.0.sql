@@ -1825,7 +1825,7 @@ $_start_groups$
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
       if v_resetLog THEN
 -- ... if requested by the user, call the emaj_reset_group function to erase remaining traces from previous logs
-        SELECT emaj._rst_group(v_groupNames[v_i]) INTO v_nbTb;
+        SELECT emaj._reset_group(v_groupNames[v_i]) INTO v_nbTb;
       END IF;
 -- ... and check foreign keys with tables outside the group
       PERFORM emaj._check_fk_groups(array[v_groupNames[v_i]]);
@@ -3161,7 +3161,7 @@ $emaj_reset_group$
       RAISE EXCEPTION 'emaj_reset_group: Group % cannot be reset because it is not in idle state. An emaj_stop_group function must be previously executed.', v_groupName;
     END IF;
 -- perform the reset operation
-    SELECT emaj._rst_group(v_groupName) INTO v_nbTb;
+    SELECT emaj._reset_group(v_groupName) INTO v_nbTb;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('RESET_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
@@ -3171,7 +3171,7 @@ $emaj_reset_group$;
 COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS
 $$Resets all log tables content of a stopped E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj._rst_group(v_groupName TEXT) 
+CREATE or REPLACE FUNCTION emaj._reset_group(v_groupName TEXT) 
 RETURNS INT LANGUAGE plpgsql AS 
 $_rst_group$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences saves
@@ -4338,7 +4338,7 @@ REVOKE ALL ON FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT,
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step7(v_groupNames TEXT[], v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj._rst_group(v_groupName TEXT) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj._reset_group(v_groupName TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
@@ -4407,7 +4407,7 @@ GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TE
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step7(v_groupNames TEXT[], v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) TO emaj_adm; 
-GRANT EXECUTE ON FUNCTION emaj._rst_group(v_groupName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._reset_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
