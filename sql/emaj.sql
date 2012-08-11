@@ -527,6 +527,44 @@ $_check_new_mark$
   END;
 $_check_new_mark$;
 
+CREATE or REPLACE FUNCTION emaj._forbid_truncate_fnct() RETURNS TRIGGER AS 
+$_forbid_truncate_fnct$
+-- The function is triggered by the execution of TRUNCATE SQL verb on tables of a rollbackable group 
+-- in logging mode.
+-- It can only be called with postgresql in a version greater or equal 8.4
+  BEGIN
+    IF (TG_OP = 'TRUNCATE') THEN
+      RAISE EXCEPTION 'emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (%.%) are currently protected by E-Maj. Consider stopping the group before issuing a TRUNCATE.', TG_TABLE_SCHEMA, TG_TABLE_NAME;
+    END IF;
+    RETURN NULL;
+  END;
+$_forbid_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE or REPLACE FUNCTION emaj._log_truncate_fnct() RETURNS TRIGGER AS 
+$_log_truncate_fnct$
+-- The function is triggered by the execution of TRUNCATE SQL verb on tables of an audit_only group 
+-- in logging mode.
+-- It can only be called with postgresql in a version greater or equal 8.4
+  DECLARE
+    v_logSchema      TEXT;
+    v_logTableName   TEXT;
+  BEGIN
+    IF (TG_OP = 'TRUNCATE') THEN
+      SELECT rel_log_schema INTO v_logSchema FROM emaj.emaj_relation
+        WHERE rel_schema = TG_TABLE_SCHEMA AND rel_tblseq = TG_TABLE_NAME;
+      v_logTableName := quote_ident(v_logSchema) || '.' || quote_ident(TG_TABLE_SCHEMA || '_' || TG_TABLE_NAME || '_log');
+      EXECUTE 'INSERT INTO ' || v_logTableName || ' (emaj_verb) VALUES (''TRU'')';
+    END IF;
+    RETURN NULL;
+  END;
+$_log_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
+
+---------------------------------------------------
+--                                               --
+-- Elementary functions for tables and sequences --
+--                                               --
+---------------------------------------------------
+
 CREATE or REPLACE FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_create_tbl$
@@ -1091,117 +1129,6 @@ $_log_stat_table$
     RETURN (v_endLastValue - v_beginLastValue - v_sumHole);
   END;
 $_log_stat_table$;
-
-CREATE or REPLACE FUNCTION emaj.emaj_verify_all() 
-RETURNS SETOF TEXT LANGUAGE plpgsql AS 
-$emaj_verify_all$
--- The function verifies the consistency between all emaj objects present inside emaj schema and 
--- emaj objects related to tables and sequences referenced in emaj_relation table.
--- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
-  DECLARE
-    v_pgVersion      TEXT := emaj._pg_version();
-    v_msgPrefix      TEXT;
-    v_errorFound     BOOLEAN;
-    r_schema         RECORD;
-    r_object         RECORD;
-    r_group          RECORD;
-  BEGIN
--- Global checks
-    v_msgPrefix = 'Global checks: ';
-    v_errorFound = FALSE;
--- detect if the current postgres version is at least 8.1
-    IF v_pgVersion < '8.2' THEN
-      RETURN NEXT 'Global checks: the current postgres version (' || version() || ') is not compatible with E-Maj.';
-      v_errorFound = TRUE;
-    END IF;
--- final message for global check if no error has been yet detected 
-    IF NOT v_errorFound THEN
-      RETURN NEXT v_msgPrefix || 'no error encountered';
-    END IF;
--- check each E-Maj primary and secondary schema 
-    FOR r_schema IN
-      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation WHERE rel_kind = 'r' ORDER BY rel_log_schema
-      LOOP
-      v_msgPrefix = 'Checking schema ' || quote_ident(r_schema.rel_log_schema) || ': ';
-      v_errorFound = FALSE;
--- detect log tables that don't correspond to a row in the groups table
-      FOR r_object IN 
-        SELECT v_msgPrefix || 'table ' || relname || ' is not linked to an application table declared in the emaj_relation table' AS msg
-          FROM pg_class, pg_namespace
-          WHERE relnamespace = pg_namespace.oid AND nspname = r_schema.rel_log_schema 
-            AND relkind = 'r' AND relname LIKE E'%\\_log'
-            AND relname NOT IN (SELECT rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation)
-      LOOP
-        RETURN NEXT r_object.msg;
-        v_errorFound = TRUE;
-      END LOOP;
--- verify that all log, rollback and truncate functions correspond to a row in the groups table
-      FOR r_object IN 
-        SELECT v_msgPrefix || 'function ' || proname  || ' is not linked to an application table declared in the emaj_relation table' AS msg
-          FROM pg_proc, pg_namespace
-          WHERE pronamespace = pg_namespace.oid AND nspname = r_schema.rel_log_schema AND 
-            ((proname LIKE E'%\\_log\\_fnct' AND proname NOT IN (
-              SELECT rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation))
-             OR
-             (proname LIKE E'%\\_rlbk\\_fnct' AND proname NOT IN (
-              SELECT rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation))
-            )
-      LOOP
-        RETURN NEXT r_object.msg;
-        v_errorFound = TRUE;
-      END LOOP;
--- final message for global check if no error has been yet detected 
-      IF NOT v_errorFound THEN
-        RETURN NEXT v_msgPrefix || 'no error encountered';
-      END IF;
-    END LOOP;
--- verify all groups defined in emaj_group
-    FOR r_group IN
-      SELECT group_name FROM emaj.emaj_group ORDER BY 1
-    LOOP 
-      FOR r_object IN 
-        SELECT msg FROM emaj._verify_group(r_group.group_name, false) msg
-      LOOP
-        RETURN NEXT r_object.msg;
-      END LOOP;
-    END LOOP;
-    RETURN;
-  END;
-$emaj_verify_all$;
-COMMENT ON FUNCTION emaj.emaj_verify_all() IS
-$$Verifies the consistency between existing E-Maj and application objects.$$;
-
-CREATE or REPLACE FUNCTION emaj._forbid_truncate_fnct() RETURNS TRIGGER AS 
-$_forbid_truncate_fnct$
--- The function is triggered by the execution of TRUNCATE SQL verb on tables of a rollbackable group 
--- in logging mode.
--- It can only be called with postgresql in a version greater or equal 8.4
-  BEGIN
-    IF (TG_OP = 'TRUNCATE') THEN
-      RAISE EXCEPTION 'emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (%.%) are currently protected by E-Maj. Consider stopping the group before issuing a TRUNCATE.', TG_TABLE_SCHEMA, TG_TABLE_NAME;
-    END IF;
-    RETURN NULL;
-  END;
-$_forbid_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE or REPLACE FUNCTION emaj._log_truncate_fnct() RETURNS TRIGGER AS 
-$_log_truncate_fnct$
--- The function is triggered by the execution of TRUNCATE SQL verb on tables of an audit_only group 
--- in logging mode.
--- It can only be called with postgresql in a version greater or equal 8.4
-  DECLARE
-    v_logSchema      TEXT;
-    v_logTableName   TEXT;
-  BEGIN
-    IF (TG_OP = 'TRUNCATE') THEN
-      SELECT rel_log_schema INTO v_logSchema FROM emaj.emaj_relation
-        WHERE rel_schema = TG_TABLE_SCHEMA AND rel_tblseq = TG_TABLE_NAME;
-      v_logTableName := quote_ident(v_logSchema) || '.' || quote_ident(TG_TABLE_SCHEMA || '_' || TG_TABLE_NAME || '_log');
-      EXECUTE 'INSERT INTO ' || v_logTableName || ' (emaj_verb) VALUES (''TRU'')';
-    END IF;
-    RETURN NULL;
-  END;
-$_log_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ------------------------------------------------
 ----                                        ----
@@ -4286,6 +4213,91 @@ INSERT INTO pg_description (objoid, classoid, objsubid, description)
 
 ------------------------------------
 --                                --
+-- Global purpose functions       --
+--                                --
+------------------------------------
+
+CREATE or REPLACE FUNCTION emaj.emaj_verify_all() 
+RETURNS SETOF TEXT LANGUAGE plpgsql AS 
+$emaj_verify_all$
+-- The function verifies the consistency between all emaj objects present inside emaj schema and 
+-- emaj objects related to tables and sequences referenced in emaj_relation table.
+-- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
+  DECLARE
+    v_pgVersion      TEXT := emaj._pg_version();
+    v_msgPrefix      TEXT;
+    v_errorFound     BOOLEAN;
+    r_schema         RECORD;
+    r_object         RECORD;
+    r_group          RECORD;
+  BEGIN
+-- Global checks
+    v_msgPrefix = 'Global checks: ';
+    v_errorFound = FALSE;
+-- detect if the current postgres version is at least 8.1
+    IF v_pgVersion < '8.2' THEN
+      RETURN NEXT 'Global checks: the current postgres version (' || version() || ') is not compatible with E-Maj.';
+      v_errorFound = TRUE;
+    END IF;
+-- final message for global check if no error has been yet detected 
+    IF NOT v_errorFound THEN
+      RETURN NEXT v_msgPrefix || 'no error encountered';
+    END IF;
+-- check each E-Maj primary and secondary schema 
+    FOR r_schema IN
+      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation WHERE rel_kind = 'r' ORDER BY rel_log_schema
+      LOOP
+      v_msgPrefix = 'Checking schema ' || quote_ident(r_schema.rel_log_schema) || ': ';
+      v_errorFound = FALSE;
+-- detect log tables that don't correspond to a row in the groups table
+      FOR r_object IN 
+        SELECT v_msgPrefix || 'table ' || relname || ' is not linked to an application table declared in the emaj_relation table' AS msg
+          FROM pg_class, pg_namespace
+          WHERE relnamespace = pg_namespace.oid AND nspname = r_schema.rel_log_schema 
+            AND relkind = 'r' AND relname LIKE E'%\\_log'
+            AND relname NOT IN (SELECT rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation)
+      LOOP
+        RETURN NEXT r_object.msg;
+        v_errorFound = TRUE;
+      END LOOP;
+-- verify that all log, rollback and truncate functions correspond to a row in the groups table
+      FOR r_object IN 
+        SELECT v_msgPrefix || 'function ' || proname  || ' is not linked to an application table declared in the emaj_relation table' AS msg
+          FROM pg_proc, pg_namespace
+          WHERE pronamespace = pg_namespace.oid AND nspname = r_schema.rel_log_schema AND 
+            ((proname LIKE E'%\\_log\\_fnct' AND proname NOT IN (
+              SELECT rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation))
+             OR
+             (proname LIKE E'%\\_rlbk\\_fnct' AND proname NOT IN (
+              SELECT rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation))
+            )
+      LOOP
+        RETURN NEXT r_object.msg;
+        v_errorFound = TRUE;
+      END LOOP;
+-- final message for global check if no error has been yet detected 
+      IF NOT v_errorFound THEN
+        RETURN NEXT v_msgPrefix || 'no error encountered';
+      END IF;
+    END LOOP;
+-- verify all groups defined in emaj_group
+    FOR r_group IN
+      SELECT group_name FROM emaj.emaj_group ORDER BY 1
+    LOOP 
+      FOR r_object IN 
+        SELECT msg FROM emaj._verify_group(r_group.group_name, false) msg
+      LOOP
+        RETURN NEXT r_object.msg;
+      END LOOP;
+    END LOOP;
+    RETURN;
+  END;
+$emaj_verify_all$;
+COMMENT ON FUNCTION emaj.emaj_verify_all() IS
+$$Verifies the consistency between existing E-Maj and application objects.$$;
+
+------------------------------------
+--                                --
 -- rights to emaj roles           --
 --                                --
 ------------------------------------
@@ -4344,15 +4356,14 @@ REVOKE ALL ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._log_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._log_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
@@ -4401,6 +4412,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 
 -- give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj._txid_current() TO emaj_adm;
@@ -4412,15 +4424,14 @@ GRANT EXECUTE ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._log_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._log_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
@@ -4470,21 +4481,22 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT,
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 
 -- give appropriate rights on functions to emaj_viewer role
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 
 -- add grants to emaj roles on some system functions, needed for ppa plugin
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_viewer;
