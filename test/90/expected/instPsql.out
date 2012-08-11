@@ -4164,6 +4164,51 @@ INSERT INTO pg_description (objoid, classoid, objsubid, description)
 -- Global purpose functions       --
 --                                --
 ------------------------------------
+CREATE or REPLACE FUNCTION emaj._verify_schema(v_schemaName TEXT) 
+RETURNS SETOF TEXT LANGUAGE plpgsql AS 
+$_verify_schema$
+-- The function verifies that E-Maj schema only contains E-Maj objects.
+-- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
+  DECLARE
+    v_msgPrefix      TEXT;
+    v_errorFound     BOOLEAN;
+    r_object         RECORD;
+  BEGIN
+    v_msgPrefix = 'Checking schema ' || quote_ident(v_schemaName) || ': ';
+    v_errorFound = FALSE;
+-- detect log tables that don't correspond to a row in the groups table
+    FOR r_object IN 
+      SELECT v_msgPrefix || 'table ' || relname || ' is not linked to an application table declared in the emaj_relation table' AS msg
+        FROM pg_class, pg_namespace
+        WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
+          AND relkind = 'r' AND relname LIKE E'%\\_log'
+          AND relname NOT IN (SELECT rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation)
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
+-- verify that all log, rollback and truncate functions correspond to a row in the groups table
+    FOR r_object IN 
+      SELECT v_msgPrefix || 'function ' || proname  || ' is not linked to an application table declared in the emaj_relation table' AS msg
+        FROM pg_proc, pg_namespace
+        WHERE pronamespace = pg_namespace.oid AND nspname = v_schemaName AND 
+          ((proname LIKE E'%\\_log\\_fnct' AND proname NOT IN (
+            SELECT rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation))
+           OR
+           (proname LIKE E'%\\_rlbk\\_fnct' AND proname NOT IN (
+            SELECT rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation))
+          )
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
+-- final message for global check if no error has been yet detected 
+    IF NOT v_errorFound THEN
+      RETURN NEXT v_msgPrefix || 'no error encountered';
+    END IF;
+    RETURN;
+  END;
+$_verify_schema$;
 CREATE or REPLACE FUNCTION emaj.emaj_verify_all() 
 RETURNS SETOF TEXT LANGUAGE plpgsql AS 
 $emaj_verify_all$
@@ -4190,42 +4235,15 @@ $emaj_verify_all$
     IF NOT v_errorFound THEN
       RETURN NEXT v_msgPrefix || 'no error encountered';
     END IF;
--- check each E-Maj primary and secondary schema 
+-- check each E-Maj primary and secondary schema
     FOR r_schema IN
       SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation WHERE rel_kind = 'r' ORDER BY rel_log_schema
       LOOP
-      v_msgPrefix = 'Checking schema ' || quote_ident(r_schema.rel_log_schema) || ': ';
-      v_errorFound = FALSE;
--- detect log tables that don't correspond to a row in the groups table
       FOR r_object IN 
-        SELECT v_msgPrefix || 'table ' || relname || ' is not linked to an application table declared in the emaj_relation table' AS msg
-          FROM pg_class, pg_namespace
-          WHERE relnamespace = pg_namespace.oid AND nspname = r_schema.rel_log_schema 
-            AND relkind = 'r' AND relname LIKE E'%\\_log'
-            AND relname NOT IN (SELECT rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation)
-      LOOP
+        SELECT msg FROM emaj._verify_schema(r_schema.rel_log_schema) msg
+        LOOP
         RETURN NEXT r_object.msg;
-        v_errorFound = TRUE;
       END LOOP;
--- verify that all log, rollback and truncate functions correspond to a row in the groups table
-      FOR r_object IN 
-        SELECT v_msgPrefix || 'function ' || proname  || ' is not linked to an application table declared in the emaj_relation table' AS msg
-          FROM pg_proc, pg_namespace
-          WHERE pronamespace = pg_namespace.oid AND nspname = r_schema.rel_log_schema AND 
-            ((proname LIKE E'%\\_log\\_fnct' AND proname NOT IN (
-              SELECT rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation))
-             OR
-             (proname LIKE E'%\\_rlbk\\_fnct' AND proname NOT IN (
-              SELECT rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation))
-            )
-      LOOP
-        RETURN NEXT r_object.msg;
-        v_errorFound = TRUE;
-      END LOOP;
--- final message for global check if no error has been yet detected 
-      IF NOT v_errorFound THEN
-        RETURN NEXT v_msgPrefix || 'no error encountered';
-      END IF;
     END LOOP;
 -- verify all groups defined in emaj_group
     FOR r_group IN
@@ -4347,6 +4365,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._verify_schema(v_schemaName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 -- give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj._txid_current() TO emaj_adm;
@@ -4414,6 +4433,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT,
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._verify_schema(v_schemaName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 -- give appropriate rights on functions to emaj_viewer role
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
@@ -4428,6 +4448,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._verify_schema(v_schemaName TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 -- add grants to emaj roles on some system functions, needed for ppa plugin
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_viewer;
@@ -4815,7 +4836,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    66
+    67
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
