@@ -4223,34 +4223,42 @@ $_verify_schema$
 -- The function verifies that E-Maj schema only contains E-Maj objects.
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
   DECLARE
-    v_msgPrefix      TEXT;
-    v_errorFound     BOOLEAN;
-    r_object         RECORD;
+    v_emajSchema    TEXT := 'emaj';
+    v_schemaPrefix  TEXT := 'emaj';
+    v_msgPrefix     TEXT;
+    v_errorFound    BOOLEAN;
+    r_object        RECORD;
   BEGIN
     v_msgPrefix = 'Checking schema ' || quote_ident(v_schemaName) || ': ';
     v_errorFound = FALSE;
--- detect log tables that don't correspond to a row in the groups table
+-- detect tables that don't correspond to an emaj internal table or a log table
     FOR r_object IN 
-      SELECT v_msgPrefix || 'table ' || relname || ' is not linked to an application table declared in the emaj_relation table' AS msg
+      SELECT v_msgPrefix || 'table ' || relname || ' is not linked to any created tables group' AS msg
         FROM pg_class, pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
-          AND relkind = 'r' AND relname LIKE E'%\\_log'
-          AND relname NOT IN (SELECT rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation)
+          AND relkind = 'r'                               -- all tables of the given schema
+          AND relname NOT IN                              -- except regular log tables
+              (SELECT rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation 
+                 WHERE rel_log_schema = v_schemaName)
+                                                          -- and except internal emaj tables in the emaj schema
+          AND (v_schemaName <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')
     LOOP
       RETURN NEXT r_object.msg;
       v_errorFound = TRUE;
     END LOOP;
--- verify that all log, rollback and truncate functions correspond to a row in the groups table
+-- verify functions that don't correspond to any emaj function 
     FOR r_object IN 
-      SELECT v_msgPrefix || 'function ' || proname  || ' is not linked to an application table declared in the emaj_relation table' AS msg
-        FROM pg_proc, pg_namespace
-        WHERE pronamespace = pg_namespace.oid AND nspname = v_schemaName AND 
-          ((proname LIKE E'%\\_log\\_fnct' AND proname NOT IN (
-            SELECT rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation))
-           OR
-           (proname LIKE E'%\\_rlbk\\_fnct' AND proname NOT IN (
-            SELECT rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation))
-          )
+      SELECT v_msgPrefix || 'function ' || proname  || ' is not linked to any created tables group' AS msg
+        FROM pg_proc, pg_namespace                        -- all functions of the given schema
+        WHERE pronamespace = pg_namespace.oid AND nspname = v_schemaName 
+          AND proname NOT IN (                            -- except regular log functions
+            SELECT rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation 
+              WHERE rel_log_schema = v_schemaName)
+          AND proname NOT IN (                            -- except regular rollback functions
+            SELECT rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation
+              WHERE rel_log_schema = v_schemaName)
+                                                          -- and except internal emaj functions in the emaj schema
+          AND (v_schemaName <> v_emajSchema OR (proname NOT LIKE E'emaj\\_%' AND proname NOT LIKE E'\\_%'))
     LOOP
       RETURN NEXT r_object.msg;
       v_errorFound = TRUE;

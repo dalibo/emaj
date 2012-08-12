@@ -777,19 +777,21 @@ select * from emaj.emaj_verify_all();
  Checking tables group phil's group#3",: no error encountered
 (8 rows)
 
--- detection of an orphan log table
+-- detection of unattended tables in E-Maj schemas
 begin;
   create table emaj.dummy1_log (col1 int);
-  create table emaj.dummy2_log (col1 int);
+  create table emaj.dummy2 (col1 int);
+  create table emajb.emaj_dummy (col1 int);
+  create table emaj.emaj_dummy (col1 int);      -- only this is not detected
   select * from emaj.emaj_verify_all()
     order by 1;
-                                                 emaj_verify_all                                                  
-------------------------------------------------------------------------------------------------------------------
+                                  emaj_verify_all                                  
+-----------------------------------------------------------------------------------
  Checking schema "emaj #'3": no error encountered
- Checking schema emajb: no error encountered
+ Checking schema emajb: table emaj_dummy is not linked to any created tables group
  Checking schema "emajC": no error encountered
- Checking schema emaj: table dummy1_log is not linked to an application table declared in the emaj_relation table
- Checking schema emaj: table dummy2_log is not linked to an application table declared in the emaj_relation table
+ Checking schema emaj: table dummy1_log is not linked to any created tables group
+ Checking schema emaj: table dummy2 is not linked to any created tables group
  Checking tables group myGroup1: no error encountered
  Checking tables group myGroup2: no error encountered
  Checking tables group phil's group#3",: no error encountered
@@ -797,39 +799,22 @@ begin;
 (9 rows)
 
 rollback;
--- detection of an orphan log function
+-- detection of unattended function in E-Maj schemas
 begin;
-  create function emajb.dummy1_log_fnct () returns int language sql as $$ select 0 $$;
-  create function emajb.dummy2_log_fnct () returns int language sql as $$ select 0 $$;
-  select * from emaj.emaj_verify_all()
-    order by 1;
-                                                      emaj_verify_all                                                      
----------------------------------------------------------------------------------------------------------------------------
- Checking schema "emaj #'3": no error encountered
- Checking schema emajb: function dummy1_log_fnct is not linked to an application table declared in the emaj_relation table
- Checking schema emajb: function dummy2_log_fnct is not linked to an application table declared in the emaj_relation table
- Checking schema "emajC": no error encountered
- Checking schema emaj: no error encountered
- Checking tables group myGroup1: no error encountered
- Checking tables group myGroup2: no error encountered
- Checking tables group phil's group#3",: no error encountered
- Global checks: no error encountered
-(9 rows)
-
-rollback;
--- detection of an orphan rollback function
-begin;
-  create function "emajC".dummy1_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj.dummy1_log_fnct () returns int language sql as $$ select 0 $$;
   create function "emajC".dummy2_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  create function "emajC".dummy3_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this is not detected
+  create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this is not detected
   select * from emaj.emaj_verify_all()
     order by 1;
-                                                       emaj_verify_all                                                        
-------------------------------------------------------------------------------------------------------------------------------
+                                       emaj_verify_all                                        
+----------------------------------------------------------------------------------------------
  Checking schema "emaj #'3": no error encountered
  Checking schema emajb: no error encountered
- Checking schema "emajC": function dummy1_rlbk_fnct is not linked to an application table declared in the emaj_relation table
- Checking schema "emajC": function dummy2_rlbk_fnct is not linked to an application table declared in the emaj_relation table
- Checking schema emaj: no error encountered
+ Checking schema "emajC": function dummy2_rlbk_fnct is not linked to any created tables group
+ Checking schema "emajC": function dummy3_fnct is not linked to any created tables group
+ Checking schema emaj: function dummy1_log_fnct is not linked to any created tables group
  Checking tables group myGroup1: no error encountered
  Checking tables group myGroup2: no error encountered
  Checking tables group phil's group#3",: no error encountered
@@ -1004,9 +989,9 @@ begin;
                                                                 emaj_verify_all                                                                 
 ------------------------------------------------------------------------------------------------------------------------------------------------
  Global checks: no error encountered
- Checking schema emaj: table dummy_log is not linked to an application table declared in the emaj_relation table
- Checking schema emaj: function dummy_log_fnct is not linked to an application table declared in the emaj_relation table
- Checking schema emaj: function dummy_rlbk_fnct is not linked to an application table declared in the emaj_relation table
+ Checking schema emaj: table dummy_log is not linked to any created tables group
+ Checking schema emaj: function dummy_log_fnct is not linked to any created tables group
+ Checking schema emaj: function dummy_rlbk_fnct is not linked to any created tables group
  Checking schema "emaj #'3": no error encountered
  Checking schema emajb: no error encountered
  Checking schema "emajC": no error encountered

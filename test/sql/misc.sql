@@ -362,24 +362,22 @@ select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup
 -----------------------------
 -- should be OK
 select * from emaj.emaj_verify_all();
--- detection of an orphan log table
+-- detection of unattended tables in E-Maj schemas
 begin;
   create table emaj.dummy1_log (col1 int);
-  create table emaj.dummy2_log (col1 int);
+  create table emaj.dummy2 (col1 int);
+  create table emajb.emaj_dummy (col1 int);
+  create table emaj.emaj_dummy (col1 int);      -- only this is not detected
   select * from emaj.emaj_verify_all()
     order by 1;
 rollback;
--- detection of an orphan log function
+-- detection of unattended function in E-Maj schemas
 begin;
-  create function emajb.dummy1_log_fnct () returns int language sql as $$ select 0 $$;
-  create function emajb.dummy2_log_fnct () returns int language sql as $$ select 0 $$;
-  select * from emaj.emaj_verify_all()
-    order by 1;
-rollback;
--- detection of an orphan rollback function
-begin;
-  create function "emajC".dummy1_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj.dummy1_log_fnct () returns int language sql as $$ select 0 $$;
   create function "emajC".dummy2_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  create function "emajC".dummy3_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this is not detected
+  create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this is not detected
   select * from emaj.emaj_verify_all()
     order by 1;
 rollback;
