@@ -17,7 +17,9 @@ Enhancements:
     emaj_group_def table support this feature: grpdef_log_dat_tsp and 
     grpdef_log_idx_tsp. If they contain NULL, tspemaj is used if it exists.
   - emaj_verify() function now detects more unattended tables and functions 
-    in E-Maj schemas (i.e. not only those which looks like emaj components)
+    in E-Maj schemas (i.e. not only those which looks like emaj components).
+    It also detects views, sequences, composite types, domains and foreign 
+    table that should not be present in E-Maj schemas.
   - a new variation of the emaj_get_previous_mark_group() function returns 
     the name of the mark that immediately precedes a given mark for a group.
   - minor improvements in the code and in comments.
