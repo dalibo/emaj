@@ -782,7 +782,7 @@ begin;
   create table emaj.dummy1_log (col1 int);
   create table emaj.dummy2 (col1 int);
   create table emajb.emaj_dummy (col1 int);
-  create table emaj.emaj_dummy (col1 int);      -- only this is not detected
+  create table emaj.emaj_dummy (col1 int);               -- this one is not detected
   select * from emaj.emaj_verify_all()
     order by 1;
                                   emaj_verify_all                                  
@@ -799,13 +799,13 @@ begin;
 (9 rows)
 
 rollback;
--- detection of unattended function in E-Maj schemas
+-- detection of unattended functions in E-Maj schemas
 begin;
   create function emaj.dummy1_log_fnct () returns int language sql as $$ select 0 $$;
   create function "emajC".dummy2_rlbk_fnct () returns int language sql as $$ select 0 $$;
   create function "emajC".dummy3_fnct () returns int language sql as $$ select 0 $$;
-  create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this is not detected
-  create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this is not detected
+  create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this one is not detected
+  create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this one is not detected
   select * from emaj.emaj_verify_all()
     order by 1;
                                        emaj_verify_all                                        
@@ -815,6 +815,119 @@ begin;
  Checking schema "emajC": function dummy2_rlbk_fnct is not linked to any created tables group
  Checking schema "emajC": function dummy3_fnct is not linked to any created tables group
  Checking schema emaj: function dummy1_log_fnct is not linked to any created tables group
+ Checking tables group myGroup1: no error encountered
+ Checking tables group myGroup2: no error encountered
+ Checking tables group phil's group#3",: no error encountered
+ Global checks: no error encountered
+(9 rows)
+
+rollback;
+-- detection of unattended sequences in E-Maj schemas
+begin;
+  create table emaj.dummy1_log (col1 serial);
+NOTICE:  CREATE TABLE will create implicit sequence "dummy1_log_col1_seq" for serial column "dummy1_log.col1"
+  create sequence emajb.dummy2_seq;
+  create sequence emajb.dummy3_log_seq;
+  create sequence emaj.emaj_dummy4_seq;                  -- this one is not detected
+  select * from emaj.emaj_verify_all()
+    order by 1;
+                                       emaj_verify_all                                        
+----------------------------------------------------------------------------------------------
+ Checking schema "emaj #'3": no error encountered
+ Checking schema emajb: sequence dummy2_seq is not linked to any created tables group
+ Checking schema emajb: sequence dummy3_log_seq is not linked to any created tables group
+ Checking schema "emajC": no error encountered
+ Checking schema emaj: sequence dummy1_log_col1_seq is not linked to any created tables group
+ Checking schema emaj: table dummy1_log is not linked to any created tables group
+ Checking tables group myGroup1: no error encountered
+ Checking tables group myGroup2: no error encountered
+ Checking tables group phil's group#3",: no error encountered
+ Global checks: no error encountered
+(10 rows)
+
+rollback;
+-- detection of unattended types in E-Maj schemas
+begin;
+  create type emaj.dummy1_type as (col1 int);
+  create type emajb.dummy2_type as (col1 int);
+  create type emajb.dummy3_type as (col1 int);
+  create type emaj.emaj_dummy4_type as (col1 int);       -- this one is not detected
+  select * from emaj.emaj_verify_all()
+    order by 1;
+                          emaj_verify_all                          
+-------------------------------------------------------------------
+ Checking schema "emaj #'3": no error encountered
+ Checking schema emajb: type dummy2_type is not an E-Maj component
+ Checking schema emajb: type dummy3_type is not an E-Maj component
+ Checking schema "emajC": no error encountered
+ Checking schema emaj: type dummy1_type is not an E-Maj component
+ Checking tables group myGroup1: no error encountered
+ Checking tables group myGroup2: no error encountered
+ Checking tables group phil's group#3",: no error encountered
+ Global checks: no error encountered
+(9 rows)
+
+rollback;
+-- detection of unattended views in E-Maj schemas
+begin;
+  create view emaj.dummy1_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
+  create view emaj.dummy2_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
+  select * from emaj.emaj_verify_all()
+    order by 1;
+                         emaj_verify_all                          
+------------------------------------------------------------------
+ Checking schema "emaj #'3": no error encountered
+ Checking schema emajb: no error encountered
+ Checking schema "emajC": no error encountered
+ Checking schema emaj: view dummy1_view is not an E-Maj component
+ Checking schema emaj: view dummy2_view is not an E-Maj component
+ Checking tables group myGroup1: no error encountered
+ Checking tables group myGroup2: no error encountered
+ Checking tables group phil's group#3",: no error encountered
+ Global checks: no error encountered
+(9 rows)
+
+rollback;
+-- detection of unattended foreign tables in E-Maj schemas
+-- (this only gives pertinent results with postgres 9.1+ version)
+begin;
+  create extension file_fdw;
+ERROR:  syntax error at or near "extension"
+LINE 1: create extension file_fdw;
+               ^
+  create foreign data wrapper file handler file_fdw_handler;
+ERROR:  syntax error at or near "foreign"
+LINE 1: create foreign data wrapper file handler file_fdw_handler;
+               ^
+  create server file_server foreign data wrapper file;
+ERROR:  syntax error at or near "server"
+LINE 1: create server file_server foreign data wrapper file;
+               ^
+  create foreign table emaj.dummy1_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
+ERROR:  syntax error at or near "foreign"
+LINE 1: create foreign table emaj.dummy1_ftbl (ligne TEXT) server fi...
+               ^
+  create foreign table emaj.dummy2_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
+ERROR:  syntax error at or near "foreign"
+LINE 1: create foreign table emaj.dummy2_ftbl (ligne TEXT) server fi...
+               ^
+  select * from emaj.emaj_verify_all()
+    order by 1;
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+rollback;
+-- detection of unattended domains in E-Maj schemas
+begin;
+  create domain "emajC".dummy1_domain as int check (VALUE > 0);
+  create domain "emajC".dummy2_domain as int check (VALUE > 0);
+  select * from emaj.emaj_verify_all()
+    order by 1;
+                             emaj_verify_all                             
+-------------------------------------------------------------------------
+ Checking schema "emaj #'3": no error encountered
+ Checking schema emajb: no error encountered
+ Checking schema "emajC": domain dummy1_domain is not an E-Maj component
+ Checking schema "emajC": domain dummy2_domain is not an E-Maj component
+ Checking schema emaj: no error encountered
  Checking tables group myGroup1: no error encountered
  Checking tables group myGroup2: no error encountered
  Checking tables group phil's group#3",: no error encountered

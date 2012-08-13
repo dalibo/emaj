@@ -4263,6 +4263,63 @@ $_verify_schema$
       RETURN NEXT r_object.msg;
       v_errorFound = TRUE;
     END LOOP;
+-- verify sequences that don't correspond to any emaj sequence 
+    FOR r_object IN 
+      SELECT v_msgPrefix || 'sequence ' || relname || ' is not linked to any created tables group' AS msg
+        FROM pg_class, pg_namespace
+        WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
+          AND relkind = 'S'                               -- all sequences of the given schema
+          AND relname NOT IN                              -- except regular log table's sequences
+              (SELECT emaj._build_log_seq_name(rel_schema, rel_tblseq) FROM emaj.emaj_relation 
+                 WHERE rel_log_schema = v_schemaName)
+                                                          -- and except internal emaj sequences in the emaj schema
+          AND (v_schemaName <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
+-- verify composite types that don't correspond to any emaj type 
+    FOR r_object IN 
+      SELECT v_msgPrefix || 'type ' || relname || ' is not an E-Maj component' AS msg
+        FROM pg_class, pg_namespace
+        WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
+          AND relkind = 'c'                               -- all composite types of the given schema
+                                                          -- and except internal emaj types in the emaj schema
+          AND (v_schemaName <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
+-- verify views 
+    FOR r_object IN 
+      SELECT v_msgPrefix || 'view ' || relname || ' is not an E-Maj component' AS msg
+        FROM pg_class, pg_namespace
+        WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
+          AND relkind = 'v'                               -- all views of the given schema
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
+-- verify foreign tables 
+    FOR r_object IN 
+      SELECT v_msgPrefix || 'foreign table ' || relname || ' is not an E-Maj component' AS msg
+        FROM pg_class, pg_namespace
+        WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
+          AND relkind = 'f'                               -- all foreign tables of the given schema
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
+-- verify domains 
+    FOR r_object IN 
+      SELECT v_msgPrefix || 'domain ' || typname || ' is not an E-Maj component' AS msg
+        FROM pg_type, pg_namespace
+        WHERE typnamespace = pg_namespace.oid AND nspname = v_schemaName 
+          AND typisdefined and typtype = 'd'              -- all domains of the given schema
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
 -- final message for global check if no error has been yet detected 
     IF NOT v_errorFound THEN
       RETURN NEXT v_msgPrefix || 'no error encountered';

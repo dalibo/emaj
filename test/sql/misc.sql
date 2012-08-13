@@ -367,17 +367,60 @@ begin;
   create table emaj.dummy1_log (col1 int);
   create table emaj.dummy2 (col1 int);
   create table emajb.emaj_dummy (col1 int);
-  create table emaj.emaj_dummy (col1 int);      -- only this is not detected
+  create table emaj.emaj_dummy (col1 int);               -- this one is not detected
   select * from emaj.emaj_verify_all()
     order by 1;
 rollback;
--- detection of unattended function in E-Maj schemas
+-- detection of unattended functions in E-Maj schemas
 begin;
   create function emaj.dummy1_log_fnct () returns int language sql as $$ select 0 $$;
   create function "emajC".dummy2_rlbk_fnct () returns int language sql as $$ select 0 $$;
   create function "emajC".dummy3_fnct () returns int language sql as $$ select 0 $$;
-  create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this is not detected
-  create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this is not detected
+  create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this one is not detected
+  create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this one is not detected
+  select * from emaj.emaj_verify_all()
+    order by 1;
+rollback;
+-- detection of unattended sequences in E-Maj schemas
+begin;
+  create table emaj.dummy1_log (col1 serial);
+  create sequence emajb.dummy2_seq;
+  create sequence emajb.dummy3_log_seq;
+  create sequence emaj.emaj_dummy4_seq;                  -- this one is not detected
+  select * from emaj.emaj_verify_all()
+    order by 1;
+rollback;
+-- detection of unattended types in E-Maj schemas
+begin;
+  create type emaj.dummy1_type as (col1 int);
+  create type emajb.dummy2_type as (col1 int);
+  create type emajb.dummy3_type as (col1 int);
+  create type emaj.emaj_dummy4_type as (col1 int);       -- this one is not detected
+  select * from emaj.emaj_verify_all()
+    order by 1;
+rollback;
+-- detection of unattended views in E-Maj schemas
+begin;
+  create view emaj.dummy1_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
+  create view emaj.dummy2_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
+  select * from emaj.emaj_verify_all()
+    order by 1;
+rollback;
+-- detection of unattended foreign tables in E-Maj schemas
+-- (this only gives pertinent results with postgres 9.1+ version)
+begin;
+  create extension file_fdw;
+  create foreign data wrapper file handler file_fdw_handler;
+  create server file_server foreign data wrapper file;
+  create foreign table emaj.dummy1_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
+  create foreign table emaj.dummy2_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
+  select * from emaj.emaj_verify_all()
+    order by 1;
+rollback;
+-- detection of unattended domains in E-Maj schemas
+begin;
+  create domain "emajC".dummy1_domain as int check (VALUE > 0);
+  create domain "emajC".dummy2_domain as int check (VALUE > 0);
   select * from emaj.emaj_verify_all()
     order by 1;
 rollback;
