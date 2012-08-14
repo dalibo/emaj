@@ -224,4 +224,3 @@ SELECT pg_proc.proname
   WHERE nspname = 'emaj' AND proname LIKE E'emaj\\_%' AND 
         pg_description.description='E-Maj internal function';
 
-

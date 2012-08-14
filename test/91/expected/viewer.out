@@ -80,16 +80,16 @@ select count(*) from emaj.mySchema1_myTbl1_log;
 -- authorized functions
 -----------------------------
 select * from emaj.emaj_verify_all();
-                       emaj_verify_all                        
---------------------------------------------------------------
- Global checks: no error encountered
- Checking schema emaj: no error encountered
- Checking schema "emaj #'3": no error encountered
- Checking schema emajb: no error encountered
- Checking schema "emajC": no error encountered
- Checking tables group myGroup1: no error encountered
- Checking tables group myGroup2: no error encountered
- Checking tables group phil's group#3",: no error encountered
+                      emaj_verify_all                      
+-----------------------------------------------------------
+ Global checks: no error detected
+ Checking schema emaj: no error detected
+ Checking schema "emaj #'3": no error detected
+ Checking schema emajb: no error detected
+ Checking schema "emajC": no error detected
+ Checking tables group myGroup1: no error detected
+ Checking tables group myGroup2: no error detected
+ Checking tables group phil's group#3",: no error detected
 (8 rows)
 
 select substring(emaj.emaj_get_previous_mark_group('myGroup1', current_timestamp) FOR 5 FROM 1);

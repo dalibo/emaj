@@ -83,6 +83,16 @@ begin;
   select emaj.emaj_rollback_group('myGroup1','GeneratedStopMark');
 rollback;
 
+-- missing application table and mono-group rollback
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_rollback_group('myGroup2','Mark21');
+rollback;
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
+rollback;
+
 -- should be OK
 select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_rollback_group('myGroup2','Mark21');
@@ -97,6 +107,16 @@ select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
+
+-- missing application table and multi-groups rollback
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
+rollback;
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
+rollback;
 
 -- restart groups
 select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');

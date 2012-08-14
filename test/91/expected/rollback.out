@@ -279,6 +279,27 @@ CONTEXT:  SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 8 at RETURN
 rollback;
+-- missing application table and mono-group rollback
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_rollback_group('myGroup2','Mark21');
+ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist anymore.
+CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_group(v_groupNames[v_i],true)"
+PL/pgSQL function "_rlbk_groups_step1" line 41 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+PL/pgSQL function "emaj_rollback_group" line 8 at RETURN
+rollback;
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
+ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist anymore.
+CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_group(v_groupNames[v_i],true)"
+PL/pgSQL function "_rlbk_groups_step1" line 41 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+PL/pgSQL function "emaj_logged_rollback_group" line 12 at RETURN
+rollback;
 -- should be OK
 select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
  emaj_rollback_group 
@@ -334,6 +355,27 @@ select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
                            3
 (1 row)
 
+-- missing application table and multi-groups rollback
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
+ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist anymore.
+CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_group(v_groupNames[v_i],true)"
+PL/pgSQL function "_rlbk_groups_step1" line 41 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+PL/pgSQL function "emaj_rollback_groups" line 8 at RETURN
+rollback;
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
+ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist anymore.
+CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_group(v_groupNames[v_i],true)"
+PL/pgSQL function "_rlbk_groups_step1" line 41 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+PL/pgSQL function "emaj_logged_rollback_groups" line 12 at RETURN
+rollback;
 -- restart groups
 select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
  emaj_stop_groups 

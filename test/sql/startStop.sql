@@ -15,6 +15,11 @@ select emaj.emaj_start_group(NULL,NULL);
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
 -- reserved mark name
 select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
+-- missing application table
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_start_group('myGroup2','M1');
+rollback;
 
 -- should be OK
 select emaj.emaj_start_group('myGroup1','Mark1');
@@ -63,6 +68,11 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 -- unknown group
 select emaj.emaj_stop_group(NULL);
 select emaj.emaj_stop_group('unkownGroup');
+-- missing application table
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_stop_group('myGroup2');
+rollback;
 
 -- should be OK
 select emaj.emaj_stop_group('myGroup1');
@@ -95,62 +105,6 @@ select emaj.emaj_start_group('myGroup1','Foo%Bar');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -----------------------------
--- test _verify_group function
------------------------------
--- detection of an incompatible postgres version
-begin;
-  update emaj.emaj_group set group_pg_version = 
-    case when substr(group_pg_version,1,3)='8.2' or substr(group_pg_version,1,3)='8.3' then '8.4RC1' 
-         when substr(group_pg_version,1,3)>='8.3' then '8.2.0'
-    end
-    where group_name = 'myGroup2';
-  select emaj.emaj_start_group('myGroup2','M1');
-rollback;
--- detection of a missing application table
-begin;
-  drop table mySchema2."myTbl3" cascade;
-  select emaj.emaj_start_group('myGroup2','M1');
-rollback;
--- detection of a missing log table
-begin;
-  drop table emaj.mySchema2_myTbl1_log;
-  select emaj.emaj_start_group('myGroup2','M1');
-rollback;
--- detection of a missing log function
-begin;
-  drop function emaj.mySchema2_myTbl1_log_fnct() cascade;
-  select emaj.emaj_start_group('myGroup2','M1');
-rollback;
--- detection of a missing rollback function
-begin;
-  drop function emaj.mySchema2_myTbl1_rlbk_fnct(bigint);
-  select emaj.emaj_start_group('myGroup2','M1');
-rollback;
--- detection of a missing log trigger
-begin;
-  drop trigger mySchema2_myTbl1_emaj_log_trg on mySchema2.myTbl1;
-  select emaj.emaj_start_group('myGroup2','M1');
-rollback;
--- detection of a missing truncate trigger (only exists with pg8.4+)
-begin;
-  drop trigger mySchema2_myTbl1_emaj_trunc_trg on mySchema2.myTbl1;
-  select emaj.emaj_start_group('myGroup2','M1');
-rollback;
--- detection of a discrepancies between application and log tables
-begin;
-  alter table mySchema2.myTbl1 drop column col13;
-  select emaj.emaj_start_group('myGroup2','M1');
-rollback;
-begin;
-  alter table mySchema2.myTbl1 alter column col12 type text;
-  select emaj.emaj_start_group('myGroup2','M1');
-rollback;
-begin;
-  alter table mySchema2.myTbl1 add column col99 smallint;
-  select emaj.emaj_start_group('myGroup2','M1');
-rollback;
-
------------------------------
 -- emaj_start_groups() tests
 -----------------------------
 select emaj.emaj_stop_group('myGroup1');
@@ -169,6 +123,12 @@ select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 select emaj.emaj_start_group('myGroup2','Mark1',true);
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',false);
 select emaj.emaj_stop_group('myGroup2');
+
+-- missing application table
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
+rollback;
 
 -- should be OK, with a warning on fkey between tables from different groups and warning on group names array content
 begin;
@@ -194,6 +154,12 @@ select emaj.emaj_stop_groups(NULL);
 select emaj.emaj_stop_groups('{""}');
 select emaj.emaj_stop_groups('{"unknownGroup",""}');
 select emaj.emaj_stop_groups('{"myGroup1","unknownGroup"}');
+
+-- missing application table
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
+rollback;
 
 -- should be OK
 select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
