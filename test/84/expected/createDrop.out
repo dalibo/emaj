@@ -274,7 +274,7 @@ select emaj.emaj_stop_group('myGroup1');
 begin;
   create table emajb.dummy_log (col1 int);
   select emaj.emaj_drop_group('myGroup1');
-ERROR:  _drop_group: cannot drop schema emajb. It probably owns unattended objects.
+ERROR:  _drop_group: cannot drop schema emajb. It probably owns unattended objects. Use the emaj_verify_all() function to get details
 CONTEXT:  SQL statement "SELECT emaj._drop_group( $1 , TRUE)"
 PL/pgSQL function "emaj_drop_group" line 11 at SQL statement
 rollback;

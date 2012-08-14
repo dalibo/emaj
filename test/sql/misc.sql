@@ -1,5 +1,6 @@
 -- misc.sql : test miscellaneous functions
 --
+
 -----------------------------
 -- emaj_reset_group() test
 -----------------------------
@@ -432,6 +433,16 @@ begin;
   update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
   select * from emaj.emaj_verify_all();
 rollback;
+-- detection of a missing schema
+begin;
+  drop schema myschema1 cascade;
+  select * from emaj.emaj_verify_all();
+rollback;
+-- detection of a missing relation
+begin;
+  drop table myschema1.mytbl4;
+  select * from emaj.emaj_verify_all();
+rollback;
 -- detection of relation type change (a table is now a sequence!)
 begin;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
@@ -489,6 +500,67 @@ begin;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1';
   select * from emaj.emaj_verify_all();
+rollback;
+
+--------------------------------
+-- User errors and recovery tests 
+--------------------------------
+SET client_min_messages TO WARNING;
+
+-- cases when an application table is altered
+begin;
+  alter table myschema2.mytbl4 add column newcol int;
+-- setting a mark or rollbacking fails
+  savepoint sp1;
+    select emaj.emaj_set_mark_group('myGroup2','dummyMark');
+  rollback to savepoint sp1;
+    select emaj.emaj_rollback_group('myGroup2','EMAJLASTMARK');
+  rollback to savepoint sp1;
+-- but it is possible to stop, drop and recreate the group
+  select emaj.emaj_stop_group('myGroup2');
+  select emaj.emaj_drop_group('myGroup2');
+  select emaj.emaj_create_group('myGroup2');
+  select emaj.emaj_start_group('myGroup2','start mark');
+rollback;
+
+-- cases when an application table is dropped
+begin;
+  drop table myschema2.mytbl4;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+  rollback to savepoint sp1;
+-- the only solution is to force the drop the group, change the emaj_group_def table and recreate the group
+  select emaj.emaj_force_drop_group('myGroup2');
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl4';
+  select emaj.emaj_create_group('myGroup2');
+-- but there are remaining orphan object in emaj schema...
+rollback;
+
+-- cases when an application sequence is dropped
+begin;
+  drop sequence myschema2.mySeq1;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+  rollback to savepoint sp1;
+-- the only solution is to force the drop the group, change the emaj_group_def table and recreate the group
+  select emaj.emaj_force_drop_group('myGroup2');
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq1';
+  select emaj.emaj_create_group('myGroup2');
+rollback;
+
+-- cases when non E-Maj related objects are stored in emaj secondary schemas
+begin;
+  create sequence emajb.dummySeq;
+-- dropping group fails at secondary schema drop step
+  savepoint sp1;
+    select emaj.emaj_drop_group('myGroup1');
+  rollback to savepoint sp1;
+-- use emaj_verify_all() to understand the problem
+  select * from emaj.emaj_verify_all();
+-- use emaj_force_drop_group to solve the problem
+  select emaj.emaj_force_drop_group('myGroup1');
 rollback;
 
 -----------------------------
