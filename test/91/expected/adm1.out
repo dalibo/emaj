@@ -100,7 +100,7 @@ select emaj.emaj_force_drop_group('myGroup2');
                      8
 (1 row)
 
-select emaj.emaj_stop_group('phil''s group#3",');
+select emaj.emaj_stop_group('phil''s group#3",','Simple stop mark');
  emaj_stop_group 
 -----------------
                3

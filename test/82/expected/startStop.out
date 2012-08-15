@@ -346,6 +346,24 @@ CONTEXT:  PL/pgSQL function "emaj_stop_group" line 7 at return
 select emaj.emaj_stop_group('unkownGroup');
 ERROR:  _stop_group: group unkownGroup has not been created.
 CONTEXT:  PL/pgSQL function "emaj_stop_group" line 7 at return
+select emaj.emaj_stop_group(NULL,NULL);
+ERROR:  _stop_group: group <NULL> has not been created.
+CONTEXT:  PL/pgSQL function "emaj_stop_group" line 7 at return
+select emaj.emaj_stop_group('unkownGroup',NULL);
+ERROR:  _stop_group: group unkownGroup has not been created.
+CONTEXT:  PL/pgSQL function "emaj_stop_group" line 7 at return
+-- invalid mark
+select emaj.emaj_stop_group('myGroup1','EMAJ_LAST_MARK');
+ERROR:  _check_new_mark: EMAJ_LAST_MARK is not an allowed name for a new mark.
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 ,  $2 )"
+PL/pgSQL function "_stop_groups" line 41 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 7 at return
+-- already existing mark
+select emaj.emaj_stop_group('phil''s group#3",','Mark3');
+ERROR:  _check_new_mark: Group phil's group#3", already contains a mark named Mark3.
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 ,  $2 )"
+PL/pgSQL function "_stop_groups" line 41 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 7 at return
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
@@ -386,7 +404,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 (6 rows)
 
 -- should be OK
-select emaj.emaj_stop_group('myGroup2');
+select emaj.emaj_stop_group('myGroup2','Stop mark');
  emaj_stop_group 
 -----------------
                8
@@ -394,6 +412,14 @@ select emaj.emaj_stop_group('myGroup2');
 
 -- warning, already stopped
 select emaj.emaj_stop_group('myGroup2');
+WARNING:  _stop_group: Group myGroup2 cannot be stopped because it is not in logging state.
+CONTEXT:  PL/pgSQL function "emaj_stop_group" line 7 at return
+ emaj_stop_group 
+-----------------
+               0
+(1 row)
+
+select emaj.emaj_stop_group('myGroup2','Stop mark 2');
 WARNING:  _stop_group: Group myGroup2 cannot be stopped because it is not in logging state.
 CONTEXT:  PL/pgSQL function "emaj_stop_group" line 7 at return
  emaj_stop_group 
@@ -645,11 +671,21 @@ PL/pgSQL function "_stop_groups" line 47 at perform
 PL/pgSQL function "emaj_stop_groups" line 7 at return
 rollback;
 -- should be OK
-select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
+select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
  emaj_stop_groups 
 ------------------
                14
 (1 row)
+
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    |  regexp_replace  | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+------------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
+       6 | phil's group#3", | Mark3            |               0 | ACTIVE     |              |                     0 |                    35 |                          
+      24 | myGroup1         | Mark1            |               0 | DELETED    |              |                     0 |                   169 |                         0
+      25 | myGroup2         | Mark1            |               0 | DELETED    |              |                     0 |                   169 |                         0
+      26 | myGroup1         | Global Stop at % |               0 | DELETED    |              |                     0 |                   183 |                          
+      27 | myGroup2         | Global Stop at % |               0 | DELETED    |              |                     0 |                   183 |                          
+(5 rows)
 
 -- with warning about group names array content
 select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1']);

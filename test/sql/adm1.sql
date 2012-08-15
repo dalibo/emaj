@@ -29,7 +29,7 @@ select count(*) from emaj.mySchema1_myTbl1_log;
 select emaj.emaj_stop_group('myGroup1');
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
-select emaj.emaj_stop_group('phil''s group#3",');
+select emaj.emaj_stop_group('phil''s group#3",','Simple stop mark');
 select emaj.emaj_drop_group('phil''s group#3",');
 -- emaj tables
 select * from emaj.emaj_group;

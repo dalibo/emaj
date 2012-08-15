@@ -16,6 +16,8 @@ Enhancements:
     tables or their indexes on a per table basis. Two new columns in the 
     emaj_group_def table support this feature: grpdef_log_dat_tsp and 
     grpdef_log_idx_tsp. If they contain NULL, tspemaj is used if it exists.
+  - an additional parameter for emaj_stop_group() and emaj_stop_groups() 
+    functions allows to customize the name of the mark set by these functions. 
   - emaj_verify_all() function now detects more unattended tables and 
     functions in E-Maj schemas (i.e. not only those which looks like emaj 
     components). It also detects views, sequences, composite types, domains 

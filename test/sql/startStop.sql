@@ -68,6 +68,12 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 -- unknown group
 select emaj.emaj_stop_group(NULL);
 select emaj.emaj_stop_group('unkownGroup');
+select emaj.emaj_stop_group(NULL,NULL);
+select emaj.emaj_stop_group('unkownGroup',NULL);
+-- invalid mark
+select emaj.emaj_stop_group('myGroup1','EMAJ_LAST_MARK');
+-- already existing mark
+select emaj.emaj_stop_group('phil''s group#3",','Mark3');
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
@@ -83,10 +89,11 @@ select group_name, group_state, group_nb_table, group_nb_sequence, group_comment
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -- should be OK
-select emaj.emaj_stop_group('myGroup2');
+select emaj.emaj_stop_group('myGroup2','Stop mark');
 
 -- warning, already stopped
 select emaj.emaj_stop_group('myGroup2');
+select emaj.emaj_stop_group('myGroup2','Stop mark 2');
 
 -- start with auto-mark in a single transaction
 begin transaction;
@@ -162,7 +169,8 @@ begin;
 rollback;
 
 -- should be OK
-select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
+select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -- with warning about group names array content
 select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1']);
