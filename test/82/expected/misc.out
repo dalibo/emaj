@@ -1241,16 +1241,7 @@ rollback;
 -- cases when an application sequence is dropped
 begin;
   drop sequence myschema2.mySeq1;
--- stopping group fails
-  savepoint sp1;
-    select emaj.emaj_stop_group('myGroup2');
-ERROR:  relation "myschema2.myseq1" does not exist
-CONTEXT:  SQL statement "INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ) SELECT 'myschema2', 'myseq1', 'Wed Aug 15 00:49:41.351453 2012 PDT', 'STOP_00.49.41.351', last_value, 0, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema2.myseq1"
-PL/pgSQL function "_set_mark_groups" line 76 at execute statement
-SQL statement "SELECT  emaj._set_mark_groups( $1 ,  $2 ,  $3 , true)"
-PL/pgSQL function "_stop_groups" line 75 at perform
-PL/pgSQL function "emaj_stop_group" line 7 at return
-  rollback to savepoint sp1;
+-- setting a mark or stopping the group
 -- the only solution is to force the group's drop, change the emaj_group_def table and recreate the group
   select emaj.emaj_force_drop_group('myGroup2');
  emaj_force_drop_group 

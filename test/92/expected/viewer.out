@@ -169,7 +169,11 @@ select emaj.emaj_start_groups(array['myGroup1'],'mark');
 ERROR:  permission denied for function emaj_start_groups
 select emaj.emaj_stop_group('myGroup1');
 ERROR:  permission denied for function emaj_stop_group
+select emaj.emaj_stop_group('myGroup1',NULL);
+ERROR:  permission denied for function emaj_stop_group
 select emaj.emaj_stop_groups(array['myGroup1']);
+ERROR:  permission denied for function emaj_stop_groups
+select emaj.emaj_stop_groups(array['myGroup1'],NULL);
 ERROR:  permission denied for function emaj_stop_groups
 select emaj.emaj_set_mark_group('myGroup1','mark');
 ERROR:  permission denied for function emaj_set_mark_group

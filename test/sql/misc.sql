@@ -541,10 +541,7 @@ rollback;
 -- cases when an application sequence is dropped
 begin;
   drop sequence myschema2.mySeq1;
--- stopping group fails
-  savepoint sp1;
-    select emaj.emaj_stop_group('myGroup2');
-  rollback to savepoint sp1;
+-- setting a mark or stopping the group
 -- the only solution is to force the group's drop, change the emaj_group_def table and recreate the group
   select emaj.emaj_force_drop_group('myGroup2');
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq1';

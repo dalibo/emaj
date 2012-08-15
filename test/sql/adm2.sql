@@ -21,7 +21,7 @@ select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2');
 
 -- rollback and stop to Multi-1
 select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1');
-select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
+select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback');
 
 -- try to start both groups, but with an old deleted mark name
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);

@@ -1853,6 +1853,21 @@ $emaj_stop_group$;
 COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS
 $$Stops an E-Maj group.$$;
 
+CREATE or REPLACE FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT) 
+RETURNS INT LANGUAGE plpgsql AS 
+$emaj_stop_group$
+-- This function de-activates the log triggers of all the tables for a group. 
+-- Execute several emaj_stop_group functions for the same group doesn't produce any error.
+-- Input: group name, stop mark name to set 
+-- Output: number of processed tables and sequences
+  BEGIN
+-- just call the common _stop_groups function
+    RETURN emaj._stop_groups(array[v_groupName], v_mark, false);
+  END;
+$emaj_stop_group$;
+COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT,TEXT) IS
+$$Stops an E-Maj group.$$;
+
 CREATE or REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) 
 RETURNS INT LANGUAGE plpgsql AS 
 $emaj_stop_groups$
@@ -1866,6 +1881,21 @@ $emaj_stop_groups$
   END;
 $emaj_stop_groups$;
 COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[]) IS
+$$Stops several E-Maj groups.$$;
+
+CREATE or REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) 
+RETURNS INT LANGUAGE plpgsql AS 
+$emaj_stop_groups$
+-- This function de-activates the log triggers of all the tables for a groups array.
+-- Groups already in IDLE state are simply not processed.
+-- Input: array of group names, stop mark name to set 
+-- Output: number of processed tables and sequences
+  BEGIN
+-- just call the common _stop_groups function
+    RETURN emaj._stop_groups(emaj._check_group_names_array(v_groupNames), v_mark, true);
+  END;
+$emaj_stop_groups$;
+COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[], TEXT) IS
 $$Stops several E-Maj groups.$$;
 
 CREATE or REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) 
@@ -4453,7 +4483,9 @@ REVOKE ALL ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT) 
 REVOKE ALL ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT, v_resetLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
@@ -4522,7 +4554,9 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEX
 GRANT EXECUTE ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT, v_resetLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
