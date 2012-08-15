@@ -1647,13 +1647,19 @@ $_drop_group$
         WHERE rel_group <> v_groupName AND rel_log_schema <>  v_schemaPrefix
       ORDER BY 1
       LOOP
-      BEGIN
-        EXECUTE 'DROP SCHEMA ' || quote_ident(r_schema.rel_log_schema);
-        EXCEPTION
+      IF v_isForced THEN
+-- drop cascade when called by emaj_force_drop_group()
+        EXECUTE 'DROP SCHEMA ' || quote_ident(r_schema.rel_log_schema) || ' CASCADE';
+      ELSE
+-- otherwise, drop restrict with a trap on the potential error
+        BEGIN
+          EXECUTE 'DROP SCHEMA ' || quote_ident(r_schema.rel_log_schema);
+          EXCEPTION
 -- trap the 2BP01 exception to generate a more understandable error message
-          WHEN DEPENDENT_OBJECTS_STILL_EXIST THEN         -- SQLSTATE '2BP01'
-            RAISE EXCEPTION '_drop_group: cannot drop schema %. It probably owns unattended objects. Use the emaj_verify_all() function to get details', quote_ident(r_schema.rel_log_schema);
-      END;
+            WHEN DEPENDENT_OBJECTS_STILL_EXIST THEN         -- SQLSTATE '2BP01'
+              RAISE EXCEPTION '_drop_group: cannot drop schema %. It probably owns unattended objects. Use the emaj_verify_all() function to get details', quote_ident(r_schema.rel_log_schema);
+        END;
+      END IF;
 -- and record the schema suppression in emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
         VALUES (CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END,'SECONDARY SCHEMA DROPPED',quote_ident(r_schema.rel_log_schema));
