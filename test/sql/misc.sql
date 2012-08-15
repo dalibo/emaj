@@ -577,6 +577,8 @@ begin;
   select * from emaj.emaj_verify_all();
 -- use emaj_force_drop_group to solve the problem
   select emaj.emaj_force_drop_group('myGroup1');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
 rollback;
 
 -----------------------------

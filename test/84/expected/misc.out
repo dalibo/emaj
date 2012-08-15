@@ -1272,7 +1272,7 @@ begin;
 ERROR:  relation "myschema2.myseq1" does not exist
 LINE 1: ...min_value, cache_value, is_cycled, is_called FROM myschema2....
                                                              ^
-QUERY:  INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ) SELECT 'myschema2', 'myseq1', 'Wed Aug 15 00:31:23.30792 2012 PDT', 'STOP_00.31.23.295', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema2.myseq1
+QUERY:  INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ) SELECT 'myschema2', 'myseq1', 'Wed Aug 15 00:50:42.033532 2012 PDT', 'STOP_00.50.42.024', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema2.myseq1
 CONTEXT:  PL/pgSQL function "_set_mark_groups" line 76 at EXECUTE statement
 SQL statement "SELECT  emaj._set_mark_groups( $1 ,  $2 ,  $3 , true)"
 PL/pgSQL function "_stop_groups" line 75 at PERFORM
@@ -1367,9 +1367,23 @@ PL/pgSQL function "emaj_drop_group" line 11 at SQL statement
 
 -- use emaj_force_drop_group to solve the problem
   select emaj.emaj_force_drop_group('myGroup1');
-ERROR:  _drop_group: cannot drop schema emajb. It probably owns unattended objects. Use the emaj_verify_all() function to get details
-CONTEXT:  SQL statement "SELECT emaj._drop_group( $1 , TRUE)"
-PL/pgSQL function "emaj_force_drop_group" line 14 at SQL statement
+ emaj_force_drop_group 
+-----------------------
+                     6
+(1 row)
+
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+                      emaj_verify_all                      
+-----------------------------------------------------------
+ Global checks: no error detected
+ Checking schema emaj: no error detected
+ Checking schema "emaj #'3": no error detected
+ Checking schema "emajC": no error detected
+ Checking tables group myGroup2: no error detected
+ Checking tables group phil's group#3",: no error detected
+(6 rows)
+
 rollback;
 -----------------------------
 -- test end: check and reset history
