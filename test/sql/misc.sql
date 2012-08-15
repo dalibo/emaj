@@ -530,11 +530,12 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
   rollback to savepoint sp1;
--- the only solution is to force the drop the group, change the emaj_group_def table and recreate the group
+-- the only solution is to force the group's drop, change the emaj_group_def table and recreate the group
   select emaj.emaj_force_drop_group('myGroup2');
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl4';
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
   select emaj.emaj_create_group('myGroup2');
--- but there are remaining orphan object in emaj schema...
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
 rollback;
 
 -- cases when an application sequence is dropped
@@ -544,10 +545,25 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
   rollback to savepoint sp1;
--- the only solution is to force the drop the group, change the emaj_group_def table and recreate the group
+-- the only solution is to force the group's drop, change the emaj_group_def table and recreate the group
   select emaj.emaj_force_drop_group('myGroup2');
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq1';
   select emaj.emaj_create_group('myGroup2');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+rollback;
+
+-- cases when an application schema is dropped
+begin;
+  drop schema myschema2 cascade;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+  rollback to savepoint sp1;
+-- the only solution is to force the group's drop
+  select emaj.emaj_force_drop_group('myGroup2');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
 rollback;
 
 -- cases when non E-Maj related objects are stored in emaj secondary schemas

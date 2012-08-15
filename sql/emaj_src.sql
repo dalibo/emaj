@@ -874,7 +874,7 @@ $_create_tbl$
   END;
 $_create_tbl$;
 
-CREATE or REPLACE FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isForced BOOLEAN, v_isRollbackable BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_drop_tbl$
 -- The function deletes all what has been created by _create_tbl function
@@ -890,6 +890,7 @@ $_drop_tbl$
     v_truncTriggerName TEXT;
     v_seqName          TEXT;
     v_fullSeqName      TEXT;
+    v_tableShouldExist BOOLEAN;
   BEGIN
     v_fullTableName    := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
     v_logTableName     := quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
@@ -899,11 +900,21 @@ $_drop_tbl$
     v_truncTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_trunc_trg');
     v_seqName          := emaj._build_log_seq_name(v_schemaName, v_tableName);
     v_fullSeqName      := quote_ident(v_logSchema) || '.' || quote_ident(v_seqName);
+    v_tableShouldExist = TRUE;
+-- When the function is called by emaj_force_drop_group(), check the table exists before dropping its triggers
+    IF v_isForced THEN
+      PERFORM 0 FROM pg_class, pg_namespace 
+        WHERE relnamespace = pg_namespace.oid
+          AND nspname = v_schemaName AND relname = v_tableName AND relkind = 'r';
+      v_tableShouldExist = FOUND;
+    END IF;
+    IF v_tableShouldExist THEN
 -- delete the log trigger on the application table
-    EXECUTE 'DROP TRIGGER IF EXISTS ' || v_logTriggerName || ' ON ' || v_fullTableName;
+      EXECUTE 'DROP TRIGGER IF EXISTS ' || v_logTriggerName || ' ON ' || v_fullTableName;
 -- delete the truncate trigger on the application table
-    IF v_pgVersion >= '8.4' THEN
-      EXECUTE 'DROP TRIGGER IF EXISTS ' || v_truncTriggerName || ' ON ' || v_fullTableName;
+      IF v_pgVersion >= '8.4' THEN
+        EXECUTE 'DROP TRIGGER IF EXISTS ' || v_truncTriggerName || ' ON ' || v_fullTableName;
+      END IF;
     END IF;
 -- delete log and rollback functions,
     EXECUTE 'DROP FUNCTION IF EXISTS ' || v_logFnctName || '()';
@@ -1627,7 +1638,7 @@ $emaj_drop_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
       VALUES ('DROP_GROUP', 'BEGIN', v_groupName);
 -- effectively drop the group
-    SELECT emaj._drop_group(v_groupName, TRUE) INTO v_nbTb;
+    SELECT emaj._drop_group(v_groupName, FALSE) INTO v_nbTb;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('DROP_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
@@ -1653,7 +1664,7 @@ $emaj_force_drop_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
       VALUES ('FORCE_DROP_GROUP', 'BEGIN', v_groupName);
 -- effectively drop the group
-    SELECT emaj._drop_group(v_groupName, FALSE) INTO v_nbTb;
+    SELECT emaj._drop_group(v_groupName, TRUE) INTO v_nbTb;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('FORCE_DROP_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
@@ -1663,7 +1674,7 @@ $emaj_force_drop_group$;
 COMMENT ON FUNCTION emaj.emaj_force_drop_group(TEXT) IS
 $$Drops an E-Maj group, even in LOGGING state.$$;
 
-CREATE or REPLACE FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN) 
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
 $_drop_group$
 -- This function effectively deletes the emaj objects for all tables of a group
@@ -1685,7 +1696,7 @@ $_drop_group$
       RAISE EXCEPTION '_drop_group: group % has not been created.', v_groupName;
     END IF;
 -- if the state of the group has to be checked,
-    IF v_checkState THEN
+    IF NOT v_isForced THEN
 --   check that the group is IDLE (i.e. not in a LOGGING) state
       IF v_groupState <> 'IDLE' THEN
         RAISE EXCEPTION '_drop_group: The group % cannot be deleted because it is not in idle state.', v_groupName;
@@ -1698,7 +1709,7 @@ $_drop_group$
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
-        PERFORM emaj._drop_tbl (r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isRollbackable);
+        PERFORM emaj._drop_tbl (r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isForced, v_isRollbackable);
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
           PERFORM emaj._drop_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
@@ -1723,7 +1734,7 @@ $_drop_group$
       END;
 -- and record the schema suppression in emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-        VALUES (CASE WHEN v_checkState THEN 'DROP_GROUP' ELSE 'FORCE_DROP_GROUP' END,'SECONDARY SCHEMA DROPPED',quote_ident(r_schema.rel_log_schema));
+        VALUES (CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END,'SECONDARY SCHEMA DROPPED',quote_ident(r_schema.rel_log_schema));
     END LOOP;
 -- delete group rows from the emaj_fk table.
     DELETE FROM emaj.emaj_fk WHERE v_groupName = ANY (fk_groups);
@@ -4494,7 +4505,7 @@ REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isForced BOOLEAN, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) FROM PUBLIC;
@@ -4507,7 +4518,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable
 REVOKE ALL ON FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
@@ -4563,7 +4574,7 @@ GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames T
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isForced BOOLEAN, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) TO emaj_adm;
@@ -4576,7 +4587,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbacka
 GRANT EXECUTE ON FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;

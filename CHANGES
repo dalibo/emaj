@@ -25,7 +25,8 @@ Enhancements:
   - minor improvements in the code and in comments.
 
 Bug fixes:
-
+  - let emaj_force_drop_group() works when an application schema or relation 
+    has been previously dropped.
 
 0.11.1
 ------
