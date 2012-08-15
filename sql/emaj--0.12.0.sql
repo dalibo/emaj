@@ -4298,7 +4298,7 @@ $_verify_schema$
       RETURN NEXT r_object.msg;
       v_errorFound = TRUE;
     END LOOP;
--- verify composite types that don't correspond to any emaj type 
+-- verify composite types that don't correspond to any emaj type
     FOR r_object IN 
       SELECT v_msgPrefix || 'type ' || relname || ' is not an E-Maj component' AS msg
         FROM pg_class, pg_namespace
@@ -4310,7 +4310,7 @@ $_verify_schema$
       RETURN NEXT r_object.msg;
       v_errorFound = TRUE;
     END LOOP;
--- verify views 
+-- verify views
     FOR r_object IN 
       SELECT v_msgPrefix || 'view ' || relname || ' is not an E-Maj component' AS msg
         FROM pg_class, pg_namespace
@@ -4320,7 +4320,7 @@ $_verify_schema$
       RETURN NEXT r_object.msg;
       v_errorFound = TRUE;
     END LOOP;
--- verify foreign tables 
+-- verify foreign tables
     FOR r_object IN 
       SELECT v_msgPrefix || 'foreign table ' || relname || ' is not an E-Maj component' AS msg
         FROM pg_class, pg_namespace
@@ -4330,12 +4330,39 @@ $_verify_schema$
       RETURN NEXT r_object.msg;
       v_errorFound = TRUE;
     END LOOP;
--- verify domains 
+-- verify domains
     FOR r_object IN 
       SELECT v_msgPrefix || 'domain ' || typname || ' is not an E-Maj component' AS msg
         FROM pg_type, pg_namespace
         WHERE typnamespace = pg_namespace.oid AND nspname = v_schemaName 
           AND typisdefined and typtype = 'd'              -- all domains of the given schema
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
+-- verify conversions
+    FOR r_object IN 
+      SELECT v_msgPrefix || 'conversion ' || conname || ' is not an E-Maj component' AS msg
+        FROM pg_conversion, pg_namespace
+        WHERE connamespace = pg_namespace.oid AND nspname = v_schemaName 
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
+-- verify operator
+    FOR r_object IN 
+      SELECT v_msgPrefix || 'operator ' || oprname || ' is not an E-Maj component' AS msg
+        FROM pg_operator, pg_namespace
+        WHERE oprnamespace = pg_namespace.oid AND nspname = v_schemaName 
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
+-- verify operator class
+    FOR r_object IN 
+      SELECT v_msgPrefix || 'operator class ' || opcname || ' is not an E-Maj component' AS msg
+        FROM pg_opclass, pg_namespace
+        WHERE opcnamespace = pg_namespace.oid AND nspname = v_schemaName 
     LOOP
       RETURN NEXT r_object.msg;
       v_errorFound = TRUE;

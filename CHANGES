@@ -20,8 +20,9 @@ Enhancements:
     functions allows to customize the name of the mark set by these functions. 
   - emaj_verify_all() function now detects more unattended tables and 
     functions in E-Maj schemas (i.e. not only those which looks like emaj 
-    components). It also detects views, sequences, composite types, domains 
-    and foreign table that should not be present in E-Maj schemas.
+    components). It also detects views, sequences, composite types, domains, 
+    foreign tables, conversions, operators and operator classes that should 
+    not be present in E-Maj schemas.
   - a new variation of the emaj_get_previous_mark_group() function returns 
     the name of the mark that immediately precedes a given mark for a group.
   - minor improvements in the code and in comments.
