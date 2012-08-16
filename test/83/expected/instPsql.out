@@ -564,6 +564,26 @@ $_log_truncate_fnct$
     RETURN NULL;
   END;
 $_log_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
+CREATE or REPLACE FUNCTION emaj._create_log_schema(v_logSchemaName TEXT)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
+$_create_log_schema$
+-- The function creates a log schema and gives the appropriate rights to emaj users
+-- Input: log schema name
+-- The function is created as SECURITY DEFINER so that secondary schemas can be owned by superuser
+  DECLARE
+  BEGIN
+-- check that the schema doesn't already exist
+    PERFORM 0 FROM pg_namespace WHERE nspname = v_logSchemaName;
+    IF FOUND THEN
+      RAISE EXCEPTION '_create_log_schema: schema % should not exist. Drop it manually, or modify emaj_group_def table''s content.',v_logSchemaName;
+    END IF;
+-- create the schema and give the appropriate rights
+    EXECUTE 'CREATE SCHEMA ' || quote_ident(v_logSchemaName);
+    EXECUTE 'GRANT ALL ON SCHEMA ' || quote_ident(v_logSchemaName) || ' TO emaj_adm';
+    EXECUTE 'GRANT USAGE ON SCHEMA ' || quote_ident(v_logSchemaName) || ' TO emaj_viewer';
+    RETURN;
+  END;
+$_create_log_schema$;
 ---------------------------------------------------
 --                                               --
 -- Elementary functions for tables and sequences --
@@ -1509,15 +1529,8 @@ $emaj_create_group$
       SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
       ORDER BY 1
       LOOP
--- check that the schema doesn't already exist
-      PERFORM 0 FROM pg_namespace WHERE nspname = r_schema.log_schema;
-      IF FOUND THEN
-        RAISE EXCEPTION 'emaj_create_group: schema % should not exist. Drop it manually, or modify emaj_group_def table''s content.',r_schema.log_schema;
-      END IF;
--- create the schema and give the appropriate rights
-      EXECUTE 'CREATE SCHEMA ' || quote_ident(r_schema.log_schema);
-      EXECUTE 'GRANT ALL ON SCHEMA ' || quote_ident(r_schema.log_schema) || ' TO emaj_adm';
-      EXECUTE 'GRANT USAGE ON SCHEMA ' || quote_ident(r_schema.log_schema) || ' TO emaj_viewer';
+-- create the schema
+      PERFORM emaj._create_log_schema(r_schema.log_schema);
 -- and record the schema creation in emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
         VALUES ('CREATE_GROUP','SECONDARY SCHEMA CREATED',quote_ident(r_schema.log_schema));
@@ -4479,6 +4492,7 @@ REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FR
 REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_truncate_fnct() FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isForced BOOLEAN, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
@@ -4550,6 +4564,7 @@ GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT)
 GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_truncate_fnct() TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isForced BOOLEAN, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
@@ -4986,7 +5001,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    70
+    71
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
