@@ -1139,12 +1139,112 @@ $_log_stat_table$
     RETURN (v_endLastValue - v_beginLastValue - v_sumHole);
   END;
 $_log_stat_table$;
+CREATE or REPLACE FUNCTION emaj._verify_tblseq(v_schemaName TEXT, v_tblseq TEXT, v_relKind TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN)
+RETURNS SETOF TEXT LANGUAGE plpgsql AS 
+$_verify_tblseq$
+-- The function performs checks to verify the consistency of emaj objects for a single table or sequence.
+-- Input: schema and table or sequence names, the kind of relation and the log schema registered in emaj_relation table, a boolean to specify if the group it belongs to is rollbackable
+-- Output: it returns a set of warning messages for discovered discrepancies.
+-- If no error is detected, no row is returned.
+  DECLARE
+    v_msg               TEXT;
+    v_realRelKind       TEXT;
+    v_fullTableName     TEXT;
+    v_logTableName      TEXT;
+    v_logFnctName       TEXT;
+    v_rlbkFnctName      TEXT;
+    v_logTriggerName    TEXT;
+    v_truncTriggerName  TEXT;
+    v_pgVersion         TEXT := emaj._pg_version();
+  BEGIN
+-- check the application relation exist
+    SELECT relkind INTO v_realRelKind FROM pg_class, pg_namespace
+      WHERE relnamespace = pg_namespace.oid 
+        AND nspname = v_schemaName AND relname = v_tblseq 
+        AND relkind in ('r','S');
+    IF NOT FOUND THEN
+      RETURN NEXT 'table/sequence ' || v_schemaName || '.' || v_tblseq || ' does not exist anymore.';
+    ELSE
+-- check the class is unchanged
+      IF v_relKind <> v_realRelKind THEN
+        RETURN NEXT 'the relation type for ' || v_schemaName || '.' || v_tblseq || ' has changed (was ''' || v_relKind || ''' at emaj_create_group time).';
+      ELSE
+        IF v_relKind = 'r' THEN
+-- if it is a table, ...
+          v_logTableName     := v_schemaName || '_' || v_tblseq || '_log';
+          v_logFnctName      := v_schemaName || '_' || v_tblseq || '_log_fnct';
+          v_rlbkFnctName     := v_schemaName || '_' || v_tblseq || '_rlbk_fnct';
+          v_logTriggerName   := v_schemaName || '_' || v_tblseq || '_emaj_log_trg';
+          v_truncTriggerName := v_schemaName || '_' || v_tblseq || '_emaj_trunc_trg';
+          v_fullTableName  := quote_ident(v_schemaName) || '.' || quote_ident(v_tblseq);
+--   -> check boths functions exists
+          PERFORM proname FROM pg_proc , pg_namespace WHERE 
+            pronamespace = pg_namespace.oid AND nspname = v_logSchema AND proname = v_logFnctName;
+          IF NOT FOUND THEN
+            RETURN NEXT 'log function ' || v_logFnctName || ' not found.';
+          END IF;
+          IF v_isRollbackable THEN
+            PERFORM proname FROM pg_proc, pg_namespace WHERE 
+              pronamespace = pg_namespace.oid AND nspname = v_logSchema AND proname = v_rlbkFnctName;
+            IF NOT FOUND THEN
+              RETURN NEXT 'rollback function ' || v_rlbkFnctName || ' not found.';
+            END IF;
+          END IF;
+--   -> check both triggers exist
+          PERFORM tgname FROM pg_trigger WHERE tgname = v_logTriggerName;
+          IF NOT FOUND THEN
+            RETURN NEXT 'log trigger ' || v_logTriggerName || ' not found.';
+          END IF;
+          IF v_pgVersion >= '8.4' THEN
+            PERFORM tgname FROM pg_trigger WHERE tgname = v_truncTriggerName;
+            IF NOT FOUND THEN
+              RETURN NEXT 'truncate trigger ' || v_truncTriggerName || ' not found.';
+            END IF;
+          END IF;
+--   -> check the log table exists
+          PERFORM relname FROM pg_class, pg_namespace WHERE 
+            relnamespace = pg_namespace.oid AND nspname = v_logSchema AND relkind = 'r' AND relname = v_logTableName;
+          IF NOT FOUND THEN
+            RETURN NEXT 'log table ' || v_logTableName || ' not found.';
+          ELSE
+--   -> check that the log tables structure is consistent with the application tables structure
+--      (same columns and same formats)
+--      - added or changed column in application table
+            PERFORM attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace 
+              WHERE nspname = v_schemaName AND relnamespace = pg_namespace.oid AND relname = v_tblseq
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
+            EXCEPT
+            SELECT attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace
+              WHERE nspname = v_logSchema AND relnamespace = pg_namespace.oid AND relname = v_logTableName
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%';
+            IF FOUND THEN
+              RETURN NEXT 'the structure of log table ' || v_logTableName || ' is not coherent with ' || v_fullTableName || ' (added or changed column?).';
+            END IF;
+--      - missing or changed column in application table
+            PERFORM attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace
+              WHERE nspname = v_logSchema AND relnamespace = pg_namespace.oid AND relname = v_logTableName
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
+            EXCEPT
+            SELECT attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace 
+              WHERE nspname = v_schemaName AND relnamespace = pg_namespace.oid AND relname = v_tblseq
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false;
+            IF FOUND THEN
+              RETURN NEXT 'the structure of log table ' || v_logTableName || ' is not coherent with ' || v_fullTableName || ' (dropped or changed column?).';
+            END IF;
+          END IF;
+-- if it is a sequence, nothing else to check
+        END IF;
+      END IF;
+    END IF;
+    RETURN;
+  END;
+$_verify_tblseq$;
 ------------------------------------------------
 ----                                        ----
 ----       Functions to manage groups       ----
 ----                                        ----
 ------------------------------------------------
-CREATE or REPLACE FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean) 
+CREATE or REPLACE FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop BOOLEAN) 
 RETURNS SETOF TEXT LANGUAGE plpgsql AS 
 $_verify_group$
 -- The function verifies the consistency between log and application tables for a group
@@ -1167,6 +1267,7 @@ $_verify_group$
     v_truncTriggerName  TEXT;
     r_schema            RECORD;
     r_tblsq             RECORD;
+    r_msg               RECORD;
   BEGIN
 -- for 8.1-, E-Maj is not compatible
     IF v_pgVersion < '8.2' THEN
@@ -1207,117 +1308,18 @@ $_verify_group$
         v_errorFound = TRUE;
       END IF;
     END LOOP;
--- per relation checks
+-- per relation checks: use emaj._verify_tblseq() function
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_kind FROM emaj.emaj_relation 
           WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
--- check the application relation exist
-      SELECT relkind INTO v_relKind FROM pg_class, pg_namespace
-        WHERE relnamespace = pg_namespace.oid 
-          AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq 
-          AND relkind in ('r','S');
-      IF NOT FOUND THEN
-        v_msg = v_msgPrefix || 'table/sequence ' || r_tblsq.rel_schema || '.' || r_tblsq.rel_tblseq || ' does not exist anymore.';
-        if v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
-        RETURN NEXT v_msg;
+      FOR r_msg IN
+        SELECT v_msgPrefix || msg as errMsg FROM emaj._verify_tblseq(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_kind, r_tblsq.rel_log_schema, v_isRollbackable) as msg
+        LOOP
+        IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',r_msg.errMsg; END IF;
+        RETURN NEXT r_msg.errMsg;
         v_errorFound = TRUE;
-      ELSE
--- check the class is unchanged
-        IF r_tblsq.rel_kind <> v_relKind THEN
-          v_msg = v_msgPrefix || 'the relation type for ' || r_tblsq.rel_schema || '.' || r_tblsq.rel_tblseq || ' has changed (was ''' || r_tblsq.rel_kind || ''' at emaj_create_group time).';
-          IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
-          RETURN NEXT v_msg;
-          v_errorFound = TRUE;
-        ELSE
-          IF r_tblsq.rel_kind = 'r' THEN
--- if it is a table, ...
-            v_logTableName     := r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log';
-            v_logFnctName      := r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log_fnct';
-            v_rlbkFnctName     := r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_rlbk_fnct';
-            v_logTriggerName   := r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_emaj_log_trg';
-            v_truncTriggerName := r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_emaj_trunc_trg';
-            v_fullTableName  := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
---   -> check boths functions exists
-            PERFORM proname FROM pg_proc , pg_namespace WHERE 
-              pronamespace = pg_namespace.oid AND nspname = r_tblsq.rel_log_schema AND proname = v_logFnctName;
-            IF NOT FOUND THEN
-              v_msg = v_msgPrefix || 'log function ' || v_logFnctName || ' not found.';
-              IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
-              RETURN NEXT v_msg;
-              v_errorFound = TRUE;
-            END IF;
-            IF v_isRollbackable THEN
-              PERFORM proname FROM pg_proc, pg_namespace WHERE 
-                pronamespace = pg_namespace.oid AND nspname = r_tblsq.rel_log_schema AND proname = v_rlbkFnctName;
-              IF NOT FOUND THEN
-                v_msg = v_msgPrefix || 'rollback function ' || v_rlbkFnctName || ' not found.';
-                IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
-                RETURN NEXT v_msg;
-                v_errorFound = TRUE;
-              END IF;
-            END IF;
---   -> check both triggers exist
-            PERFORM tgname FROM pg_trigger WHERE tgname = v_logTriggerName;
-            IF NOT FOUND THEN
-              v_msg = v_msgPrefix || 'log trigger ' || v_logTriggerName || ' not found.';
-              IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
-              RETURN NEXT v_msg;
-              v_errorFound = TRUE;
-            END IF;
-            IF v_pgVersion >= '8.4' THEN
-              PERFORM tgname FROM pg_trigger WHERE tgname = v_truncTriggerName;
-              IF NOT FOUND THEN
-                v_msg = v_msgPrefix || 'truncate trigger ' || v_truncTriggerName || ' not found.';
-                IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
-                RETURN NEXT v_msg;
-                v_errorFound = TRUE;
-              END IF;
-            END IF;
---   -> check the log table exists
-            PERFORM relname FROM pg_class, pg_namespace WHERE 
-              relnamespace = pg_namespace.oid AND nspname = r_tblsq.rel_log_schema AND relkind = 'r' AND relname = v_logTableName;
-            IF NOT FOUND THEN
-              v_msg = v_msgPrefix || 'log table ' || v_logTableName || ' not found.';
-              IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
-              RETURN NEXT v_msg;
-              v_errorFound = TRUE;
-            ELSE
---   -> check that the log tables structure is consistent with the application tables structure
---      (same columns and same formats)
---      - added or changed column in application table
-              PERFORM attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace 
-                WHERE nspname = r_tblsq.rel_schema AND relnamespace = pg_namespace.oid AND relname = r_tblsq.rel_tblseq
-                  AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
-              EXCEPT
-              SELECT attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace
-                WHERE nspname = r_tblsq.rel_log_schema AND relnamespace = pg_namespace.oid AND relname = v_logTableName
-                  AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%';
-              IF FOUND THEN
-                v_msg = v_msgPrefix || 'the structure of log table ' || v_logTableName || ' is not coherent with ' || v_fullTableName || ' (added or changed column?).';
-                IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
-                RETURN NEXT v_msg;
-                v_errorFound = TRUE;
-              END IF;
---      - missing or changed column in application table
-              PERFORM attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace
-                WHERE nspname = r_tblsq.rel_log_schema AND relnamespace = pg_namespace.oid AND relname = v_logTableName
-                  AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
-              EXCEPT
-              SELECT attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace 
-                WHERE nspname = r_tblsq.rel_schema AND relnamespace = pg_namespace.oid AND relname = r_tblsq.rel_tblseq
-                  AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false;
-              IF FOUND THEN
-                v_msg = v_msgPrefix || 'the structure of log table ' || v_logTableName || ' is not coherent with ' || v_fullTableName || ' (dropped or changed column?).';
-                IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
-                RETURN NEXT v_msg;
-                v_errorFound = TRUE;
-              END IF;
-            END IF;
--- if it is a sequence, nothing to do
-          END IF;
-        END IF;
-      END IF;
+      END LOOP;
     END LOOP;
     IF NOT v_errorFound THEN
 -- OK, no error for the group
@@ -4483,6 +4485,7 @@ REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PU
 REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._verify_tblseq(v_schemaName TEXT, v_tblseq TEXT, v_relKind TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
@@ -4553,6 +4556,7 @@ GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO e
 GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._verify_tblseq(v_schemaName TEXT, v_tblseq TEXT, v_relKind TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
@@ -4612,6 +4616,7 @@ GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._verify_tblseq(v_schemaName TEXT, v_tblseq TEXT, v_relKind TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
@@ -4981,7 +4986,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    69
+    70
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
