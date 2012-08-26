@@ -23,6 +23,11 @@ Enhancements:
     components). It also detects views, sequences, composite types, domains, 
     foreign tables, conversions, operators and operator classes that should 
     not be present in E-Maj schemas.
+  - a new emaj_alter_group() function allows to take into account any change 
+    applied in the emaj_group_def table for a given tables group (like 
+    adding to or suppressing from the group tables or sequences, or changing 
+    priority levels or log schema names or tablespaces). It then replaces 
+    the use of emaj_drop_group() followed by emaj_create_group() functions.
   - a new variation of the emaj_get_previous_mark_group() function returns 
     the name of the mark that immediately precedes a given mark for a group.
   - minor improvements in the code and in comments.
@@ -30,6 +35,9 @@ Enhancements:
 Bug fixes:
   - let emaj_force_drop_group() works when an application schema or relation 
     has been previously dropped.
+  - allow an emaj_adm role to effectively execute the emaj_reset_group() 
+    function without error on TRUNCATE statements when the group has been 
+    created by someone else.
 
 0.11.1
 ------

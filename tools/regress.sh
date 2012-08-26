@@ -65,10 +65,10 @@ function reg_test_version()
 	then
 		echo "Parallel rollback test 1"
 		../../php/emajParallelRollback.php -p $RTVPORT -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l >results/prlb1.out
-		diff results/prlb1.out expected/prlb1.out
+		diff expected/prlb1.out results/prlb1.out
 		echo "Parallel rollback test 2"
 		../../php/emajParallelRollback.php -p $RTVPORT -d regression -g myGroup1 -m Multi-1 -s 3 >results/prlb2.out
-		diff results/prlb2.out expected/prlb2.out
+		diff expected/prlb2.out results/prlb2.out
 	fi
 	cd ../..
     return
@@ -87,9 +87,9 @@ function migrat_test()
 	$RTVBIN/dropdb -p $RTVPORT regression
 	$RTVBIN/createdb -p $RTVPORT regression
 	$RTVBIN/psql -p $RTVPORT regression <../$2/results/regression.dump >results/restore.out
-	diff results/restore.out expected/restore.out
+	diff expected/restore.out results/restore.out
 	cat ../sql/afterRest.sql|$RTVBIN/psql -p $RTVPORT -a regression >results/afterRest.out
-	diff results/afterRest.out expected/afterRest.out
+	diff expected/afterRest.out results/afterRest.out
     cd ../..
     return
 }

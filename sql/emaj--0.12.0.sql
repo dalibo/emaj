@@ -130,18 +130,20 @@ $$Contains E-Maj groups definition, supplied by the E-Maj administrator.$$;
 -- table containing the defined groups
 --     rows are created at emaj_create_group time and deleted at emaj_drop_group time
 CREATE TABLE emaj.emaj_group (
-    group_name               TEXT        NOT NULL,
-    group_state              TEXT        NOT NULL,       -- 2 possibles states: 
+    group_name                TEXT        NOT NULL,
+    group_state               TEXT        NOT NULL,      -- 2 possibles states: 
                                                          --   'LOGGING' between emaj_start_group and emaj_stop_group
                                                          --   'IDLE' in other cases
-    group_nb_table           INT,                        -- number of tables at emaj_create_group time
-    group_nb_sequence        INT,                        -- number of sequences at emaj_create_group time
-    group_is_rollbackable    BOOLEAN,                    -- false for 'AUDIT_ONLY' groups, true for 'ROLLBACKABLE' groups
-    group_creation_datetime  TIMESTAMPTZ NOT NULL        -- start time of the transaction that created the group
-                             DEFAULT transaction_timestamp(),
-    group_pg_version         TEXT        NOT NULL        -- postgres version at emaj_create_group() time
-                             DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
-    group_comment            TEXT,                       -- optional user comment
+    group_nb_table            INT,                       -- number of tables at emaj_create_group time
+    group_nb_sequence         INT,                       -- number of sequences at emaj_create_group time
+    group_is_rollbackable     BOOLEAN,                   -- false for 'AUDIT_ONLY' groups, true for 'ROLLBACKABLE' groups
+    group_creation_datetime   TIMESTAMPTZ NOT NULL       -- start time of the transaction that created the group
+                              DEFAULT transaction_timestamp(),
+    group_last_alter_datetime TIMESTAMPTZ,               -- date and time of the last emaj_alter_group() exec, 
+                                                         -- set to NULL at emaj_create_group() time
+    group_pg_version          TEXT        NOT NULL       -- postgres version at emaj_create_group() time
+                              DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
+    group_comment             TEXT,                      -- optional user comment
     PRIMARY KEY (group_name)
     );
 COMMENT ON TABLE emaj.emaj_group IS
@@ -523,6 +525,36 @@ $_create_log_schema$
     RETURN;
   END;
 $_create_log_schema$;
+
+CREATE or REPLACE FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
+$_drop_log_schema$
+-- The function drops a log schema
+-- Input: log schema name, boolean telling whether the schema to drop may contain residual objects 
+-- The function is created as SECURITY DEFINER so that secondary schemas can be dropped in any case
+  DECLARE
+  BEGIN
+-- check that the schema doesn't already exist
+    PERFORM 0 FROM pg_namespace WHERE nspname = v_logSchemaName;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION '_drop_log_schema: schema % doesn''t exist.',v_logSchemaName;
+    END IF;
+    IF v_isForced THEN
+-- drop cascade when called by emaj_force_xxx_group()
+      EXECUTE 'DROP SCHEMA ' || quote_ident(v_logSchemaName) || ' CASCADE';
+    ELSE
+-- otherwise, drop restrict with a trap on the potential error
+      BEGIN
+        EXECUTE 'DROP SCHEMA ' || quote_ident(v_logSchemaName);
+        EXCEPTION
+-- trap the 2BP01 exception to generate a more understandable error message
+          WHEN DEPENDENT_OBJECTS_STILL_EXIST THEN         -- SQLSTATE '2BP01'
+            RAISE EXCEPTION '_drop_log_schema: cannot drop schema %. It probably owns unattended objects. Use the emaj_verify_all() function to get details', quote_ident(v_logSchemaName);
+      END;
+    END IF;
+    RETURN;
+  END;
+$_drop_log_schema$;
 
 ---------------------------------------------------
 --                                               --
@@ -1350,8 +1382,9 @@ $_check_fk_groups$;
 CREATE or REPLACE FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN)
 RETURNS void LANGUAGE plpgsql AS 
 $_lock_groups$
--- This function locks all tables of a groups array. 
--- The lock mode is provided by the calling function
+-- This function locks all tables of a groups array.
+-- The lock mode is provided by the calling function. 
+-- It only locks existing tables. It is calling function's responsability to handle cases when application tables are missing.
 -- Input: array of group names, lock mode, flag indicating whether the function is called to processed several groups
   DECLARE
     v_nbRetry       SMALLINT := 0;
@@ -1374,11 +1407,12 @@ $_lock_groups$
 -- in case of deadlock, retry up to 5 times
     WHILE NOT v_ok AND v_nbRetry < 5 LOOP
       BEGIN
--- scan all tables of the group
+-- scan all existing tables of the group
         v_nbTbl = 0;
         FOR r_tblsq IN
-            SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
-               WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' 
+            SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation, pg_class, pg_namespace
+               WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+                 AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq 
                ORDER BY rel_priority, rel_schema, rel_tblseq
             LOOP
 -- lock the table
@@ -1419,13 +1453,12 @@ COMMENT ON FUNCTION emaj.emaj_create_group(TEXT) IS
 $$Creates a rollbackable E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) 
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_create_group$
 -- This function creates emaj objects for all tables of a group
 -- It also creates the secondary E-Maj schemas when needed
 -- Input: group name, boolean indicating wether the group is rollbackable or not
 -- Output: number of processed tables and sequences
--- The function is created as SECURITY DEFINER so that secondary schemas can be owned by superuser
   DECLARE
     v_nbTbl         INT := 0;
     v_nbSeq         INT := 0;
@@ -1452,12 +1485,17 @@ $emaj_create_group$
     IF v_groupName = '' THEN
       RAISE EXCEPTION 'emaj_create_group: group name must at least contain 1 character.';
     END IF;
+-- check the group is known in emaj_group_def table
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName;
+    IF NOT FOUND THEN
+       RAISE EXCEPTION 'emaj_create_group: Group % is unknown in emaj_group_def table.', v_groupName;
+    END IF;
 -- check that the group is not yet recorded in emaj_group table
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF FOUND THEN
       RAISE EXCEPTION 'emaj_create_group: group % is already created.', v_groupName;
     END IF;
--- check that no table or sequence of the new group already belong to another created group
+-- check that no table or sequence of the new group already belongs to another created group
     v_msg = '';
     FOR r_tblsq IN
         SELECT grpdef_schema, grpdef_tblseq, rel_group FROM emaj.emaj_group_def, emaj.emaj_relation
@@ -1501,7 +1539,7 @@ $emaj_create_group$
       v_relkind = emaj._check_class(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq);
       IF v_relkind = 'r' THEN
 -- if it is a table, build the log schema name
-        v_logSchema = coalesce(v_schemaPrefix ||  r_tblsq.grpdef_log_schema_suffix, v_emajSchema);
+        v_logSchema = coalesce(v_schemaPrefix || r_tblsq.grpdef_log_schema_suffix, v_emajSchema);
 -- create the related emaj objects
         PERFORM emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable);
 -- and record the table in the emaj_relation table
@@ -1523,9 +1561,6 @@ $emaj_create_group$
         v_nbSeq = v_nbSeq + 1;
       END IF;
     END LOOP;
-    IF v_nbTbl + v_nbSeq = 0 THEN
-       RAISE EXCEPTION 'emaj_create_group: Group % is unknown in emaj_group_def table.', v_groupName;
-    END IF;
 -- update tables and sequences counters in the emaj_group table
     UPDATE emaj.emaj_group SET group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
       WHERE group_name = v_groupName;
@@ -1591,7 +1626,9 @@ CREATE or REPLACE FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS 
 $emaj_force_drop_group$
 -- This function deletes the emaj objects for all tables of a group.
--- It differs from emaj_drop_group by the fact that no check is done on group's state.
+-- It differs from emaj_drop_group by the fact that:
+--   - the group may be in LOGGING state
+--   - a missing component in the drop processing does not generate any error
 -- This allows to drop a group that is not consistent, following hasardeous operations.
 -- This function should not be used, except if the emaj_drop_group fails. 
 -- Input: group name
@@ -1648,10 +1685,10 @@ $_drop_group$
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
-        PERFORM emaj._drop_tbl (r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isForced, v_isRollbackable);
+        PERFORM emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isForced, v_isRollbackable);
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
-          PERFORM emaj._drop_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+          PERFORM emaj._drop_seq(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
       END IF;
       v_nbTb = v_nbTb + 1;
     END LOOP;
@@ -1664,19 +1701,8 @@ $_drop_group$
         WHERE rel_group <> v_groupName AND rel_log_schema <>  v_schemaPrefix
       ORDER BY 1
       LOOP
-      IF v_isForced THEN
--- drop cascade when called by emaj_force_drop_group()
-        EXECUTE 'DROP SCHEMA ' || quote_ident(r_schema.rel_log_schema) || ' CASCADE';
-      ELSE
--- otherwise, drop restrict with a trap on the potential error
-        BEGIN
-          EXECUTE 'DROP SCHEMA ' || quote_ident(r_schema.rel_log_schema);
-          EXCEPTION
--- trap the 2BP01 exception to generate a more understandable error message
-            WHEN DEPENDENT_OBJECTS_STILL_EXIST THEN         -- SQLSTATE '2BP01'
-              RAISE EXCEPTION '_drop_group: cannot drop schema %. It probably owns unattended objects. Use the emaj_verify_all() function to get details', quote_ident(r_schema.rel_log_schema);
-        END;
-      END IF;
+-- drop the schema
+      PERFORM emaj._drop_log_schema(r_schema.rel_log_schema, v_isForced);
 -- and record the schema suppression in emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
         VALUES (CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END,'SECONDARY SCHEMA DROPPED',quote_ident(r_schema.rel_log_schema));
@@ -1689,6 +1715,244 @@ $_drop_group$
     RETURN v_nbTb;
   END;
 $_drop_group$;
+
+CREATE or REPLACE FUNCTION emaj.emaj_alter_group(v_groupName TEXT) 
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_alter_group$
+-- This function alters a tables group. 
+-- It takes into account the changes recorded in the emaj_group_def table since the group has been created.
+-- Executing emaj_alter_group() is equivalent to chaining emaj_drop_group() and emaj_create_group(). 
+-- But only emaj objects that need to be dropped or created are processed.
+-- Input: group name
+-- Output: number of effectively processed tables and sequences (created or dropped)
+  DECLARE
+    v_emajSchema        TEXT := 'emaj';
+    v_schemaPrefix      TEXT := 'emaj';
+    v_nbTb              INT := 0;
+    v_nbTbl             INT;
+    v_nbSeq             INT;
+    v_groupState        TEXT;
+    v_isRollbackable    BOOLEAN;
+    v_logSchema         TEXT;
+    v_logSchemasArray   TEXT[];
+    v_msg               TEXT;
+    v_relkind           TEXT;
+    v_logDatTsp         TEXT;
+    v_logIdxTsp         TEXT;
+    v_defTsp            TEXT;
+    v_nbMsg             INT;
+    v_stmt              TEXT;
+    v_nb_trg            INT;
+    v_toRecreate        BOOLEAN;
+    r_tblsq             RECORD;
+    r_schema            RECORD;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES ('ALTER_GROUP', 'BEGIN', v_groupName);
+-- check that the group is recorded in emaj_group table
+    SELECT group_state, group_is_rollbackable INTO v_groupState, v_isRollbackable FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_alter_group: group % has not been created.', v_groupName;
+    END IF;
+-- check that the group is IDLE (i.e. not in a LOGGING) state
+    IF v_groupState <> 'IDLE' THEN
+      RAISE EXCEPTION 'emaj_alter_group: The group % cannot be altered because it is not in idle state.', v_groupName;
+    END IF;
+-- check the are remaining rows for the group in emaj_group_def table
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName;
+    IF NOT FOUND THEN
+       RAISE EXCEPTION 'emaj_alter_group: Group % is unknown in emaj_group_def table.', v_groupName;
+    END IF;
+-- check that no table or sequence of the new group already belongs to another created group
+    v_msg = '';
+    FOR r_tblsq IN
+        SELECT grpdef_schema, grpdef_tblseq, rel_group FROM emaj.emaj_group_def, emaj.emaj_relation
+          WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
+            AND grpdef_group = v_groupName AND rel_group <> v_groupName
+      LOOP
+      IF v_msg <> '' THEN
+        v_msg = v_msg || ', ';
+      END IF;
+      v_msg = v_msg || r_tblsq.grpdef_schema || '.' || r_tblsq.grpdef_tblseq || ' in ' || r_tblsq.rel_group;
+    END LOOP;
+    IF v_msg <> '' THEN
+      RAISE EXCEPTION 'emaj_alter_group: one or several tables already belong to another group (%).', v_msg;
+    END IF;
+-- define the default tablespace, NULL if tspemaj tablespace doesn't exist
+    SELECT 'tspemaj' INTO v_defTsp FROM pg_tablespace WHERE spcname = 'tspemaj';
+-- OK, we can now successively process:
+--   - relations that do not belong to the tables group anymore, by dropping their emaj components
+--   - relations that continue to belong to the tables group but with different characteristics,
+--     by first dropping their emaj components and letting the last step recreate them
+--   - new relations in the tables group, by (re)creating their emaj components
+-- list all relations that do not belong to the tables group anymore
+    FOR r_tblsq IN
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema
+        FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName
+          AND (rel_schema, rel_tblseq) NOT IN (
+              SELECT grpdef_schema, grpdef_tblseq
+                FROM emaj.emaj_group_def
+                WHERE grpdef_group = v_groupName)
+      ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+      IF r_tblsq.rel_kind = 'r' THEN
+-- if it is a table, delete the related emaj objects
+        PERFORM emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, FALSE, v_isRollbackable);
+-- add the log schema to the array of log schemas to potentialy drop at the end of the function
+        IF r_tblsq.rel_log_schema <> v_emajSchema AND 
+           (v_logSchemasArray IS NULL OR r_tblsq.rel_log_schema <> ALL (v_logSchemasArray)) THEN
+          v_logSchemasArray = array_append(v_logSchemasArray,r_tblsq.rel_log_schema);
+        END IF;
+      ELSEIF r_tblsq.rel_kind = 'S' THEN
+-- if it is a sequence, delete all related data from emaj_sequence table
+        PERFORM emaj._drop_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+      END IF;
+-- delete the related row in emaj_relation
+      DELETE FROM emaj.emaj_relation WHERE rel_schema = r_tblsq.rel_schema AND rel_tblseq = r_tblsq.rel_tblseq;
+      v_nbTb = v_nbTb + 1;
+    END LOOP;
+--
+-- list relations that continue to belong to the tables group
+    FOR r_tblsq IN
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+        FROM emaj.emaj_relation, emaj.emaj_group_def
+        WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+          AND rel_group = v_groupName
+          AND grpdef_group = v_groupName
+      ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+-- now detect changes that justify to drop and recreate the relation
+      v_toRecreate = FALSE;
+-- detect if the relation has changed or any related emaj objects is not OK
+      SELECT count(*) INTO v_nbMsg FROM emaj._verify_tblseq(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_kind, r_tblsq.rel_log_schema, v_isRollbackable) as msg;
+-- if yes
+      IF v_nbMsg <> 0
+-- or if the log data tablespace in emaj_group_def has changed
+         OR (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_dat_tsp,'') <> coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp,'')) OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_dat_tsp IS NOT NULL)
+-- or if the log index tablespace in emaj_group_def has changed
+         OR (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_idx_tsp,'') <> coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp,'')) OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_idx_tsp IS NOT NULL)
+-- or if the log schema in emaj_group_def has changed
+         OR r_tblsq.rel_log_schema <> coalesce(v_schemaPrefix || r_tblsq.grpdef_log_schema_suffix, v_emajSchema) THEN
+-- then drop and recreate the relation
+        v_toRecreate = TRUE;
+-- has the priority changed in emaj_group_def ? If yes, just report the change into emaj_relation
+      ELSEIF (r_tblsq.rel_priority IS NULL AND r_tblsq.grpdef_priority IS NOT NULL) OR
+             (r_tblsq.rel_priority IS NOT NULL AND r_tblsq.grpdef_priority IS NULL) OR
+             (r_tblsq.rel_priority <> r_tblsq.grpdef_priority) THEN
+        UPDATE emaj.emaj_relation SET rel_priority = r_tblsq.grpdef_priority
+          WHERE rel_schema = r_tblsq.grpdef_schema AND rel_tblseq = r_tblsq.grpdef_tblseq;
+        v_nbTb = v_nbTb + 1;
+      END IF;
+-- process the recreation step if it is needed
+      IF v_toRecreate THEN
+-- first drop the emaj relation
+        IF r_tblsq.rel_kind = 'r' THEN
+-- if it is a table, delete the related emaj objects
+          PERFORM emaj._drop_tbl (r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, FALSE, v_isRollbackable);
+-- and add the log schema to the list of log schemas to potentialy drop at the end of the function
+        IF r_tblsq.rel_log_schema <> v_emajSchema AND 
+           (v_logSchemasArray IS NULL OR r_tblsq.rel_log_schema <> ALL (v_logSchemasArray)) THEN
+            v_logSchemasArray = array_append(v_logSchemasArray,r_tblsq.rel_log_schema);
+          END IF;
+        ELSEIF r_tblsq.rel_kind = 'S' THEN
+-- if it is a sequence, delete all related data from emaj_sequence table
+          PERFORM emaj._drop_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+        END IF;
+-- delete the related row in emaj_relation
+        DELETE FROM emaj.emaj_relation WHERE rel_schema = r_tblsq.grpdef_schema AND rel_tblseq = r_tblsq.grpdef_tblseq;
+-- this now missing emaj relation will now appear as a new relation of the tables group and will be processed in the next step
+      END IF;
+    END LOOP;
+--
+-- cleanup all remaining log tables 
+    PERFORM emaj._reset_group(v_groupName);
+-- drop useless log schemas, using the list of potential schemas to drop built previously
+    IF v_logSchemasArray IS NOT NULL THEN
+      FOR v_i IN 1 .. array_upper(v_logSchemasArray,1) 
+        LOOP
+        PERFORM 0 FROM emaj.emaj_relation WHERE rel_log_schema = v_logSchemasArray [v_i];
+        IF NOT FOUND THEN 
+-- drop the log schema
+          PERFORM emaj._drop_log_schema(v_logSchemasArray [v_i], false);
+-- and record the schema drop in emaj_hist table
+          INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+            VALUES ('ALTER_GROUP','SECONDARY SCHEMA DROPPED',quote_ident(v_logSchemasArray [v_i]));
+        END IF;
+      END LOOP;
+    END IF;
+-- look for new E-Maj secondary schemas to create
+    FOR r_schema IN
+      SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def 
+        WHERE grpdef_group = v_groupName 
+          AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''
+      EXCEPT
+      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
+      ORDER BY 1
+      LOOP
+-- create the schema
+      PERFORM emaj._create_log_schema(r_schema.log_schema);
+-- and record the schema creation in emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+        VALUES ('ALTER_GROUP','SECONDARY SCHEMA CREATED',quote_ident(r_schema.log_schema));
+    END LOOP;
+--
+-- list new relations in the tables group
+    FOR r_tblsq IN
+      SELECT grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+        FROM emaj.emaj_group_def
+        WHERE grpdef_group = v_groupName
+          AND (grpdef_schema, grpdef_tblseq) NOT IN (
+              SELECT rel_schema, rel_tblseq
+                FROM emaj.emaj_relation
+                WHERE rel_group = v_groupName)
+      ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+      LOOP
+--
+-- check the class is valid
+      v_relkind = emaj._check_class(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq);
+      IF v_relkind = 'r' THEN
+-- if it is a table, build the log schema name
+        v_logSchema = coalesce(v_schemaPrefix ||  r_tblsq.grpdef_log_schema_suffix, v_emajSchema);
+-- create the related emaj objects
+        PERFORM emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable);
+-- and record the table in the emaj_relation table
+        INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind)
+            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_relkind);
+      ELSEIF v_relkind = 'S' THEN
+-- if it is a sequence, check no log schema has been set as parameter in the emaj_group_def table
+        IF r_tblsq.grpdef_log_schema_suffix IS NOT NULL THEN
+          RAISE EXCEPTION 'emaj_alter_group: Defining a secondary log schema is not allowed for a sequence (%.%).', r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq;
+        END IF;
+--   check no tablespace has been set as parameter in the emaj_group_def table
+        IF r_tblsq.grpdef_log_dat_tsp IS NOT NULL OR r_tblsq.grpdef_log_idx_tsp IS NOT NULL THEN
+          RAISE EXCEPTION 'emaj_alter_group: Defining log tablespaces is not allowed for a sequence (%.%).', r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq;
+        END IF;
+--   and record it in the emaj_relation table
+        INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
+            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_relkind);
+      END IF;
+      v_nbTb = v_nbTb + 1;
+    END LOOP;
+-- update tables and sequences counters and the last alter timestamp in the emaj_group table
+    SELECT count(*) INTO v_nbTbl FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'r';
+    SELECT count(*) INTO v_nbSeq FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'S';
+    UPDATE emaj.emaj_group SET group_last_alter_datetime = transaction_timestamp(), 
+                               group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
+      WHERE group_name = v_groupName;
+--	delete old marks of the tables group from emaj_mark
+    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
+-- check foreign keys with tables outside the group
+    PERFORM emaj._check_fk_groups(array[v_groupName]);
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('ALTER_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences effectively processed');
+    RETURN v_nbTb;
+  END;
+$emaj_alter_group$;
+COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT) IS
+$$Alter an E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) 
 RETURNS INT LANGUAGE plpgsql AS 
@@ -3192,13 +3456,14 @@ COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS
 $$Resets all log tables content of a stopped E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj._reset_group(v_groupName TEXT) 
-RETURNS INT LANGUAGE plpgsql AS 
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
 $_rst_group$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences saves
 -- It is called by both emaj_reset_group and emaj_start_group functions
 -- Input: group name
 -- Output: number of processed tables
 -- There is no check of the group state
+-- The function is defined as SECURITY DEFINER so that an emaj_adm role can truncate log tables
   DECLARE
     v_nbTb          INT  := 0;
     v_logTableName  TEXT;
@@ -4507,6 +4772,7 @@ REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isForced BOOLEAN, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
@@ -4523,6 +4789,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT)
 REVOKE ALL ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_alter_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
@@ -4580,6 +4847,7 @@ GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames T
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isForced BOOLEAN, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
@@ -4596,6 +4864,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TE
 GRANT EXECUTE ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_alter_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;

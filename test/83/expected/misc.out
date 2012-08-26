@@ -697,7 +697,7 @@ begin;
   update emaj.emaj_mark set mark_datetime = '2000-01-01 13:00:00+00'
     where mark_group = 'myGroup2' and mark_name = 'Mark22';
   select emaj.emaj_generate_sql('myGroup2', 'Mark22', 'Mark21', NULL);
-ERROR:  emaj_generate_sql: mark id for Mark22 (83 = Sat Jan 01 05:00:00 2000 PST) is greater than mark id for Mark21 (71 = Sat Jan 01 04:00:00 2000 PST).
+ERROR:  emaj_generate_sql: mark id for Mark22 (85 = Sat Jan 01 05:00:00 2000 PST) is greater than mark id for Mark21 (73 = Sat Jan 01 04:00:00 2000 PST).
 rollback;
 -- invalid location path name
 select emaj.emaj_generate_sql('myGroup1', NULL, NULL, NULL);
@@ -1196,16 +1196,25 @@ PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
                8
 (1 row)
 
-  select emaj.emaj_drop_group('myGroup2');
+  savepoint sp2;
+    select emaj.emaj_drop_group('myGroup2');
  emaj_drop_group 
 -----------------
                8
 (1 row)
 
-  select emaj.emaj_create_group('myGroup2');
+    select emaj.emaj_create_group('myGroup2');
  emaj_create_group 
 -------------------
                  8
+(1 row)
+
+  rollback to savepoint sp2;
+-- or stop and alter the group
+    select emaj.emaj_alter_group('myGroup2');
+ emaj_alter_group 
+------------------
+                1
 (1 row)
 
   select emaj.emaj_start_group('myGroup2','start mark');
@@ -1222,21 +1231,20 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  relation "myschema2.mytbl4" does not exist
-CONTEXT:  SQL statement "LOCK TABLE myschema2.mytbl4 IN ACCESS EXCLUSIVE MODE"
-PL/pgSQL function "_lock_groups" line 34 at EXECUTE statement
-SQL statement "SELECT  emaj._lock_groups( $1 ,'', $2 )"
-PL/pgSQL function "_stop_groups" line 47 at PERFORM
+CONTEXT:  SQL statement "ALTER TABLE myschema2.mytbl4 DISABLE TRIGGER myschema2_mytbl4_emaj_log_trg"
+PL/pgSQL function "_stop_groups" line 58 at EXECUTE statement
 PL/pgSQL function "emaj_stop_group" line 7 at RETURN
   rollback to savepoint sp1;
--- the only solution is to force the group's drop, change the emaj_group_def table and recreate the group
-  select emaj.emaj_force_drop_group('myGroup2');
+-- the only solution is to change the emaj_group_def table, force the group's drop and recreate the group
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
+  savepoint sp2;
+    select emaj.emaj_force_drop_group('myGroup2');
  emaj_force_drop_group 
 -----------------------
                      8
 (1 row)
 
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
-  select emaj.emaj_create_group('myGroup2');
+    select emaj.emaj_create_group('myGroup2');
  emaj_create_group 
 -------------------
                  7
@@ -1260,15 +1268,16 @@ rollback;
 -- cases when an application sequence is dropped
 begin;
   drop sequence myschema2.mySeq1;
--- setting a mark or stopping the group
--- the only solution is to force the group's drop, change the emaj_group_def table and recreate the group
+-- setting a mark or stopping the group fails
+-- the only solution is to change the emaj_group_def table, force the group's drop and recreate the group
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq1';
+  savepoint sp2;
   select emaj.emaj_force_drop_group('myGroup2');
  emaj_force_drop_group 
 -----------------------
                      8
 (1 row)
 
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq1';
   select emaj.emaj_create_group('myGroup2');
  emaj_create_group 
 -------------------
@@ -1297,14 +1306,13 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  schema "myschema2" does not exist
-CONTEXT:  SQL statement "LOCK TABLE myschema2.mytbl1 IN ACCESS EXCLUSIVE MODE"
-PL/pgSQL function "_lock_groups" line 34 at EXECUTE statement
-SQL statement "SELECT  emaj._lock_groups( $1 ,'', $2 )"
-PL/pgSQL function "_stop_groups" line 47 at PERFORM
+CONTEXT:  SQL statement "ALTER TABLE myschema2.mytbl1 DISABLE TRIGGER myschema2_mytbl1_emaj_log_trg"
+PL/pgSQL function "_stop_groups" line 58 at EXECUTE statement
 PL/pgSQL function "emaj_stop_group" line 7 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to force the group's drop
-  select emaj.emaj_force_drop_group('myGroup2');
+  savepoint sp2;
+    select emaj.emaj_force_drop_group('myGroup2');
  emaj_force_drop_group 
 -----------------------
                      8
@@ -1330,8 +1338,10 @@ begin;
 -- dropping group fails at secondary schema drop step
   savepoint sp1;
     select emaj.emaj_drop_group('myGroup1');
-ERROR:  _drop_group: cannot drop schema emajb. It probably owns unattended objects. Use the emaj_verify_all() function to get details
-CONTEXT:  SQL statement "SELECT emaj._drop_group( $1 , FALSE)"
+ERROR:  _drop_log_schema: cannot drop schema emajb. It probably owns unattended objects. Use the emaj_verify_all() function to get details
+CONTEXT:  SQL statement "SELECT  emaj._drop_log_schema( $1 ,  $2 )"
+PL/pgSQL function "_drop_group" line 50 at PERFORM
+SQL statement "SELECT emaj._drop_group( $1 , FALSE)"
 PL/pgSQL function "emaj_drop_group" line 11 at SQL statement
   rollback to savepoint sp1;
 -- use emaj_verify_all() to understand the problem

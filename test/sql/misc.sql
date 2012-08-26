@@ -518,8 +518,13 @@ begin;
   rollback to savepoint sp1;
 -- but it is possible to stop, drop and recreate the group
   select emaj.emaj_stop_group('myGroup2');
-  select emaj.emaj_drop_group('myGroup2');
-  select emaj.emaj_create_group('myGroup2');
+  savepoint sp2;
+    select emaj.emaj_drop_group('myGroup2');
+    select emaj.emaj_create_group('myGroup2');
+  rollback to savepoint sp2;
+-- or stop and alter the group
+    select emaj.emaj_alter_group('myGroup2');
+
   select emaj.emaj_start_group('myGroup2','start mark');
 rollback;
 
@@ -530,10 +535,12 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
   rollback to savepoint sp1;
--- the only solution is to force the group's drop, change the emaj_group_def table and recreate the group
-  select emaj.emaj_force_drop_group('myGroup2');
+-- the only solution is to change the emaj_group_def table, force the group's drop and recreate the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
-  select emaj.emaj_create_group('myGroup2');
+  savepoint sp2;
+    select emaj.emaj_force_drop_group('myGroup2');
+    select emaj.emaj_create_group('myGroup2');
+
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
 rollback;
@@ -541,11 +548,13 @@ rollback;
 -- cases when an application sequence is dropped
 begin;
   drop sequence myschema2.mySeq1;
--- setting a mark or stopping the group
--- the only solution is to force the group's drop, change the emaj_group_def table and recreate the group
-  select emaj.emaj_force_drop_group('myGroup2');
+-- setting a mark or stopping the group fails
+-- the only solution is to change the emaj_group_def table, force the group's drop and recreate the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq1';
+  savepoint sp2;
+  select emaj.emaj_force_drop_group('myGroup2');
   select emaj.emaj_create_group('myGroup2');
+
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
 rollback;
@@ -558,7 +567,9 @@ begin;
     select emaj.emaj_stop_group('myGroup2');
   rollback to savepoint sp1;
 -- the only solution is to force the group's drop
-  select emaj.emaj_force_drop_group('myGroup2');
+  savepoint sp2;
+    select emaj.emaj_force_drop_group('myGroup2');
+
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
 rollback;

@@ -140,143 +140,143 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      28 | myGroup1         | Mark1          |               2 | ACTIVE     |              |                     0 |                   189 |                         0
-      29 | myGroup2         | Mark2          |               2 | ACTIVE     |              |                     0 |                   197 |                         0
-      30 | myGroup1         | SM1            |               2 | ACTIVE     |              |                     0 |                   203 |                         0
-      31 | myGroup2         | SM1            |               2 | ACTIVE     |              |                     0 |                   211 |                         0
-      32 | myGroup2         | phil's mark #1 |               2 | ACTIVE     |              |                     0 |                   219 |                         0
-      33 | myGroup1         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   225 |                         0
-      34 | myGroup2         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   233 |                         0
-      35 | myGroup1         | Foo%Bar        |               2 | ACTIVE     |              |                     0 |                   239 |                         0
-      36 | myGroup1         | SM3            |               2 | ACTIVE     |              |                     0 |                   253 |                         0
-      37 | myGroup2         | SM3            |               2 | ACTIVE     |              |                     0 |                   253 |                         0
-      38 | myGroup1         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   267 |                         0
-      39 | myGroup2         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   267 |                         0
-      40 | myGroup1         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   281 |                         0
-      41 | myGroup2         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   281 |                         0
-      42 | myGroup1         | Bar%Foo        |               2 | ACTIVE     |              |                     0 |                   295 |                          
-      43 | myGroup2         | Bar%Foo        |               2 | ACTIVE     |              |                     0 |                   295 |                          
+       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
+      30 | myGroup1         | Mark1          |               2 | ACTIVE     |              |                     0 |                   201 |                         0
+      31 | myGroup2         | Mark2          |               2 | ACTIVE     |              |                     0 |                   209 |                         0
+      32 | myGroup1         | SM1            |               2 | ACTIVE     |              |                     0 |                   215 |                         0
+      33 | myGroup2         | SM1            |               2 | ACTIVE     |              |                     0 |                   223 |                         0
+      34 | myGroup2         | phil's mark #1 |               2 | ACTIVE     |              |                     0 |                   231 |                         0
+      35 | myGroup1         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   237 |                         0
+      36 | myGroup2         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   245 |                         0
+      37 | myGroup1         | Foo%Bar        |               2 | ACTIVE     |              |                     0 |                   251 |                         0
+      38 | myGroup1         | SM3            |               2 | ACTIVE     |              |                     0 |                   265 |                         0
+      39 | myGroup2         | SM3            |               2 | ACTIVE     |              |                     0 |                   265 |                         0
+      40 | myGroup1         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   279 |                         0
+      41 | myGroup2         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   279 |                         0
+      42 | myGroup1         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   293 |                         0
+      43 | myGroup2         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   293 |                         0
+      44 | myGroup1         | Bar%Foo        |               2 | ACTIVE     |              |                     0 |                   307 |                          
+      45 | myGroup2         | Bar%Foo        |               2 | ACTIVE     |              |                     0 |                   307 |                          
 (17 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
  sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
 ---------+----------------+------------------------------------+----------------+---------------+----------------
-      33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
-      34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
-      35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
-     184 | myschema1      | myTbl3_col31_seq                   | Mark1          |             1 | f
-     185 | emajC          | myschema1_myTbl3_log_seq           | Mark1          |             1 | f
-     186 | emaj           | myschema1_mytbl1_log_seq           | Mark1          |             1 | f
-     187 | emaj           | myschema1_mytbl4_log_seq           | Mark1          |             1 | f
-     188 | emaj           | myschema1_mytbl2_log_seq           | Mark1          |             1 | f
-     189 | emajb          | myschema1_mytbl2b_log_seq          | Mark1          |             1 | f
-     190 | myschema2      | myseq1                             | Mark2          |          1000 | f
-     191 | emaj           | myschema2_mytbl1_log_seq           | Mark2          |             1 | f
-     192 | emaj           | myschema2_mytbl2_log_seq           | Mark2          |             1 | f
-     193 | emajC          | myschema2_myTbl3_log_seq           | Mark2          |             1 | f
-     194 | myschema2      | myTbl3_col31_seq                   | Mark2          |             1 | f
-     195 | emaj           | myschema2_mytbl4_log_seq           | Mark2          |             1 | f
-     196 | emaj           | myschema2_mytbl5_log_seq           | Mark2          |             1 | f
-     197 | emaj           | myschema2_mytbl6_log_seq           | Mark2          |             1 | f
-     198 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
-     199 | emajC          | myschema1_myTbl3_log_seq           | SM1            |             1 | f
-     200 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
-     201 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
-     202 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
-     203 | emajb          | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
-     204 | myschema2      | myseq1                             | SM1            |          1000 | f
-     205 | emaj           | myschema2_mytbl1_log_seq           | SM1            |             1 | f
-     206 | emaj           | myschema2_mytbl2_log_seq           | SM1            |             1 | f
-     207 | emajC          | myschema2_myTbl3_log_seq           | SM1            |             1 | f
-     208 | myschema2      | myTbl3_col31_seq                   | SM1            |             1 | f
-     209 | emaj           | myschema2_mytbl4_log_seq           | SM1            |             1 | f
-     210 | emaj           | myschema2_mytbl5_log_seq           | SM1            |             1 | f
-     211 | emaj           | myschema2_mytbl6_log_seq           | SM1            |             1 | f
-     212 | myschema2      | myseq1                             | phil's mark #1 |          1000 | f
-     213 | emaj           | myschema2_mytbl1_log_seq           | phil's mark #1 |             1 | f
-     214 | emaj           | myschema2_mytbl2_log_seq           | phil's mark #1 |             1 | f
-     215 | emajC          | myschema2_myTbl3_log_seq           | phil's mark #1 |             1 | f
-     216 | myschema2      | myTbl3_col31_seq                   | phil's mark #1 |             1 | f
-     217 | emaj           | myschema2_mytbl4_log_seq           | phil's mark #1 |             1 | f
-     218 | emaj           | myschema2_mytbl5_log_seq           | phil's mark #1 |             1 | f
-     219 | emaj           | myschema2_mytbl6_log_seq           | phil's mark #1 |             1 | f
-     220 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     221 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
-     222 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
-     223 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
-     224 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
-     225 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
-     226 | myschema2      | myseq1                             | MARK_%         |          1000 | f
-     227 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
-     228 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
-     229 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
-     230 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     231 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
-     232 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
-     233 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
-     234 | myschema1      | myTbl3_col31_seq                   | Foo%Bar        |             1 | f
-     235 | emajC          | myschema1_myTbl3_log_seq           | Foo%Bar        |             1 | f
-     236 | emaj           | myschema1_mytbl1_log_seq           | Foo%Bar        |             1 | f
-     237 | emaj           | myschema1_mytbl4_log_seq           | Foo%Bar        |             1 | f
-     238 | emaj           | myschema1_mytbl2_log_seq           | Foo%Bar        |             1 | f
-     239 | emajb          | myschema1_mytbl2b_log_seq          | Foo%Bar        |             1 | f
-     240 | myschema1      | myTbl3_col31_seq                   | SM3            |             1 | f
-     241 | emajC          | myschema1_myTbl3_log_seq           | SM3            |             1 | f
-     242 | emaj           | myschema1_mytbl1_log_seq           | SM3            |             1 | f
-     243 | emaj           | myschema1_mytbl4_log_seq           | SM3            |             1 | f
-     244 | emaj           | myschema1_mytbl2_log_seq           | SM3            |             1 | f
-     245 | emajb          | myschema1_mytbl2b_log_seq          | SM3            |             1 | f
-     246 | myschema2      | myseq1                             | SM3            |          1000 | f
-     247 | emaj           | myschema2_mytbl1_log_seq           | SM3            |             1 | f
-     248 | emaj           | myschema2_mytbl2_log_seq           | SM3            |             1 | f
-     249 | emajC          | myschema2_myTbl3_log_seq           | SM3            |             1 | f
-     250 | myschema2      | myTbl3_col31_seq                   | SM3            |             1 | f
-     251 | emaj           | myschema2_mytbl4_log_seq           | SM3            |             1 | f
-     252 | emaj           | myschema2_mytbl5_log_seq           | SM3            |             1 | f
-     253 | emaj           | myschema2_mytbl6_log_seq           | SM3            |             1 | f
-     254 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     255 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
-     256 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
-     257 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
-     258 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
-     259 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
-     260 | myschema2      | myseq1                             | MARK_%         |          1000 | f
-     261 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
-     262 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
-     263 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
-     264 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     265 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
-     266 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
-     267 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
-     268 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     269 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
-     270 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
-     271 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
-     272 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
-     273 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
-     274 | myschema2      | myseq1                             | MARK_%         |          1000 | f
-     275 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
-     276 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
-     277 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
-     278 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     279 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
-     280 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
-     281 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
-     282 | myschema1      | myTbl3_col31_seq                   | Bar%Foo        |             1 | f
-     283 | emajC          | myschema1_myTbl3_log_seq           | Bar%Foo        |             1 | f
-     284 | emaj           | myschema1_mytbl1_log_seq           | Bar%Foo        |             1 | f
-     285 | emaj           | myschema1_mytbl4_log_seq           | Bar%Foo        |             1 | f
-     286 | emaj           | myschema1_mytbl2_log_seq           | Bar%Foo        |             1 | f
-     287 | emajb          | myschema1_mytbl2b_log_seq          | Bar%Foo        |             1 | f
-     288 | myschema2      | myseq1                             | Bar%Foo        |          1000 | f
-     289 | emaj           | myschema2_mytbl1_log_seq           | Bar%Foo        |             1 | f
-     290 | emaj           | myschema2_mytbl2_log_seq           | Bar%Foo        |             1 | f
-     291 | emajC          | myschema2_myTbl3_log_seq           | Bar%Foo        |             1 | f
-     292 | myschema2      | myTbl3_col31_seq                   | Bar%Foo        |             1 | f
-     293 | emaj           | myschema2_mytbl4_log_seq           | Bar%Foo        |             1 | f
-     294 | emaj           | myschema2_mytbl5_log_seq           | Bar%Foo        |             1 | f
-     295 | emaj           | myschema2_mytbl6_log_seq           | Bar%Foo        |             1 | f
+      45 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
+      46 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
+      47 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
+     196 | myschema1      | myTbl3_col31_seq                   | Mark1          |             1 | f
+     197 | emajC          | myschema1_myTbl3_log_seq           | Mark1          |             1 | f
+     198 | emaj           | myschema1_mytbl1_log_seq           | Mark1          |             1 | f
+     199 | emaj           | myschema1_mytbl4_log_seq           | Mark1          |             1 | f
+     200 | emaj           | myschema1_mytbl2_log_seq           | Mark1          |             1 | f
+     201 | emajb          | myschema1_mytbl2b_log_seq          | Mark1          |             1 | f
+     202 | myschema2      | myseq1                             | Mark2          |          1000 | f
+     203 | emaj           | myschema2_mytbl1_log_seq           | Mark2          |             1 | f
+     204 | emaj           | myschema2_mytbl2_log_seq           | Mark2          |             1 | f
+     205 | emajC          | myschema2_myTbl3_log_seq           | Mark2          |             1 | f
+     206 | myschema2      | myTbl3_col31_seq                   | Mark2          |             1 | f
+     207 | emaj           | myschema2_mytbl4_log_seq           | Mark2          |             1 | f
+     208 | emaj           | myschema2_mytbl5_log_seq           | Mark2          |             1 | f
+     209 | emaj           | myschema2_mytbl6_log_seq           | Mark2          |             1 | f
+     210 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
+     211 | emajC          | myschema1_myTbl3_log_seq           | SM1            |             1 | f
+     212 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
+     213 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
+     214 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
+     215 | emajb          | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
+     216 | myschema2      | myseq1                             | SM1            |          1000 | f
+     217 | emaj           | myschema2_mytbl1_log_seq           | SM1            |             1 | f
+     218 | emaj           | myschema2_mytbl2_log_seq           | SM1            |             1 | f
+     219 | emajC          | myschema2_myTbl3_log_seq           | SM1            |             1 | f
+     220 | myschema2      | myTbl3_col31_seq                   | SM1            |             1 | f
+     221 | emaj           | myschema2_mytbl4_log_seq           | SM1            |             1 | f
+     222 | emaj           | myschema2_mytbl5_log_seq           | SM1            |             1 | f
+     223 | emaj           | myschema2_mytbl6_log_seq           | SM1            |             1 | f
+     224 | myschema2      | myseq1                             | phil's mark #1 |          1000 | f
+     225 | emaj           | myschema2_mytbl1_log_seq           | phil's mark #1 |             1 | f
+     226 | emaj           | myschema2_mytbl2_log_seq           | phil's mark #1 |             1 | f
+     227 | emajC          | myschema2_myTbl3_log_seq           | phil's mark #1 |             1 | f
+     228 | myschema2      | myTbl3_col31_seq                   | phil's mark #1 |             1 | f
+     229 | emaj           | myschema2_mytbl4_log_seq           | phil's mark #1 |             1 | f
+     230 | emaj           | myschema2_mytbl5_log_seq           | phil's mark #1 |             1 | f
+     231 | emaj           | myschema2_mytbl6_log_seq           | phil's mark #1 |             1 | f
+     232 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     233 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     234 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     235 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     236 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     237 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     238 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     239 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     240 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     241 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     242 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     243 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     244 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     245 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     246 | myschema1      | myTbl3_col31_seq                   | Foo%Bar        |             1 | f
+     247 | emajC          | myschema1_myTbl3_log_seq           | Foo%Bar        |             1 | f
+     248 | emaj           | myschema1_mytbl1_log_seq           | Foo%Bar        |             1 | f
+     249 | emaj           | myschema1_mytbl4_log_seq           | Foo%Bar        |             1 | f
+     250 | emaj           | myschema1_mytbl2_log_seq           | Foo%Bar        |             1 | f
+     251 | emajb          | myschema1_mytbl2b_log_seq          | Foo%Bar        |             1 | f
+     252 | myschema1      | myTbl3_col31_seq                   | SM3            |             1 | f
+     253 | emajC          | myschema1_myTbl3_log_seq           | SM3            |             1 | f
+     254 | emaj           | myschema1_mytbl1_log_seq           | SM3            |             1 | f
+     255 | emaj           | myschema1_mytbl4_log_seq           | SM3            |             1 | f
+     256 | emaj           | myschema1_mytbl2_log_seq           | SM3            |             1 | f
+     257 | emajb          | myschema1_mytbl2b_log_seq          | SM3            |             1 | f
+     258 | myschema2      | myseq1                             | SM3            |          1000 | f
+     259 | emaj           | myschema2_mytbl1_log_seq           | SM3            |             1 | f
+     260 | emaj           | myschema2_mytbl2_log_seq           | SM3            |             1 | f
+     261 | emajC          | myschema2_myTbl3_log_seq           | SM3            |             1 | f
+     262 | myschema2      | myTbl3_col31_seq                   | SM3            |             1 | f
+     263 | emaj           | myschema2_mytbl4_log_seq           | SM3            |             1 | f
+     264 | emaj           | myschema2_mytbl5_log_seq           | SM3            |             1 | f
+     265 | emaj           | myschema2_mytbl6_log_seq           | SM3            |             1 | f
+     266 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     267 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     268 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     269 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     270 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     271 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     272 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     273 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     274 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     275 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     276 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     277 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     278 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     279 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     280 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     281 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     282 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     283 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     284 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     285 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     286 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     287 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     288 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     289 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     290 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     291 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     292 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     293 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     294 | myschema1      | myTbl3_col31_seq                   | Bar%Foo        |             1 | f
+     295 | emajC          | myschema1_myTbl3_log_seq           | Bar%Foo        |             1 | f
+     296 | emaj           | myschema1_mytbl1_log_seq           | Bar%Foo        |             1 | f
+     297 | emaj           | myschema1_mytbl4_log_seq           | Bar%Foo        |             1 | f
+     298 | emaj           | myschema1_mytbl2_log_seq           | Bar%Foo        |             1 | f
+     299 | emajb          | myschema1_mytbl2b_log_seq          | Bar%Foo        |             1 | f
+     300 | myschema2      | myseq1                             | Bar%Foo        |          1000 | f
+     301 | emaj           | myschema2_mytbl1_log_seq           | Bar%Foo        |             1 | f
+     302 | emaj           | myschema2_mytbl2_log_seq           | Bar%Foo        |             1 | f
+     303 | emajC          | myschema2_myTbl3_log_seq           | Bar%Foo        |             1 | f
+     304 | myschema2      | myTbl3_col31_seq                   | Bar%Foo        |             1 | f
+     305 | emaj           | myschema2_mytbl4_log_seq           | Bar%Foo        |             1 | f
+     306 | emaj           | myschema2_mytbl5_log_seq           | Bar%Foo        |             1 | f
+     307 | emaj           | myschema2_mytbl6_log_seq           | Bar%Foo        |             1 | f
 (115 rows)
 
 -----------------------------
@@ -414,143 +414,143 @@ select emaj.emaj_rename_mark_group('myGroup2','phil''s mark #1','john''s mark #1
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+-------------------------------+-----------------------+-----------------------+---------------------------
-       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                     0 |                    35 |                          
-      28 | myGroup1         | First Mark     |               2 | ACTIVE     |                               |                     0 |                   189 |                         0
-      29 | myGroup2         | Mark2          |               2 | ACTIVE     |                               |                     0 |                   197 |                         0
-      30 | myGroup1         | SM1            |               2 | ACTIVE     | a better comment for group #1 |                     0 |                   203 |                         0
-      31 | myGroup2         | SM1            |               2 | ACTIVE     |                               |                     0 |                   211 |                         0
-      32 | myGroup2         | john's mark #1 |               2 | ACTIVE     | a good phil's comment!        |                     0 |                   219 |                         0
-      33 | myGroup1         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   225 |                         0
-      34 | myGroup2         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   233 |                         0
-      35 | myGroup1         | Foo%Bar        |               2 | ACTIVE     |                               |                     0 |                   239 |                         0
-      36 | myGroup1         | SM3            |               2 | ACTIVE     |                               |                     0 |                   253 |                         0
-      37 | myGroup2         | SM3            |               2 | ACTIVE     |                               |                     0 |                   253 |                         0
-      38 | myGroup1         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   267 |                         0
-      39 | myGroup2         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   267 |                         0
-      40 | myGroup1         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   281 |                         0
-      41 | myGroup2         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   281 |                         0
-      42 | myGroup1         | Bar%Foo        |               2 | ACTIVE     |                               |                     0 |                   295 |                          
-      43 | myGroup2         | SM2            |               2 | ACTIVE     | a comment for group #2        |                     0 |                   295 |                          
+       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                     0 |                    47 |                          
+      30 | myGroup1         | First Mark     |               2 | ACTIVE     |                               |                     0 |                   201 |                         0
+      31 | myGroup2         | Mark2          |               2 | ACTIVE     |                               |                     0 |                   209 |                         0
+      32 | myGroup1         | SM1            |               2 | ACTIVE     | a better comment for group #1 |                     0 |                   215 |                         0
+      33 | myGroup2         | SM1            |               2 | ACTIVE     |                               |                     0 |                   223 |                         0
+      34 | myGroup2         | john's mark #1 |               2 | ACTIVE     | a good phil's comment!        |                     0 |                   231 |                         0
+      35 | myGroup1         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   237 |                         0
+      36 | myGroup2         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   245 |                         0
+      37 | myGroup1         | Foo%Bar        |               2 | ACTIVE     |                               |                     0 |                   251 |                         0
+      38 | myGroup1         | SM3            |               2 | ACTIVE     |                               |                     0 |                   265 |                         0
+      39 | myGroup2         | SM3            |               2 | ACTIVE     |                               |                     0 |                   265 |                         0
+      40 | myGroup1         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   279 |                         0
+      41 | myGroup2         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   279 |                         0
+      42 | myGroup1         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   293 |                         0
+      43 | myGroup2         | MARK_%         |               2 | ACTIVE     |                               |                     0 |                   293 |                         0
+      44 | myGroup1         | Bar%Foo        |               2 | ACTIVE     |                               |                     0 |                   307 |                          
+      45 | myGroup2         | SM2            |               2 | ACTIVE     | a comment for group #2        |                     0 |                   307 |                          
 (17 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
  sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
 ---------+----------------+------------------------------------+----------------+---------------+----------------
-      33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
-      34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
-      35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
-     184 | myschema1      | myTbl3_col31_seq                   | First Mark     |             1 | f
-     185 | emajC          | myschema1_myTbl3_log_seq           | First Mark     |             1 | f
-     186 | emaj           | myschema1_mytbl1_log_seq           | First Mark     |             1 | f
-     187 | emaj           | myschema1_mytbl4_log_seq           | First Mark     |             1 | f
-     188 | emaj           | myschema1_mytbl2_log_seq           | First Mark     |             1 | f
-     189 | emajb          | myschema1_mytbl2b_log_seq          | First Mark     |             1 | f
-     190 | myschema2      | myseq1                             | Mark2          |          1000 | f
-     191 | emaj           | myschema2_mytbl1_log_seq           | Mark2          |             1 | f
-     192 | emaj           | myschema2_mytbl2_log_seq           | Mark2          |             1 | f
-     193 | emajC          | myschema2_myTbl3_log_seq           | Mark2          |             1 | f
-     194 | myschema2      | myTbl3_col31_seq                   | Mark2          |             1 | f
-     195 | emaj           | myschema2_mytbl4_log_seq           | Mark2          |             1 | f
-     196 | emaj           | myschema2_mytbl5_log_seq           | Mark2          |             1 | f
-     197 | emaj           | myschema2_mytbl6_log_seq           | Mark2          |             1 | f
-     198 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
-     199 | emajC          | myschema1_myTbl3_log_seq           | SM1            |             1 | f
-     200 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
-     201 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
-     202 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
-     203 | emajb          | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
-     204 | myschema2      | myseq1                             | SM1            |          1000 | f
-     205 | emaj           | myschema2_mytbl1_log_seq           | SM1            |             1 | f
-     206 | emaj           | myschema2_mytbl2_log_seq           | SM1            |             1 | f
-     207 | emajC          | myschema2_myTbl3_log_seq           | SM1            |             1 | f
-     208 | myschema2      | myTbl3_col31_seq                   | SM1            |             1 | f
-     209 | emaj           | myschema2_mytbl4_log_seq           | SM1            |             1 | f
-     210 | emaj           | myschema2_mytbl5_log_seq           | SM1            |             1 | f
-     211 | emaj           | myschema2_mytbl6_log_seq           | SM1            |             1 | f
-     212 | myschema2      | myseq1                             | john's mark #1 |          1000 | f
-     213 | emaj           | myschema2_mytbl1_log_seq           | john's mark #1 |             1 | f
-     214 | emaj           | myschema2_mytbl2_log_seq           | john's mark #1 |             1 | f
-     215 | emajC          | myschema2_myTbl3_log_seq           | john's mark #1 |             1 | f
-     216 | myschema2      | myTbl3_col31_seq                   | john's mark #1 |             1 | f
-     217 | emaj           | myschema2_mytbl4_log_seq           | john's mark #1 |             1 | f
-     218 | emaj           | myschema2_mytbl5_log_seq           | john's mark #1 |             1 | f
-     219 | emaj           | myschema2_mytbl6_log_seq           | john's mark #1 |             1 | f
-     220 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     221 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
-     222 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
-     223 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
-     224 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
-     225 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
-     226 | myschema2      | myseq1                             | MARK_%         |          1000 | f
-     227 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
-     228 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
-     229 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
-     230 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     231 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
-     232 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
-     233 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
-     234 | myschema1      | myTbl3_col31_seq                   | Foo%Bar        |             1 | f
-     235 | emajC          | myschema1_myTbl3_log_seq           | Foo%Bar        |             1 | f
-     236 | emaj           | myschema1_mytbl1_log_seq           | Foo%Bar        |             1 | f
-     237 | emaj           | myschema1_mytbl4_log_seq           | Foo%Bar        |             1 | f
-     238 | emaj           | myschema1_mytbl2_log_seq           | Foo%Bar        |             1 | f
-     239 | emajb          | myschema1_mytbl2b_log_seq          | Foo%Bar        |             1 | f
-     240 | myschema1      | myTbl3_col31_seq                   | SM3            |             1 | f
-     241 | emajC          | myschema1_myTbl3_log_seq           | SM3            |             1 | f
-     242 | emaj           | myschema1_mytbl1_log_seq           | SM3            |             1 | f
-     243 | emaj           | myschema1_mytbl4_log_seq           | SM3            |             1 | f
-     244 | emaj           | myschema1_mytbl2_log_seq           | SM3            |             1 | f
-     245 | emajb          | myschema1_mytbl2b_log_seq          | SM3            |             1 | f
-     246 | myschema2      | myseq1                             | SM3            |          1000 | f
-     247 | emaj           | myschema2_mytbl1_log_seq           | SM3            |             1 | f
-     248 | emaj           | myschema2_mytbl2_log_seq           | SM3            |             1 | f
-     249 | emajC          | myschema2_myTbl3_log_seq           | SM3            |             1 | f
-     250 | myschema2      | myTbl3_col31_seq                   | SM3            |             1 | f
-     251 | emaj           | myschema2_mytbl4_log_seq           | SM3            |             1 | f
-     252 | emaj           | myschema2_mytbl5_log_seq           | SM3            |             1 | f
-     253 | emaj           | myschema2_mytbl6_log_seq           | SM3            |             1 | f
-     254 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     255 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
-     256 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
-     257 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
-     258 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
-     259 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
-     260 | myschema2      | myseq1                             | MARK_%         |          1000 | f
-     261 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
-     262 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
-     263 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
-     264 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     265 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
-     266 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
-     267 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
-     268 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     269 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
-     270 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
-     271 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
-     272 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
-     273 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
-     274 | myschema2      | myseq1                             | MARK_%         |          1000 | f
-     275 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
-     276 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
-     277 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
-     278 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
-     279 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
-     280 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
-     281 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
-     282 | myschema1      | myTbl3_col31_seq                   | SM2            |             1 | f
-     283 | emajC          | myschema1_myTbl3_log_seq           | SM2            |             1 | f
-     284 | emaj           | myschema1_mytbl1_log_seq           | SM2            |             1 | f
-     285 | emaj           | myschema1_mytbl4_log_seq           | SM2            |             1 | f
-     286 | emaj           | myschema1_mytbl2_log_seq           | SM2            |             1 | f
-     287 | emajb          | myschema1_mytbl2b_log_seq          | SM2            |             1 | f
-     288 | myschema2      | myseq1                             | SM2            |          1000 | f
-     289 | emaj           | myschema2_mytbl1_log_seq           | SM2            |             1 | f
-     290 | emaj           | myschema2_mytbl2_log_seq           | SM2            |             1 | f
-     291 | emajC          | myschema2_myTbl3_log_seq           | SM2            |             1 | f
-     292 | myschema2      | myTbl3_col31_seq                   | SM2            |             1 | f
-     293 | emaj           | myschema2_mytbl4_log_seq           | SM2            |             1 | f
-     294 | emaj           | myschema2_mytbl5_log_seq           | SM2            |             1 | f
-     295 | emaj           | myschema2_mytbl6_log_seq           | SM2            |             1 | f
+      45 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
+      46 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
+      47 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
+     196 | myschema1      | myTbl3_col31_seq                   | First Mark     |             1 | f
+     197 | emajC          | myschema1_myTbl3_log_seq           | First Mark     |             1 | f
+     198 | emaj           | myschema1_mytbl1_log_seq           | First Mark     |             1 | f
+     199 | emaj           | myschema1_mytbl4_log_seq           | First Mark     |             1 | f
+     200 | emaj           | myschema1_mytbl2_log_seq           | First Mark     |             1 | f
+     201 | emajb          | myschema1_mytbl2b_log_seq          | First Mark     |             1 | f
+     202 | myschema2      | myseq1                             | Mark2          |          1000 | f
+     203 | emaj           | myschema2_mytbl1_log_seq           | Mark2          |             1 | f
+     204 | emaj           | myschema2_mytbl2_log_seq           | Mark2          |             1 | f
+     205 | emajC          | myschema2_myTbl3_log_seq           | Mark2          |             1 | f
+     206 | myschema2      | myTbl3_col31_seq                   | Mark2          |             1 | f
+     207 | emaj           | myschema2_mytbl4_log_seq           | Mark2          |             1 | f
+     208 | emaj           | myschema2_mytbl5_log_seq           | Mark2          |             1 | f
+     209 | emaj           | myschema2_mytbl6_log_seq           | Mark2          |             1 | f
+     210 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
+     211 | emajC          | myschema1_myTbl3_log_seq           | SM1            |             1 | f
+     212 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
+     213 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
+     214 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
+     215 | emajb          | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
+     216 | myschema2      | myseq1                             | SM1            |          1000 | f
+     217 | emaj           | myschema2_mytbl1_log_seq           | SM1            |             1 | f
+     218 | emaj           | myschema2_mytbl2_log_seq           | SM1            |             1 | f
+     219 | emajC          | myschema2_myTbl3_log_seq           | SM1            |             1 | f
+     220 | myschema2      | myTbl3_col31_seq                   | SM1            |             1 | f
+     221 | emaj           | myschema2_mytbl4_log_seq           | SM1            |             1 | f
+     222 | emaj           | myschema2_mytbl5_log_seq           | SM1            |             1 | f
+     223 | emaj           | myschema2_mytbl6_log_seq           | SM1            |             1 | f
+     224 | myschema2      | myseq1                             | john's mark #1 |          1000 | f
+     225 | emaj           | myschema2_mytbl1_log_seq           | john's mark #1 |             1 | f
+     226 | emaj           | myschema2_mytbl2_log_seq           | john's mark #1 |             1 | f
+     227 | emajC          | myschema2_myTbl3_log_seq           | john's mark #1 |             1 | f
+     228 | myschema2      | myTbl3_col31_seq                   | john's mark #1 |             1 | f
+     229 | emaj           | myschema2_mytbl4_log_seq           | john's mark #1 |             1 | f
+     230 | emaj           | myschema2_mytbl5_log_seq           | john's mark #1 |             1 | f
+     231 | emaj           | myschema2_mytbl6_log_seq           | john's mark #1 |             1 | f
+     232 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     233 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     234 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     235 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     236 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     237 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     238 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     239 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     240 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     241 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     242 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     243 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     244 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     245 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     246 | myschema1      | myTbl3_col31_seq                   | Foo%Bar        |             1 | f
+     247 | emajC          | myschema1_myTbl3_log_seq           | Foo%Bar        |             1 | f
+     248 | emaj           | myschema1_mytbl1_log_seq           | Foo%Bar        |             1 | f
+     249 | emaj           | myschema1_mytbl4_log_seq           | Foo%Bar        |             1 | f
+     250 | emaj           | myschema1_mytbl2_log_seq           | Foo%Bar        |             1 | f
+     251 | emajb          | myschema1_mytbl2b_log_seq          | Foo%Bar        |             1 | f
+     252 | myschema1      | myTbl3_col31_seq                   | SM3            |             1 | f
+     253 | emajC          | myschema1_myTbl3_log_seq           | SM3            |             1 | f
+     254 | emaj           | myschema1_mytbl1_log_seq           | SM3            |             1 | f
+     255 | emaj           | myschema1_mytbl4_log_seq           | SM3            |             1 | f
+     256 | emaj           | myschema1_mytbl2_log_seq           | SM3            |             1 | f
+     257 | emajb          | myschema1_mytbl2b_log_seq          | SM3            |             1 | f
+     258 | myschema2      | myseq1                             | SM3            |          1000 | f
+     259 | emaj           | myschema2_mytbl1_log_seq           | SM3            |             1 | f
+     260 | emaj           | myschema2_mytbl2_log_seq           | SM3            |             1 | f
+     261 | emajC          | myschema2_myTbl3_log_seq           | SM3            |             1 | f
+     262 | myschema2      | myTbl3_col31_seq                   | SM3            |             1 | f
+     263 | emaj           | myschema2_mytbl4_log_seq           | SM3            |             1 | f
+     264 | emaj           | myschema2_mytbl5_log_seq           | SM3            |             1 | f
+     265 | emaj           | myschema2_mytbl6_log_seq           | SM3            |             1 | f
+     266 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     267 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     268 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     269 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     270 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     271 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     272 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     273 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     274 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     275 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     276 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     277 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     278 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     279 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     280 | myschema1      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     281 | emajC          | myschema1_myTbl3_log_seq           | MARK_%         |             1 | f
+     282 | emaj           | myschema1_mytbl1_log_seq           | MARK_%         |             1 | f
+     283 | emaj           | myschema1_mytbl4_log_seq           | MARK_%         |             1 | f
+     284 | emaj           | myschema1_mytbl2_log_seq           | MARK_%         |             1 | f
+     285 | emajb          | myschema1_mytbl2b_log_seq          | MARK_%         |             1 | f
+     286 | myschema2      | myseq1                             | MARK_%         |          1000 | f
+     287 | emaj           | myschema2_mytbl1_log_seq           | MARK_%         |             1 | f
+     288 | emaj           | myschema2_mytbl2_log_seq           | MARK_%         |             1 | f
+     289 | emajC          | myschema2_myTbl3_log_seq           | MARK_%         |             1 | f
+     290 | myschema2      | myTbl3_col31_seq                   | MARK_%         |             1 | f
+     291 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
+     292 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
+     293 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
+     294 | myschema1      | myTbl3_col31_seq                   | SM2            |             1 | f
+     295 | emajC          | myschema1_myTbl3_log_seq           | SM2            |             1 | f
+     296 | emaj           | myschema1_mytbl1_log_seq           | SM2            |             1 | f
+     297 | emaj           | myschema1_mytbl4_log_seq           | SM2            |             1 | f
+     298 | emaj           | myschema1_mytbl2_log_seq           | SM2            |             1 | f
+     299 | emajb          | myschema1_mytbl2b_log_seq          | SM2            |             1 | f
+     300 | myschema2      | myseq1                             | SM2            |          1000 | f
+     301 | emaj           | myschema2_mytbl1_log_seq           | SM2            |             1 | f
+     302 | emaj           | myschema2_mytbl2_log_seq           | SM2            |             1 | f
+     303 | emajC          | myschema2_myTbl3_log_seq           | SM2            |             1 | f
+     304 | myschema2      | myTbl3_col31_seq                   | SM2            |             1 | f
+     305 | emaj           | myschema2_mytbl4_log_seq           | SM2            |             1 | f
+     306 | emaj           | myschema2_mytbl5_log_seq           | SM2            |             1 | f
+     307 | emaj           | myschema2_mytbl6_log_seq           | SM2            |             1 | f
 (115 rows)
 
 -----------------------------
@@ -661,53 +661,53 @@ ERROR:  emaj_set_mark_groups: A mark cannot be set for group myGroup1 because it
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+-------------------------------+-----------------------+-----------------------+---------------------------
-       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                     0 |                    35 |                          
-      30 | myGroup1         | SM1            |               2 | DELETED    | a better comment for group #1 |                     0 |                   203 |                         0
-      43 | myGroup2         | SM2            |               2 | DELETED    | a comment for group #2        |                     0 |                   295 |                         0
-      44 | myGroup1         | STOP_%         |               2 | DELETED    |                               |                     0 |                   301 |                          
-      45 | myGroup2         | STOP_%         |               2 | DELETED    |                               |                     0 |                   309 |                          
+       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                     0 |                    47 |                          
+      32 | myGroup1         | SM1            |               2 | DELETED    | a better comment for group #1 |                     0 |                   215 |                         0
+      45 | myGroup2         | SM2            |               2 | DELETED    | a comment for group #2        |                     0 |                   307 |                         0
+      46 | myGroup1         | STOP_%         |               2 | DELETED    |                               |                     0 |                   313 |                          
+      47 | myGroup2         | STOP_%         |               2 | DELETED    |                               |                     0 |                   321 |                          
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
  sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
 ---------+----------------+------------------------------------+----------------+---------------+----------------
-      33 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
-      34 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
-      35 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
-     198 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
-     199 | emajC          | myschema1_myTbl3_log_seq           | SM1            |             1 | f
-     200 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
-     201 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
-     202 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
-     203 | emajb          | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
-     282 | myschema1      | myTbl3_col31_seq                   | SM2            |             1 | f
-     283 | emajC          | myschema1_myTbl3_log_seq           | SM2            |             1 | f
-     284 | emaj           | myschema1_mytbl1_log_seq           | SM2            |             1 | f
-     285 | emaj           | myschema1_mytbl4_log_seq           | SM2            |             1 | f
-     286 | emaj           | myschema1_mytbl2_log_seq           | SM2            |             1 | f
-     287 | emajb          | myschema1_mytbl2b_log_seq          | SM2            |             1 | f
-     288 | myschema2      | myseq1                             | SM2            |          1000 | f
-     289 | emaj           | myschema2_mytbl1_log_seq           | SM2            |             1 | f
-     290 | emaj           | myschema2_mytbl2_log_seq           | SM2            |             1 | f
-     291 | emajC          | myschema2_myTbl3_log_seq           | SM2            |             1 | f
-     292 | myschema2      | myTbl3_col31_seq                   | SM2            |             1 | f
-     293 | emaj           | myschema2_mytbl4_log_seq           | SM2            |             1 | f
-     294 | emaj           | myschema2_mytbl5_log_seq           | SM2            |             1 | f
-     295 | emaj           | myschema2_mytbl6_log_seq           | SM2            |             1 | f
-     296 | myschema1      | myTbl3_col31_seq                   | STOP_%         |             1 | f
-     297 | emajC          | myschema1_myTbl3_log_seq           | STOP_%         |             1 | f
-     298 | emaj           | myschema1_mytbl1_log_seq           | STOP_%         |             1 | f
-     299 | emaj           | myschema1_mytbl4_log_seq           | STOP_%         |             1 | f
-     300 | emaj           | myschema1_mytbl2_log_seq           | STOP_%         |             1 | f
-     301 | emajb          | myschema1_mytbl2b_log_seq          | STOP_%         |             1 | f
-     302 | myschema2      | myseq1                             | STOP_%         |          1000 | f
-     303 | emaj           | myschema2_mytbl1_log_seq           | STOP_%         |             1 | f
-     304 | emaj           | myschema2_mytbl2_log_seq           | STOP_%         |             1 | f
-     305 | emajC          | myschema2_myTbl3_log_seq           | STOP_%         |             1 | f
-     306 | myschema2      | myTbl3_col31_seq                   | STOP_%         |             1 | f
-     307 | emaj           | myschema2_mytbl4_log_seq           | STOP_%         |             1 | f
-     308 | emaj           | myschema2_mytbl5_log_seq           | STOP_%         |             1 | f
-     309 | emaj           | myschema2_mytbl6_log_seq           | STOP_%         |             1 | f
+      45 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
+      46 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
+      47 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
+     210 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
+     211 | emajC          | myschema1_myTbl3_log_seq           | SM1            |             1 | f
+     212 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
+     213 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
+     214 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
+     215 | emajb          | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
+     294 | myschema1      | myTbl3_col31_seq                   | SM2            |             1 | f
+     295 | emajC          | myschema1_myTbl3_log_seq           | SM2            |             1 | f
+     296 | emaj           | myschema1_mytbl1_log_seq           | SM2            |             1 | f
+     297 | emaj           | myschema1_mytbl4_log_seq           | SM2            |             1 | f
+     298 | emaj           | myschema1_mytbl2_log_seq           | SM2            |             1 | f
+     299 | emajb          | myschema1_mytbl2b_log_seq          | SM2            |             1 | f
+     300 | myschema2      | myseq1                             | SM2            |          1000 | f
+     301 | emaj           | myschema2_mytbl1_log_seq           | SM2            |             1 | f
+     302 | emaj           | myschema2_mytbl2_log_seq           | SM2            |             1 | f
+     303 | emajC          | myschema2_myTbl3_log_seq           | SM2            |             1 | f
+     304 | myschema2      | myTbl3_col31_seq                   | SM2            |             1 | f
+     305 | emaj           | myschema2_mytbl4_log_seq           | SM2            |             1 | f
+     306 | emaj           | myschema2_mytbl5_log_seq           | SM2            |             1 | f
+     307 | emaj           | myschema2_mytbl6_log_seq           | SM2            |             1 | f
+     308 | myschema1      | myTbl3_col31_seq                   | STOP_%         |             1 | f
+     309 | emajC          | myschema1_myTbl3_log_seq           | STOP_%         |             1 | f
+     310 | emaj           | myschema1_mytbl1_log_seq           | STOP_%         |             1 | f
+     311 | emaj           | myschema1_mytbl4_log_seq           | STOP_%         |             1 | f
+     312 | emaj           | myschema1_mytbl2_log_seq           | STOP_%         |             1 | f
+     313 | emajb          | myschema1_mytbl2b_log_seq          | STOP_%         |             1 | f
+     314 | myschema2      | myseq1                             | STOP_%         |          1000 | f
+     315 | emaj           | myschema2_mytbl1_log_seq           | STOP_%         |             1 | f
+     316 | emaj           | myschema2_mytbl2_log_seq           | STOP_%         |             1 | f
+     317 | emajC          | myschema2_myTbl3_log_seq           | STOP_%         |             1 | f
+     318 | myschema2      | myTbl3_col31_seq                   | STOP_%         |             1 | f
+     319 | emaj           | myschema2_mytbl4_log_seq           | STOP_%         |             1 | f
+     320 | emaj           | myschema2_mytbl5_log_seq           | STOP_%         |             1 | f
+     321 | emaj           | myschema2_mytbl6_log_seq           | STOP_%         |             1 | f
 (37 rows)
 
 -----------------------------

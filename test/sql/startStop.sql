@@ -1,5 +1,6 @@
 -- startStop.sql : test emaj_start_group(), emaj_start_groups(), emaj_stop_group() and emaj_stop_groups()functions
 --
+SET client_min_messages TO WARNING;
 -- prepare groups
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2');
@@ -46,12 +47,16 @@ select emaj.emaj_start_group('myGroup2','Mark3');
 
 -- check how truncate reacts  - tables are empty anyway
 -- ... for a rollbackable group (must be blocked in pg 8.4+)
+SET client_min_messages TO NOTICE;
+
 truncate myschema1.mytbl1 cascade;
 -- ... for an audit_only group (must be logged in pg 8.4+)
 truncate "phil's schema3"."phil's tbl1" cascade;
 select "phil's col11", "phil's col12", "phil\s col13", 
        emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip 
   from "emaj #'3"."phil's schema3_phil's tbl1_log";
+
+SET client_min_messages TO WARNING;
 
 -- impact of started group
 select group_name, group_state, group_nb_table, group_nb_sequence, group_comment 

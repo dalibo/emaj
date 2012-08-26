@@ -55,6 +55,7 @@ select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup1',true);
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup1');
+select emaj.emaj_alter_group('myGroup1');
 select emaj.emaj_start_group('myGroup1','mark');
 select emaj.emaj_start_groups(array['myGroup1'],'mark');
 select emaj.emaj_stop_group('myGroup1');

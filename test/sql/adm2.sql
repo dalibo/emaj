@@ -88,8 +88,32 @@ select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj.myS
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -----------------------------
--- Step 9 : for phil''s group#3", recreate the group as rollbackable, update tables, 
---          rename a mark, then delete 2 marks then delete all before a mark 
+-- Step 9 : test the emaj_alter_group function with non rollbackable phil's group#3, group
+-----------------------------
+set role emaj_regression_tests_adm_user;
+select emaj.emaj_create_group('phil''s group#3",',false);
+
+reset role;
+alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(11);
+
+set role emaj_regression_tests_adm_user;
+update emaj.emaj_group_def set grpdef_priority = 1 where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+select emaj.emaj_alter_group('phil''s group#3",');
+--select rel_priority from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'phil''s tbl1';
+select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
+select emaj.emaj_stop_group('phil''s group#3",');
+
+reset role;
+alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(10);
+
+set role emaj_regression_tests_adm_user;
+update emaj.emaj_group_def set grpdef_priority = NULL where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+select emaj.emaj_alter_group('phil''s group#3",');
+select emaj.emaj_drop_group('phil''s group#3",');
+
+-----------------------------
+-- Step 10 : for phil''s group#3", recreate the group as rollbackable, update tables, 
+--           rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
 -- prepare phil's group#3, group
 --
@@ -132,7 +156,7 @@ select emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3');
 select emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3');
 
 -----------------------------
--- Checking step 9
+-- Checking step 10
 -----------------------------
 -- emaj tables
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
@@ -149,7 +173,7 @@ select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, em
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj."phil's schema3_myTbl2\_log" order by emaj_gid, emaj_tuple desc;
 
 -----------------------------
--- Step 10 : for myGroup1, in a transaction, update tables and rollback the transaction, 
+-- Step 11 : for myGroup1, in a transaction, update tables and rollback the transaction, 
 --           then rollback to previous mark 
 -----------------------------
 set search_path=myschema1;
@@ -161,7 +185,7 @@ rollback;
 select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
 -----------------------------
--- Checking step 10
+-- Checking step 11
 -----------------------------
 -- emaj tables
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
@@ -169,7 +193,7 @@ select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from emaj.emaj_rlb
   order by rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_operation;
 
 -----------------------------
--- Step 11 : tests snaps and script generation functions
+-- Step 12 : tests snaps and script generation functions
 -----------------------------
 -- first add some updates for tables with unusual types (arrays, geometric)
 set search_path=myschema2;
