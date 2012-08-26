@@ -1,100 +1,11 @@
 -- startStop.sql : test emaj_start_group(), emaj_start_groups(), emaj_stop_group() and emaj_stop_groups()functions
 --
+SET client_min_messages TO WARNING;
 -- prepare groups
 select emaj.emaj_create_group('myGroup1');
-NOTICE:  table "myschema1_myTbl3_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema1_myTbl3_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema1_myTbl3_emaj_log_trg" for table "myschema1.myTbl3" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema1_myTbl3_emaj_log_trg" ON myschema1."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema1_myTbl3_emaj_trunc_trg" for table "myschema1.myTbl3" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema1_myTbl3_emaj_trunc_trg" ON myschema1."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema1_mytbl1_emaj_log_trg" for table "myschema1.mytbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl1_emaj_log_trg ON myschema1.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema1_mytbl1_emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl1_emaj_trunc_trg ON myschema1.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  table "myschema1_mytbl4_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl4_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema1_mytbl4_emaj_log_trg" for table "myschema1.mytbl4" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl4_emaj_log_trg ON myschema1.mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema1_mytbl4_emaj_trunc_trg" for table "myschema1.mytbl4" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl4_emaj_trunc_trg ON myschema1.mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  table "myschema1_mytbl2_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl2_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema1_mytbl2_emaj_log_trg" for table "myschema1.mytbl2" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2_emaj_log_trg ON myschema1.mytbl2"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema1_mytbl2_emaj_trunc_trg" for table "myschema1.mytbl2" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2_emaj_trunc_trg ON myschema1.mytbl2"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emajb.myschema1_mytbl2b_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema1_mytbl2b_emaj_log_trg" for table "myschema1.mytbl2b" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2b_emaj_log_trg ON myschema1.mytbl2b"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema1_mytbl2b_emaj_trunc_trg" for table "myschema1.mytbl2b" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2b_emaj_trunc_trg ON myschema1.mytbl2b"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
  emaj_create_group 
 -------------------
@@ -102,114 +13,6 @@ PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 (1 row)
 
 select emaj.emaj_create_group('myGroup2');
-NOTICE:  table "myschema2_mytbl1_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_mytbl1_emaj_log_trg" for table "myschema2.mytbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl1_emaj_log_trg ON myschema2.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_mytbl1_emaj_trunc_trg" for table "myschema2.mytbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl1_emaj_trunc_trg ON myschema2.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  table "myschema2_mytbl2_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl2_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_mytbl2_emaj_log_trg" for table "myschema2.mytbl2" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl2_emaj_log_trg ON myschema2.mytbl2"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_mytbl2_emaj_trunc_trg" for table "myschema2.mytbl2" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl2_emaj_trunc_trg ON myschema2.mytbl2"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  table "myschema2_myTbl3_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema2_myTbl3_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_myTbl3_emaj_log_trg" for table "myschema2.myTbl3" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema2_myTbl3_emaj_log_trg" ON myschema2."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_myTbl3_emaj_trunc_trg" for table "myschema2.myTbl3" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema2_myTbl3_emaj_trunc_trg" ON myschema2."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  table "myschema2_mytbl4_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl4_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_mytbl4_emaj_log_trg" for table "myschema2.mytbl4" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl4_emaj_log_trg ON myschema2.mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_mytbl4_emaj_trunc_trg" for table "myschema2.mytbl4" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl4_emaj_trunc_trg ON myschema2.mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  table "myschema2_mytbl5_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl5_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_mytbl5_emaj_log_trg" for table "myschema2.mytbl5" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl5_emaj_log_trg ON myschema2.mytbl5"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_mytbl5_emaj_trunc_trg" for table "myschema2.mytbl5" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl5_emaj_trunc_trg ON myschema2.mytbl5"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  table "myschema2_mytbl6_log" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl6_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 84 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_mytbl6_emaj_log_trg" for table "myschema2.mytbl6" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl6_emaj_log_trg ON myschema2.mytbl6"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 149 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
-NOTICE:  trigger "myschema2_mytbl6_emaj_trunc_trg" for table "myschema2.mytbl6" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl6_emaj_trunc_trg ON myschema2.mytbl6"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
-SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
  emaj_create_group 
 -------------------
                  8
@@ -324,6 +127,7 @@ PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statem
 PL/pgSQL function emaj.emaj_start_group(text,text) line 6 at RETURN
 -- check how truncate reacts  - tables are empty anyway
 -- ... for a rollbackable group (must be blocked in pg 8.4+)
+SET client_min_messages TO NOTICE;
 truncate myschema1.mytbl1 cascade;
 NOTICE:  truncate cascades to table "mytbl4"
 ERROR:  emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (myschema1.mytbl1) are currently protected by E-Maj. Consider stopping the group before issuing a TRUNCATE.
@@ -339,6 +143,7 @@ select "phil's col11", "phil's col12", "phil\s col13",
               |              |              | TRU       |            |        1 | postgres  | 
 (1 row)
 
+SET client_min_messages TO WARNING;
 -- impact of started group
 select group_name, group_state, group_nb_table, group_nb_sequence, group_comment 
   from emaj.emaj_group order by group_name, group_state;
@@ -352,11 +157,11 @@ select group_name, group_state, group_nb_table, group_nb_sequence, group_comment
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       5 | myGroup2         | Mark2          |               0 | DELETED    |              |                     0 |                    32 |                         0
-       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-       8 | myGroup2         | STOP_%         |               0 | DELETED    |              |                     0 |                    49 |                          
-      10 | myGroup1         | %abc%          |               0 | ACTIVE     |              |                     0 |                    63 |                          
-      11 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                     0 |                    71 |                          
+       7 | myGroup2         | Mark2          |               0 | DELETED    |              |                     0 |                    44 |                         0
+       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
+      10 | myGroup2         | STOP_%         |               0 | DELETED    |              |                     0 |                    61 |                          
+      12 | myGroup1         | %abc%          |               0 | ACTIVE     |              |                     0 |                    75 |                          
+      13 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                     0 |                    83 |                          
 (5 rows)
 
 -- check old events are deleted
@@ -441,10 +246,8 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_group('myGroup2');
 ERROR:  relation "myschema2.myTbl3" does not exist
-CONTEXT:  SQL statement "LOCK TABLE myschema2."myTbl3" IN ACCESS EXCLUSIVE MODE"
-PL/pgSQL function emaj._lock_groups(text[],text,boolean) line 35 at EXECUTE statement
-SQL statement "SELECT emaj._lock_groups(v_validGroupNames,'',v_multiGroup)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean) line 48 at PERFORM
+CONTEXT:  SQL statement "ALTER TABLE myschema2."myTbl3" DISABLE TRIGGER "myschema2_myTbl3_emaj_log_trg""
+PL/pgSQL function emaj._stop_groups(text[],text,boolean) line 59 at EXECUTE statement
 PL/pgSQL function emaj.emaj_stop_group(text) line 8 at RETURN
 rollback;
 -- should be OK
@@ -467,12 +270,12 @@ select group_name, group_state, group_nb_table, group_nb_sequence, group_comment
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       5 | myGroup2         | Mark2          |               0 | DELETED    |              |                     0 |                    32 |                         0
-       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-       8 | myGroup2         | STOP_%         |               0 | DELETED    |              |                     0 |                    49 |                          
-      10 | myGroup1         | %abc%          |               0 | DELETED    |              |                     0 |                    63 |                         0
-      11 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                     0 |                    71 |                          
-      12 | myGroup1         | STOP_%         |               2 | DELETED    |              |                     0 |                    77 |                          
+       7 | myGroup2         | Mark2          |               0 | DELETED    |              |                     0 |                    44 |                         0
+       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
+      10 | myGroup2         | STOP_%         |               0 | DELETED    |              |                     0 |                    61 |                          
+      12 | myGroup1         | %abc%          |               0 | DELETED    |              |                     0 |                    75 |                         0
+      13 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                     0 |                    83 |                          
+      14 | myGroup1         | STOP_%         |               2 | DELETED    |              |                     0 |                    89 |                          
 (6 rows)
 
 -- should be OK
@@ -517,9 +320,9 @@ commit;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      14 | myGroup1         | MARK_%         |               2 | ACTIVE     |              |                     0 |                    91 |                          
-      15 | myGroup2         | MARK_%         |               2 | ACTIVE     |              |                     0 |                    99 |                          
+       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
+      16 | myGroup1         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   103 |                          
+      17 | myGroup2         | MARK_%         |               2 | ACTIVE     |              |                     0 |                   111 |                          
 (3 rows)
 
 begin transaction;
@@ -546,10 +349,10 @@ select emaj.emaj_start_group('myGroup1','Foo%Bar');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      15 | myGroup2         | MARK_%         |               2 | DELETED    |              |                     0 |                    99 |                         0
-      17 | myGroup2         | STOP_%         |               2 | DELETED    |              |                     0 |                   113 |                          
-      18 | myGroup1         | Foo%Bar        |               2 | ACTIVE     |              |                     0 |                   119 |                          
+       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
+      17 | myGroup2         | MARK_%         |               2 | DELETED    |              |                     0 |                   111 |                         0
+      19 | myGroup2         | STOP_%         |               2 | DELETED    |              |                     0 |                   125 |                          
+      20 | myGroup1         | Foo%Bar        |               2 | ACTIVE     |              |                     0 |                   131 |                          
 (4 rows)
 
 -----------------------------
@@ -695,9 +498,9 @@ select group_name, group_state, group_nb_table, group_nb_sequence, group_comment
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       6 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      24 | myGroup1         | Mark1          |               2 | ACTIVE     |              |                     0 |                   169 |                          
-      25 | myGroup2         | Mark1          |               2 | ACTIVE     |              |                     0 |                   169 |                          
+       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
+      26 | myGroup1         | Mark1          |               2 | ACTIVE     |              |                     0 |                   181 |                          
+      27 | myGroup2         | Mark1          |               2 | ACTIVE     |              |                     0 |                   181 |                          
 (3 rows)
 
 -----------------------------
@@ -736,10 +539,8 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 ERROR:  relation "myschema2.myTbl3" does not exist
-CONTEXT:  SQL statement "LOCK TABLE myschema2."myTbl3" IN ACCESS EXCLUSIVE MODE"
-PL/pgSQL function emaj._lock_groups(text[],text,boolean) line 35 at EXECUTE statement
-SQL statement "SELECT emaj._lock_groups(v_validGroupNames,'',v_multiGroup)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean) line 48 at PERFORM
+CONTEXT:  SQL statement "ALTER TABLE myschema2."myTbl3" DISABLE TRIGGER "myschema2_myTbl3_emaj_log_trg""
+PL/pgSQL function emaj._stop_groups(text[],text,boolean) line 59 at EXECUTE statement
 PL/pgSQL function emaj.emaj_stop_groups(text[]) line 8 at RETURN
 rollback;
 -- should be OK
@@ -752,11 +553,11 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    |  regexp_replace  | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+------------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       6 | phil's group#3", | Mark3            |               0 | ACTIVE     |              |                     0 |                    35 |                          
-      24 | myGroup1         | Mark1            |               2 | DELETED    |              |                     0 |                   169 |                         0
-      25 | myGroup2         | Mark1            |               2 | DELETED    |              |                     0 |                   169 |                         0
-      26 | myGroup1         | Global Stop at % |               2 | DELETED    |              |                     0 |                   183 |                          
-      27 | myGroup2         | Global Stop at % |               2 | DELETED    |              |                     0 |                   183 |                          
+       8 | phil's group#3", | Mark3            |               0 | ACTIVE     |              |                     0 |                    47 |                          
+      26 | myGroup1         | Mark1            |               2 | DELETED    |              |                     0 |                   181 |                         0
+      27 | myGroup2         | Mark1            |               2 | DELETED    |              |                     0 |                   181 |                         0
+      28 | myGroup1         | Global Stop at % |               2 | DELETED    |              |                     0 |                   195 |                          
+      29 | myGroup2         | Global Stop at % |               2 | DELETED    |              |                     0 |                   195 |                          
 (5 rows)
 
 -- with warning about group names array content
