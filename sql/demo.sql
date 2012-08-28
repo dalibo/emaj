@@ -304,12 +304,14 @@ select * from emaj.emaj_mark;
 \echo '###########################################################################'
 \echo '###                                                                     ###'
 \echo '###                        R O L L B A C K   3                          ###'
+\echo '###    L O G G E D _ R O L L B A C K   T O   R E N A M E D   MARK1      ###'
 \echo '###                                                                     ###'
 \echo '###########################################################################'
 
 -- Rollback to the initial mark
-\echo '--- rollback the renamed initial mark and stop the group (deactivate the triggers) ---'
-select emaj.emaj_rollback_and_stop_group('myAppl1','First Mark for Appli1');
+\echo '--- rollback to the renamed initial mark and stop the group (deactivate the triggers) ---'
+select emaj.emaj_logged_rollback_group('myAppl1','First Mark for Appli1');
+select emaj.emaj_stop_group('myAppl1');
 
 select * from emaj.emaj_mark;
 
