@@ -3524,6 +3524,9 @@ $emaj_reset_group$
     END IF;
 -- perform the reset operation
     SELECT emaj._reset_group(v_groupName) INTO v_nbTb;
+    IF v_nbTb = 0 THEN
+       RAISE EXCEPTION 'emaj_reset_group: Internal error (Group % is empty).', v_groupName;
+    END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('RESET_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
@@ -3535,7 +3538,7 @@ $$Resets all log tables content of a stopped E-Maj group.$$;
 
 CREATE or REPLACE FUNCTION emaj._reset_group(v_groupName TEXT) 
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
-$_rst_group$
+$_reset_group$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences saves
 -- It is called by both emaj_reset_group and emaj_start_group functions
 -- Input: group name
@@ -3574,12 +3577,9 @@ $_rst_group$
       END IF;
       v_nbTb = v_nbTb + 1;
     END LOOP;
-    IF v_nbTb = 0 THEN
-       RAISE EXCEPTION '_rst_group: Internal error (Group % is empty).', v_groupName;
-    END IF;
     RETURN v_nbTb;
   END;
-$_rst_group$;
+$_reset_group$;
 
 CREATE or REPLACE FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) 
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS 

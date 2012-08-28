@@ -556,7 +556,7 @@ select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid
  emajC
 (1 row)
 
--- only change the log data tablespace
+-- only change the log data tablespace for 1 table
 update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
@@ -580,6 +580,27 @@ select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.
   spcname  
 -----------
  tsp log'2
+(1 row)
+
+-- change the log data tablespace for all tables of a group
+update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp is NULL then 'tsplog1' when grpdef_log_dat_tsp = 'tsplog1' then 'tsp log''2' else NULL end where grpdef_schema = 'myschema1' and grpdef_tblseq not like '%seq';
+select emaj.emaj_alter_group('myGroup1');
+WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
+PL/pgSQL function "emaj_alter_group" line 198 at PERFORM
+ emaj_alter_group 
+------------------
+                5
+(1 row)
+
+update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp = 'tsplog1' then NULL when grpdef_log_dat_tsp = 'tsp log''2' then 'tsplog1' else 'tsp log''2' end where grpdef_schema = 'myschema1' and grpdef_tblseq not like '%seq';
+select emaj.emaj_alter_group('myGroup1');
+WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
+PL/pgSQL function "emaj_alter_group" line 198 at PERFORM
+ emaj_alter_group 
+------------------
+                5
 (1 row)
 
 -- only change the log index tablespace
@@ -832,27 +853,27 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      134 | ALTER_GROUP      | SECONDARY SCHEMA CREATED | emajb            |                                          | postgres
      135 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
      136 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
-     137 | ALTER_GROUP      | SECONDARY SCHEMA DROPPED | emajb            |                                          | postgres
-     138 | ALTER_GROUP      | SECONDARY SCHEMA CREATED | emajb            |                                          | postgres
-     139 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
-     140 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
-     141 | ALTER_GROUP      | SECONDARY SCHEMA DROPPED | emajb            |                                          | postgres
-     142 | ALTER_GROUP      | SECONDARY SCHEMA CREATED | emajb            |                                          | postgres
-     143 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
-     144 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
-     145 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
-     146 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
-     147 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
+     137 | ALTER_GROUP      | SECONDARY SCHEMA DROPPED | "emajC"          |                                          | postgres
+     138 | ALTER_GROUP      | SECONDARY SCHEMA DROPPED | emajb            |                                          | postgres
+     139 | ALTER_GROUP      | SECONDARY SCHEMA CREATED | emajb            |                                          | postgres
+     140 | ALTER_GROUP      | SECONDARY SCHEMA CREATED | "emajC"          |                                          | postgres
+     141 | ALTER_GROUP      | END                      | myGroup1         | 5 tables/sequences effectively processed | postgres
+     142 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
+     143 | ALTER_GROUP      | SECONDARY SCHEMA DROPPED | "emajC"          |                                          | postgres
+     144 | ALTER_GROUP      | SECONDARY SCHEMA DROPPED | emajb            |                                          | postgres
+     145 | ALTER_GROUP      | SECONDARY SCHEMA CREATED | emajb            |                                          | postgres
+     146 | ALTER_GROUP      | SECONDARY SCHEMA CREATED | "emajC"          |                                          | postgres
+     147 | ALTER_GROUP      | END                      | myGroup1         | 5 tables/sequences effectively processed | postgres
      148 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
-     149 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
-     150 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
+     149 | ALTER_GROUP      | SECONDARY SCHEMA DROPPED | emajb            |                                          | postgres
+     150 | ALTER_GROUP      | SECONDARY SCHEMA CREATED | emajb            |                                          | postgres
      151 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
      152 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
-     153 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
-     154 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
+     153 | ALTER_GROUP      | SECONDARY SCHEMA DROPPED | emajb            |                                          | postgres
+     154 | ALTER_GROUP      | SECONDARY SCHEMA CREATED | emajb            |                                          | postgres
      155 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
      156 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
-     157 | ALTER_GROUP      | END                      | myGroup1         | 0 tables/sequences effectively processed | postgres
+     157 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
      158 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
      159 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
      160 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
@@ -863,9 +884,21 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      165 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
      166 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
      167 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
-     168 | FORCE_DROP_GROUP | BEGIN                    | myGroup1         |                                          | postgres
-     169 | FORCE_DROP_GROUP | SECONDARY SCHEMA DROPPED | emajb            |                                          | postgres
-     170 | FORCE_DROP_GROUP | SECONDARY SCHEMA DROPPED | "emajC"          |                                          | postgres
-     171 | FORCE_DROP_GROUP | END                      | myGroup1         | 6 tables/sequences processed             | postgres
-(129 rows)
+     168 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
+     169 | ALTER_GROUP      | END                      | myGroup1         | 0 tables/sequences effectively processed | postgres
+     170 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
+     171 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
+     172 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
+     173 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
+     174 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
+     175 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
+     176 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
+     177 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
+     178 | ALTER_GROUP      | BEGIN                    | myGroup1         |                                          | postgres
+     179 | ALTER_GROUP      | END                      | myGroup1         | 1 tables/sequences effectively processed | postgres
+     180 | FORCE_DROP_GROUP | BEGIN                    | myGroup1         |                                          | postgres
+     181 | FORCE_DROP_GROUP | SECONDARY SCHEMA DROPPED | emajb            |                                          | postgres
+     182 | FORCE_DROP_GROUP | SECONDARY SCHEMA DROPPED | "emajC"          |                                          | postgres
+     183 | FORCE_DROP_GROUP | END                      | myGroup1         | 6 tables/sequences processed             | postgres
+(141 rows)
 
