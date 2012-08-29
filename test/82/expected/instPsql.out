@@ -65,12 +65,12 @@ $tmp$
       RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
     END IF;
 -- check the current role is a superuser
-    PERFORM 0 FROM pg_roles WHERE rolname = current_user AND rolsuper;
+    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
     END IF;
 -- check the dblink contrib is installed
---    PERFORM 0 FROM pg_proc WHERE proname = 'dblink';
+--    PERFORM 0 FROM pg_catalog.pg_proc WHERE proname = 'dblink';
 --    IF NOT FOUND THEN
 --      RAISE EXCEPTION 'E-Maj installation: dblink contrib/extension is not installed.';
 --    END IF;
@@ -109,7 +109,7 @@ $tmp$
   BEGIN
 -- create emaj roles (NOLOGIN), if they do not exist 
 -- does 'emaj_adm' already exist ?
-    PERFORM 1 FROM pg_roles WHERE rolname = 'emaj_adm';
+    PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_adm';
 -- if no, create it
     IF NOT FOUND THEN
       CREATE ROLE emaj_adm;
@@ -117,7 +117,7 @@ $tmp$
         $$This role may be granted to other roles in charge of E-Maj administration.$$;
     END IF;
 -- does 'emaj_viewer' already exist ?
-    PERFORM 1 FROM pg_roles WHERE rolname = 'emaj_viewer';
+    PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_viewer';
 -- if no, create it
     IF NOT FOUND THEN
       CREATE ROLE emaj_viewer;
@@ -136,7 +136,7 @@ $tmp$
 -- if tspemaj tablespace exists, 
 --   use it as default_tablespace for emaj tables creation
 --   and grant the create rights on it to emaj_adm
-    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
+    PERFORM 0 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
     IF FOUND THEN
       SET LOCAL default_tablespace TO tspemaj;
       GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
@@ -486,11 +486,11 @@ $_check_class$
     IF v_schemaName = 'emaj' THEN
       RAISE EXCEPTION '_check_class: object from schema % cannot be managed by EMAJ.', v_schemaName;
     END IF;
-    SELECT oid INTO v_schemaOid FROM pg_namespace WHERE nspname = v_schemaName;
+    SELECT oid INTO v_schemaOid FROM pg_catalog.pg_namespace WHERE nspname = v_schemaName;
     IF NOT FOUND THEN
       RAISE EXCEPTION '_check_class: schema % doesn''t exist.', v_schemaName;
     END IF;
-    SELECT relkind INTO v_relKind FROM pg_class 
+    SELECT relkind INTO v_relKind FROM pg_catalog.pg_class 
       WHERE relnamespace = v_schemaOid AND relname = v_className AND relkind in ('r','S');
     IF NOT FOUND THEN
       RAISE EXCEPTION '_check_class: table or sequence % doesn''t exist.', v_className;
@@ -575,7 +575,7 @@ $_create_log_schema$
   DECLARE
   BEGIN
 -- check that the schema doesn't already exist
-    PERFORM 0 FROM pg_namespace WHERE nspname = v_logSchemaName;
+    PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = v_logSchemaName;
     IF FOUND THEN
       RAISE EXCEPTION '_create_log_schema: schema % should not exist. Drop it manually, or modify emaj_group_def table''s content.',v_logSchemaName;
     END IF;
@@ -595,7 +595,7 @@ $_drop_log_schema$
   DECLARE
   BEGIN
 -- check that the schema doesn't already exist
-    PERFORM 0 FROM pg_namespace WHERE nspname = v_logSchemaName;
+    PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = v_logSchemaName;
     IF NOT FOUND THEN
       RAISE EXCEPTION '_drop_log_schema: schema % doesn''t exist.',v_logSchemaName;
     END IF;
@@ -658,7 +658,7 @@ $_create_tbl$
     r_trigger               RECORD;
 -- cursor to retrieve all columns of the application table
     col1_curs CURSOR (tbl regclass) FOR 
-      SELECT attname FROM pg_attribute 
+      SELECT attname FROM pg_catalog.pg_attribute 
         WHERE attrelid = tbl 
           AND attnum > 0
           AND attisdropped = false
@@ -667,16 +667,16 @@ $_create_tbl$
 -- (taking column names in pg_attribute from the table's definition instead of index definition is mandatory 
 --  starting from pg9.0, joining tables with indkey instead of indexrelid)
     col2_curs CURSOR (tbl regclass) FOR 
-      SELECT attname FROM pg_attribute, pg_index 
+      SELECT attname FROM pg_catalog.pg_attribute, pg_catalog.pg_index 
         WHERE pg_attribute.attrelid = pg_index.indrelid
           AND attnum = ANY (indkey) 
           AND indrelid = tbl AND indisprimary
           AND attnum > 0 AND attisdropped = false;
   BEGIN
 -- check the table has a primary key
-    SELECT true INTO v_relhaspkey FROM pg_class, pg_namespace, pg_constraint WHERE 
-        relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid AND
-        contype = 'p' AND nspname = v_schemaName AND relname = v_tableName;
+    SELECT true INTO v_relhaspkey FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint 
+      WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid 
+        AND contype = 'p' AND nspname = v_schemaName AND relname = v_tableName;
     IF NOT FOUND THEN
       v_relhaspkey = false;
     END IF;
@@ -730,7 +730,7 @@ $_create_tbl$
 --   They are useless and blocking to store truncate event for tables belonging to audit_only tables
     FOR r_column IN
       SELECT ' ALTER COLUMN ' || quote_ident(attname) || ' DROP NOT NULL' AS action 
-        FROM pg_attribute, pg_class, pg_namespace 
+        FROM pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace 
         WHERE relnamespace = pg_namespace.oid AND attrelid = pg_class.oid 
           AND nspname = v_logSchema AND relname = v_schemaName || '_' || v_tableName || '_log' 
           AND attnum > 0 AND attnotnull AND attisdropped = false AND attname NOT LIKE E'emaj\\_%'
@@ -885,7 +885,8 @@ $_create_tbl$
 -- This check is not done for postgres 8.2 because column tgconstraint doesn't exist
     IF v_pgVersion >= '8.3' THEN
       FOR r_trigger IN 
-        SELECT tgname FROM pg_trigger WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'%emaj\\_%\\_trg'
+        SELECT tgname FROM pg_catalog.pg_trigger 
+          WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'%emaj\\_%\\_trg'
       LOOP
         IF v_triggerList = '' THEN
           v_triggerList = v_triggerList || r_trigger.tgname;
@@ -935,7 +936,7 @@ $_drop_tbl$
     v_tableShouldExist = TRUE;
 -- When the function is called by emaj_force_drop_group(), check the table exists before dropping its triggers
     IF v_isForced THEN
-      PERFORM 0 FROM pg_class, pg_namespace 
+      PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace 
         WHERE relnamespace = pg_namespace.oid
           AND nspname = v_schemaName AND relname = v_tableName AND relkind = 'r';
       v_tableShouldExist = FOUND;
@@ -1209,7 +1210,7 @@ $_verify_tblseq$
     v_pgVersion         TEXT := emaj._pg_version();
   BEGIN
 -- check the application relation exist
-    SELECT relkind INTO v_realRelKind FROM pg_class, pg_namespace
+    SELECT relkind INTO v_realRelKind FROM pg_catalog.pg_class, pg_catalog.pg_namespace
       WHERE relnamespace = pg_namespace.oid 
         AND nspname = v_schemaName AND relname = v_tblseq 
         AND relkind in ('r','S');
@@ -1229,54 +1230,59 @@ $_verify_tblseq$
           v_truncTriggerName := v_schemaName || '_' || v_tblseq || '_emaj_trunc_trg';
           v_fullTableName  := quote_ident(v_schemaName) || '.' || quote_ident(v_tblseq);
 --   -> check boths functions exists
-          PERFORM proname FROM pg_proc , pg_namespace WHERE 
-            pronamespace = pg_namespace.oid AND nspname = v_logSchema AND proname = v_logFnctName;
+          PERFORM proname FROM pg_catalog.pg_proc , pg_catalog.pg_namespace 
+            WHERE pronamespace = pg_namespace.oid AND nspname = v_logSchema AND proname = v_logFnctName;
           IF NOT FOUND THEN
             RETURN NEXT 'log function ' || v_logFnctName || ' not found.';
           END IF;
           IF v_isRollbackable THEN
-            PERFORM proname FROM pg_proc, pg_namespace WHERE 
-              pronamespace = pg_namespace.oid AND nspname = v_logSchema AND proname = v_rlbkFnctName;
+            PERFORM proname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace 
+              WHERE pronamespace = pg_namespace.oid AND nspname = v_logSchema AND proname = v_rlbkFnctName;
             IF NOT FOUND THEN
               RETURN NEXT 'rollback function ' || v_rlbkFnctName || ' not found.';
             END IF;
           END IF;
 --   -> check both triggers exist
-          PERFORM tgname FROM pg_trigger WHERE tgname = v_logTriggerName;
+          PERFORM tgname FROM pg_catalog.pg_trigger WHERE tgname = v_logTriggerName;
           IF NOT FOUND THEN
             RETURN NEXT 'log trigger ' || v_logTriggerName || ' not found.';
           END IF;
           IF v_pgVersion >= '8.4' THEN
-            PERFORM tgname FROM pg_trigger WHERE tgname = v_truncTriggerName;
+            PERFORM tgname FROM pg_catalog.pg_trigger WHERE tgname = v_truncTriggerName;
             IF NOT FOUND THEN
               RETURN NEXT 'truncate trigger ' || v_truncTriggerName || ' not found.';
             END IF;
           END IF;
 --   -> check the log table exists
-          PERFORM relname FROM pg_class, pg_namespace WHERE 
-            relnamespace = pg_namespace.oid AND nspname = v_logSchema AND relkind = 'r' AND relname = v_logTableName;
+          PERFORM relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace 
+            WHERE relnamespace = pg_namespace.oid AND nspname = v_logSchema 
+              AND relkind = 'r' AND relname = v_logTableName;
           IF NOT FOUND THEN
             RETURN NEXT 'log table ' || v_logTableName || ' not found.';
           ELSE
 --   -> check that the log tables structure is consistent with the application tables structure
 --      (same columns and same formats)
 --      - added or changed column in application table
-            PERFORM attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace 
+            PERFORM attname, atttypid, attlen, atttypmod 
+              FROM pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace 
               WHERE nspname = v_schemaName AND relnamespace = pg_namespace.oid AND relname = v_tblseq
                 AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
             EXCEPT
-            SELECT attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace
+            SELECT attname, atttypid, attlen, atttypmod 
+              FROM pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
               WHERE nspname = v_logSchema AND relnamespace = pg_namespace.oid AND relname = v_logTableName
                 AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%';
             IF FOUND THEN
               RETURN NEXT 'the structure of log table ' || v_logTableName || ' is not coherent with ' || v_fullTableName || ' (added or changed column?).';
             END IF;
 --      - missing or changed column in application table
-            PERFORM attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace
+            PERFORM attname, atttypid, attlen, atttypmod 
+              FROM pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
               WHERE nspname = v_logSchema AND relnamespace = pg_namespace.oid AND relname = v_logTableName
                 AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
             EXCEPT
-            SELECT attname, atttypid, attlen, atttypmod FROM pg_attribute, pg_class, pg_namespace 
+            SELECT attname, atttypid, attlen, atttypmod 
+              FROM pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace 
               WHERE nspname = v_schemaName AND relnamespace = pg_namespace.oid AND relname = v_tblseq
                 AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false;
             IF FOUND THEN
@@ -1351,7 +1357,7 @@ $_verify_group$
         SELECT DISTINCT rel_schema FROM emaj.emaj_relation 
           WHERE rel_group = v_groupName ORDER BY rel_schema
         LOOP
-      PERFORM 0 FROM pg_namespace WHERE nspname = r_schema.rel_schema;
+      PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = r_schema.rel_schema;
       IF NOT FOUND THEN
         v_msg = v_msgPrefix || 'schema ' || r_schema.rel_schema || ' does not exist anymore.';
         if v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
@@ -1391,8 +1397,8 @@ $_check_fk_groups$
 -- issue a warning if a table of the groups has a foreign key that references a table outside the groups
     FOR r_fk IN
       SELECT c.conname,r.rel_schema,r.rel_tblseq,nf.nspname,tf.relname 
-        FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace nf,pg_class tf, 
-             emaj.emaj_relation r, emaj.emaj_group g
+        FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class t, 
+             pg_catalog.pg_namespace nf, pg_catalog.pg_class tf, emaj.emaj_relation r, emaj.emaj_group g
         WHERE contype = 'f'                                         -- FK constraints only
           AND c.conrelid  = t.oid  AND t.relnamespace  = n.oid      -- join for table and namespace 
           AND c.confrelid = tf.oid AND tf.relnamespace = nf.oid     -- join for referenced table and namespace
@@ -1409,8 +1415,8 @@ $_check_fk_groups$
 -- issue a warning if a table of the groups is referenced by a table outside the groups
     FOR r_fk IN
       SELECT c.conname,n.nspname,t.relname,r.rel_schema,r.rel_tblseq 
-        FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace nf,pg_class tf, 
-             emaj.emaj_relation r, emaj.emaj_group g
+        FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class t, 
+             pg_catalog.pg_namespace nf, pg_catalog.pg_class tf, emaj.emaj_relation r, emaj.emaj_group g
         WHERE contype = 'f'                                           -- FK constraints only
           AND c.conrelid  = t.oid  AND t.relnamespace  = n.oid        -- join for table and namespace 
           AND c.confrelid = tf.oid AND tf.relnamespace = nf.oid       -- join for referenced table and namespace
@@ -1458,7 +1464,8 @@ $_lock_groups$
 -- scan all existing tables of the group
         v_nbTbl = 0;
         FOR r_tblsq IN
-            SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation, pg_class, pg_namespace
+            SELECT rel_priority, rel_schema, rel_tblseq 
+               FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
                WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
                  AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq 
                ORDER BY rel_priority, rel_schema, rel_tblseq
@@ -1573,7 +1580,7 @@ $emaj_create_group$
         VALUES ('CREATE_GROUP','SECONDARY SCHEMA CREATED',quote_ident(r_schema.log_schema));
     END LOOP;
 -- define the default tablespace, NULL if tspemaj tablespace doesn't exist
-    SELECT 'tspemaj' INTO v_defTsp FROM pg_tablespace WHERE spcname = 'tspemaj';
+    SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
 -- scan all classes of the group (in priority order, NULLS being processed last)
     FOR r_tblsq IN
         SELECT grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
@@ -1821,7 +1828,7 @@ $emaj_alter_group$
       RAISE EXCEPTION 'emaj_alter_group: one or several tables already belong to another group (%).', v_msg;
     END IF;
 -- define the default tablespace, NULL if tspemaj tablespace doesn't exist
-    SELECT 'tspemaj' INTO v_defTsp FROM pg_tablespace WHERE spcname = 'tspemaj';
+    SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
 -- OK, we can now successively process:
 --   - relations that do not belong to the tables group anymore, by dropping their emaj components
 --   - relations that continue to belong to the tables group but with different characteristics,
@@ -3091,11 +3098,11 @@ $_rlbk_groups_set_session$
           WHERE rel_group = ANY (v_groupNames)
             AND rel_session IS NULL                          -- not yet allocated
             AND (rel_schema, rel_tblseq) IN (                -- list of (schema,table) linked to the original table by foreign keys
-            SELECT nspname, relname FROM pg_constraint, pg_class t, pg_namespace n 
+            SELECT nspname, relname FROM pg_catalog.pg_constraint, pg_catalog.pg_class t, pg_catalog.pg_namespace n 
               WHERE contype = 'f' AND confrelid = v_fullTableName::regclass 
                 AND t.oid = conrelid AND relnamespace = n.oid
             UNION
-            SELECT nspname, relname FROM pg_constraint, pg_class t, pg_namespace n
+            SELECT nspname, relname FROM pg_catalog.pg_constraint, pg_catalog.pg_class t, pg_catalog.pg_namespace n
               WHERE contype = 'f' AND conrelid = v_fullTableName::regclass 
                 AND t.oid = confrelid AND relnamespace = n.oid
             ) 
@@ -3209,7 +3216,7 @@ $_rlbk_groups_step4$
 -- select all foreign keys belonging to or referencing the session's tables of the group, if any
     FOR r_fk IN
       SELECT c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid) AS def, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
-        FROM pg_constraint c, pg_namespace n, pg_class t, emaj.emaj_relation r
+        FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class t, emaj.emaj_relation r
         WHERE c.contype = 'f'                                            -- FK constraints only
           AND r.rel_rows > 0                                             -- table to effectively rollback only
           AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
@@ -3217,7 +3224,8 @@ $_rlbk_groups_step4$
           AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session
       UNION
       SELECT c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid) AS def, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
-        FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_relation r
+        FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class t, 
+             pg_catalog.pg_namespace rn, pg_catalog.pg_class rt, emaj.emaj_relation r
         WHERE c.contype = 'f'                                            -- FK constraints only
           AND r.rel_rows > 0                                             -- table to effectively rollback only
           AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
@@ -3312,7 +3320,8 @@ $_rlbk_groups_step6$
                ) + (
 --   get the number of rollbacked rows in the referenced table
         SELECT rel_rows
-          FROM pg_constraint c, pg_namespace n, pg_namespace rn, pg_class rt, emaj.emaj_relation r
+          FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_namespace rn, 
+               pg_catalog.pg_class rt, emaj.emaj_relation r
           WHERE c.conname = r_fk.fk_name                                   -- constraint id (name + schema)
             AND c.connamespace = n.oid AND n.nspname = r_fk.fk_schema
             AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
@@ -3326,7 +3335,7 @@ $_rlbk_groups_step6$
     FOR r_fk IN
 -- get all recorded fk to recreate, plus the number of rows of the related table as estimated by postgres (pg_class.reltuples)
       SELECT fk_schema, fk_table, fk_name, fk_def, pg_class.reltuples 
-        FROM emaj.emaj_fk, pg_namespace, pg_class
+        FROM emaj.emaj_fk, pg_catalog.pg_namespace, pg_catalog.pg_class
         WHERE fk_action = 'add_fk' AND
               fk_groups = v_groupNames AND fk_session = v_session AND                         -- restrictions
               pg_namespace.oid = relnamespace AND relname = fk_table AND nspname = fk_schema  -- joins
@@ -3794,14 +3803,16 @@ $emaj_estimate_rollback_duration$
 -- for each foreign key referencing tables that are concerned by the rollback operation
     FOR r_fkey IN
       SELECT c.conname, n.nspname, t.relname, t.reltuples, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
-        FROM pg_constraint c, pg_namespace n, pg_class t, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
+        FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class t, 
+             emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
         WHERE c.contype = 'f'                                            -- FK constraints only
           AND s.stat_rows > 0                                              -- table to effectively rollback only
           AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
           AND n.nspname = s.stat_schema AND t.relname = s.stat_table     -- join on log_stat results
       UNION
       SELECT c.conname, n.nspname, t.relname, t.reltuples, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
-        FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
+        FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class t, 
+             pg_catalog.pg_namespace rn, pg_catalog.pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
         WHERE c.contype = 'f'                                            -- FK constraints only
           AND s.stat_rows > 0                                            -- table to effectively rollback only
           AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
@@ -3839,7 +3850,8 @@ $emaj_estimate_rollback_duration$
         SELECT (
 --   get the number of rollbacked rows in the referencing table
         SELECT s.stat_rows
-          FROM pg_constraint c, pg_namespace n, pg_class r, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
+          FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class r, 
+               emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
           WHERE c.conname = r_fkey.conname                                 -- constraint id (name + schema)
             AND c.connamespace = n.oid AND n.nspname = r_fkey.nspname
             AND c.conrelid  = r.oid AND r.relnamespace  = n.oid            -- joins for referencing table and namespace
@@ -3847,7 +3859,8 @@ $emaj_estimate_rollback_duration$
                ) + (
 --   get the number of rollbacked rows in the referenced table
         SELECT s.stat_rows
-          FROM pg_constraint c, pg_namespace n, pg_namespace rn, pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
+          FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_namespace rn, 
+               pg_catalog.pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
           WHERE c.conname = r_fkey.conname                                 -- constraint id (name + schema)
             AND c.connamespace = n.oid AND n.nspname = r_fkey.nspname
             AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
@@ -3931,13 +3944,13 @@ $emaj_snap_group$
 -- if it is a table,
 --   first build the order by column list
         v_colList := '';
-        PERFORM 0 FROM pg_class, pg_namespace, pg_constraint 
+        PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint 
           WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid AND
                 contype = 'p' AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
         IF FOUND THEN
 --   the table has a pkey,
           FOR r_col IN
-              SELECT attname FROM pg_attribute, pg_index 
+              SELECT attname FROM pg_catalog.pg_attribute, pg_catalog.pg_index 
                 WHERE pg_attribute.attrelid = pg_index.indrelid 
                   AND attnum = ANY (indkey) 
                   AND indrelid = v_fullTableName::regclass AND indisprimary
@@ -3952,7 +3965,7 @@ $emaj_snap_group$
         ELSE
 --   the table has no pkey
           FOR r_col IN
-              SELECT attname FROM pg_attribute
+              SELECT attname FROM pg_catalog.pg_attribute
                 WHERE attrelid = v_fullTableName::regclass
                   AND attnum > 0  AND attisdropped = false
               LOOP
@@ -4265,7 +4278,7 @@ $emaj_generate_sql$
       RAISE EXCEPTION 'emaj_generate_sql: group % has not been created.', v_groupName;
     END IF;
 -- check all tables of the group have a pkey
-    SELECT count(*) INTO v_cpt FROM pg_class, pg_namespace, emaj.emaj_relation
+    SELECT count(*) INTO v_cpt FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
       WHERE relnamespace = pg_namespace.oid
         AND nspname = rel_schema AND relname =  rel_tblseq 
         AND rel_group = v_groupName AND rel_kind = 'r' 
@@ -4346,7 +4359,7 @@ $emaj_generate_sql$
       v_valList = '';
       v_setList = '';
       FOR r_col IN
-        SELECT attname, format_type(atttypid,atttypmod) FROM pg_attribute 
+        SELECT attname, format_type(atttypid,atttypmod) FROM pg_catalog.pg_attribute 
          WHERE attrelid = v_fullTableName ::regclass
            AND attnum > 0 AND NOT attisdropped
          ORDER BY attnum
@@ -4375,7 +4388,7 @@ $emaj_generate_sql$
 --  starting from pg9.0, joining tables with indkey instead of indexrelid)
       v_pkCondList = '';
       FOR r_col IN
-        SELECT attname, format_type(atttypid,atttypmod) FROM pg_attribute, pg_index 
+        SELECT attname, format_type(atttypid,atttypmod) FROM pg_catalog.pg_attribute, pg_catalog.pg_index 
           WHERE pg_attribute.attrelid = pg_index.indrelid
             AND attnum = ANY (indkey) 
             AND indrelid = v_fullTableName ::regclass AND indisprimary
@@ -4497,16 +4510,16 @@ COMMENT ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
 -- Set comments for all internal functions, 
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
-INSERT INTO pg_description (objoid, classoid, objsubid, description)
+INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
   SELECT pg_proc.oid, pg_class.oid, 0 , 'E-Maj internal function'
-    FROM pg_proc, pg_class
+    FROM pg_catalog.pg_proc, pg_catalog.pg_class
     WHERE pg_class.relname = 'pg_proc'
       AND pg_proc.oid IN               -- list all emaj functions that do not have yet a comment in pg_description
        (SELECT pg_proc.oid 
-          FROM pg_proc
-               JOIN pg_namespace ON (pronamespace=pg_namespace.oid)
-               LEFT OUTER JOIN pg_description ON (pg_description.objoid = pg_proc.oid 
-                                     AND classoid = (SELECT oid FROM pg_class WHERE relname = 'pg_proc')
+          FROM pg_catalog.pg_proc
+               JOIN pg_catalog.pg_namespace ON (pronamespace=pg_namespace.oid)
+               LEFT OUTER JOIN pg_catalog.pg_description ON (pg_description.objoid = pg_proc.oid 
+                                     AND classoid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_proc')
                                      AND objsubid = 0)
           WHERE nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
             AND pg_description.description IS NULL
@@ -4533,7 +4546,7 @@ $_verify_schema$
 -- detect tables that don't correspond to an emaj internal table or a log table
     FOR r_object IN 
       SELECT v_msgPrefix || 'table ' || relname || ' is not linked to any created tables group' AS msg
-        FROM pg_class, pg_namespace
+        FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
           AND relkind = 'r'                               -- all tables of the given schema
           AND relname NOT IN                              -- except regular log tables
@@ -4548,7 +4561,7 @@ $_verify_schema$
 -- verify functions that don't correspond to any emaj function 
     FOR r_object IN 
       SELECT v_msgPrefix || 'function ' || proname  || ' is not linked to any created tables group' AS msg
-        FROM pg_proc, pg_namespace                        -- all functions of the given schema
+        FROM pg_catalog.pg_proc, pg_catalog.pg_namespace  -- all functions of the given schema
         WHERE pronamespace = pg_namespace.oid AND nspname = v_schemaName 
           AND proname NOT IN (                            -- except regular log functions
             SELECT rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation 
@@ -4565,7 +4578,7 @@ $_verify_schema$
 -- verify sequences that don't correspond to any emaj sequence 
     FOR r_object IN 
       SELECT v_msgPrefix || 'sequence ' || relname || ' is not linked to any created tables group' AS msg
-        FROM pg_class, pg_namespace
+        FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
           AND relkind = 'S'                               -- all sequences of the given schema
           AND relname NOT IN                              -- except regular log table's sequences
@@ -4580,7 +4593,7 @@ $_verify_schema$
 -- verify composite types that don't correspond to any emaj type
     FOR r_object IN 
       SELECT v_msgPrefix || 'type ' || relname || ' is not an E-Maj component' AS msg
-        FROM pg_class, pg_namespace
+        FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
           AND relkind = 'c'                               -- all composite types of the given schema
                                                           -- and except internal emaj types in the emaj schema
@@ -4592,7 +4605,7 @@ $_verify_schema$
 -- verify views
     FOR r_object IN 
       SELECT v_msgPrefix || 'view ' || relname || ' is not an E-Maj component' AS msg
-        FROM pg_class, pg_namespace
+        FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
           AND relkind = 'v'                               -- all views of the given schema
     LOOP
@@ -4602,7 +4615,7 @@ $_verify_schema$
 -- verify foreign tables
     FOR r_object IN 
       SELECT v_msgPrefix || 'foreign table ' || relname || ' is not an E-Maj component' AS msg
-        FROM pg_class, pg_namespace
+        FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = v_schemaName 
           AND relkind = 'f'                               -- all foreign tables of the given schema
     LOOP
@@ -4612,7 +4625,7 @@ $_verify_schema$
 -- verify domains
     FOR r_object IN 
       SELECT v_msgPrefix || 'domain ' || typname || ' is not an E-Maj component' AS msg
-        FROM pg_type, pg_namespace
+        FROM pg_catalog.pg_type, pg_catalog.pg_namespace
         WHERE typnamespace = pg_namespace.oid AND nspname = v_schemaName 
           AND typisdefined and typtype = 'd'              -- all domains of the given schema
     LOOP
@@ -4622,7 +4635,7 @@ $_verify_schema$
 -- verify conversions
     FOR r_object IN 
       SELECT v_msgPrefix || 'conversion ' || conname || ' is not an E-Maj component' AS msg
-        FROM pg_conversion, pg_namespace
+        FROM pg_catalog.pg_conversion, pg_catalog.pg_namespace
         WHERE connamespace = pg_namespace.oid AND nspname = v_schemaName 
     LOOP
       RETURN NEXT r_object.msg;
@@ -4631,7 +4644,7 @@ $_verify_schema$
 -- verify operator
     FOR r_object IN 
       SELECT v_msgPrefix || 'operator ' || oprname || ' is not an E-Maj component' AS msg
-        FROM pg_operator, pg_namespace
+        FROM pg_catalog.pg_operator, pg_catalog.pg_namespace
         WHERE oprnamespace = pg_namespace.oid AND nspname = v_schemaName 
     LOOP
       RETURN NEXT r_object.msg;
@@ -4640,7 +4653,7 @@ $_verify_schema$
 -- verify operator class
     FOR r_object IN 
       SELECT v_msgPrefix || 'operator class ' || opcname || ' is not an E-Maj component' AS msg
-        FROM pg_opclass, pg_namespace
+        FROM pg_catalog.pg_opclass, pg_catalog.pg_namespace
         WHERE opcnamespace = pg_namespace.oid AND nspname = v_schemaName 
     LOOP
       RETURN NEXT r_object.msg;
@@ -4919,7 +4932,7 @@ $tmp$
   DECLARE
     v_mpt           INTEGER;
   BEGIN
-    SELECT setting INTO v_mpt FROM pg_settings WHERE name = 'max_prepared_transactions';
+    SELECT setting INTO v_mpt FROM pg_catalog.pg_settings WHERE name = 'max_prepared_transactions';
     IF v_mpt <= 1 THEN
       RAISE WARNING 'E-Maj installation: as the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
     END IF;
