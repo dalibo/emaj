@@ -1,4 +1,5 @@
--- startStop.sql : test emaj_start_group(), emaj_start_groups(), emaj_stop_group() and emaj_stop_groups()functions
+-- startStop.sql : test emaj_start_group(), emaj_start_groups(), 
+--                      emaj_stop_group(), emaj_stop_groups() and emaj_force_stop_group() functions
 --
 SET client_min_messages TO WARNING;
 -- prepare groups
@@ -180,7 +181,43 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 -- with warning about group names array content
 select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1']);
 
--- test end: stop the groups and reset history
+-----------------------------
+-- emaj_force_stop_group() tests
+-----------------------------
+select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
+-- unknown group
+select emaj.emaj_force_stop_group(NULL);
+select emaj.emaj_force_stop_group('unkownGroup');
+
+-- should be OK
+-- missing application schema
+begin;
+  drop schema mySchema2 cascade;
+  select emaj.emaj_force_stop_group('myGroup2');
+rollback;
+-- missing application table
+begin;
+  drop table mySchema2."myTbl3" cascade;
+  select emaj.emaj_force_stop_group('myGroup2');
+rollback;
+-- missing log trigger
+begin;
+  drop trigger myschema2_mytbl4_emaj_log_trg on myschema2.mytbl4;
+  select emaj.emaj_force_stop_group('myGroup2');
+rollback;
+-- sane group
+select emaj.emaj_force_stop_group('myGroup2');
+select emaj.emaj_force_stop_group('myGroup1');
+
+-- warning, already stopped
+select emaj.emaj_force_stop_group('myGroup2');
+
+-- impact of stopped group
+select group_name, group_state, group_nb_table, group_nb_sequence, group_comment 
+  from emaj.emaj_group order by group_name, group_state;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+
+-- test end: (groups are stopped) and reset history
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
 
