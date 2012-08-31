@@ -697,7 +697,7 @@ begin;
   update emaj.emaj_mark set mark_datetime = '2000-01-01 13:00:00+00'
     where mark_group = 'myGroup2' and mark_name = 'Mark22';
   select emaj.emaj_generate_sql('myGroup2', 'Mark22', 'Mark21', NULL);
-ERROR:  emaj_generate_sql: mark id for Mark22 (85 = Sat Jan 01 05:00:00 2000 PST) is greater than mark id for Mark21 (73 = Sat Jan 01 04:00:00 2000 PST).
+ERROR:  emaj_generate_sql: mark id for Mark22 (87 = Sat Jan 01 05:00:00 2000 PST) is greater than mark id for Mark21 (75 = Sat Jan 01 04:00:00 2000 PST).
 rollback;
 -- invalid location path name
 select emaj.emaj_generate_sql('myGroup1', NULL, NULL, NULL);
@@ -1216,16 +1216,10 @@ PL/pgSQL function "emaj_rollback_group" line 8 at RETURN
 
   rollback to savepoint sp2;
 -- or stop and alter the group
-    select emaj.emaj_alter_group('myGroup2');
+  select emaj.emaj_alter_group('myGroup2');
  emaj_alter_group 
 ------------------
                 1
-(1 row)
-
-  select emaj.emaj_start_group('myGroup2','start mark');
- emaj_start_group 
-------------------
-                8
 (1 row)
 
 rollback;
@@ -1235,24 +1229,60 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  relation "myschema2.mytbl4" does not exist
-CONTEXT:  SQL statement "ALTER TABLE myschema2.mytbl4 DISABLE TRIGGER myschema2_mytbl4_emaj_log_trg"
-PL/pgSQL function "_stop_groups" line 59 at EXECUTE statement
-PL/pgSQL function "emaj_stop_group" line 8 at RETURN
+ERROR:  _stop_group: Table myschema2.mytbl4 does not exist anymore.
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], 'STOP_%', false, false)"
+PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
   rollback to savepoint sp1;
--- the only solution is to change the emaj_group_def table, force the group's drop and recreate the group
+-- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
-  savepoint sp2;
-    select emaj.emaj_force_drop_group('myGroup2');
- emaj_force_drop_group 
+  select emaj.emaj_force_stop_group('myGroup2');
+ emaj_force_stop_group 
 -----------------------
                      8
 (1 row)
 
-    select emaj.emaj_create_group('myGroup2');
- emaj_create_group 
--------------------
-                 7
+  select emaj.emaj_drop_group('myGroup2');
+ERROR:  relation "myschema2.mytbl4" does not exist
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl4_emaj_log_trg ON myschema2.mytbl4"
+PL/pgSQL function "_drop_tbl" line 35 at EXECUTE statement
+SQL statement "SELECT emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isForced, v_isRollbackable)"
+PL/pgSQL function "_drop_group" line 34 at PERFORM
+SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
+PL/pgSQL function "emaj_drop_group" line 12 at SQL statement
+  select emaj.emaj_create_group('myGroup2');
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+rollback;
+-- cases when a log trigger on an application table is dropped
+begin;
+  drop trigger myschema2_mytbl4_emaj_log_trg on myschema2.mytbl4;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+ERROR:  _stop_group: Trigger myschema2_mytbl4_emaj_log_trg on table myschema2.mytbl4 does not exist anymore.
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], 'STOP_%', false, false)"
+PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+  rollback to savepoint sp1;
+-- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
+  select emaj.emaj_force_stop_group('myGroup2');
+ emaj_force_stop_group 
+-----------------------
+                     8
+(1 row)
+
+  select emaj.emaj_alter_group('myGroup2');
+WARNING:  _check_fk_groups: table myschema2.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
+PL/pgSQL function "emaj_alter_group" line 227 at PERFORM
+WARNING:  _check_fk_groups: table myschema2.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
+PL/pgSQL function "emaj_alter_group" line 227 at PERFORM
+ emaj_alter_group 
+------------------
+                1
 (1 row)
 
 -- and everything is clean...
@@ -1274,19 +1304,18 @@ rollback;
 begin;
   drop sequence myschema2.mySeq1;
 -- setting a mark or stopping the group fails
--- the only solution is to change the emaj_group_def table, force the group's drop and recreate the group
+-- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq1';
-  savepoint sp2;
-  select emaj.emaj_force_drop_group('myGroup2');
- emaj_force_drop_group 
+  select emaj.emaj_force_stop_group('myGroup2');
+ emaj_force_stop_group 
 -----------------------
                      8
 (1 row)
 
-  select emaj.emaj_create_group('myGroup2');
- emaj_create_group 
--------------------
-                 7
+  select emaj.emaj_alter_group('myGroup2');
+ emaj_alter_group 
+------------------
+                1
 (1 row)
 
 -- and everything is clean...
@@ -1310,32 +1339,28 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  schema "myschema2" does not exist
-CONTEXT:  SQL statement "ALTER TABLE myschema2.mytbl1 DISABLE TRIGGER myschema2_mytbl1_emaj_log_trg"
-PL/pgSQL function "_stop_groups" line 59 at EXECUTE statement
-PL/pgSQL function "emaj_stop_group" line 8 at RETURN
+ERROR:  _stop_group: Schema myschema2 does not exist anymore.
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], 'STOP_%', false, false)"
+PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
   rollback to savepoint sp1;
--- the only solution is to force the group's drop
-  savepoint sp2;
-    select emaj.emaj_force_drop_group('myGroup2');
- emaj_force_drop_group 
+-- the only solution is to force the group's stop and drop the group
+  select emaj.emaj_force_stop_group('myGroup2');
+ emaj_force_stop_group 
 -----------------------
                      8
 (1 row)
 
+  select emaj.emaj_drop_group('myGroup2');
+ERROR:  schema "myschema2" does not exist
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl1_emaj_log_trg ON myschema2.mytbl1"
+PL/pgSQL function "_drop_tbl" line 35 at EXECUTE statement
+SQL statement "SELECT emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isForced, v_isRollbackable)"
+PL/pgSQL function "_drop_group" line 34 at PERFORM
+SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
+PL/pgSQL function "emaj_drop_group" line 12 at SQL statement
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                      emaj_verify_all                      
------------------------------------------------------------
- Global checks: no error detected
- Checking schema emaj: no error detected
- Checking schema "emaj #'3": no error detected
- Checking schema emajb: no error detected
- Checking schema "emajC": no error detected
- Checking tables group myGroup1: no error detected
- Checking tables group phil's group#3",: no error detected
-(7 rows)
-
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
 rollback;
 -- cases when non E-Maj related objects are stored in emaj secondary schemas
 begin;

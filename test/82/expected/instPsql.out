@@ -2168,9 +2168,18 @@ $emaj_stop_group$
 -- Execute several emaj_stop_group functions for the same group doesn't produce any error.
 -- Input: group name
 -- Output: number of processed tables and sequences
+  DECLARE
+    v_nbTblSeq         INT;
   BEGIN
--- just call the common _stop_groups function
-    RETURN emaj._stop_groups(array[v_groupName], 'STOP_%', false);
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES ('STOP_GROUP', 'BEGIN', v_groupName);
+-- call the common _stop_groups function
+    SELECT emaj._stop_groups(array[v_groupName], 'STOP_%', false, false) INTO v_nbTblSeq;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('STOP_GROUP', 'END', v_groupName, v_nbTblSeq || ' tables/sequences processed');
+    RETURN v_nbTblSeq;
   END;
 $emaj_stop_group$;
 COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS
@@ -2182,9 +2191,18 @@ $emaj_stop_group$
 -- Execute several emaj_stop_group functions for the same group doesn't produce any error.
 -- Input: group name, stop mark name to set 
 -- Output: number of processed tables and sequences
+  DECLARE
+    v_nbTblSeq         INT;
   BEGIN
--- just call the common _stop_groups function
-    RETURN emaj._stop_groups(array[v_groupName], v_mark, false);
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES ('STOP_GROUP', 'BEGIN', v_groupName);
+-- call the common _stop_groups function
+    SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false) INTO v_nbTblSeq;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('STOP_GROUP', 'END', v_groupName, v_nbTblSeq || ' tables/sequences processed');
+    RETURN v_nbTblSeq;
   END;
 $emaj_stop_group$;
 COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT,TEXT) IS
@@ -2196,9 +2214,18 @@ $emaj_stop_groups$
 -- Groups already in IDLE state are simply not processed.
 -- Input: array of group names
 -- Output: number of processed tables and sequences
+  DECLARE
+    v_nbTblSeq         INT;
   BEGIN
--- just call the common _stop_groups function
-    RETURN emaj._stop_groups(emaj._check_group_names_array(v_groupNames), 'STOP_%', true);
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES ('STOP_GROUPS', 'BEGIN', array_to_string(v_groupNames,','));
+-- call the common _stop_groups function
+    SELECT emaj._stop_groups(emaj._check_group_names_array(v_groupNames), 'STOP_%', true, false) INTO v_nbTblSeq;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('STOP_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
+    RETURN v_nbTblSeq;
   END;
 $emaj_stop_groups$;
 COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[]) IS
@@ -2210,14 +2237,48 @@ $emaj_stop_groups$
 -- Groups already in IDLE state are simply not processed.
 -- Input: array of group names, stop mark name to set 
 -- Output: number of processed tables and sequences
+  DECLARE
+    v_nbTblSeq         INT;
   BEGIN
--- just call the common _stop_groups function
-    RETURN emaj._stop_groups(emaj._check_group_names_array(v_groupNames), v_mark, true);
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES ('STOP_GROUPS', 'BEGIN', array_to_string(v_groupNames,','));
+-- call the common _stop_groups function
+    SELECT emaj._stop_groups(emaj._check_group_names_array(v_groupNames), v_mark, true, false) INTO v_nbTblSeq;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('STOP_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
+    RETURN v_nbTblSeq;
   END;
 $emaj_stop_groups$;
 COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[], TEXT) IS
 $$Stops several E-Maj groups.$$;
-CREATE or REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) 
+RETURNS INT LANGUAGE plpgsql AS 
+$emaj_force_stop_group$
+-- This function forces a tables group stop.
+-- The differences with the standart emaj_stop_group() function are :
+--   - it silently ignores errors when an application table or one of its triggers is missing
+--   - no stop mark is set (to avoid error)
+-- Input: group name
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_nbTblSeq         INT;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
+      VALUES ('FORCE_STOP_GROUP', 'BEGIN', v_groupName);
+-- call the common _stop_groups function
+    SELECT emaj._stop_groups(array[v_groupName], NULL, false, true) INTO v_nbTblSeq;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
+      VALUES ('FORCE_STOP_GROUP', 'END', v_groupName, v_nbTblSeq || ' tables/sequences processed');
+    RETURN v_nbTblSeq;
+  END;
+$emaj_force_stop_group$;
+COMMENT ON FUNCTION emaj.emaj_force_stop_group(TEXT) IS
+$$Forces an E-Maj group stop.$$;
+CREATE or REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS 
 $_stop_groups$
 -- This function effectively de-activates the log triggers of all the tables for a group. 
@@ -2240,10 +2301,6 @@ $_stop_groups$
     IF v_groupNames IS NULL THEN
       RETURN 0;
     END IF;
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-      VALUES (CASE WHEN v_multiGroup THEN 'STOP_GROUPS' ELSE 'STOP_GROUP' END, 'BEGIN', 
-              array_to_string(v_groupNames,','));
 -- for each group of the array,
     FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
 -- ... check that the group is recorded in emaj_group table
@@ -2259,8 +2316,10 @@ $_stop_groups$
         v_validGroupNames = v_validGroupNames || array[v_groupNames[v_i]];
       END IF;
     END LOOP;
--- check and process the supplied mark name
-    SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
+-- check and process the supplied mark name (except if the function is called by emaj_force_stop_group())
+    IF NOT v_isForced THEN
+      SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
+    END IF;
 --
     IF v_validGroupNames IS NOT NULL THEN
 -- OK (no error detected and at least one group in logging state)
@@ -2274,12 +2333,47 @@ $_stop_groups$
           LOOP
         IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, disable the emaj log and truncate triggers
+--   errors are captured so that emaj_force_stop_group() can be silently executed
           v_fullTableName  := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
           v_logTriggerName := quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_emaj_log_trg');
           v_truncTriggerName := quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_emaj_trunc_trg');
-          EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
+          BEGIN
+            EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
+          EXCEPTION 
+            WHEN invalid_schema_name THEN 
+              IF NOT v_isForced THEN
+                RAISE EXCEPTION '_stop_group: Schema % does not exist anymore.', quote_ident(r_tblsq.rel_schema);
+              END IF;
+            WHEN undefined_table THEN 
+              IF NOT v_isForced THEN
+                RAISE EXCEPTION '_stop_group: Table % does not exist anymore.', v_fullTableName;
+              END IF;
+            WHEN undefined_object THEN 
+              IF NOT v_isForced THEN
+                RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist anymore.', v_logTriggerName, v_fullTableName;
+              END IF;
+            WHEN others THEN 
+              RAISE EXCEPTION '_stop_group: Unattended problem on disabling trigger % ; SQLSTATE = %.', v_logTriggerName, SQLSTATE;
+          END;
           IF v_pgVersion >= '8.4' THEN
-            EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_truncTriggerName;
+            BEGIN
+              EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_truncTriggerName;
+            EXCEPTION 
+              WHEN invalid_schema_name THEN 
+                IF NOT v_isForced THEN
+                  RAISE EXCEPTION '_stop_group: Schema % does not exist anymore.', quote_ident(r_tblsq.rel_schema);
+                END IF;
+              WHEN undefined_table THEN 
+                IF NOT v_isForced THEN
+                  RAISE EXCEPTION '_stop_group: Table % does not exist anymore.', v_fullTableName;
+                END IF;
+              WHEN undefined_object THEN 
+                IF NOT v_isForced THEN
+                  RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist anymore.', v_truncTriggerName, v_fullTableName;
+                END IF;
+              WHEN others THEN 
+                RAISE EXCEPTION '_stop_group: Unattended problem on disabling trigger % ; SQLSTATE = %.', v_logTriggerName, SQLSTATE;
+            END;
           END IF;
           ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, nothing to do
@@ -2293,17 +2387,15 @@ $_stop_groups$
           AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
               (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark 
                WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
--- Set the stop mark for each group
-      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
+-- Set the stop mark for each group (except if the function is called by emaj_force_stop_group())
+      IF NOT v_isForced THEN
+        PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
+      END IF;
 -- set all marks for the groups from the emaj_mark table in 'DELETED' state to avoid any further rollback
       UPDATE emaj.emaj_mark SET mark_state = 'DELETED' WHERE mark_group = ANY (v_validGroupNames) AND mark_state <> 'DELETED';
 -- update the state of the groups rows from the emaj_group table
       UPDATE emaj.emaj_group SET group_state = 'IDLE' WHERE group_name = ANY (v_validGroupNames);
     END IF;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES (CASE WHEN v_multiGroup THEN 'STOP_GROUPS' ELSE 'STOP_GROUP' END, 'END', 
-              array_to_string(v_groupNames,','), v_nbTb || ' tables/sequences processed');
     RETURN v_nbTb;
   END;
 $_stop_groups$;
@@ -4796,7 +4888,8 @@ REVOKE ALL ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN) FROM PUBLIC;
@@ -4870,7 +4963,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN) TO emaj_adm;
@@ -5302,13 +5396,13 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    73
+    74
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname LIKE E'emaj\\_%';
  count 
 -------
-    34
+    35
 (1 row)
 
