@@ -1598,9 +1598,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     8196 | LOCK_SESSIONS            | END                      | myGroup1,myGroup2               | Session #1 : 11 tables locked, 0 deadlock(s)                                                 | postgres
     8197 | SET_MARK_GROUPS          | BEGIN                    | myGroup1,myGroup2               | RLBK_Multi-1_%_START                                                                         | postgres
     8198 | SET_MARK_GROUPS          | END                      | myGroup1,myGroup2               | RLBK_Multi-1_%_START                                                                         | postgres
-    8199 | ROLLBACK_SEQUENCE        |                          | myschema2.myseq1                |                                                                                              | postgres
-    8200 | ROLLBACK_SEQUENCE        |                          | myschema2."myTbl3_col31_seq"    |                                                                                              | postgres
-    8201 | ROLLBACK_SEQUENCE        |                          | myschema1."myTbl3_col31_seq"    |                                                                                              | postgres
+    8199 | ROLLBACK_SEQUENCE        |                          | myschema1."myTbl3_col31_seq"    |                                                                                              | postgres
+    8200 | ROLLBACK_SEQUENCE        |                          | myschema2.myseq1                |                                                                                              | postgres
+    8201 | ROLLBACK_SEQUENCE        |                          | myschema2."myTbl3_col31_seq"    |                                                                                              | postgres
     8202 | SET_MARK_GROUPS          | BEGIN                    | myGroup1,myGroup2               | RLBK_Multi-1_%_DONE                                                                          | postgres
     8203 | SET_MARK_GROUPS          | END                      | myGroup1,myGroup2               | RLBK_Multi-1_%_DONE                                                                          | postgres
     8204 | ROLLBACK_GROUPS          | END                      | myGroup1,myGroup2               | 0 tables and 3 sequences effectively processed                                               | postgres
@@ -1611,18 +1611,18 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     8209 | ROLLBACK_GROUPS          | MARK DELETED             | myGroup2                        | mark RLBK_Multi-1_%_START has been deleted                                                   | postgres
     8210 | ROLLBACK_GROUPS          | MARK DELETED             | myGroup1                        | mark RLBK_Multi-1_%_DONE has been deleted                                                    | postgres
     8211 | ROLLBACK_GROUPS          | MARK DELETED             | myGroup2                        | mark RLBK_Multi-1_%_DONE has been deleted                                                    | postgres
-    8212 | ROLLBACK_SEQUENCE        |                          | myschema2.myseq1                |                                                                                              | postgres
-    8213 | ROLLBACK_SEQUENCE        |                          | myschema2."myTbl3_col31_seq"    |                                                                                              | postgres
-    8214 | ROLLBACK_SEQUENCE        |                          | myschema1."myTbl3_col31_seq"    |                                                                                              | postgres
+    8212 | ROLLBACK_SEQUENCE        |                          | myschema1."myTbl3_col31_seq"    |                                                                                              | postgres
+    8213 | ROLLBACK_SEQUENCE        |                          | myschema2.myseq1                |                                                                                              | postgres
+    8214 | ROLLBACK_SEQUENCE        |                          | myschema2."myTbl3_col31_seq"    |                                                                                              | postgres
     8215 | ROLLBACK_GROUPS          | END                      | myGroup1,myGroup2               | 0 tables and 3 sequences effectively processed                                               | postgres
     8216 | ROLLBACK_GROUPS          | BEGIN                    | myGroup1,myGroup2               | Unlogged rollback to mark Multi-1 (timestamp)                                                | postgres
     8217 | LOCK_SESSIONS            | BEGIN                    | myGroup1,myGroup2               | Session #1                                                                                   | postgres
     8218 | LOCK_SESSIONS            | END                      | myGroup1,myGroup2               | Session #1 : 11 tables locked, 0 deadlock(s)                                                 | postgres
     8219 | ROLLBACK_GROUPS          | MARK DELETED             | myGroup1                        | mark Multi-2 has been deleted                                                                | postgres
     8220 | ROLLBACK_GROUPS          | MARK DELETED             | myGroup2                        | mark Multi-2 has been deleted                                                                | postgres
-    8221 | ROLLBACK_SEQUENCE        |                          | myschema2.myseq1                |                                                                                              | postgres
-    8222 | ROLLBACK_SEQUENCE        |                          | myschema2."myTbl3_col31_seq"    |                                                                                              | postgres
-    8223 | ROLLBACK_SEQUENCE        |                          | myschema1."myTbl3_col31_seq"    |                                                                                              | postgres
+    8221 | ROLLBACK_SEQUENCE        |                          | myschema1."myTbl3_col31_seq"    |                                                                                              | postgres
+    8222 | ROLLBACK_SEQUENCE        |                          | myschema2.myseq1                |                                                                                              | postgres
+    8223 | ROLLBACK_SEQUENCE        |                          | myschema2."myTbl3_col31_seq"    |                                                                                              | postgres
     8224 | ROLLBACK_GROUPS          | END                      | myGroup1,myGroup2               | 0 tables and 3 sequences effectively processed                                               | postgres
     8225 | STOP_GROUPS              | BEGIN                    | myGroup1,myGroup2               |                                                                                              | postgres
     8226 | LOCK_GROUPS              | BEGIN                    | myGroup1,myGroup2               |                                                                                              | postgres

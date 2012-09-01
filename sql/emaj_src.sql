@@ -928,11 +928,11 @@ $_create_tbl$
   END;
 $_create_tbl$;
 
-CREATE or REPLACE FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isForced BOOLEAN, v_isRollbackable BOOLEAN) 
+CREATE or REPLACE FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_drop_tbl$
 -- The function deletes all what has been created by _create_tbl function
--- Required inputs: schema name (mandatory even if "public"), table name, log schema and a boolean indicating wether the related group was created as rollbackable
+-- Required inputs: schema name, table name, log schema and a boolean indicating whether the related group was created as rollbackable
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_pgVersion        TEXT := emaj._pg_version();
@@ -944,7 +944,6 @@ $_drop_tbl$
     v_truncTriggerName TEXT;
     v_seqName          TEXT;
     v_fullSeqName      TEXT;
-    v_tableShouldExist BOOLEAN;
   BEGIN
     v_fullTableName    := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
     v_logTableName     := quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
@@ -954,15 +953,11 @@ $_drop_tbl$
     v_truncTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_trunc_trg');
     v_seqName          := emaj._build_log_seq_name(v_schemaName, v_tableName);
     v_fullSeqName      := quote_ident(v_logSchema) || '.' || quote_ident(v_seqName);
-    v_tableShouldExist = TRUE;
--- When the function is called by emaj_force_drop_group(), check the table exists before dropping its triggers
-    IF v_isForced THEN
-      PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace 
-        WHERE relnamespace = pg_namespace.oid
-          AND nspname = v_schemaName AND relname = v_tableName AND relkind = 'r';
-      v_tableShouldExist = FOUND;
-    END IF;
-    IF v_tableShouldExist THEN
+-- check the table exists before dropping its triggers
+    PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace 
+      WHERE relnamespace = pg_namespace.oid
+        AND nspname = v_schemaName AND relname = v_tableName AND relkind = 'r';
+    IF FOUND THEN
 -- delete the log trigger on the application table
       EXECUTE 'DROP TRIGGER IF EXISTS ' || v_logTriggerName || ' ON ' || v_fullTableName;
 -- delete the truncate trigger on the application table
@@ -1770,7 +1765,7 @@ $_drop_group$
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
-        PERFORM emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isForced, v_isRollbackable);
+        PERFORM emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isRollbackable);
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
           PERFORM emaj._drop_seq(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
@@ -1884,7 +1879,7 @@ $emaj_alter_group$
       LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
-        PERFORM emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, FALSE, v_isRollbackable);
+        PERFORM emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isRollbackable);
 -- add the log schema to the array of log schemas to potentialy drop at the end of the function
         IF r_tblsq.rel_log_schema <> v_emajSchema AND 
            (v_logSchemasArray IS NULL OR r_tblsq.rel_log_schema <> ALL (v_logSchemasArray)) THEN
@@ -1935,7 +1930,7 @@ $emaj_alter_group$
 -- first drop the emaj relation
         IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
-          PERFORM emaj._drop_tbl (r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, FALSE, v_isRollbackable);
+          PERFORM emaj._drop_tbl (r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isRollbackable);
 -- and add the log schema to the list of log schemas to potentialy drop at the end of the function
         IF r_tblsq.rel_log_schema <> v_emajSchema AND 
            (v_logSchemasArray IS NULL OR r_tblsq.rel_log_schema <> ALL (v_logSchemasArray)) THEN
@@ -4966,7 +4961,7 @@ REVOKE ALL ON FUNCTION emaj._log_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isForced BOOLEAN, v_isRollbackable BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) FROM PUBLIC;
@@ -5042,7 +5037,7 @@ GRANT EXECUTE ON FUNCTION emaj._log_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isForced BOOLEAN, v_isRollbackable BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) TO emaj_adm;
