@@ -78,7 +78,7 @@ select count(*) from emaj.mySchema1_myTbl1_log;
 (1 row)
 
 -----------------------------
--- stop and drop groups
+-- stop, reset and drop groups
 -----------------------------
 select emaj.emaj_stop_group('myGroup1');
 WARNING:  _stop_group: Group myGroup1 cannot be stopped because it is not in logging state.
@@ -87,6 +87,12 @@ PL/pgSQL function "emaj_stop_group" line 12 at SQL statement
  emaj_stop_group 
 -----------------
                0
+(1 row)
+
+select emaj.emaj_reset_group('myGroup1');
+ emaj_reset_group 
+------------------
+                6
 (1 row)
 
 select emaj.emaj_drop_group('myGroup1');
@@ -2381,8 +2387,6 @@ select emaj.emaj_get_previous_mark_group('dummyGroup', '2010-01-01');
 ERROR:  emaj_get_previous_mark_group: group dummyGroup has not been created.
 select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
 ERROR:  emaj_get_previous_mark_group: group dummyGroup has not been created.
-select emaj.emaj_reset_group('dummyGroup');
-ERROR:  emaj_reset_group: group dummyGroup has not been created.
 select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL); 
 ERROR:  emaj_log_stat_group: group dummyGroup has not been created.
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);

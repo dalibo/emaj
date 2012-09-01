@@ -24,9 +24,10 @@ select count(*) from emaj.emaj_fk;
 select count(*) from emaj.mySchema1_myTbl1_log;
 
 -----------------------------
--- stop and drop groups
+-- stop, reset and drop groups
 -----------------------------
 select emaj.emaj_stop_group('myGroup1');
+select emaj.emaj_reset_group('myGroup1');
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
 select emaj.emaj_stop_group('phil''s group#3",','Simple stop mark');
@@ -364,7 +365,6 @@ select emaj.emaj_drop_group('dummyGroup');
 select emaj.emaj_force_drop_group('dummyGroup');
 select emaj.emaj_get_previous_mark_group('dummyGroup', '2010-01-01');
 select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
-select emaj.emaj_reset_group('dummyGroup');
 select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL); 
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);
 select emaj.emaj_estimate_rollback_duration('dummyGroup', 'dummyMark');
