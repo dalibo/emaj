@@ -2311,38 +2311,46 @@ $_stop_groups$
             EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
           EXCEPTION 
             WHEN invalid_schema_name THEN 
-              IF NOT v_isForced THEN
+              IF v_isForced THEN
+                RAISE WARNING '_stop_group: Schema % does not exist anymore.', quote_ident(r_tblsq.rel_schema);
+              ELSE
                 RAISE EXCEPTION '_stop_group: Schema % does not exist anymore.', quote_ident(r_tblsq.rel_schema);
               END IF;
             WHEN undefined_table THEN 
-              IF NOT v_isForced THEN
+              IF v_isForced THEN
+                RAISE WARNING '_stop_group: Table % does not exist anymore.', v_fullTableName;
+              ELSE
                 RAISE EXCEPTION '_stop_group: Table % does not exist anymore.', v_fullTableName;
               END IF;
             WHEN undefined_object THEN 
-              IF NOT v_isForced THEN
+              IF v_isForced THEN
+                RAISE WARNING '_stop_group: Trigger % on table % does not exist anymore.', v_logTriggerName, v_fullTableName;
+              ELSE
                 RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist anymore.', v_logTriggerName, v_fullTableName;
               END IF;
-            WHEN others THEN 
-              RAISE EXCEPTION '_stop_group: Unattended problem on disabling trigger % ; SQLSTATE = %.', v_logTriggerName, SQLSTATE;
           END;
           IF v_pgVersion >= '8.4' THEN
             BEGIN
               EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_truncTriggerName;
             EXCEPTION 
               WHEN invalid_schema_name THEN 
-                IF NOT v_isForced THEN
+                IF v_isForced THEN
+                  RAISE WARNING '_stop_group: Schema % does not exist anymore.', quote_ident(r_tblsq.rel_schema);
+                ELSE
                   RAISE EXCEPTION '_stop_group: Schema % does not exist anymore.', quote_ident(r_tblsq.rel_schema);
                 END IF;
               WHEN undefined_table THEN 
-                IF NOT v_isForced THEN
+                IF v_isForced THEN
+                  RAISE WARNING '_stop_group: Table % does not exist anymore.', v_fullTableName;
+                ELSE
                   RAISE EXCEPTION '_stop_group: Table % does not exist anymore.', v_fullTableName;
                 END IF;
               WHEN undefined_object THEN 
-                IF NOT v_isForced THEN
+                IF v_isForced THEN
+                  RAISE WARNING '_stop_group: Trigger % on table % does not exist anymore.', v_truncTriggerName, v_fullTableName;
+                ELSE
                   RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist anymore.', v_truncTriggerName, v_fullTableName;
                 END IF;
-              WHEN others THEN 
-                RAISE EXCEPTION '_stop_group: Unattended problem on disabling trigger % ; SQLSTATE = %.', v_logTriggerName, SQLSTATE;
             END;
           END IF;
           ELSEIF r_tblsq.rel_kind = 'S' THEN
