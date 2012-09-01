@@ -1240,18 +1240,31 @@ PL/pgSQL function "emaj_force_stop_group" line 14 at SQL statement
 (1 row)
 
   select emaj.emaj_drop_group('myGroup2');
-ERROR:  relation "myschema2.mytbl4" does not exist
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl4_emaj_log_trg ON myschema2.mytbl4"
-PL/pgSQL function "_drop_tbl" line 34 at EXECUTE statement
-SQL statement "SELECT  emaj._drop_tbl( $1 ,  $2 ,  $3 ,  $4 ,  $5 )"
-PL/pgSQL function "_drop_group" line 33 at PERFORM
-SQL statement "SELECT emaj._drop_group( $1 , FALSE)"
-PL/pgSQL function "emaj_drop_group" line 11 at SQL statement
+ emaj_drop_group 
+-----------------
+               8
+(1 row)
+
   select emaj.emaj_create_group('myGroup2');
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ emaj_create_group 
+-------------------
+                 7
+(1 row)
+
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+                      emaj_verify_all                      
+-----------------------------------------------------------
+ Global checks: no error detected
+ Checking schema emaj: no error detected
+ Checking schema "emaj #'3": no error detected
+ Checking schema emajb: no error detected
+ Checking schema "emajC": no error detected
+ Checking tables group myGroup1: no error detected
+ Checking tables group myGroup2: no error detected
+ Checking tables group phil's group#3",: no error detected
+(8 rows)
+
 rollback;
 -- cases when a log trigger on an application table is dropped
 begin;
@@ -1370,16 +1383,24 @@ PL/pgSQL function "emaj_force_stop_group" line 14 at SQL statement
 (1 row)
 
   select emaj.emaj_drop_group('myGroup2');
-ERROR:  schema "myschema2" does not exist
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl1_emaj_log_trg ON myschema2.mytbl1"
-PL/pgSQL function "_drop_tbl" line 34 at EXECUTE statement
-SQL statement "SELECT  emaj._drop_tbl( $1 ,  $2 ,  $3 ,  $4 ,  $5 )"
-PL/pgSQL function "_drop_group" line 33 at PERFORM
-SQL statement "SELECT emaj._drop_group( $1 , FALSE)"
-PL/pgSQL function "emaj_drop_group" line 11 at SQL statement
+ emaj_drop_group 
+-----------------
+               8
+(1 row)
+
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+                      emaj_verify_all                      
+-----------------------------------------------------------
+ Global checks: no error detected
+ Checking schema emaj: no error detected
+ Checking schema "emaj #'3": no error detected
+ Checking schema emajb: no error detected
+ Checking schema "emajC": no error detected
+ Checking tables group myGroup1: no error detected
+ Checking tables group phil's group#3",: no error detected
+(7 rows)
+
 rollback;
 -- cases when non E-Maj related objects are stored in emaj secondary schemas
 begin;
