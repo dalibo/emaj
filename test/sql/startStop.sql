@@ -217,7 +217,10 @@ select group_name, group_state, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name, group_state;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
--- test end: (groups are stopped) and reset history
+-- test end: (groups are stopped) reset history and force sequences id
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
+alter sequence emaj.emaj_mark_mark_id_seq restart 300;
+alter sequence emaj.emaj_sequence_sequ_id_seq restart 300;
+alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 300;
 

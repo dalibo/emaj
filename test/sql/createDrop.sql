@@ -260,11 +260,15 @@ drop table emaj.myschema1_mytbl1_log;
 select emaj.emaj_alter_group('myGroup1');
 
 -----------------------------
--- test end: check
+-- test end: check and force sequences id
 -----------------------------
 select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
+alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
+alter sequence emaj.emaj_mark_mark_id_seq restart 200;
+alter sequence emaj.emaj_sequence_sequ_id_seq restart 200;
+alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 200;
 

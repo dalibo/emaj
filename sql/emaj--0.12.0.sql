@@ -2353,15 +2353,15 @@ $_stop_groups$
         END IF;
         v_nbTb = v_nbTb + 1;
       END LOOP;
--- record the number of log rows for the old last mark of each group
-      UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = 
-        (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(m.mark_group,'EMAJ_LAST_MARK',NULL))
-        WHERE mark_group = ANY (v_groupNames) 
-          AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
-              (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark 
-               WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
--- Set the stop mark for each group (except if the function is called by emaj_force_stop_group())
+-- if the function is not called by emaj_force_stop_group(), record the number of log rows for the old last mark of each group
       IF NOT v_isForced THEN
+        UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = 
+          (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(m.mark_group,'EMAJ_LAST_MARK',NULL))
+          WHERE mark_group = ANY (v_groupNames) 
+            AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
+                (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark 
+                 WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
+-- and set the stop mark for each group
         PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
       END IF;
 -- set all marks for the groups from the emaj_mark table in 'DELETED' state to avoid any further rollback

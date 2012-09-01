@@ -345,7 +345,7 @@ ALTER TABLE
 ALTER SEQUENCE
  setval 
 --------
-    133
+   1000
 (1 row)
 
 CREATE TABLE
@@ -365,7 +365,7 @@ ALTER TABLE
 ALTER SEQUENCE
  setval 
 --------
-     22
+   1000
 (1 row)
 
 CREATE TABLE
@@ -376,7 +376,7 @@ ALTER TABLE
 ALTER SEQUENCE
  setval 
 --------
-    878
+   1000
 (1 row)
 
 CREATE TABLE

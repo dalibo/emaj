@@ -599,10 +599,13 @@ begin;
 rollback;
 
 -----------------------------
--- test end: check and reset history
+-- test end: check, reset history and force sequences id
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
 truncate emaj.emaj_hist;
-alter sequence emaj.emaj_hist_hist_id_seq restart 8000;
+alter sequence emaj.emaj_hist_hist_id_seq restart 6000;
+alter sequence emaj.emaj_mark_mark_id_seq restart 600;
+alter sequence emaj.emaj_sequence_sequ_id_seq restart 600;
+alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 600;
 

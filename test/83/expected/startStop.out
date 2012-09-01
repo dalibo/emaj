@@ -156,11 +156,11 @@ select group_name, group_state, group_nb_table, group_nb_sequence, group_comment
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       7 | myGroup2         | Mark2          |               0 | DELETED    |              |                     0 |                    44 |                         0
-       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
-      10 | myGroup2         | STOP_%         |               0 | DELETED    |              |                     0 |                    61 |                          
-      12 | myGroup1         | %abc%          |               0 | ACTIVE     |              |                     0 |                    75 |                          
-      13 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                     0 |                    83 |                          
+     201 | myGroup2         | Mark2          |               0 | DELETED    |              |                   199 |                   213 |                         0
+     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   216 |                          
+     204 | myGroup2         | STOP_%         |               0 | DELETED    |              |                   199 |                   230 |                          
+     206 | myGroup1         | %abc%          |               0 | ACTIVE     |              |                   199 |                   244 |                          
+     207 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                   199 |                   252 |                          
 (5 rows)
 
 -- check old events are deleted
@@ -274,12 +274,12 @@ select group_name, group_state, group_nb_table, group_nb_sequence, group_comment
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       7 | myGroup2         | Mark2          |               0 | DELETED    |              |                     0 |                    44 |                         0
-       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
-      10 | myGroup2         | STOP_%         |               0 | DELETED    |              |                     0 |                    61 |                          
-      12 | myGroup1         | %abc%          |               0 | DELETED    |              |                     0 |                    75 |                         0
-      13 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                     0 |                    83 |                          
-      14 | myGroup1         | STOP_%         |               0 | DELETED    |              |                     0 |                    89 |                          
+     201 | myGroup2         | Mark2          |               0 | DELETED    |              |                   199 |                   213 |                         0
+     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   216 |                          
+     204 | myGroup2         | STOP_%         |               0 | DELETED    |              |                   199 |                   230 |                          
+     206 | myGroup1         | %abc%          |               0 | DELETED    |              |                   199 |                   244 |                         0
+     207 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                   199 |                   252 |                          
+     208 | myGroup1         | STOP_%         |               0 | DELETED    |              |                   199 |                   258 |                          
 (6 rows)
 
 -- should be OK
@@ -326,9 +326,9 @@ commit;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
-      16 | myGroup1         | MARK_%         |               0 | ACTIVE     |              |                     0 |                   103 |                          
-      17 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                     0 |                   111 |                          
+     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   216 |                          
+     210 | myGroup1         | MARK_%         |               0 | ACTIVE     |              |                   199 |                   272 |                          
+     211 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                   199 |                   280 |                          
 (3 rows)
 
 begin transaction;
@@ -355,10 +355,10 @@ select emaj.emaj_start_group('myGroup1','Foo%Bar');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
-      17 | myGroup2         | MARK_%         |               0 | DELETED    |              |                     0 |                   111 |                         0
-      19 | myGroup2         | STOP_%         |               0 | DELETED    |              |                     0 |                   125 |                          
-      20 | myGroup1         | Foo%Bar        |               0 | ACTIVE     |              |                     0 |                   131 |                          
+     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   216 |                          
+     211 | myGroup2         | MARK_%         |               0 | DELETED    |              |                   199 |                   280 |                         0
+     213 | myGroup2         | STOP_%         |               0 | DELETED    |              |                   199 |                   294 |                          
+     214 | myGroup1         | Foo%Bar        |               0 | ACTIVE     |              |                   199 |                   300 |                          
 (4 rows)
 
 -----------------------------
@@ -504,9 +504,9 @@ select group_name, group_state, group_nb_table, group_nb_sequence, group_comment
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
-      26 | myGroup1         | Mark1          |               0 | ACTIVE     |              |                     0 |                   181 |                          
-      27 | myGroup2         | Mark1          |               0 | ACTIVE     |              |                     0 |                   181 |                          
+     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   216 |                          
+     220 | myGroup1         | Mark1          |               0 | ACTIVE     |              |                   199 |                   350 |                          
+     221 | myGroup2         | Mark1          |               0 | ACTIVE     |              |                   199 |                   350 |                          
 (3 rows)
 
 -----------------------------
@@ -564,11 +564,11 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    |  regexp_replace  | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+------------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       8 | phil's group#3", | Mark3            |               0 | ACTIVE     |              |                     0 |                    47 |                          
-      26 | myGroup1         | Mark1            |               0 | DELETED    |              |                     0 |                   181 |                         0
-      27 | myGroup2         | Mark1            |               0 | DELETED    |              |                     0 |                   181 |                         0
-      28 | myGroup1         | Global Stop at % |               0 | DELETED    |              |                     0 |                   195 |                          
-      29 | myGroup2         | Global Stop at % |               0 | DELETED    |              |                     0 |                   195 |                          
+     202 | phil's group#3", | Mark3            |               0 | ACTIVE     |              |                   199 |                   216 |                          
+     220 | myGroup1         | Mark1            |               0 | DELETED    |              |                   199 |                   350 |                         0
+     221 | myGroup2         | Mark1            |               0 | DELETED    |              |                   199 |                   350 |                         0
+     222 | myGroup1         | Global Stop at % |               0 | DELETED    |              |                   199 |                   364 |                          
+     223 | myGroup2         | Global Stop at % |               0 | DELETED    |              |                   199 |                   364 |                          
 (5 rows)
 
 -- with warning about group names array content
@@ -708,11 +708,14 @@ select group_name, group_state, group_nb_table, group_nb_sequence, group_comment
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-       8 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                     0 |                    47 |                          
-      30 | myGroup1         | Mark1          |               0 | DELETED    |              |                     0 |                   209 |                         0
-      31 | myGroup2         | Mark1          |               0 | DELETED    |              |                     0 |                   209 |                         0
+     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   216 |                          
+     224 | myGroup1         | Mark1          |               0 | DELETED    |              |                   199 |                   378 |                          
+     225 | myGroup2         | Mark1          |               0 | DELETED    |              |                   199 |                   378 |                          
 (3 rows)
 
--- test end: (groups are stopped) and reset history
+-- test end: (groups are stopped) reset history and force sequences id
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
+alter sequence emaj.emaj_mark_mark_id_seq restart 300;
+alter sequence emaj.emaj_sequence_sequ_id_seq restart 300;
+alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 300;
