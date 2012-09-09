@@ -433,12 +433,12 @@ begin;
   update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
   select * from emaj.emaj_verify_all();
 rollback;
--- detection of a missing schema
+-- detection of a missing application schema
 begin;
   drop schema myschema1 cascade;
   select * from emaj.emaj_verify_all();
 rollback;
--- detection of a missing relation
+-- detection of a missing application relation
 begin;
   drop table myschema1.mytbl4;
   select * from emaj.emaj_verify_all();
@@ -446,6 +446,11 @@ rollback;
 -- detection of relation type change (a table is now a sequence!)
 begin;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+  select * from emaj.emaj_verify_all();
+rollback;
+-- detection of a missing E-Maj secondary schema
+begin;
+  drop schema emajb cascade;
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of a missing log trigger

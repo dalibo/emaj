@@ -28,6 +28,7 @@ $emaj_uninstall$
     v_flgSuper              BOOLEAN;
     r_group                 RECORD;
     v_nonIdleGroupList      TEXT;
+    r_schema                RECORD;
     v_roleToDrop            BOOLEAN;
     r_database              RECORD;
     v_dbList                TEXT;
@@ -66,6 +67,21 @@ $emaj_uninstall$
         RAISE EXCEPTION 'emaj_uninstall: There are remaining active groups (not in IDLE state): %. Stop them before restarting the uninstall script',v_nonIdleGroupList;
       END IF;
     END IF;
+-- OK, all conditions are met
+-- process all E-Maj secondary schemas
+    FOR r_schema IN
+      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation 
+        WHERE rel_kind = 'r' AND rel_log_schema <> 'emaj' 
+        ORDER BY rel_log_schema
+      LOOP
+      FOR r_object IN 
+        SELECT msg FROM emaj._verify_schema(r_schema.rel_log_schema) msg 
+          WHERE msg NOT LIKE '%no error detected%'
+        LOOP
+        RAISE EXCEPTION '%. Drop it before reexecuting the uninstall function.',r_object.msg;
+      END LOOP;
+    END LOOP;
+
 -- OK, drop the schema. This will drop all tables groups. So no need to call emaj_drop_group() function.
     DROP SCHEMA IF EXISTS emaj CASCADE;
 -- Also revoke grants given on postgres function to both emaj roles
