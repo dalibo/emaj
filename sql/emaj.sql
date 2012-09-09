@@ -3555,8 +3555,9 @@ $_rlbk_groups_step7$
       WHERE mark_group = v_groupNames[1] AND mark_name = v_realMark;
 --   and rollback
     PERFORM emaj._rlbk_seq(rel_schema, rel_tblseq, v_timestampMark, v_deleteLog, v_lastSequenceId) 
-       FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
-       ORDER BY rel_priority, rel_schema, rel_tblseq;
+      FROM (SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
+              WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
+              ORDER BY rel_priority, rel_schema, rel_tblseq) as t;
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
 -- if rollback is "logged" rollback, automaticaly set a mark representing the tables state just after the rollback.
 -- this mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the current time
