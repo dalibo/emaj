@@ -950,7 +950,7 @@ begin;
 (8 rows)
 
 rollback;
--- detection of a missing schema
+-- detection of a missing application schema
 begin;
   drop schema myschema1 cascade;
 NOTICE:  drop cascades to 6 other objects
@@ -980,7 +980,7 @@ drop cascades to function myschema1.mytbl2trgfct()
 (14 rows)
 
 rollback;
--- detection of a missing relation
+-- detection of a missing application relation
 begin;
   drop table myschema1.mytbl4;
   select * from emaj.emaj_verify_all();
@@ -1012,6 +1012,32 @@ begin;
  Checking tables group myGroup2: no error detected
  Checking tables group phil's group#3",: no error detected
 (8 rows)
+
+rollback;
+-- detection of a missing E-Maj secondary schema
+begin;
+  drop schema emajb cascade;
+NOTICE:  drop cascades to 5 other objects
+DETAIL:  drop cascades to table emajb.myschema1_mytbl2b_log
+drop cascades to sequence emajb.myschema1_mytbl2b_log_seq
+drop cascades to function emajb.myschema1_mytbl2b_log_fnct()
+drop cascades to trigger myschema1_mytbl2b_emaj_log_trg on table myschema1.mytbl2b
+drop cascades to function emajb.myschema1_mytbl2b_rlbk_fnct(bigint)
+  select * from emaj.emaj_verify_all();
+                                     emaj_verify_all                                      
+------------------------------------------------------------------------------------------
+ Global checks: no error detected
+ Checking schema emaj: no error detected
+ Checking schema "emaj #'3": no error detected
+ Checking schema emajb: the schema does NOT exists!
+ Checking schema "emajC": no error detected
+ Checking tables group myGroup1: log function myschema1_mytbl2b_log_fnct not found.
+ Checking tables group myGroup1: rollback function myschema1_mytbl2b_rlbk_fnct not found.
+ Checking tables group myGroup1: log trigger myschema1_mytbl2b_emaj_log_trg not found.
+ Checking tables group myGroup1: log table myschema1_mytbl2b_log not found.
+ Checking tables group myGroup2: no error detected
+ Checking tables group phil's group#3",: no error detected
+(11 rows)
 
 rollback;
 -- detection of a missing log trigger

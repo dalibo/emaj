@@ -4720,6 +4720,13 @@ $_verify_schema$
   BEGIN
     v_msgPrefix = 'Checking schema ' || quote_ident(v_schemaName) || ': ';
     v_errorFound = FALSE;
+-- verify that the schema exists
+    PERFORM 1 FROM pg_namespace WHERE nspname = v_schemaName;
+    IF NOT FOUND THEN
+-- if the schema does not exist, return a message and exit without performing other checks
+      RETURN NEXT v_msgPrefix || 'the schema does NOT exists!';
+      RETURN;
+    END IF;
 -- detect tables that don't correspond to an emaj internal table or a log table
     FOR r_object IN 
       SELECT v_msgPrefix || 'table ' || relname || ' is not linked to any created tables group' AS msg
