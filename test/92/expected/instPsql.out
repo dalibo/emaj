@@ -1572,7 +1572,7 @@ $emaj_create_group$
       PERFORM emaj._create_log_schema(r_schema.log_schema);
 -- and record the schema creation in emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-        VALUES ('CREATE_GROUP','SECONDARY SCHEMA CREATED',quote_ident(r_schema.log_schema));
+        VALUES ('CREATE_GROUP','SCHEMA CREATED',quote_ident(r_schema.log_schema));
     END LOOP;
 -- define the default tablespace, NULL if tspemaj tablespace doesn't exist
     SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
@@ -1749,7 +1749,7 @@ $_drop_group$
       PERFORM emaj._drop_log_schema(r_schema.rel_log_schema, v_isForced);
 -- and record the schema suppression in emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-        VALUES (CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END,'SECONDARY SCHEMA DROPPED',quote_ident(r_schema.rel_log_schema));
+        VALUES (CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END,'SCHEMA DROPPED',quote_ident(r_schema.rel_log_schema));
     END LOOP;
 -- delete group rows from the emaj_fk table.
     DELETE FROM emaj.emaj_fk WHERE v_groupName = ANY (fk_groups);
@@ -1921,7 +1921,7 @@ $emaj_alter_group$
           PERFORM emaj._drop_log_schema(v_logSchemasArray [v_i], false);
 -- and record the schema drop in emaj_hist table
           INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-            VALUES ('ALTER_GROUP','SECONDARY SCHEMA DROPPED',quote_ident(v_logSchemasArray [v_i]));
+            VALUES ('ALTER_GROUP','SCHEMA DROPPED',quote_ident(v_logSchemasArray [v_i]));
         END IF;
       END LOOP;
     END IF;
@@ -1938,7 +1938,7 @@ $emaj_alter_group$
       PERFORM emaj._create_log_schema(r_schema.log_schema);
 -- and record the schema creation in emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object) 
-        VALUES ('ALTER_GROUP','SECONDARY SCHEMA CREATED',quote_ident(r_schema.log_schema));
+        VALUES ('ALTER_GROUP','SCHEMA CREATED',quote_ident(r_schema.log_schema));
     END LOOP;
 --
 -- list new relations in the tables group
