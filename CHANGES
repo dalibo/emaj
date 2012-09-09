@@ -41,6 +41,7 @@ Bug fixes:
   - allow an emaj_adm role to effectively execute the emaj_reset_group() 
     function without error on TRUNCATE statements when the group has been 
     created by someone else.
+  - really rollback sequences in the desired priority order.
 
 0.11.1
 ------
