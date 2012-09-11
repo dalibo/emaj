@@ -28,7 +28,9 @@ $emaj_uninstall$
     v_flgSuper              BOOLEAN;
     r_group                 RECORD;
     v_nonIdleGroupList      TEXT;
+    v_versionEmaj           TEXT;
     r_schema                RECORD;
+    r_object                RECORD;
     v_roleToDrop            BOOLEAN;
     r_database              RECORD;
     v_dbList                TEXT;
@@ -68,21 +70,26 @@ $emaj_uninstall$
       END IF;
     END IF;
 -- OK, all conditions are met
+-- dropping the schemas will drop all tables groups. So no need for calls to emaj_drop_group() function.
 -- process all E-Maj secondary schemas
-    FOR r_schema IN
-      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation 
-        WHERE rel_kind = 'r' AND rel_log_schema <> 'emaj' 
-        ORDER BY rel_log_schema
-      LOOP
-      FOR r_object IN 
-        SELECT msg FROM emaj._verify_schema(r_schema.rel_log_schema) msg 
-          WHERE msg NOT LIKE '%no error detected%'
+    SELECT param_value_text INTO v_versionEmaj FROM emaj.emaj_param WHERE param_key = 'emaj_version';
+    IF v_versionEmaj >= '0.12.0' THEN
+      FOR r_schema IN
+        SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation 
+          WHERE rel_kind = 'r' AND rel_log_schema <> 'emaj' 
+          ORDER BY rel_log_schema
         LOOP
-        RAISE EXCEPTION '%. Drop it before reexecuting the uninstall function.',r_object.msg;
+        FOR r_object IN 
+          SELECT msg FROM emaj._verify_schema(r_schema.rel_log_schema) msg 
+            WHERE msg NOT LIKE '%no error detected%' AND msg NOT LIKE '%the schema does NOT exists%'
+          LOOP
+-- a secondary schema contains objects that do not belong to E-Maj
+          RAISE EXCEPTION '% . Drop it before reexecuting the uninstall function.',r_object.msg;
+        END LOOP;
+        EXECUTE 'DROP SCHEMA IF EXISTS ' || quote_ident(r_schema.rel_log_schema) || ' CASCADE';
       END LOOP;
-    END LOOP;
-
--- OK, drop the schema. This will drop all tables groups. So no need to call emaj_drop_group() function.
+    END IF;
+-- and drop the primary schema.
     DROP SCHEMA IF EXISTS emaj CASCADE;
 -- Also revoke grants given on postgres function to both emaj roles
     REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_viewer;
