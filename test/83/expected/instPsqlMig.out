@@ -8,22 +8,6 @@
 -- for future use...
 --\i ~/postgresql-8.4.8/contrib/dblink/dblink.sql
 -----------------------------
--- for postgres cluster 8.3 and 9.1, temporarily rename tspemaj tablespace to test both cases
------------------------------
---CREATE or REPLACE FUNCTION public.emaj_tmp() 
---RETURNS VOID LANGUAGE plpgsql AS 
---$tmp$
---  DECLARE
---  BEGIN
---    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('8.3', '9.1') THEN
---      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
---    END IF;
---    RETURN; 
---  END;
---$tmp$;
---SELECT public.emaj_tmp();
---DROP FUNCTION public.emaj_tmp();
------------------------------
 -- migrate to the target version
 -----------------------------
 \i ../../sql/emaj-0.11.1-to-0.12.0.sql
@@ -207,6 +191,7 @@ CREATE TABLE emaj.emaj_relation (
 COMMENT ON TABLE emaj.emaj_relation IS
 $$Contains the content (tables and sequences) of created E-Maj groups.$$;
 -- populate the new emaj_relation table
+-- for tables
 --   the new rel_log_schema is set to 'emaj'
 --   the new rel_log_dat_tsp, rel_log_idx_tsp columns are retrieved for pg_catalog
 INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema, 
@@ -220,10 +205,18 @@ INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority,
            left outer join pg_catalog.pg_tablespace t1 on (c1.reltablespace = t1.oid),
          pg_catalog.pg_namespace n2, pg_catalog.pg_class c2
            left outer join pg_catalog.pg_tablespace t2 on (c2.reltablespace = t2.oid)
-    WHERE c1.relname = rel_schema || '_' || rel_tblseq || '_log' and n1.nspname = 'emaj'
+    WHERE rel_kind = 'r'
+      and c1.relname = rel_schema || '_' || rel_tblseq || '_log' and n1.nspname = 'emaj'
       and c1.relnamespace = n1.oid
       and c2.relname = rel_schema || '_' || rel_tblseq || '_log_idx' and n2.nspname = 'emaj'
       and c2.relnamespace = n2.oid
+;
+-- for sequences, all new columns are set to null
+INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema, 
+                            rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_session, rel_rows)
+  SELECT rel_schema, rel_tblseq, rel_group, rel_priority, NULL, NULL, NULL, rel_kind, rel_session, rel_rows
+    FROM emaj.emaj_relation_old
+    WHERE rel_kind = 'S'
 ;
 -- suppress the previous already renamed emaj_relation table
 DROP TABLE emaj.emaj_relation_old;
