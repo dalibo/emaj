@@ -11,24 +11,24 @@
 -----------------------------
 -- for postgres cluster 8.3 and 9.1, temporarily rename tspemaj tablespace to test both cases
 -----------------------------
---CREATE or REPLACE FUNCTION public.emaj_tmp() 
---RETURNS VOID LANGUAGE plpgsql AS 
---$tmp$
---  DECLARE
---  BEGIN
---    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('8.3', '9.1') THEN
---      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
---    END IF;
---    RETURN; 
---  END;
---$tmp$;
---SELECT public.emaj_tmp();
---DROP FUNCTION public.emaj_tmp();
+CREATE or REPLACE FUNCTION public.emaj_tmp() 
+RETURNS VOID LANGUAGE plpgsql AS 
+$tmp$
+  DECLARE
+  BEGIN
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('8.3', '9.1') THEN
+      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
+    END IF;
+    RETURN; 
+  END;
+$tmp$;
+SELECT public.emaj_tmp();
+DROP FUNCTION public.emaj_tmp();
 
 -----------------------------
 -- emaj installation with previous version
 -----------------------------
-\i ../../../emaj-0.11.0/sql/emaj.sql
+\i ../../../emaj-0.11.1/sql/emaj.sql
 
 -----------------------------
 -- check installation

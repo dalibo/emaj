@@ -10,25 +10,30 @@
 -----------------------------
 -- for postgres cluster 8.3 and 9.1, temporarily rename tspemaj tablespace to test both cases
 -----------------------------
---CREATE or REPLACE FUNCTION public.emaj_tmp() 
---RETURNS VOID LANGUAGE plpgsql AS 
---$tmp$
---  DECLARE
---  BEGIN
---    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('8.3', '9.1') THEN
---      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
---    END IF;
---    RETURN; 
---  END;
---$tmp$;
---SELECT public.emaj_tmp();
---DROP FUNCTION public.emaj_tmp();
+CREATE or REPLACE FUNCTION public.emaj_tmp() 
+RETURNS VOID LANGUAGE plpgsql AS 
+$tmp$
+  DECLARE
+  BEGIN
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('8.3', '9.1') THEN
+      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
+    END IF;
+    RETURN; 
+  END;
+$tmp$;
+SELECT public.emaj_tmp();
+ emaj_tmp 
+----------
+ 
+(1 row)
+
+DROP FUNCTION public.emaj_tmp();
 -----------------------------
 -- emaj installation with previous version
 -----------------------------
-\i ../../../emaj-0.11.0/sql/emaj.sql
+\i ../../../emaj-0.11.1/sql/emaj.sql
 --
--- E-Maj : logs and rollbacks table updates : V 0.11.0
+-- E-Maj : logs and rollbacks table updates : V 0.11.1
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -36,7 +41,8 @@
 --
 -- This script must be executed by a role having SUPERUSER privileges.
 -- Before its execution:
--- 	-> the concerned cluster must contain a tablespace named "tspemaj", for instance previously created by
+-- 	-> the concerned cluster may contain a tablespace named "tspemaj" to hold E-Maj files,
+--     for instance previously created by
 --	   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
 --	-> the plpgsql language must have been created in the concerned database,
 --  (-> the dblink contrib/extension must have been installed.)
@@ -63,11 +69,6 @@ $tmp$
     PERFORM 0 FROM pg_roles WHERE rolname = current_user AND rolsuper;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
-    END IF;
--- check the tspemaj tablespace is already created
-    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj installation: the "tspemaj" tablespace doesn''t exist.';
     END IF;
 -- check the dblink contrib is installed
 --    PERFORM 0 FROM pg_proc WHERE proname = 'dblink';
@@ -99,6 +100,7 @@ CREATE SCHEMA emaj;
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 -- create emaj roles and the _txid_current() function
+-- and set tspemaj as current_tablespace if exists
 CREATE or REPLACE FUNCTION emaj._tmp_create_some_components() 
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
@@ -132,6 +134,14 @@ $tmp$
       v_stmt = v_stmt || 'txid_current();$$';
     END IF;
     EXECUTE v_stmt;
+-- if tspemaj tablespace exists, 
+--   use it as default_tablespace for emaj tables creation
+--   and grant the create rights on it to emaj_adm
+    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
+    IF FOUND THEN
+      SET LOCAL default_tablespace TO tspemaj;
+      GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
+    END IF;
 --
     RETURN; 
   END;
@@ -166,7 +176,7 @@ CREATE TABLE emaj.emaj_param (
     param_value_boolean      BOOLEAN,                    -- value if type is boolean, otherwise NULL
     param_value_interval     INTERVAL,                   -- value if type is interval, otherwise NULL
     PRIMARY KEY (param_key) 
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_param IS 
 $$Contains E-Maj parameters.$$;
 -- table containing the history of all E-Maj events  
@@ -183,7 +193,7 @@ CREATE TABLE emaj.emaj_hist (                            -- records the history 
     hist_txid                BIGINT
                              DEFAULT emaj._txid_current(), -- and its tx_id
     PRIMARY KEY (hist_id)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_hist IS
 $$Contains E-Maj events history.$$;
 -- table containing the definition of groups' content. Filled and maintained by the user, it is used by emaj_create_group function.
@@ -195,7 +205,7 @@ CREATE TABLE emaj.emaj_group_def (
                                                          --   order, with NULL last)
     PRIMARY KEY (grpdef_group, grpdef_schema, grpdef_tblseq) 
 -- the group name is included in the pkey so that a table/sequence can be temporarily assigned to several groups 
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_group_def IS
 $$Contains E-Maj groups definition, supplied by the E-Maj administrator.$$;
 -- table containing the defined groups
@@ -214,7 +224,7 @@ CREATE TABLE emaj.emaj_group (
                              DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
     group_comment            TEXT,                       -- optional user comment
     PRIMARY KEY (group_name)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_group IS
 $$Contains created E-Maj groups.$$;
 -- table containing the relations (tables and sequences) of created tables groups
@@ -229,7 +239,7 @@ CREATE TABLE emaj.emaj_relation (
     rel_rows                 BIGINT,                     -- number of rows to rollback, computed at rollback time
     PRIMARY KEY (rel_schema, rel_tblseq),
     FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_relation IS
 $$Contains the content (tables and sequences) of created E-Maj groups.$$;
 -- table containing the marks
@@ -251,7 +261,7 @@ CREATE TABLE emaj.emaj_mark (
     mark_log_rows_before_next BIGINT,                    -- number of log rows recorded for the group between the mark and the next one (NULL if last mark) - used to speedup marks lists display in phpPgAdmin plugin
     PRIMARY KEY (mark_group, mark_name),
     FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_mark IS
 $$Contains marks set on E-Maj tables groups.$$;
 -- table containing the sequences characteristics log 
@@ -273,7 +283,7 @@ CREATE TABLE emaj.emaj_sequence (
     sequ_is_cycled           BOOLEAN     NOT NULL,       -- sequence flag 'is cycled ?'
     sequ_is_called           BOOLEAN     NOT NULL,       -- sequence flag 'is called ?'
     PRIMARY KEY (sequ_schema, sequ_name, sequ_datetime)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_sequence IS
 $$Contains values of sequences at E-Maj set_mark times.$$;
 -- table containing the holes in sequences log
@@ -289,7 +299,7 @@ CREATE TABLE emaj.emaj_seq_hole (
                              DEFAULT transaction_timestamp(),
     sqhl_hole_size           BIGINT      NOT NULL,       -- hole size computed as the difference of 2 sequence last-values
     PRIMARY KEY (sqhl_schema, sqhl_table, sqhl_datetime)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_seq_hole IS
 $$Contains description of holes in sequence values for E-Maj log tables.$$;
 -- table containing statistics about previously executed rollback operations
@@ -302,7 +312,7 @@ CREATE TABLE emaj.emaj_rlbk_stat (
     rlbk_nb_rows             BIGINT      NOT NULL,       -- number of rows processed by the operation
     rlbk_duration            INTERVAL    NOT NULL,       -- duration of the elementary operation
     PRIMARY KEY (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_rlbk_stat IS
 $$Contains statistics about previous E-Maj rollback durations.$$;
 -- working storage table containing foreign key definition
@@ -313,9 +323,11 @@ CREATE TABLE emaj.emaj_fk (
     fk_name                  TEXT        NOT NULL,       -- foreign key name
     fk_schema                TEXT        NOT NULL,       -- schema name of the table that owns the foreign key
     fk_table                 TEXT        NOT NULL,       -- name of the table that owns the foreign key
-    fk_def                   TEXT        NOT NULL,       -- foreign key definition as reported by pg_get_constraintdef
+    fk_action                TEXT        NOT NULL,       -- action to perform at the end of the rollback operation
+                                                         --   can contain 'create_fk' or 'set_fk_immediate"
+    fk_def                   TEXT        ,               -- foreign key definition as reported by pg_get_constraintdef
     PRIMARY KEY (fk_groups, fk_name, fk_schema, fk_table)
-    ) TABLESPACE tspemaj;
+    );
 COMMENT ON TABLE emaj.emaj_fk IS
 $$Contains temporary description of foreign keys suppressed by E-Maj rollback operations.$$;
 ------------------------------------
@@ -346,15 +358,17 @@ $$Represents the structure of rows returned by the emaj_detailed_log_stat_group(
 -- 'Fixed' parameters             --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.11.0');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.11.1');
 -- Other parameters are optional. They are set by users if needed.
 -- The history_retention parameter defines the time interval when a row remains in the emaj history table - default is 1 month
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 month'::interval);
--- 4 parameters are used by the emaj_estimate_rollback_duration function as a default value to compute the approximate duration of a rollback operation.
+-- 5 parameters are used by the emaj_estimate_rollback_duration function as a default value to compute the approximate duration of a rollback operation.
 -- The avg_row_rollback_duration parameter defines the average duration needed to rollback a row.
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','100 microsecond'::interval);
 -- The avg_row_delete_log_duration parameter defines the average duration needed to delete log rows.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','10 -microsecond'::interval);
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','10 microsecond'::interval);
+-- The avg_fkey_check_duration parameter defines the average duration needed to check a foreign key.
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_fkey_check_duration','20 microsecond'::interval);
 -- The fixed_table_rollback_duration parameter defines the fixed rollback cost for any table or sequence belonging to a group
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','5 millisecond'::interval);
 -- The fixed_table_with_rollback_duration parameter defines the additional fixed rollback cost for any table that has effective rows to rollback
@@ -528,7 +542,8 @@ $_create_tbl$
 -- variables for the name of tables, functions, triggers,...
     v_fullTableName         TEXT;
     v_emajSchema            TEXT := 'emaj';
-    v_emajTblSpace          TEXT := 'tspemaj';
+    v_dataTblSpace          TEXT;
+    v_idxTblSpace           TEXT;
     v_logTableName          TEXT;
     v_logIdxName            TEXT;
     v_logFnctName           TEXT;
@@ -577,7 +592,15 @@ $_create_tbl$
     IF v_isRollbackable AND v_relhaspkey = FALSE THEN
       RAISE EXCEPTION '_create_tbl: table % has no PRIMARY KEY.', v_tableName;
     END IF;
--- OK, build the different name for table, trigger, functions,...
+-- if tspemaj tablespace exists, use it for the log table and its index
+    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
+    IF FOUND THEN
+      v_dataTblSpace = 'TABLESPACE tspemaj '; v_idxTblSpace = 'TABLESPACE tspemaj ';
+    ELSE
+      v_dataTblSpace = ''; v_idxTblSpace = '';
+    END IF;
+
+-- build the different name for table, trigger, functions,...
     v_fullTableName    := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
     v_logTableName     := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
     v_logIdxName       := quote_ident(v_schemaName || '_' || v_tableName || '_log_idx');
@@ -590,7 +613,7 @@ $_create_tbl$
 -- creation of the log table: the log table looks like the application table, with some additional technical columns
     EXECUTE 'DROP TABLE IF EXISTS ' || v_logTableName;
     EXECUTE 'CREATE TABLE ' || v_logTableName
-         || ' ( LIKE ' || v_fullTableName || ') TABLESPACE ' || v_emajTblSpace;
+         || ' ( LIKE ' || v_fullTableName || ') ' || v_dataTblSpace;
     EXECUTE 'ALTER TABLE ' || v_logTableName
          || ' ADD COLUMN emaj_verb    VARCHAR(3),'
          || ' ADD COLUMN emaj_tuple   VARCHAR(3),'
@@ -602,12 +625,12 @@ $_create_tbl$
 -- creation of the index on the log table
     IF v_pgVersion >= '8.3' THEN
       EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON ' 
-           ||  v_logTableName || ' (emaj_gid, emaj_tuple DESC) TABLESPACE ' || v_emajTblSpace;
+           ||  v_logTableName || ' (emaj_gid, emaj_tuple DESC) ' || v_idxTblSpace;
     ELSE
 --   in 8.2, DESC clause doesn't exist. So the index cannot be used at rollback time. 
 --   It only enforces the uniqueness of (emaj_gid, emaj_tuple)
       EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON ' 
-           ||  v_logTableName || ' (emaj_gid, emaj_tuple) TABLESPACE ' || v_emajTblSpace;
+           ||  v_logTableName || ' (emaj_gid, emaj_tuple) ' || v_idxTblSpace;
     END IF;
 -- remove the NOT NULL constraints of application columns. 
 --   They are useless and blocking to store truncate event for tables belonging to audit_only tables
@@ -848,26 +871,22 @@ $_drop_seq$
     RETURN;
   END;
 $_drop_seq$;
-CREATE or REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ,  v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT)
+CREATE or REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 
 $_rlbk_tbl$
 -- This function rollbacks one table to a given timestamp
 -- The function is called by emaj._rlbk_groups_step5()
 -- Input: schema name and table name, global sequence value limit for rollback, mark timestamp, 
---        flag to specify if log trigger must be disable during rollback operation,
 --        flag to specify if rollbacked log rows must be deleted,
 --        last sequence and last hole identifiers to keep (greater ones being to be deleted)
--- These flags must be respectively:
---   - true and true   for common (unlogged) rollback,
---   - false and false for logged rollback, 
---   - true and false  for unlogged rollback with undeleted log rows (now deleted emaj_rollback_and_stop_group function)
+-- The v_deleteLog flag must be set to true for common (unlogged) rollback and false for logged rollback
+-- For unlogged rollback, the log triggers have been disabled previously and will be enabled later.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_emajSchema     TEXT := 'emaj';
     v_fullTableName  TEXT;
     v_logTableName   TEXT;
     v_rlbkFnctName   TEXT;
-    v_logTriggerName TEXT;
     v_seqName        TEXT;
     v_fullSeqName    TEXT;
     v_nb_rows        BIGINT;
@@ -880,16 +899,11 @@ $_rlbk_tbl$
     v_logTableName   := quote_ident(v_emajSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
     v_rlbkFnctName   := quote_ident(v_emajSchema) || '.' || 
                         quote_ident(v_schemaName || '_' || v_tableName || '_rlbk_fnct');
-    v_logTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_log_trg');
     v_seqName        := emaj._build_log_seq_name(v_schemaName, v_tableName);
     v_fullSeqName    := quote_ident(v_emajSchema) || '.' || quote_ident(v_seqName);
 -- insert begin event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_lastGlobalSeq);
--- deactivate the log trigger on the application table, if needed (unlogged rollback)
-    IF v_disableTrigger THEN
-      EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
-    END IF;
 -- record the time at the rollback start
     SELECT clock_timestamp() INTO v_tsrlbk_start;
 -- rollback the table
@@ -934,10 +948,6 @@ $_rlbk_tbl$
         INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
            VALUES ('del_log', v_schemaName, v_tableName, v_tsrlbk_start, v_nb_rows, v_tsdel_end - v_tsdel_start);
       END IF;
-    END IF;
--- re-activate the log trigger on the application table, if previously disabled
-    IF v_disableTrigger THEN
-      EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || v_logTriggerName;
     END IF;
 -- insert end event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
@@ -1875,7 +1885,8 @@ $_stop_groups$
     SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
 --
     IF v_validGroupNames IS NOT NULL THEN
--- OK, lock all tables to get a stable point ...
+-- OK (no error detected and at least one group in logging state)
+-- lock all tables to get a stable point ...
 -- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
       PERFORM emaj._lock_groups(v_validGroupNames,'',v_multiGroup);
 -- for each relation of the groups to process,
@@ -1898,19 +1909,19 @@ $_stop_groups$
         v_nbTb = v_nbTb + 1;
       END LOOP;
 -- record the number of log rows for the old last mark of each group
-    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = 
-      (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(m.mark_group,'EMAJ_LAST_MARK',NULL))
-      WHERE mark_group = ANY (v_groupNames) 
-        AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
-            (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark 
-             WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
+      UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = 
+        (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(m.mark_group,'EMAJ_LAST_MARK',NULL))
+        WHERE mark_group = ANY (v_groupNames) 
+          AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
+              (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark 
+               WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
+-- Set the stop mark for each group
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
 -- set all marks for the groups from the emaj_mark table in 'DELETED' state to avoid any further rollback
       UPDATE emaj.emaj_mark SET mark_state = 'DELETED' WHERE mark_group = ANY (v_validGroupNames) AND mark_state <> 'DELETED';
 -- update the state of the groups rows from the emaj_group table
       UPDATE emaj.emaj_group SET group_state = 'IDLE' WHERE group_name = ANY (v_validGroupNames);
     END IF;
--- Set the stop mark for each group
-    PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES (CASE WHEN v_multiGroup THEN 'STOP_GROUPS' ELSE 'STOP_GROUP' END, 'END', 
@@ -2273,7 +2284,7 @@ $emaj_delete_mark_group$
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('DELETE_MARK_GROUP', 'END', v_groupName, v_mark);
+      VALUES ('DELETE_MARK_GROUP', 'END', v_groupName, v_realMark);
     RETURN 1;
   END;
 $emaj_delete_mark_group$;
@@ -2318,7 +2329,7 @@ $emaj_delete_before_mark_group$
     SELECT emaj._delete_before_mark_group(v_groupName, v_realMark) INTO v_nbMark;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
-      VALUES ('DELETE_BEFORE_MARK_GROUP', 'END', v_groupName,  v_nbMark || ' marks deleted');
+      VALUES ('DELETE_BEFORE_MARK_GROUP', 'END', v_groupName,  v_nbMark || ' marks deleted ; ' || v_realMark || ' is now the initial mark' );
     RETURN v_nbMark;
   END;
 $emaj_delete_before_mark_group$;
@@ -2403,8 +2414,8 @@ $emaj_rename_mark_group$
     IF v_realMark IS NULL THEN
       RAISE EXCEPTION 'emaj_rename_mark_group: mark % doesn''t exist for group %.', v_mark, v_groupName;
     END IF;
--- check the new mark name is not 'EMAJ_LAST_MARK'
-    IF v_newName = 'EMAJ_LAST_MARK' THEN
+-- check the new mark name is not 'EMAJ_LAST_MARK' or NULL
+    IF v_newName = 'EMAJ_LAST_MARK' OR v_newName IS NULL THEN
        RAISE EXCEPTION 'emaj_rename_mark_group: % is not an allowed name for a new mark.', v_newName;
     END IF;
 -- check if the new mark name doesn't exist for the group 
@@ -2518,7 +2529,7 @@ $_rlbk_groups$
 -- Step 3: set a rollback start mark if logged rollback
     PERFORM emaj._rlbk_groups_step3(v_groupNames, v_mark, v_unloggedRlbk, v_multiGroup);
 -- Step 4: record and drop foreign keys
-    PERFORM emaj._rlbk_groups_step4(v_groupNames, 1);
+    PERFORM emaj._rlbk_groups_step4(v_groupNames, 1, v_unloggedRlbk);
 -- Step 5: effectively rollback tables
     SELECT emaj._rlbk_groups_step5(v_groupNames, v_mark, 1, v_unloggedRlbk, v_deleteLog) INTO v_nbTbl;
 -- checks that we have the expected number of processed tables
@@ -2526,7 +2537,7 @@ $_rlbk_groups$
        RAISE EXCEPTION '_rlbk_group: Internal error 1 (%,%).',v_nbTbl,v_nbTblInGroup;
     END IF;
 -- Step 6: recreate foreign keys
-    PERFORM emaj._rlbk_groups_step6(v_groupNames, 1);
+    PERFORM emaj._rlbk_groups_step6(v_groupNames, 1, v_unloggedRlbk);
 -- Step 7: process sequences and complete the rollback operation record
     SELECT emaj._rlbk_groups_step7(v_groupNames, v_mark, v_nbTbl, v_unloggedRlbk, v_deleteLog, v_multiGroup) INTO v_nbSeq;
     RETURN v_nbTbl + v_nbSeq;
@@ -2603,7 +2614,7 @@ $_rlbk_groups_step1$
     END IF;
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording) 
       VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'BEGIN', 
-              array_to_string(v_groupNames,','), v_msg || ' rollback to mark ' || v_mark || ' [' || v_timestampMark || ']');
+              array_to_string(v_groupNames,','), v_msg || ' rollback to mark ' || v_markName || ' [' || v_timestampMark || ']');
 -- get the total number of tables for these groups
     SELECT sum(group_nb_table) INTO v_nbTblInGroup FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames) ;
 -- issue warnings in case of foreign keys with tables outside the groups
@@ -2764,40 +2775,69 @@ $_rlbk_groups_step3$
     RETURN;
   END;
 $_rlbk_groups_step3$;
-CREATE or REPLACE FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_groups_step4$
--- This is the fourth step of a rollback group processing. It drops all foreign keys involved in a rollback session.
--- Before dropping, it records them to be able to recreate them at step 5.
+-- This is the fourth step of a rollback group processing. 
+-- If the rollback is unlogged, it disables log triggers for tables involved in the rollback session.
+-- Then, it processes all foreign keys involved in the rollback session.
+--   Non deferrable fkeys and deferrable fkeys with an action for UPDATE or DELETE other than 'no action' are dropped
+--   Others are just set deferred if needed
+--   For all fkeys, the action do be performed at step 6 is recorded in emaj_fk table (with either 'add_fk' or 'set_fk_immediate' action).
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables.
   DECLARE
+    v_fullTableName     TEXT;
+    v_logTriggerName    TEXT;
+    r_tbl               RECORD;
     r_fk                RECORD;
   BEGIN
--- record and drop the foreign keys involved in all tables of the group, if any
-    INSERT INTO emaj.emaj_fk (fk_groups, fk_session, fk_name, fk_schema, fk_table, fk_def)
---    record the foreign keys of the session's tables
-      SELECT v_groupNames, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid)
+-- disable log triggers if unlogged rollback.
+    IF v_unloggedRlbk THEN
+      FOR r_tbl IN
+        SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
+          WHERE rel_group = ANY (v_groupNames) AND rel_session = v_session AND rel_kind = 'r' AND rel_rows > 0
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+        v_fullTableName  := quote_ident(r_tbl.rel_schema) || '.' || quote_ident(r_tbl.rel_tblseq);
+        v_logTriggerName := quote_ident(r_tbl.rel_schema || '_' || r_tbl.rel_tblseq || '_emaj_log_trg');
+        EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
+      END LOOP;
+    END IF;
+-- select all foreign keys belonging to or referencing the session's tables of the group, if any
+    FOR r_fk IN
+      SELECT c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid) AS def, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
         FROM pg_constraint c, pg_namespace n, pg_class t, emaj.emaj_relation r
         WHERE c.contype = 'f'                                            -- FK constraints only
-          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace 
-          AND n.nspname = r.rel_schema AND t.relname = r.rel_tblseq      -- join on group table
+          AND r.rel_rows > 0                                             -- table to effectively rollback only
+          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
+          AND n.nspname = r.rel_schema AND t.relname = r.rel_tblseq      -- join on groups table
           AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session
       UNION
---           and the foreign keys referencing the session's tables
-      SELECT v_groupNames, v_session, c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid)
+      SELECT c.conname, n.nspname, t.relname, pg_get_constraintdef(c.oid) AS def, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_relation r
         WHERE c.contype = 'f'                                            -- FK constraints only
-          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace 
+          AND r.rel_rows > 0                                             -- table to effectively rollback only
+          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
           AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace 
-          AND rn.nspname = r.rel_schema AND rt.relname = r.rel_tblseq    -- join on group table
-          AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session;
---    and drop all these foreign keys
-    FOR r_fk IN
-      SELECT fk_schema, fk_table, fk_name FROM emaj.emaj_fk 
-        WHERE fk_groups = v_groupNames  AND fk_session = v_session ORDER BY fk_schema, fk_table, fk_name
+          AND rn.nspname = r.rel_schema AND rt.relname = r.rel_tblseq    -- join on groups table
+          AND r.rel_group = ANY (v_groupNames) AND r.rel_session = v_session
+      ORDER BY nspname, relname, conname
       LOOP
-        RAISE NOTICE '_rlbk_groups_step4: groups (%), session #% -> foreign key constraint % dropped for table %.%.', array_to_string(v_groupNames,','), v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
-        EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' DROP CONSTRAINT ' || quote_ident(r_fk.fk_name);
+-- depending on the foreign key characteristics, drop it or set it deffered or just record it as 'to be reset immediate'
+      IF NOT r_fk.condeferrable OR r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
+-- non deferrable fkeys and deferrable fkeys with an action for UPDATE or DELETE other than 'no action' need to be dropped
+        EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.nspname) || '.' || quote_ident(r_fk.relname) || ' DROP CONSTRAINT ' || quote_ident(r_fk.conname);
+        INSERT INTO emaj.emaj_fk (fk_groups, fk_session, fk_name, fk_schema, fk_table, fk_action, fk_def)
+          VALUES (v_groupNames, v_session, r_fk.conname, r_fk.nspname, r_fk.relname, 'add_fk', r_fk.def);
+      ELSE
+-- other deferrable but not deferred fkeys need to be set deferred
+        IF NOT r_fk.condeferred THEN
+          EXECUTE 'SET CONSTRAINTS ' || quote_ident(r_fk.nspname) || '.' || quote_ident(r_fk.conname) || ' DEFERRED';
+        END IF;
+-- deferrable fkeys are recorded as 'to be set immediate at the end of the rollback operation'
+        INSERT INTO emaj.emaj_fk (fk_groups, fk_session, fk_name, fk_schema, fk_table, fk_action, fk_def)
+          VALUES (v_groupNames, v_session, r_fk.conname, r_fk.nspname, r_fk.relname, 'set_fk_immediate', r_fk.def);
+      END IF;
     END LOOP;
   END;
 $_rlbk_groups_step4$;
@@ -2822,8 +2862,7 @@ $_rlbk_groups_step5$
       INTO v_lastGlobalSeq, v_lastSequenceId, v_lastSeqHoleId FROM emaj.emaj_mark 
       WHERE mark_group = v_groupNames[1] AND mark_name = emaj._get_mark_name(v_groupNames[1],v_mark);
 -- rollback all tables of the session, having rows to rollback, in priority order (sequences are processed later)
--- (for the _rlbk_tbl() function call, the disableTrigger boolean always equals unloggedRlbk boolean)
-    PERFORM emaj._rlbk_tbl(rel_schema, rel_tblseq, v_lastGlobalSeq, v_timestampMark, v_unloggedRlbk, v_deleteLog, v_lastSequenceId, v_lastSeqHoleId)
+    PERFORM emaj._rlbk_tbl(rel_schema, rel_tblseq, v_lastGlobalSeq, v_timestampMark, v_deleteLog, v_lastSequenceId, v_lastSeqHoleId)
       FROM (SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
               WHERE rel_group = ANY (v_groupNames) AND rel_session = v_session AND rel_kind = 'r' AND rel_rows > 0
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t;
@@ -2832,35 +2871,85 @@ $_rlbk_groups_step5$
     RETURN v_nbTbl;
   END;
 $_rlbk_groups_step5$;
-CREATE or REPLACE FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT) 
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN) 
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_groups_step6$
--- This is the sixth step of a rollback group processing. It recreates the previously deleted foreign keys.
+-- This is the sixth step of a rollback group processing. It recreates the previously deleted foreign keys and 'set immediate' the others.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables.
   DECLARE
     v_ts_start          TIMESTAMP;
     v_ts_end            TIMESTAMP;
+    v_fullTableName     TEXT;
+    v_logTriggerName    TEXT;
+    v_rows              BIGINT;
     r_fk                RECORD;
+    r_tbl               RECORD;
   BEGIN
+-- set recorded foreign keys as IMMEDIATE
     FOR r_fk IN
--- get all recorded fk plus the number of rows of the related table as estimated by postgresql (pg_class.reltuples)
+-- get all recorded fk
+      SELECT fk_schema, fk_table, fk_name
+        FROM emaj.emaj_fk
+        WHERE fk_action = 'set_fk_immediate' AND fk_groups = v_groupNames AND fk_session = v_session
+        ORDER BY fk_schema, fk_table, fk_name
+      LOOP
+-- record the time at the alter table start
+        SELECT clock_timestamp() INTO v_ts_start;
+-- set the fkey constraint as immediate
+        EXECUTE 'SET CONSTRAINTS ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_name) || ' IMMEDIATE';
+-- record the time after the alter table and insert FK creation duration into the emaj_rlbk_stat table
+        SELECT clock_timestamp() INTO v_ts_end;
+-- compute the total number of fk that has been checked. 
+-- (this is in fact overestimated because inserts in the referecing table and deletes in the referenced table should not be taken into account. But the required log table scan would be too costly).
+        SELECT (
+--   get the number of rollbacked rows in the referencing table
+        SELECT rel_rows 
+          FROM emaj.emaj_relation
+          WHERE rel_schema = r_fk.fk_schema AND rel_tblseq = r_fk.fk_table
+               ) + (
+--   get the number of rollbacked rows in the referenced table
+        SELECT rel_rows
+          FROM pg_constraint c, pg_namespace n, pg_namespace rn, pg_class rt, emaj.emaj_relation r
+          WHERE c.conname = r_fk.fk_name                                   -- constraint id (name + schema)
+            AND c.connamespace = n.oid AND n.nspname = r_fk.fk_schema
+            AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
+            AND rn.nspname = r.rel_schema AND rt.relname = r.rel_tblseq    -- join on groups table
+               ) INTO v_rows;
+-- record the set_fk_immediate duration into the rollbacks statistics table
+        INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
+           VALUES ('set_fk_immediate', r_fk.fk_schema, r_fk.fk_name, v_ts_start, v_rows, v_ts_end - v_ts_start);
+    END LOOP;
+-- process foreign key recreation
+    FOR r_fk IN
+-- get all recorded fk to recreate, plus the number of rows of the related table as estimated by postgres (pg_class.reltuples)
       SELECT fk_schema, fk_table, fk_name, fk_def, pg_class.reltuples 
         FROM emaj.emaj_fk, pg_namespace, pg_class
-        WHERE fk_groups = v_groupNames AND fk_session = v_session AND                         -- restrictions
+        WHERE fk_action = 'add_fk' AND
+              fk_groups = v_groupNames AND fk_session = v_session AND                         -- restrictions
               pg_namespace.oid = relnamespace AND relname = fk_table AND nspname = fk_schema  -- joins
         ORDER BY fk_schema, fk_table, fk_name
       LOOP
 -- record the time at the alter table start
         SELECT clock_timestamp() INTO v_ts_start;
--- recreate the foreign key
+-- ... recreate the foreign key
         EXECUTE 'ALTER TABLE ' || quote_ident(r_fk.fk_schema) || '.' || quote_ident(r_fk.fk_table) || ' ADD CONSTRAINT ' || quote_ident(r_fk.fk_name) || ' ' || r_fk.fk_def;
 -- record the time after the alter table and insert FK creation duration into the emaj_rlbk_stat table
         SELECT clock_timestamp() INTO v_ts_end;
         INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration) 
            VALUES ('add_fk', r_fk.fk_schema, r_fk.fk_name, v_ts_start, r_fk.reltuples, v_ts_end - v_ts_start);
--- send a message about the fk creation completion 
-        RAISE NOTICE '_rlbk_group_step6: groups (%), session #% -> foreign key constraint % recreated for table %.%.', array_to_string(v_groupNames,','), v_session, r_fk.fk_name, r_fk.fk_schema, r_fk.fk_table;
     END LOOP;
+-- if unlogged rollback., enable log triggers that had been previously disabled 
+    IF v_unloggedRlbk THEN
+      FOR r_tbl IN
+        SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation 
+          WHERE rel_group = ANY (v_groupNames) AND rel_session = v_session AND rel_kind = 'r' AND rel_rows > 0
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+        v_fullTableName  := quote_ident(r_tbl.rel_schema) || '.' || quote_ident(r_tbl.rel_tblseq);
+        v_logTriggerName := quote_ident(r_tbl.rel_schema || '_' || r_tbl.rel_tblseq || '_emaj_log_trg');
+        EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || v_logTriggerName;
+      END LOOP;
+    END IF;
     RETURN;
   END;
 $_rlbk_groups_step6$;
@@ -3212,9 +3301,11 @@ $emaj_estimate_rollback_duration$
     v_estim_duration        INTERVAL;
     v_avg_row_rlbk          INTERVAL;
     v_avg_row_del_log       INTERVAL;
+    v_avg_fkey_check        INTERVAL;
     v_fixed_table_rlbk      INTERVAL;
     v_fixed_table_with_rlbk INTERVAL;
     v_estim                 INTERVAL;
+    v_checks                BIGINT;
     r_tblsq                 RECORD;
     r_fkey		            RECORD;
   BEGIN
@@ -3242,10 +3333,12 @@ $emaj_estimate_rollback_duration$
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
                         WHERE param_key = 'avg_row_delete_log_duration'),'10 microsecond'::interval),
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
+                        WHERE param_key = 'avg_fkey_check_duration'),'5 microsecond'::interval),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
                         WHERE param_key = 'fixed_table_rollback_duration'),'5 millisecond'::interval),
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param 
                         WHERE param_key = 'fixed_table_with_rollback_duration'),'2.5 millisecond'::interval)
-           INTO v_avg_row_rlbk, v_avg_row_del_log, v_fixed_table_rlbk, v_fixed_table_with_rlbk;
+           INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_table_rlbk, v_fixed_table_with_rlbk;
 -- compute the fixed cost for the group
     v_estim_duration = v_nbTblSeq * v_fixed_table_rlbk;
 --
@@ -3297,42 +3390,79 @@ $emaj_estimate_rollback_duration$
 --
 -- walk through the list of foreign key constraints concerned by the estimated rollback
 --
--- for each foreign key
+-- for each foreign key referencing tables that are concerned by the rollback operation
     FOR r_fkey IN
-      SELECT c.conname, n.nspname, t.relname, t.reltuples
+      SELECT c.conname, n.nspname, t.relname, t.reltuples, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
         FROM pg_constraint c, pg_namespace n, pg_class t, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
         WHERE c.contype = 'f'                                            -- FK constraints only
-          AND stat_rows > 0                                              -- table to effectively rollback only
-          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace 
-          AND n.nspname = s.stat_schema AND t.relname = s.stat_table     -- join on group tables to effectively rollback
+          AND s.stat_rows > 0                                              -- table to effectively rollback only
+          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
+          AND n.nspname = s.stat_schema AND t.relname = s.stat_table     -- join on log_stat results
       UNION
---           and the foreign keys referenced by tables that are concerned by the rollback operation
-      SELECT c.conname, n.nspname, t.relname, t.reltuples
+      SELECT c.conname, n.nspname, t.relname, t.reltuples, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
         FROM pg_constraint c, pg_namespace n, pg_class t, pg_namespace rn, pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
         WHERE c.contype = 'f'                                            -- FK constraints only
-          AND stat_rows > 0                                              -- table to effectively rollback only
-          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace 
+          AND s.stat_rows > 0                                            -- table to effectively rollback only
+          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
           AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace 
-          AND rn.nspname = s.stat_schema AND rt.relname = s.stat_table   -- join on group tables to effectively rollback
+          AND rn.nspname = s.stat_schema AND rt.relname = s.stat_table   -- join on log_stat results
+      ORDER BY nspname, relname, conname
         LOOP
--- estimate the recreation duration of a fkey 
-      IF r_fkey.reltuples = 0 THEN
+      IF NOT r_fkey.condeferrable OR r_fkey.confupdtype <> 'a' OR r_fkey.confdeltype <> 'a' THEN
+-- the fkey is non deferrable fkeys or has an action for UPDATE or DELETE other than 'no action'. 
+-- So estimate its re-creation duration.
+        IF r_fkey.reltuples = 0 THEN
 -- empty table (or table not analyzed) => duration = 0
-        v_estim = 0;
-	  ELSE
+          v_estim = 0;
+	    ELSE
 -- non empty table and statistics (with at least one row) are available
-        SELECT sum(rlbk_duration) * r_fkey.reltuples / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat
-          WHERE rlbk_operation = 'add_fk' AND rlbk_nb_rows > 0
-            AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname;
-        IF v_estim IS NULL THEN
--- non empty table, but no statistics with at least one row are available => take the last duration for this fkey, if any
-          SELECT rlbk_duration INTO v_estim FROM emaj.emaj_rlbk_stat
-            WHERE rlbk_operation = 'add_fk' AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname AND rlbk_datetime =
-             (SELECT max(rlbk_datetime) FROM emaj.emaj_rlbk_stat
-                WHERE rlbk_operation = 'add_fk' AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname);
+          SELECT sum(rlbk_duration) * r_fkey.reltuples / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat
+            WHERE rlbk_operation = 'add_fk' AND rlbk_nb_rows > 0
+              AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname;
           IF v_estim IS NULL THEN
--- definitely no statistics available
-            v_estim = 0;
+-- non empty table, but no statistics with at least one row are available => take the last duration for this fkey, if any
+            SELECT rlbk_duration INTO v_estim FROM emaj.emaj_rlbk_stat
+              WHERE rlbk_operation = 'add_fk' AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname AND rlbk_datetime =
+               (SELECT max(rlbk_datetime) FROM emaj.emaj_rlbk_stat
+                  WHERE rlbk_operation = 'add_fk' AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname);
+            IF v_estim IS NULL THEN
+-- definitely no statistics available, compute with the avg_fkey_check_duration parameter
+              v_estim = r_fkey.reltuples * v_avg_fkey_check;
+            END IF;
+          END IF;
+        END IF;
+      ELSE
+-- the fkey is really deferrable. So estimate the keys checks duration.
+-- compute the total number of fk that would be checked
+-- (this is in fact overestimated because inserts in the referecing table and deletes in the referenced table should not be taken into account. But the required log table scan would be too costly).
+        SELECT (
+--   get the number of rollbacked rows in the referencing table
+        SELECT s.stat_rows
+          FROM pg_constraint c, pg_namespace n, pg_class r, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
+          WHERE c.conname = r_fkey.conname                                 -- constraint id (name + schema)
+            AND c.connamespace = n.oid AND n.nspname = r_fkey.nspname
+            AND c.conrelid  = r.oid AND r.relnamespace  = n.oid            -- joins for referencing table and namespace
+            AND n.nspname = s.stat_schema AND r.relname = s.stat_table     -- join on groups table
+               ) + (
+--   get the number of rollbacked rows in the referenced table
+        SELECT s.stat_rows
+          FROM pg_constraint c, pg_namespace n, pg_namespace rn, pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
+          WHERE c.conname = r_fkey.conname                                 -- constraint id (name + schema)
+            AND c.connamespace = n.oid AND n.nspname = r_fkey.nspname
+            AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
+            AND rn.nspname = s.stat_schema AND rt.relname = s.stat_table   -- join on groups table
+               ) INTO v_checks;
+        IF v_checks = 0 THEN
+-- No check to perform
+          RAISE EXCEPTION 'estimate_rollback_duration: no check to perform. One should not find this case !!!';
+        ELSE
+-- if fkey checks statistics are available for this fkey, compute an average cost
+          SELECT sum(rlbk_duration) * v_checks / sum(rlbk_nb_rows) INTO v_estim FROM emaj.emaj_rlbk_stat
+            WHERE rlbk_operation = 'set_fk_immediate' AND rlbk_nb_rows > 0
+              AND rlbk_schema = r_fkey.nspname AND rlbk_tbl_fk = r_fkey.conname;
+          IF v_estim IS NULL THEN
+-- if no statistics are available for this fkey, use the avg_fkey_check parameter
+            v_estim = v_checks * v_avg_fkey_check;
           END IF;
         END IF;
       END IF;
@@ -3385,6 +3515,10 @@ $emaj_snap_group$
 -- check the supplied directory is not null
     IF v_dir IS NULL THEN
       RAISE EXCEPTION 'emaj_snap_group: directory parameter cannot be NULL';
+    END IF;
+-- check the copy options parameter doesn't contain unquoted ; that could be used for sql injection
+    IF regexp_replace(v_copyOptions,'''.*''','') LIKE '%;%' THEN
+      RAISE EXCEPTION 'emaj_snap_group: invalid COPY options parameter format';
     END IF;
 -- for each table/sequence of the emaj_relation table
     FOR r_tblsq IN
@@ -3513,6 +3647,10 @@ $emaj_snap_log_group$
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_snap_log_group: group % has not been created.', v_groupName;
+    END IF;
+-- check the copy options parameter doesn't contain unquoted ; that could be used for sql injection
+    IF regexp_replace(v_copyOptions,'''.*''','') LIKE '%;%'  THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: invalid COPY options parameter format';
     END IF;
 -- catch the global sequence value and the timestamp of the first mark
     IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
@@ -3995,7 +4133,6 @@ GRANT SELECT ON emaj.emaj_seq_hole   TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_fk         TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_rlbk_stat  TO emaj_viewer;
 -- -> emaj_adm can execute all emaj functions
-GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
 GRANT ALL ON SCHEMA emaj TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_global_seq TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_param      TO emaj_adm;
@@ -4025,7 +4162,7 @@ REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
@@ -4066,9 +4203,9 @@ REVOKE ALL ON FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TEXT,
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT) FROM PUBLIC; 
+REVOKE ALL ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step7(v_groupNames TEXT[], v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) FROM PUBLIC; 
 REVOKE ALL ON FUNCTION emaj._rst_group(v_groupName TEXT) FROM PUBLIC; 
@@ -4091,7 +4228,7 @@ GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames T
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_disableTrigger BOOLEAN, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
@@ -4132,9 +4269,9 @@ GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TE
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT) TO emaj_adm; 
+GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step7(v_groupNames TEXT[], v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) TO emaj_adm; 
 GRANT EXECUTE ON FUNCTION emaj._rst_group(v_groupName TEXT) TO emaj_adm;
@@ -4161,7 +4298,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT,
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_viewer;
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_viewer;
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 0.11.0', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 0.11.1', 'Initialisation completed');
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 CREATE or REPLACE FUNCTION emaj._tmp_check_setting() 
 RETURNS VOID LANGUAGE plpgsql AS
@@ -4194,7 +4331,7 @@ SET client_min_messages TO default;
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- 0.11.0
+ 0.11.1
 (1 row)
 
 -- check history
@@ -4202,6 +4339,6 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id | hist_function | hist_event | hist_object  |      regexp_replace      | hist_user 
 ---------+---------------+------------+--------------+--------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 0.11.0 | Initialisation completed | postgres
+       1 | EMAJ_INSTALL  |            | E-Maj 0.11.1 | Initialisation completed | postgres
 (1 row)
 
