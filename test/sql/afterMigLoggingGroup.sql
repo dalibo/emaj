@@ -3,7 +3,12 @@
 -- This script is the part of operations performed after the migration
 --
 -----------------------------
--- Step 1 : for myGroup1, update tables, then rollback then update tables again then set 3 marks
+-- Step 1 : check the E-Maj installation
+-----------------------------
+select * from emaj.emaj_verify_all();
+
+-----------------------------
+-- Step 2 : for myGroup1, update tables, then rollback then update tables again then set 3 marks
 -----------------------------
 set search_path=myschema1;
 --
@@ -27,14 +32,14 @@ update myTbl1 set col11 = 99 where col11 = 1;
 --
 select emaj.emaj_set_mark_group('myGroup1','M6');
 -----------------------------
--- Step 2 : for myGroup2, logged rollback again then unlogged rollback 
+-- Step 3 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------
 select emaj.emaj_logged_rollback_group('myGroup2','M2');
 --
 select emaj.emaj_rollback_group('myGroup2','M3');
 
 -----------------------------
--- Step 3 : for myGroup1, update tables, rollback, other updates, then logged rollback
+-- Step 4 : for myGroup1, update tables, rollback, other updates, then logged rollback
 -----------------------------
 set search_path=myschema1;
 --
@@ -57,7 +62,7 @@ select emaj.emaj_logged_rollback_group('myGroup1','M4');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 
 -----------------------------
--- Step 4 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
+-- Step 5 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
 set search_path=myschema1;
 --
