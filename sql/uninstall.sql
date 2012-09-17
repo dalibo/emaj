@@ -12,6 +12,7 @@
 -- In particular, the 'tspemaj' tablespace is not automaticaly dropped.
 
 \set ON_ERROR_STOP ON
+\set ECHO none
 --\set QUIET ON
 SET client_min_messages TO WARNING;
 \echo 'E-maj objects deletion...'
@@ -70,6 +71,12 @@ $emaj_uninstall$
       END IF;
     END IF;
 -- OK, all conditions are met
+-- if the emaj_demo_cleanup function exists (created by the demo script), execute it
+    PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+      WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_demo_cleanup';
+    IF FOUND THEN
+      PERFORM emaj.emaj_demo_cleanup();
+    END IF;
 -- dropping the schemas will drop all tables groups. So no need for calls to emaj_drop_group() function.
 -- process all E-Maj secondary schemas
     SELECT param_value_text INTO v_versionEmaj FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -100,7 +107,7 @@ $emaj_uninstall$
 -- Check if the schema 'myschema' used by test scripts exists.
     PERFORM 1 FROM pg_namespace WHERE nspname = 'myschema';
     IF FOUND THEN
-      RAISE WARNING 'emaj_uninstall: A schema myschema exists on the database. It may have been created by an emaj test script. You can drop it if you wish using a "DROP SCHEMA myschema cascade;" command.';
+      RAISE WARNING 'emaj_uninstall: A schema myschema exists on the database. It may have been created by an emaj test script. You can drop it if you wish using a "DROP SCHEMA myschema CASCADE;" command.';
     END IF;
 --
 -- Check if the role 'myuser' used by test scripts exists.
