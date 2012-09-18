@@ -852,9 +852,9 @@ select count(*) from emaj.myschema1_mytbl4_log;
 -- Populate application tables
 set search_path=myschema1;
 -- inserts/updates/deletes in myTbl1, myTbl2 and myTbl2b (via trigger)
-insert into myTbl1 select i, 'ABC', E'\014'::bytea from generate_series (1,11) as i;
+insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 begin transaction;
-  update myTbl1 set col13=E'\034'::bytea where col11 <= 3;
+  update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;
   insert into myTbl2 values (1,'ABC',current_date);
 commit;
 delete from myTbl1 where col11 > 10;
