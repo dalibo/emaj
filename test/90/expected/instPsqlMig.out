@@ -2722,11 +2722,10 @@ $emaj_log_stat_group$
     END IF;
 -- if first mark is NULL or empty, retrieve the name, timestamp and last sequ_hole id of the first recorded mark for the group
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
+--   if no mark exists for the group (just after emaj_create_group() or emaj_reset_group() functions call),
+--     v_realFirstMark remains NULL
       SELECT mark_id, mark_name, mark_datetime, mark_last_seq_hole_id INTO v_firstMarkId, v_realFirstMark, v_tsFirstMark, v_firstLastSeqHoleId
         FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_id LIMIT 1;
-      IF NOT FOUND THEN
-         RAISE EXCEPTION 'emaj_log_stat_group: No initial mark can be found for group %.', v_groupName;
-      END IF;
     ELSE
 -- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied first mark for the group
       SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
@@ -2736,19 +2735,15 @@ $emaj_log_stat_group$
       SELECT mark_id, mark_datetime, mark_last_seq_hole_id INTO v_firstMarkId, v_tsFirstMark, v_firstLastSeqHoleId
         FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realFirstMark;
     END IF;
--- if last mark is NULL or empty, there is no timestamp to register
-    IF v_lastMark IS NULL OR v_lastMark = '' THEN
-      v_lastMarkId = NULL;
-      v_tsLastMark = NULL;
-      v_lastLastSeqHoleId = NULL;
-    ELSE
--- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the group
+-- if a last mark name is supplied, check and retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the group
+    IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
       SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
       IF v_realLastMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: End mark % is unknown for group %.', v_lastMark, v_groupName;
       END IF;
       SELECT mark_id, mark_datetime, mark_last_seq_hole_id INTO v_lastMarkId, v_tsLastMark, v_lastLastSeqHoleId
         FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
+-- if last mark is null or empty, v_realLastMark, v_lastMarkId, v_tsLastMark and v_lastLastSeqHoleId remain NULL
     END IF;
 -- check that the first_mark < end_mark
     IF v_lastMarkId IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
@@ -2756,7 +2751,9 @@ $emaj_log_stat_group$
     END IF;
 -- for each table of the emaj_relation table, get the number of log rows and return the statistic
     FOR r_tblsq IN
-        SELECT rel_priority, rel_schema, rel_tblseq, emaj._log_stat_tbl(rel_schema, rel_tblseq, rel_log_schema, v_tsFirstMark, v_tsLastMark, v_firstLastSeqHoleId, v_lastLastSeqHoleId) AS nb_rows FROM emaj.emaj_relation
+        SELECT rel_priority, rel_schema, rel_tblseq, 
+               CASE WHEN v_tsFirstMark IS NULL THEN 0 ELSE emaj._log_stat_tbl(rel_schema, rel_tblseq, rel_log_schema, v_tsFirstMark, v_tsLastMark, v_firstLastSeqHoleId, v_lastLastSeqHoleId) END AS nb_rows 
+          FROM emaj.emaj_relation
           WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       SELECT v_groupName, r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.nb_rows INTO r_stat;

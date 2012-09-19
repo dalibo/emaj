@@ -121,6 +121,13 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark23')
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
   order by stat_group, stat_schema, stat_table;
 
+-- groups without any mark
+begin;
+  select emaj.emaj_reset_group('myGroup1');
+  select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
+  select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
+rollback;
+
 -----------------------------
 -- emaj_estimate_rollback_duration() test
 -----------------------------
