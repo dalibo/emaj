@@ -33,6 +33,9 @@ Enhancements:
     has been dropped while the tables group was in LOGGING state.
   - a new variation of the emaj_get_previous_mark_group() function returns 
     the name of the mark that immediately precedes a given mark for a group.
+  - emaj_log_stat_group() now returns a result (with all rows numbers set to 
+    0) instead of an error when the supplied start mark is NULL and no mark 
+    are yet recorded for the examined group.
   - minor improvements in the code and in comments.
 
 Bug fixes:
