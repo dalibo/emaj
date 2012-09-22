@@ -557,12 +557,12 @@ $_create_tbl$
            || '      EXIT WHEN NOT FOUND;'
            || '      IF rec_log.emaj_verb = ''INS'' THEN'
 --         || '          RAISE NOTICE ''emaj_gid = % ; INS'', rec_log.emaj_gid;'
-           || '          DELETE FROM ' || v_fullTableName || ' WHERE ' || v_pkCondList || ';'
+           || '          DELETE FROM ONLY ' || v_fullTableName || ' WHERE ' || v_pkCondList || ';'
            || '      ELSIF rec_log.emaj_verb = ''UPD'' THEN'
 --         || '          RAISE NOTICE ''emaj_gid = % ; UPD ; %'', rec_log.emaj_gid,rec_log.emaj_tuple;'
            || '          FETCH log_curs into rec_old_log;'
 --         || '          RAISE NOTICE ''emaj_gid = % ; UPD ; %'', rec_old_log.emaj_gid,rec_old_log.emaj_tuple;'
-           || '          UPDATE ' || v_fullTableName || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';'
+           || '          UPDATE ONLY ' || v_fullTableName || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';'
            || '      ELSIF rec_log.emaj_verb = ''DEL'' THEN'
 --         || '          RAISE NOTICE ''emaj_gid = % ; DEL'', rec_log.emaj_gid;'
            || '          INSERT INTO ' || v_fullTableName || ' (' || v_colList || ') VALUES (' || v_valList || ');'
@@ -3984,6 +3984,135 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(v_schemaName TEXT, v_tableName TEXT
 GRANT EXECUTE ON FUNCTION emaj._verify_tblseq(v_schemaName TEXT, v_tblseq TEXT, v_relKind TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_schema(v_schemaName TEXT) TO emaj_viewer;
+
+------------------------------------
+--                                --
+-- Rebuild rollback functions     --
+--                                --
+------------------------------------
+
+CREATE or REPLACE FUNCTION emaj.tmp() 
+RETURNS VOID LANGUAGE plpgsql AS
+$tmp$
+  DECLARE
+-- variables for the name of tables, functions, triggers,...
+    v_fullTableName         TEXT;
+    v_logTableName          TEXT;
+    v_rlbkFnctName          TEXT;
+    v_exceptionRlbkFnctName TEXT;
+-- variables to hold pieces of SQL
+    v_pkCondList            TEXT;
+    v_colList               TEXT;
+    v_valList               TEXT;
+    v_setList               TEXT;
+-- other variables
+    v_attname               TEXT;
+    r_table                 RECORD;
+-- cursor to retrieve all columns of the application table
+    col1_curs CURSOR (tbl regclass) FOR
+      SELECT attname FROM pg_catalog.pg_attribute
+        WHERE attrelid = tbl
+          AND attnum > 0
+          AND attisdropped = false
+      ORDER BY attnum;
+-- cursor to retrieve all columns of table's primary key
+-- (taking column names in pg_attribute from the table's definition instead of index definition is mandatory
+--  starting from pg9.0, joining tables with indkey instead of indexrelid)
+    col2_curs CURSOR (tbl regclass) FOR
+      SELECT attname FROM pg_catalog.pg_attribute, pg_catalog.pg_index
+        WHERE pg_attribute.attrelid = pg_index.indrelid
+          AND attnum = ANY (indkey)
+          AND indrelid = tbl AND indisprimary
+          AND attnum > 0 AND attisdropped = false;
+  BEGIN
+-- For each application table known in emaj_relation and linked to a rollbackable group
+    FOR r_table IN
+      SELECT rel_schema, rel_tblseq, rel_log_schema
+        FROM emaj.emaj_relation, emaj.emaj_group
+        WHERE rel_group = group_name AND rel_kind = 'r' AND group_is_rollbackable
+    LOOP
+-- build the different name for table, trigger, functions,...
+      v_fullTableName    := quote_ident(r_table.rel_schema) || '.' || quote_ident(r_table.rel_tblSeq);
+      v_logTableName     := quote_ident(r_table.rel_log_schema) || '.' || quote_ident(r_table.rel_schema || '_' || r_table.rel_tblSeq || '_log');
+      v_rlbkFnctName     := quote_ident(r_table.rel_log_schema) || '.' || quote_ident(r_table.rel_schema || '_' || r_table.rel_tblSeq || '_rlbk_fnct');
+      v_exceptionRlbkFnctName=substring(quote_literal(v_rlbkFnctName) FROM '^(.*).$');   -- suppress last character
+-- build the different pieces of SQL
+      v_colList := '';
+      v_valList := '';
+      v_setList := '';
+      OPEN col1_curs (v_fullTableName);
+      LOOP
+        FETCH col1_curs INTO v_attname;
+        EXIT WHEN NOT FOUND;
+        IF v_colList = '' THEN
+           v_colList := quote_ident(v_attname);
+           v_valList := 'rec_log.' || quote_ident(v_attname);
+           v_setList := quote_ident(v_attname) || ' = rec_old_log.' || quote_ident(v_attname);
+        ELSE
+           v_colList := v_colList || ', ' || quote_ident(v_attname);
+           v_valList := v_valList || ', rec_log.' || quote_ident(v_attname);
+           v_setList := v_setList || ', ' || quote_ident(v_attname) || ' = rec_old_log.' || quote_ident(v_attname);
+        END IF;
+      END LOOP;
+      CLOSE col1_curs;
+--   build "equality on the primary key" conditions, from the list of the primary key's columns
+      v_pkCondList := '';
+      OPEN col2_curs (v_fullTableName);
+      LOOP
+        FETCH col2_curs INTO v_attname;
+        EXIT WHEN NOT FOUND;
+        IF v_pkCondList = '' THEN
+           v_pkCondList := quote_ident(v_attname) || ' = rec_log.' || quote_ident(v_attname);
+        ELSE
+           v_pkCondList := v_pkCondList || ' AND ' || quote_ident(v_attname) || ' = rec_log.' || quote_ident(v_attname);
+        END IF;
+      END LOOP;
+      CLOSE col2_curs;
+-- Then recreate the rollback function associated to the table
+      EXECUTE 'CREATE or REPLACE FUNCTION ' || v_rlbkFnctName || ' (v_lastGlobalSeq BIGINT)'
+           || ' RETURNS BIGINT AS $rlbkfnct$'
+           || '  DECLARE'
+           || '    v_nb_rows       BIGINT := 0;'
+           || '    v_nb_proc_rows  INTEGER;'
+           || '    rec_log     ' || v_logTableName || '%ROWTYPE;'
+           || '    rec_old_log ' || v_logTableName || '%ROWTYPE;'
+           || '    log_curs CURSOR FOR '
+           || '      SELECT * FROM ' || v_logTableName
+           || '        WHERE emaj_gid > v_lastGlobalSeq '
+           || '        ORDER BY emaj_gid DESC, emaj_tuple;'
+           || '  BEGIN'
+           || '    OPEN log_curs;'
+           || '    LOOP '
+           || '      FETCH log_curs INTO rec_log;'
+           || '      EXIT WHEN NOT FOUND;'
+           || '      IF rec_log.emaj_verb = ''INS'' THEN'
+           || '          DELETE FROM ONLY ' || v_fullTableName || ' WHERE ' || v_pkCondList || ';'
+           || '      ELSIF rec_log.emaj_verb = ''UPD'' THEN'
+           || '          FETCH log_curs into rec_old_log;'
+           || '          UPDATE ONLY ' || v_fullTableName || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';'
+           || '      ELSIF rec_log.emaj_verb = ''DEL'' THEN'
+           || '          INSERT INTO ' || v_fullTableName || ' (' || v_colList || ') VALUES (' || v_valList || ');'
+           || '      ELSE'
+           || '          RAISE EXCEPTION ' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = % is unknown, emaj_gid = %.'','
+           || '            rec_log.emaj_verb, rec_log.emaj_gid;'
+           || '      END IF;'
+           || '      GET DIAGNOSTICS v_nb_proc_rows = ROW_COUNT;'
+           || '      IF v_nb_proc_rows <> 1 THEN'
+           || '        RAISE EXCEPTION ' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = %, emaj_gid = %, # processed rows = % .'''
+           || '           ,rec_log.emaj_verb, rec_log.emaj_gid, v_nb_proc_rows;'
+           || '      END IF;'
+           || '      v_nb_rows := v_nb_rows + 1;'
+           || '    END LOOP;'
+           || '    CLOSE log_curs;'
+           || '    RETURN v_nb_rows;'
+           || '  END;'
+           || '$rlbkfnct$ LANGUAGE plpgsql;';
+      END LOOP;
+    RETURN;
+  END;
+$tmp$;
+SELECT emaj.tmp();
+DROP FUNCTION emaj.tmp();
 
 ------------------------------------
 --                                --
