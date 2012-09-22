@@ -36,6 +36,9 @@ Enhancements:
   - emaj_log_stat_group() now returns a result (with all rows numbers set to 
     0) instead of an error when the supplied start mark is NULL and no mark 
     are yet recorded for the examined group.
+  - in rollback functions, add ONLY clause to UPDATE and DELETE statement so 
+    that the rollback operations of mother tables are safer and more 
+    efficient when table inheritance is used.
   - minor improvements in the code and in comments.
 
 Bug fixes:
