@@ -2585,6 +2585,31 @@ $_set_mark_groups$
     END IF;
 -- look at the clock to get the 'official' timestamp representing the mark
     v_timestamp = clock_timestamp();
+-- process sequences as early as possible (no lock protect them from other transactions activity)
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S' 
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+-- for each sequence of the groups, record the sequence parameters into the emaj_sequence table
+      v_fullSeqName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+      v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
+               'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' ||
+               'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+               ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
+               quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) ||
+               ', ' || quote_literal(v_mark) || ', last_value, ';
+      IF v_pgVersion <= '8.3' THEN
+         v_stmt = v_stmt || '0, ';
+      ELSE
+         v_stmt = v_stmt || 'start_value, ';
+      END IF;
+      v_stmt = v_stmt ||
+               'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+               'FROM ' || v_fullSeqName;
+      EXECUTE v_stmt;
+      v_nbTb = v_nbTb + 1;
+    END LOOP;
 -- record the number of log rows for the old last mark of each group
 --   the statement returns no row in case of emaj_start_group(s)
     UPDATE emaj.emaj_mark m SET mark_log_rows_before_next =
@@ -2593,46 +2618,28 @@ $_set_mark_groups$
         AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
             (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
              WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
--- for each member of the groups, ...
+-- for each table of the groups, ...
     FOR r_tblsq IN
-        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_kind FROM emaj.emaj_relation
-          WHERE rel_group = ANY (v_groupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+		  ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
-      IF r_tblsq.rel_kind = 'r' THEN
--- ... if it is a table, record the associated sequence parameters in the emaj sequence table
-        v_seqName := emaj._build_log_seq_name(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
-        v_fullSeqName := quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(v_seqName);
-        v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
-                 'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' ||
-                 'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                 ') SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(v_seqName) || ', ' ||
-                 quote_literal(v_timestamp) || ', ' || quote_literal(v_mark) || ', ' || 'last_value, ';
-        IF v_pgVersion <= '8.3' THEN
-           v_stmt = v_stmt || '0, ';
-        ELSE
-           v_stmt = v_stmt || 'start_value, ';
-        END IF;
-        v_stmt = v_stmt ||
-                 'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-                 'FROM ' || v_fullSeqName;
-      ELSEIF r_tblsq.rel_kind = 'S' THEN
--- ... if it is a sequence, record the sequence parameters in the emaj sequence table
-        v_fullSeqName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-        v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
-                 'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' ||
-                 'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                 ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
-                 quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) ||
-                 ', ' || quote_literal(v_mark) || ', last_value, ';
-        IF v_pgVersion <= '8.3' THEN
-           v_stmt = v_stmt || '0, ';
-        ELSE
-           v_stmt = v_stmt || 'start_value, ';
-        END IF;
-        v_stmt = v_stmt ||
-                 'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-                 'FROM ' || v_fullSeqName;
+-- ... record the associated sequence parameters in the emaj sequence table
+      v_seqName := emaj._build_log_seq_name(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+      v_fullSeqName := quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(v_seqName);
+      v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
+               'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' ||
+               'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+               ') SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(v_seqName) || ', ' ||
+               quote_literal(v_timestamp) || ', ' || quote_literal(v_mark) || ', ' || 'last_value, ';
+      IF v_pgVersion <= '8.3' THEN
+         v_stmt = v_stmt || '0, ';
+      ELSE
+         v_stmt = v_stmt || 'start_value, ';
       END IF;
+      v_stmt = v_stmt ||
+               'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+               'FROM ' || v_fullSeqName;
       EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;

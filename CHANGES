@@ -39,6 +39,10 @@ Enhancements:
   - in rollback functions, add ONLY clause to UPDATE and DELETE statement so 
     that the rollback operations of mother tables are safer and more 
     efficient when table inheritance is used.
+  - when setting a mark on one or several tables groups, record the state of 
+    all sequences as early as possible (before processing tables) ; as no 
+    lock can be set on a sequence, this decreases the risk of another 
+    concurrently running transaction modifying one of these sequences.
   - minor improvements in the code and in comments.
 
 Bug fixes:
