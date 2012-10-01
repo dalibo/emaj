@@ -140,7 +140,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   216 |                          
+     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   217 |                          
      300 | myGroup1         | Mark1          |               2 | ACTIVE     |              |                   299 |                   305 |                         0
      301 | myGroup2         | Mark2          |               2 | ACTIVE     |              |                   299 |                   313 |                         0
      302 | myGroup1         | SM1            |               2 | ACTIVE     |              |                   299 |                   319 |                         0
@@ -162,9 +162,10 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
  sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
 ---------+----------------+------------------------------------+----------------+---------------+----------------
-     214 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
-     215 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
-     216 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
+     214 | phil's schema3 | myTbl2\_col21_seq                  | Mark3          |             1 | f
+     215 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
+     216 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
+     217 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
      300 | myschema1      | myTbl3_col31_seq                   | Mark1          |             1 | f
      301 | emajC          | myschema1_myTbl3_log_seq           | Mark1          |             1 | f
      302 | emaj           | myschema1_mytbl1_log_seq           | Mark1          |             1 | f
@@ -277,7 +278,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      409 | emaj           | myschema2_mytbl4_log_seq           | Bar%Foo        |             1 | f
      410 | emaj           | myschema2_mytbl5_log_seq           | Bar%Foo        |             1 | f
      411 | emaj           | myschema2_mytbl6_log_seq           | Bar%Foo        |             1 | f
-(115 rows)
+(116 rows)
 
 -----------------------------
 -- emaj_comment_mark_group() tests
@@ -414,7 +415,7 @@ select emaj.emaj_rename_mark_group('myGroup2','phil''s mark #1','john''s mark #1
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+-------------------------------+-----------------------+-----------------------+---------------------------
-     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                   199 |                   216 |                          
+     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                   199 |                   217 |                          
      300 | myGroup1         | First Mark     |               2 | ACTIVE     |                               |                   299 |                   305 |                         0
      301 | myGroup2         | Mark2          |               2 | ACTIVE     |                               |                   299 |                   313 |                         0
      302 | myGroup1         | SM1            |               2 | ACTIVE     | a better comment for group #1 |                   299 |                   319 |                         0
@@ -436,9 +437,10 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
  sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
 ---------+----------------+------------------------------------+----------------+---------------+----------------
-     214 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
-     215 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
-     216 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
+     214 | phil's schema3 | myTbl2\_col21_seq                  | Mark3          |             1 | f
+     215 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
+     216 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
+     217 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
      300 | myschema1      | myTbl3_col31_seq                   | First Mark     |             1 | f
      301 | emajC          | myschema1_myTbl3_log_seq           | First Mark     |             1 | f
      302 | emaj           | myschema1_mytbl1_log_seq           | First Mark     |             1 | f
@@ -551,7 +553,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      409 | emaj           | myschema2_mytbl4_log_seq           | SM2            |             1 | f
      410 | emaj           | myschema2_mytbl5_log_seq           | SM2            |             1 | f
      411 | emaj           | myschema2_mytbl6_log_seq           | SM2            |             1 | f
-(115 rows)
+(116 rows)
 
 -----------------------------
 -- emaj_delete_mark_group() tests
@@ -579,8 +581,10 @@ select emaj.emaj_delete_mark_group('myGroup1','First Mark');
                       1
 (1 row)
 
-select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark
-  where mark_group = 'myGroup1' and (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d' or mark_name = 'SM3');
+select emaj.emaj_delete_mark_group('myGroup1',mark_name) from 
+ (select mark_name from emaj.emaj_mark
+    where mark_group = 'myGroup1' and (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d' or mark_name = 'SM3')
+    order by mark_id) as t;
  emaj_delete_mark_group 
 ------------------------
                       1
@@ -661,7 +665,7 @@ ERROR:  emaj_set_mark_groups: A mark cannot be set for group myGroup1 because it
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+-------------------------------+-----------------------+-----------------------+---------------------------
-     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                   199 |                   216 |                          
+     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                   199 |                   217 |                          
      302 | myGroup1         | SM1            |               2 | DELETED    | a better comment for group #1 |                   299 |                   319 |                         0
      315 | myGroup2         | SM2            |               2 | DELETED    | a comment for group #2        |                   299 |                   411 |                         0
      316 | myGroup1         | STOP_%         |               2 | DELETED    |                               |                   299 |                   417 |                          
@@ -671,9 +675,10 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
  sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
 ---------+----------------+------------------------------------+----------------+---------------+----------------
-     214 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
-     215 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
-     216 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
+     214 | phil's schema3 | myTbl2\_col21_seq                  | Mark3          |             1 | f
+     215 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
+     216 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
+     217 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
      314 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
      315 | emajC          | myschema1_myTbl3_log_seq           | SM1            |             1 | f
      316 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
@@ -708,7 +713,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      423 | emaj           | myschema2_mytbl4_log_seq           | STOP_%         |             1 | f
      424 | emaj           | myschema2_mytbl5_log_seq           | STOP_%         |             1 | f
      425 | emaj           | myschema2_mytbl6_log_seq           | STOP_%         |             1 | f
-(37 rows)
+(38 rows)
 
 -----------------------------
 -- test end: check, reset history and force sequences id

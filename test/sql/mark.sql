@@ -134,8 +134,10 @@ select emaj.emaj_delete_mark_group('myGroup2','DummyMark');
 select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_delete_mark_group('myGroup1','First Mark');
 
-select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark
-  where mark_group = 'myGroup1' and (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d' or mark_name = 'SM3');
+select emaj.emaj_delete_mark_group('myGroup1',mark_name) from 
+ (select mark_name from emaj.emaj_mark
+    where mark_group = 'myGroup1' and (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d' or mark_name = 'SM3')
+    order by mark_id) as t;
 select emaj.emaj_delete_mark_group('myGroup2','john''s mark #1');
 
 -- at least 1 mark should remain

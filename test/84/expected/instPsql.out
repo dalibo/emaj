@@ -960,6 +960,42 @@ $_drop_tbl$
     RETURN;
   END;
 $_drop_tbl$;
+CREATE or REPLACE FUNCTION emaj._create_seq(v_schemaName TEXT, v_seqName TEXT, v_groupName TEXT)
+RETURNS void LANGUAGE plpgsql AS
+$_create_seq$
+-- The function checks whether the sequence is related to a serial column of an application table.
+-- If yes, it verifies that this table also belong to the same group
+-- Required inputs: schema name and sequence name
+  DECLARE
+    v_tableSchema    TEXT;
+    v_tableName      TEXT;
+    v_tableGroup     TEXT;
+  BEGIN
+-- get the schema and the name of the table that contains a serial column this sequence is linked to, if one exists
+    SELECT nt.nspname, ct.relname INTO v_tableSchema, v_tableName
+      FROM pg_catalog.pg_class cs, pg_catalog.pg_namespace ns, pg_depend, 
+           pg_catalog.pg_class ct, pg_catalog.pg_namespace nt
+      WHERE cs.relname = v_seqName AND ns.nspname = v_schemaName -- the selected sequence
+        AND cs.relnamespace = ns.oid                             -- join condition for sequence schema name
+        AND ct.relnamespace = nt.oid                             -- join condition for linked table schema name
+        AND pg_depend.objid = cs.oid                             -- join condition for the pg_depend table
+        AND pg_depend.refobjid = ct.oid                          -- join conditions for depended table schema name
+        AND pg_depend.classid = pg_depend.refclassid             -- the classid et refclassid must be 'pg_class'
+        AND pg_depend.classid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_class');
+    IF FOUND THEN
+      SELECT grpdef_group INTO v_tableGroup FROM emaj.emaj_group_def 
+        WHERE grpdef_schema = v_tableSchema AND grpdef_tblseq = v_tableName;
+      IF NOT FOUND THEN
+        RAISE WARNING '_create_seq: Sequence %.% is linked to table %.% but this table does not belong to any tables group.', v_schemaName, v_seqName, v_tableSchema, v_tableName;
+      ELSE
+        IF v_tableGroup <> v_groupName THEN
+          RAISE WARNING '_create_seq: Sequence %.% is linked to table %.% but this table belong to another tables group (%).', v_schemaName, v_seqName, v_tableSchema, v_tableName, v_tableGroup;
+        END IF;
+      END IF;
+    END IF;
+    RETURN;
+  END;
+$_create_seq$;
 CREATE or REPLACE FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT)
 RETURNS void LANGUAGE plpgsql AS
 $_drop_seq$
@@ -1603,6 +1639,8 @@ $emaj_create_group$
         IF r_tblsq.grpdef_log_dat_tsp IS NOT NULL OR r_tblsq.grpdef_log_idx_tsp IS NOT NULL THEN
           RAISE EXCEPTION 'emaj_create_group: Defining log tablespaces is not allowed for a sequence (%.%).', r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq;
         END IF;
+--   perform specific processing for sequences  
+        PERFORM emaj._create_seq(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName);
 --   and record it in the emaj_relation table
         INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
             VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_relkind);
@@ -1972,6 +2010,8 @@ $emaj_alter_group$
         IF r_tblsq.grpdef_log_dat_tsp IS NOT NULL OR r_tblsq.grpdef_log_idx_tsp IS NOT NULL THEN
           RAISE EXCEPTION 'emaj_alter_group: Defining log tablespaces is not allowed for a sequence (%.%).', r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq;
         END IF;
+--   perform specific processing for sequences  
+        PERFORM emaj._create_seq(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName);
 --   and record it in the emaj_relation table
         INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
             VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_relkind);
@@ -4879,6 +4919,7 @@ REVOKE ALL ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) FROM PUBLIC
 REVOKE ALL ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._create_seq(v_schemaName TEXT, v_seqName TEXT, v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) FROM PUBLIC;
@@ -4954,6 +4995,7 @@ GRANT EXECUTE ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) TO emaj_
 GRANT EXECUTE ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._create_seq(v_schemaName TEXT, v_seqName TEXT, v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) TO emaj_adm;
@@ -5416,7 +5458,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    74
+    75
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
