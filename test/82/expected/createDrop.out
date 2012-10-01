@@ -23,6 +23,7 @@ insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
 -- The third group name contains space, comma # and '
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','phil''s tbl1',NULL,' #''3');
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\');
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\_col21_seq');
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'phil''s seq\\1');
 -- Note myTbl4 from "phil's schema3" remains outside phil's group#3", group
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
@@ -117,10 +118,38 @@ select emaj.emaj_create_group('myGroup2',true);
                  8
 (1 row)
 
-select emaj.emaj_create_group('phil''s group#3",',false);
+-- should be OK, but with a warning for linked table not protected by E-Maj
+begin;
+  delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+  select emaj.emaj_create_group('phil''s group#3",',false);
+WARNING:  _create_seq: Sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table does not belong to any tables group.
+CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 ,  $3 )"
+PL/pgSQL function "emaj_create_group" line 102 at perform
  emaj_create_group 
 -------------------
                  3
+(1 row)
+
+rollback;
+-- should be OK, but with a warning for linked table belonging to another group
+begin;
+  update emaj.emaj_group_def set grpdef_group = 'dummyGrp3' 
+    where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+  select emaj.emaj_create_group('phil''s group#3",',false);
+WARNING:  _create_seq: Sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table belong to another tables group (dummyGrp3).
+CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 ,  $3 )"
+PL/pgSQL function "emaj_create_group" line 102 at perform
+ emaj_create_group 
+-------------------
+                 3
+(1 row)
+
+rollback;
+-- should be OK
+select emaj.emaj_create_group('phil''s group#3",',false);
+ emaj_create_group 
+-------------------
+                 4
 (1 row)
 
 -- create a group with a table already belonging to another group
@@ -147,30 +176,31 @@ select group_name, group_state, group_nb_table, group_nb_sequence, group_is_roll
 ------------------+-------------+----------------+-------------------+-----------------------+---------------
  myGroup1         | IDLE        |              5 |                 1 | t                     | 
  myGroup2         | IDLE        |              6 |                 2 | t                     | 
- phil's group#3", | IDLE        |              2 |                 1 | f                     | 
+ phil's group#3", | IDLE        |              2 |                 2 | f                     | 
 (3 rows)
 
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq;
-   rel_schema   |    rel_tblseq    |    rel_group     | rel_priority | rel_log_schema | rel_log_dat_tsp | rel_log_idx_tsp | rel_kind | rel_session | rel_rows 
-----------------+------------------+------------------+--------------+----------------+-----------------+-----------------+----------+-------------+----------
- myschema1      | myTbl3_col31_seq | myGroup1         |            1 |                |                 |                 | S        |             |         
- myschema1      | myTbl3           | myGroup1         |           10 | emajC          | tsplog1         | tspemaj         | r        |             |         
- myschema1      | mytbl1           | myGroup1         |           20 | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema1      | mytbl4           | myGroup1         |           20 | emaj           | tsplog1         | tsp log'2       | r        |             |         
- myschema1      | mytbl2           | myGroup1         |              | emaj           | tsplog1         | tsplog1         | r        |             |         
- myschema1      | mytbl2b          | myGroup1         |              | emajb          | tsp log'2       | tsp log'2       | r        |             |         
- myschema2      | myseq1           | myGroup2         |              |                |                 |                 | S        |             |         
- myschema2      | mytbl1           | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema2      | mytbl2           | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema2      | myTbl3           | myGroup2         |              | emajC          | tspemaj         | tspemaj         | r        |             |         
- myschema2      | myTbl3_col31_seq | myGroup2         |              |                |                 |                 | S        |             |         
- myschema2      | mytbl4           | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema2      | mytbl5           | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema2      | mytbl6           | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- phil's schema3 | myTbl2\          | phil's group#3", |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- phil's schema3 | phil's seq\1     | phil's group#3", |              |                |                 |                 | S        |             |         
- phil's schema3 | phil's tbl1      | phil's group#3", |              | emaj #'3       | tspemaj         | tspemaj         | r        |             |         
-(17 rows)
+   rel_schema   |    rel_tblseq     |    rel_group     | rel_priority | rel_log_schema | rel_log_dat_tsp | rel_log_idx_tsp | rel_kind | rel_session | rel_rows 
+----------------+-------------------+------------------+--------------+----------------+-----------------+-----------------+----------+-------------+----------
+ myschema1      | myTbl3_col31_seq  | myGroup1         |            1 |                |                 |                 | S        |             |         
+ myschema1      | myTbl3            | myGroup1         |           10 | emajC          | tsplog1         | tspemaj         | r        |             |         
+ myschema1      | mytbl1            | myGroup1         |           20 | emaj           | tspemaj         | tspemaj         | r        |             |         
+ myschema1      | mytbl4            | myGroup1         |           20 | emaj           | tsplog1         | tsp log'2       | r        |             |         
+ myschema1      | mytbl2            | myGroup1         |              | emaj           | tsplog1         | tsplog1         | r        |             |         
+ myschema1      | mytbl2b           | myGroup1         |              | emajb          | tsp log'2       | tsp log'2       | r        |             |         
+ myschema2      | myseq1            | myGroup2         |              |                |                 |                 | S        |             |         
+ myschema2      | mytbl1            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
+ myschema2      | mytbl2            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
+ myschema2      | myTbl3            | myGroup2         |              | emajC          | tspemaj         | tspemaj         | r        |             |         
+ myschema2      | myTbl3_col31_seq  | myGroup2         |              |                |                 |                 | S        |             |         
+ myschema2      | mytbl4            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
+ myschema2      | mytbl5            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
+ myschema2      | mytbl6            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
+ phil's schema3 | myTbl2\           | phil's group#3", |              | emaj           | tspemaj         | tspemaj         | r        |             |         
+ phil's schema3 | myTbl2\_col21_seq | phil's group#3", |              |                |                 |                 | S        |             |         
+ phil's schema3 | phil's seq\1      | phil's group#3", |              |                |                 |                 | S        |             |         
+ phil's schema3 | phil's tbl1       | phil's group#3", |              | emaj #'3       | tspemaj         | tspemaj         | r        |             |         
+(18 rows)
 
 select * from pg_tables where schemaname like 'emaj%' order by tablename;
  schemaname |           tablename            | tableowner | tablespace | hasindexes | hasrules | hastriggers 
@@ -437,10 +467,10 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 226 at perform
+PL/pgSQL function "emaj_alter_group" line 228 at perform
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 226 at perform
+PL/pgSQL function "emaj_alter_group" line 228 at perform
  emaj_alter_group 
 ------------------
                 2
@@ -465,10 +495,10 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 226 at perform
+PL/pgSQL function "emaj_alter_group" line 228 at perform
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 226 at perform
+PL/pgSQL function "emaj_alter_group" line 228 at perform
  emaj_alter_group 
 ------------------
                 1
@@ -753,7 +783,7 @@ select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(his
  CREATE_GROUP     | END            | myGroup2         | 8 tables/sequences processed             | postgres
  CREATE_GROUP     | BEGIN          | phil's group#3", | audit_only                               | postgres
  CREATE_GROUP     | SCHEMA CREATED | "emaj #'3"       |                                          | postgres
- CREATE_GROUP     | END            | phil's group#3", | 3 tables/sequences processed             | postgres
+ CREATE_GROUP     | END            | phil's group#3", | 4 tables/sequences processed             | postgres
  COMMENT_GROUP    |                | myGroup1         |                                          | postgres
  COMMENT_GROUP    |                | myGroup1         |                                          | postgres
  COMMENT_GROUP    |                | myGroup1         |                                          | postgres

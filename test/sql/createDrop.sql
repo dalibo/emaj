@@ -23,6 +23,7 @@ insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
 -- The third group name contains space, comma # and '
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','phil''s tbl1',NULL,' #''3');
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\');
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\_col21_seq');
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'phil''s seq\\1');
 -- Note myTbl4 from "phil's schema3" remains outside phil's group#3", group
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
@@ -72,6 +73,21 @@ rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2',true);
+
+-- should be OK, but with a warning for linked table not protected by E-Maj
+begin;
+  delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+  select emaj.emaj_create_group('phil''s group#3",',false);
+rollback;
+
+-- should be OK, but with a warning for linked table belonging to another group
+begin;
+  update emaj.emaj_group_def set grpdef_group = 'dummyGrp3' 
+    where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+  select emaj.emaj_create_group('phil''s group#3",',false);
+rollback;
+
+-- should be OK
 select emaj.emaj_create_group('phil''s group#3",',false);
 
 -- create a group with a table already belonging to another group

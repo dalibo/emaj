@@ -145,7 +145,7 @@ CREATE TABLE myTbl6 (
 
 CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
 
--- Third schema (for a audit_only group)
+-- Third schema (for an audit_only group)
 
 DROP SCHEMA IF EXISTS "phil's schema3" CASCADE;
 CREATE SCHEMA "phil's schema3";
@@ -162,7 +162,7 @@ CREATE TABLE "phil's tbl1" (
 
 DROP TABLE IF EXISTS "myTbl2\" ;
 CREATE TABLE "myTbl2\" (
-  col21       INT              NOT NULL,
+  col21       SERIAL           NOT NULL,
   col22       TEXT             ,
   col23       DATE
 );
@@ -195,6 +195,7 @@ grant select on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema
 grant select on "phil's schema3"."phil's tbl1", "phil's schema3"."myTbl2\" to emaj_regression_tests_viewer_user;
 grant select on sequence mySchema1."myTbl3_col31_seq" to emaj_regression_tests_viewer_user;
 grant select on sequence mySchema2."myTbl3_col31_seq" to emaj_regression_tests_viewer_user;
+grant select on sequence "phil's schema3"."myTbl2\_col21_seq" to emaj_regression_tests_viewer_user;
 --
 grant all on mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b to emaj_regression_tests_adm_user;
 grant all on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6 to emaj_regression_tests_adm_user;
@@ -202,6 +203,7 @@ grant all on "phil's schema3"."phil's tbl1", "phil's schema3"."myTbl2\", "phil's
 grant all on sequence mySchema1."myTbl3_col31_seq" to emaj_regression_tests_adm_user;
 grant all on sequence mySchema2."myTbl3_col31_seq" to emaj_regression_tests_adm_user;
 grant all on sequence mySchema2.mySeq1 to emaj_regression_tests_adm_user;
+grant all on sequence "phil's schema3"."myTbl2\_col21_seq" to emaj_regression_tests_adm_user;
 grant all on sequence "phil's schema3"."phil's seq\1" to emaj_regression_tests_adm_user;
 
 -----------------------------

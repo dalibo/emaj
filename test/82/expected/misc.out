@@ -1320,10 +1320,10 @@ PL/pgSQL function "emaj_force_stop_group" line 14 at SQL statement
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: table myschema2.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 226 at perform
+PL/pgSQL function "emaj_alter_group" line 228 at perform
 WARNING:  _check_fk_groups: table myschema2.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 226 at perform
+PL/pgSQL function "emaj_alter_group" line 228 at perform
  emaj_alter_group 
 ------------------
                 1

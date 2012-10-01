@@ -31,6 +31,9 @@ Enhancements:
   - a new emaj_force_stop_group() function can be used to stop a corrupted 
     tables group, in particular when an application table or a log trigger 
     has been dropped while the tables group was in LOGGING state.
+  - at tables group creation time, issue a warning when a sequence is linked 
+    to a serial column whose table is not protected by E-Maj or do not belong 
+    to the same tables group as the sequence.
   - a new variation of the emaj_get_previous_mark_group() function returns 
     the name of the mark that immediately precedes a given mark for a group.
   - emaj_log_stat_group() now returns a result (with all rows numbers set to 
