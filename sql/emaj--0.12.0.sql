@@ -26,7 +26,7 @@ $tmp$
   BEGIN
 -- create emaj roles (NOLOGIN), if they do not exist
 -- does 'emaj_adm' already exist ?
-    PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_adm';
+    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_adm';
 -- if no, create it
     IF NOT FOUND THEN
       CREATE ROLE emaj_adm;
@@ -34,7 +34,7 @@ $tmp$
         $$This role may be granted to other roles in charge of E-Maj administration.$$;
     END IF;
 -- does 'emaj_viewer' already exist ?
-    PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_viewer';
+    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_viewer';
 -- if no, create it
     IF NOT FOUND THEN
       CREATE ROLE emaj_viewer;
@@ -462,7 +462,7 @@ $_check_new_mark$
 -- for each group of the array,
       FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
 -- ... if a mark with the same name already exists for the group, stop
-        PERFORM 1 FROM emaj.emaj_mark
+        PERFORM 0 FROM emaj.emaj_mark
           WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
         IF FOUND THEN
            RAISE EXCEPTION '_check_new_mark: Group % already contains a mark named %.', v_groupNames[v_i], v_markName;
@@ -1334,7 +1334,7 @@ $_verify_group$
       v_errorFound = TRUE;
     END IF;
 -- per application schema checks
--- check the application schema exist
+-- check the application schema exists
     FOR r_schema IN
         SELECT DISTINCT rel_schema FROM emaj.emaj_relation
           WHERE rel_group = v_groupName ORDER BY rel_schema
@@ -1525,12 +1525,12 @@ $emaj_create_group$
       RAISE EXCEPTION 'emaj_create_group: group name must at least contain 1 character.';
     END IF;
 -- check the group is known in emaj_group_def table
-    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName;
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
     IF NOT FOUND THEN
        RAISE EXCEPTION 'emaj_create_group: Group % is unknown in emaj_group_def table.', v_groupName;
     END IF;
 -- check that the group is not yet recorded in emaj_group table
-    PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF FOUND THEN
       RAISE EXCEPTION 'emaj_create_group: group % is already created.', v_groupName;
     END IF;
@@ -1800,8 +1800,8 @@ $emaj_alter_group$
     IF v_groupState <> 'IDLE' THEN
       RAISE EXCEPTION 'emaj_alter_group: The group % cannot be altered because it is not in idle state.', v_groupName;
     END IF;
--- check the are remaining rows for the group in emaj_group_def table
-    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName;
+-- check there are remaining rows for the group in emaj_group_def table
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
     IF NOT FOUND THEN
        RAISE EXCEPTION 'emaj_alter_group: Group % is unknown in emaj_group_def table.', v_groupName;
     END IF;
@@ -1913,7 +1913,7 @@ $emaj_alter_group$
     IF v_logSchemasArray IS NOT NULL THEN
       FOR v_i IN 1 .. array_upper(v_logSchemasArray,1)
         LOOP
-        PERFORM 0 FROM emaj.emaj_relation WHERE rel_log_schema = v_logSchemasArray [v_i];
+        PERFORM 0 FROM emaj.emaj_relation WHERE rel_log_schema = v_logSchemasArray [v_i] LIMIT 1;
         IF NOT FOUND THEN
 -- drop the log schema
           PERFORM emaj._drop_log_schema(v_logSchemasArray [v_i], false);
@@ -2641,7 +2641,7 @@ $emaj_comment_mark_group$
     v_realMark       TEXT;
   BEGIN
 -- check that the group is recorded in emaj_group table
-    PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_comment_mark_group: group % has not been created.', v_groupName;
     END IF;
@@ -2938,7 +2938,7 @@ $emaj_rename_mark_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('RENAME_MARK_GROUP', 'BEGIN', v_groupName, v_mark);
 -- check that the group is recorded in emaj_group table
-    PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_rename_mark_group: group % has not been created.', v_groupName;
     END IF;
@@ -2952,8 +2952,8 @@ $emaj_rename_mark_group$
        RAISE EXCEPTION 'emaj_rename_mark_group: % is not an allowed name for a new mark.', v_newName;
     END IF;
 -- check if the new mark name doesn't exist for the group
-    PERFORM 1 FROM emaj.emaj_mark
-      WHERE mark_group = v_groupName AND mark_name = v_newName LIMIT 1;
+    PERFORM 0 FROM emaj.emaj_mark
+      WHERE mark_group = v_groupName AND mark_name = v_newName;
     IF FOUND THEN
        RAISE EXCEPTION 'emaj_rename_mark_group: a mark % already exists for group %.', v_newName, v_groupName;
     END IF;
@@ -3183,7 +3183,7 @@ $_rlbk_groups_step1$
         SELECT * FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' ORDER BY rel_rows DESC
         LOOP
 --   is the table already allocated to a session (it may have been already allocated because of a fkey link) ?
-      PERFORM 1 FROM emaj.emaj_relation
+      PERFORM 0 FROM emaj.emaj_relation
         WHERE rel_group = ANY (v_groupNames) AND rel_schema = r_tbl.rel_schema AND rel_tblseq = r_tbl.rel_tblseq
           AND rel_session IS NULL;
 --   no,
@@ -4672,7 +4672,7 @@ $_verify_schema$
     v_msgPrefix = 'Checking schema ' || quote_ident(v_schemaName) || ': ';
     v_errorFound = FALSE;
 -- verify that the schema exists
-    PERFORM 1 FROM pg_namespace WHERE nspname = v_schemaName;
+    PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = v_schemaName;
     IF NOT FOUND THEN
 -- if the schema does not exist, return a message and exit without performing other checks
       RETURN NEXT v_msgPrefix || 'the schema does NOT exists!';

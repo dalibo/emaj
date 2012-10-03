@@ -254,6 +254,44 @@ $_check_class$
   END;
 $_check_class$;
 
+CREATE or REPLACE FUNCTION emaj._check_new_mark(v_mark TEXT, v_groupNames TEXT[])
+RETURNS TEXT LANGUAGE plpgsql AS
+$_check_new_mark$
+-- This function verifies that a new mark name supplied the user is valid.
+-- It processes the possible NULL mark value and the replacement of % wild characters.
+-- It also checks that the mark name do not already exist for any group.
+-- Input: name of the mark to set, array of group names
+--        The array of group names may be NULL to avoid the check against groups
+-- Output: internal name of the mark
+  DECLARE
+    v_i             INT;
+    v_markName      TEXT := v_mark;
+  BEGIN
+-- check the mark name is not 'EMAJ_LAST_MARK'
+    IF v_mark = 'EMAJ_LAST_MARK' THEN
+       RAISE EXCEPTION '_check_new_mark: % is not an allowed name for a new mark.', v_mark;
+    END IF;
+-- process null or empty supplied mark name
+    IF v_markName = '' OR v_markName IS NULL THEN
+      v_markName = 'MARK_%';
+    END IF;
+-- process % wild characters in mark name
+    v_markName = replace(v_markName, '%', to_char(current_timestamp, 'HH24.MI.SS.MS'));
+-- if requested, check the existence of the mark in groups
+    IF v_groupNames IS NOT NULL THEN
+-- for each group of the array,
+      FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+-- ... if a mark with the same name already exists for the group, stop
+        PERFORM 0 FROM emaj.emaj_mark
+          WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
+        IF FOUND THEN
+           RAISE EXCEPTION '_check_new_mark: Group % already contains a mark named %.', v_groupNames[v_i], v_markName;
+        END IF;
+      END LOOP;
+    END IF;
+    RETURN v_markName;
+  END;
+$_check_new_mark$;
 CREATE or REPLACE FUNCTION emaj._log_truncate_fnct() RETURNS TRIGGER AS
 $_log_truncate_fnct$
 -- The function is triggered by the execution of TRUNCATE SQL verb on tables of an audit_only group
@@ -1163,12 +1201,12 @@ $emaj_create_group$
       RAISE EXCEPTION 'emaj_create_group: group name must at least contain 1 character.';
     END IF;
 -- check the group is known in emaj_group_def table
-    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName;
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
     IF NOT FOUND THEN
        RAISE EXCEPTION 'emaj_create_group: Group % is unknown in emaj_group_def table.', v_groupName;
     END IF;
 -- check that the group is not yet recorded in emaj_group table
-    PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF FOUND THEN
       RAISE EXCEPTION 'emaj_create_group: group % is already created.', v_groupName;
     END IF;
@@ -1411,8 +1449,8 @@ $emaj_alter_group$
     IF v_groupState <> 'IDLE' THEN
       RAISE EXCEPTION 'emaj_alter_group: The group % cannot be altered because it is not in idle state.', v_groupName;
     END IF;
--- check the are remaining rows for the group in emaj_group_def table
-    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName;
+-- check there are remaining rows for the group in emaj_group_def table
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
     IF NOT FOUND THEN
        RAISE EXCEPTION 'emaj_alter_group: Group % is unknown in emaj_group_def table.', v_groupName;
     END IF;
@@ -1524,7 +1562,7 @@ $emaj_alter_group$
     IF v_logSchemasArray IS NOT NULL THEN
       FOR v_i IN 1 .. array_upper(v_logSchemasArray,1)
         LOOP
-        PERFORM 0 FROM emaj.emaj_relation WHERE rel_log_schema = v_logSchemasArray [v_i];
+        PERFORM 0 FROM emaj.emaj_relation WHERE rel_log_schema = v_logSchemasArray [v_i] LIMIT 1;
         IF NOT FOUND THEN
 -- drop the log schema
           PERFORM emaj._drop_log_schema(v_logSchemasArray [v_i], false);
@@ -2149,6 +2187,37 @@ $_set_mark_groups$
     RETURN v_nbTb;
   END;
 $_set_mark_groups$;
+CREATE or REPLACE FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT)
+RETURNS void LANGUAGE plpgsql AS
+$emaj_comment_mark_group$
+-- This function sets or modifies a comment on a mark by updating the mark_comment of the emaj_mark table.
+-- Input: group name, mark to comment, comment
+--   The keyword 'EMAJ_LAST_MARK' can be used as mark to delete to specify the last set mark.
+--   To reset an existing comment for a mark, the supplied comment can be NULL.
+  DECLARE
+    v_groupState     TEXT;
+    v_realMark       TEXT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_comment_mark_group: group % has not been created.', v_groupName;
+    END IF;
+-- retrieve and check the mark name
+    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION 'emaj_comment_mark_group: % is not a known mark for group %.', v_mark, v_groupName;
+    END IF;
+-- OK, update the mark_comment from emaj_mark table
+    UPDATE emaj.emaj_mark SET mark_comment = v_comment WHERE mark_group = v_groupName AND mark_name = v_realMark;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('COMMENT_MARK_GROUP', v_groupName, 'Mark ' || v_realMark);
+    RETURN;
+  END;
+$emaj_comment_mark_group$;
+COMMENT ON FUNCTION emaj.emaj_comment_mark_group(TEXT,TEXT,TEXT) IS
+$$Sets a comment on a mark for an E-Maj group.$$;
 CREATE or REPLACE FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ)
 RETURNS text LANGUAGE plpgsql AS
 $emaj_get_previous_mark_group$
@@ -2361,6 +2430,176 @@ $_delete_before_mark_group$
     RETURN v_nbMark;
   END;
 $_delete_before_mark_group$;
+CREATE or REPLACE FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT)
+RETURNS void LANGUAGE plpgsql AS
+$emaj_rename_mark_group$
+-- This function renames an existing mark.
+-- The group can be either in LOGGING or IDLE state.
+-- Rows from emaj_mark and emaj_sequence tables are updated accordingly.
+-- Input: group name, mark to rename, new name for the mark
+--   The keyword 'EMAJ_LAST_MARK' can be used as mark to rename to specify the last set mark.
+  DECLARE
+    v_realMark       TEXT;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('RENAME_MARK_GROUP', 'BEGIN', v_groupName, v_mark);
+-- check that the group is recorded in emaj_group table
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_rename_mark_group: group % has not been created.', v_groupName;
+    END IF;
+-- retrieve and check the mark name
+    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION 'emaj_rename_mark_group: mark % doesn''t exist for group %.', v_mark, v_groupName;
+    END IF;
+-- check the new mark name is not 'EMAJ_LAST_MARK' or NULL
+    IF v_newName = 'EMAJ_LAST_MARK' OR v_newName IS NULL THEN
+       RAISE EXCEPTION 'emaj_rename_mark_group: % is not an allowed name for a new mark.', v_newName;
+    END IF;
+-- check if the new mark name doesn't exist for the group
+    PERFORM 0 FROM emaj.emaj_mark
+      WHERE mark_group = v_groupName AND mark_name = v_newName;
+    IF FOUND THEN
+       RAISE EXCEPTION 'emaj_rename_mark_group: a mark % already exists for group %.', v_newName, v_groupName;
+    END IF;
+-- OK, update the sequences table as well
+    UPDATE emaj.emaj_sequence SET sequ_mark = v_newName
+      WHERE sequ_datetime = (SELECT mark_datetime FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark);
+-- and then update the emaj_mark table
+    UPDATE emaj.emaj_mark SET mark_name = v_newName
+      WHERE mark_group = v_groupName AND mark_name = v_realMark;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('RENAME_MARK_GROUP', 'END', v_groupName, v_realMark || ' renamed ' || v_newName);
+    RETURN;
+  END;
+$emaj_rename_mark_group$;
+COMMENT ON FUNCTION emaj.emaj_rename_mark_group(TEXT,TEXT,TEXT) IS
+$$Renames a mark for an E-Maj group.$$;
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN)
+RETURNS INT LANGUAGE plpgsql AS
+$_rlbk_groups_step1$
+-- This is the first step of a rollback group processing.
+-- It tests the environment, the supplied parameters and the foreign key constraints.
+-- It builds the requested number of sessions with the list of tables to process, trying to spread the load over all sessions.
+-- It finaly inserts into the history the event about the rollback start
+  DECLARE
+    v_i                   INT;
+    v_groupState          TEXT;
+    v_isRollbackable      BOOLEAN;
+    v_markName            TEXT;
+    v_markState           TEXT;
+    v_cpt                 INT;
+    v_nbTblInGroup        INT;
+    v_nbUnchangedTbl      INT;
+    v_timestampMark       TIMESTAMPTZ;
+    v_session             INT;
+    v_sessionLoad         INT [];
+    v_minSession          INT;
+    v_minRows             INT;
+    v_fullTableName       TEXT;
+    v_msg                 TEXT;
+    r_tbl                 RECORD;
+    r_tbl2                RECORD;
+  BEGIN
+-- check that each group ...
+-- ...is recorded in emaj_group table
+    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+      SELECT group_state, group_is_rollbackable INTO v_groupState, v_isRollbackable FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION '_rlbk_groups_step1: group % has not been created.', v_groupNames[v_i];
+      END IF;
+-- ... is in LOGGING state
+      IF v_groupState <> 'LOGGING' THEN
+        RAISE EXCEPTION '_rlbk_groups_step1: Group % cannot be rollbacked because it is not in logging state.', v_groupNames[v_i];
+      END IF;
+-- ... is ROLLBACKABLE
+      IF NOT v_isRollbackable THEN
+        RAISE EXCEPTION '_rlbk_groups_step1: Group % has been created for audit only purpose. It cannot be rollbacked.', v_groupNames[v_i];
+      END IF;
+-- ... is not damaged
+      PERFORM 0 FROM emaj._verify_group(v_groupNames[v_i],true);
+-- ... owns the requested mark
+      SELECT emaj._get_mark_name(v_groupNames[v_i],v_mark) INTO v_markName;
+      IF NOT FOUND OR v_markName IS NULL THEN
+        RAISE EXCEPTION '_rlbk_groups_step1: No mark % exists for group %.', v_mark, v_groupNames[v_i];
+      END IF;
+-- ... and this mark is ACTIVE
+      SELECT mark_state INTO v_markState FROM emaj.emaj_mark
+        WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
+      IF v_markState <> 'ACTIVE' THEN
+        RAISE EXCEPTION '_rlbk_groups_step1: mark % for group % is not in ACTIVE state.', v_markName, v_groupNames[v_i];
+      END IF;
+    END LOOP;
+-- get the mark timestamp and check it is the same for all groups of the array
+    SELECT count(distinct emaj._get_mark_datetime(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
+      WHERE group_name = ANY (v_groupNames);
+    IF v_cpt > 1 THEN
+      RAISE EXCEPTION '_rlbk_groups_step1: Mark % does not represent the same point in time for all groups.', v_mark;
+    END IF;
+-- get the mark timestamp for the 1st group (as we know this timestamp is the same for all groups of the array)
+    SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
+-- insert begin in the history
+    IF v_unloggedRlbk THEN
+      v_msg = 'Unlogged';
+    ELSE
+      v_msg = 'Logged';
+    END IF;
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'BEGIN',
+              array_to_string(v_groupNames,','), v_msg || ' rollback to mark ' || v_markName || ' [' || v_timestampMark || ']');
+-- get the total number of tables for these groups
+    SELECT sum(group_nb_table) INTO v_nbTblInGroup FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames) ;
+-- issue warnings in case of foreign keys with tables outside the groups
+    PERFORM emaj._check_fk_groups(v_groupNames);
+-- create sessions, using the number of sessions requested by the caller
+-- session id for sequences will remain NULL
+--   initialisation
+--     accumulated counters of number of log rows to rollback for each parallel session
+    FOR v_session IN 1 .. v_nbSession LOOP
+      v_sessionLoad [v_session] = 0;
+    END LOOP;
+    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+--     fkey table
+      DELETE FROM emaj.emaj_fk WHERE v_groupNames[v_i] = ANY (fk_groups);
+--     relation table: for each group, session set to NULL and
+--       numbers of log rows computed by emaj_log_stat_group function
+      UPDATE emaj.emaj_relation SET rel_session = NULL, rel_rows = stat_rows
+        FROM emaj.emaj_log_stat_group (v_groupNames[v_i], v_mark, NULL) stat
+        WHERE rel_group = v_groupNames[v_i]
+          AND rel_group = stat_group AND rel_schema = stat_schema AND rel_tblseq = stat_table;
+    END LOOP;
+--   count the number of tables that have no update to rollback
+    SELECT count(*) INTO v_nbUnchangedTbl FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_rows = 0;
+--   allocate tables with rows to rollback to sessions starting with the heaviest to rollback tables
+--     as reported by emaj_log_stat_group function
+    FOR r_tbl IN
+        SELECT * FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' ORDER BY rel_rows DESC
+        LOOP
+--   is the table already allocated to a session (it may have been already allocated because of a fkey link) ?
+      PERFORM 0 FROM emaj.emaj_relation
+        WHERE rel_group = ANY (v_groupNames) AND rel_schema = r_tbl.rel_schema AND rel_tblseq = r_tbl.rel_tblseq
+          AND rel_session IS NULL;
+--   no,
+      IF FOUND THEN
+--   compute the least loaded session
+        v_minSession=1; v_minRows = v_sessionLoad [1];
+        FOR v_session IN 2 .. v_nbSession LOOP
+          IF v_sessionLoad [v_session] < v_minRows THEN
+            v_minSession = v_session;
+            v_minRows = v_sessionLoad [v_session];
+          END IF;
+        END LOOP;
+--   allocate the table to the session, with all other tables linked by foreign key constraints
+        v_sessionLoad [v_minSession] = v_sessionLoad [v_minSession] +
+                 emaj._rlbk_groups_set_session(v_groupNames, r_tbl.rel_schema, r_tbl.rel_tblseq, v_minSession, r_tbl.rel_rows);
+      END IF;
+    END LOOP;
+    RETURN v_nbTblInGroup - v_nbUnchangedTbl;
+  END;
+$_rlbk_groups_step1$;
 CREATE or REPLACE FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_rlbk_groups_set_session$
@@ -3735,7 +3974,7 @@ $_verify_schema$
     v_msgPrefix = 'Checking schema ' || quote_ident(v_schemaName) || ': ';
     v_errorFound = FALSE;
 -- verify that the schema exists
-    PERFORM 1 FROM pg_namespace WHERE nspname = v_schemaName;
+    PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = v_schemaName;
     IF NOT FOUND THEN
 -- if the schema does not exist, return a message and exit without performing other checks
       RETURN NEXT v_msgPrefix || 'the schema does NOT exists!';
