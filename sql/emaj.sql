@@ -230,7 +230,7 @@ CREATE TABLE emaj.emaj_mark (
     mark_name                 TEXT        NOT NULL,      -- mark name
     mark_id                   BIGSERIAL   NOT NULL,      -- serial id used to order rows (not to rely on timestamps
                                                          -- that are not safe if system time changes)
-    mark_datetime             TIMESTAMPTZ NOT NULL,      -- precise timestamp of the mark creation, used as a reference
+    mark_datetime             TIMESTAMPTZ NOT NULL ,      -- precise timestamp of the mark creation, used as a reference
                                                          --   for other tables like emaj_sequence and all log tables
     mark_global_seq           BIGINT      NOT NULL,      -- emaj_global_seq last value at mark set (used to rollback tables)
     mark_state                TEXT,                      -- state of the mark, with 2 possible values:
@@ -252,7 +252,7 @@ $$Contains marks set on E-Maj tables groups.$$;
 CREATE TABLE emaj.emaj_sequence (
     sequ_id                  BIGSERIAL   NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
                                                          -- on timestamps that are not safe if system time changes)
-    sequ_schema              TEXT        NOT NULL,       -- application or 'emaj' schema or that owns the sequence
+    sequ_schema              TEXT        NOT NULL,       -- application or 'emaj' schema that owns the sequence
     sequ_name                TEXT        NOT NULL,       -- application or emaj sequence name
     sequ_datetime            TIMESTAMPTZ NOT NULL,       -- timestamp the sequence characteristics have been recorded
                                                          --   the same timestamp as referenced in emaj_mark table
@@ -3700,7 +3700,7 @@ $_reset_group$
         EXECUTE 'TRUNCATE ' || v_logTableName;
 --   delete rows from emaj_sequence related to the associated log sequence
         v_seqName := emaj._build_log_seq_name(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
-        DELETE FROM emaj.emaj_sequence WHERE sequ_name = v_seqName;
+        DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_tblsq.rel_log_schema AND sequ_name = v_seqName;
 --   and reset the log sequence
         PERFORM setval(quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(v_seqName), 1, false);
       ELSEIF r_tblsq.rel_kind = 'S' THEN

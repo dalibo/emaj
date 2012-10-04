@@ -55,6 +55,10 @@ Bug fixes:
     function without error on TRUNCATE statements when the group has been 
     created by someone else.
   - really rollback sequences in the desired priority order.
+  - in emaj_reset_group() function, fix a very rare case where some rows 
+    from the internal emaj_sequence table could be abusively deleted (in 
+    case an application sequence would be named as an emaj log sequence!).
+
 
 0.11.1
 ------
