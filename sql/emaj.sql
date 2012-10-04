@@ -3680,7 +3680,6 @@ $_reset_group$
   DECLARE
     v_nbTb          INT  := 0;
     v_logTableName  TEXT;
-    v_seqName       TEXT;
     r_tblsq         RECORD;
   BEGIN
 -- delete all marks for the group from the emaj_mark table
@@ -3699,10 +3698,11 @@ $_reset_group$
         v_logTableName := quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log');
         EXECUTE 'TRUNCATE ' || v_logTableName;
 --   delete rows from emaj_sequence related to the associated log sequence
-        v_seqName := emaj._build_log_seq_name(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
-        DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_tblsq.rel_log_schema AND sequ_name = v_seqName;
+        DELETE FROM emaj.emaj_sequence 
+          WHERE sequ_schema = r_tblsq.rel_log_schema 
+            AND sequ_name = emaj._build_log_seq_name(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
 --   and reset the log sequence
-        PERFORM setval(quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(v_seqName), 1, false);
+        PERFORM setval(quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(emaj._build_log_seq_name(r_tblsq.rel_schema, r_tblsq.rel_tblseq)), 1, false);
       ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
         PERFORM emaj._drop_seq (r_tblsq.rel_schema, r_tblsq.rel_tblseq);
