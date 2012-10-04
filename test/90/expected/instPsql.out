@@ -2978,7 +2978,15 @@ $emaj_rename_mark_group$
     END IF;
 -- OK, update the sequences table as well
     UPDATE emaj.emaj_sequence SET sequ_mark = v_newName
-      WHERE sequ_datetime = (SELECT mark_datetime FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark);
+      WHERE sequ_datetime =                                         -- the right mark date and time
+            (SELECT mark_datetime FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark)
+        AND (sequ_schema, sequ_name) IN 
+            (SELECT rel_schema, rel_tblseq FROM emaj.emaj_relation  -- filter only application sequences of the group
+               WHERE rel_group = v_groupName AND rel_kind = 'S'
+             UNION ALL                                              -- filter only log sequences of the group
+             SELECT rel_log_schema, emaj._build_log_seq_name(rel_schema, rel_tblseq) FROM emaj.emaj_relation
+               WHERE rel_group = v_groupName AND rel_kind = 'r'
+            );
 -- and then update the emaj_mark table
     UPDATE emaj.emaj_mark SET mark_name = v_newName
       WHERE mark_group = v_groupName AND mark_name = v_realMark;
