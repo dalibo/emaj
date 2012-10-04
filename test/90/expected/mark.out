@@ -539,14 +539,14 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      395 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
      396 | emaj           | myschema2_mytbl5_log_seq           | MARK_%         |             1 | f
      397 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
-     398 | myschema1      | myTbl3_col31_seq                   | SM2            |             1 | f
+     398 | myschema1      | myTbl3_col31_seq                   | Bar%Foo        |             1 | f
      399 | myschema2      | myseq1                             | SM2            |          1000 | f
      400 | myschema2      | myTbl3_col31_seq                   | SM2            |             1 | f
-     401 | emajC          | myschema1_myTbl3_log_seq           | SM2            |             1 | f
-     402 | emaj           | myschema1_mytbl1_log_seq           | SM2            |             1 | f
-     403 | emaj           | myschema1_mytbl4_log_seq           | SM2            |             1 | f
-     404 | emaj           | myschema1_mytbl2_log_seq           | SM2            |             1 | f
-     405 | emajb          | myschema1_mytbl2b_log_seq          | SM2            |             1 | f
+     401 | emajC          | myschema1_myTbl3_log_seq           | Bar%Foo        |             1 | f
+     402 | emaj           | myschema1_mytbl1_log_seq           | Bar%Foo        |             1 | f
+     403 | emaj           | myschema1_mytbl4_log_seq           | Bar%Foo        |             1 | f
+     404 | emaj           | myschema1_mytbl2_log_seq           | Bar%Foo        |             1 | f
+     405 | emajb          | myschema1_mytbl2b_log_seq          | Bar%Foo        |             1 | f
      406 | emaj           | myschema2_mytbl1_log_seq           | SM2            |             1 | f
      407 | emaj           | myschema2_mytbl2_log_seq           | SM2            |             1 | f
      408 | emajC          | myschema2_myTbl3_log_seq           | SM2            |             1 | f
@@ -685,14 +685,8 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      317 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
      318 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
      319 | emajb          | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
-     398 | myschema1      | myTbl3_col31_seq                   | SM2            |             1 | f
      399 | myschema2      | myseq1                             | SM2            |          1000 | f
      400 | myschema2      | myTbl3_col31_seq                   | SM2            |             1 | f
-     401 | emajC          | myschema1_myTbl3_log_seq           | SM2            |             1 | f
-     402 | emaj           | myschema1_mytbl1_log_seq           | SM2            |             1 | f
-     403 | emaj           | myschema1_mytbl4_log_seq           | SM2            |             1 | f
-     404 | emaj           | myschema1_mytbl2_log_seq           | SM2            |             1 | f
-     405 | emajb          | myschema1_mytbl2b_log_seq          | SM2            |             1 | f
      406 | emaj           | myschema2_mytbl1_log_seq           | SM2            |             1 | f
      407 | emaj           | myschema2_mytbl2_log_seq           | SM2            |             1 | f
      408 | emajC          | myschema2_myTbl3_log_seq           | SM2            |             1 | f
@@ -713,7 +707,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
      423 | emaj           | myschema2_mytbl4_log_seq           | STOP_%         |             1 | f
      424 | emaj           | myschema2_mytbl5_log_seq           | STOP_%         |             1 | f
      425 | emaj           | myschema2_mytbl6_log_seq           | STOP_%         |             1 | f
-(38 rows)
+(32 rows)
 
 -----------------------------
 -- test end: check, reset history and force sequences id
