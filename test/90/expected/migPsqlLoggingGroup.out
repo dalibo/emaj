@@ -2959,7 +2959,7 @@ $_reset_group$
         EXECUTE 'TRUNCATE ' || v_logTableName;
 --   delete rows from emaj_sequence related to the associated log sequence
         v_seqName := emaj._build_log_seq_name(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
-        DELETE FROM emaj.emaj_sequence WHERE sequ_name = v_seqName;
+        DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_tblsq.rel_log_schema AND sequ_name = v_seqName;
 --   and reset the log sequence
         PERFORM setval(quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(v_seqName), 1, false);
       ELSEIF r_tblsq.rel_kind = 'S' THEN
