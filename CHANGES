@@ -46,6 +46,8 @@ Enhancements:
     all sequences as early as possible (before processing tables) ; as no 
     lock can be set on a sequence, this decreases the risk of another 
     concurrently running transaction modifying one of these sequences.
+  - process more safely the EMAJ_LAST_MARK keyword when system time changes, 
+    the mark search not being based on timestamp any more.
   - minor improvements in the code and in comments.
 
 Bug fixes:
