@@ -226,6 +226,29 @@ DROP TABLE emaj.emaj_relation_old;
 --                                --
 ------------------------------------
 
+CREATE or REPLACE FUNCTION emaj._get_mark_name(TEXT, TEXT) RETURNS TEXT LANGUAGE sql as
+$$
+-- This function returns a mark name if exists for a group, processing the EMAJ_LAST_MARK keyword.
+-- input: group name and mark name
+-- output: mark name or NULL
+SELECT case
+         when $2 = 'EMAJ_LAST_MARK' then
+              (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = $1 ORDER BY mark_id DESC LIMIT 1)
+         else (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = $1 AND mark_name = $2)
+       end
+$$;
+CREATE or REPLACE FUNCTION emaj._get_mark_datetime(TEXT, TEXT) RETURNS TIMESTAMPTZ LANGUAGE sql as
+$$
+-- This function returns the creation timestamp of a mark if exists for a group,
+--   processing the EMAJ_LAST_MARK keyword.
+-- input: group name and mark name
+-- output: mark date-time or NULL
+SELECT case
+         when $2 = 'EMAJ_LAST_MARK' then
+              (SELECT mark_datetime FROM emaj.emaj_mark WHERE mark_group = $1 ORDER BY mark_id DESC LIMIT 1)
+         else (SELECT mark_datetime FROM emaj.emaj_mark WHERE mark_group = $1 AND mark_name = $2)
+       end
+$$;
 CREATE or REPLACE FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_class$

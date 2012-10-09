@@ -402,7 +402,7 @@ $$
 -- output: mark name or NULL
 SELECT case
          when $2 = 'EMAJ_LAST_MARK' then
-              (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = $1 ORDER BY mark_datetime DESC LIMIT 1)
+              (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = $1 ORDER BY mark_id DESC LIMIT 1)
          else (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = $1 AND mark_name = $2)
        end
 $$;
@@ -415,7 +415,7 @@ $$
 -- output: mark date-time or NULL
 SELECT case
          when $2 = 'EMAJ_LAST_MARK' then
-              (SELECT MAX(mark_datetime) FROM emaj.emaj_mark WHERE mark_group = $1)
+              (SELECT mark_datetime FROM emaj.emaj_mark WHERE mark_group = $1 ORDER BY mark_id DESC LIMIT 1)
          else (SELECT mark_datetime FROM emaj.emaj_mark WHERE mark_group = $1 AND mark_name = $2)
        end
 $$;
@@ -1501,7 +1501,7 @@ $_lock_groups$
 -- in case of deadlock, retry up to 5 times
     WHILE NOT v_ok AND v_nbRetry < 5 LOOP
       BEGIN
--- scan all existing tables of the group
+-- scan all existing tables of the groups
         v_nbTbl = 0;
         FOR r_tblsq IN
             SELECT rel_priority, rel_schema, rel_tblseq
@@ -3598,7 +3598,7 @@ $_rlbk_groups_step7$
 -- delete these useless marks (the related sequences have been already deleted by rollback functions)
       DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId;
 -- and finaly reset the mark_log_rows_before_next column for the new last mark
-      UPDATE emaj.emaj_mark set mark_log_rows_before_next = NULL
+      UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
         WHERE mark_group = ANY (v_groupNames)
           AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
               (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
