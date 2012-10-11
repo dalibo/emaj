@@ -25,6 +25,8 @@ select relname,relkind from pg_class where relname like 'emaj_%';
  emaj_param                  | r
  emaj_param_pkey             | i
  emaj_relation               | r
+ emaj_relation_idx1          | i
+ emaj_relation_idx2          | i
  emaj_relation_pkey          | i
  emaj_rlbk_stat              | r
  emaj_rlbk_stat_pkey         | i
@@ -34,7 +36,7 @@ select relname,relkind from pg_class where relname like 'emaj_%';
  emaj_sequence               | r
  emaj_sequence_pkey          | i
  emaj_sequence_sequ_id_seq   | S
-(27 rows)
+(29 rows)
 
 select * from emaj.emaj_global_seq;
   sequence_name  | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 

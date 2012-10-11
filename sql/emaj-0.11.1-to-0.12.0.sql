@@ -165,7 +165,7 @@ INSERT INTO emaj.emaj_relation_old SELECT * FROM emaj.emaj_relation;
 
 DROP TABLE emaj.emaj_relation;
 
--- create the new emaj_relation table
+-- create the new emaj_relation table and its indexes
 
 CREATE TABLE emaj.emaj_relation (
     rel_schema               TEXT        NOT NULL,       -- schema name containing the relation
@@ -184,6 +184,8 @@ CREATE TABLE emaj.emaj_relation (
     );
 COMMENT ON TABLE emaj.emaj_relation IS
 $$Contains the content (tables and sequences) of created E-Maj groups.$$;
+CREATE INDEX emaj_relation_idx1 ON emaj.emaj_relation (rel_group, rel_kind);
+CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
 
 -- populate the new emaj_relation table
 -- for tables

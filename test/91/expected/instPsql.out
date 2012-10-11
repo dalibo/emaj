@@ -250,6 +250,10 @@ CREATE TABLE emaj.emaj_relation (
     );
 COMMENT ON TABLE emaj.emaj_relation IS
 $$Contains the content (tables and sequences) of created E-Maj groups.$$;
+-- index on emaj_relation used to speedup most functions working on groups with large E-Maj configuration
+CREATE INDEX emaj_relation_idx1 ON emaj.emaj_relation (rel_group, rel_kind);
+-- index on emaj_relation used to speedup _verify_schema() with large E-Maj configuration
+CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
 -- table containing the marks
 CREATE TABLE emaj.emaj_mark (
     mark_group                TEXT        NOT NULL,      -- group for which the mark has been set
@@ -2720,6 +2724,7 @@ $emaj_get_previous_mark_group$
 -- This function returns the name of the mark that immediately precedes a given mark for a group.
 -- The function can be called by both emaj_adm and emaj_viewer roles.
 -- Input: group name, mark name
+--   The keyword 'EMAJ_LAST_MARK' can be used to specify the last set mark.
 -- Output: mark name, or NULL if there is no mark before the given mark
   DECLARE
     v_realMark       TEXT;
@@ -5334,8 +5339,23 @@ primary key, btree, for table "emaj.emaj_param"
  rel_rows        | bigint  | 
 Indexes:
     "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq)
+    "emaj_relation_idx1" btree (rel_group, rel_kind)
+    "emaj_relation_idx2" btree (rel_log_schema)
 Foreign-key constraints:
     "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
+
+Index "emaj.emaj_relation_idx1"
+  Column   | Type | Definition 
+-----------+------+------------
+ rel_group | text | rel_group
+ rel_kind  | text | rel_kind
+btree, for table "emaj.emaj_relation"
+
+    Index "emaj.emaj_relation_idx2"
+     Column     | Type |   Definition   
+----------------+------+----------------
+ rel_log_schema | text | rel_log_schema
+btree, for table "emaj.emaj_relation"
 
 Index "emaj.emaj_relation_pkey"
    Column   | Type | Definition 
