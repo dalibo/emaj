@@ -158,7 +158,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
      201 | myGroup2         | Mark2          |               0 | DELETED    |              |                   199 |                   213 |                         0
      202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   217 |                          
-     204 | myGroup2         | STOP_%         |               0 | DELETED    |              |                   199 |                   231 |                          
+     204 | myGroup2         | STOP_%         |               0 | DELETED    |              |                   199 |                   231 |                         0
      206 | myGroup1         | %abc%          |               0 | ACTIVE     |              |                   199 |                   245 |                          
      207 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                   199 |                   253 |                          
 (5 rows)
@@ -276,10 +276,10 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
      201 | myGroup2         | Mark2          |               0 | DELETED    |              |                   199 |                   213 |                         0
      202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   217 |                          
-     204 | myGroup2         | STOP_%         |               0 | DELETED    |              |                   199 |                   231 |                          
+     204 | myGroup2         | STOP_%         |               0 | DELETED    |              |                   199 |                   231 |                         0
      206 | myGroup1         | %abc%          |               0 | DELETED    |              |                   199 |                   245 |                         0
      207 | myGroup2         | MARK_%         |               0 | ACTIVE     |              |                   199 |                   253 |                          
-     208 | myGroup1         | STOP_%         |               0 | DELETED    |              |                   199 |                   259 |                          
+     208 | myGroup1         | STOP_%         |               0 | DELETED    |              |                   199 |                   259 |                         0
 (6 rows)
 
 -- should be OK
@@ -357,7 +357,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 ---------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
      202 | phil's group#3", | Mark3          |               0 | ACTIVE     |              |                   199 |                   217 |                          
      211 | myGroup2         | MARK_%         |               0 | DELETED    |              |                   199 |                   281 |                         0
-     213 | myGroup2         | STOP_%         |               0 | DELETED    |              |                   199 |                   295 |                          
+     213 | myGroup2         | STOP_%         |               0 | DELETED    |              |                   199 |                   295 |                         0
      214 | myGroup1         | Foo%Bar        |               0 | ACTIVE     |              |                   199 |                   301 |                          
 (4 rows)
 
@@ -567,8 +567,8 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      202 | phil's group#3", | Mark3            |               0 | ACTIVE     |              |                   199 |                   217 |                          
      220 | myGroup1         | Mark1            |               0 | DELETED    |              |                   199 |                   351 |                         0
      221 | myGroup2         | Mark1            |               0 | DELETED    |              |                   199 |                   351 |                         0
-     222 | myGroup1         | Global Stop at % |               0 | DELETED    |              |                   199 |                   365 |                          
-     223 | myGroup2         | Global Stop at % |               0 | DELETED    |              |                   199 |                   365 |                          
+     222 | myGroup1         | Global Stop at % |               0 | DELETED    |              |                   199 |                   365 |                         0
+     223 | myGroup2         | Global Stop at % |               0 | DELETED    |              |                   199 |                   365 |                         0
 (5 rows)
 
 -- with warning about group names array content

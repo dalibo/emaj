@@ -668,8 +668,8 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      202 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                   199 |                   217 |                          
      302 | myGroup1         | SM1            |               2 | DELETED    | a better comment for group #1 |                   299 |                   319 |                         0
      315 | myGroup2         | SM2            |               2 | DELETED    | a comment for group #2        |                   299 |                   411 |                         0
-     316 | myGroup1         | STOP_%         |               2 | DELETED    |                               |                   299 |                   417 |                          
-     317 | myGroup2         | STOP_%         |               2 | DELETED    |                               |                   299 |                   425 |                          
+     316 | myGroup1         | STOP_%         |               2 | DELETED    |                               |                   299 |                   417 |                         0
+     317 | myGroup2         | STOP_%         |               2 | DELETED    |                               |                   299 |                   425 |                         0
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;

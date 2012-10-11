@@ -84,8 +84,8 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      616 | myGroup1         | Before logged rollback to M4 | DELETED    |                      |                   606 |                   717 |                        18
      618 | myGroup1         | STOP_%                       | DELETED    |                      |                   606 |                   737 |                         0
      619 | myGroup2         | STOP_%                       | DELETED    |                      |                   606 |                   737 |                         0
-     628 | myGroup1         | Stop after rollback          | DELETED    |                      |                   606 |                   807 |                          
-     629 | myGroup2         | Stop after rollback          | DELETED    |                      |                   606 |                   807 |                          
+     628 | myGroup1         | Stop after rollback          | DELETED    |                      |                   606 |                   807 |                         0
+     629 | myGroup2         | Stop after rollback          | DELETED    |                      |                   606 |                   807 |                         0
      630 | myGroup1         | Multi-1                      | ACTIVE     |                      |                   606 |                   821 |                          
      631 | myGroup2         | Multi-1                      | ACTIVE     |                      |                   606 |                   821 |                        97
      636 | phil's group#3", | M1_rollbackable              | ACTIVE     |                      |                   606 |                   847 |                        52
@@ -385,8 +385,8 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      616 | myGroup1         | Before logged rollback to M4 | DELETED    |                      |                   606 |                   717 |                        18
      618 | myGroup1         | STOP_%                       | DELETED    |                      |                   606 |                   737 |                         0
      619 | myGroup2         | STOP_%                       | DELETED    |                      |                   606 |                   737 |                         0
-     628 | myGroup1         | Stop after rollback          | DELETED    |                      |                   606 |                   807 |                          
-     629 | myGroup2         | Stop after rollback          | DELETED    |                      |                   606 |                   807 |                          
+     628 | myGroup1         | Stop after rollback          | DELETED    |                      |                   606 |                   807 |                         0
+     629 | myGroup2         | Stop after rollback          | DELETED    |                      |                   606 |                   807 |                         0
      630 | myGroup1         | Multi-1                      | ACTIVE     |                      |                   606 |                   821 |                          
      631 | myGroup2         | Multi-1                      | ACTIVE     |                      |                   606 |                   821 |                          
      636 | phil's group#3", | M1_rollbackable              | ACTIVE     |                      |                   606 |                   847 |                        52
