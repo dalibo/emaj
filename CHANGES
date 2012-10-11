@@ -64,6 +64,8 @@ Bug fixes:
     been set for several tables groups, renaming this mark for one of these 
     groups led to a corrupted emaj_sequence table for rows concerning the 
     same mark and the other groups.
+  - properly set to 0 the mark_log_rows_before_next column of the internal 
+    emaj_mark table for the marks set at emaj_stop_group time.
 
 0.11.1
 ------
