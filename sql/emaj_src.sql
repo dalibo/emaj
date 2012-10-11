@@ -245,6 +245,10 @@ CREATE TABLE emaj.emaj_relation (
     );
 COMMENT ON TABLE emaj.emaj_relation IS
 $$Contains the content (tables and sequences) of created E-Maj groups.$$;
+-- index on emaj_relation used to speedup most functions working on groups with large E-Maj configuration
+CREATE INDEX emaj_relation_idx1 ON emaj.emaj_relation (rel_group, rel_kind);
+-- index on emaj_relation used to speedup _verify_schema() with large E-Maj configuration
+CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
 
 -- table containing the marks
 CREATE TABLE emaj.emaj_mark (
@@ -2775,6 +2779,7 @@ $emaj_get_previous_mark_group$
 -- This function returns the name of the mark that immediately precedes a given mark for a group.
 -- The function can be called by both emaj_adm and emaj_viewer roles.
 -- Input: group name, mark name
+--   The keyword 'EMAJ_LAST_MARK' can be used to specify the last set mark.
 -- Output: mark name, or NULL if there is no mark before the given mark
   DECLARE
     v_realMark       TEXT;
