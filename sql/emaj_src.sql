@@ -40,6 +40,8 @@ RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
     v_stmt          TEXT;
+    v_schemaList    TEXT;
+    r_schema        RECORD;
   BEGIN
 -- the creation of the function implicitely validates that plpgsql language is created!
 -- check postgres version is >= 8.2
@@ -52,6 +54,24 @@ $tmp$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
     END IF;
+-- check there is no E-Maj secondary schema remaining (that could later lead to error)
+    v_schemaList = '';
+    BEGIN
+-- try to join an emaj.emaj_relation table and the postgres schemas table
+      FOR r_schema IN
+          SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation 
+            WHERE rel_log_schema <> 'emaj' 
+              AND EXISTS (SELECT 0 FROM pg_catalog.pg_namespace WHERE nspname = rel_log_schema)
+        LOOP
+        v_schemaList = v_schemaList || r_schema.rel_log_schema || ', ';
+      END LOOP;
+    EXCEPTION WHEN OTHERS THEN -- do nothing
+    END;
+    IF v_schemaList <> '' THEN
+-- some secondary schemas remaining
+      RAISE EXCEPTION 'E-Maj installation: some secondary schemas (%) need to be dropped before reinstalling E-Maj. You can use the uninstall.sql script or the emaj_drop_group() function or DROP SCHEMA statements.', substring(v_schemaList FROM 1 FOR char_length(v_schemaList) - 2);
+    END IF;
+-- if there is an error (schema or table or column not there), continue
 -- check the dblink contrib is installed
 --    PERFORM 0 FROM pg_catalog.pg_proc WHERE proname = 'dblink';
 --    IF NOT FOUND THEN
