@@ -283,7 +283,7 @@ rollback;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_rollback_group('myGroup2','Mark21');
-ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist anymore.
+ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist any more.
 CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_group( $1 [ $2 ],true)"
 PL/pgSQL function "_rlbk_groups_step1" line 40 at perform
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
@@ -293,7 +293,7 @@ rollback;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
-ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist anymore.
+ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist any more.
 CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_group( $1 [ $2 ],true)"
 PL/pgSQL function "_rlbk_groups_step1" line 40 at perform
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
@@ -359,7 +359,7 @@ select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
-ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist anymore.
+ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist any more.
 CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_group( $1 [ $2 ],true)"
 PL/pgSQL function "_rlbk_groups_step1" line 40 at perform
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
@@ -369,7 +369,7 @@ rollback;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
-ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist anymore.
+ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist any more.
 CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_group( $1 [ $2 ],true)"
 PL/pgSQL function "_rlbk_groups_step1" line 40 at perform
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"

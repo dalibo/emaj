@@ -104,7 +104,7 @@ Enhancements:
     set to true, old log records of a group are deleted (i.e. the group is 
     reset) at start group time. If the group is not reset at start time, all 
     old related marks and log tables rows cannot be used for any rollback 
-    operation anymore. Nevertheless, log rows remain visible, old marks can 
+    operation any more. Nevertheless, log rows remain visible, old marks can 
     be deleted, renamed or commented, and log statistics can be requested.
   - now that logs may survive to a group start, a mark is automaticaly set 
     at group stop time so that this operation is clearly visible in the marks 
@@ -190,7 +190,7 @@ Bug fixes:
   - fix emaj_delete_mark_group() and emaj_delete_before_mark_group() 
     operations. When a mark set for several groups by an 
     emaj_set_mark_groups() function, is deleted for a single group, it was 
-    not usable anymore (in particular for rollback) for the other groups 
+    not usable any more (in particular for rollback) for the other groups 
     for which the mark remained active.
   - fix errors when using schema, column, sequence or mark names including 
     unusual characters like apostrophs or commas.
@@ -292,7 +292,7 @@ Bug fixes:
   - change the primary key columns identification. Starting from pg 9.0, 
     column names must be read from pg_attribute with the table's definition, 
     using pg_index.indkey, as the column names with the index definition is 
-    not safe anymore in case of column renaming.
+    not safe any more in case of column renaming.
 
 0.9.1
 -----
@@ -473,7 +473,7 @@ Enhancements:
   - add a feature to perform parallel rollbacks, in order to speed up the 
     rollback operations on multi-processor servers. A PHP command is created
     for this purpose: emajParallelRollback.php.
-  - the emaj_reset_group function is not necessary anymore before starting 
+  - the emaj_reset_group function is not necessary any more before starting 
     a group; the log purge is automaticaly done at emaj_start_group function; 
     But the emaj_reset_function remains so user can purge log tables sooner.
   - issue a warning at emaj_create_group, emaj_start_group and 

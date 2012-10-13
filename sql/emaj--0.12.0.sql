@@ -1199,7 +1199,7 @@ $_verify_tblseq$
         AND nspname = v_schemaName AND relname = v_tblseq
         AND relkind in ('r','S');
     IF NOT FOUND THEN
-      RETURN NEXT 'table/sequence ' || v_schemaName || '.' || v_tblseq || ' does not exist anymore.';
+      RETURN NEXT 'table/sequence ' || v_schemaName || '.' || v_tblseq || ' does not exist any more.';
     ELSE
 -- check the class is unchanged
       IF v_relKind <> v_realRelKind THEN
@@ -1327,7 +1327,7 @@ $_verify_group$
     v_errorFound = FALSE;
 -- check the postgres version at creation time is compatible with the current version
 -- Warning: comparisons on version numbers are alphanumeric.
---          But we suppose these tests will not be useful anymore when pg 10.0 will appear!
+--          But we suppose these tests will not be useful any more when pg 10.0 will appear!
 --   for 8.2 and 8.3, both major versions must be the same
     IF ((v_pgVersion = '8.2' OR v_pgVersion = '8.3') AND substring (v_creationPgVersion FROM E'(\\d+\\.\\d+)') <> v_pgVersion) OR
 --   for 8.4+, both major versions must be 8.4+
@@ -1345,7 +1345,7 @@ $_verify_group$
         LOOP
       PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = r_schema.rel_schema;
       IF NOT FOUND THEN
-        v_msg = v_msgPrefix || 'schema ' || r_schema.rel_schema || ' does not exist anymore.';
+        v_msg = v_msgPrefix || 'schema ' || r_schema.rel_schema || ' does not exist any more.';
         if v_onErrorStop THEN RAISE EXCEPTION '_verify_group: %',v_msg; END IF;
         RETURN NEXT v_msg;
         v_errorFound = TRUE;
@@ -1699,7 +1699,7 @@ CREATE or REPLACE FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_group$
 -- This function effectively deletes the emaj objects for all tables of a group
--- It also drops secondary schemas that are not useful anymore
+-- It also drops secondary schemas that are not useful any more
 -- Input: group name, and a boolean indicating whether the group's state has to be checked
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that secondary schemas can be dropped
@@ -1827,11 +1827,11 @@ $emaj_alter_group$
 -- define the default tablespace, NULL if tspemaj tablespace doesn't exist
     SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
 -- OK, we can now successively process:
---   - relations that do not belong to the tables group anymore, by dropping their emaj components
+--   - relations that do not belong to the tables group any more, by dropping their emaj components
 --   - relations that continue to belong to the tables group but with different characteristics,
 --     by first dropping their emaj components and letting the last step recreate them
 --   - new relations in the tables group, by (re)creating their emaj components
--- list all relations that do not belong to the tables group anymore
+-- list all relations that do not belong to the tables group any more
     FOR r_tblsq IN
       SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema
         FROM emaj.emaj_relation
@@ -2352,21 +2352,21 @@ $_stop_groups$
           EXCEPTION
             WHEN invalid_schema_name THEN
               IF v_isForced THEN
-                RAISE WARNING '_stop_group: Schema % does not exist anymore.', quote_ident(r_tblsq.rel_schema);
+                RAISE WARNING '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
               ELSE
-                RAISE EXCEPTION '_stop_group: Schema % does not exist anymore.', quote_ident(r_tblsq.rel_schema);
+                RAISE EXCEPTION '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
               END IF;
             WHEN undefined_table THEN
               IF v_isForced THEN
-                RAISE WARNING '_stop_group: Table % does not exist anymore.', v_fullTableName;
+                RAISE WARNING '_stop_group: Table % does not exist any more.', v_fullTableName;
               ELSE
-                RAISE EXCEPTION '_stop_group: Table % does not exist anymore.', v_fullTableName;
+                RAISE EXCEPTION '_stop_group: Table % does not exist any more.', v_fullTableName;
               END IF;
             WHEN undefined_object THEN
               IF v_isForced THEN
-                RAISE WARNING '_stop_group: Trigger % on table % does not exist anymore.', v_logTriggerName, v_fullTableName;
+                RAISE WARNING '_stop_group: Trigger % on table % does not exist any more.', v_logTriggerName, v_fullTableName;
               ELSE
-                RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist anymore.', v_logTriggerName, v_fullTableName;
+                RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist any more.', v_logTriggerName, v_fullTableName;
               END IF;
           END;
           IF v_pgVersion >= '8.4' THEN
@@ -2375,21 +2375,21 @@ $_stop_groups$
             EXCEPTION
               WHEN invalid_schema_name THEN
                 IF v_isForced THEN
-                  RAISE WARNING '_stop_group: Schema % does not exist anymore.', quote_ident(r_tblsq.rel_schema);
+                  RAISE WARNING '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
                 ELSE
-                  RAISE EXCEPTION '_stop_group: Schema % does not exist anymore.', quote_ident(r_tblsq.rel_schema);
+                  RAISE EXCEPTION '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
                 END IF;
               WHEN undefined_table THEN
                 IF v_isForced THEN
-                  RAISE WARNING '_stop_group: Table % does not exist anymore.', v_fullTableName;
+                  RAISE WARNING '_stop_group: Table % does not exist any more.', v_fullTableName;
                 ELSE
-                  RAISE EXCEPTION '_stop_group: Table % does not exist anymore.', v_fullTableName;
+                  RAISE EXCEPTION '_stop_group: Table % does not exist any more.', v_fullTableName;
                 END IF;
               WHEN undefined_object THEN
                 IF v_isForced THEN
-                  RAISE WARNING '_stop_group: Trigger % on table % does not exist anymore.', v_truncTriggerName, v_fullTableName;
+                  RAISE WARNING '_stop_group: Trigger % on table % does not exist any more.', v_truncTriggerName, v_fullTableName;
                 ELSE
-                  RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist anymore.', v_truncTriggerName, v_fullTableName;
+                  RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist any more.', v_truncTriggerName, v_fullTableName;
                 END IF;
             END;
           END IF;
@@ -4411,7 +4411,7 @@ $emaj_generate_sql$
     r_tblsq                 RECORD;
     r_col                   RECORD;
   BEGIN
--- this parameter should be moved in the create function clause once 8.2 will not be supported anymore by E-Maj
+-- this parameter should be moved in the create function clause once 8.2 will not be supported any more by E-Maj
     SET standard_conforming_strings = ON;
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -4651,7 +4651,7 @@ $emaj_generate_sql$
     EXECUTE 'COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid ) TO ' || quote_literal(v_location);
 -- drop temporary table ?
 --    DROP TABLE IF EXISTS emaj_temp_script;
--- this line should be removed once 8.2 will not be supported anymore by E-Maj (and the SET will be put as create function clause
+-- this line should be removed once 8.2 will not be supported any more by E-Maj (and the SET will be put as create function clause
     RESET standard_conforming_strings;
 -- insert end in the history and return
     v_cumNbSQL = v_cumNbSQL + v_nbSeq;
