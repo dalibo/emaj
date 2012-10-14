@@ -476,12 +476,12 @@ NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
 PL/pgSQL function "_create_tbl" line 83 at execute statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_alter_group" line 198 at perform
+PL/pgSQL function "emaj_alter_group" line 201 at perform
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 148 at execute statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_alter_group" line 198 at perform
+PL/pgSQL function "emaj_alter_group" line 201 at perform
  emaj_alter_group 
 ------------------
                 2
@@ -509,12 +509,12 @@ NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
 PL/pgSQL function "_create_tbl" line 83 at execute statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_alter_group" line 198 at perform
+PL/pgSQL function "emaj_alter_group" line 201 at perform
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 148 at execute statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_alter_group" line 198 at perform
+PL/pgSQL function "emaj_alter_group" line 201 at perform
  emaj_alter_group 
 ------------------
                 2

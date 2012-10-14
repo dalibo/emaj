@@ -486,17 +486,17 @@ NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 198 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 201 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 198 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 201 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 198 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 201 at PERFORM
  emaj_alter_group 
 ------------------
                 2
@@ -524,17 +524,17 @@ NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 198 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 201 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 198 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 201 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 156 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 198 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 201 at PERFORM
  emaj_alter_group 
 ------------------
                 2
