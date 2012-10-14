@@ -2672,6 +2672,54 @@ $_rlbk_groups_set_session$
     RETURN v_cumRows;
   END;
 $_rlbk_groups_set_session$;
+CREATE or REPLACE FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT, v_multiGroup BOOLEAN)
+RETURNS void LANGUAGE plpgsql AS
+$_rlbk_groups_step2$
+-- This is the second step of a rollback group processing. It just locks the tables for a session.
+  DECLARE
+    v_nbRetry       SMALLINT := 0;
+    v_ok            BOOLEAN := false;
+    v_nbTbl         INT;
+    r_tblsq         RECORD;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'LOCK_SESSIONS' ELSE 'LOCK_SESSION' END, 'BEGIN', array_to_string(v_groupNames,','), 'Session #' || v_session);
+-- acquire lock on all tables
+-- in case of deadlock, retry up to 5 times
+    WHILE NOT v_ok AND v_nbRetry < 5 LOOP
+      BEGIN
+        v_nbTbl = 0;
+-- scan all tables of the session
+        FOR r_tblsq IN
+            SELECT quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS fullName FROM emaj.emaj_relation
+              WHERE rel_group = ANY (v_groupNames) AND rel_session = v_session AND rel_kind = 'r'
+              ORDER BY rel_priority, rel_schema, rel_tblseq
+            LOOP
+--   lock each table
+--     The locking level is EXCLUSIVE MODE. It blocks all concurrent update capabilities of all tables of the groups
+--     (including table with no update to rollback in order to ensure a stable state of the group at the end of 
+--     the rollback operation). But these tables can be accessed by SELECT statements
+          EXECUTE 'LOCK TABLE ' || r_tblsq.fullName || ' IN EXCLUSIVE MODE';
+          v_nbTbl = v_nbTbl + 1;
+        END LOOP;
+-- ok, all tables locked
+        v_ok = true;
+      EXCEPTION
+        WHEN deadlock_detected THEN
+          v_nbRetry = v_nbRetry + 1;
+          RAISE NOTICE '_rlbk_group_step2: a deadlock has been trapped while locking tables for groups %.', array_to_string(v_groupNames,',');
+      END;
+    END LOOP;
+    IF NOT v_ok THEN
+      RAISE EXCEPTION '_rlbk_group_step2: too many (5) deadlocks encountered while locking tables of group %.',v_groupName;
+    END IF;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'LOCK_SESSIONS' ELSE 'LOCK_SESSION' END, 'END', array_to_string(v_groupNames,','), 'Session #' || v_session || ' : ' || v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
+    RETURN;
+  END;
+$_rlbk_groups_step2$;
 CREATE or REPLACE FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_groups_step4$

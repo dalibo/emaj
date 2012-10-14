@@ -3376,12 +3376,15 @@ $_rlbk_groups_step2$
         v_nbTbl = 0;
 -- scan all tables of the session
         FOR r_tblsq IN
-            SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation
+            SELECT quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS fullName FROM emaj.emaj_relation
               WHERE rel_group = ANY (v_groupNames) AND rel_session = v_session AND rel_kind = 'r'
               ORDER BY rel_priority, rel_schema, rel_tblseq
             LOOP
 --   lock each table
-          EXECUTE 'LOCK TABLE ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+--     The locking level is EXCLUSIVE MODE. It blocks all concurrent update capabilities of all tables of the groups
+--     (including table with no update to rollback in order to ensure a stable state of the group at the end of 
+--     the rollback operation). But these tables can be accessed by SELECT statements
+          EXECUTE 'LOCK TABLE ' || r_tblsq.fullName || ' IN EXCLUSIVE MODE';
           v_nbTbl = v_nbTbl + 1;
         END LOOP;
 -- ok, all tables locked
