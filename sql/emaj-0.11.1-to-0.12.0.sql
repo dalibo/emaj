@@ -1020,13 +1020,6 @@ $_verify_group$
     v_msgPrefix         TEXT;
     v_errorFound        BOOLEAN;
     v_msg               TEXT;
-    v_fullTableName     TEXT;
-    v_relKind           TEXT;
-    v_logTableName      TEXT;
-    v_logFnctName       TEXT;
-    v_rlbkFnctName      TEXT;
-    v_logTriggerName    TEXT;
-    v_truncTriggerName  TEXT;
     r_schema            RECORD;
     r_tblsq             RECORD;
     r_msg               RECORD;
