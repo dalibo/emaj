@@ -952,12 +952,18 @@ $_verify_tblseq$
             END IF;
           END IF;
 --   -> check both triggers exist
-          PERFORM tgname FROM pg_catalog.pg_trigger WHERE tgname = v_logTriggerName;
+--          PERFORM tgname FROM pg_catalog.pg_trigger WHERE tgname = v_logTriggerName;
+          PERFORM tgname FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
+            WHERE tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
+              AND tgname = v_logTriggerName AND nspname = v_schemaName AND relname = v_tblseq;
           IF NOT FOUND THEN
             RETURN NEXT 'log trigger ' || v_logTriggerName || ' not found.';
           END IF;
           IF v_pgVersion >= '8.4' THEN
-            PERFORM tgname FROM pg_catalog.pg_trigger WHERE tgname = v_truncTriggerName;
+--            PERFORM tgname FROM pg_catalog.pg_trigger WHERE tgname = v_truncTriggerName;
+            PERFORM tgname FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
+              WHERE tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
+                AND tgname = v_truncTriggerName AND nspname = v_schemaName AND relname = v_tblseq;
             IF NOT FOUND THEN
               RETURN NEXT 'truncate trigger ' || v_truncTriggerName || ' not found.';
             END IF;
