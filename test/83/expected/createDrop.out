@@ -432,6 +432,12 @@ begin;
   select emaj.emaj_alter_group('myGroup1');
 ERROR:  emaj_alter_group: Group myGroup1 is unknown in emaj_group_def table.
 rollback;
+-- schema suffix cannot be changed for sequence
+begin;
+  update emaj.emaj_group_def set grpdef_log_schema_suffix = 'dummy' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_alter_group('myGroup1');
+ERROR:  emaj_alter_group: Defining a secondary log schema is not allowed for a sequence (myschema1.myTbl3_col31_seq).
+rollback;
 -- log tablespace cannot be changed for sequence
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -478,10 +484,10 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 228 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 231 at PERFORM
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 228 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 231 at PERFORM
  emaj_alter_group 
 ------------------
                 2
@@ -506,10 +512,10 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 228 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 231 at PERFORM
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 228 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 231 at PERFORM
  emaj_alter_group 
 ------------------
                 1
@@ -617,7 +623,7 @@ update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_alter_group" line 198 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 201 at PERFORM
  emaj_alter_group 
 ------------------
                 5
@@ -627,7 +633,7 @@ update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_alter_group" line 198 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 201 at PERFORM
  emaj_alter_group 
 ------------------
                 5

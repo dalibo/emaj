@@ -181,6 +181,11 @@ begin;
   delete from emaj.emaj_group_def where grpdef_group = 'myGroup1';
   select emaj.emaj_alter_group('myGroup1');
 rollback;
+-- schema suffix cannot be changed for sequence
+begin;
+  update emaj.emaj_group_def set grpdef_log_schema_suffix = 'dummy' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_alter_group('myGroup1');
+rollback;
 -- log tablespace cannot be changed for sequence
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
