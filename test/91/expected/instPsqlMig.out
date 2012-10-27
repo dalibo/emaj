@@ -4041,7 +4041,7 @@ $emaj_generate_sql$
 $emaj_generate_sql$;
 COMMENT ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
-CREATE or REPLACE FUNCTION emaj._verify_schemas()
+CREATE or REPLACE FUNCTION emaj._verify_all_schemas()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_schemas$
 -- The function verifies that all E-Maj schemas only contains E-Maj objects.
@@ -4173,7 +4173,7 @@ $emaj_verify_all$
 -- check all E-Maj primary and secondary schemas
     v_errorFound = FALSE;
     FOR r_object IN
-      SELECT msg FROM emaj._verify_schemas() msg
+      SELECT msg FROM emaj._verify_all_schemas() msg
     LOOP
       RETURN NEXT 'Checking E-Maj schemas: ' || r_object.msg;
       v_errorFound = TRUE;
@@ -4249,7 +4249,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._reset_group(v_groupName TEXT) FROM PUBLIC; 
-REVOKE ALL ON FUNCTION emaj._verify_schemas() FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._verify_all_schemas() FROM PUBLIC;
 -- give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) TO emaj_adm;
@@ -4267,12 +4267,12 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) TO emaj_a
 GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._reset_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._verify_schemas() TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_adm;
 -- give appropriate rights on functions to emaj_viewer role
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_tblseq(v_schemaName TEXT, v_tblseq TEXT, v_relKind TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._verify_schemas() TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
 ------------------------------------
 --                                --
 -- Rebuild rollback functions     --
