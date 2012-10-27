@@ -32,6 +32,8 @@ select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
 select emaj.emaj_stop_group('phil''s group#3",','Simple stop mark');
 select emaj.emaj_drop_group('phil''s group#3",');
+select emaj.emaj_force_stop_group('myGroup4');
+select emaj.emaj_drop_group('myGroup4');
 -- emaj tables
 select * from emaj.emaj_group;
 select * from emaj.emaj_relation;
@@ -48,6 +50,7 @@ reset role;
 truncate mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b; 
 truncate mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6;
 alter sequence mySchema2.mySeq1 restart 1000;
+truncate mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2;
 
 -- starting from this point, disable the trigger on myTbl2
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;

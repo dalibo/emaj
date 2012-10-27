@@ -221,6 +221,6 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 300;
-alter sequence emaj.emaj_sequence_sequ_id_seq restart 300;
+alter sequence emaj.emaj_sequence_sequ_id_seq restart 3000;
 alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 300;
 

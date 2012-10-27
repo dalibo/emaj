@@ -184,6 +184,6 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 400;
-alter sequence emaj.emaj_sequence_sequ_id_seq restart 400;
+alter sequence emaj.emaj_sequence_sequ_id_seq restart 4000;
 alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 400;
 

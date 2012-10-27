@@ -12,6 +12,7 @@ insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1,NULL);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C','tsplog1',NULL);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,'tsplog1','tsp log''2');
+
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
@@ -21,11 +22,16 @@ insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl5');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl6');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
 -- The third group name contains space, comma # and '
+-- (note myTbl4 from "phil's schema3" remains outside phil's group#3", group)
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','phil''s tbl1',NULL,' #''3');
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\');
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\_col21_seq');
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'phil''s seq\\1');
--- Note myTbl4 from "phil's schema3" remains outside phil's group#3", group
+
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblm');
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc1');
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc2');
+
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
 insert into emaj.emaj_group_def values ('dummyGrp2','myschema1','dummyTable');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
@@ -89,6 +95,7 @@ rollback;
 
 -- should be OK
 select emaj.emaj_create_group('phil''s group#3",',false);
+select emaj.emaj_create_group('myGroup4');
 
 -- create a group with a table already belonging to another group
 select emaj.emaj_create_group('dummyGrp3');
@@ -291,6 +298,6 @@ select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(his
   where hist_function <> 'EMAJ_INSTALL';
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 200;
-alter sequence emaj.emaj_sequence_sequ_id_seq restart 200;
+alter sequence emaj.emaj_sequence_sequ_id_seq restart 2000;
 alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 200;
 

@@ -300,6 +300,23 @@ select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from
 (select * from emaj.emaj_rlbk_stat order by rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime) as t;
 
 -----------------------------
+-- test use of partitionned tables
+-----------------------------
+select emaj.emaj_start_group('myGroup4','myGroup4_start');
+insert into myschema4.myTblM values ('2001-09-11',0,'abc'),('2011-09-11',10,'def'),('2021-09-11',20,'ghi');
+
+select emaj.emaj_set_mark_group('myGroup4','mark1');
+delete from myschema4.myTblM;
+
+select emaj.emaj_logged_rollback_group('myGroup4','mark1');
+
+select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mytblm_log;
+select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mytblc1_log;
+select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mytblc2_log;
+
+select emaj.emaj_rollback_group('myGroup4','myGroup4_start');
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
@@ -307,6 +324,6 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 5000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 500;
-alter sequence emaj.emaj_sequence_sequ_id_seq restart 500;
+alter sequence emaj.emaj_sequence_sequ_id_seq restart 5000;
 alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 500;
 

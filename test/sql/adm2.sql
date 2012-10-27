@@ -140,6 +140,7 @@ select emaj.emaj_set_mark_group('phil''s group#3",','M2_again!');
 --
 delete from "phil's tbl1" where "phil's col11" = 10;
 update "phil's tbl1" set "phil's col12" = 'DEF' where "phil's col11" <= 2;
+
 select nextval(E'"phil''s schema3"."phil''s seq\\1"');
 --
 select emaj.emaj_set_mark_groups(array['phil''s group#3",'],'phil''s mark #1');

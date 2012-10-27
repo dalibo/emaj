@@ -181,6 +181,42 @@ ALTER TABLE "myTbl2\" ADD CONSTRAINT mytbl2_col21_fkey FOREIGN KEY (col21) REFER
 
 CREATE SEQUENCE "phil's seq\1" MINVALUE 1000 MAXVALUE 2000 CYCLE;
 
+-- Fourth schema (for partitioning)
+
+DROP SCHEMA IF EXISTS mySchema4 CASCADE;
+CREATE SCHEMA mySchema4;
+
+SET search_path=mySchema4;
+
+DROP TABLE IF EXISTS myTblM ;
+CREATE TABLE myTblM (
+  col1       DATE             NOT NULL,
+  col2       INT              ,
+  col3       VARCHAR          ,
+  PRIMARY KEY (col1)
+);
+
+DROP TABLE IF EXISTS myTblC1 ;
+CREATE TABLE myTblC1 (CHECK (col1 BETWEEN '2000-01-01' AND '2009-12-31'), PRIMARY KEY (col1, col2)) INHERITS (myTblM);
+
+DROP TABLE IF EXISTS myTblC2 ;
+CREATE TABLE myTblC2 (CHECK (col1 BETWEEN '2010-01-01' AND '2019-12-31'), PRIMARY KEY (col1, col2)) INHERITS (myTblM);
+
+DROP TRIGGER IF EXISTS myTblM_insert_trigger ON myTblM; 
+CREATE OR REPLACE FUNCTION myTblM_insert_trigger() RETURNS TRIGGER AS $trigger$ 
+BEGIN 
+  IF NEW.col1 BETWEEN '2000-01-01' AND '2009-12-31' THEN
+    INSERT INTO myschema4.myTblC1 VALUES (NEW.*);
+    RETURN NULL;
+  ELSEIF NEW.col1 BETWEEN '2010-01-01' AND '2019-12-31' THEN
+    INSERT INTO myschema4.myTblC2 VALUES (NEW.*);
+    RETURN NULL;
+  END IF;
+  RETURN NEW;
+END;
+$trigger$ LANGUAGE PLPGSQL;
+CREATE TRIGGER myTblM_insert_trigger BEFORE INSERT ON myTblM FOR EACH ROW EXECUTE PROCEDURE mySchema4.myTblM_insert_trigger();
+
 -----------------------------
 -- create roles and give rigths on application objects
 -----------------------------
@@ -188,7 +224,7 @@ create role emaj_regression_tests_adm_user login password 'adm';
 create role emaj_regression_tests_viewer_user login password 'viewer';
 create role emaj_regression_tests_anonym_user login password 'anonym';
 --
-grant all on schema mySchema1, mySchema2, "phil's schema3" to emaj_regression_tests_adm_user, emaj_regression_tests_viewer_user;
+grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4 to emaj_regression_tests_adm_user, emaj_regression_tests_viewer_user;
 --
 grant select on mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b to emaj_regression_tests_viewer_user;
 grant select on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6 to emaj_regression_tests_viewer_user;
@@ -196,6 +232,7 @@ grant select on "phil's schema3"."phil's tbl1", "phil's schema3"."myTbl2\" to em
 grant select on sequence mySchema1."myTbl3_col31_seq" to emaj_regression_tests_viewer_user;
 grant select on sequence mySchema2."myTbl3_col31_seq" to emaj_regression_tests_viewer_user;
 grant select on sequence "phil's schema3"."myTbl2\_col21_seq" to emaj_regression_tests_viewer_user;
+grant select on mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2 to emaj_regression_tests_viewer_user;
 --
 grant all on mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b to emaj_regression_tests_adm_user;
 grant all on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6 to emaj_regression_tests_adm_user;
@@ -205,6 +242,7 @@ grant all on sequence mySchema2."myTbl3_col31_seq" to emaj_regression_tests_adm_
 grant all on sequence mySchema2.mySeq1 to emaj_regression_tests_adm_user;
 grant all on sequence "phil's schema3"."myTbl2\_col21_seq" to emaj_regression_tests_adm_user;
 grant all on sequence "phil's schema3"."phil's seq\1" to emaj_regression_tests_adm_user;
+grant all on mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2 to emaj_regression_tests_adm_user;
 
 -----------------------------
 -- check that no function has kept its default rights to public
