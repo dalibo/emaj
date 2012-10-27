@@ -9,7 +9,7 @@ select * from emaj.emaj_verify_all();
                       emaj_verify_all                      
 -----------------------------------------------------------
  Global checks: no error detected
- Checking schema emaj: no error detected
+ Checking E-Maj schemas: no error detected
  Checking tables group myGroup1: no error detected
  Checking tables group myGroup2: no error detected
  Checking tables group phil's group#3",: no error detected

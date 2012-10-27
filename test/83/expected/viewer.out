@@ -25,37 +25,37 @@ select count(*) from emaj.emaj_hist;
 select count(*) from emaj.emaj_group_def;
  count 
 -------
-    22
+    25
 (1 row)
 
 select count(*) from emaj.emaj_group;
  count 
 -------
-     3
+     4
 (1 row)
 
 select count(*) from emaj.emaj_relation;
  count 
 -------
-    18
+    21
 (1 row)
 
 select count(*) from emaj.emaj_mark;
  count 
 -------
-     6
+     7
 (1 row)
 
 select count(*) from emaj.emaj_sequence;
  count 
 -------
-    40
+    43
 (1 row)
 
 select count(*) from emaj.emaj_seq_hole;
  count 
 -------
-     0
+     3
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
@@ -83,14 +83,12 @@ select * from emaj.emaj_verify_all();
                       emaj_verify_all                      
 -----------------------------------------------------------
  Global checks: no error detected
- Checking schema emaj: no error detected
- Checking schema "emaj #'3": no error detected
- Checking schema emajb: no error detected
- Checking schema "emajC": no error detected
+ Checking E-Maj schemas: no error detected
  Checking tables group myGroup1: no error detected
  Checking tables group myGroup2: no error detected
+ Checking tables group myGroup4: no error detected
  Checking tables group phil's group#3",: no error detected
-(8 rows)
+(6 rows)
 
 select substring(emaj.emaj_get_previous_mark_group('myGroup1', current_timestamp) FOR 5 FROM 1);
  substring 
