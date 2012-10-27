@@ -4772,7 +4772,7 @@ $$Generates a sql script corresponding to all updates performed on a tables grou
 --                                --
 ------------------------------------
 
-CREATE or REPLACE FUNCTION emaj._verify_schemas()
+CREATE or REPLACE FUNCTION emaj._verify_all_schemas()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_schemas$
 -- The function verifies that all E-Maj schemas only contains E-Maj objects.
@@ -4905,7 +4905,7 @@ $emaj_verify_all$
 -- check all E-Maj primary and secondary schemas
     v_errorFound = FALSE;
     FOR r_object IN
-      SELECT msg FROM emaj._verify_schemas() msg
+      SELECT msg FROM emaj._verify_all_schemas() msg
     LOOP
       RETURN NEXT 'Checking E-Maj schemas: ' || r_object.msg;
       v_errorFound = TRUE;
@@ -5073,7 +5073,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._verify_schemas() FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._verify_all_schemas() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 
 -- give appropriate rights on functions to emaj_adm role
@@ -5151,7 +5151,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT,
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._verify_schemas() TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 
 -- give appropriate rights on functions to emaj_viewer role
@@ -5168,7 +5168,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._verify_schemas() TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 
 -- add grants to emaj roles on some system functions, needed for ppa plugin
