@@ -6,14 +6,10 @@
 -- Step 1 : check the E-Maj installation
 -----------------------------
 select * from emaj.emaj_verify_all();
-                      emaj_verify_all                      
------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group phil's group#3",: no error detected
-(5 rows)
+  emaj_verify_all  
+-------------------
+ No error detected
+(1 row)
 
 -----------------------------
 -- Step 2 : for myGroup1, update tables, then rollback then update tables again then set 3 marks
