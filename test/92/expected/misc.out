@@ -789,15 +789,10 @@ select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup
 -----------------------------
 -- should be OK
 select * from emaj.emaj_verify_all();
-                      emaj_verify_all                      
------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+  emaj_verify_all  
+-------------------
+ No error detected
+(1 row)
 
 -- detection of unattended tables in E-Maj schemas
 begin;
@@ -805,19 +800,13 @@ begin;
   create table emaj.dummy2 (col1 int);
   create table emajb.emaj_dummy (col1 int);
   create table emaj.emaj_dummy (col1 int);               -- this one is not detected
-  select * from emaj.emaj_verify_all()
-    order by 1;
-                                     emaj_verify_all                                      
-------------------------------------------------------------------------------------------
- Checking E-Maj schemas: table emajb.emaj_dummy is not linked to any created tables group
- Checking E-Maj schemas: table emaj.dummy1_log is not linked to any created tables group
- Checking E-Maj schemas: table emaj.dummy2 is not linked to any created tables group
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
- Global checks: no error detected
-(8 rows)
+  select * from emaj.emaj_verify_all();
+                                       emaj_verify_all                                        
+----------------------------------------------------------------------------------------------
+ In schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
+ In schema "emaj", the table "emaj"."dummy2" is not linked to any created tables group.
+ In schema "emajb", the table "emajb"."emaj_dummy" is not linked to any created tables group.
+(3 rows)
 
 rollback;
 -- detection of unattended functions in E-Maj schemas
@@ -827,19 +816,13 @@ begin;
   create function "emajC".dummy3_fnct () returns int language sql as $$ select 0 $$;
   create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this one is not detected
   create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this one is not detected
-  select * from emaj.emaj_verify_all()
-    order by 1;
-                                          emaj_verify_all                                          
----------------------------------------------------------------------------------------------------
- Checking E-Maj schemas: function emajC.dummy2_rlbk_fnct is not linked to any created tables group
- Checking E-Maj schemas: function emajC.dummy3_fnct is not linked to any created tables group
- Checking E-Maj schemas: function emaj.dummy1_log_fnct is not linked to any created tables group
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
- Global checks: no error detected
-(8 rows)
+  select * from emaj.emaj_verify_all();
+                                            emaj_verify_all                                            
+-------------------------------------------------------------------------------------------------------
+ In schema "emaj", the function "emaj"."dummy1_log_fnct" is not linked to any created tables group.
+ In schema "emajC", the function "emajC"."dummy2_rlbk_fnct" is not linked to any created tables group.
+ In schema "emajC", the function "emajC"."dummy3_fnct" is not linked to any created tables group.
+(3 rows)
 
 rollback;
 -- detection of unattended sequences in E-Maj schemas
@@ -849,20 +832,14 @@ NOTICE:  CREATE TABLE will create implicit sequence "dummy1_log_col1_seq" for se
   create sequence emajb.dummy2_seq;
   create sequence emajb.dummy3_log_seq;
   create sequence emaj.emaj_dummy4_seq;                  -- this one is not detected
-  select * from emaj.emaj_verify_all()
-    order by 1;
-                                           emaj_verify_all                                           
------------------------------------------------------------------------------------------------------
- Checking E-Maj schemas: sequence emajb.dummy2_seq is not linked to any created tables group
- Checking E-Maj schemas: sequence emajb.dummy3_log_seq is not linked to any created tables group
- Checking E-Maj schemas: sequence emaj.dummy1_log_col1_seq is not linked to any created tables group
- Checking E-Maj schemas: table emaj.dummy1_log is not linked to any created tables group
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
- Global checks: no error detected
-(9 rows)
+  select * from emaj.emaj_verify_all();
+                                            emaj_verify_all                                             
+--------------------------------------------------------------------------------------------------------
+ In schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
+ In schema "emaj", the sequence "emaj"."dummy1_log_col1_seq" is not linked to any created tables group.
+ In schema "emajb", the sequence "emajb"."dummy2_seq" is not linked to any created tables group.
+ In schema "emajb", the sequence "emajb"."dummy3_log_seq" is not linked to any created tables group.
+(4 rows)
 
 rollback;
 -- detection of unattended types in E-Maj schemas
@@ -871,37 +848,25 @@ begin;
   create type emajb.dummy2_type as (col1 int);
   create type emajb.dummy3_type as (col1 int);
   create type emaj.emaj_dummy4_type as (col1 int);       -- this one is not detected
-  select * from emaj.emaj_verify_all()
-    order by 1;
-                             emaj_verify_all                              
---------------------------------------------------------------------------
- Checking E-Maj schemas: type emajb.dummy2_type is not an E-Maj component
- Checking E-Maj schemas: type emajb.dummy3_type is not an E-Maj component
- Checking E-Maj schemas: type emaj.dummy1_type is not an E-Maj component
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
- Global checks: no error detected
-(8 rows)
+  select * from emaj.emaj_verify_all();
+                               emaj_verify_all                                
+------------------------------------------------------------------------------
+ In schema "emaj", the type "emaj"."dummy1_type" is not an E-Maj component.
+ In schema "emajb", the type "emajb"."dummy2_type" is not an E-Maj component.
+ In schema "emajb", the type "emajb"."dummy3_type" is not an E-Maj component.
+(3 rows)
 
 rollback;
 -- detection of unattended views in E-Maj schemas
 begin;
   create view emaj.dummy1_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
   create view emaj.dummy2_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
-  select * from emaj.emaj_verify_all()
-    order by 1;
-                             emaj_verify_all                             
--------------------------------------------------------------------------
- Checking E-Maj schemas: view emaj.dummy1_view is not an E-Maj component
- Checking E-Maj schemas: view emaj.dummy2_view is not an E-Maj component
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
- Global checks: no error detected
-(7 rows)
+  select * from emaj.emaj_verify_all();
+                              emaj_verify_all                               
+----------------------------------------------------------------------------
+ In schema "emaj", the view "emaj"."dummy1_view" is not an E-Maj component.
+ In schema "emaj", the view "emaj"."dummy2_view" is not an E-Maj component.
+(2 rows)
 
 rollback;
 -- detection of unattended foreign tables in E-Maj schemas
@@ -912,36 +877,24 @@ begin;
   create server file_server foreign data wrapper file;
   create foreign table emaj.dummy1_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
   create foreign table emaj.dummy2_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
-  select * from emaj.emaj_verify_all()
-    order by 1;
-                                 emaj_verify_all                                  
-----------------------------------------------------------------------------------
- Checking E-Maj schemas: foreign table emaj.dummy1_ftbl is not an E-Maj component
- Checking E-Maj schemas: foreign table emaj.dummy2_ftbl is not an E-Maj component
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
- Global checks: no error detected
-(7 rows)
+  select * from emaj.emaj_verify_all();
+                                   emaj_verify_all                                   
+-------------------------------------------------------------------------------------
+ In schema "emaj", the foreign table "emaj"."dummy1_ftbl" is not an E-Maj component.
+ In schema "emaj", the foreign table "emaj"."dummy2_ftbl" is not an E-Maj component.
+(2 rows)
 
 rollback;
 -- detection of unattended domains in E-Maj schemas
 begin;
   create domain "emajC".dummy1_domain as int check (VALUE > 0);
   create domain "emajC".dummy2_domain as int check (VALUE > 0);
-  select * from emaj.emaj_verify_all()
-    order by 1;
-                               emaj_verify_all                                
-------------------------------------------------------------------------------
- Checking E-Maj schemas: domain emajC.dummy1_domain is not an E-Maj component
- Checking E-Maj schemas: domain emajC.dummy2_domain is not an E-Maj component
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
- Global checks: no error detected
-(7 rows)
+  select * from emaj.emaj_verify_all();
+                                 emaj_verify_all                                  
+----------------------------------------------------------------------------------
+ In schema "emajC", the domain "emajC"."dummy1_domain" is not an E-Maj component.
+ In schema "emajC", the domain "emajC"."dummy2_domain" is not an E-Maj component.
+(2 rows)
 
 rollback;
 -- tests on groups errors
@@ -949,15 +902,10 @@ rollback;
 begin;
   update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
   select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                 
-------------------------------------------------------------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: the group has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+                                                      emaj_verify_all                                                      
+---------------------------------------------------------------------------------------------------------------------------
+ The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
+(1 row)
 
 rollback;
 -- detection of a missing application schema
@@ -971,51 +919,36 @@ drop cascades to table myschema1.mytbl4
 drop cascades to table myschema1.mytbl2b
 drop cascades to function myschema1.mytbl2trgfct()
   select * from emaj.emaj_verify_all();
-                                          emaj_verify_all                                           
-----------------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: schema myschema1 does not exist any more.
- Checking tables group myGroup1: table/sequence myschema1.myTbl3_col31_seq does not exist any more.
- Checking tables group myGroup1: table/sequence myschema1.myTbl3 does not exist any more.
- Checking tables group myGroup1: table/sequence myschema1.mytbl1 does not exist any more.
- Checking tables group myGroup1: table/sequence myschema1.mytbl4 does not exist any more.
- Checking tables group myGroup1: table/sequence myschema1.mytbl2 does not exist any more.
- Checking tables group myGroup1: table/sequence myschema1.mytbl2b does not exist any more.
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(12 rows)
+                                      emaj_verify_all                                      
+-------------------------------------------------------------------------------------------
+ The application schema "myschema1" does not exist any more.
+ In group "myGroup1", the table "myschema1"."mytbl1" does not exist any more.
+ In group "myGroup1", the table "myschema1"."mytbl2" does not exist any more.
+ In group "myGroup1", the table "myschema1"."mytbl2b" does not exist any more.
+ In group "myGroup1", the table "myschema1"."myTbl3" does not exist any more.
+ In group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" does not exist any more.
+ In group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
+(7 rows)
 
 rollback;
 -- detection of a missing application relation
 begin;
   drop table myschema1.mytbl4;
   select * from emaj.emaj_verify_all();
-                                     emaj_verify_all                                      
-------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: table/sequence myschema1.mytbl4 does not exist any more.
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+                               emaj_verify_all                                
+------------------------------------------------------------------------------
+ In group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
+(1 row)
 
 rollback;
 -- detection of relation type change (a table is now a sequence!)
 begin;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
   select * from emaj.emaj_verify_all();
-                                                     emaj_verify_all                                                     
--------------------------------------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: the relation type for myschema1.mytbl1 has changed (was 'S' at emaj_create_group time).
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+                                 emaj_verify_all                                 
+---------------------------------------------------------------------------------
+ In group "myGroup1", the sequence "myschema1"."mytbl1" does not exist any more.
+(1 row)
 
 rollback;
 -- detection of a missing E-Maj secondary schema
@@ -1028,33 +961,24 @@ drop cascades to function emajb.myschema1_mytbl2b_log_fnct()
 drop cascades to trigger myschema1_mytbl2b_emaj_log_trg on table myschema1.mytbl2b
 drop cascades to function emajb.myschema1_mytbl2b_rlbk_fnct(bigint)
   select * from emaj.emaj_verify_all();
-                                     emaj_verify_all                                      
-------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: schema emajb does not exist.
- Checking tables group myGroup1: log function myschema1_mytbl2b_log_fnct not found.
- Checking tables group myGroup1: rollback function myschema1_mytbl2b_rlbk_fnct not found.
- Checking tables group myGroup1: log trigger myschema1_mytbl2b_emaj_log_trg not found.
- Checking tables group myGroup1: log table myschema1_mytbl2b_log not found.
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(9 rows)
+                                        emaj_verify_all                                         
+------------------------------------------------------------------------------------------------
+ The E-Maj schema "emajb" does not exist any more.
+ In group "myGroup1", the log table "emajb"."myschema1_mytbl2b_log" is not found.
+ In group "myGroup1", the log function "emajb"."myschema1_mytbl2b_log_fnct" is not found.
+ In group "myGroup1", the rollback function "emajb"."myschema1_mytbl2b_rlbk_fnct" is not found.
+ In group "myGroup1", the log trigger "myschema1_mytbl2b_emaj_log_trg" is not found.
+(5 rows)
 
 rollback;
 -- detection of a missing log trigger
 begin;
   drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
   select * from emaj.emaj_verify_all();
-                                   emaj_verify_all                                    
---------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: log trigger myschema1_mytbl1_emaj_log_trg not found.
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+                                  emaj_verify_all                                   
+------------------------------------------------------------------------------------
+ In group "myGroup1", the log trigger "myschema1_mytbl1_emaj_log_trg" is not found.
+(1 row)
 
 rollback;
 -- detection of a missing log function (and trigger)
@@ -1062,61 +986,41 @@ begin;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
 NOTICE:  drop cascades to trigger myschema1_mytbl1_emaj_log_trg on table myschema1.mytbl1
   select * from emaj.emaj_verify_all();
-                                   emaj_verify_all                                    
---------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: log function myschema1_mytbl1_log_fnct not found.
- Checking tables group myGroup1: log trigger myschema1_mytbl1_emaj_log_trg not found.
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(7 rows)
+                                    emaj_verify_all                                     
+----------------------------------------------------------------------------------------
+ In group "myGroup1", the log function "emaj"."myschema1_mytbl1_log_fnct" is not found.
+ In group "myGroup1", the log trigger "myschema1_mytbl1_emaj_log_trg" is not found.
+(2 rows)
 
 rollback;
 -- detection of a missing rollback function
 begin;
   drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
   select * from emaj.emaj_verify_all();
-                                     emaj_verify_all                                     
------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: rollback function myschema1_mytbl1_rlbk_fnct not found.
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+                                       emaj_verify_all                                        
+----------------------------------------------------------------------------------------------
+ In group "myGroup1", the rollback function "emaj"."myschema1_mytbl1_rlbk_fnct" is not found.
+(1 row)
 
 rollback;
 -- detection of a missing truncate trigger
 begin;
   drop trigger myschema1_mytbl1_emaj_trunc_trg on myschema1.mytbl1;
   select * from emaj.emaj_verify_all();
-                                       emaj_verify_all                                       
----------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: truncate trigger myschema1_mytbl1_emaj_trunc_trg not found.
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+                                      emaj_verify_all                                      
+-------------------------------------------------------------------------------------------
+ In group "myGroup1", the truncate trigger "myschema1_mytbl1_emaj_trunc_trg" is not found.
+(1 row)
 
 rollback;
 -- detection of a missing log table
 begin;
   drop table emaj.myschema1_mytbl1_log;
   select * from emaj.emaj_verify_all();
-                              emaj_verify_all                              
----------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: log table myschema1_mytbl1_log not found.
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+                                emaj_verify_all                                 
+--------------------------------------------------------------------------------
+ In group "myGroup1", the log table "emaj"."myschema1_mytbl1_log" is not found.
+(1 row)
 
 rollback;
 -- detection of a change in the application table structure (new column)
@@ -1125,16 +1029,11 @@ begin;
   alter table myschema1.mytbl1 add column othernewcol text;
   alter table myschema1.mytbl2 add column newcol int;
   select * from emaj.emaj_verify_all();
-                                                                  emaj_verify_all                                                                  
----------------------------------------------------------------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: the structure of log table myschema1_mytbl1_log is not coherent with myschema1.mytbl1 (added or changed column?).
- Checking tables group myGroup1: the structure of log table myschema1_mytbl2_log is not coherent with myschema1.mytbl2 (added or changed column?).
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(7 rows)
+                                                                   emaj_verify_all                                                                    
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ In group "myGroup1", the structure of the application table "myschema1"."mytbl1" is not coherent with its log table ("emaj"."myschema1_mytbl1_log").
+ In group "myGroup1", the structure of the application table "myschema1"."mytbl2" is not coherent with its log table ("emaj"."myschema1_mytbl2_log").
+(2 rows)
 
 rollback;
 -- detection of a change in the application table structure (column type change)
@@ -1142,16 +1041,10 @@ begin;
   alter table myschema1.mytbl4 drop column col42;
   alter table myschema1.mytbl4 alter column col45 type varchar(15);
   select * from emaj.emaj_verify_all();
-                                                                   emaj_verify_all                                                                   
------------------------------------------------------------------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: the structure of log table myschema1_mytbl4_log is not coherent with myschema1.mytbl4 (added or changed column?).
- Checking tables group myGroup1: the structure of log table myschema1_mytbl4_log is not coherent with myschema1.mytbl4 (dropped or changed column?).
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(7 rows)
+                                                                   emaj_verify_all                                                                    
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ In group "myGroup1", the structure of the application table "myschema1"."mytbl4" is not coherent with its log table ("emaj"."myschema1_mytbl4_log").
+(1 row)
 
 rollback;
 -- all in 1
@@ -1167,21 +1060,18 @@ begin;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1';
   select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                 
-------------------------------------------------------------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: function emaj.dummy_log_fnct is not linked to any created tables group
- Checking E-Maj schemas: function emaj.dummy_rlbk_fnct is not linked to any created tables group
- Checking E-Maj schemas: table emaj.dummy_log is not linked to any created tables group
- Checking tables group myGroup1: the group has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
- Checking tables group myGroup1: log function myschema1_mytbl1_log_fnct not found.
- Checking tables group myGroup1: rollback function myschema1_mytbl1_rlbk_fnct not found.
- Checking tables group myGroup1: log trigger myschema1_mytbl1_emaj_log_trg not found.
- Checking tables group myGroup1: log table myschema1_mytbl1_log not found.
- Checking tables group myGroup2: the relation type for myschema2.mytbl1 has changed (was 'S' at emaj_create_group time).
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(12 rows)
+                                                      emaj_verify_all                                                      
+---------------------------------------------------------------------------------------------------------------------------
+ In schema "emaj", the table "emaj"."dummy_log" is not linked to any created tables group.
+ In schema "emaj", the function "emaj"."dummy_log_fnct" is not linked to any created tables group.
+ In schema "emaj", the function "emaj"."dummy_rlbk_fnct" is not linked to any created tables group.
+ The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
+ In group "myGroup2", the sequence "myschema2"."mytbl1" does not exist any more.
+ In group "myGroup1", the log table "emaj"."myschema1_mytbl1_log" is not found.
+ In group "myGroup1", the log function "emaj"."myschema1_mytbl1_log_fnct" is not found.
+ In group "myGroup1", the rollback function "emaj"."myschema1_mytbl1_rlbk_fnct" is not found.
+ In group "myGroup1", the log trigger "myschema1_mytbl1_emaj_log_trg" is not found.
+(9 rows)
 
 rollback;
 --------------------------------
@@ -1273,15 +1163,10 @@ PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                      emaj_verify_all                      
------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+  emaj_verify_all  
+-------------------
+ No error detected
+(1 row)
 
 rollback;
 -- cases when a log trigger on an application table is dropped
@@ -1319,15 +1204,10 @@ PL/pgSQL function emaj.emaj_alter_group(text) line 232 at PERFORM
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                      emaj_verify_all                      
------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+  emaj_verify_all  
+-------------------
+ No error detected
+(1 row)
 
 rollback;
 -- cases when an application sequence is dropped
@@ -1350,15 +1230,10 @@ begin;
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                      emaj_verify_all                      
------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+  emaj_verify_all  
+-------------------
+ No error detected
+(1 row)
 
 rollback;
 -- cases when an application schema is dropped
@@ -1422,14 +1297,10 @@ PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                      emaj_verify_all                      
------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(5 rows)
+  emaj_verify_all  
+-------------------
+ No error detected
+(1 row)
 
 rollback;
 -- cases when non E-Maj related objects are stored in emaj secondary schemas
@@ -1446,15 +1317,10 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
   rollback to savepoint sp1;
 -- use emaj_verify_all() to understand the problem
   select * from emaj.emaj_verify_all();
-                                      emaj_verify_all                                      
--------------------------------------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: sequence emajb.dummyseq is not linked to any created tables group
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(6 rows)
+                                        emaj_verify_all                                        
+-----------------------------------------------------------------------------------------------
+ In schema "emajb", the sequence "emajb"."dummyseq" is not linked to any created tables group.
+(1 row)
 
 -- use emaj_force_drop_group to solve the problem
   select emaj.emaj_force_drop_group('myGroup1');
@@ -1465,14 +1331,10 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                      emaj_verify_all                      
------------------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup2: no error detected
- Checking tables group myGroup4: no error detected
- Checking tables group phil's group#3",: no error detected
-(5 rows)
+  emaj_verify_all  
+-------------------
+ No error detected
+(1 row)
 
 rollback;
 -----------------------------

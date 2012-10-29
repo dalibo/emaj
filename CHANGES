@@ -22,7 +22,9 @@ Enhancements:
     functions in E-Maj schemas (i.e. not only those which looks like emaj 
     components). It also detects views, sequences, composite types, domains, 
     foreign tables, conversions, operators and operator classes that should 
-    not be present in E-Maj schemas.
+    not be present in E-Maj schemas. It now only returns one row when no 
+    problem is detected. The function has been optimised to fit performance
+    needs with databases having a great number of relational objects.
   - a new emaj_alter_group() function allows to take into account any change 
     applied in the emaj_group_def table for a given tables group (like 
     adding to or suppressing from the group tables or sequences, or changing 

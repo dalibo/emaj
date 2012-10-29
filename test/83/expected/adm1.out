@@ -2375,13 +2375,10 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -- check grants on other functions to emaj_adm role
 -----------------------------
 select * from emaj.emaj_verify_all();
-                  emaj_verify_all                  
----------------------------------------------------
- Global checks: no error detected
- Checking E-Maj schemas: no error detected
- Checking tables group myGroup1: no error detected
- Checking tables group myGroup2: no error detected
-(4 rows)
+  emaj_verify_all  
+-------------------
+ No error detected
+(1 row)
 
 select emaj.emaj_create_group('dummyGroup');
 ERROR:  emaj_create_group: Group dummyGroup is unknown in emaj_group_def table.
