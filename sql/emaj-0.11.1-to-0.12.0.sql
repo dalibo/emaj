@@ -20,7 +20,8 @@ SET client_min_messages TO WARNING;
 ------------------------------------
 -- Creation of a specific function to check the migration conditions are met.
 -- The function generates an exception if at least one condition is not met.
-CREATE or REPLACE FUNCTION emaj.tmp() 
+DROP FUNCTION IF EXISTS emaj.tmp();
+CREATE FUNCTION emaj.tmp() 
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
@@ -51,7 +52,7 @@ BEGIN TRANSACTION;
 -- lock emaj_group table to avoid any concurrent E-Maj activity
 LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
 
-CREATE or REPLACE FUNCTION emaj.tmp() 
+CREATE OR REPLACE FUNCTION emaj.tmp() 
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
@@ -225,7 +226,7 @@ DROP TABLE emaj.emaj_relation_old;
 --                                --
 ------------------------------------
 
-CREATE or REPLACE FUNCTION emaj._get_mark_name(TEXT, TEXT) RETURNS TEXT LANGUAGE sql as
+CREATE OR REPLACE FUNCTION emaj._get_mark_name(TEXT, TEXT) RETURNS TEXT LANGUAGE sql as
 $$
 -- This function returns a mark name if exists for a group, processing the EMAJ_LAST_MARK keyword.
 -- input: group name and mark name
@@ -237,7 +238,7 @@ SELECT case
        end
 $$;
 
-CREATE or REPLACE FUNCTION emaj._get_mark_datetime(TEXT, TEXT) RETURNS TIMESTAMPTZ LANGUAGE sql as
+CREATE OR REPLACE FUNCTION emaj._get_mark_datetime(TEXT, TEXT) RETURNS TIMESTAMPTZ LANGUAGE sql as
 $$
 -- This function returns the creation timestamp of a mark if exists for a group,
 --   processing the EMAJ_LAST_MARK keyword.
@@ -250,7 +251,7 @@ SELECT case
        end
 $$;
 
-CREATE or REPLACE FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT)
+CREATE OR REPLACE FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_class$
 -- This function verifies that an application table or sequence exists in pg_class
@@ -278,7 +279,7 @@ $_check_class$
   END;
 $_check_class$;
 
-CREATE or REPLACE FUNCTION emaj._check_new_mark(v_mark TEXT, v_groupNames TEXT[])
+CREATE OR REPLACE FUNCTION emaj._check_new_mark(v_mark TEXT, v_groupNames TEXT[])
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_new_mark$
 -- This function verifies that a new mark name supplied the user is valid.
@@ -317,7 +318,7 @@ $_check_new_mark$
   END;
 $_check_new_mark$;
 
-CREATE or REPLACE FUNCTION emaj._log_truncate_fnct() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION emaj._log_truncate_fnct() RETURNS TRIGGER AS
 $_log_truncate_fnct$
 -- The function is triggered by the execution of TRUNCATE SQL verb on tables of an audit_only group
 -- in logging mode.
@@ -336,7 +337,7 @@ $_log_truncate_fnct$
   END;
 $_log_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE or REPLACE FUNCTION emaj._create_log_schema(v_logSchemaName TEXT)
+CREATE OR REPLACE FUNCTION emaj._create_log_schema(v_logSchemaName TEXT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_log_schema$
 -- The function creates a log schema and gives the appropriate rights to emaj users
@@ -357,7 +358,7 @@ $_create_log_schema$
   END;
 $_create_log_schema$;
 
-CREATE or REPLACE FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_log_schema$
 -- The function drops a log schema
@@ -388,7 +389,7 @@ $_drop_log_schema$
 $_drop_log_schema$;
 
 DROP FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN);
-CREATE or REPLACE FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table
@@ -517,7 +518,7 @@ $_create_tbl$
 -- creation of the log fonction that will be mapped to the log trigger later
 -- The new row is logged for each INSERT, the old row is logged for each DELETE
 -- and the old and the new rows are logged for each UPDATE.
-    EXECUTE 'CREATE or REPLACE FUNCTION ' || v_logFnctName || '() RETURNS trigger AS $logfnct$'
+    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS trigger AS $logfnct$'
          || 'BEGIN'
 -- The sequence associated to the log table is incremented at the beginning of the function ...
          || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
@@ -605,7 +606,7 @@ $_create_tbl$
 -- The function returns the number of rollbacked elementary operations or rows
 -- All these functions will be called by the emaj_rlbk_tbl function, which is activated by the
 --  emaj_rollback_group function
-      EXECUTE 'CREATE or REPLACE FUNCTION ' || v_rlbkFnctName || ' (v_lastGlobalSeq BIGINT)'
+      EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_rlbkFnctName || ' (v_lastGlobalSeq BIGINT)'
            || ' RETURNS BIGINT AS $rlbkfnct$'
            || '  DECLARE'
            || '    v_nb_rows       BIGINT := 0;'
@@ -677,7 +678,7 @@ $_create_tbl$
 $_create_tbl$;
 
 DROP FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN);
-CREATE or REPLACE FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_tbl$
 -- The function deletes all what has been created by _create_tbl function
@@ -731,7 +732,7 @@ $_drop_tbl$
   END;
 $_drop_tbl$;
 
-CREATE or REPLACE FUNCTION emaj._create_seq(v_schemaName TEXT, v_seqName TEXT, v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj._create_seq(v_schemaName TEXT, v_seqName TEXT, v_groupName TEXT)
 RETURNS void LANGUAGE plpgsql AS
 $_create_seq$
 -- The function checks whether the sequence is related to a serial column of an application table.
@@ -769,7 +770,7 @@ $_create_seq$
 $_create_seq$;
 
 DROP FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT);
-CREATE or REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_tbl$
 -- This function rollbacks one table to a given timestamp
@@ -854,7 +855,7 @@ $_rlbk_tbl$
 $_rlbk_tbl$;
 
 DROP FUNCTION emaj._log_stat_table(v_schemaName TEXT, v_tableName TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT);
-CREATE or REPLACE FUNCTION emaj._log_stat_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._log_stat_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_log_stat_tbl$
 -- This function returns the number of log rows for a single table between 2 marks or between a mark and the current situation.
@@ -900,7 +901,7 @@ $_log_stat_tbl$
   END;
 $_log_stat_tbl$;
 
-CREATE or REPLACE FUNCTION emaj._verify_tblseq(v_schemaName TEXT, v_tblseq TEXT, v_relKind TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._verify_tblseq(v_schemaName TEXT, v_tblseq TEXT, v_relKind TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN)
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_tblseq$
 -- The function performs checks to verify the consistency of emaj objects for a single table or sequence.
@@ -1012,7 +1013,7 @@ $_verify_tblseq$
   END;
 $_verify_tblseq$;
 
-CREATE or REPLACE FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop BOOLEAN)
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_group$
 -- The function verifies the consistency between log and application tables for a group
@@ -1090,7 +1091,7 @@ $_verify_group$
   END;
 $_verify_group$;
 
-CREATE or REPLACE FUNCTION emaj._check_fk_groups(v_groupNames TEXT[])
+CREATE OR REPLACE FUNCTION emaj._check_fk_groups(v_groupNames TEXT[])
 RETURNS void LANGUAGE plpgsql AS
 $_check_fk_groups$
 -- this function checks foreign key constraints for tables of a groups array.
@@ -1139,7 +1140,7 @@ $_check_fk_groups$
   END;
 $_check_fk_groups$;
 
-CREATE or REPLACE FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN)
 RETURNS void LANGUAGE plpgsql AS
 $_lock_groups$
 -- This function locks all tables of a groups array.
@@ -1199,7 +1200,7 @@ $_lock_groups$
   END;
 $_lock_groups$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_create_group$
 -- This function creates emaj objects for all tables of a group
@@ -1325,7 +1326,7 @@ $emaj_create_group$;
 COMMENT ON FUNCTION emaj.emaj_create_group(TEXT, BOOLEAN) IS
 $$Creates an E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_drop_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_drop_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_drop_group$
 -- This function deletes the emaj objects for all tables of a group
@@ -1348,7 +1349,7 @@ $emaj_drop_group$;
 COMMENT ON FUNCTION emaj.emaj_drop_group(TEXT) IS
 $$Drops an E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_force_drop_group$
 -- This function deletes the emaj objects for all tables of a group.
@@ -1377,7 +1378,7 @@ COMMENT ON FUNCTION emaj.emaj_force_drop_group(TEXT) IS
 $$Drops an E-Maj group, even in LOGGING state.$$;
 
 DROP FUNCTION emaj._drop_group(v_groupName TEXT, v_checkState BOOLEAN);
-CREATE or REPLACE FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_group$
 -- This function effectively deletes the emaj objects for all tables of a group
@@ -1443,7 +1444,7 @@ $_drop_group$
   END;
 $_drop_group$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_alter_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_alter_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_alter_group$
 -- This function alters a tables group.
@@ -1686,7 +1687,7 @@ $emaj_alter_group$;
 COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT) IS
 $$Alter an E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_start_groups$
 -- This function activates the log triggers of all the tables for one or several groups and set a first mark
@@ -1770,7 +1771,7 @@ $_start_groups$
   END;
 $_start_groups$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_stop_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_stop_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_stop_group$
 -- This function de-activates the log triggers of all the tables for a group.
@@ -1794,7 +1795,7 @@ $emaj_stop_group$;
 COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS
 $$Stops an E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_stop_group$
 -- This function de-activates the log triggers of all the tables for a group.
@@ -1818,7 +1819,7 @@ $emaj_stop_group$;
 COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT,TEXT) IS
 $$Stops an E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[])
+CREATE OR REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[])
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_stop_groups$
 -- This function de-activates the log triggers of all the tables for a groups array.
@@ -1842,7 +1843,7 @@ $emaj_stop_groups$;
 COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[]) IS
 $$Stops several E-Maj groups.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_stop_groups$
 -- This function de-activates the log triggers of all the tables for a groups array.
@@ -1866,7 +1867,7 @@ $emaj_stop_groups$;
 COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[], TEXT) IS
 $$Stops several E-Maj groups.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_force_stop_group$
 -- This function forces a tables group stop.
@@ -1893,7 +1894,7 @@ COMMENT ON FUNCTION emaj.emaj_force_stop_group(TEXT) IS
 $$Forces an E-Maj group stop.$$;
 
 DROP FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN);
-CREATE or REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_stop_groups$
 -- This function effectively de-activates the log triggers of all the tables for a group.
@@ -2022,7 +2023,7 @@ $_stop_groups$
   END;
 $_stop_groups$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS int LANGUAGE plpgsql AS
 $emaj_set_mark_group$
 -- This function inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the group
@@ -2067,7 +2068,7 @@ $emaj_set_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_set_mark_group(TEXT,TEXT) IS
 $$Sets a mark on an E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT)
 RETURNS int LANGUAGE plpgsql AS
 $emaj_set_mark_groups$
 -- This function inserts a mark in the emaj_mark table and takes an image of the sequences definitions for several groups at a time
@@ -2126,7 +2127,7 @@ $emaj_set_mark_groups$;
 COMMENT ON FUNCTION emaj.emaj_set_mark_groups(TEXT[],TEXT) IS
 $$Sets a mark on several E-Maj groups.$$;
 
-CREATE or REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN)
 RETURNS int LANGUAGE plpgsql AS
 $_set_mark_groups$
 -- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
@@ -2237,7 +2238,7 @@ $_set_mark_groups$
   END;
 $_set_mark_groups$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT)
 RETURNS void LANGUAGE plpgsql AS
 $emaj_comment_mark_group$
 -- This function sets or modifies a comment on a mark by updating the mark_comment of the emaj_mark table.
@@ -2269,7 +2270,7 @@ $emaj_comment_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_comment_mark_group(TEXT,TEXT,TEXT) IS
 $$Sets a comment on a mark for an E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ)
+CREATE OR REPLACE FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ)
 RETURNS text LANGUAGE plpgsql AS
 $emaj_get_previous_mark_group$
 -- This function returns the name of the mark that immediately precedes a given date and time.
@@ -2299,7 +2300,7 @@ $emaj_get_previous_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TIMESTAMPTZ) IS
 $$Returns the latest mark name preceeding a point in time.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS text LANGUAGE plpgsql AS
 $emaj_get_previous_mark_group$
 -- This function returns the name of the mark that immediately precedes a given mark for a group.
@@ -2335,7 +2336,7 @@ $emaj_get_previous_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TEXT) IS
 $$Returns the latest mark name preceeding a given mark for a group.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS integer LANGUAGE plpgsql AS
 $emaj_delete_mark_group$
 -- This function deletes all traces from a previous set_mark_group(s) function.
@@ -2430,7 +2431,7 @@ $emaj_delete_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_delete_mark_group(TEXT,TEXT) IS
 $$Deletes a mark for an E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS integer LANGUAGE plpgsql AS
 $_delete_before_mark_group$
 -- This function effectively deletes all marks set before a given mark.
@@ -2485,7 +2486,7 @@ $_delete_before_mark_group$
   END;
 $_delete_before_mark_group$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT)
 RETURNS void LANGUAGE plpgsql AS
 $emaj_rename_mark_group$
 -- This function renames an existing mark.
@@ -2542,7 +2543,7 @@ $emaj_rename_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_rename_mark_group(TEXT,TEXT,TEXT) IS
 $$Renames a mark for an E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_groups_step1$
 -- This is the first step of a rollback group processing.
@@ -2665,7 +2666,7 @@ $_rlbk_groups_step1$
   END;
 $_rlbk_groups_step1$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_rlbk_groups_set_session$
 -- This function updates the emaj_relation table and set the predefined session id for one table.
@@ -2704,7 +2705,7 @@ $_rlbk_groups_set_session$
   END;
 $_rlbk_groups_set_session$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT, v_multiGroup BOOLEAN)
 RETURNS void LANGUAGE plpgsql AS
 $_rlbk_groups_step2$
 -- This is the second step of a rollback group processing. It just locks the tables for a session.
@@ -2753,7 +2754,7 @@ $_rlbk_groups_step2$
   END;
 $_rlbk_groups_step2$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_groups_step4$
 -- This is the fourth step of a rollback group processing.
@@ -2821,7 +2822,7 @@ $_rlbk_groups_step4$
   END;
 $_rlbk_groups_step4$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_groups_step5$
 -- This is the fifth step of a rollback group processing. It performs the rollback of all tables of a session.
@@ -2852,7 +2853,7 @@ $_rlbk_groups_step5$
   END;
 $_rlbk_groups_step5$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_groups_step6$
 -- This is the sixth step of a rollback group processing. It recreates the previously deleted foreign keys and 'set immediate' the others.
@@ -2936,7 +2937,7 @@ $_rlbk_groups_step6$
   END;
 $_rlbk_groups_step6$;
 
-CREATE or REPLACE FUNCTION emaj._rlbk_groups_step7(v_groupNames TEXT[], v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_groups_step7(v_groupNames TEXT[], v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_groups_step7$
 -- This is the last step of a rollback group processing. It :
@@ -3009,7 +3010,7 @@ $_rlbk_groups_step7$
   END;
 $_rlbk_groups_step7$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_reset_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_reset_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $emaj_reset_group$
 -- This function empties the log tables for all tables of a group and deletes the sequences saves
@@ -3047,7 +3048,7 @@ $emaj_reset_group$;
 COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS
 $$Resets all log tables content of a stopped E-Maj group.$$;
 
-CREATE or REPLACE FUNCTION emaj._reset_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj._reset_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_reset_group$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences saves
@@ -3092,7 +3093,7 @@ $_reset_group$
   END;
 $_reset_group$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
 $emaj_log_stat_group$
 -- This function returns statistics on row updates executed between 2 marks or between a mark and the current situation.
@@ -3172,7 +3173,7 @@ $emaj_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_group(TEXT,TEXT,TEXT) IS
 $$Returns global statistics about logged events for an E-Maj group between 2 marks.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
 RETURNS SETOF emaj.emaj_detailed_log_stat_type LANGUAGE plpgsql AS
 $emaj_detailed_log_stat_group$
 -- This function returns statistics on row updates executed between 2 marks as viewed through the log tables
@@ -3268,7 +3269,7 @@ $emaj_detailed_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT,TEXT,TEXT) IS
 $$Returns detailed statistics about logged events for an E-Maj group between 2 marks.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT)
 RETURNS interval LANGUAGE plpgsql AS
 $emaj_estimate_rollback_duration$
 -- This function computes an approximate duration of a rollback to a predefined mark for a group.
@@ -3462,7 +3463,7 @@ $emaj_estimate_rollback_duration$;
 COMMENT ON FUNCTION emaj.emaj_estimate_rollback_duration(TEXT,TEXT) IS
 $$Estimates the duration of a potential rollback of an E-Maj group to a given mark.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $emaj_snap_group$
 -- This function creates a file for each table and sequence belonging to the group.
@@ -3583,7 +3584,7 @@ $emaj_snap_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $emaj_snap_log_group$
 -- This function creates a file for each log table belonging to the group.
@@ -3783,7 +3784,7 @@ $emaj_snap_log_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $emaj_generate_sql$
 -- This function generates a SQL script representing all updates performed on a tables group between 2 marks
@@ -4086,7 +4087,7 @@ $emaj_generate_sql$;
 COMMENT ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
 
-CREATE or REPLACE FUNCTION emaj._verify_all_groups()
+CREATE OR REPLACE FUNCTION emaj._verify_all_groups()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_all_groups$
 -- The function verifies the consistency of all E-Maj groups.
@@ -4278,7 +4279,7 @@ $_verify_all_groups$
   END;
 $_verify_all_groups$;
 
-CREATE or REPLACE FUNCTION emaj._verify_all_schemas()
+CREATE OR REPLACE FUNCTION emaj._verify_all_schemas()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_all_schemas$
 -- The function verifies that all E-Maj schemas only contains E-Maj objects.
@@ -4393,7 +4394,7 @@ $_verify_all_schemas$
   END;
 $_verify_all_schemas$;
 
-CREATE or REPLACE FUNCTION emaj.emaj_verify_all()
+CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $emaj_verify_all$
 -- The function verifies the consistency between all emaj objects present inside emaj schema and
@@ -4524,7 +4525,7 @@ GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
 --                                --
 ------------------------------------
 
-CREATE or REPLACE FUNCTION emaj.tmp() 
+CREATE OR REPLACE FUNCTION emaj.tmp() 
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
@@ -4602,7 +4603,7 @@ $tmp$
       END LOOP;
       CLOSE col2_curs;
 -- Then recreate the rollback function associated to the table
-      EXECUTE 'CREATE or REPLACE FUNCTION ' || v_rlbkFnctName || ' (v_lastGlobalSeq BIGINT)'
+      EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_rlbkFnctName || ' (v_lastGlobalSeq BIGINT)'
            || ' RETURNS BIGINT AS $rlbkfnct$'
            || '  DECLARE'
            || '    v_nb_rows       BIGINT := 0;'
