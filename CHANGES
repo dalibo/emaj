@@ -25,6 +25,8 @@ Enhancements:
     not be present in E-Maj schemas. It now only returns one row when no 
     problem is detected. The function has been optimised to fit performance
     needs with databases having a great number of relational objects.
+  - the sanity checks performed on groups at start_group, set_mark_group and 
+    rollback_group times have been significantly speed up.
   - a new emaj_alter_group() function allows to take into account any change 
     applied in the emaj_group_def table for a given tables group (like 
     adding to or suppressing from the group tables or sequences, or changing 

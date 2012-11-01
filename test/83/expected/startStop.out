@@ -47,13 +47,133 @@ PL/pgSQL function "_start_groups" line 48 at SQL statement
 SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
 PL/pgSQL function "emaj_start_group" line 16 at SQL statement
 PL/pgSQL function "emaj_start_group" line 5 at RETURN
--- missing application table
+-- detection of too old group
 begin;
-  drop table mySchema2."myTbl3" cascade;
-  select emaj.emaj_start_group('myGroup2','M1');
-ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist any more.
-CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_group( $1 [ $2 ], true)"
-PL/pgSQL function "_start_groups" line 36 at PERFORM
+  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_groups: The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
+PL/pgSQL function "emaj_start_group" line 16 at SQL statement
+PL/pgSQL function "emaj_start_group" line 5 at RETURN
+rollback;
+-- detection of a missing application schema
+begin;
+  drop schema myschema1 cascade;
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_group: In group "myGroup1", the table "myschema1"."mytbl1" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
+PL/pgSQL function "emaj_start_group" line 16 at SQL statement
+PL/pgSQL function "emaj_start_group" line 5 at RETURN
+rollback;
+-- detection of a missing application relation
+begin;
+  drop table myschema1.mytbl4;
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_group: In group "myGroup1", the table "myschema1"."mytbl4" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
+PL/pgSQL function "emaj_start_group" line 16 at SQL statement
+PL/pgSQL function "emaj_start_group" line 5 at RETURN
+rollback;
+-- detection of relation type change (a table is now a sequence!)
+begin;
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_group: In group "myGroup1", the sequence "myschema1"."mytbl1" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
+PL/pgSQL function "emaj_start_group" line 16 at SQL statement
+PL/pgSQL function "emaj_start_group" line 5 at RETURN
+rollback;
+-- detection of a missing E-Maj secondary schema
+begin;
+  drop schema emajb cascade;
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_group: In group "myGroup1", the log table "emajb"."myschema1_mytbl2b_log" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
+PL/pgSQL function "emaj_start_group" line 16 at SQL statement
+PL/pgSQL function "emaj_start_group" line 5 at RETURN
+rollback;
+-- detection of a missing log trigger
+begin;
+  drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_group: In group "myGroup1", the log trigger "myschema1_mytbl1_emaj_log_trg" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
+PL/pgSQL function "emaj_start_group" line 16 at SQL statement
+PL/pgSQL function "emaj_start_group" line 5 at RETURN
+rollback;
+-- detection of a missing log function
+begin;
+  drop function emaj.myschema1_mytbl1_log_fnct() cascade;
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_group: In group "myGroup1", the log function "emaj"."myschema1_mytbl1_log_fnct" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
+PL/pgSQL function "emaj_start_group" line 16 at SQL statement
+PL/pgSQL function "emaj_start_group" line 5 at RETURN
+rollback;
+-- detection of a missing rollback function
+begin;
+  drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_group: In group "myGroup1", the rollback function "emaj"."myschema1_mytbl1_rlbk_fnct" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
+PL/pgSQL function "emaj_start_group" line 16 at SQL statement
+PL/pgSQL function "emaj_start_group" line 5 at RETURN
+rollback;
+-- detection of a missing truncate trigger (pg 8.4+)
+begin;
+  drop trigger myschema1_mytbl1_emaj_trunc_trg on myschema1.mytbl1;
+ERROR:  trigger "myschema1_mytbl1_emaj_trunc_trg" for table "mytbl1" does not exist
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+rollback;
+-- detection of a missing log table
+begin;
+  drop table emaj.myschema1_mytbl1_log;
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_group: In group "myGroup1", the log table "emaj"."myschema1_mytbl1_log" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
+PL/pgSQL function "emaj_start_group" line 16 at SQL statement
+PL/pgSQL function "emaj_start_group" line 5 at RETURN
+rollback;
+-- detection of a change in the application table structure (new column)
+begin;
+  alter table myschema1.mytbl1 add column newcol int;
+  alter table myschema1.mytbl1 add column othernewcol text;
+  alter table myschema1.mytbl2 add column newcol int;
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_group: In group "myGroup1", the structure of the application table "myschema1"."mytbl1" is not coherent with its log table ("emaj"."myschema1_mytbl1_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
+PL/pgSQL function "emaj_start_group" line 16 at SQL statement
+PL/pgSQL function "emaj_start_group" line 5 at RETURN
+rollback;
+-- detection of a change in the application table structure (column type change)
+begin;
+  alter table myschema1.mytbl4 drop column col42;
+  alter table myschema1.mytbl4 alter column col45 type varchar(15);
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  _verify_group: In group "myGroup1", the structure of the application table "myschema1"."mytbl4" is not coherent with its log table ("emaj"."myschema1_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
 PL/pgSQL function "emaj_start_group" line 16 at SQL statement
 PL/pgSQL function "emaj_start_group" line 5 at RETURN
@@ -437,9 +557,9 @@ select emaj.emaj_stop_group('myGroup2');
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
-ERROR:  _verify_group: Checking tables group myGroup2: table/sequence myschema2.myTbl3 does not exist any more.
-CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_group( $1 [ $2 ], true)"
-PL/pgSQL function "_start_groups" line 36 at PERFORM
+ERROR:  _verify_group: In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_start_groups" line 37 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_group_names_array( $1 ),  $2 , true,  $3 )"
 PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
 rollback;

@@ -273,7 +273,7 @@ select emaj.emaj_alter_group('myGroup1');
 alter table myschema1.mytbl1 alter column newcol2 type bigint;
 select emaj.emaj_alter_group('myGroup1');
 alter table myschema1.mytbl1 alter column newcol2 set default 0;
--- NB: changing default hos no impact on emaj component 
+-- NB: changing default has no impact on emaj component 
 select emaj.emaj_alter_group('myGroup1');
 alter table myschema1.mytbl1 drop column newcol2;
 select emaj.emaj_alter_group('myGroup1');

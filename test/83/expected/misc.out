@@ -1092,14 +1092,14 @@ begin;
 -- setting a mark or rollbacking fails
   savepoint sp1;
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
-ERROR:  _verify_group: Checking tables group myGroup2: the structure of log table myschema2_mytbl4_log is not coherent with myschema2.mytbl4 (added or changed column?).
-CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_group( $1 , true)"
+ERROR:  _verify_group: In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups(array[ $1 ], true)"
 PL/pgSQL function "emaj_set_mark_group" line 25 at PERFORM
   rollback to savepoint sp1;
-    select emaj.emaj_rollback_group('myGroup2','EMAJLASTMARK');
-ERROR:  _verify_group: Checking tables group myGroup2: the structure of log table myschema2_mytbl4_log is not coherent with myschema2.mytbl4 (added or changed column?).
-CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_group( $1 [ $2 ],true)"
-PL/pgSQL function "_rlbk_groups_step1" line 40 at PERFORM
+    select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
+ERROR:  _verify_group: In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
+PL/pgSQL function "_rlbk_groups_step1" line 52 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
@@ -1129,7 +1129,7 @@ PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
   select emaj.emaj_alter_group('myGroup2');
  emaj_alter_group 
 ------------------
-                1
+                8
 (1 row)
 
 rollback;
@@ -1198,13 +1198,13 @@ PL/pgSQL function "emaj_force_stop_group" line 14 at SQL statement
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: table myschema2.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 231 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 231 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
  emaj_alter_group 
 ------------------
-                1
+                7
 (1 row)
 
 -- and everything is clean...
@@ -1230,7 +1230,7 @@ begin;
   select emaj.emaj_alter_group('myGroup2');
  emaj_alter_group 
 ------------------
-                1
+                7
 (1 row)
 
 -- and everything is clean...

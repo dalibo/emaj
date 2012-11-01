@@ -17,10 +17,68 @@ select emaj.emaj_start_group(NULL,NULL);
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
 -- reserved mark name
 select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
--- missing application table
+-- detection of too old group
 begin;
-  drop table mySchema2."myTbl3" cascade;
-  select emaj.emaj_start_group('myGroup2','M1');
+  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a missing application schema
+begin;
+  drop schema myschema1 cascade;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a missing application relation
+begin;
+  drop table myschema1.mytbl4;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of relation type change (a table is now a sequence!)
+begin;
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a missing E-Maj secondary schema
+begin;
+  drop schema emajb cascade;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a missing log trigger
+begin;
+  drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a missing log function
+begin;
+  drop function emaj.myschema1_mytbl1_log_fnct() cascade;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a missing rollback function
+begin;
+  drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a missing truncate trigger (pg 8.4+)
+begin;
+  drop trigger myschema1_mytbl1_emaj_trunc_trg on myschema1.mytbl1;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a missing log table
+begin;
+  drop table emaj.myschema1_mytbl1_log;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a change in the application table structure (new column)
+begin;
+  alter table myschema1.mytbl1 add column newcol int;
+  alter table myschema1.mytbl1 add column othernewcol text;
+  alter table myschema1.mytbl2 add column newcol int;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a change in the application table structure (column type change)
+begin;
+  alter table myschema1.mytbl4 drop column col42;
+  alter table myschema1.mytbl4 alter column col45 type varchar(15);
+  select emaj.emaj_start_group('myGroup1','M1');
 rollback;
 
 -- should be OK
