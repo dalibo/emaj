@@ -519,7 +519,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
   rollback to savepoint sp1;
-    select emaj.emaj_rollback_group('myGroup2','EMAJLASTMARK');
+    select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
   rollback to savepoint sp1;
 -- but it is possible to stop, drop and recreate the group
   select emaj.emaj_stop_group('myGroup2');

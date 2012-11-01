@@ -480,7 +480,7 @@ select group_nb_table, group_nb_sequence, case when group_last_alter_datetime is
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                0
+                6
 (1 row)
 
 select group_nb_table, group_nb_sequence, case when group_last_alter_datetime is null then 'NULL' else 'NOT NULL' end as is_group_last_alter_datetime_null from emaj.emaj_group where group_name = 'myGroup1';
@@ -504,13 +504,13 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 231 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 231 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
  emaj_alter_group 
 ------------------
-                2
+                4
 (1 row)
 
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
@@ -532,13 +532,13 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 231 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 231 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
  emaj_alter_group 
 ------------------
-                1
+                3
 (1 row)
 
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
@@ -553,7 +553,7 @@ insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                2
+                5
 (1 row)
 
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
@@ -576,7 +576,7 @@ insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
@@ -590,7 +590,7 @@ update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_sche
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema1_myTbl3_log';
@@ -603,7 +603,7 @@ update emaj.emaj_group_def set grpdef_log_schema_suffix = 'C' where grpdef_schem
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema1_myTbl3_log';
@@ -617,7 +617,7 @@ update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = '
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
@@ -630,7 +630,7 @@ update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_sc
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
@@ -644,20 +644,20 @@ update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_alter_group" line 201 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
  emaj_alter_group 
 ------------------
-                5
+                6
 (1 row)
 
 update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp = 'tsplog1' then NULL when grpdef_log_dat_tsp = 'tsp log''2' then 'tsplog1' else 'tsp log''2' end where grpdef_schema = 'myschema1' and grpdef_tblseq not like '%seq';
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_alter_group" line 201 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
  emaj_alter_group 
 ------------------
-                5
+                6
 (1 row)
 
 -- only change the log index tablespace
@@ -665,7 +665,7 @@ update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = '
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log_idx';
@@ -678,7 +678,7 @@ update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsp log''2' where grpdef_sc
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log_idx';
@@ -692,7 +692,7 @@ update emaj.emaj_group_def set grpdef_priority = 30 where grpdef_schema = 'mysch
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
@@ -705,7 +705,7 @@ update emaj.emaj_group_def set grpdef_priority = NULL where grpdef_schema = 'mys
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
@@ -718,7 +718,7 @@ update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'mysch
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
@@ -732,36 +732,36 @@ alter table myschema1.mytbl1 add column newcol int;
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 alter table myschema1.mytbl1 rename newcol to newcol2;
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 alter table myschema1.mytbl1 alter column newcol2 type bigint;
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 alter table myschema1.mytbl1 alter column newcol2 set default 0;
--- NB: changing default hos no impact on emaj component 
+-- NB: changing default has no impact on emaj component 
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                0
+                6
 (1 row)
 
 alter table myschema1.mytbl1 drop column newcol2;
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 -- missing emaj components
@@ -769,28 +769,28 @@ drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 drop function emaj.myschema1_mytbl1_log_fnct() cascade;
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 drop table emaj.myschema1_mytbl1_log;
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                1
+                6
 (1 row)
 
 -----------------------------
@@ -816,150 +816,150 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t
   where hist_function <> 'EMAJ_INSTALL';
-  hist_function   |   hist_event   |   hist_object    |              regexp_replace              | hist_user 
-------------------+----------------+------------------+------------------------------------------+-----------
- CREATE_GROUP     | BEGIN          | myGroup1         | rollbackable                             | postgres
- CREATE_GROUP     | SCHEMA CREATED | emajb            |                                          | postgres
- CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                          | postgres
- CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed             | postgres
- CREATE_GROUP     | BEGIN          | myGroup2         | rollbackable                             | postgres
- CREATE_GROUP     | END            | myGroup2         | 8 tables/sequences processed             | postgres
- CREATE_GROUP     | BEGIN          | phil's group#3", | audit_only                               | postgres
- CREATE_GROUP     | SCHEMA CREATED | "emaj #'3"       |                                          | postgres
- CREATE_GROUP     | END            | phil's group#3", | 4 tables/sequences processed             | postgres
- CREATE_GROUP     | BEGIN          | myGroup4         | rollbackable                             | postgres
- CREATE_GROUP     | END            | myGroup4         | 3 tables/sequences processed             | postgres
- COMMENT_GROUP    |                | myGroup1         |                                          | postgres
- COMMENT_GROUP    |                | myGroup1         |                                          | postgres
- COMMENT_GROUP    |                | myGroup1         |                                          | postgres
- START_GROUP      | BEGIN          | myGroup1         | With log reset                           | postgres
- LOCK_GROUP       | BEGIN          | myGroup1         |                                          | postgres
- LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)           | postgres
- SET_MARK_GROUP   | BEGIN          | myGroup1         | MARK_%                                   | postgres
- SET_MARK_GROUP   | END            | myGroup1         | MARK_%                                   | postgres
- START_GROUP      | END            | myGroup1         | 6 tables/sequences processed             | postgres
- STOP_GROUP       | BEGIN          | myGroup1         |                                          | postgres
- LOCK_GROUP       | BEGIN          | myGroup1         |                                          | postgres
- LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)           | postgres
- SET_MARK_GROUP   | BEGIN          | myGroup1         | STOP_%                                   | postgres
- SET_MARK_GROUP   | END            | myGroup1         | STOP_%                                   | postgres
- STOP_GROUP       | END            | myGroup1         | 6 tables/sequences processed             | postgres
- DROP_GROUP       | BEGIN          | myGroup1         |                                          | postgres
- DROP_GROUP       | SCHEMA DROPPED | emajb            |                                          | postgres
- DROP_GROUP       | END            | myGroup1         | 6 tables/sequences processed             | postgres
- DROP_GROUP       | BEGIN          | myGroup2         |                                          | postgres
- DROP_GROUP       | SCHEMA DROPPED | "emajC"          |                                          | postgres
- DROP_GROUP       | END            | myGroup2         | 8 tables/sequences processed             | postgres
- CREATE_GROUP     | BEGIN          | myGroup1         | audit_only                               | postgres
- CREATE_GROUP     | SCHEMA CREATED | emajb            |                                          | postgres
- CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                          | postgres
- CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed             | postgres
- START_GROUP      | BEGIN          | myGroup1         | With log reset                           | postgres
- LOCK_GROUP       | BEGIN          | myGroup1         |                                          | postgres
- LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)           | postgres
- SET_MARK_GROUP   | BEGIN          | myGroup1         | MARK_%                                   | postgres
- SET_MARK_GROUP   | END            | myGroup1         | MARK_%                                   | postgres
- START_GROUP      | END            | myGroup1         | 6 tables/sequences processed             | postgres
- FORCE_DROP_GROUP | BEGIN          | myGroup1         |                                          | postgres
- FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                          | postgres
- FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                          | postgres
- FORCE_DROP_GROUP | END            | myGroup1         | 6 tables/sequences processed             | postgres
- CREATE_GROUP     | BEGIN          | myGroup2         | rollbackable                             | postgres
- CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                          | postgres
- CREATE_GROUP     | END            | myGroup2         | 8 tables/sequences processed             | postgres
- FORCE_DROP_GROUP | BEGIN          | myGroup2         |                                          | postgres
- FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                          | postgres
- FORCE_DROP_GROUP | END            | myGroup2         | 8 tables/sequences processed             | postgres
- CREATE_GROUP     | BEGIN          | myGroup1         | rollbackable                             | postgres
- CREATE_GROUP     | SCHEMA CREATED | emajb            |                                          | postgres
- CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                          | postgres
- CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed             | postgres
- START_GROUP      | BEGIN          | myGroup1         | With log reset                           | postgres
- LOCK_GROUP       | BEGIN          | myGroup1         |                                          | postgres
- LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)           | postgres
- SET_MARK_GROUP   | BEGIN          | myGroup1         | MARK_%                                   | postgres
- SET_MARK_GROUP   | END            | myGroup1         | MARK_%                                   | postgres
- START_GROUP      | END            | myGroup1         | 6 tables/sequences processed             | postgres
- STOP_GROUP       | BEGIN          | myGroup1         |                                          | postgres
- LOCK_GROUP       | BEGIN          | myGroup1         |                                          | postgres
- LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)           | postgres
- SET_MARK_GROUP   | BEGIN          | myGroup1         | STOP_%                                   | postgres
- SET_MARK_GROUP   | END            | myGroup1         | STOP_%                                   | postgres
- STOP_GROUP       | END            | myGroup1         | 6 tables/sequences processed             | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 0 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 2 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 2 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                          | postgres
- ALTER_GROUP      | SCHEMA CREATED | emajb            |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                          | postgres
- ALTER_GROUP      | SCHEMA CREATED | emajb            |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                          | postgres
- ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                          | postgres
- ALTER_GROUP      | SCHEMA CREATED | emajb            |                                          | postgres
- ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 5 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                          | postgres
- ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                          | postgres
- ALTER_GROUP      | SCHEMA CREATED | emajb            |                                          | postgres
- ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 5 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                          | postgres
- ALTER_GROUP      | SCHEMA CREATED | emajb            |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                          | postgres
- ALTER_GROUP      | SCHEMA CREATED | emajb            |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 0 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                          | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 tables/sequences effectively processed | postgres
- FORCE_DROP_GROUP | BEGIN          | myGroup1         |                                          | postgres
- FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                          | postgres
- FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                          | postgres
- FORCE_DROP_GROUP | END            | myGroup1         | 6 tables/sequences processed             | postgres
+  hist_function   |   hist_event   |   hist_object    |                 regexp_replace                  | hist_user 
+------------------+----------------+------------------+-------------------------------------------------+-----------
+ CREATE_GROUP     | BEGIN          | myGroup1         | rollbackable                                    | postgres
+ CREATE_GROUP     | SCHEMA CREATED | emajb            |                                                 | postgres
+ CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | myGroup2         | rollbackable                                    | postgres
+ CREATE_GROUP     | END            | myGroup2         | 8 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | phil's group#3", | audit_only                                      | postgres
+ CREATE_GROUP     | SCHEMA CREATED | "emaj #'3"       |                                                 | postgres
+ CREATE_GROUP     | END            | phil's group#3", | 4 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | myGroup4         | rollbackable                                    | postgres
+ CREATE_GROUP     | END            | myGroup4         | 3 tables/sequences processed                    | postgres
+ COMMENT_GROUP    |                | myGroup1         |                                                 | postgres
+ COMMENT_GROUP    |                | myGroup1         |                                                 | postgres
+ COMMENT_GROUP    |                | myGroup1         |                                                 | postgres
+ START_GROUP      | BEGIN          | myGroup1         | With log reset                                  | postgres
+ LOCK_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)                  | postgres
+ SET_MARK_GROUP   | BEGIN          | myGroup1         | MARK_%                                          | postgres
+ SET_MARK_GROUP   | END            | myGroup1         | MARK_%                                          | postgres
+ START_GROUP      | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ STOP_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)                  | postgres
+ SET_MARK_GROUP   | BEGIN          | myGroup1         | STOP_%                                          | postgres
+ SET_MARK_GROUP   | END            | myGroup1         | STOP_%                                          | postgres
+ STOP_GROUP       | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ DROP_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ DROP_GROUP       | SCHEMA DROPPED | emajb            |                                                 | postgres
+ DROP_GROUP       | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ DROP_GROUP       | BEGIN          | myGroup2         |                                                 | postgres
+ DROP_GROUP       | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ DROP_GROUP       | END            | myGroup2         | 8 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | myGroup1         | audit_only                                      | postgres
+ CREATE_GROUP     | SCHEMA CREATED | emajb            |                                                 | postgres
+ CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ START_GROUP      | BEGIN          | myGroup1         | With log reset                                  | postgres
+ LOCK_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)                  | postgres
+ SET_MARK_GROUP   | BEGIN          | myGroup1         | MARK_%                                          | postgres
+ SET_MARK_GROUP   | END            | myGroup1         | MARK_%                                          | postgres
+ START_GROUP      | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ FORCE_DROP_GROUP | BEGIN          | myGroup1         |                                                 | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                                 | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ FORCE_DROP_GROUP | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | myGroup2         | rollbackable                                    | postgres
+ CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ CREATE_GROUP     | END            | myGroup2         | 8 tables/sequences processed                    | postgres
+ FORCE_DROP_GROUP | BEGIN          | myGroup2         |                                                 | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ FORCE_DROP_GROUP | END            | myGroup2         | 8 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | myGroup1         | rollbackable                                    | postgres
+ CREATE_GROUP     | SCHEMA CREATED | emajb            |                                                 | postgres
+ CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ START_GROUP      | BEGIN          | myGroup1         | With log reset                                  | postgres
+ LOCK_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)                  | postgres
+ SET_MARK_GROUP   | BEGIN          | myGroup1         | MARK_%                                          | postgres
+ SET_MARK_GROUP   | END            | myGroup1         | MARK_%                                          | postgres
+ START_GROUP      | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ STOP_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)                  | postgres
+ SET_MARK_GROUP   | BEGIN          | myGroup1         | STOP_%                                          | postgres
+ SET_MARK_GROUP   | END            | myGroup1         | STOP_%                                          | postgres
+ STOP_GROUP       | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 2 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 2 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 5 dropped relations and 5 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 5 dropped relations and 5 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ FORCE_DROP_GROUP | BEGIN          | myGroup1         |                                                 | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                                 | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ FORCE_DROP_GROUP | END            | myGroup1         | 6 tables/sequences processed                    | postgres
 (142 rows)
 
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
