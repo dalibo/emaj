@@ -2258,7 +2258,7 @@ $emaj_comment_mark_group$
     v_realMark       TEXT;
   BEGIN
 -- check that the group is recorded in emaj_group table
-    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_comment_mark_group: group % has not been created.', v_groupName;
     END IF;
