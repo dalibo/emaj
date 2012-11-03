@@ -642,6 +642,21 @@ select emaj.emaj_delete_before_mark_group('myGroup2',
                              6
 (1 row)
 
+-- check emaj_delete_before_mark_group also cleans up the emaj_hist table
+insert into emaj.emaj_param (param_key, param_value_interval) values ('history_retention','0 second'::interval);
+select emaj.emaj_set_mark_group('phil''s group#3",','Mark4');
+ emaj_set_mark_group 
+---------------------
+                   4
+(1 row)
+
+select emaj.emaj_delete_before_mark_group('phil''s group#3",','Mark4');
+ emaj_delete_before_mark_group 
+-------------------------------
+                             1
+(1 row)
+
+delete from emaj.emaj_param where param_key = 'history_retention';
 -----------------------------
 -- test functions with group not in logging state 
 -----------------------------
@@ -665,20 +680,16 @@ ERROR:  emaj_set_mark_groups: A mark cannot be set for group myGroup1 because it
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+------------+-------------------------------+-----------------------+-----------------------+---------------------------
-     202 | phil's group#3", | Mark3          |               0 | ACTIVE     |                               |                   199 |                  2017 |                          
      302 | myGroup1         | SM1            |               2 | DELETED    | a better comment for group #1 |                   299 |                  3019 |                         0
      315 | myGroup2         | SM2            |               2 | DELETED    | a comment for group #2        |                   299 |                  3111 |                         0
-     316 | myGroup1         | STOP_%         |               2 | DELETED    |                               |                   299 |                  3117 |                         0
-     317 | myGroup2         | STOP_%         |               2 | DELETED    |                               |                   299 |                  3125 |                         0
+     316 | phil's group#3", | Mark4          |               2 | ACTIVE     |                               |                   299 |                  3115 |                          
+     317 | myGroup1         | STOP_%         |               2 | DELETED    |                               |                   299 |                  3121 |                         0
+     318 | myGroup2         | STOP_%         |               2 | DELETED    |                               |                   299 |                  3129 |                         0
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
  sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
 ---------+----------------+------------------------------------+----------------+---------------+----------------
-    2014 | phil's schema3 | myTbl2\_col21_seq                  | Mark3          |             1 | f
-    2015 | phil's schema3 | phil's seq\1                       | Mark3          |          1000 | f
-    2016 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark3          |             1 | f
-    2017 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark3          |             1 | f
     3014 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
     3015 | emajC          | myschema1_myTbl3_log_seq           | SM1            |             1 | f
     3016 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
@@ -693,20 +704,24 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     3109 | emaj           | myschema2_mytbl4_log_seq           | SM2            |             1 | f
     3110 | emaj           | myschema2_mytbl5_log_seq           | SM2            |             1 | f
     3111 | emaj           | myschema2_mytbl6_log_seq           | SM2            |             1 | f
-    3112 | myschema1      | myTbl3_col31_seq                   | STOP_%         |             1 | f
-    3113 | emajC          | myschema1_myTbl3_log_seq           | STOP_%         |             1 | f
-    3114 | emaj           | myschema1_mytbl1_log_seq           | STOP_%         |             1 | f
-    3115 | emaj           | myschema1_mytbl4_log_seq           | STOP_%         |             1 | f
-    3116 | emaj           | myschema1_mytbl2_log_seq           | STOP_%         |             1 | f
-    3117 | emajb          | myschema1_mytbl2b_log_seq          | STOP_%         |             1 | f
-    3118 | myschema2      | myseq1                             | STOP_%         |          1000 | f
-    3119 | myschema2      | myTbl3_col31_seq                   | STOP_%         |             1 | f
-    3120 | emaj           | myschema2_mytbl1_log_seq           | STOP_%         |             1 | f
-    3121 | emaj           | myschema2_mytbl2_log_seq           | STOP_%         |             1 | f
-    3122 | emajC          | myschema2_myTbl3_log_seq           | STOP_%         |             1 | f
-    3123 | emaj           | myschema2_mytbl4_log_seq           | STOP_%         |             1 | f
-    3124 | emaj           | myschema2_mytbl5_log_seq           | STOP_%         |             1 | f
-    3125 | emaj           | myschema2_mytbl6_log_seq           | STOP_%         |             1 | f
+    3112 | phil's schema3 | myTbl2\_col21_seq                  | Mark4          |             1 | f
+    3113 | phil's schema3 | phil's seq\1                       | Mark4          |          1000 | f
+    3114 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark4          |             1 | f
+    3115 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark4          |             1 | f
+    3116 | myschema1      | myTbl3_col31_seq                   | STOP_%         |             1 | f
+    3117 | emajC          | myschema1_myTbl3_log_seq           | STOP_%         |             1 | f
+    3118 | emaj           | myschema1_mytbl1_log_seq           | STOP_%         |             1 | f
+    3119 | emaj           | myschema1_mytbl4_log_seq           | STOP_%         |             1 | f
+    3120 | emaj           | myschema1_mytbl2_log_seq           | STOP_%         |             1 | f
+    3121 | emajb          | myschema1_mytbl2b_log_seq          | STOP_%         |             1 | f
+    3122 | myschema2      | myseq1                             | STOP_%         |          1000 | f
+    3123 | myschema2      | myTbl3_col31_seq                   | STOP_%         |             1 | f
+    3124 | emaj           | myschema2_mytbl1_log_seq           | STOP_%         |             1 | f
+    3125 | emaj           | myschema2_mytbl2_log_seq           | STOP_%         |             1 | f
+    3126 | emajC          | myschema2_myTbl3_log_seq           | STOP_%         |             1 | f
+    3127 | emaj           | myschema2_mytbl4_log_seq           | STOP_%         |             1 | f
+    3128 | emaj           | myschema2_mytbl5_log_seq           | STOP_%         |             1 | f
+    3129 | emaj           | myschema2_mytbl6_log_seq           | STOP_%         |             1 | f
 (32 rows)
 
 -----------------------------
@@ -714,110 +729,101 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
 -----------------------------
 select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
- hist_id |      hist_function       | hist_event |  regexp_replace   |                regexp_replace                 | hist_user 
----------+--------------------------+------------+-------------------+-----------------------------------------------+-----------
-    3000 | START_GROUP              | BEGIN      | myGroup1          | With log reset                                | postgres
-    3001 | LOCK_GROUP               | BEGIN      | myGroup1          |                                               | postgres
-    3002 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                | postgres
-    3003 | SET_MARK_GROUP           | BEGIN      | myGroup1          | Mark1                                         | postgres
-    3004 | SET_MARK_GROUP           | END        | myGroup1          | Mark1                                         | postgres
-    3005 | START_GROUP              | END        | myGroup1          | 6 tables/sequences processed                  | postgres
-    3006 | START_GROUP              | BEGIN      | myGroup2          | With log reset                                | postgres
-    3007 | LOCK_GROUP               | BEGIN      | myGroup2          |                                               | postgres
-    3008 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                | postgres
-    3009 | SET_MARK_GROUP           | BEGIN      | myGroup2          | Mark2                                         | postgres
-    3010 | SET_MARK_GROUP           | END        | myGroup2          | Mark2                                         | postgres
-    3011 | START_GROUP              | END        | myGroup2          | 8 tables/sequences processed                  | postgres
-    3015 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                               | postgres
-    3016 | LOCK_GROUP               | BEGIN      | myGroup1          |                                               | postgres
-    3017 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                | postgres
-    3018 | SET_MARK_GROUP           | END        | myGroup1          | SM1                                           | postgres
-    3019 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                               | postgres
-    3020 | LOCK_GROUP               | BEGIN      | myGroup2          |                                               | postgres
-    3021 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                | postgres
-    3022 | SET_MARK_GROUP           | END        | myGroup2          | SM1                                           | postgres
-    3023 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                               | postgres
-    3024 | LOCK_GROUP               | BEGIN      | myGroup2          |                                               | postgres
-    3025 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                | postgres
-    3026 | SET_MARK_GROUP           | END        | myGroup2          | phil's mark #1                                | postgres
-    3028 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                               | postgres
-    3029 | LOCK_GROUP               | BEGIN      | myGroup1          |                                               | postgres
-    3030 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                | postgres
-    3031 | SET_MARK_GROUP           | END        | myGroup1          | MARK_%                                        | postgres
-    3032 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                               | postgres
-    3033 | LOCK_GROUP               | BEGIN      | myGroup2          |                                               | postgres
-    3034 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                | postgres
-    3035 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                        | postgres
-    3036 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                               | postgres
-    3037 | LOCK_GROUP               | BEGIN      | myGroup1          |                                               | postgres
-    3038 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                | postgres
-    3039 | SET_MARK_GROUP           | END        | myGroup1          | Foo%Bar                                       | postgres
-    3040 | SET_MARK_GROUPS          | BEGIN      |                   |                                               | postgres
-    3041 | SET_MARK_GROUPS          | END        |                   |                                               | postgres
-    3044 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | SM3                                           | postgres
-    3045 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                               | postgres
-    3046 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)               | postgres
-    3047 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | SM3                                           | postgres
-    3049 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                               | postgres
-    3050 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                               | postgres
-    3051 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)               | postgres
-    3052 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                               | postgres
-    3053 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                               | postgres
-    3054 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                               | postgres
-    3055 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)               | postgres
-    3056 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                               | postgres
-    3057 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | Bar%Foo                                       | postgres
-    3058 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                               | postgres
-    3059 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)               | postgres
-    3060 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | Bar%Foo                                       | postgres
-    3061 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                      | postgres
-    3062 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                      | postgres
-    3063 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                      | postgres
-    3064 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                      | postgres
-    3065 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark Bar%Foo                                  | postgres
-    3066 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark phil's mark #1                           | postgres
-    3072 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                | postgres
-    3073 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                           | postgres
-    3074 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                         | postgres
-    3075 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                      | postgres
-    3076 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | phil's mark #1                                | postgres
-    3077 | RENAME_MARK_GROUP        | END        | myGroup2          | phil's mark #1 renamed john's mark #1         | postgres
-    3082 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                | postgres
-    3083 | DELETE_MARK_GROUP        | END        | myGroup1          | Bar%Foo                                       | postgres
-    3084 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                    | postgres
-    3085 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                    | postgres
-    3086 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                        | postgres
-    3087 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                        | postgres
-    3088 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                       | postgres
-    3089 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                       | postgres
-    3090 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM3                                           | postgres
-    3091 | DELETE_MARK_GROUP        | END        | myGroup1          | SM3                                           | postgres
-    3092 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                        | postgres
-    3093 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                        | postgres
-    3094 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                        | postgres
-    3095 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                        | postgres
-    3096 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                | postgres
-    3097 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                | postgres
-    3102 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                               | postgres
-    3103 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM1                                           | postgres
-    3104 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM1 is now the initial mark | postgres
-    3105 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                | postgres
-    3106 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM1 is now the initial mark | postgres
-    3107 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                           | postgres
-    3108 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 6 marks deleted ; SM2 is now the initial mark | postgres
-    3109 | STOP_GROUP               | BEGIN      | myGroup1          |                                               | postgres
-    3110 | LOCK_GROUP               | BEGIN      | myGroup1          |                                               | postgres
-    3111 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                | postgres
-    3112 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                        | postgres
-    3113 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                        | postgres
-    3114 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                  | postgres
-    3115 | STOP_GROUP               | BEGIN      | myGroup2          |                                               | postgres
-    3116 | LOCK_GROUP               | BEGIN      | myGroup2          |                                               | postgres
-    3117 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                | postgres
-    3118 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                        | postgres
-    3119 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                        | postgres
-    3120 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                  | postgres
-(101 rows)
+ hist_id |      hist_function       | hist_event |  regexp_replace   |                 regexp_replace                  | hist_user 
+---------+--------------------------+------------+-------------------+-------------------------------------------------+-----------
+    3018 | SET_MARK_GROUP           | END        | myGroup1          | SM1                                             | postgres
+    3019 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
+    3020 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3021 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3022 | SET_MARK_GROUP           | END        | myGroup2          | SM1                                             | postgres
+    3023 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
+    3024 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3025 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3026 | SET_MARK_GROUP           | END        | myGroup2          | phil's mark #1                                  | postgres
+    3028 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
+    3029 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3030 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    3031 | SET_MARK_GROUP           | END        | myGroup1          | MARK_%                                          | postgres
+    3032 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
+    3033 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3034 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3035 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                          | postgres
+    3036 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
+    3037 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3038 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    3039 | SET_MARK_GROUP           | END        | myGroup1          | Foo%Bar                                         | postgres
+    3040 | SET_MARK_GROUPS          | BEGIN      |                   |                                                 | postgres
+    3041 | SET_MARK_GROUPS          | END        |                   |                                                 | postgres
+    3044 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | SM3                                             | postgres
+    3045 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3046 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    3047 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | SM3                                             | postgres
+    3049 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3050 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3051 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    3052 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
+    3053 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3054 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3055 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    3056 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
+    3057 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | Bar%Foo                                         | postgres
+    3058 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3059 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    3060 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | Bar%Foo                                         | postgres
+    3061 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                        | postgres
+    3062 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                        | postgres
+    3063 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
+    3064 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
+    3065 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark Bar%Foo                                    | postgres
+    3066 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark phil's mark #1                             | postgres
+    3072 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                  | postgres
+    3073 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                             | postgres
+    3074 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                           | postgres
+    3075 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                        | postgres
+    3076 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | phil's mark #1                                  | postgres
+    3077 | RENAME_MARK_GROUP        | END        | myGroup2          | phil's mark #1 renamed john's mark #1           | postgres
+    3082 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3083 | DELETE_MARK_GROUP        | END        | myGroup1          | Bar%Foo                                         | postgres
+    3084 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                      | postgres
+    3085 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                      | postgres
+    3086 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3087 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3088 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                         | postgres
+    3089 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                         | postgres
+    3090 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM3                                             | postgres
+    3091 | DELETE_MARK_GROUP        | END        | myGroup1          | SM3                                             | postgres
+    3092 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3093 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3094 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3095 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3096 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                  | postgres
+    3097 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                  | postgres
+    3102 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                                 | postgres
+    3103 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM1                                             | postgres
+    3104 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM1 is now the initial mark   | postgres
+    3105 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3106 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM1 is now the initial mark   | postgres
+    3107 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
+    3108 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 6 marks deleted ; SM2 is now the initial mark   | postgres
+    3109 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
+    3110 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
+    3111 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
+    3112 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
+    3113 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
+    3114 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
+    3115 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3116 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3117 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    3118 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
+    3119 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
+    3120 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                    | postgres
+    3121 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3122 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3123 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3124 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
+    3125 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
+    3126 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
+(92 rows)
 
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;
