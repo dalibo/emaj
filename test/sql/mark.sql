@@ -163,6 +163,12 @@ select emaj.emaj_delete_before_mark_group('myGroup2',
       (select emaj.emaj_get_previous_mark_group('myGroup2',
              (select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM2')+'0.000001 SECOND'::interval)));
 
+-- check emaj_delete_before_mark_group also cleans up the emaj_hist table
+insert into emaj.emaj_param (param_key, param_value_interval) values ('history_retention','0 second'::interval);
+select emaj.emaj_set_mark_group('phil''s group#3",','Mark4');
+select emaj.emaj_delete_before_mark_group('phil''s group#3",','Mark4');
+delete from emaj.emaj_param where param_key = 'history_retention';
+
 -----------------------------
 -- test functions with group not in logging state 
 -----------------------------

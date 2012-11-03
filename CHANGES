@@ -40,6 +40,10 @@ Enhancements:
     to the same tables group as the sequence.
   - a new variation of the emaj_get_previous_mark_group() function returns 
     the name of the mark that immediately precedes a given mark for a group.
+  - the emaj_delete_before_mark_group() now tries to purge the emaj_hist 
+    table, similarly to what start_group functions do. This simplifies the 
+    management of the emaj_hist table when groups are never stopped and 
+    restarted.
   - emaj_log_stat_group() now returns a result (with all rows numbers set to 
     0) instead of an error when the supplied start mark is NULL and no mark 
     are yet recorded for the examined group.
