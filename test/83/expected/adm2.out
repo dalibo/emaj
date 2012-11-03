@@ -1014,17 +1014,17 @@ select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, em
            21 | AB'C         | \034'        | UPD       | NEW        |    12052
            22 | AB'C         | \014         | UPD       | OLD        |    12053
            22 | AB'C         | \034'        | UPD       | NEW        |    12053
-           21 | AB'C         | \034'        | DEL       | OLD        |    12055
-           22 | AB'C         | \034'        | DEL       | OLD        |    12056
-           23 | AB'C         | \014         | DEL       | OLD        |    12057
-           24 | AB'C         | \014         | DEL       | OLD        |    12058
-           25 | AB'C         | \014         | DEL       | OLD        |    12059
-           26 | AB'C         | \014         | DEL       | OLD        |    12060
-           27 | AB'C         | \014         | DEL       | OLD        |    12061
-           28 | AB'C         | \014         | DEL       | OLD        |    12062
-           29 | AB'C         | \014         | DEL       | OLD        |    12063
-           30 | AB'C         | \014         | DEL       | OLD        |    12064
-           31 | AB'C         | \014         | DEL       | OLD        |    12065
+           23 | AB'C         | \014         | DEL       | OLD        |    12055
+           24 | AB'C         | \014         | DEL       | OLD        |    12056
+           25 | AB'C         | \014         | DEL       | OLD        |    12057
+           26 | AB'C         | \014         | DEL       | OLD        |    12058
+           27 | AB'C         | \014         | DEL       | OLD        |    12059
+           28 | AB'C         | \014         | DEL       | OLD        |    12060
+           29 | AB'C         | \014         | DEL       | OLD        |    12061
+           30 | AB'C         | \014         | DEL       | OLD        |    12062
+           31 | AB'C         | \014         | DEL       | OLD        |    12063
+           21 | AB'C         | \034'        | DEL       | OLD        |    12064
+           22 | AB'C         | \034'        | DEL       | OLD        |    12065
            10 | AB'C         | \014         | DEL       | OLD        |    12067
             1 | AB'C         | \034         | UPD       | OLD        |    12068
             1 | DEF          | \034         | UPD       | NEW        |    12068
@@ -1341,8 +1341,6 @@ UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 20, "phil's col1
 UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 21, "phil's col12" = 'AB''C', "phil\s col13" = E'\\034''' WHERE "phil's col11" = 21 AND "phil's col12" = 'AB''C';
 UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 22, "phil's col12" = 'AB''C', "phil\s col13" = E'\\034''' WHERE "phil's col11" = 22 AND "phil's col12" = 'AB''C';
 INSERT INTO "phil's schema3"."myTbl2\" VALUES (1, 'ABC', '12-31-2010');
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 21 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 22 AND "phil's col12" = 'AB''C';
 DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 23 AND "phil's col12" = 'AB''C';
 DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 24 AND "phil's col12" = 'AB''C';
 DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 25 AND "phil's col12" = 'AB''C';
@@ -1352,6 +1350,8 @@ DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 28 AND "p
 DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 29 AND "phil's col12" = 'AB''C';
 DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 30 AND "phil's col12" = 'AB''C';
 DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 31 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 21 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 22 AND "phil's col12" = 'AB''C';
 INSERT INTO "phil's schema3"."myTbl2\" VALUES (2, 'DEF', NULL);
 DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 10 AND "phil's col12" = 'AB''C';
 UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 1, "phil's col12" = 'DEF', "phil\s col13" = E'\\034' WHERE "phil's col11" = 1 AND "phil's col12" = 'AB''C';
