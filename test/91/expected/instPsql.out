@@ -5360,7 +5360,7 @@ primary key, btree, for table "emaj.emaj_fk"
  max_value     | bigint  | 9223372036854775807
  min_value     | bigint  | 1
  cache_value   | bigint  | 1
- log_cnt       | bigint  | 1
+ log_cnt       | bigint  | 0
  is_cycled     | boolean | f
  is_called     | boolean | f
 
@@ -5433,7 +5433,7 @@ Indexes:
  max_value     | bigint  | 9223372036854775807
  min_value     | bigint  | 1
  cache_value   | bigint  | 1
- log_cnt       | bigint  | 0
+ log_cnt       | bigint  | 32
  is_cycled     | boolean | f
  is_called     | boolean | t
 
@@ -5480,7 +5480,7 @@ Foreign-key constraints:
  max_value     | bigint  | 9223372036854775807
  min_value     | bigint  | 1
  cache_value   | bigint  | 1
- log_cnt       | bigint  | 1
+ log_cnt       | bigint  | 0
  is_cycled     | boolean | f
  is_called     | boolean | f
 
@@ -5598,7 +5598,7 @@ primary key, btree, for table "emaj.emaj_seq_hole"
  max_value     | bigint  | 9223372036854775807
  min_value     | bigint  | 1
  cache_value   | bigint  | 1
- log_cnt       | bigint  | 1
+ log_cnt       | bigint  | 0
  is_cycled     | boolean | f
  is_called     | boolean | f
 
@@ -5639,7 +5639,7 @@ primary key, btree, for table "emaj.emaj_sequence"
  max_value     | bigint  | 9223372036854775807
  min_value     | bigint  | 1
  cache_value   | bigint  | 1
- log_cnt       | bigint  | 1
+ log_cnt       | bigint  | 0
  is_cycled     | boolean | f
  is_called     | boolean | f
 
