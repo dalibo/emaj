@@ -241,7 +241,6 @@ $$Represents the structure of rows returned by the internal _verify_groups() fun
 --                                --
 ------------------------------------
 DROP FUNCTION emaj._verify_group(v_groupName TEXT, v_onErrorStop boolean);
-
 CREATE OR REPLACE FUNCTION emaj._purge_hist() RETURNS VOID LANGUAGE sql as
 $$
 -- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter
@@ -308,7 +307,6 @@ $_check_class$
     RETURN v_relKind;
   END;
 $_check_class$;
-
 CREATE OR REPLACE FUNCTION emaj._check_new_mark(v_mark TEXT, v_groupNames TEXT[])
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_new_mark$
@@ -365,7 +363,6 @@ $_log_truncate_fnct$
     RETURN NULL;
   END;
 $_log_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
-
 CREATE OR REPLACE FUNCTION emaj._create_log_schema(v_logSchemaName TEXT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_log_schema$
@@ -415,7 +412,6 @@ $_drop_log_schema$
     RETURN;
   END;
 $_drop_log_schema$;
-
 DROP FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_isRollbackable BOOLEAN);
 CREATE OR REPLACE FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
@@ -924,7 +920,6 @@ $_log_stat_tbl$
     RETURN (v_endLastValue - v_beginLastValue - v_sumHole);
   END;
 $_log_stat_tbl$;
-
 CREATE OR REPLACE FUNCTION emaj._verify_groups(v_groups TEXT[], v_onErrorStop BOOLEAN)
 RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
 $_verify_groups$
@@ -4412,7 +4407,6 @@ $emaj_verify_all$
 $emaj_verify_all$;
 COMMENT ON FUNCTION emaj.emaj_verify_all() IS
 $$Verifies the consistency between existing E-Maj and application objects.$$;
-
 -- Set comments for all internal functions,
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
 INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
