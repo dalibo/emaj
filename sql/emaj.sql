@@ -1,5 +1,5 @@
 --
--- E-Maj : logs and rollbacks table updates : V 0.12.0
+-- E-Maj : logs and rollbacks table updates : Version <NEXT_VERSION>
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -380,7 +380,7 @@ $$Represents the structure of rows returned by the internal _verify_groups() fun
 -- 'Fixed' parameters             --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','0.12.0');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','<NEXT_VERSION>');
 
 -- Other parameters are optional. They are set by users if needed.
 
@@ -5345,7 +5345,7 @@ GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_vi
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_viewer;
 
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 0.12.0', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSION>', 'Initialisation completed');
 
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 CREATE OR REPLACE FUNCTION emaj._tmp_check_setting()

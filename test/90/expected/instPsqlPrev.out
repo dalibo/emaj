@@ -1,5 +1,5 @@
 -- instPsqlPrev.sql: Install previous version of E-Maj as simple psql script (for postgres version prior 9.1)
--- It installs E-Maj 0.11.0 for migration test.
+-- It installs the previous E-Maj version for migration test.
 --
 ------------------------------------------------------------
 -- install dblink
