@@ -3,7 +3,7 @@ README
 
 E-Maj: logs and rollbacks table updates
 
-Version: 0.12.0
+Version: <NEXT_VERSION>
 
 
 1- License
@@ -50,10 +50,10 @@ In both environments, being able to examine the history of updates performed on 
 - sql/demo.sql                      demonstration psql script
 - sql/prep-pr.sql                   psql script to prepare parallel rollback demonstration
 
-- doc/emaj.0.12.0_doc_en.pdf        E-Maj user's guide in English
-- doc/emaj.0.12.0_doc_fr.pdf        E-Maj user's guide in French
-- doc/emaj.0.12.0_pres_en.pdf		E-Maj presentation in English
-- doc/emaj.0.12.0_pres_fr.pdf		E-Maj presentation in French
+- doc/emaj.<NEXT_VERSION>_doc_en.pdf        E-Maj user's guide in English
+- doc/emaj.<NEXT_VERSION>_doc_fr.pdf        E-Maj user's guide in French
+- doc/emaj.<NEXT_VERSION>_pres_en.pdf		E-Maj presentation in English
+- doc/emaj.<NEXT_VERSION>_pres_fr.pdf		E-Maj presentation in French
 
 - php/emajParallelRollback.php      external client for parallel rollback
 
