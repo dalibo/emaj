@@ -472,7 +472,7 @@ $_check_group_names_array$
   BEGIN
     IF array_upper(v_groupNames,1) >= 1 THEN
 -- if there are elements, build the result array
-      FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+      FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
 -- look for not NULL & not empty group name
         IF v_groupNames[v_i] IS NULL OR v_groupNames[v_i] = '' THEN
           RAISE WARNING '_check_group_names_array: a group name is NULL or empty.';
@@ -513,7 +513,7 @@ $_check_class$
       RAISE EXCEPTION '_check_class: schema % doesn''t exist.', v_schemaName;
     END IF;
     SELECT relkind INTO v_relKind FROM pg_catalog.pg_class
-      WHERE relnamespace = v_schemaOid AND relname = v_className AND relkind in ('r','S');
+      WHERE relnamespace = v_schemaOid AND relname = v_className AND relkind IN ('r','S');
     IF NOT FOUND THEN
       RAISE EXCEPTION '_check_class: table or sequence % doesn''t exist.', v_className;
     END IF;
@@ -547,7 +547,7 @@ $_check_new_mark$
 -- if requested, check the existence of the mark in groups
     IF v_groupNames IS NOT NULL THEN
 -- for each group of the array,
-      FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+      FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
 -- ... if a mark with the same name already exists for the group, stop
         PERFORM 0 FROM emaj.emaj_mark
           WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
@@ -2187,7 +2187,7 @@ $_start_groups$
       RETURN 0;
     END IF;
 -- check that each group is recorded in emaj_group table
-    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
       SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
         RAISE EXCEPTION '_start_group: group % has not been created.', v_groupNames[v_i];
@@ -2200,7 +2200,7 @@ $_start_groups$
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- for each group,
-    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
       if v_resetLog THEN
 -- ... if requested by the user, call the emaj_reset_group function to erase remaining traces from previous logs
         SELECT emaj._reset_group(v_groupNames[v_i]) INTO v_nbTb;
@@ -2389,7 +2389,7 @@ $_stop_groups$
       RETURN 0;
     END IF;
 -- for each group of the array,
-    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
 -- ... check that the group is recorded in emaj_group table
       SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
@@ -2567,7 +2567,7 @@ $emaj_set_mark_groups$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('SET_MARK_GROUPS', 'BEGIN', array_to_string(v_groupNames,','), v_mark);
 -- for each group...
-    FOR v_i in 1 .. array_upper(v_validGroupNames,1) LOOP
+    FOR v_i IN 1 .. array_upper(v_validGroupNames,1) LOOP
 -- ... check that the group is recorded in emaj_group table
 -- (the SELECT is coded FOR UPDATE to lock the accessed group, avoiding any operation on this group at the same time)
       SELECT group_state INTO v_groupState FROM emaj.emaj_group WHERE group_name = v_validGroupNames[v_i] FOR UPDATE;
@@ -2695,7 +2695,7 @@ $_set_mark_groups$
     SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END INTO v_lastGlobalSeq
       FROM emaj.emaj_global_seq;
 -- insert the marks into the emaj_mark table
-    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
       INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_global_seq, mark_state, mark_last_sequence_id, mark_last_seq_hole_id)
         VALUES (v_groupNames[v_i], v_mark, v_timestamp, v_lastGlobalSeq, 'ACTIVE', v_lastSequenceId, v_lastSeqHoleId);
     END LOOP;
@@ -3202,7 +3202,7 @@ $_rlbk_groups_step1$
   BEGIN
 -- check that each group ...
 -- ...is recorded in emaj_group table
-    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
       SELECT group_state, group_is_rollbackable INTO v_groupState, v_isRollbackable FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
       IF NOT FOUND THEN
         RAISE EXCEPTION '_rlbk_groups_step1: group % has not been created.', v_groupNames[v_i];
@@ -3257,7 +3257,7 @@ $_rlbk_groups_step1$
     FOR v_session IN 1 .. v_nbSession LOOP
       v_sessionLoad [v_session] = 0;
     END LOOP;
-    FOR v_i in 1 .. array_upper(v_groupNames,1) LOOP
+    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
 --     fkey table
       DELETE FROM emaj.emaj_fk WHERE v_groupNames[v_i] = ANY (fk_groups);
 --     relation table: for each group, session set to NULL and
