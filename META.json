@@ -1,17 +1,24 @@
 {
    "name": "E-Maj",
    "abstract": "E-Maj provides a set of functions to 1) log updates performed on groups of tables and 2) rollback these updates if needed",
-   "version": "<NEXT_VERSION>",
+   "version": "1.0.0",
    "maintainer": "Philippe Beaudoin - phb<dot>emaj<at>free<dot>fr",
    "license": "gpl_2",
    "tags": [ "emaj", "table log", "log trigger", "archive before journal", "logical rollback", "flashback" ],
    "provides": {
      "emaj": {
        "file": "sql/emaj.sql",
-       "docfile": "doc/emaj.<NEXT_VERSION>_doc_en.pdf",
-       "version": "<NEXT_VERSION>",
+       "docfile": "doc/emaj.1.0.0_doc_en.pdf",
+       "version": "1.0.0",
        "abstract": "Tables updates log and rollback"
      }
+   },
+   "resources": {
+      "repository": {
+        "url":  "git://github.com/beaud76/emaj.git",
+        "web":  "http://github.com/beaud76/emaj/",
+        "type": "git"
+      }
    },
    "meta-spec": {
       "version": "1.0.0",
