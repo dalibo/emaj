@@ -1,0 +1,59 @@
+tools/README
+
+The tool directory contains several tools that may be essential or useful in E-Maj development:
+- gen_emaj.pl is a perl script that process the sql/emaj_src.sql file script,
+- regress.sh is a shell script that select and execute regression tests,
+- copy2Expected.sh is a shell script that copy the result files of regression tests environment to the reference directory.
+
+
+gen_emaj.pl
+-----------
+The gen_emaj.pl perl script transforms the sql/emaj_src.sql into 2 scripts, one used to install E-Maj as a common all_in_one script, and the other that will be used to install E-Maj as an extension (once the current limitations in extension management will disappear).
+It is used by the regress.sh tool before displaying its menu so that any test run can use its proper install script.
+
+Customisation:
+At the beginning of the script (near line 18), the variable $dir is initialized with the emaj project root directory. You must adapt its value to fit your installation.
+
+
+regress.sh
+----------
+The regress.sh script is the key tool to perform regression tests. It executes scenarios located into the test directory. These scenarios use sql scripts located into the test/sql directory. The output files are stored into the test/<pg_version>/results directory and compared with reference files located into the test/<pg_version>/expected directory.
+Several types of tests are available:
+- the standard set of tests starting with the emaj installation,
+- a dump of an emaj environment from a cluster in one postgres version and a restore in another cluster running another postgres version,
+- the standard set of tests starting with the installation of the prior emaj version followed by the migration script,
+- some specific tests including an emaj version migration in the middle of the operations.
+To complete the standart tests scenarios, a test of the parallel rollback client is run.
+
+Customisation:
+First, some symbolic links must be created so that the unique test/sql directory can be used for all postgres version test environment. To do this, just issue for each postgres version the following command:
+    ln -s test/sql test/<pg_version>/sql
+Similarly, a symbolic link has to be created to reach the emaj.sql script:
+    ln -s sql/emaj.sql test/sql/emaj.sql
+Then the regress.sh script must be adapted.
+At the beginning of the script (near line 8), the variable EMAJ_HOME is initialized with the emaj project root directory. Then, for each installed postgres version, 3 variables are initialized:
+- PGBIN<version> is the postgres binary path
+- PGPORT<version> is the ip port of the cluster running this postgres version
+- PGREG<version> points to the directory that hosts the standart regress tool
+You must adapt these values to fit your installation.
+At the end of the script, a menu is displayed to propose all available tests. You must adapt it to your environment.
+
+
+copy2Expected.sh
+----------------
+The copy2Expected.sh is a shell script that copy the result files of regression tests environment to the reference directory. Once result regression test files are considered as representing a new reference, you can simply execute the script by typing:
+    sh copy2Expected.sh
+
+Customisation:
+At the beginning of the script (near line 7), the variable EMAJ_HOME is initialized with the emaj project root directory. You must adapt its value to fit your installation.
+Then for each available major postgres version on the environment, 2 commands copy the ouput test files from the /results to the /expected directories. You must adapt the script to your installed major postgres versions.
+
+
+
+
+
+
+
+
+
+
