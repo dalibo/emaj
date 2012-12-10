@@ -78,13 +78,11 @@ begin;
 rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
-select emaj.emaj_create_group('myGroup2',true);
 
 -- should be OK, but with a warning for linked table not protected by E-Maj
-begin;
-  delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
-  select emaj.emaj_create_group('phil''s group#3",',false);
-rollback;
+alter table myschema2.myTbl6 add foreign key (col61) references myschema2.myTbl7 (col71) deferrable initially immediate;
+alter table myschema2.myTbl8 add foreign key (col81) references myschema2.myTbl6 (col61) deferrable;
+select emaj.emaj_create_group('myGroup2',true);
 
 -- should be OK, but with a warning for linked table belonging to another group
 begin;

@@ -5,6 +5,9 @@ E-Maj - Release notes
 Enhancements:
 
 Bug fixes:
+  - fix an abort in rollback processing when a deferrable foreign key links 
+    two tables, one not being covered by E-Maj, and the other having events 
+    to rollback.
 
 1.0.0
 ------

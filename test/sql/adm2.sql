@@ -301,6 +301,6 @@ delete from mySchema2.myTbl1;
 delete from mySchema2.myTbl2; 
 delete from mySchema2."myTbl3";
 delete from mySchema2.myTbl5;
-delete from mySchema2.myTbl6;
+delete from mySchema2.myTbl6 where col61 <> 0;
 alter sequence mySchema2.mySeq1 restart 9999;
 

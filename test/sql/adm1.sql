@@ -48,7 +48,10 @@ select count(*) from emaj.emaj_rlbk_stat;
 -----------------------------
 reset role;
 truncate mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b; 
-truncate mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6;
+truncate mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6, mySchema2.myTbl7, mySchema2.myTbl8;
+insert into myschema2.myTbl7 select i from generate_series(0,100,1) i;
+insert into myschema2.myTbl6 (col61) values (0);
+insert into myschema2.myTbl8 (col81) values (0);
 alter sequence mySchema2.mySeq1 restart 1000;
 truncate mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2;
 
@@ -130,7 +133,7 @@ insert into myTbl5 values (1,'{"abc","def","ghi"}','{1,2,3}',NULL);
 insert into myTbl5 values (2,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date]);
 update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}' where col54 is null;
 insert into myTbl6 select i, point(i,1.3), '((0,0),(2,2))', circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27' from generate_series (1,8) as i;
-update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 <= 3;
+update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 between 1 and 3;
 --
 select emaj.emaj_set_mark_group('myGroup2','M2');
 --
@@ -147,7 +150,7 @@ insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
 update myTbl4 set col43 = 2;
 delete from mytbl5 where 4 = any(col53);
-delete from myTbl6 where col65 is null;
+delete from myTbl6 where col65 is null and col61 <> 0;
 --
 select emaj.emaj_set_mark_group('myGroup2','M3');
 -----------------------------

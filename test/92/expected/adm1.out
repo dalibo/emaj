@@ -173,7 +173,10 @@ select count(*) from emaj.emaj_rlbk_stat;
 -----------------------------
 reset role;
 truncate mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b; 
-truncate mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6;
+truncate mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6, mySchema2.myTbl7, mySchema2.myTbl8;
+insert into myschema2.myTbl7 select i from generate_series(0,100,1) i;
+insert into myschema2.myTbl6 (col61) values (0);
+insert into myschema2.myTbl8 (col81) values (0);
 alter sequence mySchema2.mySeq1 restart 1000;
 truncate mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2;
 -- starting from this point, disable the trigger on myTbl2
@@ -379,6 +382,12 @@ CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl6_emaj_trunc_trg 
 PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 157 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 114 at PERFORM
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 114 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -391,6 +400,18 @@ select emaj.emaj_start_group('myGroup1','M1');
 (1 row)
 
 select emaj.emaj_start_group('myGroup2','M1');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 46 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
+PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
+PL/pgSQL function emaj.emaj_start_group(text,text) line 6 at RETURN
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 46 at PERFORM
+SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
+PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
+PL/pgSQL function emaj.emaj_start_group(text,text) line 6 at RETURN
  emaj_start_group 
 ------------------
                 8
@@ -634,7 +655,7 @@ insert into myTbl5 values (1,'{"abc","def","ghi"}','{1,2,3}',NULL);
 insert into myTbl5 values (2,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date]);
 update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}' where col54 is null;
 insert into myTbl6 select i, point(i,1.3), '((0,0),(2,2))', circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27' from generate_series (1,8) as i;
-update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 <= 3;
+update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 between 1 and 3;
 --
 select emaj.emaj_set_mark_group('myGroup2','M2');
  emaj_set_mark_group 
@@ -671,7 +692,7 @@ insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
 update myTbl4 set col43 = 2;
 delete from mytbl5 where 4 = any(col53);
-delete from myTbl6 where col65 is null;
+delete from myTbl6 where col65 is null and col61 <> 0;
 --
 select emaj.emaj_set_mark_group('myGroup2','M3');
  emaj_set_mark_group 
@@ -795,12 +816,13 @@ select * from mySchema2.myTbl5 order by col51;
 select * from mySchema2.myTbl6 order by col61;
  col61 |  col62  |    col63    |   col64   |         col65         |     col66      
 -------+---------+-------------+-----------+-----------------------+----------------
+     0 |         |             |           |                       | 
      4 | (4,1.3) | (2,2),(0,0) | <(5,5),4> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      5 | (5,1.3) | (2,2),(0,0) | <(5,5),5> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      6 | (6,1.3) | (2,2),(0,0) | <(5,5),6> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      7 | (7,1.3) | (2,2),(0,0) | <(5,5),7> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      8 | (8,1.3) | (2,2),(0,0) | <(5,5),8> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
-(5 rows)
+(6 rows)
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
@@ -898,12 +920,36 @@ reset role;
 analyze mytbl4;
 set role emaj_regression_tests_adm_user;
 select emaj.emaj_logged_rollback_group('myGroup2','M2');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function emaj._rlbk_groups_step1(text[],text,boolean,integer,boolean) line 74 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 12 at RETURN
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function emaj._rlbk_groups_step1(text[],text,boolean,integer,boolean) line 74 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 12 at RETURN
  emaj_logged_rollback_group 
 ----------------------------
                           5
 (1 row)
 
 select emaj.emaj_logged_rollback_group('myGroup2','M3');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function emaj._rlbk_groups_step1(text[],text,boolean,integer,boolean) line 74 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 12 at RETURN
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function emaj._rlbk_groups_step1(text[],text,boolean,integer,boolean) line 74 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 12 at RETURN
  emaj_logged_rollback_group 
 ----------------------------
                           5
@@ -1061,12 +1107,13 @@ select * from mySchema2.myTbl5 order by col51;
 select * from mySchema2.myTbl6 order by col61;
  col61 |  col62  |    col63    |   col64   |         col65         |     col66      
 -------+---------+-------------+-----------+-----------------------+----------------
+     0 |         |             |           |                       | 
      4 | (4,1.3) | (2,2),(0,0) | <(5,5),4> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      5 | (5,1.3) | (2,2),(0,0) | <(5,5),5> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      6 | (6,1.3) | (2,2),(0,0) | <(5,5),6> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      7 | (7,1.3) | (2,2),(0,0) | <(5,5),7> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      8 | (8,1.3) | (2,2),(0,0) | <(5,5),8> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
-(5 rows)
+(6 rows)
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
@@ -1483,6 +1530,18 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------
 select emaj.emaj_logged_rollback_group('myGroup2','M2');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function emaj._rlbk_groups_step1(text[],text,boolean,integer,boolean) line 74 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 12 at RETURN
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function emaj._rlbk_groups_step1(text[],text,boolean,integer,boolean) line 74 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 12 at RETURN
  emaj_logged_rollback_group 
 ----------------------------
                           5
@@ -1490,6 +1549,18 @@ select emaj.emaj_logged_rollback_group('myGroup2','M2');
 
 --
 select emaj.emaj_rollback_group('myGroup2','M3');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function emaj._rlbk_groups_step1(text[],text,boolean,integer,boolean) line 74 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_rollback_group(text,text) line 8 at RETURN
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function emaj._rlbk_groups_step1(text[],text,boolean,integer,boolean) line 74 at PERFORM
+SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_rollback_group(text,text) line 8 at RETURN
  emaj_rollback_group 
 ---------------------
                    5
@@ -1599,7 +1670,9 @@ select * from emaj.emaj_fk order by fk_groups, fk_session, fk_name;
  {myGroup1} |          1 | mytbl4_col44_fkey | myschema1 | mytbl4   | add_fk           | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED
  {myGroup2} |          1 | mytbl4_col43_fkey | myschema2 | mytbl4   | set_fk_immediate | FOREIGN KEY (col43) REFERENCES myschema2.mytbl2(col21) DEFERRABLE INITIALLY DEFERRED
  {myGroup2} |          1 | mytbl4_col44_fkey | myschema2 | mytbl4   | add_fk           | FOREIGN KEY (col44, col45) REFERENCES myschema2.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE
-(4 rows)
+ {myGroup2} |          1 | mytbl6_col61_fkey | myschema2 | mytbl6   | set_fk_immediate | FOREIGN KEY (col61) REFERENCES myschema2.mytbl7(col71) DEFERRABLE
+ {myGroup2} |          1 | mytbl8_col81_fkey | myschema2 | mytbl8   | set_fk_immediate | FOREIGN KEY (col81) REFERENCES myschema2.mytbl6(col61) DEFERRABLE
+(6 rows)
 
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
  sqhl_id | sqhl_schema | sqhl_table | sqhl_hole_size 
@@ -1665,12 +1738,13 @@ select * from mySchema2.myTbl5 order by col51;
 select * from mySchema2.myTbl6 order by col61;
  col61 |  col62  |    col63    |   col64   |         col65         |     col66      
 -------+---------+-------------+-----------+-----------------------+----------------
+     0 |         |             |           |                       | 
      4 | (4,1.3) | (2,2),(0,0) | <(5,5),4> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      5 | (5,1.3) | (2,2),(0,0) | <(5,5),5> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      6 | (6,1.3) | (2,2),(0,0) | <(5,5),6> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      7 | (7,1.3) | (2,2),(0,0) | <(5,5),7> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
      8 | (8,1.3) | (2,2),(0,0) | <(5,5),8> | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27
-(5 rows)
+(6 rows)
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
@@ -1915,7 +1989,9 @@ select * from emaj.emaj_fk order by fk_groups, fk_session, fk_name;
  {myGroup1} |          1 | mytbl4_col44_fkey | myschema1 | mytbl4   | add_fk           | FOREIGN KEY (col44, col45) REFERENCES mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED
  {myGroup2} |          1 | mytbl4_col43_fkey | myschema2 | mytbl4   | set_fk_immediate | FOREIGN KEY (col43) REFERENCES myschema2.mytbl2(col21) DEFERRABLE INITIALLY DEFERRED
  {myGroup2} |          1 | mytbl4_col44_fkey | myschema2 | mytbl4   | add_fk           | FOREIGN KEY (col44, col45) REFERENCES myschema2.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE
-(4 rows)
+ {myGroup2} |          1 | mytbl6_col61_fkey | myschema2 | mytbl6   | set_fk_immediate | FOREIGN KEY (col61) REFERENCES myschema2.mytbl7(col71) DEFERRABLE
+ {myGroup2} |          1 | mytbl8_col81_fkey | myschema2 | mytbl8   | set_fk_immediate | FOREIGN KEY (col81) REFERENCES myschema2.mytbl6(col61) DEFERRABLE
+(6 rows)
 
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
  sqhl_id | sqhl_schema | sqhl_table | sqhl_hole_size 
@@ -2233,7 +2309,9 @@ select * from emaj.emaj_fk order by fk_groups, fk_session, fk_name;
  {myGroup1} |          1 | mytbl4_col44_fkey | myschema1 | mytbl4   | add_fk           | FOREIGN KEY (col44, col45) REFERENCES mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED
  {myGroup2} |          1 | mytbl4_col43_fkey | myschema2 | mytbl4   | set_fk_immediate | FOREIGN KEY (col43) REFERENCES myschema2.mytbl2(col21) DEFERRABLE INITIALLY DEFERRED
  {myGroup2} |          1 | mytbl4_col44_fkey | myschema2 | mytbl4   | add_fk           | FOREIGN KEY (col44, col45) REFERENCES myschema2.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE
-(4 rows)
+ {myGroup2} |          1 | mytbl6_col61_fkey | myschema2 | mytbl6   | set_fk_immediate | FOREIGN KEY (col61) REFERENCES myschema2.mytbl7(col71) DEFERRABLE
+ {myGroup2} |          1 | mytbl8_col81_fkey | myschema2 | mytbl8   | set_fk_immediate | FOREIGN KEY (col81) REFERENCES myschema2.mytbl6(col61) DEFERRABLE
+(6 rows)
 
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
  sqhl_id | sqhl_schema | sqhl_table | sqhl_hole_size 
@@ -2289,7 +2367,15 @@ select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from emaj.emaj_rlb
  rlbk             | myschema2   | mytbl6            |            9
  del_log          | myschema2   | mytbl6            |           15
  rlbk             | myschema2   | mytbl6            |           15
-(40 rows)
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |            3
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |            3
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |            9
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |           15
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |            3
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |            3
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |            9
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |           15
+(48 rows)
 
 -- user tables
 select * from mySchema1.myTbl1 order by col11,col12;

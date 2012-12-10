@@ -13,6 +13,16 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 
 -- start both groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
+PL/pgSQL function "_start_groups" line 45 at perform
+SQL statement "SELECT emaj._start_groups(emaj._check_group_names_array( $1 ),  $2 , true,  $3 )"
+PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
+PL/pgSQL function "_start_groups" line 45 at perform
+SQL statement "SELECT emaj._start_groups(emaj._check_group_names_array( $1 ),  $2 , true,  $3 )"
+PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
  emaj_start_groups 
 -------------------
                 14
@@ -27,6 +37,18 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
 
 -- logged rollback to Multi-1
 select emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
+PL/pgSQL function "_rlbk_groups_step1" line 73 at perform
+SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
+PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
+PL/pgSQL function "emaj_logged_rollback_groups" line 11 at return
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
+PL/pgSQL function "_rlbk_groups_step1" line 73 at perform
+SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
+PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
+PL/pgSQL function "emaj_logged_rollback_groups" line 11 at return
  emaj_logged_rollback_groups 
 -----------------------------
                            3
@@ -34,6 +56,18 @@ select emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1');
 
 -- rollback to Multi-2
 select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
+PL/pgSQL function "_rlbk_groups_step1" line 73 at perform
+SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
+PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
+PL/pgSQL function "emaj_rollback_groups" line 7 at return
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
+PL/pgSQL function "_rlbk_groups_step1" line 73 at perform
+SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
+PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
+PL/pgSQL function "emaj_rollback_groups" line 7 at return
  emaj_rollback_groups 
 ----------------------
                     3
@@ -41,6 +75,18 @@ select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2');
 
 -- rollback and stop to Multi-1
 select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
+PL/pgSQL function "_rlbk_groups_step1" line 73 at perform
+SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
+PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
+PL/pgSQL function "emaj_rollback_groups" line 7 at return
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
+PL/pgSQL function "_rlbk_groups_step1" line 73 at perform
+SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
+PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
+PL/pgSQL function "emaj_rollback_groups" line 7 at return
  emaj_rollback_groups 
 ----------------------
                     3
@@ -54,6 +100,16 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback')
 
 -- try to start both groups, but with an old deleted mark name
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
+PL/pgSQL function "_start_groups" line 45 at perform
+SQL statement "SELECT emaj._start_groups(emaj._check_group_names_array( $1 ),  $2 , true,  $3 )"
+PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
+PL/pgSQL function "_start_groups" line 45 at perform
+SQL statement "SELECT emaj._start_groups(emaj._check_group_names_array( $1 ),  $2 , true,  $3 )"
+PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
 ERROR:  _check_new_mark: Group myGroup1 already contains a mark named Multi-1.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 ,  $2 )"
 PL/pgSQL function "_start_groups" line 48 at SQL statement
@@ -61,6 +117,16 @@ SQL statement "SELECT emaj._start_groups(emaj._check_group_names_array( $1 ),  $
 PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
 -- really start both groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1b', false);
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
+PL/pgSQL function "_start_groups" line 45 at perform
+SQL statement "SELECT emaj._start_groups(emaj._check_group_names_array( $1 ),  $2 , true,  $3 )"
+PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
+PL/pgSQL function "_start_groups" line 45 at perform
+SQL statement "SELECT emaj._start_groups(emaj._check_group_names_array( $1 ),  $2 , true,  $3 )"
+PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
  emaj_start_groups 
 -------------------
                 14
@@ -87,6 +153,18 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
 (0 rows)
 
 select emaj.emaj_rollback_group('myGroup2','Multi-2');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
+PL/pgSQL function "_rlbk_groups_step1" line 73 at perform
+SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
+PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
+PL/pgSQL function "emaj_rollback_group" line 7 at return
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
+PL/pgSQL function "_rlbk_groups_step1" line 73 at perform
+SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
+PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
+PL/pgSQL function "emaj_rollback_group" line 7 at return
  emaj_rollback_group 
 ---------------------
                    2
@@ -929,7 +1007,15 @@ select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from emaj.emaj_rlb
  rlbk             | myschema2   | mytbl6            |            9
  del_log          | myschema2   | mytbl6            |           15
  rlbk             | myschema2   | mytbl6            |           15
-(40 rows)
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |            3
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |            3
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |            9
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |           15
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |            3
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |            3
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |            9
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |           15
+(48 rows)
 
 -- user tables
 select * from "phil's schema3"."phil's tbl1" order by "phil's col11","phil's col12";
@@ -1115,7 +1201,15 @@ select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from emaj.emaj_rlb
  rlbk             | myschema2   | mytbl6            |            9
  del_log          | myschema2   | mytbl6            |           15
  rlbk             | myschema2   | mytbl6            |           15
-(41 rows)
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |            3
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |            3
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |            9
+ set_fk_immediate | myschema2   | mytbl6_col61_fkey |           15
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |            3
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |            3
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |            9
+ set_fk_immediate | myschema2   | mytbl8_col81_fkey |           15
+(49 rows)
 
 -----------------------------
 -- Step 12 : tests snaps and script generation functions
@@ -1187,7 +1281,7 @@ ERROR:  emaj_generate_sql: this function needs a PostgreSQL version 8.3+.
 select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
  check 
 -------
-    21
+    22
 (1 row)
 
 select emaj.emaj_generate_sql('phil''s group#3",', 'M1_rollbackable', NULL, '/tmp/emaj_test/sql_scripts/Group3.sql');
@@ -1222,6 +1316,18 @@ begin;
 (1 row)
 
   select emaj.emaj_rollback_group('myGroup2','Multi-1');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
+PL/pgSQL function "_rlbk_groups_step1" line 73 at perform
+SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
+PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
+PL/pgSQL function "emaj_rollback_group" line 7 at return
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
+PL/pgSQL function "_rlbk_groups_step1" line 73 at perform
+SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
+PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
+PL/pgSQL function "emaj_rollback_group" line 7 at return
  emaj_rollback_group 
 ---------------------
                    4
@@ -1282,7 +1388,8 @@ diff --exclude _INFO_s /tmp/emaj_test/snaps/myschema2_mytbl5.snap /tmp/emaj_test
 < 10,"{abc,def,ghi}","{1,2,3}","{11-28-2010,12-03-2010}"
 < 20,"{abc,def,ghi}","{3,4,5}","{02-01-2000,02-28-2000}"
 diff --exclude _INFO_s /tmp/emaj_test/snaps/myschema2_mytbl6.snap /tmp/emaj_test/snaps2/myschema2_mytbl6.snap
-2,14c2,6
+2,15c2,7
+< 0,,,"<(5,6),3.5>",,
 < 4,"(4,1.3)","(2,2),(0,0)","<(5,6),3.5>",,10.20.30.40/27
 < 5,"(5,1.3)","(2,2),(0,0)","<(5,6),3.5>",,10.20.30.40/27
 < 6,"(6,1.3)","(2,2),(0,0)","<(5,6),3.5>",,10.20.30.40/27
@@ -1297,6 +1404,7 @@ diff --exclude _INFO_s /tmp/emaj_test/snaps/myschema2_mytbl6.snap /tmp/emaj_test
 < 17,"(7,1.3)","(2,2),(0,0)","<(5,5),7>","((-2,-2),(3,0),(1,4))",10.20.30.40/27
 < 18,"(8,1.3)","(2,2),(0,0)","<(5,5),8>","((-2,-2),(3,0),(1,4))",10.20.30.40/27
 ---
+> 0,,,,,
 > 4,"(4,1.3)","(2,2),(0,0)","<(5,5),4>","((-2,-2),(3,0),(1,4))",10.20.30.40/27
 > 5,"(5,1.3)","(2,2),(0,0)","<(5,5),5>","((-2,-2),(3,0),(1,4))",10.20.30.40/27
 > 6,"(6,1.3)","(2,2),(0,0)","<(5,5),6>","((-2,-2),(3,0),(1,4))",10.20.30.40/27
@@ -1764,7 +1872,7 @@ select count(*) from mySchema2.myTbl5;
 select count(*) from mySchema2.myTbl6;
  count 
 -------
-    13
+    14
 (1 row)
 
 delete from mySchema1.myTbl4;
@@ -1777,5 +1885,5 @@ delete from mySchema2.myTbl1;
 delete from mySchema2.myTbl2; 
 delete from mySchema2."myTbl3";
 delete from mySchema2.myTbl5;
-delete from mySchema2.myTbl6;
+delete from mySchema2.myTbl6 where col61 <> 0;
 alter sequence mySchema2.mySeq1 restart 9999;

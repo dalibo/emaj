@@ -3466,13 +3466,13 @@ $_rlbk_groups_step6$
         SELECT clock_timestamp() INTO v_ts_end;
 -- compute the total number of fk that has been checked.
 -- (this is in fact overestimated because inserts in the referecing table and deletes in the referenced table should not be taken into account. But the required log table scan would be too costly).
-        SELECT (
---   get the number of rollbacked rows in the referencing table
+        SELECT coalesce((
+--   get the number of rollbacked rows in the referencing table (or 0 if not covered by emaj)
         SELECT rel_rows
           FROM emaj.emaj_relation
           WHERE rel_schema = r_fk.fk_schema AND rel_tblseq = r_fk.fk_table
-               ) + (
---   get the number of rollbacked rows in the referenced table
+               ), 0) + coalesce((
+--   get the number of rollbacked rows in the referenced table (or 0 if not covered by emaj)
         SELECT rel_rows
           FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_namespace rn,
                pg_catalog.pg_class rt, emaj.emaj_relation r
@@ -3480,7 +3480,7 @@ $_rlbk_groups_step6$
             AND c.connamespace = n.oid AND n.nspname = r_fk.fk_schema
             AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
             AND rn.nspname = r.rel_schema AND rt.relname = r.rel_tblseq    -- join on groups table
-               ) INTO v_rows;
+               ), 0) INTO v_rows;
 -- record the set_fk_immediate duration into the rollbacks statistics table
         INSERT INTO emaj.emaj_rlbk_stat (rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_nb_rows, rlbk_duration)
            VALUES ('set_fk_immediate', r_fk.fk_schema, r_fk.fk_name, v_ts_start, v_rows, v_ts_end - v_ts_start);
