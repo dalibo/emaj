@@ -527,7 +527,7 @@ SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), 
 PL/pgSQL function "emaj_create_group" line 87 at PERFORM
 NOTICE:  trigger "phil's schema3_myTbl2\_emaj_log_trg" for table "myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_log_trg" ON "phil's schema3"."myTbl2\""
-PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 141 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
 PL/pgSQL function "emaj_create_group" line 87 at PERFORM
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
@@ -537,7 +537,7 @@ SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), 
 PL/pgSQL function "emaj_create_group" line 87 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 141 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
 PL/pgSQL function "emaj_create_group" line 87 at PERFORM
  emaj_create_group 
@@ -557,7 +557,7 @@ SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), 
 PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 141 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
 PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
  emaj_alter_group 
@@ -590,7 +590,7 @@ SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), 
 PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 141 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
 PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
  emaj_alter_group 
@@ -622,7 +622,7 @@ SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), 
 PL/pgSQL function "emaj_create_group" line 87 at PERFORM
 NOTICE:  trigger "phil's schema3_myTbl2\_emaj_log_trg" for table "myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_log_trg" ON "phil's schema3"."myTbl2\""
-PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 141 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
 PL/pgSQL function "emaj_create_group" line 87 at PERFORM
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
@@ -632,7 +632,7 @@ SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), 
 PL/pgSQL function "emaj_create_group" line 87 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function "_create_tbl" line 148 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 141 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
 PL/pgSQL function "emaj_create_group" line 87 at PERFORM
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).
@@ -1271,7 +1271,7 @@ phil's schema3_phil's tbl1.snap
 select emaj.emaj_generate_sql('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script"
-PL/pgSQL function "emaj_generate_sql" line 121 at SQL statement
+PL/pgSQL function "emaj_generate_sql" line 114 at SQL statement
  emaj_generate_sql 
 -------------------
                  1

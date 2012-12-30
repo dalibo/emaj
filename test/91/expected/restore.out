@@ -256,6 +256,7 @@ ALTER FUNCTION
 COMMENT
 CREATE FUNCTION
 ALTER FUNCTION
+<<<<<<< HEAD
 COMMENT
 CREATE FUNCTION
 ALTER FUNCTION
@@ -271,6 +272,8 @@ ALTER FUNCTION
 COMMENT
 CREATE FUNCTION
 ALTER FUNCTION
+=======
+>>>>>>> Taking benefit from the end of the postgres 8.2 support, various code improvements.
 CREATE FUNCTION
 ALTER FUNCTION
 CREATE FUNCTION
@@ -951,11 +954,14 @@ REVOKE
 REVOKE
 GRANT
 GRANT
+<<<<<<< HEAD
 GRANT
 REVOKE
 REVOKE
 GRANT
 GRANT
+=======
+>>>>>>> Taking benefit from the end of the postgres 8.2 support, various code improvements.
 GRANT
 REVOKE
 REVOKE

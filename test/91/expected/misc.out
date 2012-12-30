@@ -736,7 +736,7 @@ ERROR:  emaj_generate_sql: Tables group phil's group#3", contains 1 tables witho
 select emaj.emaj_generate_sql('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script"
-PL/pgSQL function "emaj_generate_sql" line 122 at SQL statement
+PL/pgSQL function "emaj_generate_sql" line 115 at SQL statement
  emaj_generate_sql 
 -------------------
              11712

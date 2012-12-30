@@ -1,4 +1,4 @@
-This script is the common source for both E-Maj installation scripts used:
+emaj._create_tblThis script is the common source for both E-Maj installation scripts used:
 - either for a direct direct psql installation
 - or for a CREATE EXTENSION in pg9.1+
 Special patterns #gen_xxx placed at the beginning of lines control the generation.
@@ -44,9 +44,9 @@ $tmp$
     r_schema        RECORD;
   BEGIN
 -- the creation of the function implicitely validates that plpgsql language is created!
--- check postgres version is >= 8.2
+-- check postgres version is >= 8.3
 --   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') < '8.2' THEN
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') < '8.3' THEN
       RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
     END IF;
 -- check the current role is a superuser
@@ -135,15 +135,6 @@ $tmp$
       COMMENT ON ROLE emaj_viewer IS
         $$This role may be granted to other roles allowed to view E-Maj objects content.$$;
     END IF;
--- create a SQL emaj_txid_function that encapsulates the standart txid_current function with postgres 8.3+
--- or just returns 0 with postgres 8.2
-    v_stmt = 'CREATE OR REPLACE FUNCTION emaj._txid_current() RETURNS BIGINT LANGUAGE SQL AS $$ SELECT ';
-    IF v_pgVersion < '8.3' THEN
-      v_stmt = v_stmt || '0::BIGINT;$$';
-    ELSE
-      v_stmt = v_stmt || 'txid_current();$$';
-    END IF;
-    EXECUTE v_stmt;
 -- if tspemaj tablespace exists,
 --   use it as default_tablespace for emaj tables creation
 --   and grant the create rights on it to emaj_adm
@@ -202,7 +193,7 @@ CREATE TABLE emaj.emaj_hist (                            -- records the history 
     hist_user                TEXT
                              DEFAULT session_user,       -- the user who call the E-Maj function
     hist_txid                BIGINT
-                             DEFAULT emaj._txid_current(), -- and its tx_id
+                             DEFAULT txid_current(),     -- and its tx_id
     PRIMARY KEY (hist_id)
     );
 COMMENT ON TABLE emaj.emaj_hist IS
@@ -283,7 +274,7 @@ CREATE TABLE emaj.emaj_mark (
                                                          --   'ACTIVE' and 'DELETED'
     mark_comment              TEXT,                      -- optional user comment
     mark_txid                 BIGINT                     -- id of the tx that has set the mark
-                              DEFAULT emaj._txid_current(),
+                              DEFAULT txid_current(),
     mark_last_sequence_id     BIGINT,                    -- last sequ_id for the group at the end of the _set_mark_groups operation
     mark_last_seq_hole_id     BIGINT,                    -- last sqhl_id for the group at _set_mark_groups time
     mark_log_rows_before_next BIGINT,                    -- number of log rows recorded for the group between the mark and the next one (NULL if last mark) - used to speedup marks lists display in phpPgAdmin plugin
@@ -764,19 +755,12 @@ $_create_tbl$
          || ' ADD COLUMN emaj_tuple   VARCHAR(3),'
          || ' ADD COLUMN emaj_gid     BIGINT      NOT NULL   DEFAULT nextval(''emaj.emaj_global_seq''),'
          || ' ADD COLUMN emaj_changed TIMESTAMPTZ DEFAULT clock_timestamp(),'
-         || ' ADD COLUMN emaj_txid    BIGINT      DEFAULT emaj._txid_current(),'
+         || ' ADD COLUMN emaj_txid    BIGINT      DEFAULT txid_current(),'
          || ' ADD COLUMN emaj_user    VARCHAR(32) DEFAULT session_user,'
          || ' ADD COLUMN emaj_user_ip INET        DEFAULT inet_client_addr()';
 -- creation of the index on the log table
-    IF v_pgVersion >= '8.3' THEN
-      EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON '
-           ||  v_logTableName || ' (emaj_gid, emaj_tuple DESC) ' || v_idxTblSpace;
-    ELSE
---   in 8.2, DESC clause doesn't exist. So the index cannot be used at rollback time.
---   It only enforces the uniqueness of (emaj_gid, emaj_tuple)
-      EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON '
-           ||  v_logTableName || ' (emaj_gid, emaj_tuple) ' || v_idxTblSpace;
-    END IF;
+    EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON '
+         ||  v_logTableName || ' (emaj_gid, emaj_tuple DESC) ' || v_idxTblSpace;
 -- remove the NOT NULL constraints of application columns.
 --   They are useless and blocking to store truncate event for tables belonging to audit_only tables
     FOR r_column IN
@@ -932,23 +916,20 @@ $_create_tbl$
            || '  END;'
            || '$rlbkfnct$ LANGUAGE plpgsql;';
       END IF;
--- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger,
--- This check is not done for postgres 8.2 because column tgconstraint doesn't exist
-    IF v_pgVersion >= '8.3' THEN
-      FOR r_trigger IN
-        SELECT tgname FROM pg_catalog.pg_trigger
-          WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'%emaj\\_%\\_trg'
-      LOOP
-        IF v_triggerList = '' THEN
-          v_triggerList = v_triggerList || r_trigger.tgname;
-        ELSE
-          v_triggerList = v_triggerList || ', ' || r_trigger.tgname;
-        END IF;
-      END LOOP;
--- if yes, issue a warning (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
-      IF v_triggerList <> '' THEN
-        RAISE WARNING '_create_tbl: table % has triggers (%). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.', v_fullTableName, v_triggerList;
+-- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
+    FOR r_trigger IN
+      SELECT tgname FROM pg_catalog.pg_trigger
+        WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'%emaj\\_%\\_trg'
+    LOOP
+      IF v_triggerList = '' THEN
+        v_triggerList = v_triggerList || r_trigger.tgname;
+      ELSE
+        v_triggerList = v_triggerList || ', ' || r_trigger.tgname;
       END IF;
+    END LOOP;
+-- if yes, issue a warning (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
+    IF v_triggerList <> '' THEN
+      RAISE WARNING '_create_tbl: table % has triggers (%). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.', v_fullTableName, v_triggerList;
     END IF;
 -- grant appropriate rights to both emaj roles
     EXECUTE 'GRANT SELECT ON TABLE ' || v_logTableName || ' TO emaj_viewer';
@@ -1302,23 +1283,22 @@ $_verify_groups$
   BEGIN
 -- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
 -- Let's start with some global checks that always raise an exception if an issue is detected
--- check the postgres version: E-Maj is not compatible with 8.1-
-    IF v_pgVersion < '8.2' THEN
+-- check the postgres version: E-Maj is not compatible with 8.2-
+    IF v_pgVersion < '8.3' THEN
       RAISE EXCEPTION 'The current postgres version (%) is not compatible with E-Maj.', version();
     END IF;
 -- check the postgres version at groups creation time is compatible with the current version
 -- Warning: comparisons on version numbers are alphanumeric.
 --          But we suppose these tests will not be useful any more when pg 10.0 will appear!
---   for 8.2 and 8.3, both major versions must be the same
+--   for 8.3, both major versions must be the same
     FOR r_object IN
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groups)
-          AND ((v_pgVersion = '8.2' OR v_pgVersion = '8.3') 
-               AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion) OR
+          AND ((v_pgVersion = '8.3' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion)
 --   for 8.4+, both major versions must be 8.4+
-              (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4')
+            OR (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4'))
         ORDER BY msg
     LOOP
       RAISE EXCEPTION '_verify_groups: %',r_object.msg;
@@ -3839,16 +3819,11 @@ $emaj_log_stat_group$
       RAISE EXCEPTION 'emaj_log_stat_group: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMark, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
     END IF;
 -- for each table of the emaj_relation table, get the number of log rows and return the statistic
-    FOR r_tblsq IN
-        SELECT rel_priority, rel_schema, rel_tblseq, 
-               CASE WHEN v_tsFirstMark IS NULL THEN 0 ELSE emaj._log_stat_tbl(rel_schema, rel_tblseq, rel_log_schema, v_tsFirstMark, v_tsLastMark, v_firstLastSeqHoleId, v_lastLastSeqHoleId) END AS nb_rows 
-          FROM emaj.emaj_relation
-          WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq
-        LOOP
-      SELECT v_groupName, r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.nb_rows INTO r_stat;
-      RETURN NEXT r_stat;
-    END LOOP;
-    RETURN;
+    RETURN QUERY
+      SELECT v_groupName, rel_schema, rel_tblseq, 
+             CASE WHEN v_tsFirstMark IS NULL THEN 0 ELSE emaj._log_stat_tbl(rel_schema, rel_tblseq, rel_log_schema, v_tsFirstMark, v_tsLastMark, v_firstLastSeqHoleId, v_lastLastSeqHoleId) END AS nb_rows 
+        FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq;
   END;
 $emaj_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_group(TEXT,TEXT,TEXT) IS
@@ -4466,7 +4441,7 @@ COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_generate_sql$
 -- This function generates a SQL script representing all updates performed on a tables group between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -4516,8 +4491,6 @@ $emaj_generate_sql$
     r_tblsq                 RECORD;
     r_col                   RECORD;
   BEGIN
--- this parameter should be moved in the create function clause once 8.2 will not be supported any more by E-Maj
-    SET standard_conforming_strings = ON;
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
 --      VALUES ('GENERATE_SQL', 'BEGIN', v_groupName, 'From mark ' || coalesce (v_firstMark, 'NULL') || ' to mark ' || coalesce (v_lastMark, 'NULL') || ' towards ' || v_location);
@@ -4525,11 +4498,6 @@ $emaj_generate_sql$
        CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
        CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
        || v_location);
--- check postgres version is >= 8.3
---   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
-    IF v_pgVersion < '8.3' THEN
-      RAISE EXCEPTION 'emaj_generate_sql: this function needs a PostgreSQL version 8.3+.';
-    END IF;
 -- check that the group is recorded in emaj_group table
     SELECT group_state INTO v_groupState
       FROM emaj.emaj_group WHERE group_name = v_groupName;
@@ -4787,35 +4755,27 @@ $_verify_all_groups$
 -- check the postgres version at creation time is compatible with the current version
 -- Warning: comparisons on version numbers are alphanumeric.
 --          But we suppose these tests will not be useful any more when pg 10.0 will appear!
---   for 8.2 and 8.3, both major versions must be the same
-    FOR r_object IN
+--   for 8.3, both major versions must be the same
+    RETURN QUERY
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
-        WHERE ((v_pgVersion = '8.2' OR v_pgVersion = '8.3') 
-               AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion) OR
+        WHERE ((v_pgVersion = '8.3' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion)
 --   for 8.4+, both major versions must be 8.4+
-              (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4')
-        ORDER BY msg
-    LOOP
-      RETURN NEXT r_object.msg;
-    END LOOP;
+            OR (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4'))
+        ORDER BY msg;
 -- check all application schemas referenced in the emaj_relation table still exist
-    FOR r_object IN
+    RETURN QUERY
       SELECT 'The application schema "' || rel_schema || '" does not exist any more.' AS msg
         FROM (
           SELECT DISTINCT rel_schema FROM emaj.emaj_relation 
             EXCEPT
           SELECT nspname FROM pg_catalog.pg_namespace
              ) AS t
-        ORDER BY msg
-    LOOP
-      RETURN NEXT r_object.msg;
-    END LOOP;
+        ORDER BY msg;
 -- check all application relations referenced in the emaj_relation table still exist
-    FOR r_object IN
-      SELECT t.rel_schema, t.rel_tblseq, 
-             'In group "' || r.rel_group || '", the ' ||
+    RETURN QUERY
+      SELECT 'In group "' || r.rel_group || '", the ' ||
                CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END || 
                t.rel_schema || '"."' || t.rel_tblseq || '" does not exist any more.' AS msg
         FROM (                                        -- all expected application relations
@@ -4825,52 +4785,44 @@ $_verify_all_groups$
             WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S')
              ) AS t, emaj.emaj_relation r             -- join with emaj_relation to get the group name
         WHERE t.rel_schema = r.rel_schema AND t.rel_tblseq = r.rel_tblseq
-        ORDER BY 1,2,3
-    LOOP
-      RETURN NEXT r_object.msg;
-    END LOOP;
+        ORDER BY t.rel_schema, t.rel_tblseq, 1;
 -- check the log table for all tables referenced in the emaj_relation table still exist
-    FOR r_object IN
-      SELECT rel_schema, rel_tblseq,
-             'In group "' || rel_group || '", the log table "' || 
+    RETURN QUERY
+      SELECT 'In group "' || rel_group || '", the log table "' || 
                rel_log_schema || '"."' || rel_schema || '_' || rel_tblseq || '_log" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_kind = 'r'
           AND (rel_log_schema, rel_schema || '_' || rel_tblseq || '_log') NOT IN
               (SELECT nspname, relname FROM pg_catalog.pg_namespace, pg_catalog.pg_class
                  WHERE relnamespace = pg_namespace.oid AND relname LIKE E'%\_%\_log')
-        ORDER BY 1,2,3
-    LOOP
-      RETURN NEXT r_object.msg;
-    END LOOP;
+        ORDER BY rel_schema, rel_tblseq, 1;
 -- check log and rollback functions for all tables referenced in the emaj_relation table still exist
-    FOR r_object IN                                   -- schema and table names are rebuilt from the returned function name
-      SELECT substring(fnct FROM '^(.*)_.*_.*_fnct') AS sch, substring(fnct FROM '^.*_(.*)_.*_fnct') AS tbl,
-             'In group "' || r.rel_group || '", the ' || 
-               CASE WHEN substring(fnct FROM '^.*_.*_(.*)_fnct') = 'log' THEN 'log' ELSE 'rollback' END || 
-               ' function "' || t.rel_log_schema || '"."' || fnct || '" is not found.' AS msg
-        FROM (                                        -- all expected log functions
-         (SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' AS fnct 
-            FROM emaj.emaj_relation 
-            WHERE rel_kind = 'r'
-          UNION ALL                                   -- plus all expected rollback functions
-          SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' AS fnct 
-            FROM emaj.emaj_relation, emaj.emaj_group
-            WHERE rel_group = group_name AND rel_kind = 'r' AND group_is_rollbackable
-         ) EXCEPT                                     -- minus functions known by postgres
-         SELECT nspname, proname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-           WHERE pronamespace = pg_namespace.oid AND proname LIKE E'%\_%\_%\_fnct'
-             ) AS t, emaj.emaj_relation r             -- join with emaj_relation to get the group name 
-        WHERE r.rel_schema = substring(fnct FROM '^(.*)_.*_.*_fnct') AND r.rel_tblseq = substring(fnct FROM '^.*_(.*)_.*_fnct')
-        ORDER BY 1,2,3
-    LOOP
-      RETURN NEXT r_object.msg;
-    END LOOP;
+    RETURN QUERY
+      SELECT msg FROM (
+        SELECT substring(fnct FROM '^(.*)_.*_.*_fnct') AS sch, substring(fnct FROM '^.*_(.*)_.*_fnct') AS tbl,
+                                                -- schema and table names are rebuilt from the returned function name
+               'In group "' || r.rel_group || '", the ' || 
+                 CASE WHEN substring(fnct FROM '^.*_.*_(.*)_fnct') = 'log' THEN 'log' ELSE 'rollback' END || 
+                 ' function "' || t.rel_log_schema || '"."' || fnct || '" is not found.' AS msg
+          FROM (                                        -- all expected log functions
+           (SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' AS fnct 
+              FROM emaj.emaj_relation 
+              WHERE rel_kind = 'r'
+            UNION ALL                                   -- plus all expected rollback functions
+            SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' AS fnct 
+              FROM emaj.emaj_relation, emaj.emaj_group
+              WHERE rel_group = group_name AND rel_kind = 'r' AND group_is_rollbackable
+           ) EXCEPT                                     -- minus functions known by postgres
+           SELECT nspname, proname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+             WHERE pronamespace = pg_namespace.oid AND proname LIKE E'%\_%\_%\_fnct'
+               ) AS t, emaj.emaj_relation r             -- join with emaj_relation to get the group name 
+          WHERE r.rel_schema = substring(fnct FROM '^(.*)_.*_.*_fnct') AND r.rel_tblseq = substring(fnct FROM '^.*_(.*)_.*_fnct')
+          ORDER BY 1,2,3
+      ) AS t;
 -- check log and truncate triggers for all tables referenced in the emaj_relation table still exist
 --   start with log trigger
-    FOR r_object IN
-      SELECT rel_schema, rel_tblseq,
-             'In group "' || rel_group || '", the log trigger "' || 
+    RETURN QUERY
+      SELECT 'In group "' || rel_group || '", the log trigger "' || 
                rel_schema || '_' || rel_tblseq || '_emaj_log_trg" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_kind = 'r'
@@ -4884,15 +4836,11 @@ $_verify_all_groups$
           AND (rel_schema, rel_tblseq) IN
               (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                  WHERE relnamespace = pg_namespace.oid)
-        ORDER BY 1,2,3
-    LOOP
-      RETURN NEXT r_object.msg;
-    END LOOP;
+        ORDER BY rel_schema, rel_tblseq, 1;
 --   then truncate trigger if pg 8.4+
     IF v_pgVersion >= '8.4' THEN
-      FOR r_object IN
-        SELECT rel_schema, rel_tblseq,
-               'In group "' || rel_group || '", the truncate trigger "' || 
+      RETURN QUERY
+        SELECT 'In group "' || rel_group || '", the truncate trigger "' || 
                  rel_schema || '_' || rel_tblseq || '_emaj_trunc_trg" is not found.' AS msg
           FROM emaj.emaj_relation
           WHERE rel_kind = 'r'
@@ -4906,62 +4854,58 @@ $_verify_all_groups$
             AND (rel_schema, rel_tblseq) IN
                 (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                    WHERE relnamespace = pg_namespace.oid)
-          ORDER BY 1,2,3
-      LOOP
-        RETURN NEXT r_object.msg;
-      END LOOP;
+          ORDER BY rel_schema, rel_tblseq, 1;
 -- TODO : merge both triggers check when pg 8.3 will not be supported any more
     END IF;
 -- check all log tables have a structure consistent with the application tables they reference
 --      (same columns and same formats). It only returns one row per faulting table.
-    FOR r_object IN
-      SELECT DISTINCT rel_schema, rel_tblseq,
-             'In group "' || rel_group || '", the structure of the application table "' || 
-               rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' || 
-             rel_log_schema || '"."' || rel_schema || '_' || rel_tblseq || '_log").' AS msg
-        FROM (
-          (                                           -- application table's columns 
-          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
-            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
-              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
-              AND rel_kind = 'r'
-          EXCEPT                                      -- minus log table's columns
-          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
-            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema 
-              AND relname = rel_schema || '_' || rel_tblseq || '_log'
-              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
-              AND rel_kind = 'r'
-          )
-          UNION
-          (                                           -- log table's columns
-          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
-            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema 
-              AND relname = rel_schema || '_' || rel_tblseq || '_log'
-              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
-              AND rel_kind = 'r'
-          EXCEPT                                      --  minus application table's columns
-          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
-            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
-              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
-              AND rel_kind = 'r'
-          )) AS t
-                         -- do not issue a row if the log or application table does not exist, 
-                         -- these cases have been already detected
-      WHERE (rel_log_schema, rel_schema || '_' || rel_tblseq || '_log') IN
-            (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-               WHERE relnamespace = pg_namespace.oid)
-        AND (rel_schema, rel_tblseq) IN
-            (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-               WHERE relnamespace = pg_namespace.oid)
-      ORDER BY 1,2,3
+    RETURN QUERY
+      SELECT msg FROM (
+        SELECT DISTINCT rel_schema, rel_tblseq,
+               'In group "' || rel_group || '", the structure of the application table "' || 
+                 rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' || 
+               rel_log_schema || '"."' || rel_schema || '_' || rel_tblseq || '_log").' AS msg
+          FROM (
+            (                                           -- application table's columns 
+            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
+                AND rel_kind = 'r'
+            EXCEPT                                      -- minus log table's columns
+            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema 
+                AND relname = rel_schema || '_' || rel_tblseq || '_log'
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
+                AND rel_kind = 'r'
+            )
+            UNION
+            (                                           -- log table's columns
+            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema 
+                AND relname = rel_schema || '_' || rel_tblseq || '_log'
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
+                AND rel_kind = 'r'
+            EXCEPT                                      --  minus application table's columns
+            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
+                AND rel_kind = 'r'
+            )) AS t
+                           -- do not issue a row if the log or application table does not exist, 
+                           -- these cases have been already detected
+        WHERE (rel_log_schema, rel_schema || '_' || rel_tblseq || '_log') IN
+              (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+                 WHERE relnamespace = pg_namespace.oid)
+          AND (rel_schema, rel_tblseq) IN
+              (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+                 WHERE relnamespace = pg_namespace.oid)
+        ORDER BY 1,2,3
+        ) AS t;
 -- TODO : use CTE to improve performance, when pg 8.3 will not be supported any more
-    LOOP
-      RETURN NEXT r_object.msg;
-    END LOOP;
     RETURN;
   END;
 $_verify_all_groups$;
@@ -4976,108 +4920,104 @@ $_verify_all_schemas$
     r_object         RECORD;
   BEGIN
 -- verify that the expected E-Maj schemas still exist
-    FOR r_object IN
+    RETURN QUERY
       SELECT DISTINCT 'The E-Maj schema "' || rel_log_schema || '" does not exist any more.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_log_schema NOT IN (SELECT nspname FROM pg_catalog.pg_namespace)
-        ORDER BY msg
-    LOOP
-      RETURN NEXT r_object.msg;
-    END LOOP;
+        ORDER BY msg;
 -- detect all objects that are not directly linked to a known table groups in all E-Maj schemas
 -- scan pg_class, pg_proc, pg_type, pg_conversion, pg_operator, pg_opclass
-    FOR r_object IN
+    RETURN QUERY
+      SELECT msg FROM (
 -- look for unexpected tables
-      SELECT nspname, 1, 'In schema "' || nspname || 
-             '", the table "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
-         FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-         WHERE relnamespace = pg_namespace.oid AND relkind = 'r'
-           AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal tables
-           AND (nspname, relname) NOT IN                                    -- exclude emaj log tables
-              (SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation)
-           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-      UNION ALL
+        SELECT nspname, 1, 'In schema "' || nspname || 
+               '", the table "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
+           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+           WHERE relnamespace = pg_namespace.oid AND relkind = 'r'
+             AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal tables
+             AND (nspname, relname) NOT IN                                    -- exclude emaj log tables
+                (SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation)
+             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+        UNION ALL
 -- look for unexpected sequences
-      SELECT nspname, 2, 'In schema "' || nspname || 
-             '", the sequence "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
-         FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-         WHERE relnamespace = pg_namespace.oid AND relkind = 'S'
-           AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal sequences
-           AND (nspname, relname) NOT IN                                    -- exclude emaj log table sequences 
-              (SELECT rel_log_schema, emaj._build_log_seq_name(rel_schema, rel_tblseq) FROM emaj.emaj_relation)
-           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-      UNION ALL
+        SELECT nspname, 2, 'In schema "' || nspname || 
+               '", the sequence "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
+           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+           WHERE relnamespace = pg_namespace.oid AND relkind = 'S'
+             AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal sequences
+             AND (nspname, relname) NOT IN                                    -- exclude emaj log table sequences 
+                (SELECT rel_log_schema, emaj._build_log_seq_name(rel_schema, rel_tblseq) FROM emaj.emaj_relation)
+             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+        UNION ALL
 -- look for unexpected functions
-      SELECT nspname, 3, 'In schema "' || nspname || 
-             '", the function "' || nspname || '"."' || proname  || '" is not linked to any created tables group.' AS msg
-         FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-         WHERE pronamespace = pg_namespace.oid 
-           AND (nspname <> v_emajSchema OR (proname NOT LIKE E'emaj\\_%' AND proname NOT LIKE E'\\_%'))
-                                                                            -- exclude emaj internal functions
-           AND (nspname, proname) NOT IN (                                  -- exclude emaj log functions
-             SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation)
-           AND (nspname, proname) NOT IN (                                  -- exclude emaj rollback functions
-             SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation)
-           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-      UNION ALL
+        SELECT nspname, 3, 'In schema "' || nspname || 
+               '", the function "' || nspname || '"."' || proname  || '" is not linked to any created tables group.' AS msg
+           FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+           WHERE pronamespace = pg_namespace.oid 
+             AND (nspname <> v_emajSchema OR (proname NOT LIKE E'emaj\\_%' AND proname NOT LIKE E'\\_%'))
+                                                                              -- exclude emaj internal functions
+             AND (nspname, proname) NOT IN (                                  -- exclude emaj log functions
+               SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation)
+             AND (nspname, proname) NOT IN (                                  -- exclude emaj rollback functions
+               SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation)
+             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+        UNION ALL
 -- look for unexpected composite types
-      SELECT nspname, 4, 'In schema "' || nspname || 
-             '", the type "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
-         FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-         WHERE relnamespace = pg_namespace.oid AND relkind = 'c'
-           AND (nspname <> v_emajSchema OR (relname NOT LIKE E'emaj\\_%' AND relname NOT LIKE E'\\_%'))
-                                                                            -- exclude emaj internal types
-           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-      UNION ALL
+        SELECT nspname, 4, 'In schema "' || nspname || 
+               '", the type "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+           WHERE relnamespace = pg_namespace.oid AND relkind = 'c'
+             AND (nspname <> v_emajSchema OR (relname NOT LIKE E'emaj\\_%' AND relname NOT LIKE E'\\_%'))
+                                                                              -- exclude emaj internal types
+             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+        UNION ALL
 -- look for unexpected views
-      SELECT nspname, 5, 'In schema "' || nspname || 
-             '", the view "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
-         FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-         WHERE relnamespace = pg_namespace.oid  AND relkind = 'v'
-           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-      UNION ALL
+        SELECT nspname, 5, 'In schema "' || nspname || 
+               '", the view "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+           WHERE relnamespace = pg_namespace.oid  AND relkind = 'v'
+             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+        UNION ALL
 -- look for unexpected foreign tables
-      SELECT nspname, 6, 'In schema "' || nspname || 
-             '", the foreign table "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
-         FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-         WHERE relnamespace = pg_namespace.oid  AND relkind = 'f'
-           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-      UNION ALL
+        SELECT nspname, 6, 'In schema "' || nspname || 
+               '", the foreign table "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+           WHERE relnamespace = pg_namespace.oid  AND relkind = 'f'
+             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+        UNION ALL
 -- look for unexpected domains
-      SELECT nspname, 7, 'In schema "' || nspname || 
-             '", the domain "' || nspname || '"."' || typname || '" is not an E-Maj component.' AS msg
-         FROM pg_catalog.pg_type, pg_catalog.pg_namespace
-         WHERE typnamespace = pg_namespace.oid AND typisdefined and typtype = 'd'
-           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-      UNION ALL
+        SELECT nspname, 7, 'In schema "' || nspname || 
+               '", the domain "' || nspname || '"."' || typname || '" is not an E-Maj component.' AS msg
+           FROM pg_catalog.pg_type, pg_catalog.pg_namespace
+           WHERE typnamespace = pg_namespace.oid AND typisdefined and typtype = 'd'
+             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+        UNION ALL
 -- look for unexpected conversions
-      SELECT nspname, 8, 'In schema "' || nspname || 
-             '", the conversion "' || nspname || '"."' || conname || '" is not an E-Maj component.' AS msg
-         FROM pg_catalog.pg_conversion, pg_catalog.pg_namespace
-         WHERE connamespace = pg_namespace.oid 
-           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-      UNION ALL
+        SELECT nspname, 8, 'In schema "' || nspname || 
+               '", the conversion "' || nspname || '"."' || conname || '" is not an E-Maj component.' AS msg
+           FROM pg_catalog.pg_conversion, pg_catalog.pg_namespace
+           WHERE connamespace = pg_namespace.oid 
+             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+        UNION ALL
 -- look for unexpected operators
-      SELECT nspname, 9, 'In schema "' || nspname || 
-             '", the operator "' || nspname || '"."' || oprname || '" is not an E-Maj component.' AS msg
-         FROM pg_catalog.pg_operator, pg_catalog.pg_namespace
-         WHERE oprnamespace = pg_namespace.oid 
-           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-      UNION ALL
+        SELECT nspname, 9, 'In schema "' || nspname || 
+               '", the operator "' || nspname || '"."' || oprname || '" is not an E-Maj component.' AS msg
+           FROM pg_catalog.pg_operator, pg_catalog.pg_namespace
+           WHERE oprnamespace = pg_namespace.oid 
+             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+        UNION ALL
 -- look for unexpected operator classes
-      SELECT nspname, 10, 'In schema "' || nspname || 
-             '", the operator class "' || nspname || '"."' || opcname || '" is not an E-Maj component.' AS msg
-         FROM pg_catalog.pg_opclass, pg_catalog.pg_namespace
-         WHERE opcnamespace = pg_namespace.oid 
-           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-      ORDER BY 1, 2, 3
--- Todo: when pg version 8.3- will not be supported, the following CTE could be used to minimize the number of emaj_relation scan to build the schemas list
+        SELECT nspname, 10, 'In schema "' || nspname || 
+               '", the operator class "' || nspname || '"."' || opcname || '" is not an E-Maj component.' AS msg
+           FROM pg_catalog.pg_opclass, pg_catalog.pg_namespace
+           WHERE opcnamespace = pg_namespace.oid 
+             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+        ORDER BY 1, 2, 3
+      ) AS t;
+-- TODO: when pg version 8.3- will not be supported, the following CTE could be used to minimize the number of emaj_relation scan to build the schemas list
 --        WITH logschemas AS ( SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation )
 --  replacing all "AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)" conditions by
 --                "AND nspname IN (SELECT rel_log_schema FROM logschemas)"
-    LOOP
-      RETURN NEXT r_object.msg;
-    END LOOP;
     RETURN;
   END;
 $_verify_all_schemas$;
@@ -5094,8 +5034,8 @@ $emaj_verify_all$
     r_object         RECORD;
   BEGIN
 -- Global checks
--- detect if the current postgres version is at least 8.1
-    IF v_pgVersion < '8.2' THEN
+-- detect if the current postgres version is at least 8.2
+    IF v_pgVersion < '8.3' THEN
       RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with E-Maj.';
       v_errorFound = TRUE;
     END IF;
@@ -5191,7 +5131,6 @@ GRANT SELECT ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_viewer;
 
 -- revoke grants on all functions from PUBLIC
-REVOKE ALL ON FUNCTION emaj._txid_current() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._purge_hist() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_name(TEXT, TEXT) FROM PUBLIC;
@@ -5268,7 +5207,6 @@ REVOKE ALL ON FUNCTION emaj._verify_all_schemas() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 
 -- give appropriate rights on functions to emaj_adm role
-GRANT EXECUTE ON FUNCTION emaj._txid_current() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._purge_hist() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_adm;

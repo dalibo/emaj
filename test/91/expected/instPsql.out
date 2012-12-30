@@ -4462,6 +4462,7 @@ $emaj_snap_log_group$
 $emaj_snap_log_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
+<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_group$
@@ -4495,6 +4496,11 @@ $$Generates a sql script corresponding to all updates performed on a tables grou
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_group$
+=======
+CREATE OR REPLACE FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+$emaj_generate_sql$
+>>>>>>> Taking benefit from the end of the postgres 8.2 support, various code improvements.
 -- This function generates a SQL script representing all updates performed on a tables group between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
 -- It call the _gen_sql_groups() function to effetively process the request
@@ -4627,9 +4633,33 @@ $_gen_sql_groups$
     v_rqSeq                 TEXT;
     r_tblsq                 RECORD;
   BEGIN
+<<<<<<< HEAD
 -- if the group names array is null, immediately return 0
     IF v_groupNames IS NULL THEN
       RETURN 0;
+=======
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+--      VALUES ('GENERATE_SQL', 'BEGIN', v_groupName, 'From mark ' || coalesce (v_firstMark, 'NULL') || ' to mark ' || coalesce (v_lastMark, 'NULL') || ' towards ' || v_location);
+      VALUES ('GENERATE_SQL', 'BEGIN', v_groupName,
+       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
+       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
+       || v_location);
+-- check that the group is recorded in emaj_group table
+    SELECT group_state INTO v_groupState
+      FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_generate_sql: group % has not been created.', v_groupName;
+    END IF;
+-- check all tables of the group have a pkey
+    SELECT count(*) INTO v_cpt FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
+      WHERE relnamespace = pg_namespace.oid
+        AND nspname = rel_schema AND relname =  rel_tblseq
+        AND rel_group = v_groupName AND rel_kind = 'r'
+        AND relhaspkey = false;
+    IF v_cpt > 0 THEN
+      RAISE EXCEPTION 'emaj_generate_sql: Tables group % contains % tables without pkey.', v_groupName, v_cpt;
+>>>>>>> Taking benefit from the end of the postgres 8.2 support, various code improvements.
     END IF;
 -- check that each group ...
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
@@ -5783,7 +5813,11 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
+<<<<<<< HEAD
     79
+=======
+    74
+>>>>>>> Taking benefit from the end of the postgres 8.2 support, various code improvements.
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 

@@ -3,6 +3,8 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+  - various code improvements, in particular taking benefit from the end of 
+    the postgres 8.2 support.
 
 Bug fixes:
 

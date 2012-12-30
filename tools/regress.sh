@@ -7,9 +7,9 @@
 #---------------------------------------------#
 EMAJ_HOME="/home/postgres/proj/emaj"
 
-PGBIN82="/usr/local/pg8221/bin"
-PGPORT82="8221"
-PGREG82="/home/postgres/postgresql-8.2.21/src/test/regress"
+#PGBIN82="/usr/local/pg8221/bin"
+#PGPORT82="8221"
+#PGREG82="/home/postgres/postgresql-8.2.21/src/test/regress"
 
 PGBIN83="/usr/local/pg8321/bin"
 PGPORT83="8321"
@@ -115,7 +115,7 @@ echo "--- E-Maj regression tests ---"
 echo " "
 echo "Available tests:"
 echo "----------------"
-echo "	A- pg 8.2 (port $PGPORT82) standart test"
+#echo "	A- pg 8.2 (port $PGPORT82) standart test"
 echo "	B- pg 8.3 (port $PGPORT83) standart test"
 echo "	C- pg 8.4 (port $PGPORT84) standart test"
 echo "	D- pg 9.0 (port $PGPORT90) standart test"
@@ -123,7 +123,7 @@ echo "	E- pg 9.1 (port $PGPORT91) standart test"
 echo "	F- pg 9.2 (port $PGPORT92) standart test"
 echo "	M- pg 8.4 dump and 9.1 restore"
 #echo "	N- pg 9.1 dump and 9.1 restore"
-echo "	P- pg 8.2 (port $PGPORT82) starting with E-Maj migration"
+#echo "	P- pg 8.2 (port $PGPORT82) starting with E-Maj migration"
 echo "	Q- pg 8.3 (port $PGPORT83) starting with E-Maj migration"
 echo "	R- pg 8.4 (port $PGPORT84) starting with E-Maj migration"
 echo "	S- pg 9.0 (port $PGPORT90) starting with E-Maj migration"
@@ -140,7 +140,7 @@ read ANSWER
 
 # execute the test
 case $ANSWER in
-	A|a) reg_test_version "82" "psql";;
+#	A|a) reg_test_version "82" "psql";;
 	B|b) reg_test_version "83" "psql" ;;
 	C|c) reg_test_version "84" "psql" ;;
 	D|d) reg_test_version "90" "psql" ;;
@@ -149,7 +149,7 @@ case $ANSWER in
 	F|f) reg_test_version "92" "psql";;
 	M|m) migrat_test "91" "84";;
 #	N|n) migrat_test "91" "91";;
-	P|p) reg_test_version "82" "psql_mig" ;;
+#	P|p) reg_test_version "82" "psql_mig" ;;
 	Q|q) reg_test_version "83" "psql_mig" ;;
 	R|r) reg_test_version "84" "psql_mig" ;;
 	S|s) reg_test_version "90" "psql_mig" ;;
@@ -162,7 +162,7 @@ case $ANSWER in
 	W|w) reg_test_version "91" "psql_mx_mig";;
 	X|x) reg_test_version "92" "psql_mx_mig";;
 	Y|y)
-		reg_test_version "82" "psql_mig"
+#		reg_test_version "82" "psql_mig"
 		reg_test_version "83" "psql_mig"
 		reg_test_version "84" "psql_mig"
 		reg_test_version "90" "psql_mig"
@@ -171,7 +171,7 @@ case $ANSWER in
 		reg_test_version "92" "psql_mig"
 		;;
 	Z|z)
-		reg_test_version "82" "psql"
+#		reg_test_version "82" "psql"
 		reg_test_version "83" "psql"
 		reg_test_version "84" "psql"
 		reg_test_version "90" "psql"
