@@ -1293,18 +1293,18 @@ phil's schema3_myTbl2\_col21_seq.snap
 phil's schema3_myTbl2\.snap
 phil's schema3_phil's seq\1.snap
 phil's schema3_phil's tbl1.snap
--- reset directory for emaj_generate_sql tests
+-- reset directory for emaj_gen_sql_group tests
 \! rm -R /tmp/emaj_test/sql_scripts
 \! mkdir /tmp/emaj_test/sql_scripts
 --select * from emaj.emaj_mark order by mark_group, mark_id;
 -- generate sql script for each active group (and check the result with detailed log statistics + number of sequences)
-select emaj.emaj_generate_sql('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
+select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script"
-PL/pgSQL function "emaj_generate_sql" line 114 at SQL statement
- emaj_generate_sql 
--------------------
-                 1
+PL/pgSQL function "emaj_gen_sql_group" line 114 at SQL statement
+ emaj_gen_sql_group 
+--------------------
+                  1
 (1 row)
 
 select coalesce(sum(stat_rows),0) + 1 as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
@@ -1313,10 +1313,10 @@ select coalesce(sum(stat_rows),0) + 1 as check from emaj.emaj_detailed_log_stat_
      1
 (1 row)
 
-select emaj.emaj_generate_sql('myGroup2', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup2.sql');
- emaj_generate_sql 
--------------------
-                22
+select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup2.sql');
+ emaj_gen_sql_group 
+--------------------
+                 22
 (1 row)
 
 select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
@@ -1325,10 +1325,10 @@ select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGro
     22
 (1 row)
 
-select emaj.emaj_generate_sql('phil''s group#3",', 'M1_rollbackable', NULL, '/tmp/emaj_test/sql_scripts/Group3.sql');
- emaj_generate_sql 
--------------------
-                57
+select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, '/tmp/emaj_test/sql_scripts/Group3.sql');
+ emaj_gen_sql_group 
+--------------------
+                 57
 (1 row)
 
 select sum(stat_rows) + 1 as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
@@ -1400,14 +1400,14 @@ PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 (1 row)
 
 \i /tmp/emaj_test/sql_scripts/myGroup1.sql
--- file generated at [ts] by the emaj_generate_sql() function, for tables group myGroup1, processing logs between mark Multi-1 and the current situation
+-- file generated at [ts] by the emaj_gen_sql_group() function, for tables group myGroup1, processing logs between mark Multi-1 and the current situation
 SET standard_conforming_strings = ON;
 --BEGIN TRANSACTION;
 ALTER SEQUENCE myschema1."myTbl3_col31_seq" RESTART 21 START 1 INCREMENT 1 MAXVALUE 9223372036854775807 MINVALUE 1 CACHE 1 NO CYCLE;
 --COMMIT;
 RESET standard_conforming_strings;
 \i /tmp/emaj_test/sql_scripts/myGroup2.sql
--- file generated at [ts] by the emaj_generate_sql() function, for tables group myGroup2, processing logs between mark Multi-1 and the current situation
+-- file generated at [ts] by the emaj_gen_sql_group() function, for tables group myGroup2, processing logs between mark Multi-1 and the current situation
 SET standard_conforming_strings = ON;
 --BEGIN TRANSACTION;
 INSERT INTO myschema2.mytbl5 VALUES (10, '{abc,def,ghi}', '{1,2,3}', NULL);
@@ -1435,7 +1435,7 @@ ALTER SEQUENCE myschema2."myTbl3_col31_seq" RESTART 21 START 1 INCREMENT 1 MAXVA
 --COMMIT;
 RESET standard_conforming_strings;
 \i /tmp/emaj_test/sql_scripts/Group3.sql
--- file generated at [ts] by the emaj_generate_sql() function, for tables group phil's group#3",, processing logs between mark M1_rollbackable and the current situation
+-- file generated at [ts] by the emaj_gen_sql_group() function, for tables group phil's group#3",, processing logs between mark M1_rollbackable and the current situation
 SET standard_conforming_strings = ON;
 --BEGIN TRANSACTION;
 INSERT INTO "phil's schema3"."phil's tbl1" VALUES (1, 'AB''C', E'\\014');

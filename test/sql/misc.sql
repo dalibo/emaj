@@ -321,7 +321,7 @@ select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23','/tmp/emaj_test/log
 \! ls /tmp/emaj_test/log_snaps |sed s/[0-9][0-9].[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]/\[timestamp_mask\]/g
 
 -----------------------------
--- emaj_generate_sql() test
+-- emaj_gen_sql_group() test
 -----------------------------
 -- set/reset directory for snaps
 \! mkdir -p /tmp/emaj_test/sql_scripts
@@ -329,14 +329,14 @@ select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23','/tmp/emaj_test/log
 \! mkdir /tmp/emaj_test/sql_scripts
 
 -- group is unknown in emaj_group_def
-select emaj.emaj_generate_sql(NULL, NULL, NULL, NULL);
-select emaj.emaj_generate_sql('unknownGroup', NULL, NULL, NULL);
+select emaj.emaj_gen_sql_group(NULL, NULL, NULL, NULL);
+select emaj.emaj_gen_sql_group('unknownGroup', NULL, NULL, NULL);
 
 -- invalid start mark
-select emaj.emaj_generate_sql('myGroup2', 'unknownMark', NULL, NULL);
+select emaj.emaj_gen_sql_group('myGroup2', 'unknownMark', NULL, NULL);
 
 -- invalid end mark
-select emaj.emaj_generate_sql('myGroup2', NULL, 'unknownMark', NULL);
+select emaj.emaj_gen_sql_group('myGroup2', NULL, 'unknownMark', NULL);
 
 -- end mark is prior start mark
 begin;
@@ -345,24 +345,24 @@ begin;
     where mark_group = 'myGroup2' and mark_name = 'Mark21';
   update emaj.emaj_mark set mark_datetime = '2000-01-01 13:00:00+00'
     where mark_group = 'myGroup2' and mark_name = 'Mark22';
-  select emaj.emaj_generate_sql('myGroup2', 'Mark22', 'Mark21', NULL);
+  select emaj.emaj_gen_sql_group('myGroup2', 'Mark22', 'Mark21', NULL);
 rollback;
 -- invalid location path name
-select emaj.emaj_generate_sql('myGroup1', NULL, NULL, NULL);
-select emaj.emaj_generate_sql('myGroup1', NULL, NULL, '/tmp/unknownDirectory/myFile');
+select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
+select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/unknownDirectory/myFile');
 
 -- the tables group contains a table without pkey
-select emaj.emaj_generate_sql('phil''s group#3",', NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
+select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
 
 -- should be ok (generated files content is checked later in adm2.sql scenario)
--- (getting counters from detailed log statistics + the number of sequences included in the group allows a comparison with the result of emaj_generate_sql function)
-select emaj.emaj_generate_sql('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
+-- (getting counters from detailed log statistics + the number of sequences included in the group allows a comparison with the result of emaj_gen_sql_group function)
+select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL);
-select emaj.emaj_generate_sql('myGroup2', 'Mark21', NULL, '/tmp/emaj_test/sql_scripts/myFile');
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, '/tmp/emaj_test/sql_scripts/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',NULL);
-select emaj.emaj_generate_sql('myGroup2', NULL, 'Mark22', '/tmp/emaj_test/sql_scripts/myFile');
+select emaj.emaj_gen_sql_group('myGroup2', NULL, 'Mark22', '/tmp/emaj_test/sql_scripts/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'Mark22');
-select emaj.emaj_generate_sql('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile');
+select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
 
 -----------------------------

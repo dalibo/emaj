@@ -75,7 +75,7 @@ select emaj.emaj_logged_rollback_groups(array['myGroup1'],'mark');
 select emaj.emaj_reset_group('myGroup1');
 select emaj.emaj_snap_group('myGroup1','/tmp',NULL);
 select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp',NULL);
-select emaj.emaj_generate_sql('myGroup1',NULL,NULL,'/tmp/dummy');
+select emaj.emaj_gen_sql_group('myGroup1',NULL,NULL,'/tmp/dummy');
 --
 reset role;
 

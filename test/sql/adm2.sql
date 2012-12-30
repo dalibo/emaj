@@ -214,17 +214,17 @@ select emaj.emaj_snap_group('phil''s group#3",','/tmp/emaj_test/snaps','CSV HEAD
 
 \! ls /tmp/emaj_test/snaps
 
--- reset directory for emaj_generate_sql tests
+-- reset directory for emaj_gen_sql_group tests
 \! rm -R /tmp/emaj_test/sql_scripts
 \! mkdir /tmp/emaj_test/sql_scripts
 
 --select * from emaj.emaj_mark order by mark_group, mark_id;
 -- generate sql script for each active group (and check the result with detailed log statistics + number of sequences)
-select emaj.emaj_generate_sql('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
+select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
 select coalesce(sum(stat_rows),0) + 1 as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
-select emaj.emaj_generate_sql('myGroup2', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup2.sql');
+select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup2.sql');
 select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
-select emaj.emaj_generate_sql('phil''s group#3",', 'M1_rollbackable', NULL, '/tmp/emaj_test/sql_scripts/Group3.sql');
+select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, '/tmp/emaj_test/sql_scripts/Group3.sql');
 select sum(stat_rows) + 1 as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
 
 -- process \\ in script files

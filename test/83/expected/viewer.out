@@ -196,7 +196,7 @@ select emaj.emaj_snap_group('myGroup1','/tmp',NULL);
 ERROR:  permission denied for function emaj_snap_group
 select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp',NULL);
 ERROR:  permission denied for function emaj_snap_log_group
-select emaj.emaj_generate_sql('myGroup1',NULL,NULL,'/tmp/dummy');
-ERROR:  permission denied for function emaj_generate_sql
+select emaj.emaj_gen_sql_group('myGroup1',NULL,NULL,'/tmp/dummy');
+ERROR:  permission denied for function emaj_gen_sql_group
 --
 reset role;

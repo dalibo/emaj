@@ -5,6 +5,8 @@ E-Maj - Release notes
 Enhancements:
   - various code improvements, in particular taking benefit from the end of 
     the postgres 8.2 support.
+  - the emaj_generate_sql() function is renamed emaj_gen_sql_group() for 
+    consistency with other functions names.
 
 Bug fixes:
 

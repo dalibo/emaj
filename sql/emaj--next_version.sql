@@ -4342,9 +4342,9 @@ $emaj_snap_log_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
-$emaj_generate_sql$
+$emaj_gen_sql_group$
 -- This function generates a SQL script representing all updates performed on a tables group between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
 -- The function can process groups that are in IDLE state.
@@ -4404,7 +4404,7 @@ $emaj_generate_sql$
     SELECT group_state INTO v_groupState
       FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_generate_sql: group % has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_gen_sql_group: group % has not been created.', v_groupName;
     END IF;
 -- check all tables of the group have a pkey
     SELECT count(*) INTO v_cpt FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
@@ -4413,20 +4413,20 @@ $emaj_generate_sql$
         AND rel_group = v_groupName AND rel_kind = 'r'
         AND relhaspkey = false;
     IF v_cpt > 0 THEN
-      RAISE EXCEPTION 'emaj_generate_sql: Tables group % contains % tables without pkey.', v_groupName, v_cpt;
+      RAISE EXCEPTION 'emaj_gen_sql_group: Tables group % contains % tables without pkey.', v_groupName, v_cpt;
     END IF;
 -- if first mark is NULL or empty, retrieve the name, the global sequence value and the timestamp of the first recorded mark for the group
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
       SELECT mark_id, mark_name, mark_global_seq, mark_datetime INTO v_firstMarkId, v_realFirstMark, v_firstEmajGid, v_tsFirstMark
         FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_id LIMIT 1;
       IF NOT FOUND THEN
-         RAISE EXCEPTION 'emaj_generate_sql: No initial mark can be found for group %.', v_groupName;
+         RAISE EXCEPTION 'emaj_gen_sql_group: No initial mark can be found for group %.', v_groupName;
       END IF;
     ELSE
 -- else, check and retrieve the name, the global sequence value and the timestamp of the supplied first mark for the group
       SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
       IF v_realFirstMark IS NULL THEN
-        RAISE EXCEPTION 'emaj_generate_sql: Start mark % is unknown for group %.', v_firstMark, v_groupName;
+        RAISE EXCEPTION 'emaj_gen_sql_group: Start mark % is unknown for group %.', v_firstMark, v_groupName;
       END IF;
       SELECT mark_id, mark_global_seq, mark_datetime INTO v_firstMarkId, v_firstEmajGid, v_tsFirstMark
         FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realFirstMark;
@@ -4440,22 +4440,22 @@ $emaj_generate_sql$
 -- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the group
       SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
       IF v_realLastMark IS NULL THEN
-        RAISE EXCEPTION 'emaj_generate_sql: End mark % is unknown for group %.', v_lastMark, v_groupName;
+        RAISE EXCEPTION 'emaj_gen_sql_group: End mark % is unknown for group %.', v_lastMark, v_groupName;
       END IF;
       SELECT mark_id, mark_global_seq, mark_datetime INTO v_lastMarkId, v_lastEmajGid, v_tsLastMark
         FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
     END IF;
 -- check that the first_mark < end_mark
     IF v_lastMarkId IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
-      RAISE EXCEPTION 'emaj_generate_sql: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMark, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
+      RAISE EXCEPTION 'emaj_gen_sql_group: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMark, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
     END IF;
 -- test the supplied output file name by inserting a temporary line (trap NULL or bad file name)
     BEGIN
-      EXECUTE 'COPY (SELECT ''-- emaj_generate_sql() function in progress - started at '
+      EXECUTE 'COPY (SELECT ''-- emaj_gen_sql_group() function in progress - started at '
                      || statement_timestamp() || ''') TO ' || quote_literal(v_location);
     EXCEPTION
       WHEN OTHERS THEN
-        RAISE EXCEPTION 'emaj_generate_sql: file % cannot be used as script output file.', v_location;
+        RAISE EXCEPTION 'emaj_gen_sql_group: file % cannot be used as script output file.', v_location;
     END;
 -- create temporary table
     DROP TABLE IF EXISTS emaj_temp_script;
@@ -4614,7 +4614,7 @@ $emaj_generate_sql$
     END IF;
     INSERT INTO emaj_temp_script SELECT 0, 1, 0,
          '-- file generated at ' || statement_timestamp()
-      || ' by the emaj_generate_sql() function, for tables group ' || v_groupName
+      || ' by the emaj_gen_sql_group() function, for tables group ' || v_groupName
       || ', processing logs between mark ' || v_realFirstMark || v_endComment;
 -- encapsulate the sql statements inside a TRANSACTION
 -- and manage the standard_conforming_strings option to properly handle special characters
@@ -4634,8 +4634,8 @@ $emaj_generate_sql$
       VALUES ('GENERATE_SQL', 'END', v_groupName, v_cumNbSQL || ' generated statements');
     RETURN v_cumNbSQL;
   END;
-$emaj_generate_sql$;
-COMMENT ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
+$emaj_gen_sql_group$;
+COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
 
 ------------------------------------
@@ -5103,7 +5103,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_fir
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_all_groups() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_all_schemas() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
@@ -5180,7 +5180,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
