@@ -31,22 +31,28 @@ select count(*) from emajb.myschema1_mytbl2b_log;
 select count(*) from "emajC"."myschema1_myTbl3_log";
 select count(*) from emaj.myschema1_mytbl4_log;
 
+-- start myGroup1
+select emaj.emaj_start_group('myGroup1','Mark21');
 -----------------------------
--- log updates on myschema2 between 3 marks
+-- log updates on myschema2 between 3 mono-group and multi-groups marks 
 -----------------------------
 set search_path=myschema2;
+-- set a multi-groups mark
+select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-1');
 -- inserts/updates/deletes in myTbl1, myTbl2 and myTbl2b (via trigger)
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,10100) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 500;
 delete from myTbl1 where col11 > 10000;
 insert into myTbl2 select i, 'DEF', current_date from generate_series (1,900) as i;
--- set a mark
+-- set marks
 select emaj.emaj_set_mark_group('myGroup2','Mark22');
+select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
 -- inserts/updates/deletes in myTbl3 and myTbl4
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 insert into myTbl4 select i,'FK...',i,1,'ABC' from generate_series (1,100) as i;
--- set a mark
+-- set marks
 select emaj.emaj_set_mark_group('myGroup2','Mark23');
+select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
 
 -----------------------------
 -- emaj_log_stat_group() and emaj_detailled_log_stat_group() test
@@ -123,6 +129,7 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
 
 -- groups without any mark
 begin;
+  select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_reset_group('myGroup1');
   select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
   select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
@@ -139,9 +146,10 @@ select emaj.emaj_estimate_rollback_duration('unknownGroup',NULL);
 select emaj.emaj_estimate_rollback_duration('myGroup2','dummyMark');
 
 -- group not in logging state
-select emaj.emaj_start_group('myGroup1','Mark11');
-select emaj.emaj_stop_group('myGroup1');
-select emaj.emaj_estimate_rollback_duration('myGroup1','Mark11');
+begin;
+  select emaj.emaj_stop_group('myGroup1');
+  select emaj.emaj_estimate_rollback_duration('myGroup1','Mark11');
+rollback;
 
 -- insert 2 timing parameters (=> so use 2 default values)
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','5 millisecond'::interval);
@@ -321,7 +329,7 @@ select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23','/tmp/emaj_test/log
 \! ls /tmp/emaj_test/log_snaps |sed s/[0-9][0-9].[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]/\[timestamp_mask\]/g
 
 -----------------------------
--- emaj_gen_sql_group() test
+-- emaj_gen_sql_group() and emaj_gen_sql_groups() test
 -----------------------------
 -- set/reset directory for snaps
 \! mkdir -p /tmp/emaj_test/sql_scripts
@@ -332,11 +340,16 @@ select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23','/tmp/emaj_test/log
 select emaj.emaj_gen_sql_group(NULL, NULL, NULL, NULL);
 select emaj.emaj_gen_sql_group('unknownGroup', NULL, NULL, NULL);
 
+select emaj.emaj_gen_sql_groups(NULL, NULL, NULL, NULL);
+select emaj.emaj_gen_sql_groups('{"myGroup1","unknownGroup"}', NULL, NULL, NULL);
+
 -- invalid start mark
 select emaj.emaj_gen_sql_group('myGroup2', 'unknownMark', NULL, NULL);
+select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Mark11', NULL, NULL);
 
 -- invalid end mark
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'unknownMark', NULL);
+select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', NULL, 'Mark11', NULL);
 
 -- end mark is prior start mark
 begin;
@@ -347,12 +360,28 @@ begin;
     where mark_group = 'myGroup2' and mark_name = 'Mark22';
   select emaj.emaj_gen_sql_group('myGroup2', 'Mark22', 'Mark21', NULL);
 rollback;
+begin;
+-- (mark timestamps are temporarily changed so that regression test can return a stable error message)
+  update emaj.emaj_mark set mark_datetime = '2000-01-01 12:00:00+00' where mark_name = 'Multi-2';
+  update emaj.emaj_mark set mark_datetime = '2000-01-01 13:00:00+00' where mark_name = 'Multi-3';
+  select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-3', 'Multi-2', NULL);
+rollback;
+
+-- start mark with the same name but that doesn't correspond to the same point in time
+  select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Mark21', 'Multi-2', NULL);
+  select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, 'Multi-2', NULL);
+
+-- end mark with the same name but that doesn't correspond to the same point in time
+  select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Mark21', NULL);
+
 -- invalid location path name
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/unknownDirectory/myFile');
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/unknownDirectory/myFile');
 
 -- the tables group contains a table without pkey
 select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
+select emaj.emaj_gen_sql_groups(array['myGroup1','phil''s group#3",'], NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
 
 -- should be ok (generated files content is checked later in adm2.sql scenario)
 -- (getting counters from detailed log statistics + the number of sequences included in the group allows a comparison with the result of emaj_gen_sql_group function)
@@ -362,6 +391,8 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, '/tmp/emaj_test/sql_s
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',NULL);
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'Mark22', '/tmp/emaj_test/sql_scripts/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'Mark22');
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myFile');
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-2', 'Multi-3', '/tmp/emaj_test/sql_scripts/myFile');
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
 
@@ -592,6 +623,7 @@ rollback;
 begin;
   create sequence emajb.dummySeq;
 -- dropping group fails at secondary schema drop step
+  select emaj.emaj_stop_group('myGroup1');
   savepoint sp1;
     select emaj.emaj_drop_group('myGroup1');
   rollback to savepoint sp1;

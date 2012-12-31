@@ -257,6 +257,9 @@ COMMENT
 CREATE FUNCTION
 ALTER FUNCTION
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 COMMENT
 CREATE FUNCTION
 ALTER FUNCTION
@@ -266,6 +269,7 @@ ALTER FUNCTION
 COMMENT
 CREATE FUNCTION
 ALTER FUNCTION
+<<<<<<< HEAD
 COMMENT
 CREATE FUNCTION
 ALTER FUNCTION
@@ -274,6 +278,8 @@ CREATE FUNCTION
 ALTER FUNCTION
 =======
 >>>>>>> Taking benefit from the end of the postgres 8.2 support, various code improvements.
+=======
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 CREATE FUNCTION
 ALTER FUNCTION
 CREATE FUNCTION
@@ -1030,6 +1036,7 @@ REVOKE
 REVOKE
 GRANT
 GRANT
+<<<<<<< HEAD
 REVOKE
 REVOKE
 GRANT
@@ -1038,6 +1045,8 @@ REVOKE
 REVOKE
 GRANT
 GRANT
+=======
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 GRANT
 REVOKE
 REVOKE

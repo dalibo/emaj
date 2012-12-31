@@ -43,13 +43,13 @@ select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_mark;
  count 
 -------
-     7
+    12
 (1 row)
 
 select count(*) from emaj.emaj_sequence;
  count 
 -------
-    43
+    79
 (1 row)
 
 select count(*) from emaj.emaj_seq_hole;
@@ -85,16 +85,16 @@ select * from emaj.emaj_verify_all();
  No error detected
 (1 row)
 
-select substring(emaj.emaj_get_previous_mark_group('myGroup1', current_timestamp) FOR 5 FROM 1);
- substring 
------------
- STOP_
+select emaj.emaj_get_previous_mark_group('myGroup1', current_timestamp);
+ emaj_get_previous_mark_group 
+------------------------------
+ Multi-3
 (1 row)
 
 select emaj.emaj_get_previous_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_get_previous_mark_group 
 ------------------------------
- Mark11
+ Multi-2
 (1 row)
 
 select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
@@ -113,7 +113,11 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
 (0 rows)
 
 select emaj.emaj_estimate_rollback_duration('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp));
-ERROR:  emaj_estimate_rollback_duration: group myGroup1 has not been created or is not in LOGGING state.
+ emaj_estimate_rollback_duration 
+---------------------------------
+ @ 0.03 secs
+(1 row)
+
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
  substr 
 --------
@@ -198,5 +202,7 @@ select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp',NULL);
 ERROR:  permission denied for function emaj_snap_log_group
 select emaj.emaj_gen_sql_group('myGroup1',NULL,NULL,'/tmp/dummy');
 ERROR:  permission denied for function emaj_gen_sql_group
+select emaj.emaj_gen_sql_groups(array['myGroup1'],NULL,NULL,'/tmp/dummy');
+ERROR:  permission denied for function emaj_gen_sql_groups
 --
 reset role;

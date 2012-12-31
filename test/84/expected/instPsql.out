@@ -4485,7 +4485,11 @@ $emaj_gen_sql_group$
        CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
        || v_location);
 -- call the _gen_sql_groups() function that effectively processes the request
+<<<<<<< HEAD
     SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location, NULL) INTO v_cumNbSQL;
+=======
+    SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location) INTO v_cumNbSQL;
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 -- insert end in the history and return
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('GEN_SQL_GROUP', 'END', v_groupName, v_cumNbSQL || ' generated statements');
@@ -4494,6 +4498,7 @@ $emaj_gen_sql_group$
 $emaj_gen_sql_group$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
+<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_group$
@@ -4535,6 +4540,8 @@ $emaj_gen_sql_group$
 $emaj_gen_sql_group$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
+=======
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_groups$
@@ -4556,7 +4563,11 @@ $emaj_gen_sql_groups$
        CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
        || v_location);
 -- call the _gen_sql_groups() function that effectively processes the request
+<<<<<<< HEAD
     SELECT emaj._gen_sql_groups(emaj._check_names_array(v_groupNames,'group'), v_firstMark, v_lastMark, v_location, NULL)
+=======
+    SELECT emaj._gen_sql_groups(emaj._check_group_names_array(v_groupNames), v_firstMark, v_lastMark, v_location)
+>>>>>>> Add a new emaj_gen_sql_groups() function.
       INTO v_cumNbSQL;
 -- insert end in the history and return
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -4566,6 +4577,7 @@ $emaj_gen_sql_groups$
 $emaj_gen_sql_groups$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
 $$Generates a sql script corresponding to all updates performed on a set of tables groups between two marks and stores it into a given file.$$;
+<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_groups$
@@ -4599,6 +4611,9 @@ $emaj_gen_sql_groups$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) IS
 $$Generates a sql script corresponding to all updates performed on a set of tables groups between two marks and stores it into a given file.$$;
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
+=======
+CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
@@ -4640,6 +4655,7 @@ $_gen_sql_groups$
     r_tblsq                 RECORD;
   BEGIN
 <<<<<<< HEAD
+<<<<<<< HEAD
 -- if the group names array is null, immediately return 0
     IF v_groupNames IS NULL THEN
       RETURN 0;
@@ -4670,6 +4686,11 @@ $_gen_sql_groups$
 =======
       RAISE EXCEPTION 'emaj_gen_sql_group: Tables group % contains % tables without pkey.', v_groupName, v_cpt;
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
+=======
+-- if the group names array is null, immediately return 0
+    IF v_groupNames IS NULL THEN
+      RETURN 0;
+>>>>>>> Add a new emaj_gen_sql_groups() function.
     END IF;
 -- check that each group ...
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
@@ -4678,10 +4699,14 @@ $_gen_sql_groups$
         FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i];
       IF NOT FOUND THEN
 <<<<<<< HEAD
+<<<<<<< HEAD
         RAISE EXCEPTION '_gen_sql_groups: group % has not been created.', v_groupNames[v_i];
 =======
          RAISE EXCEPTION 'emaj_gen_sql_group: No initial mark can be found for group %.', v_groupName;
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
+=======
+        RAISE EXCEPTION '_gen_sql_groups: group % has not been created.', v_groupNames[v_i];
+>>>>>>> Add a new emaj_gen_sql_groups() function.
       END IF;
 -- ... has no tables without pkey
       SELECT count(*) INTO v_cpt FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
@@ -4705,10 +4730,14 @@ $_gen_sql_groups$
       SELECT emaj._get_mark_name(v_groupNames[v_i],v_firstMarkCopy) INTO v_realFirstMark;
       IF v_realFirstMark IS NULL THEN
 <<<<<<< HEAD
+<<<<<<< HEAD
         RAISE EXCEPTION '_gen_sql_groups: No mark % exists for group %.', v_firstMarkCopy, v_groupNames[v_i];
 =======
         RAISE EXCEPTION 'emaj_gen_sql_group: Start mark % is unknown for group %.', v_firstMark, v_groupName;
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
+=======
+        RAISE EXCEPTION '_gen_sql_groups: No mark % exists for group %.', v_firstMarkCopy, v_groupNames[v_i];
+>>>>>>> Add a new emaj_gen_sql_groups() function.
       END IF;
 -- ... and owns the requested last mark, if supplied
       IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
@@ -4744,6 +4773,7 @@ $_gen_sql_groups$
       v_tsLastMark = NULL;
     ELSE
 <<<<<<< HEAD
+<<<<<<< HEAD
 -- else, retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the 1st group
 =======
 -- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the group
@@ -4752,11 +4782,15 @@ $_gen_sql_groups$
         RAISE EXCEPTION 'emaj_gen_sql_group: End mark % is unknown for group %.', v_lastMark, v_groupName;
       END IF;
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
+=======
+-- else, retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the 1st group
+>>>>>>> Add a new emaj_gen_sql_groups() function.
       SELECT mark_id, mark_global_seq, mark_datetime INTO v_lastMarkId, v_lastEmajGid, v_tsLastMark
         FROM emaj.emaj_mark WHERE mark_group = v_groupNames[1] AND mark_name = v_realLastMark;
     END IF;
 -- check that the first_mark < end_mark
     IF v_lastMarkId IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
+<<<<<<< HEAD
 <<<<<<< HEAD
       RAISE EXCEPTION '_gen_sql_groups: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMarkCopy, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
     END IF;
@@ -4790,15 +4824,22 @@ $_gen_sql_groups$
         RAISE EXCEPTION '_gen_sql_groups: file % cannot be used as script output file.', v_location;
 =======
       RAISE EXCEPTION 'emaj_gen_sql_group: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMark, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
+=======
+      RAISE EXCEPTION '_gen_sql_groups: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMarkCopy, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
+>>>>>>> Add a new emaj_gen_sql_groups() function.
     END IF;
 -- test the supplied output file name by inserting a temporary line (trap NULL or bad file name)
     BEGIN
-      EXECUTE 'COPY (SELECT ''-- emaj_gen_sql_group() function in progress - started at '
+      EXECUTE 'COPY (SELECT ''-- _gen_sql_groups() function in progress - started at '
                      || statement_timestamp() || ''') TO ' || quote_literal(v_location);
     EXCEPTION
       WHEN OTHERS THEN
+<<<<<<< HEAD
         RAISE EXCEPTION 'emaj_gen_sql_group: file % cannot be used as script output file.', v_location;
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
+=======
+        RAISE EXCEPTION '_gen_sql_groups: file % cannot be used as script output file.', v_location;
+>>>>>>> Add a new emaj_gen_sql_groups() function.
     END;
 -- create temporary table
     DROP TABLE IF EXISTS emaj_temp_script;
@@ -4819,8 +4860,12 @@ $_gen_sql_groups$
     END IF;
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
+<<<<<<< HEAD
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                        -- tables of the groups
             AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs)) -- filtered or not by the user
+=======
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' 
+>>>>>>> Add a new emaj_gen_sql_groups() function.
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
@@ -4833,8 +4878,12 @@ $_gen_sql_groups$
     v_nbSeq = 0;
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation
+<<<<<<< HEAD
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'                        -- sequences of the groups
             AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs)) -- filtered or not by the user
+=======
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S' 
+>>>>>>> Add a new emaj_gen_sql_groups() function.
           ORDER BY rel_priority DESC, rel_schema DESC, rel_tblseq DESC
         LOOP
       v_fullSeqName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
@@ -4896,7 +4945,7 @@ $_gen_sql_groups$
 =======
     INSERT INTO emaj_temp_script SELECT 0, 1, 0,
          '-- file generated at ' || statement_timestamp()
-      || ' by the emaj_gen_sql_group() function, for tables group ' || v_groupName
+      || ' by E-Maj, for tables groups ' || array_to_string(v_groupNames,',')
       || ', processing logs between mark ' || v_realFirstMark || v_endComment;
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
 -- encapsulate the sql statements inside a TRANSACTION
@@ -4915,12 +4964,16 @@ $_gen_sql_groups$
     RETURN v_cumNbSQL;
   END;
 <<<<<<< HEAD
+<<<<<<< HEAD
 $_gen_sql_groups$;
 =======
 $emaj_gen_sql_group$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
+=======
+$_gen_sql_groups$;
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 ------------------------------------
 --                                --
 -- Global purpose functions       --
@@ -5373,12 +5426,17 @@ REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copy
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 <<<<<<< HEAD
+<<<<<<< HEAD
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
 =======
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
+=======
+REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 REVOKE ALL ON FUNCTION emaj._verify_all_groups() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_all_schemas() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
@@ -5456,12 +5514,17 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_c
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 <<<<<<< HEAD
+<<<<<<< HEAD
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
 =======
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
+=======
+GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
@@ -5893,16 +5956,24 @@ select count(*) from pg_proc, pg_namespace
  count 
 -------
 <<<<<<< HEAD
+<<<<<<< HEAD
     79
 =======
     74
 >>>>>>> Taking benefit from the end of the postgres 8.2 support, various code improvements.
+=======
+    77
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname LIKE E'emaj\\_%';
  count 
 -------
+<<<<<<< HEAD
     38
+=======
+    36
+>>>>>>> Add a new emaj_gen_sql_groups() function.
 (1 row)
 

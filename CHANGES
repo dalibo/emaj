@@ -5,6 +5,9 @@ E-Maj - Release notes
 Enhancements:
   - various code improvements, in particular taking benefit from the end of 
     the postgres 8.2 support.
+  - add a new emaj_gen_sql_groups() function that generates a sql script 
+    replaying all updates recorded for a set of groups between two marks or 
+    between a mark and the current situation.
   - the emaj_generate_sql() function is renamed emaj_gen_sql_group() for 
     consistency with other functions names.
 
