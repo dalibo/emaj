@@ -45,6 +45,7 @@ In both environments, being able to examine the history of updates performed on 
 - sql/emaj-0.10.1-to-0.11.0.sql     psql migration script from 0.10.1 to 0.11.0
 - sql/emaj-0.11.0-to-0.11.1.sql     psql migration script from 0.11.0 to 0.11.1
 - sql/emaj-0.11.1-to-1.0.0.sql      psql migration script from 0.11.1 to 1.0.0
+- sql/emaj-1.0.0-to-1.0.1.sql       psql migration script from 1.0.0 to 1.0.1
 - sql/emaj--0.10.0--unpackaged.sql  script used to unregister a 0.10.0 E-Maj extension
 - sql/emaj--0.10.1--unpackaged.sql  script used to unregister a 0.10.1 E-Maj extension
 - sql/uninstall.sql                 uninstallation script
