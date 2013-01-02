@@ -16,7 +16,7 @@ CONTEXT:  SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_rollback_groups(NULL,NULL);
-WARNING:  _check_group_names_array: No group name to process.
+WARNING:  _check_names_array: No group name to process.
 CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
  emaj_rollback_groups 
 ----------------------
@@ -24,7 +24,7 @@ CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 (1 row)
 
 select emaj.emaj_logged_rollback_groups(NULL,NULL);
-WARNING:  _check_group_names_array: No group name to process.
+WARNING:  _check_names_array: No group name to process.
 CONTEXT:  PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
  emaj_logged_rollback_groups 
 -----------------------------
@@ -218,14 +218,14 @@ CONTEXT:  SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",""}',NULL);
-WARNING:  _check_group_names_array: a group name is NULL or empty.
+WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 ERROR:  _rlbk_groups_step1: No mark <NULL> exists for group myGroup1.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",NULL}',NULL);
-WARNING:  _check_group_names_array: a group name is NULL or empty.
+WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 ERROR:  _rlbk_groups_step1: No mark <NULL> exists for group myGroup1.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
@@ -237,7 +237,7 @@ CONTEXT:  SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2","myGroup2"}',NULL);
-WARNING:  _check_group_names_array: duplicate group name myGroup2.
+WARNING:  _check_names_array: duplicate group name myGroup2.
 CONTEXT:  PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 ERROR:  _rlbk_groups_step1: No mark <NULL> exists for group myGroup1.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"

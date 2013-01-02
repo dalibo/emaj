@@ -89,7 +89,7 @@ select emaj.emaj_set_mark_group('myGroup1','Foo%Bar');
 -----------------------------
 -- NULL group names array
 select emaj.emaj_set_mark_groups(NULL,NULL);
-WARNING:  _check_group_names_array: No group name to process.
+WARNING:  _check_names_array: No group name to process.
 CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
  emaj_set_mark_groups 
 ----------------------
@@ -98,7 +98,7 @@ CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
 
 -- groups array is unknown in emaj_group_def
 select emaj.emaj_set_mark_groups('{"unknownGroup",""}',NULL);
-WARNING:  _check_group_names_array: a group name is NULL or empty.
+WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
 ERROR:  emaj_set_mark_groups: group unknownGroup has not been created.
 -- reserved mark name
@@ -115,15 +115,15 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
 
 -- duplicate mark name and warning on group names array content
 select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1'],'SM3');
-WARNING:  _check_group_names_array: a group name is NULL or empty.
+WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
-WARNING:  _check_group_names_array: a group name is NULL or empty.
+WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
-WARNING:  _check_group_names_array: duplicate group name myGroup2.
+WARNING:  _check_names_array: duplicate group name myGroup2.
 CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
-WARNING:  _check_group_names_array: duplicate group name myGroup2.
+WARNING:  _check_names_array: duplicate group name myGroup2.
 CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
-WARNING:  _check_group_names_array: duplicate group name myGroup1.
+WARNING:  _check_names_array: duplicate group name myGroup1.
 CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
 ERROR:  _check_new_mark: Group myGroup1 already contains a mark named SM3.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_validGroupNames)"

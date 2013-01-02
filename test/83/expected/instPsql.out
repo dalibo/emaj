@@ -4491,10 +4491,14 @@ $emaj_generate_sql$
        || v_location);
 -- call the _gen_sql_groups() function that effectively processes the request
 <<<<<<< HEAD
+<<<<<<< HEAD
     SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location, NULL) INTO v_cumNbSQL;
 =======
     SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location) INTO v_cumNbSQL;
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+    SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location, NULL) INTO v_cumNbSQL;
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 -- insert end in the history and return
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('GEN_SQL_GROUP', 'END', v_groupName, v_cumNbSQL || ' generated statements');
@@ -4504,12 +4508,17 @@ $emaj_gen_sql_group$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
 <<<<<<< HEAD
+<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 =======
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
+=======
+CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 $emaj_gen_sql_group$
 -- This function generates a SQL script representing all updates performed on a tables group between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -4539,8 +4548,11 @@ $emaj_gen_sql_group$
 $emaj_gen_sql_group$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
+<<<<<<< HEAD
 =======
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_groups$
@@ -4563,10 +4575,14 @@ $emaj_gen_sql_groups$
        || v_location);
 -- call the _gen_sql_groups() function that effectively processes the request
 <<<<<<< HEAD
+<<<<<<< HEAD
     SELECT emaj._gen_sql_groups(emaj._check_names_array(v_groupNames,'group'), v_firstMark, v_lastMark, v_location, NULL)
 =======
     SELECT emaj._gen_sql_groups(emaj._check_group_names_array(v_groupNames), v_firstMark, v_lastMark, v_location)
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+    SELECT emaj._gen_sql_groups(emaj._check_names_array(v_groupNames,'group'), v_firstMark, v_lastMark, v_location, NULL)
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
       INTO v_cumNbSQL;
 -- insert end in the history and return
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -4577,6 +4593,9 @@ $emaj_gen_sql_groups$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
 $$Generates a sql script corresponding to all updates performed on a set of tables groups between two marks and stores it into a given file.$$;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_groups$
@@ -4610,9 +4629,12 @@ $emaj_gen_sql_groups$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) IS
 $$Generates a sql script corresponding to all updates performed on a set of tables groups between two marks and stores it into a given file.$$;
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
+<<<<<<< HEAD
 =======
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
@@ -4641,10 +4663,13 @@ $_gen_sql_groups$
     v_lastEmajGid           BIGINT;
     v_tsFirstMark           TIMESTAMPTZ;
     v_tsLastMark            TIMESTAMPTZ;
+<<<<<<< HEAD
 -- + 2 lines for optimisation test
     v_firstLastSeqHoleId    BIGINT;
     v_lastLastSeqHoleId     BIGINT;
 --
+=======
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
     v_tblseqErr             TEXT;
     v_nbSQL                 INT;
     v_nbSeq                 INT;
@@ -4862,6 +4887,27 @@ $_gen_sql_groups$
     IF v_lastMarkId IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
       RAISE EXCEPTION '_gen_sql_groups: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMarkCopy, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
     END IF;
+-- check the array of tables and sequences to filter, if supplied.
+-- each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups
+    IF v_tblseqs IS NOT NULL THEN
+      IF v_tblseqs = array[''] THEN
+        RAISE EXCEPTION '_gen_sql_groups: filtered table/sequence names array cannot be empty.';
+      END IF;
+      v_tblseqErr = '';
+      FOR r_tblsq IN
+        SELECT t FROM regexp_split_to_table(array_to_string(v_tblseqs,'?'),E'\\?') AS t
+          EXCEPT
+        SELECT rel_schema || '.' || rel_tblseq FROM emaj.emaj_relation
+          WHERE rel_group = ANY (v_groupNames)
+-- TODO regexp_split_to_table(array_to_string) to be transformed into unnest() when pg 8.3 will not be supported any more
+        LOOP
+        v_tblseqErr = v_tblseqErr || r_tblsq.t || ', ';
+      END LOOP;
+      IF v_tblseqErr <> '' THEN
+        v_tblseqErr = substring(v_tblseqErr FROM 1 FOR char_length(v_tblseqErr) - 2);
+        RAISE EXCEPTION '_gen_sql_groups: some tables and/or sequences (%) do not belong to any of the selected tables groups.', v_tblseqErr;
+      END IF;
+    END IF;
 -- test the supplied output file name by inserting a temporary line (trap NULL or bad file name)
     BEGIN
       EXECUTE 'COPY (SELECT ''-- _gen_sql_groups() function in progress - started at '
@@ -4895,6 +4941,7 @@ $_gen_sql_groups$
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
 <<<<<<< HEAD
+<<<<<<< HEAD
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                        -- tables of the groups
             AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs)) -- filtered or not by the user
 -- + 2 lines for optimisation test
@@ -4903,6 +4950,10 @@ $_gen_sql_groups$
 =======
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' 
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                        -- tables of the groups
+            AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs)) -- filtered or not by the user
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
@@ -4916,11 +4967,16 @@ $_gen_sql_groups$
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation
 <<<<<<< HEAD
+<<<<<<< HEAD
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'                        -- sequences of the groups
             AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs)) -- filtered or not by the user
 =======
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S' 
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'                        -- sequences of the groups
+            AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs)) -- filtered or not by the user
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
           ORDER BY rel_priority DESC, rel_schema DESC, rel_tblseq DESC
         LOOP
       v_fullSeqName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
@@ -4973,18 +5029,24 @@ $_gen_sql_groups$
       v_endComment = ' and the current situation';
     END IF;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
     INSERT INTO emaj_temp_script SELECT 0, 1, 0, '-- SQL script generated by E-Maj at ' || statement_timestamp();
     INSERT INTO emaj_temp_script SELECT 0, 2, 0, '--    for tables group(s): ' || array_to_string(v_groupNames,',');
     INSERT INTO emaj_temp_script SELECT 0, 3, 0, '--    processing logs between mark ' || v_realFirstMark || v_endComment;
     IF v_tblseqs IS NOT NULL THEN
       INSERT INTO emaj_temp_script SELECT 0, 4, 0, '--    only for the following tables/sequences: ' || array_to_string(v_tblseqs,',');
     END IF;
+<<<<<<< HEAD
 =======
     INSERT INTO emaj_temp_script SELECT 0, 1, 0,
          '-- file generated at ' || statement_timestamp()
       || ' by E-Maj, for tables groups ' || array_to_string(v_groupNames,',')
       || ', processing logs between mark ' || v_realFirstMark || v_endComment;
 >>>>>>> The emaj_generate_sql() function is renamed emaj_gen_sql_group() for consistency with other functions names.
+=======
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 -- encapsulate the sql statements inside a TRANSACTION
 -- and manage the standard_conforming_strings option to properly handle special characters
     INSERT INTO emaj_temp_script SELECT 0, 10, 0, 'SET standard_conforming_strings = ON;';
@@ -5464,6 +5526,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TE
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
@@ -5474,6 +5537,12 @@ REVOKE ALL ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEX
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 REVOKE ALL ON FUNCTION emaj._verify_all_groups() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_all_schemas() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
@@ -5552,6 +5621,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
@@ -5562,6 +5632,12 @@ GRANT EXECUTE ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark 
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
@@ -5971,6 +6047,7 @@ select count(*) from pg_proc, pg_namespace
 -------
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     79
 =======
     74
@@ -5978,6 +6055,9 @@ select count(*) from pg_proc, pg_namespace
 =======
     77
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+    79
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
@@ -5985,9 +6065,13 @@ select count(*) from pg_proc, pg_namespace
  count 
 -------
 <<<<<<< HEAD
+<<<<<<< HEAD
     38
 =======
     36
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+    38
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 (1 row)
 

@@ -270,16 +270,22 @@ COMMENT
 CREATE FUNCTION
 ALTER FUNCTION
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 COMMENT
 CREATE FUNCTION
 ALTER FUNCTION
 COMMENT
 CREATE FUNCTION
 ALTER FUNCTION
+<<<<<<< HEAD
 =======
 >>>>>>> Taking benefit from the end of the postgres 8.2 support, various code improvements.
 =======
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 CREATE FUNCTION
 ALTER FUNCTION
 CREATE FUNCTION
@@ -1037,6 +1043,9 @@ REVOKE
 GRANT
 GRANT
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 REVOKE
 REVOKE
 GRANT
@@ -1045,8 +1054,11 @@ REVOKE
 REVOKE
 GRANT
 GRANT
+<<<<<<< HEAD
 =======
 >>>>>>> Add a new emaj_gen_sql_groups() function.
+=======
+>>>>>>> Both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an additional text array parameter specifying a set of table or sequence names. This optional parameter represents a filter of tables and/or sequences to process.
 GRANT
 REVOKE
 REVOKE
