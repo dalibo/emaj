@@ -46,7 +46,9 @@
 	cd ..
 
 # tag the new version
+	cd emaj
 	git tag 'v$NEW'
+	cd ..
 
 # Create the new version environment
 # ----------------------------------

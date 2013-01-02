@@ -1,5 +1,5 @@
 --
--- E-Maj: migration from 1.0.0 to <NEXT_VERSION>
+-- E-Maj: migration from 1.0.0 to 1.0.1
 --
 -- This software is distributed under the GNU General Public License.
 --
