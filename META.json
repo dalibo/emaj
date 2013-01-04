@@ -15,13 +15,13 @@
    },
    "resources": {
       "repository": {
-        "url":  "git://github.com/beaud76/emaj.git",
-        "web":  "http://github.com/beaud76/emaj/",
+        "url":  "https://github.com/beaud76/emaj.git",
+        "web":  "https://github.com/beaud76/emaj/",
         "type": "git"
       }
    },
    "meta-spec": {
-      "version": "<NEXT_VERSION>",
+      "version": "1.0.0",
       "url": "http://pgxn.org/meta/spec.txt"
    }
 }
