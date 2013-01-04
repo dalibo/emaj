@@ -4678,6 +4678,8 @@ $_gen_sql_groups$
     v_lastEmajGid           BIGINT;
     v_tsFirstMark           TIMESTAMPTZ;
     v_tsLastMark            TIMESTAMPTZ;
+    v_firstLastSeqHoleId    BIGINT;
+    v_lastLastSeqHoleId     BIGINT;
     v_tblseqErr             TEXT;
     v_nbSQL                 INT;
     v_nbSeq                 INT;
@@ -4750,16 +4752,17 @@ $_gen_sql_groups$
 -- retrieve the name, the global sequence value and the timestamp of the supplied first mark for the 1st group
 --   (the global sequence value and the timestamp are the same for all groups of the array
 --    and the mark ids are just used to check that first mark is prior the last mark)
-    SELECT mark_id, mark_global_seq, mark_datetime INTO v_firstMarkId, v_firstEmajGid, v_tsFirstMark
+    SELECT mark_id, mark_global_seq, mark_datetime, mark_last_seq_hole_id INTO v_firstMarkId, v_firstEmajGid, v_tsFirstMark, v_firstLastSeqHoleId
       FROM emaj.emaj_mark WHERE mark_group = v_groupNames[1] AND mark_name = v_realFirstMark;
 -- if last mark is NULL or empty, there is no timestamp to register
     IF v_lastMark IS NULL OR v_lastMark = '' THEN
       v_lastMarkId = NULL;
       v_lastEmajGid = NULL;
       v_tsLastMark = NULL;
+      v_lastLastSeqHoleId = NULL;
     ELSE
 -- else, retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the 1st group
-      SELECT mark_id, mark_global_seq, mark_datetime INTO v_lastMarkId, v_lastEmajGid, v_tsLastMark
+      SELECT mark_id, mark_global_seq, mark_datetime, mark_last_seq_hole_id INTO v_lastMarkId, v_lastEmajGid, v_tsLastMark, v_lastLastSeqHoleId
         FROM emaj.emaj_mark WHERE mark_group = v_groupNames[1] AND mark_name = v_realLastMark;
     END IF;
 -- check that the first_mark < end_mark
@@ -4816,6 +4819,9 @@ $_gen_sql_groups$
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                        -- tables of the groups
             AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs)) -- filtered or not by the user
+                                                                               -- only tables having updates to process
+            AND emaj._log_stat_tbl(rel_schema, rel_tblseq, rel_log_schema, v_tsFirstMark, 
+                                   v_tsLastMark, v_firstLastSeqHoleId, v_lastLastSeqHoleId) > 0  
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
       v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);

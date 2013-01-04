@@ -1301,7 +1301,7 @@ phil's schema3_phil's tbl1.snap
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script"
-PL/pgSQL function "_gen_sql_groups" line 145 at SQL statement
+PL/pgSQL function "_gen_sql_groups" line 148 at SQL statement
 SQL statement "SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location, NULL)"
 PL/pgSQL function "emaj_gen_sql_group" line 19 at SQL statement
  emaj_gen_sql_group 
