@@ -753,13 +753,14 @@ $_create_tbl$
     EXECUTE 'CREATE TABLE ' || v_logTableName
          || ' ( LIKE ' || v_fullTableName || ') ' || v_dataTblSpace;
     EXECUTE 'ALTER TABLE ' || v_logTableName
-         || ' ADD COLUMN emaj_verb    VARCHAR(3),'
-         || ' ADD COLUMN emaj_tuple   VARCHAR(3),'
-         || ' ADD COLUMN emaj_gid     BIGINT      NOT NULL   DEFAULT nextval(''emaj.emaj_global_seq''),'
-         || ' ADD COLUMN emaj_changed TIMESTAMPTZ DEFAULT clock_timestamp(),'
-         || ' ADD COLUMN emaj_txid    BIGINT      DEFAULT txid_current(),'
-         || ' ADD COLUMN emaj_user    VARCHAR(32) DEFAULT session_user,'
-         || ' ADD COLUMN emaj_user_ip INET        DEFAULT inet_client_addr()';
+         || ' ADD COLUMN emaj_verb      VARCHAR(3),'
+         || ' ADD COLUMN emaj_tuple     VARCHAR(3),'
+         || ' ADD COLUMN emaj_gid       BIGINT      NOT NULL   DEFAULT nextval(''emaj.emaj_global_seq''),'
+         || ' ADD COLUMN emaj_changed   TIMESTAMPTZ DEFAULT clock_timestamp(),'
+         || ' ADD COLUMN emaj_txid      BIGINT      DEFAULT txid_current(),'
+         || ' ADD COLUMN emaj_user      VARCHAR(32) DEFAULT session_user,'
+         || ' ADD COLUMN emaj_user_ip   INET        DEFAULT inet_client_addr(),'
+         || ' ADD COLUMN emaj_user_port INT         DEFAULT inet_client_port()';
 -- creation of the index on the log table
     EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON '
          ||  v_logTableName || ' (emaj_gid, emaj_tuple DESC) ' || v_idxTblSpace;

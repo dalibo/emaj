@@ -191,13 +191,13 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 NOTICE:  trigger "myschema1_myTbl3_emaj_log_trg" for table "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema1_myTbl3_emaj_log_trg" ON myschema1."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 NOTICE:  trigger "myschema1_myTbl3_emaj_trunc_trg" for table "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema1_myTbl3_emaj_trunc_trg" ON myschema1."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
@@ -209,13 +209,13 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 NOTICE:  trigger "myschema1_mytbl1_emaj_log_trg" for table "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl1_emaj_log_trg ON myschema1.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 NOTICE:  trigger "myschema1_mytbl1_emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl1_emaj_trunc_trg ON myschema1.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
@@ -227,13 +227,13 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 NOTICE:  trigger "myschema1_mytbl4_emaj_log_trg" for table "myschema1.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl4_emaj_log_trg ON myschema1.mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 NOTICE:  trigger "myschema1_mytbl4_emaj_trunc_trg" for table "myschema1.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl4_emaj_trunc_trg ON myschema1.mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
@@ -245,13 +245,13 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 NOTICE:  trigger "myschema1_mytbl2_emaj_log_trg" for table "myschema1.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2_emaj_log_trg ON myschema1.mytbl2"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 NOTICE:  trigger "myschema1_mytbl2_emaj_trunc_trg" for table "myschema1.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2_emaj_trunc_trg ON myschema1.mytbl2"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
@@ -267,13 +267,13 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 NOTICE:  trigger "myschema1_mytbl2b_emaj_log_trg" for table "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2b_emaj_log_trg ON myschema1.mytbl2b"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 NOTICE:  trigger "myschema1_mytbl2b_emaj_trunc_trg" for table "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2b_emaj_trunc_trg ON myschema1.mytbl2b"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
@@ -296,12 +296,12 @@ SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tbl
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl1_emaj_log_trg" for table "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl1_emaj_log_trg ON myschema2.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl1_emaj_trunc_trg" for table "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl1_emaj_trunc_trg ON myschema2.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  table "myschema2_mytbl2_log" does not exist, skipping
@@ -311,12 +311,12 @@ SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tbl
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl2_emaj_log_trg" for table "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl2_emaj_log_trg ON myschema2.mytbl2"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl2_emaj_trunc_trg" for table "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl2_emaj_trunc_trg ON myschema2.mytbl2"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  table "myschema2_myTbl3_log" does not exist, skipping
@@ -326,12 +326,12 @@ SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tbl
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_myTbl3_emaj_log_trg" for table "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema2_myTbl3_emaj_log_trg" ON myschema2."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_myTbl3_emaj_trunc_trg" for table "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema2_myTbl3_emaj_trunc_trg" ON myschema2."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  table "myschema2_mytbl4_log" does not exist, skipping
@@ -341,12 +341,12 @@ SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tbl
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl4_emaj_log_trg" for table "myschema2.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl4_emaj_log_trg ON myschema2.mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl4_emaj_trunc_trg" for table "myschema2.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl4_emaj_trunc_trg ON myschema2.mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  table "myschema2_mytbl5_log" does not exist, skipping
@@ -356,12 +356,12 @@ SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tbl
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl5_emaj_log_trg" for table "myschema2.mytbl5" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl5_emaj_log_trg ON myschema2.mytbl5"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl5_emaj_trunc_trg" for table "myschema2.mytbl5" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl5_emaj_trunc_trg ON myschema2.mytbl5"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  table "myschema2_mytbl6_log" does not exist, skipping
@@ -371,12 +371,12 @@ SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tbl
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl6_emaj_log_trg" for table "myschema2.mytbl6" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl6_emaj_log_trg ON myschema2.mytbl6"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 142 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 143 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl6_emaj_trunc_trg" for table "myschema2.mytbl6" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl6_emaj_trunc_trg ON myschema2.mytbl6"
-PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 150 at EXECUTE statement
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 151 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 88 at PERFORM
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
@@ -560,76 +560,81 @@ select * from mySchema1.myTbl4 order by col41;
 (2 rows)
 
 -- log tables
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
- col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip 
--------+------------+-------+-----------+------------+----------+-----------+--------------
-     1 | ABC        | \x0c  | INS       | NEW        |    11843 | postgres  | 
-     2 | ABC        | \x0c  | INS       | NEW        |    11844 | postgres  | 
-     3 | ABC        | \x0c  | INS       | NEW        |    11845 | postgres  | 
-     4 | ABC        | \x0c  | INS       | NEW        |    11846 | postgres  | 
-     5 | ABC        | \x0c  | INS       | NEW        |    11847 | postgres  | 
-     6 | ABC        | \x0c  | INS       | NEW        |    11848 | postgres  | 
-     7 | ABC        | \x0c  | INS       | NEW        |    11849 | postgres  | 
-     8 | ABC        | \x0c  | INS       | NEW        |    11850 | postgres  | 
-     9 | ABC        | \x0c  | INS       | NEW        |    11851 | postgres  | 
-    10 | ABC        | \x0c  | INS       | NEW        |    11852 | postgres  | 
-    11 | ABC        | \x0c  | INS       | NEW        |    11853 | postgres  | 
-     1 | ABC        | \x0c  | UPD       | OLD        |    11854 | postgres  | 
-     1 | ABC        | \x1c  | UPD       | NEW        |    11854 | postgres  | 
-     2 | ABC        | \x0c  | UPD       | OLD        |    11855 | postgres  | 
-     2 | ABC        | \x1c  | UPD       | NEW        |    11855 | postgres  | 
-     3 | ABC        | \x0c  | UPD       | OLD        |    11856 | postgres  | 
-     3 | ABC        | \x1c  | UPD       | NEW        |    11856 | postgres  | 
-    11 | ABC        | \x0c  | DEL       | OLD        |    11858 | postgres  | 
-    10 | ABC        | \x0c  | DEL       | OLD        |    11875 | postgres  | 
-     1 | ABC        | \x1c  | UPD       | OLD        |    11877 | postgres  | 
-     1 | DEF        | \x1c  | UPD       | NEW        |    11877 | postgres  | 
-     2 | ABC        | \x1c  | UPD       | OLD        |    11878 | postgres  | 
-     2 | DEF        | \x1c  | UPD       | NEW        |    11878 | postgres  | 
+select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, emaj_user_port
+    from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
+ col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | emaj_user_port 
+-------+------------+-------+-----------+------------+----------+-----------+--------------+----------------
+     1 | ABC        | \x0c  | INS       | NEW        |    11843 | postgres  |              |               
+     2 | ABC        | \x0c  | INS       | NEW        |    11844 | postgres  |              |               
+     3 | ABC        | \x0c  | INS       | NEW        |    11845 | postgres  |              |               
+     4 | ABC        | \x0c  | INS       | NEW        |    11846 | postgres  |              |               
+     5 | ABC        | \x0c  | INS       | NEW        |    11847 | postgres  |              |               
+     6 | ABC        | \x0c  | INS       | NEW        |    11848 | postgres  |              |               
+     7 | ABC        | \x0c  | INS       | NEW        |    11849 | postgres  |              |               
+     8 | ABC        | \x0c  | INS       | NEW        |    11850 | postgres  |              |               
+     9 | ABC        | \x0c  | INS       | NEW        |    11851 | postgres  |              |               
+    10 | ABC        | \x0c  | INS       | NEW        |    11852 | postgres  |              |               
+    11 | ABC        | \x0c  | INS       | NEW        |    11853 | postgres  |              |               
+     1 | ABC        | \x0c  | UPD       | OLD        |    11854 | postgres  |              |               
+     1 | ABC        | \x1c  | UPD       | NEW        |    11854 | postgres  |              |               
+     2 | ABC        | \x0c  | UPD       | OLD        |    11855 | postgres  |              |               
+     2 | ABC        | \x1c  | UPD       | NEW        |    11855 | postgres  |              |               
+     3 | ABC        | \x0c  | UPD       | OLD        |    11856 | postgres  |              |               
+     3 | ABC        | \x1c  | UPD       | NEW        |    11856 | postgres  |              |               
+    11 | ABC        | \x0c  | DEL       | OLD        |    11858 | postgres  |              |               
+    10 | ABC        | \x0c  | DEL       | OLD        |    11875 | postgres  |              |               
+     1 | ABC        | \x1c  | UPD       | OLD        |    11877 | postgres  |              |               
+     1 | DEF        | \x1c  | UPD       | NEW        |    11877 | postgres  |              |               
+     2 | ABC        | \x1c  | UPD       | OLD        |    11878 | postgres  |              |               
+     2 | DEF        | \x1c  | UPD       | NEW        |    11878 | postgres  |              |               
 (23 rows)
 
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
- col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip 
--------+-------+------------+-----------+------------+----------+-----------+--------------
-     1 | ABC   | 12-31-2010 | INS       | NEW        |    11857 | postgres  | 
-     2 | DEF   |            | INS       | NEW        |    11859 | postgres  | 
+select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, emaj_user_port
+    from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
+ col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | emaj_user_port 
+-------+-------+------------+-----------+------------+----------+-----------+--------------+----------------
+     1 | ABC   | 12-31-2010 | INS       | NEW        |    11857 | postgres  |              |               
+     2 | DEF   |            | INS       | NEW        |    11859 | postgres  |              |               
 (2 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip 
--------+-------+-----------+------------+----------+-----------+--------------
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, emaj_user_port
+    from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | emaj_user_port 
+-------+-------+-----------+------------+----------+-----------+--------------+----------------
 (0 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
- col31 | col33 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip 
--------+-------+-----------+------------+----------+-----------+--------------
-    11 | 10.00 | INS       | NEW        |    11860 | postgres  | 
-    12 | 10.00 | INS       | NEW        |    11861 | postgres  | 
-    13 | 10.00 | INS       | NEW        |    11862 | postgres  | 
-    14 | 10.00 | INS       | NEW        |    11863 | postgres  | 
-    15 | 10.00 | INS       | NEW        |    11864 | postgres  | 
-    16 | 10.00 | INS       | NEW        |    11865 | postgres  | 
-    17 | 10.00 | INS       | NEW        |    11866 | postgres  | 
-    18 | 10.00 | INS       | NEW        |    11867 | postgres  | 
-    19 | 10.00 | INS       | NEW        |    11868 | postgres  | 
-    20 | 10.00 | INS       | NEW        |    11869 | postgres  | 
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, emaj_user_port
+    from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+ col31 | col33 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | emaj_user_port 
+-------+-------+-----------+------------+----------+-----------+--------------+----------------
+    11 | 10.00 | INS       | NEW        |    11860 | postgres  |              |               
+    12 | 10.00 | INS       | NEW        |    11861 | postgres  |              |               
+    13 | 10.00 | INS       | NEW        |    11862 | postgres  |              |               
+    14 | 10.00 | INS       | NEW        |    11863 | postgres  |              |               
+    15 | 10.00 | INS       | NEW        |    11864 | postgres  |              |               
+    16 | 10.00 | INS       | NEW        |    11865 | postgres  |              |               
+    17 | 10.00 | INS       | NEW        |    11866 | postgres  |              |               
+    18 | 10.00 | INS       | NEW        |    11867 | postgres  |              |               
+    19 | 10.00 | INS       | NEW        |    11868 | postgres  |              |               
+    20 | 10.00 | INS       | NEW        |    11869 | postgres  |              |               
 (10 rows)
 
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
- col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip 
--------+-------+-------+-------+------------+-----------+------------+----------+-----------+--------------
-     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |    11870 | postgres  | 
-     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |    11871 | postgres  | 
-     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |    11872 | postgres  | 
-     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |    11872 | postgres  | 
-     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |    11873 | postgres  | 
-     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |    11873 | postgres  | 
-     3 | FK... |     1 |    10 | ABC        | INS       | NEW        |    11874 | postgres  | 
-     3 | FK... |     1 |    10 | ABC        | DEL       | OLD        |    11876 | postgres  | 
-     1 | FK... |     2 |     1 | ABC        | UPD       | OLD        |    11879 | postgres  | 
-     1 | FK... |     2 |     1 |            | UPD       | NEW        |    11879 | postgres  | 
-     2 | FK... |     2 |     1 | ABC        | UPD       | OLD        |    11880 | postgres  | 
-     2 | FK... |     2 |     1 |            | UPD       | NEW        |    11880 | postgres  | 
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, emaj_user_port
+    from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
+ col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | emaj_user_port 
+-------+-------+-------+-------+------------+-----------+------------+----------+-----------+--------------+----------------
+     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |    11870 | postgres  |              |               
+     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |    11871 | postgres  |              |               
+     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |    11872 | postgres  |              |               
+     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |    11872 | postgres  |              |               
+     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |    11873 | postgres  |              |               
+     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |    11873 | postgres  |              |               
+     3 | FK... |     1 |    10 | ABC        | INS       | NEW        |    11874 | postgres  |              |               
+     3 | FK... |     1 |    10 | ABC        | DEL       | OLD        |    11876 | postgres  |              |               
+     1 | FK... |     2 |     1 | ABC        | UPD       | OLD        |    11879 | postgres  |              |               
+     1 | FK... |     2 |     1 |            | UPD       | NEW        |    11879 | postgres  |              |               
+     2 | FK... |     2 |     1 | ABC        | UPD       | OLD        |    11880 | postgres  |              |               
+     2 | FK... |     2 |     1 |            | UPD       | NEW        |    11880 | postgres  |              |               
 (12 rows)
 
 -----------------------------

@@ -112,7 +112,7 @@ truncate myschema1.mytbl1 cascade;
 -- ... for an audit_only group (must be logged in pg 8.4+)
 truncate "phil's schema3"."phil's tbl1" cascade;
 select "phil's col11", "phil's col12", "phil\s col13", 
-       emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip 
+       emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, emaj_user_port 
   from "emaj #'3"."phil's schema3_phil's tbl1_log";
 
 SET client_min_messages TO WARNING;

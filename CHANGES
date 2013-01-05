@@ -14,6 +14,9 @@ Enhancements:
     additional text array parameter specifying a set of table or sequence
     names. This optional parameter represents a filter of tables and/or 
     sequences to process.
+  - add an emaj_user_port column into each log tables. It holds the ip port 
+    of the remote user who performed the recorded update and complements the 
+    already existing emaj_user_ip column.
 
 Bug fixes:
 

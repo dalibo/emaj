@@ -301,11 +301,11 @@ truncate "phil's schema3"."phil's tbl1" cascade;
 NOTICE:  truncate cascades to table "mytbl4"
 NOTICE:  truncate cascades to table "myTbl2\"
 select "phil's col11", "phil's col12", "phil\s col13", 
-       emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip 
+       emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, emaj_user_port 
   from "emaj #'3"."phil's schema3_phil's tbl1_log";
- phil's col11 | phil's col12 | phil\s col13 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip 
---------------+--------------+--------------+-----------+------------+----------+-----------+--------------
-              |              |              | TRU       |            |        1 | postgres  | 
+ phil's col11 | phil's col12 | phil\s col13 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | emaj_user_port 
+--------------+--------------+--------------+-----------+------------+----------+-----------+--------------+----------------
+              |              |              | TRU       |            |        1 | postgres  |              |               
 (1 row)
 
 SET client_min_messages TO WARNING;
