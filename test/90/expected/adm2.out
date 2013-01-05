@@ -15,12 +15,12 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
  emaj_start_groups 
@@ -39,13 +39,13 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
 select emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
@@ -58,13 +58,13 @@ PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
@@ -77,13 +77,13 @@ PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
@@ -102,29 +102,29 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback')
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
 ERROR:  _check_new_mark: Group myGroup1 already contains a mark named Multi-1.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function "_start_groups" line 48 at SQL statement
+PL/pgSQL function "_start_groups" line 49 at SQL statement
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
 -- really start both groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1b', false);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 15 at SQL statement
  emaj_start_groups 
@@ -155,13 +155,13 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
 select emaj.emaj_rollback_group('myGroup2','Multi-2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
@@ -524,32 +524,32 @@ NOTICE:  table "phil's schema3_myTbl2\_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_myTbl2\_log""
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "phil's schema3_myTbl2\_emaj_log_trg" for table "myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_log_trg" ON "phil's schema3"."myTbl2\""
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "phil's schema3_myTbl2\_emaj_trunc_trg" for table "myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_trunc_trg" ON "phil's schema3"."myTbl2\""
 PL/pgSQL function "_create_tbl" line 150 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 150 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
  emaj_create_group 
 -------------------
                  4
@@ -564,17 +564,17 @@ NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 200 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 200 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 150 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 200 at PERFORM
  emaj_alter_group 
 ------------------
                 4
@@ -602,17 +602,17 @@ NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 200 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 200 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 150 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 200 at PERFORM
  emaj_alter_group 
 ------------------
                 4
@@ -639,38 +639,38 @@ NOTICE:  table "phil's schema3_myTbl2\_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_myTbl2\_log""
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "phil's schema3_myTbl2\_emaj_log_trg" for table "myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_log_trg" ON "phil's schema3"."myTbl2\""
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "phil's schema3_myTbl2\_emaj_trunc_trg" for table "myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_trunc_trg" ON "phil's schema3"."myTbl2\""
 PL/pgSQL function "_create_tbl" line 150 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 150 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function "emaj_create_group" line 113 at PERFORM
+PL/pgSQL function "emaj_create_group" line 114 at PERFORM
 WARNING:  _check_fk_groups: table phil's schema3.phil's tbl1 is referenced by foreign key mytbl4_col44_fkey from table phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function "emaj_create_group" line 113 at PERFORM
+PL/pgSQL function "emaj_create_group" line 114 at PERFORM
  emaj_create_group 
 -------------------
                  4
@@ -679,13 +679,13 @@ PL/pgSQL function "emaj_create_group" line 113 at PERFORM
 select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 16 at SQL statement
 PL/pgSQL function "emaj_start_group" line 5 at RETURN
 WARNING:  _check_fk_groups: table phil's schema3.phil's tbl1 is referenced by foreign key mytbl4_col44_fkey from table phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 16 at SQL statement
 PL/pgSQL function "emaj_start_group" line 5 at RETURN
@@ -777,13 +777,13 @@ select * from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mar
 select emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3');
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 WARNING:  _check_fk_groups: table phil's schema3.phil's tbl1 is referenced by foreign key mytbl4_col44_fkey from table phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
@@ -795,13 +795,13 @@ PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3');
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 WARNING:  _check_fk_groups: table phil's schema3.phil's tbl1 is referenced by foreign key mytbl4_col44_fkey from table phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
@@ -1370,13 +1370,13 @@ begin;
   select emaj.emaj_rollback_group('myGroup2','Multi-1');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
@@ -1388,13 +1388,13 @@ PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
   select emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable');
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 WARNING:  _check_fk_groups: table phil's schema3.phil's tbl1 is referenced by foreign key mytbl4_col44_fkey from table phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN

@@ -130,8 +130,8 @@ select emaj.emaj_drop_group('myGroup4');
 
 -- emaj tables
 select * from emaj.emaj_group;
- group_name | group_state | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_datetime | group_last_alter_datetime | group_pg_version | group_comment 
-------------+-------------+----------------+-------------------+-----------------------+-------------------------+---------------------------+------------------+---------------
+ group_name | group_is_logging | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_datetime | group_last_alter_datetime | group_pg_version | group_comment 
+------------+------------------+----------------+-------------------+-----------------------+-------------------------+---------------------------+------------------+---------------
 (0 rows)
 
 select * from emaj.emaj_relation;
@@ -187,65 +187,65 @@ NOTICE:  table "myschema1_myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema1_myTbl3_log""
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_myTbl3_emaj_log_trg" for table "myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema1_myTbl3_emaj_log_trg" ON myschema1."myTbl3""
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl1_emaj_log_trg" for table "mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl1_emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl4_log"
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl4_emaj_log_trg" for table "mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl4_emaj_log_trg ON myschema1.mytbl4"
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl2_log"
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl2_emaj_log_trg" for table "mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2_emaj_log_trg ON myschema1.mytbl2"
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emajb.myschema1_mytbl2b_log"
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 NOTICE:  trigger "myschema1_mytbl2b_emaj_log_trg" for table "mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema1_mytbl2b_emaj_log_trg ON myschema1.mytbl2b"
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
@@ -263,68 +263,68 @@ NOTICE:  table "myschema2_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl1_log"
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl1_emaj_log_trg" for table "mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl1_emaj_log_trg ON myschema2.mytbl1"
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  table "myschema2_mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl2_log"
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl2_emaj_log_trg" for table "mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl2_emaj_log_trg ON myschema2.mytbl2"
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  table "myschema2_myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema2_myTbl3_log""
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "myschema2_myTbl3_emaj_log_trg" for table "myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "myschema2_myTbl3_emaj_log_trg" ON myschema2."myTbl3""
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  table "myschema2_mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl4_log"
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl4_emaj_log_trg" for table "mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl4_emaj_log_trg ON myschema2.mytbl4"
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  table "myschema2_mytbl5_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl5_log"
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl5_emaj_log_trg" for table "mytbl5" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl5_emaj_log_trg ON myschema2.mytbl5"
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  table "myschema2_mytbl6_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl6_log"
 PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 NOTICE:  trigger "myschema2_mytbl6_emaj_log_trg" for table "mytbl6" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS myschema2_mytbl6_emaj_log_trg ON myschema2.mytbl6"
 PL/pgSQL function "_create_tbl" line 142 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
-PL/pgSQL function "emaj_create_group" line 87 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 113 at PERFORM
+PL/pgSQL function "emaj_create_group" line 114 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 113 at PERFORM
+PL/pgSQL function "emaj_create_group" line 114 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -339,13 +339,13 @@ select emaj.emaj_start_group('myGroup1','M1');
 select emaj.emaj_start_group('myGroup2','M1');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
 PL/pgSQL function "emaj_start_group" line 16 at SQL statement
 PL/pgSQL function "emaj_start_group" line 5 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
 PL/pgSQL function "emaj_start_group" line 16 at SQL statement
 PL/pgSQL function "emaj_start_group" line 5 at RETURN
@@ -401,12 +401,12 @@ select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 -- Checking step 1
 -----------------------------
 -- emaj tables
-select group_name, group_state, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
-from emaj.emaj_group order by group_nb_table;
- group_name | group_state | group_nb_table | group_nb_sequence | group_is_rollbackable |  group_comment   
-------------+-------------+----------------+-------------------+-----------------------+------------------
- myGroup1   | LOGGING     |              5 |                 1 | t                     | This is group #1
- myGroup2   | LOGGING     |              6 |                 2 | t                     | 
+select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
+  from emaj.emaj_group order by group_nb_table;
+ group_name | group_is_logging | group_nb_table | group_nb_sequence | group_is_rollbackable |  group_comment   
+------------+------------------+----------------+-------------------+-----------------------+------------------
+ myGroup1   | t                |              5 |                 1 | t                     | This is group #1
+ myGroup2   | t                |              6 |                 2 | t                     | 
 (2 rows)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
@@ -863,13 +863,13 @@ set role emaj_regression_tests_adm_user;
 select emaj.emaj_logged_rollback_group('myGroup2','M2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
@@ -881,13 +881,13 @@ PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_logged_rollback_group('myGroup2','M3');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
@@ -1473,13 +1473,13 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 select emaj.emaj_logged_rollback_group('myGroup2','M2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
@@ -1492,13 +1492,13 @@ PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_rollback_group('myGroup2','M3');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_groups_step1" line 73 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 74 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN

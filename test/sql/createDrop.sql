@@ -103,8 +103,8 @@ select emaj.emaj_create_group('myGroup2');
 
 -- impact of created groups
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
-select group_name, group_state, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
-  from emaj.emaj_group order by group_name, group_state;
+select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
+  from emaj.emaj_group order by group_name, group_is_logging;
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq;
 select * from pg_tables where schemaname like 'emaj%' order by tablename;
 

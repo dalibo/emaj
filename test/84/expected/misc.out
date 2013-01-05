@@ -10,7 +10,7 @@ select emaj.emaj_reset_group('unknownGroup');
 ERROR:  emaj_reset_group: group unknownGroup has not been created.
 -- group not in logging state
 select emaj.emaj_reset_group('myGroup1');
-ERROR:  emaj_reset_group: Group myGroup1 cannot be reset because it is not in idle state. An emaj_stop_group function must be previously executed.
+ERROR:  emaj_reset_group: Group myGroup1 cannot be reset because it is in LOGGING state. An emaj_stop_group function must be previously executed.
 -- stop group
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
@@ -1312,12 +1312,12 @@ begin;
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
 ERROR:  _verify_group: In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups(array[ $1 ], true)"
-PL/pgSQL function "emaj_set_mark_group" line 25 at PERFORM
+PL/pgSQL function "emaj_set_mark_group" line 26 at PERFORM
   rollback to savepoint sp1;
     select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _verify_group: In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT  0 FROM emaj._verify_groups( $1 , true)"
-PL/pgSQL function "_rlbk_groups_step1" line 52 at PERFORM
+PL/pgSQL function "_rlbk_groups_step1" line 53 at PERFORM
 SQL statement "SELECT emaj._rlbk_groups_step1( $1 ,  $2 ,  $3 , 1,  $4 )"
 PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
@@ -1339,11 +1339,11 @@ PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
     select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 113 at PERFORM
+PL/pgSQL function "emaj_create_group" line 114 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 113 at PERFORM
+PL/pgSQL function "emaj_create_group" line 114 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
@@ -1355,10 +1355,10 @@ PL/pgSQL function "emaj_create_group" line 6 at RETURN
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 230 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 230 at PERFORM
  emaj_alter_group 
 ------------------
                 8
@@ -1398,11 +1398,11 @@ PL/pgSQL function "emaj_force_stop_group" line 14 at SQL statement
   select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 113 at PERFORM
+PL/pgSQL function "emaj_create_group" line 114 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 113 at PERFORM
+PL/pgSQL function "emaj_create_group" line 114 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
@@ -1441,16 +1441,16 @@ PL/pgSQL function "emaj_force_stop_group" line 14 at SQL statement
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 230 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 230 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 230 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 230 at PERFORM
  emaj_alter_group 
 ------------------
                 7
@@ -1479,10 +1479,10 @@ begin;
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 230 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 229 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 230 at PERFORM
  emaj_alter_group 
 ------------------
                 7
@@ -1577,7 +1577,7 @@ begin;
     select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schema: cannot drop schema emajb. It probably owns unattended objects. Use the emaj_verify_all() function to get details
 CONTEXT:  SQL statement "SELECT  emaj._drop_log_schema( $1 ,  $2 )"
-PL/pgSQL function "_drop_group" line 50 at PERFORM
+PL/pgSQL function "_drop_group" line 51 at PERFORM
 SQL statement "SELECT emaj._drop_group( $1 , FALSE)"
 PL/pgSQL function "emaj_drop_group" line 11 at SQL statement
   rollback to savepoint sp1;

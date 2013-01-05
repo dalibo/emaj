@@ -10,13 +10,13 @@ select emaj.emaj_start_group('myGroup1','Mark1');
 select emaj.emaj_start_group('myGroup2','Mark2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
 PL/pgSQL function "emaj_start_group" line 16 at SQL statement
 PL/pgSQL function "emaj_start_group" line 5 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
-PL/pgSQL function "_start_groups" line 45 at PERFORM
+PL/pgSQL function "_start_groups" line 46 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
 PL/pgSQL function "emaj_start_group" line 16 at SQL statement
 PL/pgSQL function "emaj_start_group" line 5 at RETURN
@@ -37,7 +37,7 @@ ERROR:  emaj_set_mark_group: group unknownGroup has not been created.
 select emaj.emaj_set_mark_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: EMAJ_LAST_MARK is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 , array[ $2 ])"
-PL/pgSQL function "emaj_set_mark_group" line 27 at SQL statement
+PL/pgSQL function "emaj_set_mark_group" line 28 at SQL statement
 -- should be OK
 select emaj.emaj_set_mark_group('myGroup1','SM1');
  emaj_set_mark_group 
@@ -61,7 +61,7 @@ select emaj.emaj_set_mark_group('myGroup2','phil''s mark #1');
 select emaj.emaj_set_mark_group('myGroup1','SM1');
 ERROR:  _check_new_mark: Group myGroup1 already contains a mark named SM1.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 , array[ $2 ])"
-PL/pgSQL function "emaj_set_mark_group" line 27 at SQL statement
+PL/pgSQL function "emaj_set_mark_group" line 28 at SQL statement
 -- mark with generated name and in a single transaction
 begin transaction;
   select emaj.emaj_set_mark_group('myGroup1',NULL);
@@ -105,7 +105,7 @@ ERROR:  emaj_set_mark_groups: group unknownGroup has not been created.
 select emaj.emaj_set_mark_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: EMAJ_LAST_MARK is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 ,  $2 )"
-PL/pgSQL function "emaj_set_mark_groups" line 41 at SQL statement
+PL/pgSQL function "emaj_set_mark_groups" line 42 at SQL statement
 -- should be OK
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
  emaj_set_mark_groups 
@@ -127,7 +127,7 @@ WARNING:  _check_names_array: duplicate group name myGroup1.
 CONTEXT:  PL/pgSQL function "emaj_set_mark_groups" line 13 at assignment
 ERROR:  _check_new_mark: Group myGroup1 already contains a mark named SM3.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark( $1 ,  $2 )"
-PL/pgSQL function "emaj_set_mark_groups" line 41 at SQL statement
+PL/pgSQL function "emaj_set_mark_groups" line 42 at SQL statement
 -- generated mark name
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','');
  emaj_set_mark_groups 
@@ -685,9 +685,9 @@ select emaj.emaj_stop_group('myGroup2');
 (1 row)
 
 select emaj.emaj_set_mark_group('myGroup1','SM1');
-ERROR:  emaj_set_mark_group: A mark cannot be set for group myGroup1 because it is not in logging state. An emaj_start_group function must be previously executed.
+ERROR:  emaj_set_mark_group: A mark cannot be set for group myGroup1 because it is not in LOGGING state. An emaj_start_group function must be previously executed.
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'SM1');
-ERROR:  emaj_set_mark_groups: A mark cannot be set for group myGroup1 because it is not in logging state. An emaj_start_group function must be previously executed.
+ERROR:  emaj_set_mark_groups: A mark cannot be set for group myGroup1 because it is not in LOGGING state. An emaj_start_group function must be previously executed.
 -- check marks state
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 

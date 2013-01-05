@@ -118,8 +118,8 @@ select "phil's col11", "phil's col12", "phil\s col13",
 SET client_min_messages TO WARNING;
 
 -- impact of started group
-select group_name, group_state, group_nb_table, group_nb_sequence, group_comment 
-  from emaj.emaj_group order by group_name, group_state;
+select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_comment 
+  from emaj.emaj_group order by group_name, group_is_logging;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -- check old events are deleted
@@ -148,8 +148,8 @@ rollback;
 select emaj.emaj_stop_group('myGroup1');
 
 -- impact of stopped group
-select group_name, group_state, group_nb_table, group_nb_sequence, group_comment 
-  from emaj.emaj_group order by group_name, group_state;
+select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_comment 
+  from emaj.emaj_group order by group_name, group_is_logging;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -- should be OK
@@ -211,8 +211,8 @@ rollback;
 
 -- impact of started group
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
-select group_name, group_state, group_nb_table, group_nb_sequence, group_comment 
-  from emaj.emaj_group order by group_name, group_state;
+select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_comment 
+  from emaj.emaj_group order by group_name, group_is_logging;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -----------------------------
@@ -271,8 +271,8 @@ select emaj.emaj_force_stop_group('myGroup1');
 select emaj.emaj_force_stop_group('myGroup2');
 
 -- impact of stopped group
-select group_name, group_state, group_nb_table, group_nb_sequence, group_comment 
-  from emaj.emaj_group order by group_name, group_state;
+select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_comment 
+  from emaj.emaj_group order by group_name, group_is_logging;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -- test end: (groups are stopped) reset history and force sequences id

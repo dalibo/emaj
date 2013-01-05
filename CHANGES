@@ -18,7 +18,9 @@ Enhancements:
     of the remote user who performed the recorded update and complements the 
     already existing emaj_user_ip column.
   - Some minor coding improvements such as: the replacement of the mark_state 
-    column in the emaj_mark table by a boolean column named mark_is_deleted.
+    column in the emaj_mark table by a boolean column named mark_is_deleted ;
+    the replacement of the group_state column in the emaj_group table by a 
+    boolean column named group_is_logging ; some error message improvements.
 
 Bug fixes:
 

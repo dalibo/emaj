@@ -102,8 +102,8 @@ select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 -- Checking step 1
 -----------------------------
 -- emaj tables
-select group_name, group_state, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
-from emaj.emaj_group order by group_nb_table;
+select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
+  from emaj.emaj_group order by group_nb_table;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 -- user tables
