@@ -17,6 +17,8 @@ Enhancements:
   - add an emaj_user_port column into each log tables. It holds the ip port 
     of the remote user who performed the recorded update and complements the 
     already existing emaj_user_ip column.
+  - Some minor coding improvements such as: the replacement of the mark_state 
+    column in the emaj_mark table by a boolean column named mark_is_deleted.
 
 Bug fixes:
 

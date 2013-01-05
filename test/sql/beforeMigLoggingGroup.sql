@@ -112,5 +112,5 @@ select emaj.emaj_logged_rollback_group('myGroup2','M3');
 select group_name, group_state, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
 from emaj.emaj_group order by group_nb_table;
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id from emaj.emaj_mark order by mark_id;
 

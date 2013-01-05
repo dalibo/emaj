@@ -242,10 +242,10 @@ select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is deleted');
 
 -- try to get rollback duration on a deleted mark
 select emaj.emaj_estimate_rollback_duration('myGroup2','M3');
-ERROR:  emaj_estimate_rollback_duration: mark M3 for group myGroup2 is not in ACTIVE state.
+ERROR:  emaj_estimate_rollback_duration: mark M3 for group myGroup2 is not usable for rollback.
 -- try to rollback on a deleted mark
 select emaj.emaj_rollback_group('myGroup2','M3');
-ERROR:  _rlbk_groups_step1: mark M3 for group myGroup2 is not in ACTIVE state.
+ERROR:  _rlbk_groups_step1: mark M3 for group myGroup2 is not usable for rollback.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 8 at RETURN
@@ -253,19 +253,19 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text) line 8 at RETURN
 -- Checking step 8
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id | mark_group |        regexp_replace        | mark_global_seq | mark_state |     mark_comment     | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------+------------------------------+-----------------+------------+----------------------+-----------------------+-----------------------+---------------------------
-     607 | myGroup2   | M3                           |           11929 | DELETED    | This mark is deleted |                   599 |                  6051 |                         0
-     612 | myGroup1   | M4                           |           11958 | DELETED    |                      |                   601 |                  6089 |                        10
-     613 | myGroup1   | M5                           |           11968 | DELETED    |                      |                   601 |                  6095 |                         3
-     617 | myGroup1   | Before logged rollback to M4 |           11998 | DELETED    |                      |                   606 |                  6123 |                        18
-     619 | myGroup1   | STOP_%                       |           12016 | DELETED    |                      |                   606 |                  6143 |                         0
-     620 | myGroup2   | STOP_%                       |           12016 | DELETED    |                      |                   606 |                  6143 |                         0
-     629 | myGroup1   | Stop after rollback          |           12016 | DELETED    |                      |                   606 |                  6213 |                         0
-     630 | myGroup2   | Stop after rollback          |           12016 | DELETED    |                      |                   606 |                  6213 |                         0
-     631 | myGroup1   | Multi-1                      |           12016 | ACTIVE     |                      |                   606 |                  6227 |                          
-     632 | myGroup2   | Multi-1                      |           12016 | ACTIVE     |                      |                   606 |                  6227 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group |        regexp_replace        | mark_global_seq | mark_is_deleted |     mark_comment     | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------+------------------------------+-----------------+-----------------+----------------------+-----------------------+-----------------------+---------------------------
+     607 | myGroup2   | M3                           |           11929 | t               | This mark is deleted |                   599 |                  6051 |                         0
+     612 | myGroup1   | M4                           |           11958 | t               |                      |                   601 |                  6089 |                        10
+     613 | myGroup1   | M5                           |           11968 | t               |                      |                   601 |                  6095 |                         3
+     617 | myGroup1   | Before logged rollback to M4 |           11998 | t               |                      |                   606 |                  6123 |                        18
+     619 | myGroup1   | STOP_%                       |           12016 | t               |                      |                   606 |                  6143 |                         0
+     620 | myGroup2   | STOP_%                       |           12016 | t               |                      |                   606 |                  6143 |                         0
+     629 | myGroup1   | Stop after rollback          |           12016 | t               |                      |                   606 |                  6213 |                         0
+     630 | myGroup2   | Stop after rollback          |           12016 | t               |                      |                   606 |                  6213 |                         0
+     631 | myGroup1   | Multi-1                      |           12016 | f               |                      |                   606 |                  6227 |                          
+     632 | myGroup2   | Multi-1                      |           12016 | f               |                      |                   606 |                  6227 |                          
 (10 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -814,22 +814,22 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text) line 8 at RETURN
 -- Checking step 10
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    |        regexp_replace        | mark_global_seq | mark_state |     mark_comment     | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+------------------------------+-----------------+------------+----------------------+-----------------------+-----------------------+---------------------------
-     607 | myGroup2         | M3                           |           11929 | DELETED    | This mark is deleted |                   599 |                  6051 |                         0
-     612 | myGroup1         | M4                           |           11958 | DELETED    |                      |                   601 |                  6089 |                        10
-     613 | myGroup1         | M5                           |           11968 | DELETED    |                      |                   601 |                  6095 |                         3
-     617 | myGroup1         | Before logged rollback to M4 |           11998 | DELETED    |                      |                   606 |                  6123 |                        18
-     619 | myGroup1         | STOP_%                       |           12016 | DELETED    |                      |                   606 |                  6143 |                         0
-     620 | myGroup2         | STOP_%                       |           12016 | DELETED    |                      |                   606 |                  6143 |                         0
-     629 | myGroup1         | Stop after rollback          |           12016 | DELETED    |                      |                   606 |                  6213 |                         0
-     630 | myGroup2         | Stop after rollback          |           12016 | DELETED    |                      |                   606 |                  6213 |                         0
-     631 | myGroup1         | Multi-1                      |           12016 | ACTIVE     |                      |                   606 |                  6227 |                          
-     632 | myGroup2         | Multi-1                      |           12016 | ACTIVE     |                      |                   606 |                  6227 |                          
-     637 | phil's group#3", | M1_rollbackable              |           12016 | ACTIVE     |                      |                   606 |                  6253 |                        52
-     638 | phil's group#3", | M2_rollbackable              |           12068 | ACTIVE     |                      |                   606 |                  6257 |                         3
-     640 | phil's group#3", | phil's mark #3               |           12071 | ACTIVE     | Third mark set       |                   606 |                  6265 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    |        regexp_replace        | mark_global_seq | mark_is_deleted |     mark_comment     | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+------------------------------+-----------------+-----------------+----------------------+-----------------------+-----------------------+---------------------------
+     607 | myGroup2         | M3                           |           11929 | t               | This mark is deleted |                   599 |                  6051 |                         0
+     612 | myGroup1         | M4                           |           11958 | t               |                      |                   601 |                  6089 |                        10
+     613 | myGroup1         | M5                           |           11968 | t               |                      |                   601 |                  6095 |                         3
+     617 | myGroup1         | Before logged rollback to M4 |           11998 | t               |                      |                   606 |                  6123 |                        18
+     619 | myGroup1         | STOP_%                       |           12016 | t               |                      |                   606 |                  6143 |                         0
+     620 | myGroup2         | STOP_%                       |           12016 | t               |                      |                   606 |                  6143 |                         0
+     629 | myGroup1         | Stop after rollback          |           12016 | t               |                      |                   606 |                  6213 |                         0
+     630 | myGroup2         | Stop after rollback          |           12016 | t               |                      |                   606 |                  6213 |                         0
+     631 | myGroup1         | Multi-1                      |           12016 | f               |                      |                   606 |                  6227 |                          
+     632 | myGroup2         | Multi-1                      |           12016 | f               |                      |                   606 |                  6227 |                          
+     637 | phil's group#3", | M1_rollbackable              |           12016 | f               |                      |                   606 |                  6253 |                        52
+     638 | phil's group#3", | M2_rollbackable              |           12068 | f               |                      |                   606 |                  6257 |                         3
+     640 | phil's group#3", | phil's mark #3               |           12071 | f               | Third mark set       |                   606 |                  6265 |                          
 (13 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;

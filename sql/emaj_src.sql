@@ -270,8 +270,7 @@ CREATE TABLE emaj.emaj_mark (
     mark_datetime             TIMESTAMPTZ NOT NULL ,      -- precise timestamp of the mark creation, used as a reference
                                                          --   for other tables like emaj_sequence and all log tables
     mark_global_seq           BIGINT      NOT NULL,      -- emaj_global_seq last value at mark set (used to rollback tables)
-    mark_state                TEXT,                      -- state of the mark, with 2 possible values:
-                                                         --   'ACTIVE' and 'DELETED'
+    mark_is_deleted           BOOLEAN     NOT NULL,      -- boolean to indicate if the mark is deleted
     mark_comment              TEXT,                      -- optional user comment
     mark_txid                 BIGINT                     -- id of the tx that has set the mark
                               DEFAULT txid_current(),
@@ -430,8 +429,8 @@ $$
     DELETE FROM emaj.emaj_hist WHERE hist_datetime <
       (SELECT MIN(datetime) FROM
         (
-                 -- compute the oldest active mark for all groups
-          (SELECT MIN(mark_datetime) FROM emaj.emaj_mark WHERE mark_state = 'ACTIVE')
+                 -- compute the oldest non deleted mark for all groups
+          (SELECT MIN(mark_datetime) FROM emaj.emaj_mark WHERE NOT mark_is_deleted)
          UNION
                  -- compute the timestamp of now minus the history_retention (1 month by default)
           (SELECT current_timestamp -
@@ -2589,10 +2588,11 @@ $_stop_groups$
           WHERE mark_group = ANY (v_validGroupNames)
             AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
                 (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
-                 WHERE mark_group = ANY (v_validGroupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
+                 WHERE mark_group = ANY (v_validGroupNames) AND NOT mark_is_deleted GROUP BY mark_group);
       END IF;
--- set all marks for the groups from the emaj_mark table in 'DELETED' state to avoid any further rollback
-      UPDATE emaj.emaj_mark SET mark_state = 'DELETED' WHERE mark_group = ANY (v_validGroupNames) AND mark_state <> 'DELETED';
+-- set all marks for the groups from the emaj_mark table as 'DELETED' to avoid any further rollback
+      UPDATE emaj.emaj_mark SET mark_is_deleted = TRUE
+        WHERE mark_group = ANY (v_validGroupNames) AND NOT mark_is_deleted;
 -- update the state of the groups rows from the emaj_group table
       UPDATE emaj.emaj_group SET group_state = 'IDLE' WHERE group_name = ANY (v_validGroupNames);
     END IF;
@@ -2764,9 +2764,9 @@ $_set_mark_groups$
     UPDATE emaj.emaj_mark m SET mark_log_rows_before_next =
       coalesce( (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(m.mark_group,'EMAJ_LAST_MARK',NULL)) ,0)
       WHERE mark_group = ANY (v_groupNames)
-        AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
+        AND (mark_group, mark_id) IN                   -- select only the last non deleted mark of each concerned group
             (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
-             WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
+             WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted GROUP BY mark_group);
 -- for each table of the groups, ...
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
@@ -2802,8 +2802,8 @@ $_set_mark_groups$
       FROM emaj.emaj_global_seq;
 -- insert the marks into the emaj_mark table
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
-      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_global_seq, mark_state, mark_last_sequence_id, mark_last_seq_hole_id)
-        VALUES (v_groupNames[v_i], v_mark, v_timestamp, v_lastGlobalSeq, 'ACTIVE', v_lastSequenceId, v_lastSeqHoleId);
+      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_global_seq, mark_is_deleted, mark_last_sequence_id, mark_last_seq_hole_id)
+        VALUES (v_groupNames[v_i], v_mark, v_timestamp, v_lastGlobalSeq, FALSE, v_lastSequenceId, v_lastSeqHoleId);
     END LOOP;
 -- if requested, record the set mark end in emaj_hist
     IF v_eventToRecord THEN
@@ -3292,7 +3292,7 @@ $_rlbk_groups_step1$
     v_groupState          TEXT;
     v_isRollbackable      BOOLEAN;
     v_markName            TEXT;
-    v_markState           TEXT;
+    v_markIsDeleted       BOOLEAN;
     v_cpt                 INT;
     v_nbTblInGroup        INT;
     v_nbUnchangedTbl      INT;
@@ -3327,10 +3327,10 @@ $_rlbk_groups_step1$
         RAISE EXCEPTION '_rlbk_groups_step1: No mark % exists for group %.', v_mark, v_groupNames[v_i];
       END IF;
 -- ... and this mark is ACTIVE
-      SELECT mark_state INTO v_markState FROM emaj.emaj_mark
+      SELECT mark_is_deleted INTO v_markIsDeleted FROM emaj.emaj_mark
         WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
-      IF v_markState <> 'ACTIVE' THEN
-        RAISE EXCEPTION '_rlbk_groups_step1: mark % for group % is not in ACTIVE state.', v_markName, v_groupNames[v_i];
+      IF v_markIsDeleted THEN
+        RAISE EXCEPTION '_rlbk_groups_step1: mark % for group % is not usable for rollback.', v_markName, v_groupNames[v_i];
       END IF;
     END LOOP;
 -- check that no group is damaged
@@ -3737,9 +3737,9 @@ $_rlbk_groups_step7$
 -- and finaly reset the mark_log_rows_before_next column for the new last mark
       UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
         WHERE mark_group = ANY (v_groupNames)
-          AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
+          AND (mark_group, mark_id) IN                -- select only the last non deleted mark of each concerned group
               (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
-               WHERE mark_group = ANY (v_groupNames) AND mark_state = 'ACTIVE' GROUP BY mark_group);
+               WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted GROUP BY mark_group);
     END IF;
 -- rollback the application sequences belonging to the groups
 -- warning, this operation is not transaction safe (that's why it is placed at the end of the operation)!
@@ -4042,7 +4042,7 @@ $emaj_estimate_rollback_duration$
   DECLARE
     v_nbTblSeq              INTEGER;
     v_markName              TEXT;
-    v_markState             TEXT;
+    v_markIsDeleted         BOOLEAN;
     v_estim_duration        INTERVAL;
     v_avg_row_rlbk          INTERVAL;
     v_avg_row_del_log       INTERVAL;
@@ -4065,11 +4065,11 @@ $emaj_estimate_rollback_duration$
     IF NOT FOUND OR v_markName IS NULL THEN
       RAISE EXCEPTION 'emaj_estimate_rollback_duration: no mark % exists for group %.', v_mark, v_groupName;
     END IF;
--- check the mark is ACTIVE
-    SELECT mark_state INTO v_markState FROM emaj.emaj_mark
+-- check the mark is not logicaly deleted
+    SELECT mark_is_deleted INTO v_markIsDeleted FROM emaj.emaj_mark
       WHERE mark_group = v_groupName AND mark_name = v_markName;
-    IF v_markState <> 'ACTIVE' THEN
-      RAISE EXCEPTION 'emaj_estimate_rollback_duration: mark % for group % is not in ACTIVE state.', v_markName, v_groupName;
+    IF v_markIsDeleted THEN
+      RAISE EXCEPTION 'emaj_estimate_rollback_duration: mark % for group % is not usable for rollback.', v_markName, v_groupName;
     END IF;
 -- get all needed duration parameters from emaj_param table,
 --   or get default values for rows that are not present in emaj_param table

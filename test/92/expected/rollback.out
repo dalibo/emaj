@@ -286,7 +286,7 @@ begin;
 (1 row)
 
   select emaj.emaj_rollback_group('myGroup1','GeneratedStopMark');
-ERROR:  _rlbk_groups_step1: mark GeneratedStopMark for group myGroup1 is not in ACTIVE state.
+ERROR:  _rlbk_groups_step1: mark GeneratedStopMark for group myGroup1 is not usable for rollback.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_groups_step1(v_groupNames, v_mark, v_unloggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 8 at RETURN
@@ -544,13 +544,13 @@ select emaj.emaj_set_mark_group('myGroup1','Mark12');
                    6
 (1 row)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-     316 | phil's group#3", | Mark4          |               2 | ACTIVE     |              |                   299 |                  3115 |                          
-     424 | myGroup1         | Mark11         |               2 | ACTIVE     |              |                   399 |                  4169 |                        27
-     425 | myGroup2         | Mark21         |               2 | ACTIVE     |              |                   399 |                  4177 |                          
-     426 | myGroup1         | Mark12         |              29 | ACTIVE     |              |                   399 |                  4183 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+----------------+-----------------+-----------------+--------------+-----------------------+-----------------------+---------------------------
+     316 | phil's group#3", | Mark4          |               2 | f               |              |                   299 |                  3115 |                          
+     424 | myGroup1         | Mark11         |               2 | f               |              |                   399 |                  4169 |                        27
+     425 | myGroup2         | Mark21         |               2 | f               |              |                   399 |                  4177 |                          
+     426 | myGroup1         | Mark12         |              29 | f               |              |                   399 |                  4183 |                          
 (4 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -605,14 +605,14 @@ select emaj.emaj_set_mark_group('myGroup1','Mark13');
                    6
 (1 row)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-     316 | phil's group#3", | Mark4          |               2 | ACTIVE     |              |                   299 |                  3115 |                          
-     424 | myGroup1         | Mark11         |               2 | ACTIVE     |              |                   399 |                  4169 |                        27
-     425 | myGroup2         | Mark21         |               2 | ACTIVE     |              |                   399 |                  4177 |                          
-     426 | myGroup1         | Mark12         |              29 | ACTIVE     |              |                   399 |                  4183 |                        12
-     427 | myGroup1         | Mark13         |              41 | ACTIVE     |              |                   399 |                  4189 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+----------------+-----------------+-----------------+--------------+-----------------------+-----------------------+---------------------------
+     316 | phil's group#3", | Mark4          |               2 | f               |              |                   299 |                  3115 |                          
+     424 | myGroup1         | Mark11         |               2 | f               |              |                   399 |                  4169 |                        27
+     425 | myGroup2         | Mark21         |               2 | f               |              |                   399 |                  4177 |                          
+     426 | myGroup1         | Mark12         |              29 | f               |              |                   399 |                  4183 |                        12
+     427 | myGroup1         | Mark13         |              41 | f               |              |                   399 |                  4189 |                          
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -730,13 +730,13 @@ select emaj.emaj_rollback_group('myGroup1','Mark12');
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-     316 | phil's group#3", | Mark4          |               2 | ACTIVE     |              |                   299 |                  3115 |                          
-     424 | myGroup1         | Mark11         |               2 | ACTIVE     |              |                   399 |                  4169 |                        27
-     425 | myGroup2         | Mark21         |               2 | ACTIVE     |              |                   399 |                  4177 |                          
-     426 | myGroup1         | Mark12         |              29 | ACTIVE     |              |                   399 |                  4183 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+----------------+-----------------+-----------------+--------------+-----------------------+-----------------------+---------------------------
+     316 | phil's group#3", | Mark4          |               2 | f               |              |                   299 |                  3115 |                          
+     424 | myGroup1         | Mark11         |               2 | f               |              |                   399 |                  4169 |                        27
+     425 | myGroup2         | Mark21         |               2 | f               |              |                   399 |                  4177 |                          
+     426 | myGroup1         | Mark12         |              29 | f               |              |                   399 |                  4183 |                          
 (4 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -821,13 +821,13 @@ select emaj.emaj_stop_group('myGroup1');
 (1 row)
 
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-     316 | phil's group#3", | Mark4          |               2 | ACTIVE     |              |                   299 |                  3115 |                          
-     424 | myGroup1         | Mark11         |               2 | DELETED    |              |                   399 |                  4169 |                         0
-     425 | myGroup2         | Mark21         |               2 | ACTIVE     |              |                   399 |                  4177 |                          
-     428 | myGroup1         | STOP_%         |              41 | DELETED    |              |                   404 |                  4195 |                         0
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+----------------+-----------------+-----------------+--------------+-----------------------+-----------------------+---------------------------
+     316 | phil's group#3", | Mark4          |               2 | f               |              |                   299 |                  3115 |                          
+     424 | myGroup1         | Mark11         |               2 | t               |              |                   399 |                  4169 |                         0
+     425 | myGroup2         | Mark21         |               2 | f               |              |                   399 |                  4177 |                          
+     428 | myGroup1         | STOP_%         |              41 | t               |              |                   404 |                  4195 |                         0
 (4 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1006,14 +1006,14 @@ select emaj.emaj_set_mark_group('myGroup1','Mark13');
                    6
 (1 row)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-     316 | phil's group#3", | Mark4          |               2 | ACTIVE     |              |                   299 |                  3115 |                          
-     425 | myGroup2         | Mark21         |               2 | ACTIVE     |              |                   399 |                  4177 |                          
-     429 | myGroup1         | Mark11         |              41 | ACTIVE     |              |                   404 |                  4201 |                        19
-     430 | myGroup1         | Mark12         |              60 | ACTIVE     |              |                   404 |                  4207 |                        11
-     431 | myGroup1         | Mark13         |              71 | ACTIVE     |              |                   404 |                  4213 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+----------------+-----------------+-----------------+--------------+-----------------------+-----------------------+---------------------------
+     316 | phil's group#3", | Mark4          |               2 | f               |              |                   299 |                  3115 |                          
+     425 | myGroup2         | Mark21         |               2 | f               |              |                   399 |                  4177 |                          
+     429 | myGroup1         | Mark11         |              41 | f               |              |                   404 |                  4201 |                        19
+     430 | myGroup1         | Mark12         |              60 | f               |              |                   404 |                  4207 |                        11
+     431 | myGroup1         | Mark13         |              71 | f               |              |                   404 |                  4213 |                          
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1119,16 +1119,16 @@ select emaj.emaj_logged_rollback_group('myGroup1','Mark12');
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    |   regexp_replace    | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+---------------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-     316 | phil's group#3", | Mark4               |               2 | ACTIVE     |              |                   299 |                  3115 |                          
-     425 | myGroup2         | Mark21              |               2 | ACTIVE     |              |                   399 |                  4177 |                          
-     429 | myGroup1         | Mark11              |              41 | ACTIVE     |              |                   404 |                  4201 |                        19
-     430 | myGroup1         | Mark12              |              60 | ACTIVE     |              |                   404 |                  4207 |                        11
-     431 | myGroup1         | Mark13              |              71 | ACTIVE     |              |                   404 |                  4213 |                         0
-     432 | myGroup1         | RLBK_Mark12_%_START |              71 | ACTIVE     |              |                   404 |                  4219 |                        11
-     433 | myGroup1         | RLBK_Mark12_%_DONE  |              82 | ACTIVE     |              |                   404 |                  4225 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    |   regexp_replace    | mark_global_seq | mark_is_deleted | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+---------------------+-----------------+-----------------+--------------+-----------------------+-----------------------+---------------------------
+     316 | phil's group#3", | Mark4               |               2 | f               |              |                   299 |                  3115 |                          
+     425 | myGroup2         | Mark21              |               2 | f               |              |                   399 |                  4177 |                          
+     429 | myGroup1         | Mark11              |              41 | f               |              |                   404 |                  4201 |                        19
+     430 | myGroup1         | Mark12              |              60 | f               |              |                   404 |                  4207 |                        11
+     431 | myGroup1         | Mark13              |              71 | f               |              |                   404 |                  4213 |                         0
+     432 | myGroup1         | RLBK_Mark12_%_START |              71 | f               |              |                   404 |                  4219 |                        11
+     433 | myGroup1         | RLBK_Mark12_%_DONE  |              82 | f               |              |                   404 |                  4225 |                          
 (7 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1242,18 +1242,18 @@ select emaj.emaj_logged_rollback_group('myGroup1','Mark11');
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    |   regexp_replace    | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+---------------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-     316 | phil's group#3", | Mark4               |               2 | ACTIVE     |              |                   299 |                  3115 |                          
-     425 | myGroup2         | Mark21              |               2 | ACTIVE     |              |                   399 |                  4177 |                          
-     429 | myGroup1         | Mark11              |              41 | ACTIVE     |              |                   404 |                  4201 |                        19
-     430 | myGroup1         | Mark12              |              60 | ACTIVE     |              |                   404 |                  4207 |                        11
-     431 | myGroup1         | Mark13              |              71 | ACTIVE     |              |                   404 |                  4213 |                         0
-     432 | myGroup1         | RLBK_Mark12_%_START |              71 | ACTIVE     |              |                   404 |                  4219 |                        11
-     433 | myGroup1         | RLBK_Mark12_%_DONE  |              82 | ACTIVE     |              |                   404 |                  4225 |                         0
-     434 | myGroup1         | RLBK_Mark11_%_START |              82 | ACTIVE     |              |                   404 |                  4231 |                        41
-     435 | myGroup1         | RLBK_Mark11_%_DONE  |             123 | ACTIVE     |              |                   404 |                  4237 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    |   regexp_replace    | mark_global_seq | mark_is_deleted | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+---------------------+-----------------+-----------------+--------------+-----------------------+-----------------------+---------------------------
+     316 | phil's group#3", | Mark4               |               2 | f               |              |                   299 |                  3115 |                          
+     425 | myGroup2         | Mark21              |               2 | f               |              |                   399 |                  4177 |                          
+     429 | myGroup1         | Mark11              |              41 | f               |              |                   404 |                  4201 |                        19
+     430 | myGroup1         | Mark12              |              60 | f               |              |                   404 |                  4207 |                        11
+     431 | myGroup1         | Mark13              |              71 | f               |              |                   404 |                  4213 |                         0
+     432 | myGroup1         | RLBK_Mark12_%_START |              71 | f               |              |                   404 |                  4219 |                        11
+     433 | myGroup1         | RLBK_Mark12_%_DONE  |              82 | f               |              |                   404 |                  4225 |                         0
+     434 | myGroup1         | RLBK_Mark11_%_START |              82 | f               |              |                   404 |                  4231 |                        41
+     435 | myGroup1         | RLBK_Mark11_%_DONE  |             123 | f               |              |                   404 |                  4237 |                          
 (9 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1413,14 +1413,14 @@ select emaj.emaj_rollback_group('myGroup1','Mark13');
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_state, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_state | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+----------------+-----------------+------------+--------------+-----------------------+-----------------------+---------------------------
-     316 | phil's group#3", | Mark4          |               2 | ACTIVE     |              |                   299 |                  3115 |                          
-     425 | myGroup2         | Mark21         |               2 | ACTIVE     |              |                   399 |                  4177 |                          
-     429 | myGroup1         | Mark11         |              41 | ACTIVE     |              |                   404 |                  4201 |                        19
-     430 | myGroup1         | Mark12         |              60 | ACTIVE     |              |                   404 |                  4207 |                        11
-     431 | myGroup1         | Mark13         |              71 | ACTIVE     |              |                   404 |                  4213 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
+---------+------------------+----------------+-----------------+-----------------+--------------+-----------------------+-----------------------+---------------------------
+     316 | phil's group#3", | Mark4          |               2 | f               |              |                   299 |                  3115 |                          
+     425 | myGroup2         | Mark21         |               2 | f               |              |                   399 |                  4177 |                          
+     429 | myGroup1         | Mark11         |              41 | f               |              |                   404 |                  4201 |                        19
+     430 | myGroup1         | Mark12         |              60 | f               |              |                   404 |                  4207 |                        11
+     431 | myGroup1         | Mark13         |              71 | f               |              |                   404 |                  4213 |                          
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
