@@ -3,9 +3,8 @@
 -----------------------------
 -- install dblink
 -----------------------------
--- this 8.4.8 version seems compatible with 8.2 to 9.0 pg version
--- for future use...
---\i ~/postgresql-8.4.8/contrib/dblink/dblink.sql
+-- this 8.4.14 version seems compatible with 8.3 to 9.2 pg version
+\i ~/postgresql-8.4.14/contrib/dblink/dblink.sql
 
 -----------------------------
 -- for postgres cluster 8.3 and 9.1, temporarily rename tspemaj tablespace to test both cases

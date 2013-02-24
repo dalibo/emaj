@@ -19,8 +19,10 @@ select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_mark;
 select count(*) from emaj.emaj_sequence;
 select count(*) from emaj.emaj_seq_hole;
+select count(*) from emaj.emaj_rlbk;
+select count(*) from emaj.emaj_rlbk_session;
+select count(*) from emaj.emaj_rlbk_plan;
 select count(*) from emaj.emaj_rlbk_stat;
-select count(*) from emaj.emaj_fk;
 select count(*) from emaj.mySchema1_myTbl1_log;
 
 -----------------------------
@@ -39,7 +41,6 @@ select * from emaj.emaj_group;
 select * from emaj.emaj_relation;
 select * from emaj.emaj_mark;
 select * from emaj.emaj_sequence;
-select * from emaj.emaj_fk;
 select * from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk_stat;
 
@@ -76,7 +77,7 @@ select emaj.emaj_start_group('myGroup2','M1');
 -- check how truncate reacts (must be blocked in pg 8.4+) - tables are empty anyway
 truncate myschema1.mytbl1 cascade;
 -- 
-set search_path=myschema1;
+set search_path=public,myschema1;
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;
 insert into myTbl2 values (1,'ABC','2010-12-31');
@@ -86,7 +87,7 @@ insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
 select emaj.emaj_set_mark_group('myGroup1','M2');
 --
-set search_path=myschema1;
+set search_path=public,myschema1;
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
 update myTbl4 set col43 = 2;
@@ -126,7 +127,7 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid, emaj_
 -----------------------------
 -- Step 2 : for myGroup2, start, update tables and set 2 marks 
 -----------------------------
-set search_path=myschema2;
+set search_path=public,myschema2;
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;
 insert into myTbl2 values (1,'ABC','2010-01-01');
@@ -142,7 +143,7 @@ update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 between 1 and 
 --
 select emaj.emaj_set_mark_group('myGroup2','M2');
 --
-set search_path=myschema2;
+set search_path=public,myschema2;
 select nextval('myschema2.myseq1');
 select nextval('myschema2.myseq1');
 select nextval('myschema2.myseq1');
@@ -179,13 +180,18 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl5_log order by emaj_gid, emaj_tuple desc;
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl6_log order by emaj_gid, emaj_tuple desc;
 -----------------------------
--- Step 3 : for myGroup2, double logged rollback then delete first mark 
+-- Step 3 : for myGroup2, double logged rollback
 -----------------------------
 reset role;
 analyze mytbl4;
+-- rollback with dblink_connect_u not granted
+revoke execute on function dblink_connect_u(text,text) from emaj_adm;
 set role emaj_regression_tests_adm_user;
 select emaj.emaj_logged_rollback_group('myGroup2','M2');
 select emaj.emaj_logged_rollback_group('myGroup2','M3');
+reset role;
+grant execute on function dblink_connect_u(text,text) to emaj_adm;
+set role emaj_regression_tests_adm_user;
 -----------------------------
 -- Checking step 3
 -----------------------------
@@ -211,7 +217,7 @@ select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid
 -----------------------------
 select emaj.emaj_rollback_group('myGroup1','M2');
 --
-set search_path=myschema1;
+set search_path=public,myschema1;
 insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,110) as i;
 insert into myTbl2 values (3,'GHI','2010-01-02');
 delete from myTbl1 where col11 = 1;
@@ -255,7 +261,6 @@ select emaj.emaj_rollback_group('myGroup2','M3');
 -- emaj tables
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
-select * from emaj.emaj_fk order by fk_groups, fk_session, fk_name;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
@@ -274,7 +279,7 @@ select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid
 -----------------------------
 -- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
 -----------------------------
-set search_path=myschema1;
+set search_path=public,myschema1;
 --
 insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
 insert into myTbl4 values (11,'FK...',1,1,'Step 6');
@@ -303,7 +308,6 @@ select * from
   ) as t 
   where checked_stat_rows <> 0;
 --
-select * from emaj.emaj_fk order by fk_groups, fk_session, fk_name;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 -- user tables
 select * from mySchema1.myTbl1 order by col11,col12;
@@ -320,7 +324,7 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -----------------------------
 -- Step 7 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
-set search_path=myschema1;
+set search_path=public,myschema1;
 --
 delete from "myTbl3" where col31 = 14;
 delete from "myTbl3" where col31 = 15;
@@ -340,10 +344,7 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 -- emaj tables
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
-select * from emaj.emaj_fk order by fk_groups, fk_session, fk_name;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
-select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from emaj.emaj_rlbk_stat 
-  order by rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_operation;
 -- user tables
 select * from mySchema1.myTbl1 order by col11,col12;
 select * from mySchema1.myTbl2 order by col21;

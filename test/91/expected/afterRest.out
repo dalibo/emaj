@@ -8,8 +8,6 @@ select relname,relkind from pg_class where relname like 'emaj_%';
            relname           | relkind 
 -----------------------------+---------
  emaj_detailed_log_stat_type | c
- emaj_fk                     | r
- emaj_fk_pkey                | i
  emaj_global_seq             | S
  emaj_group                  | r
  emaj_group_def              | r
@@ -28,6 +26,14 @@ select relname,relkind from pg_class where relname like 'emaj_%';
  emaj_relation_idx1          | i
  emaj_relation_idx2          | i
  emaj_relation_pkey          | i
+ emaj_rlbk                   | r
+ emaj_rlbk_idx1              | i
+ emaj_rlbk_pkey              | i
+ emaj_rlbk_plan              | r
+ emaj_rlbk_plan_pkey         | i
+ emaj_rlbk_rlbk_id_seq       | S
+ emaj_rlbk_session           | r
+ emaj_rlbk_session_pkey      | i
  emaj_rlbk_stat              | r
  emaj_rlbk_stat_pkey         | i
  emaj_seq_hole               | r
@@ -36,7 +42,7 @@ select relname,relkind from pg_class where relname like 'emaj_%';
  emaj_sequence               | r
  emaj_sequence_pkey          | i
  emaj_sequence_sequ_id_seq   | S
-(29 rows)
+(35 rows)
 
 select * from emaj.emaj_global_seq;
   sequence_name  | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
@@ -630,38 +636,39 @@ select emaj.emaj_stop_group('myGroup2');
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
- hist_id |   hist_function   |  hist_event  |         hist_object          |                 regexp_replace                 | hist_user 
----------+-------------------+--------------+------------------------------+------------------------------------------------+-----------
-   10000 | SET_MARK_GROUP    | BEGIN        | myGroup2                     |                                                | postgres
-   10001 | LOCK_GROUP        | BEGIN        | myGroup2                     |                                                | postgres
-   10002 | LOCK_GROUP        | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                 | postgres
-   10003 | SET_MARK_GROUP    | END          | myGroup2                     | After restore mark                             | postgres
-   10004 | ROLLBACK_GROUP    | BEGIN        | myGroup2                     | Unlogged rollback to mark Multi-1 (timestamp)  | postgres
-   10005 | LOCK_SESSION      | BEGIN        | myGroup2                     | Session #1                                     | postgres
-   10006 | LOCK_SESSION      | END          | myGroup2                     | Session #1 : 6 tables locked, 0 deadlock(s)    | postgres
-   10007 | ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 12016             | postgres
-   10008 | ROLLBACK_TABLE    | END          | myschema2.mytbl1             | 28 rollbacked rows                             | postgres
-   10009 | ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 12016             | postgres
-   10010 | ROLLBACK_TABLE    | END          | myschema2.mytbl2             | 3 rollbacked rows                              | postgres
-   10011 | ROLLBACK_TABLE    | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 12016             | postgres
-   10012 | ROLLBACK_TABLE    | END          | myschema2."myTbl3"           | 10 rollbacked rows                             | postgres
-   10013 | ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 12016             | postgres
-   10014 | ROLLBACK_TABLE    | END          | myschema2.mytbl4             | 2 rollbacked rows                              | postgres
-   10015 | ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 12016             | postgres
-   10016 | ROLLBACK_TABLE    | END          | myschema2.mytbl5             | 6 rollbacked rows                              | postgres
-   10017 | ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 12016             | postgres
-   10018 | ROLLBACK_TABLE    | END          | myschema2.mytbl6             | 30 rollbacked rows                             | postgres
-   10019 | ROLLBACK_GROUP    | MARK DELETED | myGroup2                     | mark After restore mark has been deleted       | postgres
-   10020 | ROLLBACK_SEQUENCE |              | myschema2.myseq1             | RESTART 1004                                   | postgres
-   10021 | ROLLBACK_SEQUENCE |              | myschema2."myTbl3_col31_seq" | RESTART 21                                     | postgres
-   10022 | ROLLBACK_GROUP    | END          | myGroup2                     | 6 tables and 2 sequences effectively processed | postgres
-   10023 | STOP_GROUP        | BEGIN        | myGroup2                     |                                                | postgres
-   10024 | LOCK_GROUP        | BEGIN        | myGroup2                     |                                                | postgres
-   10025 | LOCK_GROUP        | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                 | postgres
-   10026 | SET_MARK_GROUP    | BEGIN        | myGroup2                     | STOP_%                                         | postgres
-   10027 | SET_MARK_GROUP    | END          | myGroup2                     | STOP_%                                         | postgres
-   10028 | STOP_GROUP        | END          | myGroup2                     | 8 tables/sequences processed                   | postgres
-(29 rows)
+ hist_id |   hist_function   |  hist_event  |         hist_object          |                         regexp_replace                         | hist_user 
+---------+-------------------+--------------+------------------------------+----------------------------------------------------------------+-----------
+   10000 | SET_MARK_GROUP    | BEGIN        | myGroup2                     |                                                                | postgres
+   10001 | LOCK_GROUP        | BEGIN        | myGroup2                     |                                                                | postgres
+   10002 | LOCK_GROUP        | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                 | postgres
+   10003 | SET_MARK_GROUP    | END          | myGroup2                     | After restore mark                                             | postgres
+   10004 | ROLLBACK_GROUP    | BEGIN        | myGroup2                     | Unlogged rollback to mark Multi-1 (timestamp)                  | postgres
+   10005 | DBLINK            | OPEN CNX     | emaj#1                       | Status = -2                                                    | postgres
+   10006 | LOCK_GROUP        | BEGIN        | myGroup2                     | Rollback session #1                                            | postgres
+   10007 | LOCK_GROUP        | END          | myGroup2                     | Rollback session #1: 6 tables locked, 0 deadlock(s)            | postgres
+   10008 | ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 12016                             | postgres
+   10009 | ROLLBACK_TABLE    | END          | myschema2.mytbl6             | 30 rolled back rows                                            | postgres
+   10010 | ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 12016                             | postgres
+   10011 | ROLLBACK_TABLE    | END          | myschema2.mytbl1             | 28 rolled back rows                                            | postgres
+   10012 | ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 12016                             | postgres
+   10013 | ROLLBACK_TABLE    | END          | myschema2.mytbl2             | 3 rolled back rows                                             | postgres
+   10014 | ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 12016                             | postgres
+   10015 | ROLLBACK_TABLE    | END          | myschema2.mytbl4             | 2 rolled back rows                                             | postgres
+   10016 | ROLLBACK_TABLE    | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 12016                             | postgres
+   10017 | ROLLBACK_TABLE    | END          | myschema2."myTbl3"           | 10 rolled back rows                                            | postgres
+   10018 | ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 12016                             | postgres
+   10019 | ROLLBACK_TABLE    | END          | myschema2.mytbl5             | 6 rolled back rows                                             | postgres
+   10020 | ROLLBACK_GROUP    | MARK DELETED | myGroup2                     | mark After restore mark has been deleted                       | postgres
+   10021 | ROLLBACK_SEQUENCE |              | myschema2.myseq1             | RESTART 1004                                                   | postgres
+   10022 | ROLLBACK_SEQUENCE |              | myschema2."myTbl3_col31_seq" | RESTART 21                                                     | postgres
+   10023 | ROLLBACK_GROUP    | END          | myGroup2                     | Rollback_id 34, 6 tables and 2 sequences effectively processed | postgres
+   10024 | STOP_GROUP        | BEGIN        | myGroup2                     |                                                                | postgres
+   10025 | LOCK_GROUP        | BEGIN        | myGroup2                     |                                                                | postgres
+   10026 | LOCK_GROUP        | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                 | postgres
+   10027 | SET_MARK_GROUP    | BEGIN        | myGroup2                     | STOP_%                                                         | postgres
+   10028 | SET_MARK_GROUP    | END          | myGroup2                     | STOP_%                                                         | postgres
+   10029 | STOP_GROUP        | END          | myGroup2                     | 8 tables/sequences processed                                   | postgres
+(30 rows)
 
 --
 truncate emaj.emaj_hist;

@@ -13,7 +13,7 @@ set role emaj_regression_tests_viewer_user;
 select count(*) from emaj.emaj_param;
  count 
 -------
-     3
+     4
 (1 row)
 
 select count(*) from emaj.emaj_hist;
@@ -58,16 +58,28 @@ select count(*) from emaj.emaj_seq_hole;
      3
 (1 row)
 
+select count(*) from emaj.emaj_rlbk;
+ count 
+-------
+    16
+(1 row)
+
+select count(*) from emaj.emaj_rlbk_session;
+ count 
+-------
+    16
+(1 row)
+
+select count(*) from emaj.emaj_rlbk_plan;
+ count 
+-------
+   182
+(1 row)
+
 select count(*) from emaj.emaj_rlbk_stat;
  count 
 -------
      0
-(1 row)
-
-select count(*) from emaj.emaj_fk;
- count 
--------
-     2
 (1 row)
 
 select count(*) from emaj.mySchema1_myTbl1_log;
@@ -95,6 +107,12 @@ select emaj.emaj_get_previous_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_get_previous_mark_group 
 ------------------------------
  Multi-2
+(1 row)
+
+select emaj.emaj_cleanup_rollback_state();
+ emaj_cleanup_rollback_state 
+-----------------------------
+                           0
 (1 row)
 
 select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
@@ -143,10 +161,14 @@ delete from emaj.emaj_sequence;
 ERROR:  permission denied for relation emaj_sequence
 delete from emaj.emaj_seq_hole;
 ERROR:  permission denied for relation emaj_seq_hole
+delete from emaj.emaj_rlbk;
+ERROR:  permission denied for relation emaj_rlbk
+delete from emaj.emaj_rlbk_session;
+ERROR:  permission denied for relation emaj_rlbk_session
+delete from emaj.emaj_rlbk_plan;
+ERROR:  permission denied for relation emaj_rlbk_plan
 delete from emaj.emaj_rlbk_stat;
 ERROR:  permission denied for relation emaj_rlbk_stat
-delete from emaj.emaj_fk;
-ERROR:  permission denied for relation emaj_fk
 delete from emaj.mySchema1_myTbl1_log;
 ERROR:  permission denied for relation myschema1_mytbl1_log
 -----------------------------

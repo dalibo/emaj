@@ -194,41 +194,43 @@ select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_is
 (4 rows)
 
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq;
-   rel_schema   |    rel_tblseq     |    rel_group     | rel_priority | rel_log_schema | rel_log_dat_tsp | rel_log_idx_tsp | rel_kind | rel_session | rel_rows 
-----------------+-------------------+------------------+--------------+----------------+-----------------+-----------------+----------+-------------+----------
- myschema1      | myTbl3_col31_seq  | myGroup1         |            1 |                |                 |                 | S        |             |         
- myschema1      | myTbl3            | myGroup1         |           10 | emajC          | tsplog1         | tspemaj         | r        |             |         
- myschema1      | mytbl1            | myGroup1         |           20 | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema1      | mytbl4            | myGroup1         |           20 | emaj           | tsplog1         | tsp log'2       | r        |             |         
- myschema1      | mytbl2            | myGroup1         |              | emaj           | tsplog1         | tsplog1         | r        |             |         
- myschema1      | mytbl2b           | myGroup1         |              | emajb          | tsp log'2       | tsp log'2       | r        |             |         
- myschema2      | myseq1            | myGroup2         |              |                |                 |                 | S        |             |         
- myschema2      | mytbl1            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema2      | mytbl2            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema2      | myTbl3            | myGroup2         |              | emajC          | tspemaj         | tspemaj         | r        |             |         
- myschema2      | myTbl3_col31_seq  | myGroup2         |              |                |                 |                 | S        |             |         
- myschema2      | mytbl4            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema2      | mytbl5            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema2      | mytbl6            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema4      | mytblc1           | myGroup4         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema4      | mytblc2           | myGroup4         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- myschema4      | mytblm            | myGroup4         |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- phil's schema3 | myTbl2\           | phil's group#3", |              | emaj           | tspemaj         | tspemaj         | r        |             |         
- phil's schema3 | myTbl2\_col21_seq | phil's group#3", |              |                |                 |                 | S        |             |         
- phil's schema3 | phil's seq\1      | phil's group#3", |              |                |                 |                 | S        |             |         
- phil's schema3 | phil's tbl1       | phil's group#3", |              | emaj #'3       | tspemaj         | tspemaj         | r        |             |         
+   rel_schema   |    rel_tblseq     |    rel_group     | rel_priority | rel_log_schema | rel_log_dat_tsp | rel_log_idx_tsp | rel_kind 
+----------------+-------------------+------------------+--------------+----------------+-----------------+-----------------+----------
+ myschema1      | myTbl3_col31_seq  | myGroup1         |            1 |                |                 |                 | S
+ myschema1      | myTbl3            | myGroup1         |           10 | emajC          | tsplog1         | tspemaj         | r
+ myschema1      | mytbl1            | myGroup1         |           20 | emaj           | tspemaj         | tspemaj         | r
+ myschema1      | mytbl4            | myGroup1         |           20 | emaj           | tsplog1         | tsp log'2       | r
+ myschema1      | mytbl2            | myGroup1         |              | emaj           | tsplog1         | tsplog1         | r
+ myschema1      | mytbl2b           | myGroup1         |              | emajb          | tsp log'2       | tsp log'2       | r
+ myschema2      | myseq1            | myGroup2         |              |                |                 |                 | S
+ myschema2      | mytbl1            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema2      | mytbl2            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema2      | myTbl3            | myGroup2         |              | emajC          | tspemaj         | tspemaj         | r
+ myschema2      | myTbl3_col31_seq  | myGroup2         |              |                |                 |                 | S
+ myschema2      | mytbl4            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema2      | mytbl5            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema2      | mytbl6            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema4      | mytblc1           | myGroup4         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema4      | mytblc2           | myGroup4         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema4      | mytblm            | myGroup4         |              | emaj           | tspemaj         | tspemaj         | r
+ phil's schema3 | myTbl2\           | phil's group#3", |              | emaj           | tspemaj         | tspemaj         | r
+ phil's schema3 | myTbl2\_col21_seq | phil's group#3", |              |                |                 |                 | S
+ phil's schema3 | phil's seq\1      | phil's group#3", |              |                |                 |                 | S
+ phil's schema3 | phil's tbl1       | phil's group#3", |              | emaj #'3       | tspemaj         | tspemaj         | r
 (21 rows)
 
 select * from pg_tables where schemaname like 'emaj%' order by tablename;
  schemaname |           tablename            | tableowner | tablespace | hasindexes | hasrules | hastriggers 
 ------------+--------------------------------+------------+------------+------------+----------+-------------
- emaj       | emaj_fk                        | postgres   | tspemaj    | t          | f        | f
  emaj       | emaj_group                     | postgres   | tspemaj    | t          | f        | t
  emaj       | emaj_group_def                 | postgres   | tspemaj    | t          | f        | f
  emaj       | emaj_hist                      | postgres   | tspemaj    | t          | f        | f
  emaj       | emaj_mark                      | postgres   | tspemaj    | t          | f        | t
  emaj       | emaj_param                     | postgres   | tspemaj    | t          | f        | f
  emaj       | emaj_relation                  | postgres   | tspemaj    | t          | f        | t
+ emaj       | emaj_rlbk                      | postgres   | tspemaj    | t          | f        | t
+ emaj       | emaj_rlbk_plan                 | postgres   | tspemaj    | t          | f        | t
+ emaj       | emaj_rlbk_session              | postgres   | tspemaj    | t          | f        | t
  emaj       | emaj_rlbk_stat                 | postgres   | tspemaj    | t          | f        | f
  emaj       | emaj_seq_hole                  | postgres   | tspemaj    | t          | f        | f
  emaj       | emaj_sequence                  | postgres   | tspemaj    | t          | f        | f
@@ -248,7 +250,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emaj       | myschema4_mytblm_log           | postgres   | tspemaj    | t          | f        | f
  emaj       | phil's schema3_myTbl2\_log     | postgres   | tspemaj    | t          | f        | f
  emaj #'3   | phil's schema3_phil's tbl1_log | postgres   | tspemaj    | t          | f        | f
-(26 rows)
+(28 rows)
 
 -----------------------------
 -- emaj_comment_group() tests

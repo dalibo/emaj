@@ -743,6 +743,9 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id |      hist_function       | hist_event |  regexp_replace   |                 regexp_replace                  | hist_user 
 ---------+--------------------------+------------+-------------------+-------------------------------------------------+-----------
+    3015 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
+    3016 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3017 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
     3018 | SET_MARK_GROUP           | END        | myGroup1          | SM1                                             | postgres
     3019 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
     3020 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
@@ -835,7 +838,7 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     3124 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
     3125 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
     3126 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
-(92 rows)
+(95 rows)
 
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;

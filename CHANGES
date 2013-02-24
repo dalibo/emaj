@@ -3,6 +3,8 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+  - the rollback processing has been largely redesigned and recoded so that
+    emaj administrators can monitor rollback operations progress.
   - various code improvements, in particular taking benefit from the end of 
     the postgres 8.2 support.
   - add a new emaj_gen_sql_groups() function that generates a sql script 
@@ -23,6 +25,11 @@ Enhancements:
     boolean column named group_is_logging ; some error message improvements.
 
 Bug fixes:
+  - At the beginning of a rollback operation, if a table known as 'not 
+    needing rollback' at initialisation time is updated before the locking 
+    step, this table will not be rolled back, generating a loss of 
+    consistency between tables of the group. A check is now added, so that 
+    the rollback safely fails if this happens.
 
 1.0.1
 ------

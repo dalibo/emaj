@@ -36,7 +36,7 @@ select emaj.emaj_start_group('myGroup1','Mark21');
 -----------------------------
 -- log updates on myschema2 between 3 mono-group and multi-groups marks 
 -----------------------------
-set search_path=myschema2;
+set search_path=public,myschema2;
 -- set a multi-groups mark
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-1');
 -- inserts/updates/deletes in myTbl1, myTbl2 and myTbl2b (via trigger)
@@ -183,13 +183,13 @@ select 8 * 0.007 + 4 * 0.0028              -- fixed cost
 
 -- estimate with added rollback statistics about fkey recreation and checks
 insert into emaj.emaj_rlbk_stat values
-  ('add_fk','myschema2','mytbl4_col44_fkey','2000/01/01 00:01:00',300,'0.036 SECONDS'::interval);
+  ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',1,'2000/01/01 00:01:00',300,'0.036 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('set_fk_immediate','myschema2','mytbl4_col43_fkey','2000/01/01 00:01:00',2000,'0.030 SECONDS'::interval);
+  ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',1,'2000/01/01 00:01:00',2000,'0.030 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('add_fk','myschema2','mytbl4_col44_fkey','2000/01/01 00:02:00',200,'0.020 SECONDS'::interval);
+  ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',2,'2000/01/01 00:02:00',200,'0.020 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('set_fk_immediate','myschema2','mytbl4_col43_fkey','2000/01/01 00:02:00',1200,'0.015 SECONDS'::interval);
+  ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',2,'2000/01/01 00:02:00',1200,'0.015 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_duration('myGroup2','Mark21');
 select 8 * 0.005 + 4 * 0.0025                                   -- fixed cost
        + 11710 * 0.0001                                         -- rollback
@@ -199,19 +199,19 @@ select 8 * 0.005 + 4 * 0.0025                                   -- fixed cost
 
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
-  ('rlbk','myschema2','mytbl1','2000/01/01 00:01:00',5350,'1.000 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','mytbl1','',1,'2000/01/01 00:01:00',5350,'1.000 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('rlbk','myschema2','mytbl2','2000/01/01 00:01:00',100,'0.004 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','mytbl2','',1,'2000/01/01 00:01:00',100,'0.004 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('rlbk','myschema2','mytbl2','2000/01/01 00:02:00',200,'0.010 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','mytbl2','',2,'2000/01/01 00:02:00',200,'0.010 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('rlbk','myschema2','mytbl2','2000/01/01 00:03:00',20000,'1.610 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','mytbl2','',3,'2000/01/01 00:03:00',20000,'1.610 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('rlbk','myschema2','myTbl3','2000/01/01 00:01:00',99,'0.004 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','myTbl3','',1,'2000/01/01 00:01:00',99,'0.004 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('rlbk','myschema2','myTbl3','2000/01/01 00:02:00',101,'0.008 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','myTbl3','',2,'2000/01/01 00:02:00',101,'0.008 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('rlbk','myschema2','mytbl4','2000/01/01 00:01:00',50000,'3.600 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'3.600 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_duration('myGroup2','Mark21');
 select 8 * 0.005 + 4 * 0.0025                                   -- fixed cost
        + (1.000 * 10700) / 5350 + (0.004+0.010)*900/(100+200)   -- rollback
@@ -222,19 +222,19 @@ select 8 * 0.005 + 4 * 0.0025                                   -- fixed cost
 
 -- estimate with added statistics about log deletes
 insert into emaj.emaj_rlbk_stat values
-  ('del_log','myschema2','mytbl1','2000/01/01 00:01:00',5350,'0.250 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl1','',1,'2000/01/01 00:01:00',5350,'0.250 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('del_log','myschema2','mytbl2','2000/01/01 00:01:00',100,'0.001 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl2','',1,'2000/01/01 00:01:00',100,'0.001 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('del_log','myschema2','mytbl2','2000/01/01 00:02:00',200,'0.003 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl2','',2,'2000/01/01 00:02:00',200,'0.003 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('del_log','myschema2','mytbl2','2000/01/01 00:03:00',20000,'1.610 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl2','',3,'2000/01/01 00:03:00',20000,'1.610 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('del_log','myschema2','myTbl3','2000/01/01 00:01:00',99,'0.001 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','myTbl3','',1,'2000/01/01 00:01:00',99,'0.001 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('del_log','myschema2','myTbl3','2000/01/01 00:02:00',101,'0.002 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','myTbl3','',2,'2000/01/01 00:02:00',101,'0.002 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('del_log','myschema2','mytbl4','2000/01/01 00:01:00',50000,'0.900 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'0.900 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_duration('myGroup2','Mark21');
 select 8 * 0.005 + 4 * 0.0025                                   -- fixed cost
        + (1.000 * 10700) / 5350 + (0.004+0.010)*900/(100+200)   -- rollback

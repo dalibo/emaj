@@ -1,6 +1,7 @@
 -- adm2.sql : complex scenario executed by an emaj_adm role. 
 --            Follows adm1.sql, and includes more specific test cases
 --
+set role emaj_regression_tests_adm_user;
 -----------------------------
 -- Step 8 : use of multi-group functions, start_group(s) without log reset and use deleted marks
 -----------------------------
@@ -90,7 +91,6 @@ select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid
 -----------------------------
 -- Step 9 : test the emaj_alter_group function with non rollbackable phil's group#3, group
 -----------------------------
-set role emaj_regression_tests_adm_user;
 select emaj.emaj_create_group('phil''s group#3",',false);
 
 reset role;
@@ -123,7 +123,7 @@ set role emaj_regression_tests_adm_user;
 select emaj.emaj_create_group('phil''s group#3",',true);
 select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
 --
-set search_path="phil's schema3";
+set search_path=public,"phil's schema3";
 --
 insert into "phil's tbl1" select i, 'AB''C', E'\\014'::bytea from generate_series (1,31) as i;
 update "phil's tbl1" set "phil\s col13" = E'\\034'::bytea where "phil's col11" <= 3;
@@ -162,10 +162,9 @@ select emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3');
 -- emaj tables
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
-select * from emaj.emaj_fk order by fk_groups, fk_session, fk_name;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
-select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from emaj.emaj_rlbk_stat
-  order by rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_operation;
+select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantity from emaj.emaj_rlbk_stat
+  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
 -- user tables
 select * from "phil's schema3"."phil's tbl1" order by "phil's col11","phil's col12";
 select * from "phil's schema3"."myTbl2\" order by col21;
@@ -177,7 +176,7 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj."phil's sc
 -- Step 11 : for myGroup1, in a transaction, update tables and rollback the transaction, 
 --           then rollback to previous mark 
 -----------------------------
-set search_path=myschema1;
+set search_path=public,myschema1;
 --
 begin transaction;
   delete from mytbl1;
@@ -190,14 +189,14 @@ select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 -----------------------------
 -- emaj tables
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
-select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from emaj.emaj_rlbk_stat
-  order by rlbk_schema, rlbk_tbl_fk, rlbk_datetime, rlbk_operation;
+select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantity from emaj.emaj_rlbk_stat
+  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
 
 -----------------------------
 -- Step 12 : tests snaps and script generation functions
 -----------------------------
 -- first add some updates for tables with unusual types (arrays, geometric)
-set search_path=myschema2;
+set search_path=public,myschema2;
 insert into myTbl5 values (10,'{"abc","def","ghi"}','{1,2,3}',NULL);
 insert into myTbl5 values (20,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date]);
 update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}' where col54 is null;
@@ -271,6 +270,23 @@ set role emaj_regression_tests_adm_user;
 -----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
+-- first set all rollback events state
+select emaj.emaj_cleanup_rollback_state();
+
+-- check rollback related tables
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+       rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, 
+       case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
+  from emaj.emaj_rlbk order by rlbk_id;
+select rlbs_rlbk_id, rlbs_session, 
+       case when rlbs_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
+  from emaj.emaj_rlbk_session order by rlbs_rlbk_id, rlbs_session;
+select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_session,
+       rlbp_fkey_def, rlbp_estimated_quantity, rlbp_estimated_duration, rlbp_estimate_method, rlbp_quantity
+  from emaj.emaj_rlbk_plan order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey;
+select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
+  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
+
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from emaj.emaj_hist order by hist_id;
 --
 reset role;

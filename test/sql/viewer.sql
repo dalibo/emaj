@@ -18,8 +18,10 @@ select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_mark;
 select count(*) from emaj.emaj_sequence;
 select count(*) from emaj.emaj_seq_hole;
+select count(*) from emaj.emaj_rlbk;
+select count(*) from emaj.emaj_rlbk_session;
+select count(*) from emaj.emaj_rlbk_plan;
 select count(*) from emaj.emaj_rlbk_stat;
-select count(*) from emaj.emaj_fk;
 select count(*) from emaj.mySchema1_myTbl1_log;
 
 -----------------------------
@@ -28,6 +30,7 @@ select count(*) from emaj.mySchema1_myTbl1_log;
 select * from emaj.emaj_verify_all();
 select emaj.emaj_get_previous_mark_group('myGroup1', current_timestamp);
 select emaj.emaj_get_previous_mark_group('myGroup1', 'EMAJ_LAST_MARK');
+select emaj.emaj_cleanup_rollback_state();
 select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
 select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
 select emaj.emaj_estimate_rollback_duration('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp));
@@ -44,8 +47,10 @@ delete from emaj.emaj_relation;
 delete from emaj.emaj_mark;
 delete from emaj.emaj_sequence;
 delete from emaj.emaj_seq_hole;
+delete from emaj.emaj_rlbk;
+delete from emaj.emaj_rlbk_session;
+delete from emaj.emaj_rlbk_plan;
 delete from emaj.emaj_rlbk_stat;
-delete from emaj.emaj_fk;
 delete from emaj.mySchema1_myTbl1_log;
 
 -----------------------------

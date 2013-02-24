@@ -1,5 +1,6 @@
 -- rollback.sql : test updates log, emaj_rollback_group(), emaj_logged_rollback_group(),
---                emaj_rollback_groups(), and emaj_logged_rollback_groups() functions
+--                emaj_rollback_groups(), and emaj_logged_rollback_groups() functions.
+--                also test emaj_cleanup_rollback_state().
 --
 -----------------------------
 -- rollback nothing tests
@@ -93,18 +94,33 @@ begin;
   select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
 rollback;
 
--- should be OK
+-- should be OK, with different cases of dblink status
+-- hide dblink_connect functions
+alter function public.dblink_connect_u(text,text) rename to renamed_dblink_connect_u;
+alter function public.dblink_connect_u(text) rename to renamed_dblink_connect_u;
 select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_rollback_group('myGroup2','Mark21');
+alter function public.renamed_dblink_connect_u(text,text) rename to dblink_connect_u;
+alter function public.renamed_dblink_connect_u(text) rename to dblink_connect_u;
 
+-- dblink_connect not in path
+set search_path='emaj';
 select emaj.emaj_logged_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
+reset search_path;
 
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mark1B');
 
+-- no user/password defined in emaj_param
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
+-- bad user/password defined in emaj_param
+insert into emaj.emaj_param (param_key, param_value_text) 
+  values ('dblink_user_password','user=<user> password=<password>');
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 
+-- dblink connection should now be ok (missing right on dblink functions is tested in adm1.sql)
+update emaj.emaj_param set param_value_text = 'user=postgres password=postgres' 
+  where param_key = 'dblink_user_password';
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 
@@ -127,7 +143,7 @@ select emaj.emaj_start_group('myGroup2','Mark21');
 -- log phase #1 with 2 unlogged rollbacks
 -----------------------------
 -- Populate application tables
-set search_path=myschema1;
+set search_path=public,myschema1;
 -- inserts/updates/deletes in myTbl1, myTbl2 and myTbl2b (via trigger)
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 begin transaction;
@@ -176,7 +192,6 @@ alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
-select * from emaj.emaj_fk;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 select col31, col33 from myschema1."myTbl3" order by col31;
@@ -191,7 +206,6 @@ select emaj.emaj_stop_group('myGroup1');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
-select * from emaj.emaj_fk;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.myschema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
@@ -209,12 +223,11 @@ select count(*) from emajb.myschema1_mytbl2b_log;
 select count(*) from "emajC"."myschema1_myTbl3_log";
 select count(*) from emaj.myschema1_mytbl4_log;
 
-
 -----------------------------
 -- log phase #2 with 2 unlogged rollbacks
 -----------------------------
 -- Populate application tables
-set search_path=myschema1;
+set search_path=public,myschema1;
 -- inserts/updates/deletes in myTbl1, myTbl2 and myTbl2b (via trigger)
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 begin transaction;
@@ -255,7 +268,6 @@ alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
-select * from emaj.emaj_fk;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 select col31, col33 from myschema1."myTbl3" order by col31;
@@ -269,7 +281,6 @@ alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
-select * from emaj.emaj_fk;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.myschema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
@@ -287,17 +298,12 @@ alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
-select * from emaj.emaj_fk;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.myschema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
 select col21, col22 from myschema1.myTbl2 order by col21;
 select col20, col21 from myschema1.myTbl2b order by col20;
-
--- check content of emaj_rlbk_stat table
-select rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_nb_rows from
-(select * from emaj.emaj_rlbk_stat order by rlbk_operation, rlbk_schema, rlbk_tbl_fk, rlbk_datetime) as t;
 
 -----------------------------
 -- test use of partitionned tables
@@ -317,8 +323,30 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_myt
 select emaj.emaj_rollback_group('myGroup4','myGroup4_start');
 
 -----------------------------
--- test end: check, reset history and force sequences id
+-- test emaj_cleanup_rollback_state()
 -----------------------------
+-- rollback a transaction with an E-Maj rollback to generate an ABORTED rollback event
+begin;
+  select emaj.emaj_rollback_group('myGroup4','myGroup4_start');
+rollback;
+select emaj.emaj_cleanup_rollback_state();
+
+-----------------------------
+-- test end: check rollback tables, reset history and force sequences id
+-----------------------------
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+       rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, 
+       case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
+  from emaj.emaj_rlbk order by rlbk_id;
+select rlbs_rlbk_id, rlbs_session, 
+       case when rlbs_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
+  from emaj.emaj_rlbk_session order by rlbs_rlbk_id, rlbs_session;
+select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_session,
+       rlbp_fkey_def, rlbp_estimated_quantity, rlbp_estimated_duration, rlbp_estimate_method, rlbp_quantity
+  from emaj.emaj_rlbk_plan order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey;
+select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
+  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
+
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
 truncate emaj.emaj_hist;
