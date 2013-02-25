@@ -822,20 +822,21 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     3111 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
     3112 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
     3113 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
-    3114 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
-    3115 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    3116 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    3117 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    3118 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
-    3119 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
-    3120 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                    | postgres
-    3121 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3122 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3123 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    3124 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
-    3125 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
-    3126 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
-(92 rows)
+    3114 | PURGE_HISTORY            |            |                   | 15 emaj_hist rows deleted                       | postgres
+    3115 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
+    3116 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3117 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3118 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    3119 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
+    3120 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
+    3121 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                    | postgres
+    3122 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3123 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3124 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3125 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
+    3126 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
+    3127 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
+(93 rows)
 
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;

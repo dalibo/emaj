@@ -166,6 +166,24 @@ select * from emaj.emaj_seq_hole;
 ---------+-------------+------------+---------------+----------------
 (0 rows)
 
+select count(*) from emaj.emaj_rlbk;
+ count 
+-------
+    16
+(1 row)
+
+select count(*) from emaj.emaj_rlbk_session;
+ count 
+-------
+    16
+(1 row)
+
+select count(*) from emaj.emaj_rlbk_plan;
+ count 
+-------
+   182
+(1 row)
+
 select count(*) from emaj.emaj_rlbk_stat;
  count 
 -------
@@ -397,12 +415,21 @@ PL/pgSQL function "emaj_create_group" line 114 at PERFORM
                  8
 (1 row)
 
+-- force a purge of the history and the rollback tables
+INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 second'::interval);
+select pg_sleep(1);
+ pg_sleep 
+----------
+ 
+(1 row)
+
 select emaj.emaj_start_group('myGroup1','M1');
  emaj_start_group 
 ------------------
                 6
 (1 row)
 
+delete from emaj.emaj_param where param_key = 'history_retention';
 select emaj.emaj_start_group('myGroup2','M1');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"

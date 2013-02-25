@@ -42,6 +42,9 @@ select * from emaj.emaj_relation;
 select * from emaj.emaj_mark;
 select * from emaj.emaj_sequence;
 select * from emaj.emaj_seq_hole;
+select count(*) from emaj.emaj_rlbk;
+select count(*) from emaj.emaj_rlbk_session;
+select count(*) from emaj.emaj_rlbk_plan;
 select count(*) from emaj.emaj_rlbk_stat;
 
 -----------------------------
@@ -68,8 +71,14 @@ select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_comment_group('myGroup1','This is group #1');
 select emaj.emaj_create_group('myGroup2',true);
 
+-- force a purge of the history and the rollback tables
+INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 second'::interval);
+select pg_sleep(1);
 select emaj.emaj_start_group('myGroup1','M1');
+delete from emaj.emaj_param where param_key = 'history_retention';
+
 select emaj.emaj_start_group('myGroup2','M1');
+
 
 -----------------------------
 -- Step 1 : for myGroup1, update tables and set 2 marks
