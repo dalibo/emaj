@@ -3530,12 +3530,7 @@ $_rlbk_init$
 -- and spread the load on the requested number of sessions.
 -- It returns a rollback id that will be needed by next steps.
   DECLARE
-    v_i                   INT;
-    v_groupIsLogging      BOOLEAN;
-    v_isRollbackable      BOOLEAN;
     v_markName            TEXT;
-    v_markIsDeleted       BOOLEAN;
-    v_cpt                 INT;
     v_nbTblInGroups       INT;
     v_nbSeqInGroups       INT;
     v_effNbTable          INT;
@@ -3547,40 +3542,10 @@ $_rlbk_init$
     v_timestampMark       TIMESTAMPTZ;
     v_msg                 TEXT;
   BEGIN
--- check that each group ...
--- ...is recorded in emaj_group table
-    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
-      SELECT group_is_logging, group_is_rollbackable INTO v_groupIsLogging, v_isRollbackable
-        FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
-      IF NOT FOUND THEN
-        RAISE EXCEPTION '_rlbk_init: group % has not been created.', v_groupNames[v_i];
-      END IF;
--- ... is in LOGGING state
-      IF NOT v_groupIsLogging THEN
-        RAISE EXCEPTION '_rlbk_init: Group % cannot be rolled back because it is not in LOGGING state.', v_groupNames[v_i];
-      END IF;
--- ... is ROLLBACKABLE
-      IF NOT v_isRollbackable THEN
-        RAISE EXCEPTION '_rlbk_init: Group % has been created for audit only purpose. It cannot be rolled back.', v_groupNames[v_i];
-      END IF;
--- ... owns the requested mark
-      SELECT emaj._get_mark_name(v_groupNames[v_i],v_mark) INTO v_markName;
-      IF NOT FOUND OR v_markName IS NULL THEN
-        RAISE EXCEPTION '_rlbk_init: No mark % exists for group %.', v_mark, v_groupNames[v_i];
-      END IF;
--- ... and this mark is ACTIVE
-      SELECT mark_is_deleted INTO v_markIsDeleted FROM emaj.emaj_mark
-        WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
-      IF v_markIsDeleted THEN
-        RAISE EXCEPTION '_rlbk_init: mark % for group % is not usable for rollback.', v_markName, v_groupNames[v_i];
-      END IF;
-    END LOOP;
--- get the mark timestamp and check it is the same for all groups of the array
-    SELECT count(DISTINCT emaj._get_mark_datetime(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
-      WHERE group_name = ANY (v_groupNames);
-    IF v_cpt > 1 THEN
-      RAISE EXCEPTION '_rlbk_init: Mark % does not represent the same point in time for all groups.', v_mark;
-    END IF;
+-- lock the groups to rollback
+    PERFORM 1 FROM emaj.emaj_group WHERE group_name = ANY(v_groupNames) FOR UPDATE;
+-- check supplied group names and mark parameters
+    SELECT emaj._rlbk_check(v_groupNames,v_mark) INTO v_markName;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- get the mark timestamp for the 1st group (as we know this timestamp is the same for all groups of the array)
@@ -3640,6 +3605,58 @@ $_rlbk_init$
     RETURN v_rlbkId;
   END;
 $_rlbk_init$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_rlbk_check$
+-- This functions performs checks on group names and mark names supplied as parameter for the emaj_rollback_groups()
+-- and emaj_estimate_rollback_groups() functions.
+-- It returns the real mark name.
+  DECLARE
+    v_i                   INT;
+    v_groupIsLogging      BOOLEAN;
+    v_isRollbackable      BOOLEAN;
+    v_markName            TEXT;
+    v_markIsDeleted       BOOLEAN;
+    v_cpt                 INT;
+  BEGIN
+-- check that each group ...
+-- ...is recorded in emaj_group table
+    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
+      SELECT group_is_logging, group_is_rollbackable INTO v_groupIsLogging, v_isRollbackable
+        FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION '_rlbk_check: group % has not been created.', v_groupNames[v_i];
+      END IF;
+-- ... is in LOGGING state
+      IF NOT v_groupIsLogging THEN
+        RAISE EXCEPTION '_rlbk_check: Group % cannot be rolled back because it is not in LOGGING state.', v_groupNames[v_i];
+      END IF;
+-- ... is ROLLBACKABLE
+      IF NOT v_isRollbackable THEN
+        RAISE EXCEPTION '_rlbk_check: Group % has been created for audit only purpose. It cannot be rolled back.', v_groupNames[v_i];
+      END IF;
+-- ... owns the requested mark
+      SELECT emaj._get_mark_name(v_groupNames[v_i],v_mark) INTO v_markName;
+      IF NOT FOUND OR v_markName IS NULL THEN
+        RAISE EXCEPTION '_rlbk_check: No mark % exists for group %.', v_mark, v_groupNames[v_i];
+      END IF;
+-- ... and this mark is ACTIVE
+      SELECT mark_is_deleted INTO v_markIsDeleted FROM emaj.emaj_mark
+        WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
+      IF v_markIsDeleted THEN
+        RAISE EXCEPTION '_rlbk_check: mark % for group % is not usable for rollback.', v_markName, v_groupNames[v_i];
+      END IF;
+    END LOOP;
+-- get the mark timestamp and check it is the same for all groups of the array
+    SELECT count(DISTINCT emaj._get_mark_datetime(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
+      WHERE group_name = ANY (v_groupNames);
+    IF v_cpt > 1 THEN
+      RAISE EXCEPTION '_rlbk_check: Mark % does not represent the same point in time for all groups.', v_mark;
+    END IF;
+    RETURN v_markName;
+  END;
+$_rlbk_check$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -6194,6 +6211,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark 
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbsession INT, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId BIGINT, v_batchNumber INT, v_schema TEXT, v_table TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_session_exec(v_rlbkId BIGINT, v_session INT) FROM PUBLIC;
@@ -6280,6 +6298,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_ma
 GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId BIGINT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_session_exec(v_rlbkId BIGINT, v_session INT) TO emaj_adm;
