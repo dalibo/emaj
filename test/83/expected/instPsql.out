@@ -523,16 +523,16 @@ CREATE TABLE emaj.emaj_rlbk (
     rlbk_id                   BIGSERIAL   NOT NULL,      -- rollback id
     rlbk_groups               TEXT[]      NOT NULL,      -- groups array to rollback 
     rlbk_mark                 TEXT        NOT NULL,      -- mark to rollback to
-    rlbk_mark_datetime        TIMESTAMPTZ NOT NULL,      -- timestamp of the mark as recorded into emaj_mark
+    rlbk_mark_datetime        TIMESTAMPTZ ,              -- timestamp of the mark as recorded into emaj_mark
     rlbk_is_logged            BOOLEAN     NOT NULL,      -- rollback type: true = logged rollback
     rlbk_nb_session           INT         NOT NULL,      -- number of requested sessions
-    rlbk_nb_table             INT         NOT NULL,      -- total number of tables in groups
-    rlbk_nb_sequence          INT         NOT NULL,      -- number of sequences to rollback
+    rlbk_nb_table             INT         ,              -- total number of tables in groups
+    rlbk_nb_sequence          INT         ,              -- number of sequences to rollback
     rlbk_eff_nb_table         INT         ,              -- number of tables with rows to rollback
-    rlbk_status               emaj._rlbk_status_enum NOT NULL,  -- rollback status
-    rlbk_begin_hist_id        BIGINT      NOT NULL,      -- hist_id of the rollback BEGIN event in the emaj_hist
+    rlbk_status               emaj._rlbk_status_enum,    -- rollback status
+    rlbk_begin_hist_id        BIGINT      ,              -- hist_id of the rollback BEGIN event in the emaj_hist
                                                          --   used to know if the rollback has been committed or not
-    rlbk_start_datetime       TIMESTAMPTZ NOT NULL,      -- clock timestamp of the rollback BEGIN event in emaj_hist
+    rlbk_start_datetime       TIMESTAMPTZ ,              -- clock timestamp of the rollback BEGIN event in emaj_hist
     rlbk_end_datetime         TIMESTAMPTZ,               -- clock time the rollback has been completed, 
 		                                                 --   NULL if rollback is in progress or aborted
     PRIMARY KEY (rlbk_id)
@@ -3661,14 +3661,14 @@ $_rlbk_init$
         RAISE EXCEPTION '_rlbk_init: mark % for group % is not usable for rollback.', v_markName, v_groupNames[v_i];
       END IF;
     END LOOP;
--- check that no group is damaged
-    PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- get the mark timestamp and check it is the same for all groups of the array
     SELECT count(DISTINCT emaj._get_mark_datetime(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
       WHERE group_name = ANY (v_groupNames);
     IF v_cpt > 1 THEN
       RAISE EXCEPTION '_rlbk_init: Mark % does not represent the same point in time for all groups.', v_mark;
     END IF;
+-- check that no group is damaged
+    PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- get the mark timestamp for the 1st group (as we know this timestamp is the same for all groups of the array)
     SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
 -- insert begin in the history
@@ -3760,16 +3760,16 @@ $_rlbk_planning$
     r_batch                 RECORD;
   BEGIN
 -- get the rollack characteristics for the emaj_rlbk event
-    v_stmt = 'SELECT rlbk_groups, rlbk_mark, rlbk_nb_session, rlbk_is_logged FROM emaj.emaj_rlbk WHERE rlbk_id = ' || v_rlbkId;
+    v_stmt = 'SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session FROM emaj.emaj_rlbk WHERE rlbk_id = ' || v_rlbkId;
     IF emaj._dblink_is_cnx_opened('emaj#1') THEN
 -- ... either through dblink if possible
-      SELECT rlbk_groups, rlbk_mark, rlbk_nb_session, rlbk_is_logged FROM dblink('emaj#1',v_stmt) 
-          AS (rlbk_groups TEXT[], rlbk_mark TEXT, rlbk_nb_session INT, rlbk_is_logged BOOLEAN) 
-        INTO v_groupNames, v_mark, v_nbSession, v_isLoggedRlbk;
+      SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session FROM dblink('emaj#1',v_stmt) 
+          AS (rlbk_groups TEXT[], rlbk_mark TEXT, rlbk_is_logged BOOLEAN, rlbk_nb_session INT) 
+        INTO v_groupNames, v_mark, v_isLoggedRlbk, v_nbSession;
       v_isDblinkUsable = true;
     ELSE
 -- ... or directly
-      EXECUTE v_stmt INTO v_groupNames, v_mark, v_nbSession, v_isLoggedRlbk;
+      EXECUTE v_stmt INTO v_groupNames, v_mark, v_isLoggedRlbk, v_nbSession;
     END IF;
 -- get some mark attributes from emaj_mark
     SELECT mark_datetime, mark_last_seq_hole_id INTO v_markDatetime, v_markLastSeqHoleId 
@@ -6643,15 +6643,15 @@ primary key, btree, for table "emaj.emaj_relation"
  rlbk_id             | bigint                   | not null default nextval('emaj.emaj_rlbk_rlbk_id_seq'::regclass)
  rlbk_groups         | text[]                   | not null
  rlbk_mark           | text                     | not null
- rlbk_mark_datetime  | timestamp with time zone | not null
+ rlbk_mark_datetime  | timestamp with time zone | 
  rlbk_is_logged      | boolean                  | not null
  rlbk_nb_session     | integer                  | not null
- rlbk_nb_table       | integer                  | not null
- rlbk_nb_sequence    | integer                  | not null
+ rlbk_nb_table       | integer                  | 
+ rlbk_nb_sequence    | integer                  | 
  rlbk_eff_nb_table   | integer                  | 
- rlbk_status         | emaj._rlbk_status_enum   | not null
- rlbk_begin_hist_id  | bigint                   | not null
- rlbk_start_datetime | timestamp with time zone | not null
+ rlbk_status         | emaj._rlbk_status_enum   | 
+ rlbk_begin_hist_id  | bigint                   | 
+ rlbk_start_datetime | timestamp with time zone | 
  rlbk_end_datetime   | timestamp with time zone | 
 Indexes:
     "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id)
