@@ -388,6 +388,7 @@ select emaj.emaj_get_previous_mark_group('dummyGroup', '2010-01-01');
 select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
 select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL); 
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);
-select emaj.emaj_estimate_rollback_duration('dummyGroup', 'dummyMark');
+select emaj.emaj_estimate_rollback_group('dummyGroup', 'dummyMark', TRUE);
+select emaj.emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
 

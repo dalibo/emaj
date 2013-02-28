@@ -342,7 +342,7 @@ select rlbs_rlbk_id, rlbs_session,
        case when rlbs_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
   from emaj.emaj_rlbk_session order by rlbs_rlbk_id, rlbs_session;
 select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_session,
-       rlbp_fkey_def, rlbp_estimated_quantity, rlbp_estimated_duration, rlbp_estimate_method, rlbp_quantity
+       rlbp_fkey_def, rlbp_estimated_quantity, rlbp_estimate_method, rlbp_quantity
   from emaj.emaj_rlbk_plan order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey;
 select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;

@@ -13,7 +13,7 @@ set role emaj_regression_tests_viewer_user;
 select count(*) from emaj.emaj_param;
  count 
 -------
-     4
+     3
 (1 row)
 
 select count(*) from emaj.emaj_hist;
@@ -120,7 +120,7 @@ select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
 ------------+-------------+------------+-----------
  myGroup1   | myschema1   | myTbl3     |         0
  myGroup1   | myschema1   | mytbl1     |         0
- myGroup1   | myschema1   | mytbl4     |         0
+ myGroup1   | myschema1   | mytbl4     |        11
  myGroup1   | myschema1   | mytbl2     |         0
  myGroup1   | myschema1   | mytbl2b    |         0
 (5 rows)
@@ -130,10 +130,16 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
 ------------+-------------+------------+-----------+-----------+-----------
 (0 rows)
 
-select emaj.emaj_estimate_rollback_duration('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp));
- emaj_estimate_rollback_duration 
----------------------------------
- @ 0.03 secs
+select emaj.emaj_estimate_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
+ emaj_estimate_rollback_group 
+------------------------------
+ @ 0.05 secs
+(1 row)
+
+select emaj.emaj_estimate_rollback_groups(array['myGroup1'],emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
+ emaj_estimate_rollback_groups 
+-------------------------------
+ @ 0.05 secs
 (1 row)
 
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);

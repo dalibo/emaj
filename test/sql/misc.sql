@@ -136,36 +136,36 @@ begin;
 rollback;
 
 -----------------------------
--- emaj_estimate_rollback_duration() test
+-- emaj_estimate_rollback_group() and emaj_estimate_rollback_groups() tests
 -----------------------------
+
 -- group is unknown in emaj_group_def
-select emaj.emaj_estimate_rollback_duration(NULL,NULL);
-select emaj.emaj_estimate_rollback_duration('unknownGroup',NULL);
+select emaj.emaj_estimate_rollback_group(NULL,NULL,FALSE);
+select emaj.emaj_estimate_rollback_group('unknownGroup',NULL,TRUE);
+select emaj.emaj_estimate_rollback_groups('{"myGroup2","unknownGroup"}',NULL,TRUE);
 
 -- invalid marks
-select emaj.emaj_estimate_rollback_duration('myGroup2','dummyMark');
+select emaj.emaj_estimate_rollback_group('myGroup2','dummyMark',TRUE);
+select emaj.emaj_estimate_rollback_groups(array['myGroup1','myGroup2'],'Mark21',TRUE);
 
 -- group not in logging state
 begin;
   select emaj.emaj_stop_group('myGroup1');
-  select emaj.emaj_estimate_rollback_duration('myGroup1','Mark11');
+  select emaj.emaj_estimate_rollback_group('myGroup1','Mark11',FALSE);
 rollback;
 
--- insert 2 timing parameters (=> so use 2 default values)
+-- insert 1 timing parameters (=> so use 3 default values)
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','5 millisecond'::interval);
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_with_rollback_duration','2.5 millisecond'::interval);
 
 -- analyze tables to get proper reltuples statistics
-analyze myschema2.mytbl4;
+vacuum analyze myschema2.mytbl4;
+select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid and relname = 'mytbl4' and nspname = 'myschema2';
 
 -- estimate with empty rollback statistics and default parameters
 delete from emaj.emaj_rlbk_stat;
 
-select emaj.emaj_estimate_rollback_duration('myGroup2','Mark21');
-select 8 * 0.005 + 4 * 0.0025             -- fixed cost
-       + 11710 * 0.0001                   -- rollback
-       + 11710 * 0.00001                  -- log deletion
-       + 1000 * 0.000005;                  -- fkey checks
+select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
+-- should return 1.436620 sec
 
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
@@ -173,29 +173,25 @@ begin;
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','12 microsecond'::interval);
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_fkey_check_duration','27 microsecond'::interval);
   UPDATE emaj.emaj_param SET param_value_interval = '7 millisecond'::interval WHERE param_key = 'fixed_table_rollback_duration';
-  UPDATE emaj.emaj_param SET param_value_interval = '2.8 millisecond'::interval WHERE param_key = 'fixed_table_with_rollback_duration';
-  select emaj.emaj_estimate_rollback_duration('myGroup2','Mark21');
+  select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
+-- should return 1.847800 sec
 rollback;
-select 8 * 0.007 + 4 * 0.0028              -- fixed cost
-       + 11710 * 0.00015                   -- rollback
-       + 11710 * 0.000012                  -- log deletion
-       + 1000 * 0.000027;                  -- fkey checks
 
--- estimate with added rollback statistics about fkey recreation and checks
+-- estimate with added rollback statistics about fkey drops, recreations and checks
+insert into emaj.emaj_rlbk_stat values
+  ('DROP_FK','','','',1,'2000/01/01 00:01:00',1,'0.003 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
   ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',1,'2000/01/01 00:01:00',300,'0.036 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
   ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',1,'2000/01/01 00:01:00',2000,'0.030 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
+  ('DROP_FK','','','',2,'2000/01/01 00:02:00',1,'0.0042 SECONDS'::interval);
+insert into emaj.emaj_rlbk_stat values
   ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',2,'2000/01/01 00:02:00',200,'0.020 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
   ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',2,'2000/01/01 00:02:00',1200,'0.015 SECONDS'::interval);
-select emaj.emaj_estimate_rollback_duration('myGroup2','Mark21');
-select 8 * 0.005 + 4 * 0.0025                                   -- fixed cost
-       + 11710 * 0.0001                                         -- rollback
-       + 11710 * 0.00001                                        -- log deletion
-       + ((0.036 + 0.020)*100)/(300+200)                        -- fkey recreation
-       + ((0.030 + 0.015)*1000)/(2000+1200);                    -- fkey checks
+select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
+-- should return 1.439982 sec
 
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
@@ -212,19 +208,14 @@ insert into emaj.emaj_rlbk_stat values
   ('RLBK_TABLE','myschema2','myTbl3','',2,'2000/01/01 00:02:00',101,'0.008 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
   ('RLBK_TABLE','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'3.600 SECONDS'::interval);
-select emaj.emaj_estimate_rollback_duration('myGroup2','Mark21');
-select 8 * 0.005 + 4 * 0.0025                                   -- fixed cost
-       + (1.000 * 10700) / 5350 + (0.004+0.010)*900/(100+200)   -- rollback
-       + (0.004 * 10) / 99 + (3.600 * 100) / 50000
-       + (10700 + 900 + 10 + 100) * 0.00001                     -- log deletion
-       + ((0.036 + 0.020)*100)/(300+200)                        -- fkey recreation
-       + ((0.030 + 0.015)*1000)/(2000+1200);                    -- fkey checks
+select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
+-- should return 2.298586 sec
 
 -- estimate with added statistics about log deletes
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','mytbl1','',1,'2000/01/01 00:01:00',5350,'0.250 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl2','',1,'2000/01/01 00:01:00',100,'0.001 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl2','',1,'2000/01/01 00:01:00',150,'0.001 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','mytbl2','',2,'2000/01/01 00:02:00',200,'0.003 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
@@ -232,17 +223,21 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','myTbl3','',1,'2000/01/01 00:01:00',99,'0.001 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','myTbl3','',2,'2000/01/01 00:02:00',101,'0.002 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','myTbl3','',2,'2000/01/01 00:02:00',151,'0.002 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'0.900 SECONDS'::interval);
-select emaj.emaj_estimate_rollback_duration('myGroup2','Mark21');
-select 8 * 0.005 + 4 * 0.0025                                   -- fixed cost
-       + (1.000 * 10700) / 5350 + (0.004+0.010)*900/(100+200)   -- rollback
-       + (0.004 * 10) / 99 + (3.600 * 100) / 50000
-       + (0.250 * 10700) / 5350 + (0.001+0.003)*900/(100+200)   -- log deletion
-       + (0.001 * 10) / 99 + (0.900 * 100) / 50000
-       + ((0.036 + 0.020)*100)/(300+200)                        -- fkey recreation
-       + ((0.030 + 0.015)*1000)/(2000+1200);                    -- fkey checks
+select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
+-- should return 2.805341 sec
+
+-- estimate with 2 groups and a SET_FK_DEF step
+vacuum analyze myschema1.mytbl4;
+select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid and relname = 'mytbl4' and nspname = 'myschema1';
+begin;
+-- temporarily insert new rows into myTbl4 of myschema1
+  insert into myschema1.myTbl4 select i,'FK...',2,1,'ABC' from generate_series (10,20) as i;
+  select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
+-- should return 2.853241 sec
+rollback;
 
 -- delete all manualy inserted rollback statistics and cleanup the statistics table
 delete from emaj.emaj_rlbk_stat;
@@ -677,4 +672,5 @@ alter sequence emaj.emaj_hist_hist_id_seq restart 6000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 600;
 alter sequence emaj.emaj_sequence_sequ_id_seq restart 6000;
 alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 600;
+alter sequence emaj.emaj_global_seq restart 100000;
 

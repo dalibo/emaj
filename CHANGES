@@ -5,6 +5,12 @@ E-Maj - Release notes
 Enhancements:
   - the rollback processing has been largely redesigned and recoded so that
     emaj administrators can monitor rollback operations progress.
+  - the emaj_estimate_rollback_duration() function is replaced by two new 
+    functions, namely emaj_estimate_rollback_group() and 
+    emaj_estimate_rollback_groups(), the later estimating the duration of a 
+    multi-groups rollback. They share some pieces of code with the rollback 
+    functions. A third parameter specifies whether the rollback is logged or 
+    not.
   - various code improvements, in particular taking benefit from the end of 
     the postgres 8.2 support.
   - the default value of the 'history_retention' parameter is now 1 year 

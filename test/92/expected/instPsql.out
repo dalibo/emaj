@@ -654,7 +654,7 @@ INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version'
 --   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('dblink_user_password','user=<user> password=<password>');
 -- The history_retention parameter defines the time interval when a row remains in the emaj history and rollback tables - default is 1 year
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 year'::interval);
--- 5 parameters are used by the emaj_estimate_rollback_duration function as a default value to compute the approximate duration of a rollback operation.
+-- 4 parameters are used by the emaj_estimate_rollback_group(s) functions as default values to compute the approximate duration of a rollback operation.
 -- The avg_row_rollback_duration parameter defines the average duration needed to rollback a row.
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','100 microsecond'::interval);
 -- The avg_row_delete_log_duration parameter defines the average duration needed to delete log rows.
@@ -663,8 +663,6 @@ INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version'
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_fkey_check_duration','20 microsecond'::interval);
 -- The fixed_table_rollback_duration parameter defines the fixed rollback cost for any table or sequence belonging to a group
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','5 millisecond'::interval);
--- The fixed_table_with_rollback_duration parameter defines the additional fixed rollback cost for any table that has effective rows to rollback
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_with_rollback_duration','2.5 millisecond'::interval);
 ------------------------------------
 --                                --
 -- Low level Functions            --
@@ -3709,17 +3707,17 @@ $_rlbk_check$
 -- ...is recorded in emaj_group table
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
       SELECT group_is_logging, group_is_rollbackable INTO v_groupIsLogging, v_isRollbackable
-        FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
+        FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i];
       IF NOT FOUND THEN
         RAISE EXCEPTION '_rlbk_check: group % has not been created.', v_groupNames[v_i];
       END IF;
 -- ... is in LOGGING state
       IF NOT v_groupIsLogging THEN
-        RAISE EXCEPTION '_rlbk_check: Group % cannot be rolled back because it is not in LOGGING state.', v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_check: Group % is not in LOGGING state.', v_groupNames[v_i];
       END IF;
 -- ... is ROLLBACKABLE
       IF NOT v_isRollbackable THEN
-        RAISE EXCEPTION '_rlbk_check: Group % has been created for audit only purpose. It cannot be rolled back.', v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_check: Group % has been created for audit only purpose.', v_groupNames[v_i];
       END IF;
 -- ... owns the requested mark
       SELECT emaj._get_mark_name(v_groupNames[v_i],v_mark) INTO v_markName;
@@ -3743,12 +3741,13 @@ $_rlbk_check$
   END;
 $_rlbk_check$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT)
-RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_planning$
 -- This function builds the rollback steps for a rollback operation. 
 -- It stores the result into the emaj_rlbk_plan table.
 -- The function returns the effective number of tables to process.
 -- It is called in an autonomous dblink transaction, if possible.
+-- The function is defined as SECURITY DEFINER so that emaj_viwer role can write into rollback tables without having specific privileges to do it.
   DECLARE
     v_stmt                  TEXT;
     v_isDblinkUsable        BOOLEAN := false;
@@ -4003,17 +4002,17 @@ $_rlbk_planning$
         SELECT * FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'ADD_FK'
       LOOP
-      IF r_fk.rlbp_quantity = 0 THEN
+      IF r_fk.rlbp_estimated_quantity = 0 THEN
 -- empty table (or table not analyzed) => duration = 0
         v_estim_duration = 0;
         v_estim_method = 3;
       ELSE
 -- non empty table and statistics (with at least one row) are available
-        SELECT sum(rlbt_duration) * r_fk.rlbp_quantity / sum(rlbt_quantity) INTO v_estim_duration 
+        SELECT sum(rlbt_duration) * r_fk.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estim_duration 
           FROM emaj.emaj_rlbk_stat
           WHERE rlbt_step = 'ADD_FK' AND rlbt_quantity > 0
             AND rlbt_schema = r_fk.rlbp_schema AND rlbt_table = r_fk.rlbp_table AND rlbt_fkey = r_fk.rlbp_fkey;
-        v_estim_method = 2;
+        v_estim_method = 1;
         IF v_estim_duration IS NULL THEN
 -- non empty table, but no statistics with at least one row are available => take the last duration for this fkey, if any
           SELECT rlbt_duration INTO v_estim_duration FROM emaj.emaj_rlbk_stat
@@ -4022,9 +4021,10 @@ $_rlbk_planning$
               AND rlbt_datetime =
                (SELECT max(rlbt_datetime) FROM emaj.emaj_rlbk_stat WHERE rlbt_step = 'ADD_FK' 
                   AND rlbt_schema = r_fk.rlbp_schema AND rlbt_table = r_fk.rlbp_table AND rlbt_fkey = r_fk.rlbp_fkey);
+          v_estim_method = 2;
           IF v_estim_duration IS NULL THEN
 -- definitely no statistics available, compute with the avg_fkey_check_duration parameter
-            v_estim_duration = r_fk.rlbp_quantity * v_avg_fkey_check + 2 * v_fixed_table_rlbk;
+            v_estim_duration = r_fk.rlbp_estimated_quantity * v_avg_fkey_check + 2 * v_fixed_table_rlbk;
             v_estim_method = 3;
           END IF;
         END IF;
@@ -4040,14 +4040,14 @@ $_rlbk_planning$
         WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'SET_FK_IMM'
       LOOP
 -- if fkey checks statistics are available for this fkey, compute an average cost
-      SELECT sum(rlbt_duration) * r_fk.rlbp_quantity / sum(rlbt_quantity) INTO v_estim_duration 
+      SELECT sum(rlbt_duration) * r_fk.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estim_duration 
         FROM emaj.emaj_rlbk_stat
         WHERE rlbt_step = 'SET_FK_IMM' AND rlbt_quantity > 0
           AND rlbt_schema = r_fk.rlbp_schema AND rlbt_table = r_fk.rlbp_table AND rlbt_fkey = r_fk.rlbp_fkey;
       v_estim_method = 2;
       IF v_estim_duration IS NULL THEN
 -- if no statistics are available for this fkey, use the avg_fkey_check parameter
-        v_estim_duration = r_fk.rlbp_quantity * v_avg_fkey_check + v_fixed_table_rlbk;
+        v_estim_duration = r_fk.rlbp_estimated_quantity * v_avg_fkey_check + v_fixed_table_rlbk;
         v_estim_method = 3;
       END IF;
       UPDATE emaj.emaj_rlbk_plan 
@@ -4915,202 +4915,88 @@ $emaj_detailed_log_stat_group$
 $emaj_detailed_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT,TEXT,TEXT) IS
 $$Returns detailed statistics about logged events for an E-Maj group between 2 marks.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN)
 RETURNS interval LANGUAGE plpgsql AS
-$emaj_estimate_rollback_duration$
+$emaj_estimate_rollback_group$
 -- This function computes an approximate duration of a rollback to a predefined mark for a group.
--- It takes into account the content of emaj_rollback_stat table filled by previous rollback operations.
--- It also uses several parameters from emaj_param table.
--- "Logged" and "Unlogged" rollback durations are estimated with the same algorithm. (the cost of log insertion
--- for logged rollback balances the cost of log deletion of unlogged rollback)
--- Input: group name, the mark name of the rollback operation
+-- It uses the _estimate_rollback_group() function to effectively compute this estimate
+-- Input: group name, the mark name of the rollback operation, the rollback type.
 -- Output: the approximate duration that the rollback would need as time interval
   DECLARE
-    v_nbTblSeq              INTEGER;
-    v_markName              TEXT;
-    v_markIsDeleted         BOOLEAN;
-    v_estim_duration        INTERVAL;
-    v_avg_row_rlbk          INTERVAL;
-    v_avg_row_del_log       INTERVAL;
-    v_avg_fkey_check        INTERVAL;
-    v_fixed_table_rlbk      INTERVAL;
-    v_fixed_table_with_rlbk INTERVAL;
-    v_estim                 INTERVAL;
-    v_checks                BIGINT;
-    r_tblsq                 RECORD;
-    r_fkey		            RECORD;
   BEGIN
--- check that the group is recorded in emaj_group table and get the number of tables and sequences
-    SELECT group_nb_table + group_nb_sequence INTO v_nbTblSeq FROM emaj.emaj_group
-      WHERE group_name = v_groupName AND group_is_logging;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_estimate_rollback_duration: group % has not been created or is not in LOGGING state.', v_groupName;
-    END IF;
--- check the mark exists
-    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_markName;
-    IF NOT FOUND OR v_markName IS NULL THEN
-      RAISE EXCEPTION 'emaj_estimate_rollback_duration: no mark % exists for group %.', v_mark, v_groupName;
-    END IF;
--- check the mark is not logicaly deleted
-    SELECT mark_is_deleted INTO v_markIsDeleted FROM emaj.emaj_mark
-      WHERE mark_group = v_groupName AND mark_name = v_markName;
-    IF v_markIsDeleted THEN
-      RAISE EXCEPTION 'emaj_estimate_rollback_duration: mark % for group % is not usable for rollback.', v_markName, v_groupName;
-    END IF;
--- get all needed duration parameters from emaj_param table,
---   or get default values for rows that are not present in emaj_param table
-    SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'avg_row_rollback_duration'),'100 microsecond'::interval),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'avg_row_delete_log_duration'),'10 microsecond'::interval),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'avg_fkey_check_duration'),'5 microsecond'::interval),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'fixed_table_rollback_duration'),'5 millisecond'::interval),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'fixed_table_with_rollback_duration'),'2.5 millisecond'::interval)
-           INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_table_rlbk, v_fixed_table_with_rlbk;
--- compute the fixed cost for the group
-    v_estim_duration = v_nbTblSeq * v_fixed_table_rlbk;
---
--- walk through the list of tables with their number of rows to rollback as returned by the emaj_log_stat_group function
---
--- for each table with content to rollback
-    FOR r_tblsq IN
-        SELECT stat_schema, stat_table, stat_rows FROM emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) WHERE stat_rows > 0
-        LOOP
---
--- compute the rollback duration estimate for the table
---
--- first look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude)
-      SELECT sum(rlbt_duration) * r_tblsq.stat_rows / sum(rlbt_quantity) INTO v_estim FROM emaj.emaj_rlbk_stat
-        WHERE rlbt_step = 'RLBK_TABLE' AND rlbt_quantity > 0
-          AND rlbt_schema = r_tblsq.stat_schema AND rlbt_table = r_tblsq.stat_table
-          AND rlbt_quantity / r_tblsq.stat_rows < 10 AND r_tblsq.stat_rows / rlbt_quantity < 10;
-      IF v_estim IS NULL THEN
--- if there is no previous rollback operation with similar volume, take statistics for the table with all available volumes
-        SELECT sum(rlbt_duration) * r_tblsq.stat_rows / sum(rlbt_quantity) INTO v_estim FROM emaj.emaj_rlbk_stat
-          WHERE rlbt_step = 'RLBK_TABLE' AND rlbt_quantity > 0
-            AND rlbt_schema = r_tblsq.stat_schema AND rlbt_table = r_tblsq.stat_table;
-        IF v_estim IS NULL THEN
--- if there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table
-          v_estim = v_avg_row_rlbk * r_tblsq.stat_rows;
-        END IF;
-      END IF;
-      v_estim_duration = v_estim_duration + v_fixed_table_with_rlbk + v_estim;
---
--- compute the log rows delete duration for the table
---
--- first look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude)
-      SELECT sum(rlbt_duration) * r_tblsq.stat_rows / sum(rlbt_quantity) INTO v_estim FROM emaj.emaj_rlbk_stat
-        WHERE rlbt_step = 'DELETE_LOG' AND rlbt_quantity > 0
-          AND rlbt_schema = r_tblsq.stat_schema AND rlbt_table = r_tblsq.stat_table
-          AND rlbt_quantity / r_tblsq.stat_rows < 10 AND r_tblsq.stat_rows / rlbt_quantity < 10;
-      IF v_estim IS NULL THEN
--- if there is no previous rollback operation with similar volume, take statistics for the table with all available volumes
-        SELECT sum(rlbt_duration) * r_tblsq.stat_rows / sum(rlbt_quantity) INTO v_estim FROM emaj.emaj_rlbk_stat
-          WHERE rlbt_step = 'DELETE_LOG' AND rlbt_quantity > 0
-            AND rlbt_schema = r_tblsq.stat_schema AND rlbt_table = r_tblsq.stat_table;
-        IF v_estim IS NULL THEN
--- if there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table
-          v_estim = v_avg_row_del_log * r_tblsq.stat_rows;
-        END IF;
-      END IF;
-      v_estim_duration = v_estim_duration + v_estim;
-    END LOOP;
---
--- walk through the list of foreign key constraints concerned by the estimated rollback
---
--- for each foreign key referencing tables that are concerned by the rollback operation
-    FOR r_fkey IN
-      SELECT c.conname, n.nspname, t.relname, t.reltuples, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
-        FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class t,
-             emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
-        WHERE c.contype = 'f'                                            -- FK constraints only
-          AND s.stat_rows > 0                                              -- table to effectively rollback only
-          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
-          AND n.nspname = s.stat_schema AND t.relname = s.stat_table     -- join on log_stat results
-      UNION
-      SELECT c.conname, n.nspname, t.relname, t.reltuples, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype
-        FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class t,
-             pg_catalog.pg_namespace rn, pg_catalog.pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
-        WHERE c.contype = 'f'                                            -- FK constraints only
-          AND s.stat_rows > 0                                            -- table to effectively rollback only
-          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
-          AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
-          AND rn.nspname = s.stat_schema AND rt.relname = s.stat_table   -- join on log_stat results
-      ORDER BY nspname, relname, conname
-        LOOP
-      IF NOT r_fkey.condeferrable OR r_fkey.confupdtype <> 'a' OR r_fkey.confdeltype <> 'a' THEN
--- the fkey is non deferrable fkeys or has an action for UPDATE or DELETE other than 'no action'.
--- So estimate its re-creation duration.
-        IF r_fkey.reltuples = 0 THEN
--- empty table (or table not analyzed) => duration = 0
-          v_estim = 0;
-	    ELSE
--- non empty table and statistics (with at least one row) are available
-          SELECT sum(rlbt_duration) * r_fkey.reltuples / sum(rlbt_quantity) INTO v_estim FROM emaj.emaj_rlbk_stat
-            WHERE rlbt_step = 'ADD_FK' AND rlbt_quantity > 0
-              AND rlbt_schema = r_fkey.nspname AND rlbt_table = r_fkey.relname AND rlbt_fkey = r_fkey.conname;
-          IF v_estim IS NULL THEN
--- non empty table, but no statistics with at least one row are available => take the last duration for this fkey, if any
-            SELECT rlbt_duration INTO v_estim FROM emaj.emaj_rlbk_stat
-              WHERE rlbt_step = 'ADD_FK' 
-                AND rlbt_schema = r_fkey.nspname AND rlbt_table = r_fkey.relname AND rlbt_fkey = r_fkey.conname
-                AND rlbt_datetime =
-                 (SELECT max(rlbt_datetime) FROM emaj.emaj_rlbk_stat
-                    WHERE rlbt_step = 'ADD_FK' 
-                      AND rlbt_schema = r_fkey.nspname AND rlbt_table = r_fkey.relname AND rlbt_fkey = r_fkey.conname);
-            IF v_estim IS NULL THEN
--- definitely no statistics available, compute with the avg_fkey_check_duration parameter
-              v_estim = r_fkey.reltuples * v_avg_fkey_check;
-            END IF;
-          END IF;
-        END IF;
-      ELSE
--- the fkey is really deferrable. So estimate the keys checks duration.
--- compute the total number of fk that would be checked
--- (this is in fact overestimated because inserts in the referecing table and deletes in the referenced table should not be taken into account. But the required log table scan would be too costly).
-        SELECT (
---   get the number of rolled back rows in the referencing table
-        SELECT s.stat_rows
-          FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class r,
-               emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
-          WHERE c.conname = r_fkey.conname                                 -- constraint id (name + schema)
-            AND c.connamespace = n.oid AND n.nspname = r_fkey.nspname
-            AND c.conrelid  = r.oid AND r.relnamespace  = n.oid            -- joins for referencing table and namespace
-            AND n.nspname = s.stat_schema AND r.relname = s.stat_table     -- join on groups table
-               ) + (
---   get the number of rolled back rows in the referenced table
-        SELECT s.stat_rows
-          FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_namespace rn,
-               pg_catalog.pg_class rt, emaj.emaj_log_stat_group(v_groupName, v_mark, NULL) s
-          WHERE c.conname = r_fkey.conname                                 -- constraint id (name + schema)
-            AND c.connamespace = n.oid AND n.nspname = r_fkey.nspname
-            AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
-            AND rn.nspname = s.stat_schema AND rt.relname = s.stat_table   -- join on groups table
-               ) INTO v_checks;
-        IF v_checks = 0 THEN
--- No check to perform
-          RAISE EXCEPTION 'estimate_rollback_duration: no check to perform. One should not find this case !!!';
-        ELSE
--- if fkey checks statistics are available for this fkey, compute an average cost
-          SELECT sum(rlbt_duration) * v_checks / sum(rlbt_quantity) INTO v_estim FROM emaj.emaj_rlbk_stat
-            WHERE rlbt_step = 'SET_FK_IMM' AND rlbt_quantity > 0
-              AND rlbt_schema = r_fkey.nspname AND rlbt_table = r_fkey.relname AND rlbt_fkey = r_fkey.conname;
-          IF v_estim IS NULL THEN
--- if no statistics are available for this fkey, use the avg_fkey_check parameter
-            v_estim = v_checks * v_avg_fkey_check;
-          END IF;
-        END IF;
-      END IF;
-      v_estim_duration = v_estim_duration + v_estim;
-    END LOOP;
-    RETURN v_estim_duration;
+    RETURN emaj._estimate_rollback_groups(ARRAY[v_groupName], v_mark, v_isLoggedRlbk);
   END;
-$emaj_estimate_rollback_duration$;
-COMMENT ON FUNCTION emaj.emaj_estimate_rollback_duration(TEXT,TEXT) IS
-$$Estimates the duration of a potential rollback of an E-Maj group to a given mark.$$;
+$emaj_estimate_rollback_group$;
+COMMENT ON FUNCTION emaj.emaj_estimate_rollback_group(TEXT,TEXT,BOOLEAN) IS
+$$Estimates the duration of a potential rollback for a tables group to a given mark.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN)
+RETURNS interval LANGUAGE plpgsql AS
+$emaj_estimate_rollback_groups$
+-- This function computes an approximate duration of a rollback to a predefined mark for a groups array.
+-- It uses the _estimate_rollback_group() function to effectively compute this estimate
+-- Input: group names array, the mark name of the rollback operation, the rollback type.
+-- Output: the approximate duration that the rollback would need as time interval
+  DECLARE
+  BEGIN
+    RETURN emaj._estimate_rollback_groups(v_groupNames, v_mark, v_isLoggedRlbk);
+  END;
+$emaj_estimate_rollback_groups$;
+COMMENT ON FUNCTION emaj.emaj_estimate_rollback_groups(TEXT[],TEXT,BOOLEAN) IS
+$$Estimates the duration of a potential rollback for a set of tables groups to a given mark.$$;
+CREATE OR REPLACE FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN)
+RETURNS interval LANGUAGE plpgsql SECURITY DEFINER AS
+$_estimate_rollback_groups$
+-- This function effectively computes an approximate duration of a rollback to a predefined mark for a groups array.
+-- It simulates a rollback on 1 session, by calling the _rlbk_planning function that already estimates elementary 
+-- rollback steps duration. Once the global estimate is got, the rollback planning is cancelled.
+-- Input: a group names array, the mark name of the rollback operation, the rollback type.
+-- Output: the approximate duration that the rollback would need as time interval.
+-- The function is declared SECURITY DEFINER so that emaj_viewer doesn't need a specific INSERT permission on emaj_rlbk.
+  DECLARE
+    v_markName              TEXT;
+    v_fixed_table_rlbk      INTERVAL;
+    v_rlbkId                BIGINT;
+    v_estimDuration         INTERVAL;
+    v_nbTblseq              INT;
+r record;
+
+  BEGIN
+-- check supplied group names and mark parameters
+    SELECT emaj._rlbk_check(v_groupNames,v_mark) INTO v_markName;
+-- compute a random negative rollback-id
+    SELECT (random() * -10000000000)::bigint INTO v_rlbkId; 
+--
+-- simulate a rollback planning
+--
+    BEGIN
+-- insert a row into the emaj_rlbk table for this simulated rollback operation
+      INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session)
+        VALUES (v_rlbkId, v_groupNames, v_mark, v_isLoggedRlbk, 1);
+-- call the _rlbk_planning function
+      PERFORM emaj._rlbk_planning(v_rlbkId);
+-- compute the sum of the duration estimates of all elementary steps 
+      SELECT sum(rlbp_estimated_duration) INTO v_estimDuration
+        FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id = v_rlbkId;
+-- cancel the effect of the rollback planning
+      RAISE EXCEPTION '';
+    EXCEPTION
+      WHEN RAISE_EXCEPTION THEN                 -- catch the raised exception and continue
+    END;
+-- compute the final estimated duration
+-- get the "fixed_table_rollback_duration" default parameter from the emaj_param table
+    SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'fixed_table_rollback_duration'),'5 millisecond'::interval)
+           INTO v_fixed_table_rlbk;
+-- compute the number of tables to lock and sequences to rollback
+    SELECT sum(group_nb_table)+sum(group_nb_sequence) INTO v_nbTblseq
+      FROM emaj.emaj_group
+      WHERE group_name = ANY(v_groupNames);
+-- the cost of 1 table lock and 1 sequence rollback is evaluated to 1/10th of "fixed_table_rollback_duration"
+    v_estimDuration = v_estimDuration + (v_nbTblseq * v_fixed_table_rlbk / 10);
+    RETURN v_estimDuration;
+  END;
+$_estimate_rollback_groups$;
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $emaj_snap_group$
@@ -6272,7 +6158,9 @@ REVOKE ALL ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._reset_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
@@ -6357,7 +6245,9 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._reset_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
@@ -6370,6 +6260,7 @@ GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 -- give appropriate rights on functions to emaj_viewer role
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) TO emaj_viewer;
@@ -6378,10 +6269,15 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(v_schemaName TEXT, v_tableName TEXT
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId BIGINT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
@@ -6902,13 +6798,13 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    84
+    86
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname LIKE E'emaj\\_%';
  count 
 -------
-    39
+    40
 (1 row)
 
