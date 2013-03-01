@@ -2510,6 +2510,11 @@ ERROR:  _rlbk_check: group dummyGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames,v_mark)"
 PL/pgSQL function "_estimate_rollback_groups" line 17 at SQL statement
 PL/pgSQL function "emaj_estimate_rollback_groups" line 7 at RETURN
+select * from emaj.emaj_rollback_activity();
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_start_datetime | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
+---------+-------------+-----------+--------------------+----------------+-----------------+---------------+------------------+-------------------+-------------+---------------------+-------------+----------------+---------------------
+(0 rows)
+
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
  substr 
 --------

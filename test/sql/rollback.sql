@@ -1,6 +1,6 @@
 -- rollback.sql : test updates log, emaj_rollback_group(), emaj_logged_rollback_group(),
 --                emaj_rollback_groups(), and emaj_logged_rollback_groups() functions.
---                also test emaj_cleanup_rollback_state().
+--                also test emaj_cleanup_rollback_state(), and emaj_rollback_activity().
 --
 -----------------------------
 -- rollback nothing tests
@@ -331,6 +331,89 @@ begin;
 rollback;
 select emaj.emaj_cleanup_rollback_state();
 
+-----------------------------
+-- test emaj_rollback_activity()
+-----------------------------
+-- insert necessary rows into rollback tables in order to test various cases of emaj_rollback_activity() reports.
+-- these tests ares performed inside transactions that are then rolled back.
+begin;
+-- 1 rollback operation in EXECUTING state, but no rollback steps have started yet
+  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, 
+             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_start_datetime)
+    values (1232,array['group1232'],'mark1232','2000-01-01 01:00:00',true,1,
+             5,4,3,'EXECUTING',now()-'2 minutes'::interval);
+  insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
+             rlbp_estimated_duration, rlbp_start_time, rlbp_duration)
+    values (1232, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null),
+           (1232, 'RLBK_TABLE','schema','t2','','30 seconds'::interval,null,null),
+           (1232, 'RLBK_TABLE','schema','t3','','20 seconds'::interval,null,null);
+  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+-- the first RLBK_TABLE has started, but the elapse of the step is not yet > estimated duration 
+  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '11 seconds'::interval
+    where rlbp_rlbk_id = 1232 and rlbp_table = 't1';
+  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select 1.0 - ((20.0 + 30.0)+(50.0 - 11.0)) / (20.0 + 30.0 + 50.0); -- the completion % should be 11%
+-- the first RLBK_TABLE is completed, and the step duration < the estimated duration 
+  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '45 seconds'::interval,
+                                 rlbp_duration = '45 seconds'::interval
+    where rlbp_rlbk_id = 1232 and rlbp_table = 't1';
+  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select 1.0 - (20.0 + 30.0) / (20.0 + 30.0 + 45.0);  -- the completion % should be 47%
+-- the second RLBK_TABLE has started, but the elapse of the step is not yet > estimated duration 
+  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '28 seconds'::interval
+    where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
+  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select 1.0 - (20.0 + (30.0 - 28.0)) / (20.0 + 30.0 + 45.0);  -- the completion % should be 77%
+-- the second RLBK_TABLE has started, but the elapse of the step is already > estimated duration 
+  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '40 seconds'::interval
+    where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
+  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select 1.0 - (20.0) / (20.0 + 40.0 + 45.0);  -- the completion % should be 81%
+-- the second RLBK_TABLE has started, but the elapse of the step is already > estimated duration 
+  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '60 seconds'::interval
+    where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
+  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select 1.0 - (20.0) / (20.0 + 60.0 + 45.0);  -- the completion % should be 84%
+-- the second RLBK_TABLE is completed, and the step duration > the estimated duration 
+  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '65 seconds'::interval,
+                                 rlbp_duration = '65 seconds'::interval
+    where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
+  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select 1.0 - (20.0) / (20.0 + 65.0 + 45.0);  -- the completion % should be 85%
+-- the third RLBK_TABLE has started, and is almost completed 
+  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '19 seconds'::interval
+    where rlbp_rlbk_id = 1232 and rlbp_table = 't3';
+  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select 1.0 - ((20.0 - 19.0)) / (20.0 + 65.0 + 45.0);  -- the completion % should be 99%
+rollback;
+begin;
+-- 1 rollback operation in LOCKING state and without step other than LOCK_TABLE
+  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, 
+             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_start_datetime)
+    values (1233,array['group1233'],'mark1233','2000-01-01 01:00:00',true,1,
+             5,4,3,'LOCKING',now()-'2 minutes'::interval);
+  insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
+             rlbp_estimated_duration, rlbp_start_time, rlbp_duration)
+    values (1233, 'LOCK_TABLE','schema','t1','',null,null,null),
+           (1233, 'LOCK_TABLE','schema','t2','',null,null,null),
+           (1233, 'LOCK_TABLE','schema','t3','',null,null,null);
+  select rlbk_id, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+-- the rollback operation in LOCKING state now has RLBK_TABLE steps
+  insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
+             rlbp_estimated_duration, rlbp_start_time, rlbp_duration)
+    values (1233, 'RLBK_TABLE','schema','t1','','0:20:00'::interval,null,null),
+           (1233, 'RLBK_TABLE','schema','t2','','0:02:00'::interval,null,null),
+           (1233, 'RLBK_TABLE','schema','t3','','0:00:20'::interval,null,null);
+  select rlbk_id, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+-- +1 rollback operation in PLANNING state
+  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, 
+             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_start_datetime)
+    values (1234,array['group1234'],'mark1234','2000-01-01 01:00:00',true,1,
+             5,4,3,'PLANNING',now()-'1 minute'::interval);
+  select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table,
+         rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct 
+    from emaj._rollback_activity();
+rollback;
 -----------------------------
 -- test end: check rollback tables, reset history and force sequences id
 -----------------------------

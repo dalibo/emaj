@@ -629,12 +629,24 @@ CREATE TYPE emaj.emaj_detailed_log_stat_type AS (
     );
 COMMENT ON TYPE emaj.emaj_detailed_log_stat_type IS
 $$Represents the structure of rows returned by the emaj_detailed_log_stat_group() function.$$;
-CREATE TYPE emaj._rlbk_sel_type AS (
-    rlbk_groups       TEXT[],
-    rlbk_mark         TEXT,
-    rlbk_is_logged    BOOLEAN,
-    rlbk_eff_nb_table INT
+CREATE TYPE emaj.emaj_rollback_activity_type AS (
+    rlbk_id                   BIGINT,                    -- rollback id
+    rlbk_groups               TEXT[],                    -- groups array to rollback 
+    rlbk_mark                 TEXT,                      -- mark to rollback to
+    rlbk_mark_datetime        TIMESTAMPTZ,               -- timestamp of the mark as recorded into emaj_mark
+    rlbk_is_logged            BOOLEAN,                   -- rollback type: true = logged rollback
+    rlbk_nb_session           INT,                       -- number of requested sessions
+    rlbk_nb_table             INT,                       -- total number of tables in groups
+    rlbk_nb_sequence          INT,                       -- number of sequences to rollback
+    rlbk_eff_nb_table         INT,                       -- number of tables with rows to rollback
+    rlbk_status               emaj._rlbk_status_enum,    -- rollback status
+    rlbk_start_datetime       TIMESTAMPTZ,               -- clock timestamp of the rollback BEGIN event in emaj_hist
+    rlbk_elapse               INTERVAL,                  -- elapse time since the begining of the execution
+    rlbk_remaining            INTERVAL,                  -- estimated remaining time to complete the rollback
+    rlbk_completion_pct       SMALLINT                   -- estimated percentage of the rollback operation
     );
+COMMENT ON TYPE emaj.emaj_rollback_activity_type IS
+$$Represents the structure of rows returned by the emaj_rollback_activity() function.$$;
 CREATE TYPE emaj._verify_groups_type AS (
     ver_schema        TEXT,
     ver_tblseq        TEXT,
@@ -4997,6 +5009,88 @@ r record;
     RETURN v_estimDuration;
   END;
 $_estimate_rollback_groups$;
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_activity()
+RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
+$emaj_rollback_activity$
+-- This function returns the list of rollback operations currently in execution, with information about their progress 
+-- It doesnt need input parameter.
+-- It returns a set of emaj_rollback_activity_type records.
+  BEGIN
+-- cleanup the freshly completed rollback operations, if any
+    PERFORM emaj.emaj_cleanup_rollback_state();
+-- and retrieve information regarding the rollback operations that are always in execution
+    RETURN QUERY SELECT * FROM emaj._rollback_activity();
+  END;
+$emaj_rollback_activity$;
+COMMENT ON FUNCTION emaj.emaj_rollback_activity() IS
+$$Returns the list of rollback operations currently in execution, with information about their progress.$$;
+CREATE OR REPLACE FUNCTION emaj._rollback_activity()
+RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
+$_rollback_activity$
+-- This function effectively builds the list of rollback operations currently in execution.
+-- It is called by the emaj_rollback_activity() function.
+-- This is a separate function to help in testing the feature (avoiding the effects of emaj_cleanup_rollback_state()).
+-- The number of parallel rollback sessions is not taken into account here,
+--   as it is difficult to estimate the benefit brought by several parallel sessions.
+-- The times and progression indicators reported are based on the transaction timestamp.
+  DECLARE
+    v_currentTotalEstimate  INTERVAL;
+    r_rlbk                  emaj.emaj_rollback_activity_type;
+  BEGIN
+-- retrieve all not completed rollback operations (ie in 'PLANNING', 'LOCKING' or 'EXECUTING' state)
+    FOR r_rlbk IN
+      SELECT rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, 
+             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_start_datetime,
+             transaction_timestamp() - rlbk_start_datetime AS "elapse", NULL, 0
+        FROM emaj.emaj_rlbk
+        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING')
+        ORDER BY rlbk_id
+        LOOP
+-- for rollback operations in 'PLANNING' state, the remaining duration is NULL and the completion_pct = 0
+-- for all other rollback operations,
+      IF r_rlbk.rlbk_status <> 'PLANNING' THEN
+--   compute the estimated remaining duration
+        SELECT 	(
+          SELECT coalesce(
+                 sum(CASE WHEN rlbp_start_time + rlbp_estimated_duration - transaction_timestamp() > '0'::interval
+                          THEN rlbp_start_time + rlbp_estimated_duration - transaction_timestamp()
+                          ELSE '0'::interval END),'0'::interval)              -- estimated duration of remaining work
+            FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+             AND rlbp_start_time IS NOT NULL AND rlbp_duration IS NULL        -- of steps in progress
+          ) + (
+          SELECT coalesce(sum(rlbp_estimated_duration),'0'::interval)         -- estimated duration
+            FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+             AND rlbp_start_time IS NULL                                      -- of not yet started steps
+          ) INTO r_rlbk.rlbk_remaining;
+--   compute the new total duration estimate
+        SELECT 	(
+          SELECT coalesce(sum(rlbp_duration),'0'::interval)                   -- real duration 
+            FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+             AND rlbp_duration IS NOT NULL                                    -- of completed steps
+          ) + (
+          SELECT coalesce(
+                 sum(CASE WHEN transaction_timestamp() - rlbp_start_time > rlbp_estimated_duration
+                          THEN transaction_timestamp() - rlbp_start_time
+                          ELSE rlbp_estimated_duration END),'0'::interval)    -- max(real duration, estimated duration)
+            FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+             AND rlbp_start_time IS NOT NULL AND rlbp_duration IS NULL        -- of steps in progress
+          ) + (
+          SELECT coalesce(sum(rlbp_estimated_duration),'0'::interval)         -- estimated duration
+            FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+             AND rlbp_start_time IS NULL                                      -- of not yet started steps
+          ) INTO v_currentTotalEstimate;
+--   compute the completion pct
+        IF v_currentTotalEstimate <> '0'::interval THEN
+          SELECT 100 - (extract(epoch FROM r_rlbk.rlbk_remaining) * 100 
+                      / extract(epoch FROM v_currentTotalEstimate))::smallint
+            INTO r_rlbk.rlbk_completion_pct;
+        END IF;
+      END IF;
+      RETURN NEXT r_rlbk;
+    END LOOP;
+    RETURN;
+  END;
+$_rollback_activity$;
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $emaj_snap_group$
@@ -6161,6 +6255,8 @@ REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_fir
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_rollback_activity() FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rollback_activity() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
@@ -6248,6 +6344,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_activity() TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rollback_activity() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
@@ -6278,6 +6376,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_activity() TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._rollback_activity() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
@@ -6331,14 +6431,6 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
 
 -- check table list
 \d emaj.*
-  Composite type "emaj._rlbk_sel_type"
-      Column       |  Type   | Modifiers 
--------------------+---------+-----------
- rlbk_groups       | text[]  | 
- rlbk_mark         | text    | 
- rlbk_is_logged    | boolean | 
- rlbk_eff_nb_table | integer | 
-
 Composite type "emaj._verify_groups_type"
    Column   | Type | Modifiers 
 ------------+------+-----------
@@ -6711,6 +6803,24 @@ Tablespace: "tspemaj"
 primary key, btree, for table "emaj.emaj_rlbk_stat"
 Tablespace: "tspemaj"
 
+     Composite type "emaj.emaj_rollback_activity_type"
+       Column        |           Type           | Modifiers 
+---------------------+--------------------------+-----------
+ rlbk_id             | bigint                   | 
+ rlbk_groups         | text[]                   | 
+ rlbk_mark           | text                     | 
+ rlbk_mark_datetime  | timestamp with time zone | 
+ rlbk_is_logged      | boolean                  | 
+ rlbk_nb_session     | integer                  | 
+ rlbk_nb_table       | integer                  | 
+ rlbk_nb_sequence    | integer                  | 
+ rlbk_eff_nb_table   | integer                  | 
+ rlbk_status         | emaj._rlbk_status_enum   | 
+ rlbk_start_datetime | timestamp with time zone | 
+ rlbk_elapse         | interval                 | 
+ rlbk_remaining      | interval                 | 
+ rlbk_completion_pct | smallint                 | 
+
                                             Table "emaj.emaj_seq_hole"
      Column     |           Type           |                              Modifiers                               
 ----------------+--------------------------+----------------------------------------------------------------------
@@ -6798,13 +6908,13 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    86
+    88
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname LIKE E'emaj\\_%';
  count 
 -------
-    40
+    41
 (1 row)
 

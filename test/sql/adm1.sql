@@ -390,5 +390,6 @@ select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL);
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);
 select emaj.emaj_estimate_rollback_group('dummyGroup', 'dummyMark', TRUE);
 select emaj.emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
+select * from emaj.emaj_rollback_activity();
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
 

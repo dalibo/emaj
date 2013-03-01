@@ -37,13 +37,14 @@ select relname,relkind from pg_class where relname like 'emaj_%';
  emaj_rlbk_session_pkey      | i
  emaj_rlbk_stat              | r
  emaj_rlbk_stat_pkey         | i
+ emaj_rollback_activity_type | c
  emaj_seq_hole               | r
  emaj_seq_hole_pkey          | i
  emaj_seq_hole_sqhl_id_seq   | S
  emaj_sequence               | r
  emaj_sequence_pkey          | i
  emaj_sequence_sequ_id_seq   | S
-(36 rows)
+(37 rows)
 
 select * from emaj.emaj_global_seq;
   sequence_name  | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 

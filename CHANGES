@@ -11,23 +11,29 @@ Enhancements:
     multi-groups rollback. They share some pieces of code with the rollback 
     functions. A third parameter specifies whether the rollback is logged or 
     not.
+  - a new emaj_rollback_activity() function provides information about 
+    in progress rollback operations. It returns a set of rows of type 
+    emaj_rollback_activity_type. They contain a description of each running 
+    rollback operation, as well as a remaining duration estimate and a 
+    percentage of work already done. emaj_adm and emaj_viewer roles can call 
+    it.
   - various code improvements, in particular taking benefit from the end of 
     the postgres 8.2 support.
   - the default value of the 'history_retention' parameter is now 1 year 
     (previously 1 month).
-  - add a new emaj_gen_sql_groups() function that generates a sql script 
-    replaying all updates recorded for a set of groups between two marks or 
-    between a mark and the current situation.
+  - a new emaj_gen_sql_groups() function generates a sql script replaying
+    all updates recorded for a set of groups between two marks or between a 
+    mark and the current situation.
   - the emaj_generate_sql() function is renamed emaj_gen_sql_group() for 
     consistency with other functions names.
   - both emaj_gen_sql_group() and emaj_gen_sql_groups() functions may have an 
     additional text array parameter specifying a set of table or sequence
     names. This optional parameter represents a filter of tables and/or 
     sequences to process.
-  - add an emaj_user_port column into each log tables. It holds the ip port 
-    of the remote user who performed the recorded update and complements the 
-    already existing emaj_user_ip column.
-  - Some minor coding improvements such as: the replacement of the mark_state 
+  - a new emaj_user_port column is added into each log tables. It holds the 
+    ip port of the remote user who performed the recorded update and 
+    complements the already existing emaj_user_ip column.
+  - some minor coding improvements such as: the replacement of the mark_state 
     column in the emaj_mark table by a boolean column named mark_is_deleted ;
     the replacement of the group_state column in the emaj_group table by a 
     boolean column named group_is_logging ; some error message improvements.
