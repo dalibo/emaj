@@ -1,16 +1,3 @@
--- migPsqlLoggingGroup.sql: Migrate from previous E-Maj version while groups are in logging state. 
--- Install E-Maj as simple psql script (mandatory for postgres version prior 9.1)
---
-------------------------------------------------------------
--- install dblink
-------------------------------------------------------------
--- this 8.4.8 version seems compatible with 8.2 to 9.0 pg version
--- for future use...
---\i ~/postgresql-8.4.8/contrib/dblink/dblink.sql
------------------------------
--- migrate to the target version
------------------------------
-\i ../../sql/emaj-1.0.1-to-1.0.2.sql
 --
 -- E-Maj: migration from 1.0.1 to 1.0.2
 --
@@ -19,14 +6,13 @@
 -- This script migrates an existing installation of E-Maj extension.
 -- If version 1.0.1 has not been yet installed, simply use emaj.sql script. 
 --
+
 \set ON_ERROR_STOP ON
 \set QUIET ON
 SET client_min_messages TO WARNING;
 --SET client_min_messages TO NOTICE;
 \echo 'E-maj upgrade from version 1.0.1 to version 1.0.2'
-E-maj upgrade from version 1.0.1 to version 1.0.2
 \echo 'Checking...'
-Checking...
 ------------------------------------
 --                                --
 -- checks                         --
@@ -55,25 +41,24 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj.tmp();
- tmp 
------
- 
-(1 row)
-
 DROP FUNCTION emaj.tmp();
+
 -- OK, upgrade...
 \echo '... OK, Migration start...'
-... OK, Migration start...
+
 BEGIN TRANSACTION;
+
 -- lock emaj_group table to avoid any concurrent E-Maj activity
 LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
+
 \echo 'Updating E-Maj internal objects ...'
-Updating E-Maj internal objects ...
+
 ------------------------------------
 --                                --
 -- emaj functions                 --
 --                                --
 ------------------------------------
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_groups_step3$
@@ -118,6 +103,7 @@ $_rlbk_groups_step3$
     RETURN;
   END;
 $_rlbk_groups_step3$;
+
 ------------------------------------
 --                                --
 -- emaj roles and rights          --
@@ -125,29 +111,26 @@ $_rlbk_groups_step3$;
 ------------------------------------
 -- revoke grants on all functions from PUBLIC
 REVOKE ALL ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC; 
+
 -- and give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm; 
+
 -- and give appropriate rights on functions to emaj_viewer role
 --GRANT EXECUTE ON FUNCTION emaj. TO emaj_viewer;
+
 ------------------------------------
 --                                --
 -- commit migration               --
 --                                --
 ------------------------------------
+
 UPDATE emaj.emaj_param SET param_value_text = '1.0.2' WHERE param_key = 'emaj_version';
+
 -- and insert the init record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.0.2', 'Migration from 1.0.1 completed');
+
 COMMIT;
+
 SET client_min_messages TO default;
 \echo '>>> E-Maj successfully migrated to 1.0.2'
->>> E-Maj successfully migrated to 1.0.2
------------------------------
--- check installation
------------------------------
--- check the emaj_param content
-SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
- param_value_text 
-------------------
- 1.0.2
-(1 row)
 

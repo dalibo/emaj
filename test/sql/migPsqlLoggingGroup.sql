@@ -11,7 +11,7 @@
 -----------------------------
 -- migrate to the target version
 -----------------------------
-\i ../../sql/emaj-0.11.1-to-0.12.0.sql
+\i ../../sql/emaj-1.0.1-to-1.0.2.sql
 
 -----------------------------
 -- check installation
