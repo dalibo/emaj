@@ -3316,18 +3316,35 @@ $_rlbk_groups_step3$
 -- For logged rollback, it sets a mark that materialize the point in time just before the tables rollback.
 -- All concerned tables are already locked.
   DECLARE
-    v_realMark       TEXT;
-    v_markName       TEXT;
+    v_realMark              TEXT;
+    v_markName              TEXT;
+    v_markDatetime          TIMESTAMPTZ;
+    v_markLastSeqHoleId     BIGINT;
   BEGIN
+-- Get the real mark name (using first supplied group name, and check that all groups
+--   can use the same name has already been done at step 1)
+    SELECT emaj._get_mark_name(v_groupNames[1],v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION '_rlbk_groups_step3: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
+    END IF;
+-- Get other mark characteristics
+    SELECT mark_datetime, mark_last_seq_hole_id INTO v_markDatetime, v_markLastSeqHoleId FROM emaj.emaj_mark 
+      WHERE mark_group = v_groupNames[1] AND mark_name = v_realMark;
+-- check that no updates have been recorded between planning time (_rlbk_groups_step1) and lock time
+-- (_rlbk_groups_step2) for tables that did not need to be rolled back at planning time.
+-- This may occur and cannot be avoided because tables cannot be locked before processing the first rollback step. 
+-- (Sessions must lock the tables they will rollback and the planning processing distribute those tables to sessions.)
+    PERFORM 1 FROM (SELECT rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
+                      WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' 
+                        AND rel_rows = 0
+                    ) AS t
+      WHERE emaj._log_stat_tbl(rel_schema, rel_tblseq, rel_log_schema, v_markDatetime, NULL, v_markLastSeqHoleId, NULL) > 0;
+    IF FOUND THEN
+      RAISE EXCEPTION '_rlbk_groups_step3: The rollback operation has been cancelled due to concurrent activity on tables to process. Please retry.';
+    END IF;
     IF NOT v_unloggedRlbk THEN
 -- If rollback is "logged" rollback, build a mark name with the pattern:
 -- 'RLBK_<mark name to rollback to>_%_START', where % represents the current time
--- Get the real mark name (using first supplied group name, and check that all groups
---   can use the same name has already been done at step 1)
-      SELECT emaj._get_mark_name(v_groupNames[1],v_mark) INTO v_realMark;
-      IF v_realMark IS NULL THEN
-        RAISE EXCEPTION '_rlbk_groups_step3: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
-      END IF;
 --   compute the generated mark name
       v_markName = 'RLBK_' || v_realMark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START';
 -- ...  and set it

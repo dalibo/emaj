@@ -61,9 +61,9 @@ $tmp$
     r_schema        RECORD;
   BEGIN
 -- the creation of the function implicitely validates that plpgsql language is created!
--- check postgres version is >= 8.3
+-- check postgres version is >= 8.2
 --   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') < '8.3' THEN
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') < '8.2' THEN
       RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
     END IF;
 -- check the current role is a superuser
@@ -144,6 +144,15 @@ $tmp$
       COMMENT ON ROLE emaj_viewer IS
         $$This role may be granted to other roles allowed to view E-Maj objects content.$$;
     END IF;
+-- create a SQL emaj_txid_function that encapsulates the standart txid_current function with postgres 8.3+
+-- or just returns 0 with postgres 8.2
+    v_stmt = 'CREATE OR REPLACE FUNCTION emaj._txid_current() RETURNS BIGINT LANGUAGE SQL AS $$ SELECT ';
+    IF v_pgVersion < '8.3' THEN
+      v_stmt = v_stmt || '0::BIGINT;$$';
+    ELSE
+      v_stmt = v_stmt || 'txid_current();$$';
+    END IF;
+    EXECUTE v_stmt;
 -- if tspemaj tablespace exists,
 --   use it as default_tablespace for emaj tables creation
 --   and grant the create rights on it to emaj_adm
@@ -201,7 +210,7 @@ CREATE TABLE emaj.emaj_hist (                            -- records the history 
     hist_user                TEXT
                              DEFAULT session_user,       -- the user who call the E-Maj function
     hist_txid                BIGINT
-                             DEFAULT txid_current(),     -- and its tx_id
+                             DEFAULT emaj._txid_current(), -- and its tx_id
     PRIMARY KEY (hist_id)
     );
 COMMENT ON TABLE emaj.emaj_hist IS
@@ -278,7 +287,7 @@ CREATE TABLE emaj.emaj_mark (
                                                          --   'ACTIVE' and 'DELETED'
     mark_comment              TEXT,                      -- optional user comment
     mark_txid                 BIGINT                     -- id of the tx that has set the mark
-                              DEFAULT txid_current(),
+                              DEFAULT emaj._txid_current(),
     mark_last_sequence_id     BIGINT,                    -- last sequ_id for the group at the end of the _set_mark_groups operation
     mark_last_seq_hole_id     BIGINT,                    -- last sqhl_id for the group at _set_mark_groups time
     mark_log_rows_before_next BIGINT,                    -- number of log rows recorded for the group between the mark and the next one (NULL if last mark) - used to speedup marks lists display in phpPgAdmin plugin
@@ -459,41 +468,39 @@ $$
 -- output: log sequence name
 SELECT $1 || '_' || $2 || '_log_seq'
 $$;
-CREATE OR REPLACE FUNCTION emaj._check_names_array(v_names TEXT[], v_type TEXT)
+CREATE OR REPLACE FUNCTION emaj._check_group_names_array(v_groupNames TEXT[])
 RETURNS TEXT[] LANGUAGE plpgsql AS
-$_check_names_array$
--- This function build a array of names similar to the supplied array, except that NULL
+$_check_group_names_array$
+-- This function build a array of group names similar to the supplied array, except that NULL
 -- values, empty string and duplicate names are suppressed. Issue a warning if the result array is NULL.
--- The function is used to validate group names array or table and sequence names array.
--- Input: names array
---        type of element, used to format warning messages
--- Output: validated names array
+-- Input: group names array
+-- Output: validated group names array
   DECLARE
-    v_outputNames  TEXT[];
+    v_gn           TEXT[];
     v_i            INT;
   BEGIN
-    IF array_upper(v_names,1) >= 1 THEN
+    IF array_upper(v_groupNames,1) >= 1 THEN
 -- if there are elements, build the result array
-      FOR v_i IN 1 .. array_upper(v_names,1) LOOP
--- look for not NULL & not empty name
-        IF v_names[v_i] IS NULL OR v_names[v_i] = '' THEN
-          RAISE WARNING '_check_names_array: a % name is NULL or empty.', v_type;
+      FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
+-- look for not NULL & not empty group name
+        IF v_groupNames[v_i] IS NULL OR v_groupNames[v_i] = '' THEN
+          RAISE WARNING '_check_group_names_array: a group name is NULL or empty.';
 -- look for duplicate name
-        ELSEIF v_outputNames IS NOT NULL AND v_names[v_i] = ANY (v_outputNames) THEN
-          RAISE WARNING '_check_names_array: duplicate % name %.', v_type, v_names[v_i];
+        ELSEIF v_gn IS NOT NULL AND v_groupNames[v_i] = ANY (v_gn) THEN
+          RAISE WARNING '_check_group_names_array: duplicate group name %.',v_groupNames[v_i];
         ELSE
 -- OK, keep the name
-          v_outputNames = array_append (v_outputNames, v_names[v_i]);
+          v_gn = array_append (v_gn, v_groupNames[v_i]);
         END IF;
       END LOOP;
     END IF;
 -- check for NULL result
-    IF v_outputNames IS NULL THEN
-      RAISE WARNING '_check_names_array: No % name to process.', v_type;
+    IF v_gn IS NULL THEN
+      RAISE WARNING '_check_group_names_array: No group name to process.';
     END IF;
-    RETURN v_outputNames;
+    RETURN v_gn;
   END;
-$_check_names_array$;
+$_check_group_names_array$;
 CREATE OR REPLACE FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_class$
@@ -736,12 +743,19 @@ $_create_tbl$
          || ' ADD COLUMN emaj_tuple   VARCHAR(3),'
          || ' ADD COLUMN emaj_gid     BIGINT      NOT NULL   DEFAULT nextval(''emaj.emaj_global_seq''),'
          || ' ADD COLUMN emaj_changed TIMESTAMPTZ DEFAULT clock_timestamp(),'
-         || ' ADD COLUMN emaj_txid    BIGINT      DEFAULT txid_current(),'
+         || ' ADD COLUMN emaj_txid    BIGINT      DEFAULT emaj._txid_current(),'
          || ' ADD COLUMN emaj_user    VARCHAR(32) DEFAULT session_user,'
          || ' ADD COLUMN emaj_user_ip INET        DEFAULT inet_client_addr()';
 -- creation of the index on the log table
-    EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON '
-         ||  v_logTableName || ' (emaj_gid, emaj_tuple DESC) ' || v_idxTblSpace;
+    IF v_pgVersion >= '8.3' THEN
+      EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON '
+           ||  v_logTableName || ' (emaj_gid, emaj_tuple DESC) ' || v_idxTblSpace;
+    ELSE
+--   in 8.2, DESC clause doesn't exist. So the index cannot be used at rollback time.
+--   It only enforces the uniqueness of (emaj_gid, emaj_tuple)
+      EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON '
+           ||  v_logTableName || ' (emaj_gid, emaj_tuple) ' || v_idxTblSpace;
+    END IF;
 -- remove the NOT NULL constraints of application columns.
 --   They are useless and blocking to store truncate event for tables belonging to audit_only tables
     FOR r_column IN
@@ -897,20 +911,23 @@ $_create_tbl$
            || '  END;'
            || '$rlbkfnct$ LANGUAGE plpgsql;';
       END IF;
--- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
-    FOR r_trigger IN
-      SELECT tgname FROM pg_catalog.pg_trigger
-        WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'%emaj\\_%\\_trg'
-    LOOP
-      IF v_triggerList = '' THEN
-        v_triggerList = v_triggerList || r_trigger.tgname;
-      ELSE
-        v_triggerList = v_triggerList || ', ' || r_trigger.tgname;
-      END IF;
-    END LOOP;
+-- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger,
+-- This check is not done for postgres 8.2 because column tgconstraint doesn't exist
+    IF v_pgVersion >= '8.3' THEN
+      FOR r_trigger IN
+        SELECT tgname FROM pg_catalog.pg_trigger
+          WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'%emaj\\_%\\_trg'
+      LOOP
+        IF v_triggerList = '' THEN
+          v_triggerList = v_triggerList || r_trigger.tgname;
+        ELSE
+          v_triggerList = v_triggerList || ', ' || r_trigger.tgname;
+        END IF;
+      END LOOP;
 -- if yes, issue a warning (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
-    IF v_triggerList <> '' THEN
-      RAISE WARNING '_create_tbl: table % has triggers (%). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.', v_fullTableName, v_triggerList;
+      IF v_triggerList <> '' THEN
+        RAISE WARNING '_create_tbl: table % has triggers (%). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.', v_fullTableName, v_triggerList;
+      END IF;
     END IF;
 -- grant appropriate rights to both emaj roles
     EXECUTE 'GRANT SELECT ON TABLE ' || v_logTableName || ' TO emaj_viewer';
@@ -1235,106 +1252,6 @@ $_log_stat_tbl$
     RETURN (v_endLastValue - v_beginLastValue - v_sumHole);
   END;
 $_log_stat_tbl$;
-CREATE OR REPLACE FUNCTION emaj._gen_sql_tbl(v_fullTableName TEXT, v_logTableName TEXT, v_conditions TEXT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
-$_gen_sql_tbl$
--- This function generates SQL commands representing all updates performed on a table between 2 marks
--- or beetween a mark and the current situation. These command are stored into a temporary table created 
--- by the _gen_sql_groups() calling function.
--- Input: - fully qualified application table to process
---        - fully qualified associated log table
---        - sql conditions corresponding to the marks range to process
--- Output: number of generated SQL statements
-  DECLARE
-    v_valList               TEXT;
-    v_setList               TEXT;
-    v_pkCondList            TEXT;
-    v_unquotedType          TEXT[] := array['smallint','integer','bigint','numeric','decimal',
-                                            'int2','int4','int8','serial','bigserial',
-                                            'real','double precision','float','float4','float8','oid'];
-    v_rqInsert              TEXT;
-    v_rqUpdate              TEXT;
-    v_rqDelete              TEXT;
-    v_rqTruncate            TEXT;
-    v_nbSQL                 INT;
-    r_col                   RECORD;
-  BEGIN
--- retrieve from pg_attribute all columns of the application table and build :
--- - the VALUES list used in the INSERT statements
--- - the SET list used in the UPDATE statements 
-    v_valList = '';
-    v_setList = '';
-    FOR r_col IN
-      SELECT attname, format_type(atttypid,atttypmod) FROM pg_catalog.pg_attribute
-       WHERE attrelid = v_fullTableName ::regclass
-         AND attnum > 0 AND NOT attisdropped
-       ORDER BY attnum
-    LOOP
--- test if the column format (up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric data types)
-      IF regexp_replace (r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
--- literal for this column can remain as is
---          may be we will need to cast some column types in the future. So keep the comment for the moment...
---          v_valList = v_valList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::text,''NULL'') || ''::' || r_col.format_type || ', ';
-        v_valList = v_valList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::text,''NULL'') || '', ';
---          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.' || quote_ident(r_col.attname) || ' ::text,''NULL'') || ''::' || r_col.format_type || ', ';
-        v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.' || quote_ident(r_col.attname) || ' ::text,''NULL'') || '', ';
-      ELSE
--- literal for this column must be quoted
---          v_valList = v_valList || ''' || coalesce(quote_literal(o.' || quote_ident(r_col.attname) || '),''NULL'') || ''::' || r_col.format_type || ', ';
-        v_valList = v_valList || ''' || coalesce(quote_literal(o.' || quote_ident(r_col.attname) || '),''NULL'') || '', ';
---          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(quote_literal(n.' || quote_ident(r_col.attname) || '),''NULL'') || ''::' || r_col.format_type || ', ';
-        v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(quote_literal(n.' || quote_ident(r_col.attname) || '),''NULL'') || '', ';
-      END IF;
-    END LOOP;
--- suppress the final separators
-    v_valList = substring(v_valList FROM 1 FOR char_length(v_valList) - 2);
-    v_setList = substring(v_setList FROM 1 FOR char_length(v_setList) - 2);
--- retrieve all columns that represents the pkey and build the "pkey equal" conditions set that will be used in UPDATE and DELETE statements
--- (taking column names in pg_attribute from the table's definition instead of index definition is mandatory
---  starting from pg9.0, joining tables with indkey instead of indexrelid)
-    v_pkCondList = '';
-    FOR r_col IN
-      SELECT attname, format_type(atttypid,atttypmod) FROM pg_catalog.pg_attribute, pg_catalog.pg_index
-        WHERE pg_attribute.attrelid = pg_index.indrelid
-          AND attnum = ANY (indkey)
-          AND indrelid = v_fullTableName ::regclass AND indisprimary
-          AND attnum > 0 AND NOT attisdropped
-    LOOP
--- test if the column format (at least up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric data types)
-      IF regexp_replace (r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
--- literal for this column can remain as is
---          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || o.' || quote_ident(r_col.attname) || ' || ''::' || r_col.format_type || ' AND ';
-        v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || o.' || quote_ident(r_col.attname) || ' || '' AND ';
-      ELSE
--- literal for this column must be quoted
---          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(r_col.attname) || ') || ''::' || r_col.format_type || ' AND ';
-        v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(r_col.attname) || ') || '' AND ';
-      END IF;
-    END LOOP;
--- suppress the final separator
-    v_pkCondList = substring(v_pkCondList FROM 1 FOR char_length(v_pkCondList) - 5);
--- prepare sql skeletons for each statement type
-    v_rqInsert = '''INSERT INTO ' || replace(v_fullTableName,'''','''''') || ' VALUES (' || v_valList || ');''';
-    v_rqUpdate = '''UPDATE ONLY ' || replace(v_fullTableName,'''','''''') || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';''';
-    v_rqDelete = '''DELETE FROM ONLY ' || replace(v_fullTableName,'''','''''') || ' WHERE ' || v_pkCondList || ';''';
-    v_rqTruncate = '''TRUNCATE ' || replace(v_fullTableName,'''','''''') || ';''';
--- now scan the log table to process all statement types at once
-    EXECUTE 'INSERT INTO emaj_temp_script '
-         || 'SELECT o.emaj_gid, 0, o.emaj_txid, CASE '
-         ||   ' WHEN o.emaj_verb = ''INS'' THEN ' || v_rqInsert
-         ||   ' WHEN o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''OLD'' THEN ' || v_rqUpdate
-         ||   ' WHEN o.emaj_verb = ''DEL'' THEN ' || v_rqDelete
-         ||   ' WHEN o.emaj_verb = ''TRU'' THEN ' || v_rqTruncate
-         || ' END '
-         || ' FROM ' || v_logTableName || ' o'
-         ||   ' LEFT OUTER JOIN ' || v_logTableName || ' n ON n.emaj_gid = o.emaj_gid'
-         || '        AND (n.emaj_verb = ''UPD'' AND n.emaj_tuple = ''NEW'') '
-         || ' WHERE NOT (o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''NEW'')'
-         || ' AND ' || v_conditions;
-    GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
-    RETURN v_nbSQL;
-  END;
-$_gen_sql_tbl$;
 ------------------------------------------------
 ----                                        ----
 ----       Functions to manage groups       ----
@@ -1356,22 +1273,23 @@ $_verify_groups$
   BEGIN
 -- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
 -- Let's start with some global checks that always raise an exception if an issue is detected
--- check the postgres version: E-Maj is not compatible with 8.2-
-    IF v_pgVersion < '8.3' THEN
+-- check the postgres version: E-Maj is not compatible with 8.1-
+    IF v_pgVersion < '8.2' THEN
       RAISE EXCEPTION 'The current postgres version (%) is not compatible with E-Maj.', version();
     END IF;
 -- check the postgres version at groups creation time is compatible with the current version
 -- Warning: comparisons on version numbers are alphanumeric.
 --          But we suppose these tests will not be useful any more when pg 10.0 will appear!
---   for 8.3, both major versions must be the same
+--   for 8.2 and 8.3, both major versions must be the same
     FOR r_object IN
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groups)
-          AND ((v_pgVersion = '8.3' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion)
+          AND ((v_pgVersion = '8.2' OR v_pgVersion = '8.3') 
+               AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion) OR
 --   for 8.4+, both major versions must be 8.4+
-            OR (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4'))
+              (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4')
         ORDER BY msg
     LOOP
       RAISE EXCEPTION '_verify_groups: %',r_object.msg;
@@ -2211,7 +2129,7 @@ $emaj_start_groups$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('START_GROUPS', 'BEGIN', array_to_string(v_groupNames,','), CASE WHEN v_resetLog THEN 'With log reset' ELSE 'Without log reset' END);
 -- call the common _start_groups function
-    SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog) INTO v_nbTblSeq;
+    SELECT emaj._start_groups(emaj._check_group_names_array(v_groupNames), v_mark, true, v_resetLog) INTO v_nbTblSeq;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('START_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
@@ -2363,7 +2281,7 @@ $emaj_stop_groups$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
       VALUES ('STOP_GROUPS', 'BEGIN', array_to_string(v_groupNames,','));
 -- call the common _stop_groups function
-    SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false) INTO v_nbTblSeq;
+    SELECT emaj._stop_groups(emaj._check_group_names_array(v_groupNames), 'STOP_%', true, false) INTO v_nbTblSeq;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('STOP_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
@@ -2386,7 +2304,7 @@ $emaj_stop_groups$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
       VALUES ('STOP_GROUPS', 'BEGIN', array_to_string(v_groupNames,','));
 -- call the common _stop_groups function
-    SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false) INTO v_nbTblSeq;
+    SELECT emaj._stop_groups(emaj._check_group_names_array(v_groupNames), v_mark, true, false) INTO v_nbTblSeq;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('STOP_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
@@ -2607,7 +2525,7 @@ $emaj_set_mark_groups$
     v_nbTb            INT;
   BEGIN
 -- validate the group names array
-    v_validGroupNames=emaj._check_names_array(v_groupNames,'group');
+    v_validGroupNames=emaj._check_group_names_array(v_groupNames);
 -- if the group names array is null, immediately return 0
     IF v_validGroupNames IS NULL THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -3131,7 +3049,7 @@ $emaj_rollback_groups$
   BEGIN
 -- just (unlogged) rollback the groups, with log table deletion
 --   (with boolean: unloggedRlbk = true, deleteLog = true, multiGroup = true)
-    return emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, true, true);
+    return emaj._rlbk_groups(emaj._check_group_names_array(v_groupNames), v_mark, true, true, true);
   END;
 $emaj_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT) IS
@@ -3167,7 +3085,7 @@ $emaj_logged_rollback_groups$
   BEGIN
 -- just "logged-rollback" the groups, with log table deletion
 --   (with boolean: unloggedRlbk = false, deleteLog = false, multiGroup = true)
-    return emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, false, false, true);
+    return emaj._rlbk_groups(emaj._check_group_names_array(v_groupNames), v_mark, false, false, true);
   END;
 $emaj_logged_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT) IS
@@ -3428,18 +3346,35 @@ $_rlbk_groups_step3$
 -- For logged rollback, it sets a mark that materialize the point in time just before the tables rollback.
 -- All concerned tables are already locked.
   DECLARE
-    v_realMark       TEXT;
-    v_markName       TEXT;
+    v_realMark              TEXT;
+    v_markName              TEXT;
+    v_markDatetime          TIMESTAMPTZ;
+    v_markLastSeqHoleId     BIGINT;
   BEGIN
+-- Get the real mark name (using first supplied group name, and check that all groups
+--   can use the same name has already been done at step 1)
+    SELECT emaj._get_mark_name(v_groupNames[1],v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION '_rlbk_groups_step3: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
+    END IF;
+-- Get other mark characteristics
+    SELECT mark_datetime, mark_last_seq_hole_id INTO v_markDatetime, v_markLastSeqHoleId FROM emaj.emaj_mark 
+      WHERE mark_group = v_groupNames[1] AND mark_name = v_realMark;
+-- check that no updates have been recorded between planning time (_rlbk_groups_step1) and lock time
+-- (_rlbk_groups_step2) for tables that did not need to be rolled back at planning time.
+-- This may occur and cannot be avoided because tables cannot be locked before processing the first rollback step. 
+-- (Sessions must lock the tables they will rollback and the planning processing distribute those tables to sessions.)
+    PERFORM 1 FROM (SELECT rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
+                      WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' 
+                        AND rel_rows = 0
+                    ) AS t
+      WHERE emaj._log_stat_tbl(rel_schema, rel_tblseq, rel_log_schema, v_markDatetime, NULL, v_markLastSeqHoleId, NULL) > 0;
+    IF FOUND THEN
+      RAISE EXCEPTION '_rlbk_groups_step3: The rollback operation has been cancelled due to concurrent activity on tables to process. Please retry.';
+    END IF;
     IF NOT v_unloggedRlbk THEN
 -- If rollback is "logged" rollback, build a mark name with the pattern:
 -- 'RLBK_<mark name to rollback to>_%_START', where % represents the current time
--- Get the real mark name (using first supplied group name, and check that all groups
---   can use the same name has already been done at step 1)
-      SELECT emaj._get_mark_name(v_groupNames[1],v_mark) INTO v_realMark;
-      IF v_realMark IS NULL THEN
-        RAISE EXCEPTION '_rlbk_groups_step3: Internal error - mark % not found for group %.', v_mark, v_groupNames[1];
-      END IF;
 --   compute the generated mark name
       v_markName = 'RLBK_' || v_realMark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START';
 -- ...  and set it
@@ -3846,11 +3781,16 @@ $emaj_log_stat_group$
       RAISE EXCEPTION 'emaj_log_stat_group: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMark, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
     END IF;
 -- for each table of the emaj_relation table, get the number of log rows and return the statistic
-    RETURN QUERY
-      SELECT v_groupName, rel_schema, rel_tblseq, 
-             CASE WHEN v_tsFirstMark IS NULL THEN 0 ELSE emaj._log_stat_tbl(rel_schema, rel_tblseq, rel_log_schema, v_tsFirstMark, v_tsLastMark, v_firstLastSeqHoleId, v_lastLastSeqHoleId) END AS nb_rows 
-        FROM emaj.emaj_relation
-        WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq;
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, 
+               CASE WHEN v_tsFirstMark IS NULL THEN 0 ELSE emaj._log_stat_tbl(rel_schema, rel_tblseq, rel_log_schema, v_tsFirstMark, v_tsLastMark, v_firstLastSeqHoleId, v_lastLastSeqHoleId) END AS nb_rows 
+          FROM emaj.emaj_relation
+          WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+      SELECT v_groupName, r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.nb_rows INTO r_stat;
+      RETURN NEXT r_stat;
+    END LOOP;
+    RETURN;
   END;
 $emaj_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_group(TEXT,TEXT,TEXT) IS
@@ -4462,151 +4402,25 @@ $emaj_snap_log_group$
 $emaj_snap_log_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
-$emaj_gen_sql_group$
+CREATE OR REPLACE FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+$emaj_generate_sql$
 -- This function generates a SQL script representing all updates performed on a tables group between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
--- It call the _gen_sql_groups() function to effetively process the request
--- Input: - tables group
---        - start mark, NULL representing the first mark
---        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
---        - absolute pathname describing the file that will hold the result
--- Output: number of generated SQL statements (non counting comments and transaction management)
-  DECLARE
-    v_cumNbSQL              INT;
-  BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUP', 'BEGIN', v_groupName,
-       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
-       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
-       || v_location);
--- call the _gen_sql_groups() function that effectively processes the request
-    SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location, NULL) INTO v_cumNbSQL;
--- insert end in the history and return
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUP', 'END', v_groupName, v_cumNbSQL || ' generated statements');
-    RETURN v_cumNbSQL;
-  END;
-$emaj_gen_sql_group$;
-COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
-$$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
-$emaj_gen_sql_group$
--- This function generates a SQL script representing all updates performed on a tables group between 2 marks
--- or beetween a mark and the current situation. The result is stored into an external file.
--- It call the _gen_sql_groups() function to effetively process the request
--- Input: - tables group
---        - start mark, NULL representing the first mark
---        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
---        - absolute pathname describing the file that will hold the result
---        - array of schema qualified table and sequence names to only process those tables and sequences
--- Output: number of generated SQL statements (non counting comments and transaction management)
-  DECLARE
-    v_cumNbSQL              INT;
-  BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUP', 'BEGIN', v_groupName,
-       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
-       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
-       || v_location || ' with tables/sequences filtering');
--- call the _gen_sql_groups() function that effectively processes the request
-    SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location, emaj._check_names_array(v_tblseqs,'table/sequence')) INTO v_cumNbSQL;
--- insert end in the history and return
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUP', 'END', v_groupName, v_cumNbSQL || ' generated statements');
-    RETURN v_cumNbSQL;
-  END;
-$emaj_gen_sql_group$;
-COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) IS
-$$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
-$emaj_gen_sql_groups$
--- This function generates a SQL script representing all updates performed on a set of tables groups between 2 marks
--- or beetween a mark and the current situation. The result is stored into an external file.
--- It call the _gen_sql_groups() function to effetively process the request
--- Input: - tables groups array
---        - start mark, NULL representing the first mark
---        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
---        - absolute pathname describing the file that will hold the result
--- Output: number of generated SQL statements (non counting comments and transaction management)
-  DECLARE
-    v_cumNbSQL              INT;
-  BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUPS', 'BEGIN', array_to_string(v_groupNames,','),
-       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
-       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
-       || v_location);
--- call the _gen_sql_groups() function that effectively processes the request
-    SELECT emaj._gen_sql_groups(emaj._check_names_array(v_groupNames,'group'), v_firstMark, v_lastMark, v_location, NULL)
-      INTO v_cumNbSQL;
--- insert end in the history and return
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUPS', 'END', array_to_string(v_groupNames,','), v_cumNbSQL || ' generated statements');
-    RETURN v_cumNbSQL;
-  END;
-$emaj_gen_sql_groups$;
-COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
-$$Generates a sql script corresponding to all updates performed on a set of tables groups between two marks and stores it into a given file.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
-$emaj_gen_sql_groups$
--- This function generates a SQL script representing all updates performed on a set of tables groups between 2 marks
--- or beetween a mark and the current situation. The result is stored into an external file.
--- It call the _gen_sql_groups() function to effetively process the request
--- Input: - tables groups array
---        - start mark, NULL representing the first mark
---        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
---        - absolute pathname describing the file that will hold the result
---        - array of schema qualified table and sequence names to only process those tables and sequences
--- Output: number of generated SQL statements (non counting comments and transaction management)
-  DECLARE
-    v_cumNbSQL              INT;
-  BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUPS', 'BEGIN', array_to_string(v_groupNames,','),
-       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
-       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
-       || v_location || ' with tables/sequences filtering');
--- call the _gen_sql_groups() function that effectively processes the request
-    SELECT emaj._gen_sql_groups(emaj._check_names_array(v_groupNames,'group'), v_firstMark, v_lastMark, v_location, emaj._check_names_array(v_tblseqs,'table/sequence'))
-      INTO v_cumNbSQL;
--- insert end in the history and return
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUPS', 'END', array_to_string(v_groupNames,','), v_cumNbSQL || ' generated statements');
-    RETURN v_cumNbSQL;
-  END;
-$emaj_gen_sql_groups$;
-COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) IS
-$$Generates a sql script corresponding to all updates performed on a set of tables groups between two marks and stores it into a given file.$$;
-CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
-$_gen_sql_groups$
--- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
--- or beetween a mark and the current situation. The result is stored into an external file.
--- The function can process groups that are in IDLE or LOGGING state.
+-- The function can process groups that are in IDLE state.
 -- The sql statements are placed between a BEGIN TRANSACTION and a COMMIT statements.
 -- The output file can be reused as input file to a psql command to replay the updates scenario. Just '\\'
 -- character strings (double antislash), if any, must be replaced by '\' (single antislash) before feeding
 -- the psql command.
--- Input: - tables groups array
+-- Input: - tables group
 --        - start mark, NULL representing the first mark
 --        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
 --        - absolute pathname describing the file that will hold the result
---        - optional array of schema qualified table and sequence names to only process those tables and sequences
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
     v_pgVersion             TEXT := emaj._pg_version();
     v_groupState            TEXT;
     v_cpt                   INT;
-    v_firstMarkCopy         TEXT := v_firstMark;
     v_realFirstMark         TEXT;
     v_realLastMark          TEXT;
     v_firstMarkId           BIGINT;
@@ -4615,122 +4429,100 @@ $_gen_sql_groups$
     v_lastEmajGid           BIGINT;
     v_tsFirstMark           TIMESTAMPTZ;
     v_tsLastMark            TIMESTAMPTZ;
-    v_tblseqErr             TEXT;
     v_nbSQL                 INT;
     v_nbSeq                 INT;
-    v_cumNbSQL              INT := 0;
+    v_cumNbSQL              INT;
     v_fullTableName         TEXT;
     v_logTableName          TEXT;
     v_fullSeqName           TEXT;
+    v_unquotedType          TEXT[] := array['smallint','integer','bigint','numeric','decimal',
+                                            'int2','int4','int8','serial','bigserial',
+                                            'real','double precision','float','float4','float8','oid'];
     v_endComment            TEXT;
+-- variables to hold pieces of SQL
     v_conditions            TEXT;
+    v_rqInsert              TEXT;
+    v_rqUpdate              TEXT;
+    v_rqDelete              TEXT;
+    v_rqTruncate            TEXT;
+    v_valList               TEXT;
+    v_setList               TEXT;
+    v_pkCondList            TEXT;
     v_rqSeq                 TEXT;
+-- other
     r_tblsq                 RECORD;
+    r_col                   RECORD;
   BEGIN
--- if the group names array is null, immediately return 0
-    IF v_groupNames IS NULL THEN
-      RETURN 0;
+-- this parameter should be moved in the create function clause once 8.2 will not be supported any more by E-Maj
+    SET standard_conforming_strings = ON;
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+--      VALUES ('GENERATE_SQL', 'BEGIN', v_groupName, 'From mark ' || coalesce (v_firstMark, 'NULL') || ' to mark ' || coalesce (v_lastMark, 'NULL') || ' towards ' || v_location);
+      VALUES ('GENERATE_SQL', 'BEGIN', v_groupName,
+       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
+       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
+       || v_location);
+-- check postgres version is >= 8.3
+--   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
+    IF v_pgVersion < '8.3' THEN
+      RAISE EXCEPTION 'emaj_generate_sql: this function needs a PostgreSQL version 8.3+.';
     END IF;
--- check that each group ...
-    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
--- ...is recorded into the emaj_group table
-      SELECT group_state INTO v_groupState
-        FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i];
+-- check that the group is recorded in emaj_group table
+    SELECT group_state INTO v_groupState
+      FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_generate_sql: group % has not been created.', v_groupName;
+    END IF;
+-- check all tables of the group have a pkey
+    SELECT count(*) INTO v_cpt FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
+      WHERE relnamespace = pg_namespace.oid
+        AND nspname = rel_schema AND relname =  rel_tblseq
+        AND rel_group = v_groupName AND rel_kind = 'r'
+        AND relhaspkey = false;
+    IF v_cpt > 0 THEN
+      RAISE EXCEPTION 'emaj_generate_sql: Tables group % contains % tables without pkey.', v_groupName, v_cpt;
+    END IF;
+-- if first mark is NULL or empty, retrieve the name, the global sequence value and the timestamp of the first recorded mark for the group
+    IF v_firstMark IS NULL OR v_firstMark = '' THEN
+      SELECT mark_id, mark_name, mark_global_seq, mark_datetime INTO v_firstMarkId, v_realFirstMark, v_firstEmajGid, v_tsFirstMark
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_id LIMIT 1;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_gen_sql_groups: group % has not been created.', v_groupNames[v_i];
+         RAISE EXCEPTION 'emaj_generate_sql: No initial mark can be found for group %.', v_groupName;
       END IF;
--- ... has no tables without pkey
-      SELECT count(*) INTO v_cpt FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
-        WHERE relnamespace = pg_namespace.oid
-          AND nspname = rel_schema AND relname =  rel_tblseq
-          AND rel_group = v_groupNames[v_i] AND rel_kind = 'r'
-          AND relhaspkey = false;
-      IF v_cpt > 0 THEN
-        RAISE EXCEPTION '_gen_sql_groups: Tables group % contains % tables without pkey.', v_groupNames[v_i], v_cpt;
-      END IF;
--- If the first mark supplied is NULL or empty, get the first mark for the current processed group 
---   (in fact the first one) and override the supplied first mark
-      IF v_firstMarkCopy IS NULL OR v_firstMarkCopy = '' THEN
-        SELECT mark_name INTO v_firstMarkCopy
-          FROM emaj.emaj_mark WHERE mark_group = v_groupNames[v_i] ORDER BY mark_id LIMIT 1;
-        IF NOT FOUND THEN
-           RAISE EXCEPTION '_gen_sql_groups: No initial mark can be found for group %.', v_groupNames[v_i];
-        END IF;
-      END IF;
--- ... owns the requested first mark
-      SELECT emaj._get_mark_name(v_groupNames[v_i],v_firstMarkCopy) INTO v_realFirstMark;
+    ELSE
+-- else, check and retrieve the name, the global sequence value and the timestamp of the supplied first mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
       IF v_realFirstMark IS NULL THEN
-        RAISE EXCEPTION '_gen_sql_groups: No mark % exists for group %.', v_firstMarkCopy, v_groupNames[v_i];
+        RAISE EXCEPTION 'emaj_generate_sql: Start mark % is unknown for group %.', v_firstMark, v_groupName;
       END IF;
--- ... and owns the requested last mark, if supplied
-      IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
-        SELECT emaj._get_mark_name(v_groupNames[v_i],v_lastMark) INTO v_realLastMark;
-        IF v_realLastMark IS NULL THEN
-          RAISE EXCEPTION '_gen_sql_groups: No mark % exists for group %.', v_lastMark, v_groupNames[v_i];
-        END IF;
-      END IF;
-    END LOOP;
--- check that the first mark timestamp is the same for all groups of the array
-    SELECT count(DISTINCT emaj._get_mark_datetime(group_name,v_firstMarkCopy)) INTO v_cpt FROM emaj.emaj_group
-      WHERE group_name = ANY (v_groupNames);
-    IF v_cpt > 1 THEN
-      RAISE EXCEPTION '_gen_sql_groups: Mark % does not represent the same point in time for all groups.', v_firstMarkCopy;
+      SELECT mark_id, mark_global_seq, mark_datetime INTO v_firstMarkId, v_firstEmajGid, v_tsFirstMark
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realFirstMark;
     END IF;
--- check that the last mark timestamp, if supplied, is the same for all groups of the array
-    IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
-      SELECT count(DISTINCT emaj._get_mark_datetime(group_name,v_lastMark)) INTO v_cpt FROM emaj.emaj_group
-        WHERE group_name = ANY (v_groupNames);
-      IF v_cpt > 1 THEN
-        RAISE EXCEPTION '_gen_sql_groups: Mark % does not represent the same point in time for all groups.', v_lastMark;
-      END IF;
-    END IF;
--- retrieve the name, the global sequence value and the timestamp of the supplied first mark for the 1st group
---   (the global sequence value and the timestamp are the same for all groups of the array
---    and the mark ids are just used to check that first mark is prior the last mark)
-    SELECT mark_id, mark_global_seq, mark_datetime INTO v_firstMarkId, v_firstEmajGid, v_tsFirstMark
-      FROM emaj.emaj_mark WHERE mark_group = v_groupNames[1] AND mark_name = v_realFirstMark;
 -- if last mark is NULL or empty, there is no timestamp to register
     IF v_lastMark IS NULL OR v_lastMark = '' THEN
       v_lastMarkId = NULL;
       v_lastEmajGid = NULL;
       v_tsLastMark = NULL;
     ELSE
--- else, retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the 1st group
+-- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
+      IF v_realLastMark IS NULL THEN
+        RAISE EXCEPTION 'emaj_generate_sql: End mark % is unknown for group %.', v_lastMark, v_groupName;
+      END IF;
       SELECT mark_id, mark_global_seq, mark_datetime INTO v_lastMarkId, v_lastEmajGid, v_tsLastMark
-        FROM emaj.emaj_mark WHERE mark_group = v_groupNames[1] AND mark_name = v_realLastMark;
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
     END IF;
 -- check that the first_mark < end_mark
     IF v_lastMarkId IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
-      RAISE EXCEPTION '_gen_sql_groups: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMarkCopy, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
-    END IF;
--- check the array of tables and sequences to filter, if supplied.
--- each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups
-    IF v_tblseqs IS NOT NULL THEN
-      IF v_tblseqs = array[''] THEN
-        RAISE EXCEPTION '_gen_sql_groups: filtered table/sequence names array cannot be empty.';
-      END IF;
-      v_tblseqErr = '';
-      FOR r_tblsq IN
-        SELECT t FROM regexp_split_to_table(array_to_string(v_tblseqs,'?'),E'\\?') AS t
-          EXCEPT
-        SELECT rel_schema || '.' || rel_tblseq FROM emaj.emaj_relation
-          WHERE rel_group = ANY (v_groupNames)
--- TODO regexp_split_to_table(array_to_string) to be transformed into unnest() when pg 8.3 will not be supported any more
-        LOOP
-        v_tblseqErr = v_tblseqErr || r_tblsq.t || ', ';
-      END LOOP;
-      IF v_tblseqErr <> '' THEN
-        v_tblseqErr = substring(v_tblseqErr FROM 1 FOR char_length(v_tblseqErr) - 2);
-        RAISE EXCEPTION '_gen_sql_groups: some tables and/or sequences (%) do not belong to any of the selected tables groups.', v_tblseqErr;
-      END IF;
+      RAISE EXCEPTION 'emaj_generate_sql: mark id for % (% = %) is greater than mark id for % (% = %).', v_firstMark, v_firstMarkId, v_tsFirstMark, v_lastMark, v_lastMarkId, v_tsLastMark;
     END IF;
 -- test the supplied output file name by inserting a temporary line (trap NULL or bad file name)
     BEGIN
-      EXECUTE 'COPY (SELECT ''-- _gen_sql_groups() function in progress - started at '
+      EXECUTE 'COPY (SELECT ''-- emaj_generate_sql() function in progress - started at '
                      || statement_timestamp() || ''') TO ' || quote_literal(v_location);
     EXCEPTION
       WHEN OTHERS THEN
-        RAISE EXCEPTION '_gen_sql_groups: file % cannot be used as script output file.', v_location;
+        RAISE EXCEPTION 'emaj_generate_sql: file % cannot be used as script output file.', v_location;
     END;
 -- create temporary table
     DROP TABLE IF EXISTS emaj_temp_script;
@@ -4744,30 +4536,99 @@ $_gen_sql_groups$
       scr_sql               TEXT                 -- the generated sql text
     );
 -- for each application table referenced in the emaj_relation table, build SQL statements and process the related log table
--- build the restriction conditions on emaj_gid, depending on supplied mark range (the same for all tables)
-    v_conditions = 'o.emaj_gid > ' || v_firstEmajGid;
-    IF v_tsLastMark IS NOT NULL THEN
-      v_conditions = v_conditions || ' AND o.emaj_gid <= ' || v_lastEmajGid;
-    END IF;
+    v_cumNbSQL = 0;
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
-          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                        -- tables of the groups
-            AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs)) -- filtered or not by the user
-          ORDER BY rel_priority, rel_schema, rel_tblseq
+          WHERE rel_group = v_groupName AND rel_kind = 'r' ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
-      v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-      v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log');
--- process the application table, by calling the _gen_sql_tbl function
-      SELECT emaj._gen_sql_tbl(v_fullTableName, v_logTableName, v_conditions) INTO v_nbSQL;
+-- process one application table
+      v_fullTableName    := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+      v_logTableName     := quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log');
+-- build the restriction conditions on emaj_gid, depending on supplied mark range
+      v_conditions = 'o.emaj_gid > ' || v_firstEmajGid;
+      IF v_tsLastMark IS NOT NULL THEN
+        v_conditions = v_conditions || ' AND o.emaj_gid <= ' || v_lastEmajGid;
+      END IF;
+-- retrieve from pg_attribute all columns of the application table and build :
+-- - the VALUES list used in the INSERT statements
+-- - the SET list used in the UPDATE statements
+      v_valList = '';
+      v_setList = '';
+      FOR r_col IN
+        SELECT attname, format_type(atttypid,atttypmod) FROM pg_catalog.pg_attribute
+         WHERE attrelid = v_fullTableName ::regclass
+           AND attnum > 0 AND NOT attisdropped
+         ORDER BY attnum
+      LOOP
+-- test if the column format (up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric data types)
+        IF regexp_replace (r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
+-- literal for this column can remain as is
+--          may be we will need to cast some column types in the future. So keep the comment for the moment...
+--          v_valList = v_valList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::text,''NULL'') || ''::' || r_col.format_type || ', ';
+          v_valList = v_valList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::text,''NULL'') || '', ';
+--          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.' || quote_ident(r_col.attname) || ' ::text,''NULL'') || ''::' || r_col.format_type || ', ';
+          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.' || quote_ident(r_col.attname) || ' ::text,''NULL'') || '', ';
+        ELSE
+-- literal for this column must be quoted
+--          v_valList = v_valList || ''' || coalesce(quote_literal(o.' || quote_ident(r_col.attname) || '),''NULL'') || ''::' || r_col.format_type || ', ';
+          v_valList = v_valList || ''' || coalesce(quote_literal(o.' || quote_ident(r_col.attname) || '),''NULL'') || '', ';
+--          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(quote_literal(n.' || quote_ident(r_col.attname) || '),''NULL'') || ''::' || r_col.format_type || ', ';
+          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(quote_literal(n.' || quote_ident(r_col.attname) || '),''NULL'') || '', ';
+        END IF;
+      END LOOP;
+-- suppress the final separators
+      v_valList = substring(v_valList FROM 1 FOR char_length(v_valList) - 2);
+      v_setList = substring(v_setList FROM 1 FOR char_length(v_setList) - 2);
+-- retrieve all columns that represents the pkey and build the "pkey equal" conditions set that will be used in UPDATE and DELETE statements
+-- (taking column names in pg_attribute from the table's definition instead of index definition is mandatory
+--  starting from pg9.0, joining tables with indkey instead of indexrelid)
+      v_pkCondList = '';
+      FOR r_col IN
+        SELECT attname, format_type(atttypid,atttypmod) FROM pg_catalog.pg_attribute, pg_catalog.pg_index
+          WHERE pg_attribute.attrelid = pg_index.indrelid
+            AND attnum = ANY (indkey)
+            AND indrelid = v_fullTableName ::regclass AND indisprimary
+            AND attnum > 0 AND NOT attisdropped
+      LOOP
+-- test if the column format (at least up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric data types)
+        IF regexp_replace (r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
+-- literal for this column can remain as is
+--          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || o.' || quote_ident(r_col.attname) || ' || ''::' || r_col.format_type || ' AND ';
+          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || o.' || quote_ident(r_col.attname) || ' || '' AND ';
+        ELSE
+-- literal for this column must be quoted
+--          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(r_col.attname) || ') || ''::' || r_col.format_type || ' AND ';
+          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(r_col.attname) || ') || '' AND ';
+        END IF;
+      END LOOP;
+-- suppress the final separator
+      v_pkCondList = substring(v_pkCondList FROM 1 FOR char_length(v_pkCondList) - 5);
+-- prepare sql skeletons for each statement type
+      v_rqInsert = '''INSERT INTO ' || replace(v_fullTableName,'''','''''') || ' VALUES (' || v_valList || ');''';
+      v_rqUpdate = '''UPDATE ONLY ' || replace(v_fullTableName,'''','''''') || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';''';
+      v_rqDelete = '''DELETE FROM ONLY ' || replace(v_fullTableName,'''','''''') || ' WHERE ' || v_pkCondList || ';''';
+      v_rqTruncate = '''TRUNCATE ' || replace(v_fullTableName,'''','''''') || ';''';
+-- now scan the log table to process all statement types at once
+      EXECUTE 'INSERT INTO emaj_temp_script '
+           || 'SELECT o.emaj_gid, 0, o.emaj_txid, CASE '
+           ||   ' WHEN o.emaj_verb = ''INS'' THEN ' || v_rqInsert
+           ||   ' WHEN o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''OLD'' THEN ' || v_rqUpdate
+           ||   ' WHEN o.emaj_verb = ''DEL'' THEN ' || v_rqDelete
+           ||   ' WHEN o.emaj_verb = ''TRU'' THEN ' || v_rqTruncate
+           || ' END '
+           || ' FROM ' || v_logTableName || ' o'
+           ||   ' LEFT OUTER JOIN ' || v_logTableName || ' n ON n.emaj_gid = o.emaj_gid'
+           || '        AND (n.emaj_verb = ''UPD'' AND n.emaj_tuple = ''NEW'') '
+           || ' WHERE NOT (o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''NEW'')'
+           || ' AND ' || v_conditions;
+      GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
       v_cumNbSQL = v_cumNbSQL + v_nbSQL;
     END LOOP;
 -- process sequences
     v_nbSeq = 0;
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation
-          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'                        -- sequences of the groups
-            AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs)) -- filtered or not by the user
-          ORDER BY rel_priority DESC, rel_schema DESC, rel_tblseq DESC
+          WHERE rel_group = v_groupName AND rel_kind = 'S' ORDER BY rel_priority DESC, rel_schema DESC, rel_tblseq DESC
         LOOP
       v_fullSeqName := quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       IF v_tsLastMark IS NULL THEN
@@ -4812,34 +4673,37 @@ $_gen_sql_groups$
       EXECUTE 'INSERT INTO emaj_temp_script '
            || 'SELECT NULL, -1 * ' || v_nbSeq || ', txid_current(), ' || quote_literal(v_rqSeq);
     END LOOP;
--- add initial comments
+-- add an initial comment
     IF v_tsLastMark IS NOT NULL THEN
       v_endComment = ' and mark ' || v_realLastMark;
     ELSE
       v_endComment = ' and the current situation';
     END IF;
-    INSERT INTO emaj_temp_script SELECT 0, 1, 0, '-- SQL script generated by E-Maj at ' || statement_timestamp();
-    INSERT INTO emaj_temp_script SELECT 0, 2, 0, '--    for tables group(s): ' || array_to_string(v_groupNames,',');
-    INSERT INTO emaj_temp_script SELECT 0, 3, 0, '--    processing logs between mark ' || v_realFirstMark || v_endComment;
-    IF v_tblseqs IS NOT NULL THEN
-      INSERT INTO emaj_temp_script SELECT 0, 4, 0, '--    only for the following tables/sequences: ' || array_to_string(v_tblseqs,',');
-    END IF;
+    INSERT INTO emaj_temp_script SELECT 0, 1, 0,
+         '-- file generated at ' || statement_timestamp()
+      || ' by the emaj_generate_sql() function, for tables group ' || v_groupName
+      || ', processing logs between mark ' || v_realFirstMark || v_endComment;
 -- encapsulate the sql statements inside a TRANSACTION
 -- and manage the standard_conforming_strings option to properly handle special characters
-    INSERT INTO emaj_temp_script SELECT 0, 10, 0, 'SET standard_conforming_strings = ON;';
-    INSERT INTO emaj_temp_script SELECT 0, 11, 0, 'BEGIN TRANSACTION;';
+    INSERT INTO emaj_temp_script SELECT 0, 2, 0, 'SET standard_conforming_strings = ON;';
+    INSERT INTO emaj_temp_script SELECT 0, 3, 0, 'BEGIN TRANSACTION;';
     INSERT INTO emaj_temp_script SELECT NULL, 1, txid_current(), 'COMMIT;';
     INSERT INTO emaj_temp_script SELECT NULL, 2, txid_current(), 'RESET standard_conforming_strings;';
 -- write the SQL script on the external file
-    EXECUTE 'COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid ) TO '
-          || quote_literal(v_location);
+    EXECUTE 'COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid ) TO ' || quote_literal(v_location);
 -- drop temporary table ?
 --    DROP TABLE IF EXISTS emaj_temp_script;
--- return the number of sql verbs generated into the output file
+-- this line should be removed once 8.2 will not be supported any more by E-Maj (and the SET will be put as create function clause
+    RESET standard_conforming_strings;
+-- insert end in the history and return
     v_cumNbSQL = v_cumNbSQL + v_nbSeq;
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('GENERATE_SQL', 'END', v_groupName, v_cumNbSQL || ' generated statements');
     RETURN v_cumNbSQL;
   END;
-$_gen_sql_groups$;
+$emaj_generate_sql$;
+COMMENT ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
+$$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
 ------------------------------------
 --                                --
 -- Global purpose functions       --
@@ -4858,27 +4722,35 @@ $_verify_all_groups$
 -- check the postgres version at creation time is compatible with the current version
 -- Warning: comparisons on version numbers are alphanumeric.
 --          But we suppose these tests will not be useful any more when pg 10.0 will appear!
---   for 8.3, both major versions must be the same
-    RETURN QUERY
+--   for 8.2 and 8.3, both major versions must be the same
+    FOR r_object IN
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
-        WHERE ((v_pgVersion = '8.3' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion)
+        WHERE ((v_pgVersion = '8.2' OR v_pgVersion = '8.3') 
+               AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion) OR
 --   for 8.4+, both major versions must be 8.4+
-            OR (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4'))
-        ORDER BY msg;
+              (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4')
+        ORDER BY msg
+    LOOP
+      RETURN NEXT r_object.msg;
+    END LOOP;
 -- check all application schemas referenced in the emaj_relation table still exist
-    RETURN QUERY
+    FOR r_object IN
       SELECT 'The application schema "' || rel_schema || '" does not exist any more.' AS msg
         FROM (
           SELECT DISTINCT rel_schema FROM emaj.emaj_relation 
             EXCEPT
           SELECT nspname FROM pg_catalog.pg_namespace
              ) AS t
-        ORDER BY msg;
+        ORDER BY msg
+    LOOP
+      RETURN NEXT r_object.msg;
+    END LOOP;
 -- check all application relations referenced in the emaj_relation table still exist
-    RETURN QUERY
-      SELECT 'In group "' || r.rel_group || '", the ' ||
+    FOR r_object IN
+      SELECT t.rel_schema, t.rel_tblseq, 
+             'In group "' || r.rel_group || '", the ' ||
                CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END || 
                t.rel_schema || '"."' || t.rel_tblseq || '" does not exist any more.' AS msg
         FROM (                                        -- all expected application relations
@@ -4888,44 +4760,52 @@ $_verify_all_groups$
             WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S')
              ) AS t, emaj.emaj_relation r             -- join with emaj_relation to get the group name
         WHERE t.rel_schema = r.rel_schema AND t.rel_tblseq = r.rel_tblseq
-        ORDER BY t.rel_schema, t.rel_tblseq, 1;
+        ORDER BY 1,2,3
+    LOOP
+      RETURN NEXT r_object.msg;
+    END LOOP;
 -- check the log table for all tables referenced in the emaj_relation table still exist
-    RETURN QUERY
-      SELECT 'In group "' || rel_group || '", the log table "' || 
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq,
+             'In group "' || rel_group || '", the log table "' || 
                rel_log_schema || '"."' || rel_schema || '_' || rel_tblseq || '_log" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_kind = 'r'
           AND (rel_log_schema, rel_schema || '_' || rel_tblseq || '_log') NOT IN
               (SELECT nspname, relname FROM pg_catalog.pg_namespace, pg_catalog.pg_class
                  WHERE relnamespace = pg_namespace.oid AND relname LIKE E'%\_%\_log')
-        ORDER BY rel_schema, rel_tblseq, 1;
+        ORDER BY 1,2,3
+    LOOP
+      RETURN NEXT r_object.msg;
+    END LOOP;
 -- check log and rollback functions for all tables referenced in the emaj_relation table still exist
-    RETURN QUERY
-      SELECT msg FROM (
-        SELECT substring(fnct FROM '^(.*)_.*_.*_fnct') AS sch, substring(fnct FROM '^.*_(.*)_.*_fnct') AS tbl,
-                                                -- schema and table names are rebuilt from the returned function name
-               'In group "' || r.rel_group || '", the ' || 
-                 CASE WHEN substring(fnct FROM '^.*_.*_(.*)_fnct') = 'log' THEN 'log' ELSE 'rollback' END || 
-                 ' function "' || t.rel_log_schema || '"."' || fnct || '" is not found.' AS msg
-          FROM (                                        -- all expected log functions
-           (SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' AS fnct 
-              FROM emaj.emaj_relation 
-              WHERE rel_kind = 'r'
-            UNION ALL                                   -- plus all expected rollback functions
-            SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' AS fnct 
-              FROM emaj.emaj_relation, emaj.emaj_group
-              WHERE rel_group = group_name AND rel_kind = 'r' AND group_is_rollbackable
-           ) EXCEPT                                     -- minus functions known by postgres
-           SELECT nspname, proname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-             WHERE pronamespace = pg_namespace.oid AND proname LIKE E'%\_%\_%\_fnct'
-               ) AS t, emaj.emaj_relation r             -- join with emaj_relation to get the group name 
-          WHERE r.rel_schema = substring(fnct FROM '^(.*)_.*_.*_fnct') AND r.rel_tblseq = substring(fnct FROM '^.*_(.*)_.*_fnct')
-          ORDER BY 1,2,3
-      ) AS t;
+    FOR r_object IN                                   -- schema and table names are rebuilt from the returned function name
+      SELECT substring(fnct FROM '^(.*)_.*_.*_fnct') AS sch, substring(fnct FROM '^.*_(.*)_.*_fnct') AS tbl,
+             'In group "' || r.rel_group || '", the ' || 
+               CASE WHEN substring(fnct FROM '^.*_.*_(.*)_fnct') = 'log' THEN 'log' ELSE 'rollback' END || 
+               ' function "' || t.rel_log_schema || '"."' || fnct || '" is not found.' AS msg
+        FROM (                                        -- all expected log functions
+         (SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' AS fnct 
+            FROM emaj.emaj_relation 
+            WHERE rel_kind = 'r'
+          UNION ALL                                   -- plus all expected rollback functions
+          SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' AS fnct 
+            FROM emaj.emaj_relation, emaj.emaj_group
+            WHERE rel_group = group_name AND rel_kind = 'r' AND group_is_rollbackable
+         ) EXCEPT                                     -- minus functions known by postgres
+         SELECT nspname, proname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+           WHERE pronamespace = pg_namespace.oid AND proname LIKE E'%\_%\_%\_fnct'
+             ) AS t, emaj.emaj_relation r             -- join with emaj_relation to get the group name 
+        WHERE r.rel_schema = substring(fnct FROM '^(.*)_.*_.*_fnct') AND r.rel_tblseq = substring(fnct FROM '^.*_(.*)_.*_fnct')
+        ORDER BY 1,2,3
+    LOOP
+      RETURN NEXT r_object.msg;
+    END LOOP;
 -- check log and truncate triggers for all tables referenced in the emaj_relation table still exist
 --   start with log trigger
-    RETURN QUERY
-      SELECT 'In group "' || rel_group || '", the log trigger "' || 
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq,
+             'In group "' || rel_group || '", the log trigger "' || 
                rel_schema || '_' || rel_tblseq || '_emaj_log_trg" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_kind = 'r'
@@ -4939,11 +4819,15 @@ $_verify_all_groups$
           AND (rel_schema, rel_tblseq) IN
               (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                  WHERE relnamespace = pg_namespace.oid)
-        ORDER BY rel_schema, rel_tblseq, 1;
+        ORDER BY 1,2,3
+    LOOP
+      RETURN NEXT r_object.msg;
+    END LOOP;
 --   then truncate trigger if pg 8.4+
     IF v_pgVersion >= '8.4' THEN
-      RETURN QUERY
-        SELECT 'In group "' || rel_group || '", the truncate trigger "' || 
+      FOR r_object IN
+        SELECT rel_schema, rel_tblseq,
+               'In group "' || rel_group || '", the truncate trigger "' || 
                  rel_schema || '_' || rel_tblseq || '_emaj_trunc_trg" is not found.' AS msg
           FROM emaj.emaj_relation
           WHERE rel_kind = 'r'
@@ -4957,58 +4841,62 @@ $_verify_all_groups$
             AND (rel_schema, rel_tblseq) IN
                 (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                    WHERE relnamespace = pg_namespace.oid)
-          ORDER BY rel_schema, rel_tblseq, 1;
+          ORDER BY 1,2,3
+      LOOP
+        RETURN NEXT r_object.msg;
+      END LOOP;
 -- TODO : merge both triggers check when pg 8.3 will not be supported any more
     END IF;
 -- check all log tables have a structure consistent with the application tables they reference
 --      (same columns and same formats). It only returns one row per faulting table.
-    RETURN QUERY
-      SELECT msg FROM (
-        SELECT DISTINCT rel_schema, rel_tblseq,
-               'In group "' || rel_group || '", the structure of the application table "' || 
-                 rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' || 
-               rel_log_schema || '"."' || rel_schema || '_' || rel_tblseq || '_log").' AS msg
-          FROM (
-            (                                           -- application table's columns 
-            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
-              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-              WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
-                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
-                AND rel_kind = 'r'
-            EXCEPT                                      -- minus log table's columns
-            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
-              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-              WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema 
-                AND relname = rel_schema || '_' || rel_tblseq || '_log'
-                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
-                AND rel_kind = 'r'
-            )
-            UNION
-            (                                           -- log table's columns
-            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
-              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-              WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema 
-                AND relname = rel_schema || '_' || rel_tblseq || '_log'
-                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
-                AND rel_kind = 'r'
-            EXCEPT                                      --  minus application table's columns
-            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
-              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-              WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
-                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
-                AND rel_kind = 'r'
-            )) AS t
-                           -- do not issue a row if the log or application table does not exist, 
-                           -- these cases have been already detected
-        WHERE (rel_log_schema, rel_schema || '_' || rel_tblseq || '_log') IN
-              (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-                 WHERE relnamespace = pg_namespace.oid)
-          AND (rel_schema, rel_tblseq) IN
-              (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-                 WHERE relnamespace = pg_namespace.oid)
-        ORDER BY 1,2,3
-        ) AS t;
+    FOR r_object IN
+      SELECT DISTINCT rel_schema, rel_tblseq,
+             'In group "' || rel_group || '", the structure of the application table "' || 
+               rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' || 
+             rel_log_schema || '"."' || rel_schema || '_' || rel_tblseq || '_log").' AS msg
+        FROM (
+          (                                           -- application table's columns 
+          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
+              AND rel_kind = 'r'
+          EXCEPT                                      -- minus log table's columns
+          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema 
+              AND relname = rel_schema || '_' || rel_tblseq || '_log'
+              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
+              AND rel_kind = 'r'
+          )
+          UNION
+          (                                           -- log table's columns
+          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema 
+              AND relname = rel_schema || '_' || rel_tblseq || '_log'
+              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
+              AND rel_kind = 'r'
+          EXCEPT                                      --  minus application table's columns
+          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
+              AND rel_kind = 'r'
+          )) AS t
+                         -- do not issue a row if the log or application table does not exist, 
+                         -- these cases have been already detected
+      WHERE (rel_log_schema, rel_schema || '_' || rel_tblseq || '_log') IN
+            (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+               WHERE relnamespace = pg_namespace.oid)
+        AND (rel_schema, rel_tblseq) IN
+            (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+               WHERE relnamespace = pg_namespace.oid)
+      ORDER BY 1,2,3
 -- TODO : use CTE to improve performance, when pg 8.3 will not be supported any more
+    LOOP
+      RETURN NEXT r_object.msg;
+    END LOOP;
     RETURN;
   END;
 $_verify_all_groups$;
@@ -5022,104 +4910,108 @@ $_verify_all_schemas$
     r_object         RECORD;
   BEGIN
 -- verify that the expected E-Maj schemas still exist
-    RETURN QUERY
+    FOR r_object IN
       SELECT DISTINCT 'The E-Maj schema "' || rel_log_schema || '" does not exist any more.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_log_schema NOT IN (SELECT nspname FROM pg_catalog.pg_namespace)
-        ORDER BY msg;
+        ORDER BY msg
+    LOOP
+      RETURN NEXT r_object.msg;
+    END LOOP;
 -- detect all objects that are not directly linked to a known table groups in all E-Maj schemas
 -- scan pg_class, pg_proc, pg_type, pg_conversion, pg_operator, pg_opclass
-    RETURN QUERY
-      SELECT msg FROM (
+    FOR r_object IN
 -- look for unexpected tables
-        SELECT nspname, 1, 'In schema "' || nspname || 
-               '", the table "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
-           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-           WHERE relnamespace = pg_namespace.oid AND relkind = 'r'
-             AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal tables
-             AND (nspname, relname) NOT IN                                    -- exclude emaj log tables
-                (SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation)
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-        UNION ALL
+      SELECT nspname, 1, 'In schema "' || nspname || 
+             '", the table "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
+         FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+         WHERE relnamespace = pg_namespace.oid AND relkind = 'r'
+           AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal tables
+           AND (nspname, relname) NOT IN                                    -- exclude emaj log tables
+              (SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log' FROM emaj.emaj_relation)
+           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+      UNION ALL
 -- look for unexpected sequences
-        SELECT nspname, 2, 'In schema "' || nspname || 
-               '", the sequence "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
-           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-           WHERE relnamespace = pg_namespace.oid AND relkind = 'S'
-             AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal sequences
-             AND (nspname, relname) NOT IN                                    -- exclude emaj log table sequences 
-                (SELECT rel_log_schema, emaj._build_log_seq_name(rel_schema, rel_tblseq) FROM emaj.emaj_relation)
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-        UNION ALL
+      SELECT nspname, 2, 'In schema "' || nspname || 
+             '", the sequence "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
+         FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+         WHERE relnamespace = pg_namespace.oid AND relkind = 'S'
+           AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal sequences
+           AND (nspname, relname) NOT IN                                    -- exclude emaj log table sequences 
+              (SELECT rel_log_schema, emaj._build_log_seq_name(rel_schema, rel_tblseq) FROM emaj.emaj_relation)
+           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+      UNION ALL
 -- look for unexpected functions
-        SELECT nspname, 3, 'In schema "' || nspname || 
-               '", the function "' || nspname || '"."' || proname  || '" is not linked to any created tables group.' AS msg
-           FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-           WHERE pronamespace = pg_namespace.oid 
-             AND (nspname <> v_emajSchema OR (proname NOT LIKE E'emaj\\_%' AND proname NOT LIKE E'\\_%'))
-                                                                              -- exclude emaj internal functions
-             AND (nspname, proname) NOT IN (                                  -- exclude emaj log functions
-               SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation)
-             AND (nspname, proname) NOT IN (                                  -- exclude emaj rollback functions
-               SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation)
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-        UNION ALL
+      SELECT nspname, 3, 'In schema "' || nspname || 
+             '", the function "' || nspname || '"."' || proname  || '" is not linked to any created tables group.' AS msg
+         FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+         WHERE pronamespace = pg_namespace.oid 
+           AND (nspname <> v_emajSchema OR (proname NOT LIKE E'emaj\\_%' AND proname NOT LIKE E'\\_%'))
+                                                                            -- exclude emaj internal functions
+           AND (nspname, proname) NOT IN (                                  -- exclude emaj log functions
+             SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation)
+           AND (nspname, proname) NOT IN (                                  -- exclude emaj rollback functions
+             SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation)
+           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+      UNION ALL
 -- look for unexpected composite types
-        SELECT nspname, 4, 'In schema "' || nspname || 
-               '", the type "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-           WHERE relnamespace = pg_namespace.oid AND relkind = 'c'
-             AND (nspname <> v_emajSchema OR (relname NOT LIKE E'emaj\\_%' AND relname NOT LIKE E'\\_%'))
-                                                                              -- exclude emaj internal types
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-        UNION ALL
+      SELECT nspname, 4, 'In schema "' || nspname || 
+             '", the type "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+         FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+         WHERE relnamespace = pg_namespace.oid AND relkind = 'c'
+           AND (nspname <> v_emajSchema OR (relname NOT LIKE E'emaj\\_%' AND relname NOT LIKE E'\\_%'))
+                                                                            -- exclude emaj internal types
+           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+      UNION ALL
 -- look for unexpected views
-        SELECT nspname, 5, 'In schema "' || nspname || 
-               '", the view "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-           WHERE relnamespace = pg_namespace.oid  AND relkind = 'v'
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-        UNION ALL
+      SELECT nspname, 5, 'In schema "' || nspname || 
+             '", the view "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+         FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+         WHERE relnamespace = pg_namespace.oid  AND relkind = 'v'
+           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+      UNION ALL
 -- look for unexpected foreign tables
-        SELECT nspname, 6, 'In schema "' || nspname || 
-               '", the foreign table "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-           WHERE relnamespace = pg_namespace.oid  AND relkind = 'f'
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-        UNION ALL
+      SELECT nspname, 6, 'In schema "' || nspname || 
+             '", the foreign table "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
+         FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+         WHERE relnamespace = pg_namespace.oid  AND relkind = 'f'
+           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+      UNION ALL
 -- look for unexpected domains
-        SELECT nspname, 7, 'In schema "' || nspname || 
-               '", the domain "' || nspname || '"."' || typname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_type, pg_catalog.pg_namespace
-           WHERE typnamespace = pg_namespace.oid AND typisdefined and typtype = 'd'
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-        UNION ALL
+      SELECT nspname, 7, 'In schema "' || nspname || 
+             '", the domain "' || nspname || '"."' || typname || '" is not an E-Maj component.' AS msg
+         FROM pg_catalog.pg_type, pg_catalog.pg_namespace
+         WHERE typnamespace = pg_namespace.oid AND typisdefined and typtype = 'd'
+           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+      UNION ALL
 -- look for unexpected conversions
-        SELECT nspname, 8, 'In schema "' || nspname || 
-               '", the conversion "' || nspname || '"."' || conname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_conversion, pg_catalog.pg_namespace
-           WHERE connamespace = pg_namespace.oid 
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-        UNION ALL
+      SELECT nspname, 8, 'In schema "' || nspname || 
+             '", the conversion "' || nspname || '"."' || conname || '" is not an E-Maj component.' AS msg
+         FROM pg_catalog.pg_conversion, pg_catalog.pg_namespace
+         WHERE connamespace = pg_namespace.oid 
+           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+      UNION ALL
 -- look for unexpected operators
-        SELECT nspname, 9, 'In schema "' || nspname || 
-               '", the operator "' || nspname || '"."' || oprname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_operator, pg_catalog.pg_namespace
-           WHERE oprnamespace = pg_namespace.oid 
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-        UNION ALL
+      SELECT nspname, 9, 'In schema "' || nspname || 
+             '", the operator "' || nspname || '"."' || oprname || '" is not an E-Maj component.' AS msg
+         FROM pg_catalog.pg_operator, pg_catalog.pg_namespace
+         WHERE oprnamespace = pg_namespace.oid 
+           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+      UNION ALL
 -- look for unexpected operator classes
-        SELECT nspname, 10, 'In schema "' || nspname || 
-               '", the operator class "' || nspname || '"."' || opcname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_opclass, pg_catalog.pg_namespace
-           WHERE opcnamespace = pg_namespace.oid 
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
-        ORDER BY 1, 2, 3
-      ) AS t;
--- TODO: when pg version 8.3- will not be supported, the following CTE could be used to minimize the number of emaj_relation scan to build the schemas list
+      SELECT nspname, 10, 'In schema "' || nspname || 
+             '", the operator class "' || nspname || '"."' || opcname || '" is not an E-Maj component.' AS msg
+         FROM pg_catalog.pg_opclass, pg_catalog.pg_namespace
+         WHERE opcnamespace = pg_namespace.oid 
+           AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+      ORDER BY 1, 2, 3
+-- Todo: when pg version 8.3- will not be supported, the following CTE could be used to minimize the number of emaj_relation scan to build the schemas list
 --        WITH logschemas AS ( SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation )
 --  replacing all "AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)" conditions by
 --                "AND nspname IN (SELECT rel_log_schema FROM logschemas)"
+    LOOP
+      RETURN NEXT r_object.msg;
+    END LOOP;
     RETURN;
   END;
 $_verify_all_schemas$;
@@ -5135,8 +5027,8 @@ $emaj_verify_all$
     r_object         RECORD;
   BEGIN
 -- Global checks
--- detect if the current postgres version is at least 8.2
-    IF v_pgVersion < '8.3' THEN
+-- detect if the current postgres version is at least 8.1
+    IF v_pgVersion < '8.2' THEN
       RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with E-Maj.';
       v_errorFound = TRUE;
     END IF;
@@ -5219,12 +5111,13 @@ GRANT SELECT ON SEQUENCE emaj.emaj_mark_mark_id_seq TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_viewer;
 -- revoke grants on all functions from PUBLIC
+REVOKE ALL ON FUNCTION emaj._txid_current() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._purge_hist() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_name(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._check_names_array(v_groupNames TEXT[], v_type TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
@@ -5238,7 +5131,6 @@ REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PU
 REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._gen_sql_tbl(v_fullTableName TEXT, v_logTableName TEXT, v_conditions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
@@ -5290,21 +5182,18 @@ REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_fir
 REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_all_groups() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_all_schemas() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 -- give appropriate rights on functions to emaj_adm role
+GRANT EXECUTE ON FUNCTION emaj._txid_current() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._purge_hist() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._check_names_array(v_groupNames TEXT[], v_type TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
@@ -5318,7 +5207,6 @@ GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO e
 GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._gen_sql_tbl(v_fullTableName TEXT, v_logTableName TEXT, v_conditions TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
@@ -5370,11 +5258,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
@@ -5558,7 +5442,7 @@ Tablespace: "tspemaj"
  hist_object   | text                     | 
  hist_wording  | text                     | 
  hist_user     | text                     | default "session_user"()
- hist_txid     | bigint                   | default txid_current()
+ hist_txid     | bigint                   | default emaj._txid_current()
 Indexes:
     "emaj_hist_pkey" PRIMARY KEY, btree (hist_id), tablespace "tspemaj"
 Tablespace: "tspemaj"
@@ -5603,7 +5487,7 @@ Composite type "emaj.emaj_log_stat_type"
  mark_global_seq           | bigint                   | not null
  mark_state                | text                     | 
  mark_comment              | text                     | 
- mark_txid                 | bigint                   | default txid_current()
+ mark_txid                 | bigint                   | default emaj._txid_current()
  mark_last_sequence_id     | bigint                   | 
  mark_last_seq_hole_id     | bigint                   | 
  mark_log_rows_before_next | bigint                   | 
@@ -5809,13 +5693,13 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    79
+    75
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname LIKE E'emaj\\_%';
  count 
 -------
-    38
+    35
 (1 row)
 
