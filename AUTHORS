@@ -5,8 +5,10 @@ Philippe Beaudoin		<phb.emaj@free.fr>
 		implementation in plpgsql (initial idea taken from
         Andreas Scherbaum's table_log contrib)
 
-With some useful comments from:
-- JP.Argudo and Dalibo team.
-- K.Rosensteel (Bull)
-- R.Dunklau
+Many thanks for their contribution to:
+- Jean-Paul Argudo and Dalibo team.
+- Ken Rosensteel
+- Ken Harris
+- Ronan Dunklau
+- Don Levine
 
