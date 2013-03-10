@@ -69,6 +69,31 @@ PL/pgSQL function "emaj_create_group" line 7 at RETURN
 select emaj.emaj_create_group('dummyGrp2',false);
 ERROR:  _check_class: table or sequence dummyTable doesn't exist.
 CONTEXT:  PL/pgSQL function "emaj_create_group" line 84 at assignment
+-- group with a temp table
+begin;
+  CREATE TEMPORARY TABLE myTempTbl (
+    col1       INT     NOT NULL,
+    PRIMARY KEY (col1)
+  );
+  insert into emaj.emaj_group_def 
+    select 'myGroup5',nspname,'mytemptbl' from pg_class, pg_namespace
+      where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
+-- should be ko with pg 8.4+
+  select emaj.emaj_create_group('myGroup5');
+ERROR:  _create_tbl: table mytemptbl is a temporary table.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 89 at PERFORM
+PL/pgSQL function "emaj_create_group" line 7 at RETURN
+rollback;
+-- group with an unlogged table
+begin;
+  insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
+  select emaj.emaj_create_group('myGroup5');
+ERROR:  _create_tbl: table myunloggedtbl is an unlogged table.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 89 at PERFORM
+PL/pgSQL function "emaj_create_group" line 7 at RETURN
+rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
 ERROR:  _create_tbl: table myTbl2\ has no PRIMARY KEY.
@@ -94,7 +119,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 ERROR:  tablespace "dummyTablespace" does not exist
 CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log ( LIKE myschema1.mytbl1) TABLESPACE "dummyTablespace""
-PL/pgSQL function "_create_tbl" line 85 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 106 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 89 at PERFORM
 PL/pgSQL function "emaj_create_group" line 7 at RETURN

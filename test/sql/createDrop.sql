@@ -54,6 +54,23 @@ select emaj.emaj_create_group('dummyGrp1',false);
 -- unknown table in emaj_group_def
 select emaj.emaj_create_group('dummyGrp2');
 select emaj.emaj_create_group('dummyGrp2',false);
+-- group with a temp table
+begin;
+  CREATE TEMPORARY TABLE myTempTbl (
+    col1       INT     NOT NULL,
+    PRIMARY KEY (col1)
+  );
+  insert into emaj.emaj_group_def 
+    select 'myGroup5',nspname,'mytemptbl' from pg_class, pg_namespace
+      where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
+-- should be ko with pg 8.4+
+  select emaj.emaj_create_group('myGroup5');
+rollback;
+-- group with an unlogged table
+begin;
+  insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
+  select emaj.emaj_create_group('myGroup5');
+rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
 -- sequence with a log schema suffix defined in the emaj_group_def table

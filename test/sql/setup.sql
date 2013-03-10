@@ -231,6 +231,22 @@ END;
 $trigger$ LANGUAGE PLPGSQL;
 CREATE TRIGGER myTblM_insert_trigger BEFORE INSERT ON myTblM FOR EACH ROW EXECUTE PROCEDURE mySchema4.myTblM_insert_trigger();
 
+-- fifth schema (for unsupported tables)
+
+DROP SCHEMA IF EXISTS mySchema5 CASCADE;
+CREATE SCHEMA mySchema5;
+
+SET search_path=mySchema5;
+
+-- myTempTbl will be created in the test script that needs is
+
+DROP TABLE IF EXISTS myUnloggedTbl;
+-- fails with pg9.0-
+CREATE UNLOGGED TABLE myUnloggedTbl (
+  col1       INT     NOT NULL,
+  PRIMARY KEY (col1)
+);
+
 -----------------------------
 -- create roles and give rigths on application objects
 -----------------------------
@@ -238,7 +254,7 @@ create role emaj_regression_tests_adm_user login password 'adm';
 create role emaj_regression_tests_viewer_user login password 'viewer';
 create role emaj_regression_tests_anonym_user login password 'anonym';
 --
-grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4 to emaj_regression_tests_adm_user, emaj_regression_tests_viewer_user;
+grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 to emaj_regression_tests_adm_user, emaj_regression_tests_viewer_user;
 --
 grant select on mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b to emaj_regression_tests_viewer_user;
 grant select on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6, mySchema2.myTbl7, mySchema2.myTbl8 to emaj_regression_tests_viewer_user;

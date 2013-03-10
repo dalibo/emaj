@@ -17,8 +17,8 @@ Enhancements:
     rollback operation, as well as a remaining duration estimate and a 
     percentage of work already done. emaj_adm and emaj_viewer roles can call 
     it.
-  - various code improvements, in particular taking benefit from the end of 
-    the postgres 8.2 support.
+  - at create_group() or alter_group() time, a check is added to be sure no 
+    temporary tables and no unlogged tables are recorded into tables groups.
   - the default value of the 'history_retention' parameter is now 1 year 
     (previously 1 month).
   - a new emaj_gen_sql_groups() function generates a sql script replaying
@@ -33,6 +33,8 @@ Enhancements:
   - a new emaj_user_port column is added into each log tables. It holds the 
     ip port of the remote user who performed the recorded update and 
     complements the already existing emaj_user_ip column.
+  - various code improvements, in particular taking benefit from the end of 
+    the postgres 8.2 support.
   - some minor coding improvements such as: the replacement of the mark_state 
     column in the emaj_mark table by a boolean column named mark_is_deleted ;
     the replacement of the group_state column in the emaj_group table by a 
