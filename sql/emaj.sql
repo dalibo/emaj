@@ -4452,7 +4452,7 @@ $_rlbk_end$
 -- log in the history the name of all marks that must be deleted due to the rollback
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         SELECT CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END,
-               'MARK DELETED', mark_group, 'mark ' || mark_name || ' has been deleted' FROM emaj.emaj_mark
+               'DELETE MARK', mark_group, 'mark ' || mark_name || ' is deleted' FROM emaj.emaj_mark
           WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId ORDER BY mark_id;
 -- delete these useless marks (the related sequences have been already deleted by rollback functions)
       DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId;
