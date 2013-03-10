@@ -5,6 +5,12 @@ E-Maj - Release notes
 Enhancements:
 
 Bug fixes:
+
+1.0.2
+------
+Enhancements:
+
+Bug fixes:
   - At the beginning of a rollback operation, if a table known as 'not 
     needing rollback' at initialisation time is updated before the locking 
     step, this table will not be rolled back, generating a loss of 
