@@ -5,8 +5,7 @@
 -- install dblink
 ------------------------------------------------------------
 -- this 8.4.8 version seems compatible with 8.2 to 9.0 pg version
--- for future use...
---\i ~/postgresql-8.4.8/contrib/dblink/dblink.sql
+\i ~/postgresql-8.4.8/contrib/dblink/dblink.sql
 
 -----------------------------
 -- for postgres cluster 8.3 and 9.1, temporarily rename tspemaj tablespace to test both cases
@@ -28,7 +27,7 @@ DROP FUNCTION public.emaj_tmp();
 -----------------------------
 -- emaj installation with previous version
 -----------------------------
-\i ../../../emaj-1.0.0/sql/emaj.sql
+\i ../../../emaj-1.0.2/sql/emaj.sql
 
 -----------------------------
 -- check installation
