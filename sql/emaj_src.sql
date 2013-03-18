@@ -4257,22 +4257,24 @@ $_rlbk_start_mark$
     v_groupNames            TEXT[];
     v_mark                  TEXT;
     v_isLoggedRlbk          BOOLEAN;
+    v_rlbk_datetime         TIMESTAMPTZ;
     v_markDatetime          TIMESTAMPTZ;
     v_markLastSeqHoleId     BIGINT;
     v_markName              TEXT;
     v_errorMsg              TEXT;
   BEGIN
 -- get the rollack characteristics for the emaj_rlbk
-    v_stmt = 'SELECT rlbk_groups, rlbk_mark, rlbk_is_logged FROM emaj.emaj_rlbk WHERE rlbk_id = ' || v_rlbkId;
+    v_stmt = 'SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_start_datetime' ||
+             ' FROM emaj.emaj_rlbk WHERE rlbk_id = ' || v_rlbkId;
     IF emaj._dblink_is_cnx_opened('emaj#1') THEN
 -- ... either through dblink if possible
-      SELECT rlbk_groups, rlbk_mark, rlbk_is_logged FROM dblink('emaj#1',v_stmt) 
-          AS (rlbk_groups TEXT[], rlbk_mark TEXT, rlbk_is_logged BOOLEAN) 
-        INTO v_groupNames, v_mark, v_isLoggedRlbk;
+      SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_start_datetime FROM dblink('emaj#1',v_stmt) 
+          AS (rlbk_groups TEXT[], rlbk_mark TEXT, rlbk_is_logged BOOLEAN, rlbk_start_datetime TIMESTAMPTZ) 
+        INTO v_groupNames, v_mark, v_isLoggedRlbk, v_rlbk_datetime;
       v_isDblinkUsable = true;
     ELSE
 -- ... or directly
-      EXECUTE v_stmt INTO v_groupNames, v_mark, v_isLoggedRlbk;
+      EXECUTE v_stmt INTO v_groupNames, v_mark, v_isLoggedRlbk, v_rlbk_datetime;
     END IF;
 -- get some mark attributes from emaj_mark
     SELECT mark_datetime, mark_last_seq_hole_id INTO v_markDatetime, v_markLastSeqHoleId 
@@ -4295,9 +4297,9 @@ $_rlbk_start_mark$
       RAISE EXCEPTION '_rlbk_start_mark: % Please retry.', v_errorMsg;
     END IF;
     IF v_isLoggedRlbk THEN
--- If rollback is "logged" rollback, build a mark name with the pattern:
--- 'RLBK_<mark name to rollback to>_%_START', where % represents the current time
-      v_markName = 'RLBK_' || v_mark || '_' || to_char(current_timestamp, 'HH24.MI.SS.MS') || '_START';
+-- If rollback is "logged" rollback, set a mark named with the pattern:
+-- 'RLBK_<mark name to rollback to>_%_START', where % represents the rollback start time
+      v_markName = 'RLBK_' || v_mark || '_' || to_char(v_rlbk_datetime, 'HH24.MI.SS.MS') || '_START';
       PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
     END IF;
 -- update the emaj_rlbk table to adjust the rollback status
@@ -4491,6 +4493,7 @@ $_rlbk_end$
     v_groupNames        TEXT[];
     v_mark              TEXT;
     v_isLoggedRlbk      BOOLEAN;
+    v_rlbk_datetime     TIMESTAMPTZ;
     v_effNbTbl          INT;
     v_markId            BIGINT;
     v_timestampMark     TIMESTAMPTZ;
@@ -4500,18 +4503,18 @@ $_rlbk_end$
     v_histDateTime      TIMESTAMPTZ;
   BEGIN
 -- get the rollack characteristics for the emaj_rlbk
-    v_stmt = 'SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_eff_nb_table FROM emaj.emaj_rlbk ' ||
-             ' WHERE rlbk_id = ' || v_rlbkId;
+    v_stmt = 'SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_eff_nb_table, rlbk_start_datetime ' ||
+             ' FROM emaj.emaj_rlbk WHERE rlbk_id = ' || v_rlbkId;
     IF emaj._dblink_is_cnx_opened('emaj#1') THEN
 -- ... either through dblink if possible (do not try to open a connection, it has already been attempted)
-      SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_eff_nb_table
-        INTO v_groupNames, v_mark, v_isLoggedRlbk, v_effNbTbl
+      SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_eff_nb_table, rlbk_start_datetime
+        INTO v_groupNames, v_mark, v_isLoggedRlbk, v_effNbTbl, v_rlbk_datetime
         FROM dblink('emaj#1',v_stmt) 
-          AS (rlbk_groups TEXT[], rlbk_mark TEXT, rlbk_is_logged BOOLEAN, rlbk_eff_nb_table INT);
+          AS (rlbk_groups TEXT[], rlbk_mark TEXT, rlbk_is_logged BOOLEAN, rlbk_eff_nb_table INT, rlbk_start_datetime TIMESTAMPTZ);
       v_isDblinkUsable = true;
     ELSE
 -- ... or directly
-      EXECUTE v_stmt INTO v_groupNames, v_mark, v_isLoggedRlbk, v_effNbTbl;
+      EXECUTE v_stmt INTO v_groupNames, v_mark, v_isLoggedRlbk, v_effNbTbl, v_rlbk_datetime;
     END IF;
 -- if "unlogged" rollback, delete all marks later than the now rolled back mark
     IF NOT v_isLoggedRlbk THEN
@@ -4575,20 +4578,10 @@ $_rlbk_end$
               WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t;
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
---
 -- if rollback is "logged" rollback, automaticaly set a mark representing the tables state just after the rollback.
--- this mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the current time
+-- this mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the rollback start time
     IF v_isLoggedRlbk THEN
--- get the mark name set at the beginning of the rollback operation (i.e. the last set mark)
-      SELECT mark_name INTO v_markName
-        FROM emaj.emaj_mark
-        WHERE mark_group = v_groupNames[1] ORDER BY mark_id DESC LIMIT 1;
-      IF NOT FOUND OR v_markName NOT LIKE 'RLBK%START' THEN
-        RAISE EXCEPTION '_rlbk_end: Internal error - rollback start mark not found for group %.', v_groupNames[1];
-      END IF;
--- compute the mark name that ends the rollback operation, replacing the '_START' suffix of the rollback start mark by '_DONE'
-      v_markName = substring(v_markName FROM '(.*)_START$') || '_DONE';
--- ...  and set it
+      v_markName = 'RLBK_' || v_mark || '_' || to_char(v_rlbk_datetime, 'HH24.MI.SS.MS') || '_DONE';
       PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
     END IF;
 -- insert end in the history
