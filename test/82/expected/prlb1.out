@@ -1,7 +1,0 @@
- E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks for groups
--------------------------------------------------------------------
-3 connected sessions
-Number of tables needing rollback for groups 'myGroup1','myGroup2' = 9
-Logged rollback to mark 'Multi-1' in progress...
-Logged rollback of 9 tables and 3 sequences completed
-

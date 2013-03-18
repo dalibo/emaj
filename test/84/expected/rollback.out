@@ -1824,26 +1824,26 @@ rollback;
 -----------------------------
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, 
-       case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
+       case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_msg
   from emaj.emaj_rlbk order by rlbk_id;
- rlbk_id |     rlbk_groups     |   rlbk_mark    | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | end_datetime 
----------+---------------------+----------------+----------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------
-       1 | {myGroup1}          | Different_Mark | f              |               1 |             5 |                1 |                 0 | COMMITTED   |               4046 | [ts]
-       2 | {myGroup2}          | Mark21         | f              |               1 |             6 |                2 |                 0 | COMMITTED   |               4052 | [ts]
-       3 | {myGroup1}          | Different_Mark | t              |               1 |             5 |                1 |                 0 | COMMITTED   |               4060 | [ts]
-       4 | {myGroup2}          | Mark21         | t              |               1 |             6 |                2 |                 0 | COMMITTED   |               4070 | [ts]
-       5 | {myGroup1,myGroup2} | Mark1B         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               4085 | [ts]
-       6 | {myGroup1,myGroup2} | Mark1B         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               4093 | [ts]
-       7 | {myGroup1,myGroup2} | Mark1B         | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               4101 | [ts]
-       8 | {myGroup1,myGroup2} | Mark1B         | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               4114 | [ts]
-       9 | {myGroup1}          | Mark12         | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               4155 | [ts]
-      10 | {myGroup1}          | Mark11         | f              |               1 |             5 |                1 |                 3 | COMMITTED   |               4167 | [ts]
-      11 | {myGroup1}          | Mark12         | t              |               1 |             5 |                1 |                 2 | COMMITTED   |               4203 | [ts]
-      12 | {myGroup1}          | Mark11         | t              |               1 |             5 |                1 |                 5 | COMMITTED   |               4218 | [ts]
-      13 | {myGroup1}          | Mark13         | f              |               1 |             5 |                1 |                 5 | COMMITTED   |               4240 | [ts]
-      14 | {myGroup4}          | mark1          | t              |               1 |             3 |                0 |                 3 | COMMITTED   |               4273 | [ts]
-      15 | {myGroup4}          | myGroup4_start | f              |               1 |             3 |                0 |                 3 | COMMITTED   |               4289 | [ts]
-      16 | {myGroup4}          | myGroup4_start | f              |               1 |             3 |                0 |                 0 | ABORTED     |               4304 | [ts]
+ rlbk_id |     rlbk_groups     |   rlbk_mark    | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | end_datetime |                         rlbk_msg                          
+---------+---------------------+----------------+----------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------+-----------------------------------------------------------
+       1 | {myGroup1}          | Different_Mark | f              |               1 |             5 |                1 |                 0 | COMMITTED   |               4046 | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+       2 | {myGroup2}          | Mark21         | f              |               1 |             6 |                2 |                 0 | COMMITTED   |               4052 | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+       3 | {myGroup1}          | Different_Mark | t              |               1 |             5 |                1 |                 0 | COMMITTED   |               4060 | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+       4 | {myGroup2}          | Mark21         | t              |               1 |             6 |                2 |                 0 | COMMITTED   |               4070 | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+       5 | {myGroup1,myGroup2} | Mark1B         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               4085 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+       6 | {myGroup1,myGroup2} | Mark1B         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               4093 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+       7 | {myGroup1,myGroup2} | Mark1B         | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               4101 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+       8 | {myGroup1,myGroup2} | Mark1B         | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               4114 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+       9 | {myGroup1}          | Mark12         | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               4155 | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      10 | {myGroup1}          | Mark11         | f              |               1 |             5 |                1 |                 3 | COMMITTED   |               4167 | [ts]         | Completed: 3 tables and 1 sequences effectively processed
+      11 | {myGroup1}          | Mark12         | t              |               1 |             5 |                1 |                 2 | COMMITTED   |               4203 | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      12 | {myGroup1}          | Mark11         | t              |               1 |             5 |                1 |                 5 | COMMITTED   |               4218 | [ts]         | Completed: 5 tables and 1 sequences effectively processed
+      13 | {myGroup1}          | Mark13         | f              |               1 |             5 |                1 |                 5 | COMMITTED   |               4240 | [ts]         | Completed: 5 tables and 1 sequences effectively processed
+      14 | {myGroup4}          | mark1          | t              |               1 |             3 |                0 |                 3 | COMMITTED   |               4273 | [ts]         | Completed: 3 tables and 0 sequences effectively processed
+      15 | {myGroup4}          | myGroup4_start | f              |               1 |             3 |                0 |                 3 | COMMITTED   |               4289 | [ts]         | Completed: 3 tables and 0 sequences effectively processed
+      16 | {myGroup4}          | myGroup4_start | f              |               1 |             3 |                0 |                 0 | ABORTED     |               4304 | [ts]         | Completed: 0 tables and 0 sequences effectively processed
 (16 rows)
 
 select rlbs_rlbk_id, rlbs_session, 

@@ -534,7 +534,8 @@ CREATE TABLE emaj.emaj_rlbk (
                                                          --   used to know if the rollback has been committed or not
     rlbk_start_datetime       TIMESTAMPTZ ,              -- clock timestamp of the rollback BEGIN event in emaj_hist
     rlbk_end_datetime         TIMESTAMPTZ,               -- clock time the rollback has been completed, 
-		                                                 --   NULL if rollback is in progress or aborted
+                                                         --   NULL if rollback is in progress or aborted
+    rlbk_msg                  TEXT,                      -- result message
     PRIMARY KEY (rlbk_id)
     );
 COMMENT ON TABLE emaj.emaj_rlbk IS
@@ -774,9 +775,11 @@ $_dblink_open_cnx$
         END;
       END IF;
     END IF;
--- record the dblink connection attempt in the emaj_hist table
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('DBLINK','OPEN CNX',v_cnxName,'Status = ' || v_status);
+-- for emaj* connection, record the dblink connection attempt in the emaj_hist table
+    IF substring(v_cnxName from 1 for 4) = 'emaj' THEN 
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('DBLINK','OPEN CNX',v_cnxName,'Status = ' || v_status);
+    END IF;
     RETURN v_status;
   END;
 $_dblink_open_cnx$;
@@ -809,9 +812,11 @@ $_dblink_close_cnx$
     IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
 -- the emaj connection exists, so disconnect
       PERFORM dblink_disconnect(v_cnxName);
--- and record the dblink disconnection in the emaj_hist table
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-        VALUES ('DBLINK','CLOSE CNX',v_cnxName);
+-- for emaj* connection, record the dblink disconnection in the emaj_hist table 
+      IF substring(v_cnxName from 1 for 4) = 'emaj' THEN 
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+          VALUES ('DBLINK','CLOSE CNX',v_cnxName);
+      END IF;
     END IF;
     RETURN;
   END;
@@ -1528,7 +1533,7 @@ $_delete_log_tbl$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_isLoggedRlbk BOOLEAN, v_lastSequenceId BIGINT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_seq$
--- This function rollbacks one sequence to a given mark
+-- This function rollbacks one application sequence to a given mark
 -- The function is called by emaj.emaj._rlbk_end()
 -- Input: schema name and table name, mark, boolean indicating whether the rollback is logged
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it is not the owner of the application sequence.
@@ -4286,12 +4291,20 @@ $_rlbk_session_lock$
       END;
     END LOOP;
     IF NOT v_ok THEN
-      RAISE EXCEPTION '_rlbk_session_lock: too many (5) deadlocks encountered while locking tables of group %.',v_groupName;
+      PERFORM emaj._rlbk_error(v_rlbkId, '_rlbk_session_lock: too many (5) deadlocks encountered while locking tables', 'emaj#'||v_session);
+      RAISE EXCEPTION '_rlbk_session_lock: too many (5) deadlocks encountered while locking tables for groups %.',array_to_string(v_groupNames,',');
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('LOCK_GROUP', 'END', array_to_string(v_groupNames,','), 'Rollback session #' || v_session || ': ' || v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
     RETURN;
+-- TODO: trap and record exception during the rollback operation when pg 8.3 will not be supported any more
+--  EXCEPTION
+--    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+--      RAISE;
+--    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+--      PERFORM emaj._rlbk_error(v_rlbkId, SQLERRM, 'emaj#'||v_session);
+--      RAISE;
   END;
 $_rlbk_session_lock$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_start_mark(v_rlbkId BIGINT, v_multiGroup BOOLEAN)
@@ -4310,8 +4323,8 @@ $_rlbk_start_mark$
     v_isLoggedRlbk          BOOLEAN;
     v_markDatetime          TIMESTAMPTZ;
     v_markLastSeqHoleId     BIGINT;
-    v_i                     INT;
     v_markName              TEXT;
+    v_errorMsg              TEXT;
   BEGIN
 -- get the rollack characteristics for the emaj_rlbk
     v_stmt = 'SELECT rlbk_groups, rlbk_mark, rlbk_is_logged FROM emaj.emaj_rlbk WHERE rlbk_id = ' || v_rlbkId;
@@ -4341,7 +4354,9 @@ $_rlbk_start_mark$
                     ) AS t
       WHERE emaj._log_stat_tbl(rel_schema, rel_tblseq, rel_log_schema, v_markDatetime, NULL, v_markLastSeqHoleId, NULL) > 0;
     IF FOUND THEN
-      RAISE EXCEPTION '_rlbk_start_mark: The rollback operation has been cancelled due to concurrent activity on tables to process. Please retry.';
+      v_errorMsg = 'The rollback operation has been cancelled due to concurrent activity at E-Maj rollback planning time on tables to process.';
+      PERFORM emaj._rlbk_error(v_rlbkId, v_errorMsg, 'emaj#1');
+      RAISE EXCEPTION '_rlbk_start_mark: % Please retry.', v_errorMsg;
     END IF;
     IF v_isLoggedRlbk THEN
 -- If rollback is "logged" rollback, build a mark name with the pattern:
@@ -4359,6 +4374,13 @@ $_rlbk_start_mark$
       EXECUTE v_stmt;
     END IF;
     RETURN;
+-- TODO: trap and record exception during the rollback operation when pg 8.3 will not be supported any more
+--  EXCEPTION
+--    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+--      RAISE;
+--    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+--      PERFORM emaj._rlbk_error(v_rlbkId, SQLERRM, 'emaj#1');
+--      RAISE;
   END;
 $_rlbk_start_mark$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(v_rlbkId BIGINT, v_session INT)
@@ -4506,6 +4528,13 @@ $_rlbk_session_exec$
       EXECUTE v_stmt;
     END IF;
     RETURN v_effNbTable;
+-- TODO: trap and record exception during the rollback operation when pg 8.3 will not be supported any more
+--  EXCEPTION
+--    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+--      RAISE;
+--    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+--      PERFORM emaj._rlbk_error(v_rlbkId, SQLERRM, 'emaj#'||v_session);
+--      RAISE;
   END;
 $_rlbk_session_exec$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_end(v_rlbkId BIGINT, v_multiGroup BOOLEAN)
@@ -4630,22 +4659,50 @@ $_rlbk_end$
               array_to_string(v_groupNames,','), 
               'Rollback_id ' || v_rlbkId || ', ' || v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed'
              ) RETURNING hist_datetime INTO v_histDateTime;
--- update the emaj_rlbk table to set the real number of tables to process and adjust the rollback status
+-- update the emaj_rlbk table to set the real number of tables to process, adjust the rollback status and set the result message
     IF v_isDblinkUsable THEN
 -- ... either through dblink if possible
-      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMPLETED'' , rlbk_end_datetime = ' || 
-               quote_literal(v_histDateTime) || ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMPLETED'', rlbk_end_datetime = ' || 
+               quote_literal(v_histDateTime) || ', rlbk_msg = ''Completed: ' ||
+               v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed''' ||
+               ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
       PERFORM 0 FROM dblink('emaj#1',v_stmt) AS (dummy INT);
 --     and then close the connection
       PERFORM emaj._dblink_close_cnx('emaj#1');
     ELSE
 -- ... or directly (the status can be directly set to committed, the update being in the same transaction) 
-      EXECUTE 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMMITTED'' , rlbk_end_datetime = ' || 
-               quote_literal(v_histDateTime) || ' WHERE rlbk_id = ' || v_rlbkId;
+      EXECUTE 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMMITTED'', rlbk_end_datetime = ' || 
+               quote_literal(v_histDateTime) || ', rlbk_msg = ''Completed: ' ||
+               v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed''' ||
+               ' WHERE rlbk_id = ' || v_rlbkId;
     END IF;
     RETURN v_nbSeq;
+-- TODO: trap and record exception during the rollback operation when pg 8.3 will not be supported any more
+--  EXCEPTION
+--    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+--      RAISE;
+--    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+--      PERFORM emaj._rlbk_error(v_rlbkId, SQLERRM, 'emaj#1');
+--      RAISE;
   END;
 $_rlbk_end$;
+CREATE OR REPLACE FUNCTION emaj._rlbk_error(v_rlbkId BIGINT, v_msg TEXT, v_cnxName TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_rlbk_error$
+-- This function records a rollback error into the emaj_rlbk table, but only if a dblink connection is open
+-- Input: rollback identifier, message to record and the dblink connection name to use
+  DECLARE
+    v_stmt              TEXT;
+    v_isDblinkUsable    BOOLEAN := false;
+  BEGIN
+    IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_msg = ' || quote_literal(v_msg) || 
+               ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
+      PERFORM 0 FROM dblink(v_cnxName,v_stmt) AS (dummy INT);
+    END IF;
+    RETURN;
+  END;
+$_rlbk_error$;
 CREATE OR REPLACE FUNCTION emaj.emaj_cleanup_rollback_state()
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $emaj_cleanup_rollback_state$
@@ -6268,6 +6325,7 @@ REVOKE ALL ON FUNCTION emaj._rlbk_session_exec(v_rlbkId BIGINT, v_session INT) F
 REVOKE ALL ON FUNCTION emaj._rlbk_session_lock(v_rlbkId BIGINT, v_session INT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_start_mark(v_rlbkId BIGINT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_end(v_rlbkId BIGINT, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_error(v_rlbkId BIGINT,v_msg TEXT, v_cnxName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_cleanup_rollback_state() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._reset_group(v_groupName TEXT) FROM PUBLIC;
@@ -6357,6 +6415,7 @@ GRANT EXECUTE ON FUNCTION emaj._rlbk_session_exec(v_rlbkId BIGINT, v_session INT
 GRANT EXECUTE ON FUNCTION emaj._rlbk_session_lock(v_rlbkId BIGINT, v_session INT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_start_mark(v_rlbkId BIGINT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_end(v_rlbkId BIGINT, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_error(v_rlbkId BIGINT,v_msg TEXT, v_cnxName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._reset_group(v_groupName TEXT) TO emaj_adm;
@@ -6697,6 +6756,7 @@ Tablespace: "tspemaj"
  rlbk_begin_hist_id  | bigint                   | 
  rlbk_start_datetime | timestamp with time zone | 
  rlbk_end_datetime   | timestamp with time zone | 
+ rlbk_msg            | text                     | 
 Indexes:
     "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id), tablespace "tspemaj"
     "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum]), tablespace "tspemaj"
@@ -6929,7 +6989,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    88
+    89
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 

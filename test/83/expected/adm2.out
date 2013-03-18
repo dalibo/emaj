@@ -1578,27 +1578,27 @@ select emaj.emaj_cleanup_rollback_state();
 -- check rollback related tables
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, 
-       case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
+       case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_msg
   from emaj.emaj_rlbk order by rlbk_id;
- rlbk_id |      rlbk_groups      |    rlbk_mark    | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | end_datetime 
----------+-----------------------+-----------------+----------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------
-      17 | {myGroup2}            | M2              | t              |               1 |             6 |                2 |                 3 | COMMITTED   |               6066 | [ts]
-      18 | {myGroup2}            | M3              | t              |               1 |             6 |                2 |                 3 | COMMITTED   |               6083 | [ts]
-      19 | {myGroup1}            | M2              | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               6100 | [ts]
-      20 | {myGroup2}            | M2              | t              |               1 |             6 |                2 |                 3 | COMMITTED   |               6125 | [ts]
-      21 | {myGroup2}            | M3              | f              |               1 |             6 |                2 |                 3 | COMMITTED   |               6143 | [ts]
-      22 | {myGroup1}            | M5              | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               6163 | [ts]
-      23 | {myGroup1}            | M4              | t              |               1 |             5 |                1 |                 3 | COMMITTED   |               6175 | [ts]
-      24 | {myGroup1,myGroup2}   | Multi-1         | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               6223 | [ts]
-      25 | {myGroup1,myGroup2}   | Multi-2         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               6236 | [ts]
-      26 | {myGroup1,myGroup2}   | Multi-1         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               6249 | [ts]
-      27 | {myGroup2}            | Multi-2         | f              |               1 |             6 |                2 |                 0 | COMMITTED   |               6282 | [ts]
-      28 | {"phil's group#3\","} | phil's mark #3  | t              |               1 |             2 |                2 |                 0 | COMMITTED   |               6358 | [ts]
-      29 | {"phil's group#3\","} | phil's mark #3  | f              |               1 |             2 |                2 |                 0 | COMMITTED   |               6370 | [ts]
-      30 | {myGroup1}            | Multi-1         | f              |               1 |             5 |                1 |                 1 | COMMITTED   |               6380 | [ts]
-      31 | {myGroup1}            | Multi-1         | f              |               1 |             5 |                1 |                 0 | ABORTED     |               6401 | [ts]
-      32 | {myGroup2}            | Multi-1         | f              |               1 |             6 |                2 |                 2 | ABORTED     |               6408 | [ts]
-      33 | {"phil's group#3\","} | M1_rollbackable | f              |               1 |             2 |                2 |                 2 | ABORTED     |               6420 | [ts]
+ rlbk_id |      rlbk_groups      |    rlbk_mark    | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | end_datetime |                         rlbk_msg                          
+---------+-----------------------+-----------------+----------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------+-----------------------------------------------------------
+      17 | {myGroup2}            | M2              | t              |               1 |             6 |                2 |                 3 | COMMITTED   |               6066 | [ts]         | Completed: 3 tables and 2 sequences effectively processed
+      18 | {myGroup2}            | M3              | t              |               1 |             6 |                2 |                 3 | COMMITTED   |               6083 | [ts]         | Completed: 3 tables and 2 sequences effectively processed
+      19 | {myGroup1}            | M2              | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               6100 | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      20 | {myGroup2}            | M2              | t              |               1 |             6 |                2 |                 3 | COMMITTED   |               6125 | [ts]         | Completed: 3 tables and 2 sequences effectively processed
+      21 | {myGroup2}            | M3              | f              |               1 |             6 |                2 |                 3 | COMMITTED   |               6143 | [ts]         | Completed: 3 tables and 2 sequences effectively processed
+      22 | {myGroup1}            | M5              | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               6163 | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      23 | {myGroup1}            | M4              | t              |               1 |             5 |                1 |                 3 | COMMITTED   |               6175 | [ts]         | Completed: 3 tables and 1 sequences effectively processed
+      24 | {myGroup1,myGroup2}   | Multi-1         | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               6223 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+      25 | {myGroup1,myGroup2}   | Multi-2         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               6236 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+      26 | {myGroup1,myGroup2}   | Multi-1         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               6249 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+      27 | {myGroup2}            | Multi-2         | f              |               1 |             6 |                2 |                 0 | COMMITTED   |               6282 | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+      28 | {"phil's group#3\","} | phil's mark #3  | t              |               1 |             2 |                2 |                 0 | COMMITTED   |               6358 | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+      29 | {"phil's group#3\","} | phil's mark #3  | f              |               1 |             2 |                2 |                 0 | COMMITTED   |               6370 | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+      30 | {myGroup1}            | Multi-1         | f              |               1 |             5 |                1 |                 1 | COMMITTED   |               6380 | [ts]         | Completed: 1 tables and 1 sequences effectively processed
+      31 | {myGroup1}            | Multi-1         | f              |               1 |             5 |                1 |                 0 | ABORTED     |               6401 | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+      32 | {myGroup2}            | Multi-1         | f              |               1 |             6 |                2 |                 2 | ABORTED     |               6408 | [ts]         | Completed: 2 tables and 2 sequences effectively processed
+      33 | {"phil's group#3\","} | M1_rollbackable | f              |               1 |             2 |                2 |                 2 | ABORTED     |               6420 | [ts]         | Completed: 2 tables and 2 sequences effectively processed
 (17 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
