@@ -3617,7 +3617,7 @@ $_rlbk_groups$
 -- It is called by emaj_rollback_group.
 -- It effectively manages the rollback operation for each table or sequence, deleting rows from log tables
 -- only when asked by the calling functions.
--- Its activity is split into 6 smaller functions that are also called by the parallel restore php function
+-- Its activity is split into smaller functions that are also called by the parallel restore php function
 -- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group
 --        and a boolean saying if the rollback is a logged rollback
 -- Output: number of tables and sequences effectively processed
@@ -3643,6 +3643,22 @@ $_rlbk_groups$
     RETURN v_nbTbl + v_nbSeq;
   END;
 $_rlbk_groups$;
+CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId BIGINT, v_multiGroup BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql AS
+$_rlbk_async$
+-- The function calls the main rollback functions following the initialisation phase.
+-- It is only called by the phpPgAdmin plugin, in an asynchronous way, so that the rollback can be then monitored by the client.
+-- Input: rollback identifier and a boolean saying if the rollback is a logged rollback
+  DECLARE
+  BEGIN
+-- simply chain the internal functions
+    PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
+    PERFORM emaj._rlbk_start_mark(v_rlbkId, v_multiGroup);
+    PERFORM emaj._rlbk_session_exec(v_rlbkId, 1);
+    PERFORM emaj._rlbk_end(v_rlbkId, v_multiGroup);
+    RETURN;
+  END;
+$_rlbk_async$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_rlbk_init$
@@ -6317,6 +6333,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEX
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_async(v_rlbkId BIGINT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbsession INT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT) FROM PUBLIC;
@@ -6407,6 +6424,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark 
 GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_async(v_rlbkId BIGINT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT) TO emaj_adm;
@@ -6956,7 +6974,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    89
+    90
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 

@@ -320,7 +320,13 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_myt
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mytblc1_log;
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mytblc2_log;
 
-select emaj.emaj_rollback_group('myGroup4','myGroup4_start');
+-- use the functions dedicated to the ppa plugin
+-- for an equivalent of "select emaj.emaj_rollback_group('myGroup4','myGroup4_start');"
+select emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false), false);
+-- and check the result
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+       rlbk_eff_nb_table, rlbk_status, rlbk_msg
+ from emaj.emaj_rlbk order by rlbk_id desc limit 1; 
 
 -----------------------------
 -- test emaj_cleanup_rollback_state()
