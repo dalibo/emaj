@@ -25,7 +25,7 @@ select count(*) from emaj.emaj_hist;
 select count(*) from emaj.emaj_group_def;
  count 
 -------
-    25
+    27
 (1 row)
 
 select count(*) from emaj.emaj_group;

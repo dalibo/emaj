@@ -764,33 +764,75 @@ $_check_names_array$
   END;
 $_check_names_array$;
 
-CREATE OR REPLACE FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT)
-RETURNS TEXT LANGUAGE plpgsql AS
-$_check_class$
--- This function verifies that an application table or sequence exists in pg_class
--- It also protects from a recursive use : tables or sequences from emaj schema cannot be managed by EMAJ
--- Input: the names of the schema and the class (table or sequence)
--- Output: the relkind of the class : 'r' for a table and 's' for a sequence
--- If the schema or the class is not known, the function stops.
+CREATE OR REPLACE FUNCTION emaj._check_group_content(v_groupName TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_check_group_content$
+-- This function verifies that the content of tables group as defined into the emaj_group_def table is correct.
+-- It is called by emaj_create_group() and emaj_alter_group() functions.
+-- It checks that the referenced application tables and sequences,
+--  - exist,
+--  - is not located into an E-Maj schema (to protect against an E-Maj recursive use),
+--  - do not already belong to another tables group. 
+-- Input: the name of the tables group to check
   DECLARE
-    v_relKind      TEXT;
-    v_schemaOid    OID;
+    v_msg          TEXT := '';
+    r_tblsq        RECORD;
   BEGIN
-    IF v_schemaName = 'emaj' THEN
-      RAISE EXCEPTION '_check_class: object from schema % cannot be managed by EMAJ.', v_schemaName;
+-- check that all application tables and sequences listed for the group really exist
+    FOR r_tblsq IN
+      SELECT grpdef_schema || '.' || grpdef_tblseq AS full_name 
+        FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName
+      EXCEPT
+      SELECT nspname || '.' || relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace 
+        WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S')
+      ORDER BY 1
+      LOOP
+      IF v_msg <> '' THEN
+        v_msg = v_msg || ', ';
+      END IF;
+      v_msg = v_msg || r_tblsq.full_name;
+    END LOOP;
+    IF v_msg <> '' THEN
+      RAISE EXCEPTION '_check_group_content: one or several tables or sequences do not exist (%).', v_msg;
     END IF;
-    SELECT oid INTO v_schemaOid FROM pg_catalog.pg_namespace WHERE nspname = v_schemaName;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION '_check_class: schema % doesn''t exist.', v_schemaName;
+-- check no application schema listed for the group in the emaj_group_def table is an E-Maj schema
+    FOR r_tblsq IN
+      SELECT grpdef_schema || '.' || grpdef_tblseq AS full_name 
+        FROM emaj.emaj_group_def
+        WHERE grpdef_group = v_groupName
+          AND grpdef_schema IN (
+                SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
+                UNION
+                SELECT 'emaj')
+        ORDER BY 1
+      LOOP
+      IF v_msg <> '' THEN
+        v_msg = v_msg || ', ';
+      END IF;
+      v_msg = v_msg || r_tblsq.full_name;
+    END LOOP;
+    IF v_msg <> '' THEN
+      RAISE EXCEPTION '_check_group_content: one or several tables or sequences belong to an E-Maj schema (%).', v_msg;
     END IF;
-    SELECT relkind INTO v_relKind FROM pg_catalog.pg_class
-      WHERE relnamespace = v_schemaOid AND relname = v_className AND relkind IN ('r','S');
-    IF NOT FOUND THEN
-      RAISE EXCEPTION '_check_class: table or sequence % doesn''t exist.', v_className;
+-- check that no table or sequence of the new group already belongs to another created group
+    FOR r_tblsq IN
+        SELECT grpdef_schema || '.' || grpdef_tblseq || ' in ' || rel_group AS full_name
+          FROM emaj.emaj_group_def, emaj.emaj_relation
+          WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
+            AND grpdef_group = v_groupName AND rel_group <> v_groupName
+        ORDER BY 1
+      LOOP
+      IF v_msg <> '' THEN
+        v_msg = v_msg || ', ';
+      END IF;
+      v_msg = v_msg || r_tblsq.full_name;
+    END LOOP;
+    IF v_msg <> '' THEN
+      RAISE EXCEPTION '_check_group_content: one or several tables already belong to another group (%).', v_msg;
     END IF;
-    RETURN v_relKind;
+    RETURN;
   END;
-$_check_class$;
+$_check_group_content$;
 
 CREATE OR REPLACE FUNCTION emaj._check_new_mark(v_mark TEXT, v_groupNames TEXT[])
 RETURNS TEXT LANGUAGE plpgsql AS
@@ -1964,7 +2006,6 @@ $emaj_create_group$
     v_schemaPrefix  TEXT := 'emaj';
     v_logSchema     TEXT;
     v_msg           TEXT;
-    v_relkind       TEXT;
     v_logDatTsp     TEXT;
     v_logIdxTsp     TEXT;
     v_defTsp        TEXT;
@@ -1977,11 +2018,8 @@ $emaj_create_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('CREATE_GROUP', 'BEGIN', v_groupName, CASE WHEN v_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
 -- check that the group name is valid
-    IF v_groupName IS NULL THEN
-      RAISE EXCEPTION 'emaj_create_group: group name can''t be NULL.';
-    END IF;
-    IF v_groupName = '' THEN
-      RAISE EXCEPTION 'emaj_create_group: group name must at least contain 1 character.';
+    IF v_groupName IS NULL OR v_groupName = ''THEN
+      RAISE EXCEPTION 'emaj_create_group: group name can''t be NULL or empty.';
     END IF;
 -- check the group is known in emaj_group_def table
     PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
@@ -1993,20 +2031,8 @@ $emaj_create_group$
     IF FOUND THEN
       RAISE EXCEPTION 'emaj_create_group: group % is already created.', v_groupName;
     END IF;
--- check that no table or sequence of the new group already belongs to another created group
-    v_msg = '';
-    FOR r_tblsq IN
-        SELECT grpdef_schema, grpdef_tblseq, rel_group FROM emaj.emaj_group_def, emaj.emaj_relation
-          WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq AND grpdef_group = v_groupName
-      LOOP
-      IF v_msg <> '' THEN
-        v_msg = v_msg || ', ';
-      END IF;
-      v_msg = v_msg || r_tblsq.grpdef_schema || '.' || r_tblsq.grpdef_tblseq || ' in ' || r_tblsq.rel_group;
-    END LOOP;
-    IF v_msg <> '' THEN
-      RAISE EXCEPTION 'emaj_create_group: one or several tables already belong to another group (%).', v_msg;
-    END IF;
+-- performs various checks on the group's content described in the emaj_group_def table
+    PERFORM emaj._check_group_content(v_groupName);
 -- OK, insert group row in the emaj_group table
     INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable) 
       VALUES (v_groupName, FALSE,v_isRollbackable);
@@ -2029,23 +2055,24 @@ $emaj_create_group$
     SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
 -- scan all classes of the group (in priority order, NULLS being processed last)
     FOR r_tblsq IN
-        SELECT grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
-          FROM emaj.emaj_group_def
+        SELECT grpdef_priority, grpdef_schema, grpdef_tblseq, relkind, 
+               grpdef_log_schema_suffix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
           WHERE grpdef_group = v_groupName
+            AND relnamespace = pg_namespace.oid
+            AND nspname = grpdef_schema AND relname = grpdef_tblseq
           ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
         LOOP
--- check the class is valid
-      v_relkind = emaj._check_class(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq);
-      IF v_relkind = 'r' THEN
+      IF r_tblsq.relkind = 'r' THEN
 -- if it is a table, build the log schema name
         v_logSchema = coalesce(v_schemaPrefix || r_tblsq.grpdef_log_schema_suffix, v_emajSchema);
 -- create the related emaj objects
         PERFORM emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable);
 -- and record the table in the emaj_relation table
         INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind)
-            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_relkind);
+            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), 'r');
         v_nbTbl = v_nbTbl + 1;
-      ELSEIF v_relkind = 'S' THEN
+      ELSEIF r_tblsq.relkind = 'S' THEN
 -- if it is a sequence, check no log schema has been set as parameter in the emaj_group_def table
         IF r_tblsq.grpdef_log_schema_suffix IS NOT NULL THEN
           RAISE EXCEPTION 'emaj_create_group: Defining a secondary log schema is not allowed for a sequence (%.%).', r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq;
@@ -2058,7 +2085,7 @@ $emaj_create_group$
         PERFORM emaj._create_seq(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName);
 --   and record it in the emaj_relation table
         INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
-            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_relkind);
+            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, 'S');
         v_nbSeq = v_nbSeq + 1;
       END IF;
     END LOOP;
@@ -2236,7 +2263,6 @@ $emaj_alter_group$
     v_logSchema         TEXT;
     v_logSchemasArray   TEXT[];
     v_msg               TEXT;
-    v_relkind           TEXT;
     v_logDatTsp         TEXT;
     v_logIdxTsp         TEXT;
     v_defTsp            TEXT;
@@ -2264,21 +2290,8 @@ $emaj_alter_group$
     IF NOT FOUND THEN
        RAISE EXCEPTION 'emaj_alter_group: Group % is unknown in emaj_group_def table.', v_groupName;
     END IF;
--- check that no table or sequence of the new group already belongs to another created group
-    v_msg = '';
-    FOR r_tblsq IN
-        SELECT grpdef_schema, grpdef_tblseq, rel_group FROM emaj.emaj_group_def, emaj.emaj_relation
-          WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
-            AND grpdef_group = v_groupName AND rel_group <> v_groupName
-      LOOP
-      IF v_msg <> '' THEN
-        v_msg = v_msg || ', ';
-      END IF;
-      v_msg = v_msg || r_tblsq.grpdef_schema || '.' || r_tblsq.grpdef_tblseq || ' in ' || r_tblsq.rel_group;
-    END LOOP;
-    IF v_msg <> '' THEN
-      RAISE EXCEPTION 'emaj_alter_group: one or several tables already belong to another group (%).', v_msg;
-    END IF;
+-- performs various checks on the group's content described in the emaj_group_def table
+    PERFORM emaj._check_group_content(v_groupName);
 -- define the default tablespace, NULL if tspemaj tablespace doesn't exist
     SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
 -- OK, we can now process:
@@ -2401,27 +2414,27 @@ $emaj_alter_group$
 --
 -- list new relations in the tables group (really new or intentionaly dropped in the preceeding steps)
     FOR r_tblsq IN
-      SELECT grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
-        FROM emaj.emaj_group_def
+      SELECT grpdef_priority, grpdef_schema, grpdef_tblseq, relkind,
+             grpdef_log_schema_suffix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE grpdef_group = v_groupName
           AND (grpdef_schema, grpdef_tblseq) NOT IN (
               SELECT rel_schema, rel_tblseq
                 FROM emaj.emaj_relation
                 WHERE rel_group = v_groupName)
+          AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
       ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
       LOOP
 --
--- check the class is valid
-      v_relkind = emaj._check_class(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq);
-      IF v_relkind = 'r' THEN
+      IF r_tblsq.relkind = 'r' THEN
 -- if it is a table, build the log schema name
         v_logSchema = coalesce(v_schemaPrefix ||  r_tblsq.grpdef_log_schema_suffix, v_emajSchema);
 -- create the related emaj objects
         PERFORM emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable);
 -- and record the table in the emaj_relation table
         INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind)
-            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_relkind);
-      ELSEIF v_relkind = 'S' THEN
+            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), 'r');
+      ELSEIF r_tblsq.relkind = 'S' THEN
 -- if it is a sequence, check no log schema has been set as parameter in the emaj_group_def table
         IF r_tblsq.grpdef_log_schema_suffix IS NOT NULL THEN
           RAISE EXCEPTION 'emaj_alter_group: Defining a secondary log schema is not allowed for a sequence (%.%).', r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq;
@@ -2434,7 +2447,7 @@ $emaj_alter_group$
         PERFORM emaj._create_seq(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName);
 --   and record it in the emaj_relation table
         INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
-            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, v_relkind);
+            VALUES (r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName, r_tblsq.grpdef_priority, 'S');
       END IF;
       v_nbCreate = v_nbCreate + 1;
     END LOOP;
@@ -6232,7 +6245,7 @@ REVOKE ALL ON FUNCTION emaj._get_mark_name(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_names_array(v_groupNames TEXT[], v_type TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._check_group_content(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_truncate_fnct() FROM PUBLIC;
@@ -6324,7 +6337,7 @@ GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_names_array(v_groupNames TEXT[], v_type TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._check_group_content(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_truncate_fnct() TO emaj_adm;
@@ -6413,7 +6426,6 @@ GRANT EXECUTE ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) TO emaj_vie
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._build_log_seq_name(TEXT, TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;

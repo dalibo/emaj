@@ -33,7 +33,9 @@ insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc1');
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc2');
 
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
-insert into emaj.emaj_group_def values ('dummyGrp2','myschema1','dummyTable');
+insert into emaj.emaj_group_def values ('dummyGrp1','myschema1','dummyTable');
+insert into emaj.emaj_group_def values ('dummyGrp2','emaj','emaj_param');
+insert into emaj.emaj_group_def values ('dummyGrp2','emajC','myschema1_myTbl3_log');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
 -----------------------------
@@ -42,18 +44,12 @@ insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
 
 -- invalid group names
 select emaj.emaj_create_group(NULL);
-select emaj.emaj_create_group('');
-select emaj.emaj_create_group(NULL,false);
 select emaj.emaj_create_group('',false);
 -- group is unknown in emaj_group_def
 select emaj.emaj_create_group('unknownGroup');
 select emaj.emaj_create_group('unknownGroup',false);
--- unknown schema in emaj_group_def
+-- unknown schema or table in emaj_group_def
 select emaj.emaj_create_group('dummyGrp1');
-select emaj.emaj_create_group('dummyGrp1',false);
--- unknown table in emaj_group_def
-select emaj.emaj_create_group('dummyGrp2');
-select emaj.emaj_create_group('dummyGrp2',false);
 -- group with a temp table
 begin;
   CREATE TEMPORARY TABLE myTempTbl (
@@ -111,6 +107,9 @@ rollback;
 -- should be OK
 select emaj.emaj_create_group('phil''s group#3",',false);
 select emaj.emaj_create_group('myGroup4');
+
+-- create a group with a table from an E-Maj secondary schema
+select emaj.emaj_create_group('dummyGrp2',false);
 
 -- create a group with a table already belonging to another group
 select emaj.emaj_create_group('dummyGrp3');

@@ -19,6 +19,7 @@ Enhancements:
     it.
   - at create_group() or alter_group() time, a check is added to be sure no 
     temporary tables and no unlogged tables are recorded into tables groups.
+    Some other tests on tables groups content have been enforced too.
   - the default value of the 'history_retention' parameter is now 1 year 
     (previously 1 month).
   - a new emaj_gen_sql_groups() function generates a sql script replaying
