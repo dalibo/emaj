@@ -496,15 +496,20 @@ INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version'
 -- The history_retention parameter defines the time interval when a row remains in the emaj history and rollback tables - default is 1 year
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 year'::interval);
 
--- 4 parameters are used by the emaj_estimate_rollback_group(s) functions as default values to compute the approximate duration of a rollback operation.
+-- 6 parameters are used by the emaj_estimate_rollback_group(s) and the rollback functions as default values to compute the approximate duration of a rollback operation.
 -- The avg_row_rollback_duration parameter defines the average duration needed to rollback a row.
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','100 microsecond'::interval);
 -- The avg_row_delete_log_duration parameter defines the average duration needed to delete log rows.
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','10 microsecond'::interval);
 -- The avg_fkey_check_duration parameter defines the average duration needed to check a foreign key.
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_fkey_check_duration','20 microsecond'::interval);
+-- The fixed_step_rollback_duration parameter defines the fixed cost for any elementary rollback step
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_step_rollback_duration','2.5 millisecond'::interval);
 -- The fixed_table_rollback_duration parameter defines the fixed rollback cost for any table or sequence belonging to a group
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','5 millisecond'::interval);
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1 millisecond'::interval);
+-- The fixed_dblink_rollback_duration parameter defines the fixed cost of dblink use for any rollback step
+--   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','1 millisecond'::interval);
+
 ------------------------------------
 --                                --
 -- Low level Functions            --
@@ -3723,11 +3728,14 @@ $_rlbk_planning$
     v_checks                INT;
     v_estim_duration        INTERVAL;
     v_estim_method          INT;
+    v_estim_dropfk_duration INTERVAL;
+    v_estim_dropfk_method   INT;
+    v_estim_setfkdef_duration INTERVAL;
+    v_estim_setfkdef_method INT;
     v_avg_row_rlbk          INTERVAL;
     v_avg_row_del_log       INTERVAL;
     v_avg_fkey_check        INTERVAL;
-    v_fixed_table_rlbk      INTERVAL;
-    v_fixed_table_with_rlbk INTERVAL;
+    v_fixed_step_rlbk       INTERVAL;
     v_sessionLoad           INTERVAL[];
     v_minSession            INT;
     v_minDuration           INTERVAL;
@@ -3751,6 +3759,17 @@ $_rlbk_planning$
     SELECT mark_datetime, mark_last_seq_hole_id INTO v_markDatetime, v_markLastSeqHoleId 
       FROM emaj.emaj_mark
       WHERE mark_group = v_groupNames[1] AND mark_name = v_mark;
+-- get all duration parameters that will be needed later from the emaj_param table,
+--   or get default values for rows that are not present in emaj_param table
+    SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'avg_row_rollback_duration'),'100 microsecond'::interval),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'avg_row_delete_log_duration'),'10 microsecond'::interval),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'avg_fkey_check_duration'),'5 microsecond'::interval),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'fixed_step_rollback_duration'),'2.5 millisecond'::interval)
+           INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_step_rlbk;
 -- insert into emaj_rlbk_plan a row per table belonging to the tables groups to process.
     INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey)
       SELECT v_rlbkId, 'LOCK_TABLE', rel_schema, rel_tblseq, ''
@@ -3794,11 +3813,25 @@ $_rlbk_planning$
 -- and "enable log trigger" steps
 --
     IF NOT v_isLoggedRlbk THEN
+-- compute the cost for each DIS_LOG_TRG step
+--   if DIS_LOG_TRG statistics are available, compute an average cost
+      SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estim_duration FROM emaj.emaj_rlbk_stat
+        WHERE rlbt_step = 'DIS_LOG_TRG';
+      v_estim_method = 2;
+      IF v_estim_duration IS NULL THEN
+--   otherwise, use the fixed_step_rollback_duration parameter
+        v_estim_duration = v_fixed_step_rlbk;
+        v_estim_method = 3;
+      END IF;
+-- insert all DIS_LOG_TRG steps
       INSERT INTO emaj.emaj_rlbk_plan (
-          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number
-        ) SELECT v_rlbkId, 'DIS_LOG_TRG', rlbp_schema, rlbp_table, '', rlbp_batch_number
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, 
+          rlbp_estimated_duration, rlbp_estimate_method
+        ) SELECT v_rlbkId, 'DIS_LOG_TRG', rlbp_schema, rlbp_table, '', rlbp_batch_number,
+                 v_estim_duration, v_estim_method
           FROM emaj.emaj_rlbk_plan
           WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE';
+-- insert all DELETE_LOG steps. But the duration estimates will be computed later
 -- for DELETE_LOG step, compute the estimated number of log rows to delete as 4/3 * estimated number of updates 
 -- to rollback (this bets that there will be the same number of INSERT, UPDATE and DELETE verbs)
       INSERT INTO emaj.emaj_rlbk_plan (
@@ -3806,15 +3839,47 @@ $_rlbk_planning$
         ) SELECT v_rlbkId, 'DELETE_LOG', rlbp_schema, rlbp_table, '', rlbp_batch_number, rlbp_estimated_quantity * 4/3
           FROM emaj.emaj_rlbk_plan
           WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE';
+-- compute the cost for each ENA_LOG_TRG step
+--   if DIS_LOG_TRG statistics are available, compute an average cost
+      SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estim_duration FROM emaj.emaj_rlbk_stat
+        WHERE rlbt_step = 'ENA_LOG_TRG';
+      v_estim_method = 2;
+      IF v_estim_duration IS NULL THEN
+--   otherwise, use the fixed_step_rollback_duration parameter
+        v_estim_duration = v_fixed_step_rlbk;
+        v_estim_method = 3;
+      END IF;
+-- insert all ENA_LOG_TRG steps
       INSERT INTO emaj.emaj_rlbk_plan (
-          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number
-        ) SELECT v_rlbkId, 'ENA_LOG_TRG', rlbp_schema, rlbp_table, '', rlbp_batch_number
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, 
+          rlbp_estimated_duration, rlbp_estimate_method
+        ) SELECT v_rlbkId, 'ENA_LOG_TRG', rlbp_schema, rlbp_table, '', rlbp_batch_number,
+                 v_estim_duration, v_estim_method
           FROM emaj.emaj_rlbk_plan
           WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE';
     END IF;
 -- 
 -- process foreign key to define which action to perform on them
 --
+-- First compute the fixed duration estimates for each 'DROP_FK' and 'SET_FK_DEF' steps
+--   if DROP_FK statistics are available, compute an average cost
+    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estim_dropfk_duration FROM emaj.emaj_rlbk_stat
+      WHERE rlbt_step = 'DROP_FK';
+    v_estim_dropfk_method = 2;
+    IF v_estim_dropfk_duration IS NULL THEN
+--   if no statistics are available for this step, use the fixed_step_rollback_duration parameter
+      v_estim_dropfk_duration = v_fixed_step_rlbk;
+      v_estim_dropfk_method = 3;
+    END IF;
+--   if SET_FK_DEF statistics are available, compute an average cost
+    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estim_setfkdef_duration FROM emaj.emaj_rlbk_stat
+      WHERE rlbt_step = 'SET_FK_DEF';
+    v_estim_setfkdef_method = 2;
+    IF v_estim_setfkdef_duration IS NULL THEN
+--   if no statistics are available for this step, use the fixed_step_rollback_duration parameter
+      v_estim_setfkdef_duration = v_fixed_step_rlbk;
+      v_estim_setfkdef_method = 3;
+    END IF;
 -- select all foreign keys belonging to or referencing the tables to process
     FOR r_fk IN
       SELECT c.oid AS conoid, c.conname, n.nspname, t.relname, t.reltuples, pg_get_constraintdef(c.oid) AS def, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype, r.rlbp_batch_number
@@ -3838,9 +3903,11 @@ $_rlbk_planning$
       IF NOT r_fk.condeferrable OR r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
 -- non deferrable fkeys and deferrable fkeys with an action for UPDATE or DELETE other than 'no action' need to be dropped
         INSERT INTO emaj.emaj_rlbk_plan (
-          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, 
+          rlbp_estimated_duration, rlbp_estimate_method
           ) VALUES (
-          v_rlbkId, 'DROP_FK', r_fk.nspname, r_fk.relname, r_fk.conname, r_fk.rlbp_batch_number
+          v_rlbkId, 'DROP_FK', r_fk.nspname, r_fk.relname, r_fk.conname, r_fk.rlbp_batch_number,
+          v_estim_dropfk_duration, v_estim_dropfk_method
           );
         INSERT INTO emaj.emaj_rlbk_plan (
           rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_fkey_def, rlbp_estimated_quantity
@@ -3851,9 +3918,11 @@ $_rlbk_planning$
 -- other deferrable but not deferred fkeys need to be set deferred
         IF NOT r_fk.condeferred THEN
           INSERT INTO emaj.emaj_rlbk_plan (
-            rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number
+            rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, 
+            rlbp_estimated_duration, rlbp_estimate_method
             ) VALUES (
-            v_rlbkId, 'SET_FK_DEF', r_fk.nspname, r_fk.relname, r_fk.conname, r_fk.rlbp_batch_number
+            v_rlbkId, 'SET_FK_DEF', r_fk.nspname, r_fk.relname, r_fk.conname, r_fk.rlbp_batch_number,
+            v_estim_setfkdef_duration, v_estim_setfkdef_method
             );
         END IF;
 -- deferrable fkeys are recorded as 'to be set immediate at the end of the rollback operation'
@@ -3882,21 +3951,8 @@ $_rlbk_planning$
       END IF;
     END LOOP;
 --
--- Now compute the estimation duration for each step
+-- Now compute the estimation duration for each complex step ('RLBK_TABLE', 'DELETE_LOG', 'ADD_FK', 'SET_FK_IMM')
 --
--- get all needed duration parameters from emaj_param table,
---   or get default values for rows that are not present in emaj_param table
-    SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'avg_row_rollback_duration'),'100 microsecond'::interval),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'avg_row_delete_log_duration'),'10 microsecond'::interval),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'avg_fkey_check_duration'),'5 microsecond'::interval),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'fixed_table_rollback_duration'),'5 millisecond'::interval),
-           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'fixed_table_with_rollback_duration'),'2.5 millisecond'::interval)
-           INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_table_rlbk, v_fixed_table_with_rlbk;
 -- Compute the rollback duration estimates for the tables
 -- for each table with content to rollback
     FOR r_tbl IN
@@ -3919,7 +3975,7 @@ $_rlbk_planning$
         v_estim_method = 2;
         IF v_estim_duration IS NULL THEN
 -- if there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table
-          v_estim_duration = v_avg_row_rlbk * r_tbl.rlbp_estimated_quantity + v_fixed_table_rlbk;
+          v_estim_duration = v_avg_row_rlbk * r_tbl.rlbp_estimated_quantity + v_fixed_step_rlbk;
           v_estim_method = 3;
         END IF;
       END IF;
@@ -3949,7 +4005,7 @@ $_rlbk_planning$
         v_estim_method = 2;
         IF v_estim_duration IS NULL THEN
 -- if there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table
-          v_estim_duration = v_avg_row_del_log * r_tbl.rlbp_estimated_quantity + v_fixed_table_rlbk;
+          v_estim_duration = v_avg_row_del_log * r_tbl.rlbp_estimated_quantity + v_fixed_step_rlbk;
           v_estim_method = 3;
         END IF;
       END IF;
@@ -3985,7 +4041,7 @@ $_rlbk_planning$
           v_estim_method = 2;
           IF v_estim_duration IS NULL THEN
 -- definitely no statistics available, compute with the avg_fkey_check_duration parameter
-            v_estim_duration = r_fk.rlbp_estimated_quantity * v_avg_fkey_check + 2 * v_fixed_table_rlbk;
+            v_estim_duration = r_fk.rlbp_estimated_quantity * v_avg_fkey_check + v_fixed_step_rlbk;
             v_estim_method = 3;
           END IF;
         END IF;
@@ -4008,7 +4064,7 @@ $_rlbk_planning$
       v_estim_method = 2;
       IF v_estim_duration IS NULL THEN
 -- if no statistics are available for this fkey, use the avg_fkey_check parameter
-        v_estim_duration = r_fk.rlbp_estimated_quantity * v_avg_fkey_check + v_fixed_table_rlbk;
+        v_estim_duration = r_fk.rlbp_estimated_quantity * v_avg_fkey_check + v_fixed_step_rlbk;
         v_estim_method = 3;
       END IF;
       UPDATE emaj.emaj_rlbk_plan 
@@ -4016,55 +4072,6 @@ $_rlbk_planning$
         WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'SET_FK_IMM'
           AND rlbp_schema = r_fk.rlbp_schema AND rlbp_table = r_fk.rlbp_table AND rlbp_fkey = r_fk.rlbp_fkey;
     END LOOP;
--- compute the fixed costs for DIS_LOG_TRG, DROP_FK, SET_FK_DEF and ENA_LOG_TRG steps
--- if DIS_LOG_TRG statistics are available, compute an average cost
-    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estim_duration FROM emaj.emaj_rlbk_stat
-      WHERE rlbt_step = 'DIS_LOG_TRG';
-    v_estim_method = 2;
-    IF v_estim_duration IS NULL THEN
--- if no statistics are available for this step, use the fixed_table_rollback_duration parameter
-      v_estim_duration = v_fixed_table_rlbk;
-      v_estim_method = 3;
-    END IF;
-    UPDATE emaj.emaj_rlbk_plan 
-      SET rlbp_estimated_duration = v_estim_duration, rlbp_estimate_method = v_estim_method 
-      WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'DIS_LOG_TRG';
--- if DROP_FK statistics are available, compute an average cost
-    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estim_duration FROM emaj.emaj_rlbk_stat
-      WHERE rlbt_step = 'DROP_FK';
-    v_estim_method = 2;
-    IF v_estim_duration IS NULL THEN
--- if no statistics are available for this step, use the fixed_table_rollback_duration parameter
-      v_estim_duration = v_fixed_table_rlbk;
-      v_estim_method = 3;
-    END IF;
-    UPDATE emaj.emaj_rlbk_plan 
-      SET rlbp_estimated_duration = v_estim_duration, rlbp_estimate_method = v_estim_method 
-      WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'DROP_FK';
--- if SET_FK_DEF statistics are available, compute an average cost
-    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estim_duration FROM emaj.emaj_rlbk_stat
-      WHERE rlbt_step = 'SET_FK_DEF';
-    v_estim_method = 2;
-    IF v_estim_duration IS NULL THEN
--- if no statistics are available for this step, use the fixed_table_rollback_duration parameter
-      v_estim_duration = v_fixed_table_rlbk;
-      v_estim_method = 3;
-    END IF;
-    UPDATE emaj.emaj_rlbk_plan 
-      SET rlbp_estimated_duration = v_estim_duration, rlbp_estimate_method = v_estim_method 
-      WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'SET_FK_DEF';
--- if ENA_LOG_TRG statistics are available, compute an average cost
-    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estim_duration FROM emaj.emaj_rlbk_stat
-      WHERE rlbt_step = 'ENA_LOG_TRG';
-    v_estim_method = 2;
-    IF v_estim_duration IS NULL THEN
--- if no statistics are available for this step, use the fixed_table_rollback_duration parameter
-      v_estim_duration = v_fixed_table_rlbk;
-      v_estim_method = 3;
-    END IF;
-    UPDATE emaj.emaj_rlbk_plan 
-      SET rlbp_estimated_duration = v_estim_duration, rlbp_estimate_method = v_estim_method 
-      WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'ENA_LOG_TRG';
 --
 -- Allocate batch number to sessions to spread the load on sessions as best as possible
 -- 
@@ -4975,8 +4982,10 @@ $_estimate_rollback_groups$
   DECLARE
     v_markName              TEXT;
     v_fixed_table_rlbk      INTERVAL;
+    v_fixed_dblink_rlbk     INTERVAL;
     v_rlbkId                BIGINT;
     v_estimDuration         INTERVAL;
+    v_nbStep                INT;
     v_nbTblseq              INT;
 r record;
 
@@ -4994,26 +5003,28 @@ r record;
         VALUES (v_rlbkId, v_groupNames, v_mark, v_isLoggedRlbk, 1);
 -- call the _rlbk_planning function
       PERFORM emaj._rlbk_planning(v_rlbkId);
--- compute the sum of the duration estimates of all elementary steps 
-      SELECT coalesce(sum(rlbp_estimated_duration), '0 SECONDS'::INTERVAL) INTO v_estimDuration
+-- compute the sum of the duration estimates of all elementary steps, and the number of steps (except LOCK_TABLE)
+      SELECT coalesce(sum(rlbp_estimated_duration), '0 SECONDS'::INTERVAL), count(*)
+        INTO v_estimDuration, v_nbStep
         FROM emaj.emaj_rlbk_plan
-        WHERE rlbp_rlbk_id = v_rlbkId;
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step <> 'LOCK_TABLE';
 -- cancel the effect of the rollback planning
       RAISE EXCEPTION '';
     EXCEPTION
       WHEN RAISE_EXCEPTION THEN                 -- catch the raised exception and continue
     END;
--- compute the final estimated duration
--- get the "fixed_table_rollback_duration" default parameter from the emaj_param table
+-- get the "fixed_table_rollback_duration" and "fixed_dblink_rollback_duration' parameters from the emaj_param table
     SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'fixed_table_rollback_duration'),'5 millisecond'::interval)
-           INTO v_fixed_table_rlbk;
--- compute the number of tables to lock and sequences to rollback
+                        WHERE param_key = 'fixed_table_rollback_duration'),'1 millisecond'::interval),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'fixed_dblink_rollback_duration'),'1 millisecond'::interval)
+           INTO v_fixed_table_rlbk, v_fixed_dblink_rlbk;
+-- get the the number of tables to lock and sequences to rollback
     SELECT sum(group_nb_table)+sum(group_nb_sequence) INTO v_nbTblseq
       FROM emaj.emaj_group
       WHERE group_name = ANY(v_groupNames);
--- the cost of 1 table lock and 1 sequence rollback is evaluated to 1/10th of "fixed_table_rollback_duration"
-    v_estimDuration = v_estimDuration + (v_nbTblseq * v_fixed_table_rlbk / 10);
+-- compute the final estimated duration
+    v_estimDuration = v_estimDuration + (v_nbTblseq * v_fixed_table_rlbk) + (v_nbStep * v_fixed_dblink_rlbk);
     RETURN v_estimDuration;
   END;
 $_estimate_rollback_groups$;

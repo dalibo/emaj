@@ -155,7 +155,7 @@ begin;
 rollback;
 
 -- insert 1 timing parameters (=> so use 3 default values)
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','5 millisecond'::interval);
+INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_step_rollback_duration','2.5 millisecond'::interval);
 
 -- analyze tables to get proper reltuples statistics
 vacuum analyze myschema2.mytbl4;
@@ -164,20 +164,25 @@ select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid
 -- estimate with empty rollback statistics and default parameters
 delete from emaj.emaj_rlbk_stat;
 
-select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
--- should return 0.004000 sec (nothing to rollback => only the fixed costs)
+-- estimates with empty rollback statistics but 1 temporarily modified parameter ; no table to rollback
+begin;
+  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1.4 millisecond'::interval);
+  select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
+-- should return 0.011200 sec
+rollback;
 
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 1.436620 sec
+-- should return 1.407120 sec
 
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','150 microsecond'::interval);
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','12 microsecond'::interval);
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_fkey_check_duration','27 microsecond'::interval);
-  UPDATE emaj.emaj_param SET param_value_interval = '7 millisecond'::interval WHERE param_key = 'fixed_table_rollback_duration';
+  UPDATE emaj.emaj_param SET param_value_interval = '7 millisecond'::interval WHERE param_key = 'fixed_step_rollback_duration';
+  INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','2.5 millisecond'::interval);
   select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
--- should return 1.847800 sec
+-- should return 1.860700 sec
 rollback;
 
 -- estimate with added rollback statistics about fkey drops, recreations and checks
@@ -194,7 +199,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',2,'2000/01/01 00:02:00',1200,'0.015 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 1.439982 sec
+-- should return 1.422982 sec
 
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
@@ -212,7 +217,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('RLBK_TABLE','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'3.600 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 2.298586 sec
+-- should return 2.291586 sec
 
 -- estimate with added statistics about log deletes
 insert into emaj.emaj_rlbk_stat values
@@ -230,7 +235,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'0.900 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 2.805341 sec
+-- should return 2.808341 sec
 
 -- estimate with 2 groups and a SET_FK_DEF step
 vacuum analyze myschema1.mytbl4;
@@ -239,7 +244,7 @@ begin;
 -- temporarily insert new rows into myTbl4 of myschema1
   insert into myschema1.myTbl4 select i,'FK...',2,1,'ABC' from generate_series (10,20) as i;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
--- should return 2.853241 sec
+-- should return 2.844741 sec
 rollback;
 
 -- delete all manualy inserted rollback statistics and cleanup the statistics table
