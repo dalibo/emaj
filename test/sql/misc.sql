@@ -164,6 +164,9 @@ select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid
 -- estimate with empty rollback statistics and default parameters
 delete from emaj.emaj_rlbk_stat;
 
+select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
+-- should return 0.004000 sec (nothing to rollback => only the fixed costs)
+
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
 -- should return 1.436620 sec
 

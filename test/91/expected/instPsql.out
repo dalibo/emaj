@@ -5075,7 +5075,7 @@ r record;
   BEGIN
 -- check supplied group names and mark parameters
     SELECT emaj._rlbk_check(v_groupNames,v_mark) INTO v_markName;
--- compute a random negative rollback-id
+-- compute a random negative rollback-id (not to interfere with ids of real rollbacks)
     SELECT (random() * -10000000000)::bigint INTO v_rlbkId; 
 --
 -- simulate a rollback planning
@@ -5087,7 +5087,7 @@ r record;
 -- call the _rlbk_planning function
       PERFORM emaj._rlbk_planning(v_rlbkId);
 -- compute the sum of the duration estimates of all elementary steps 
-      SELECT sum(rlbp_estimated_duration) INTO v_estimDuration
+      SELECT coalesce(sum(rlbp_estimated_duration), '0 SECONDS'::INTERVAL) INTO v_estimDuration
         FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = v_rlbkId;
 -- cancel the effect of the rollback planning
