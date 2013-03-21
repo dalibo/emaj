@@ -32,3 +32,6 @@ test: adm2
 # cleanup regression tests environment
 test: cleanup
 
+# test clients
+test: client
+

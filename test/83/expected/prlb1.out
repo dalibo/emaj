@@ -1,5 +1,0 @@
- E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
------------------------------------------------------------
-==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
-==> Logged rollback completed (9 tables and 3 sequences effectively processed).
-

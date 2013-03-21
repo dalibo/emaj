@@ -7,10 +7,6 @@
 #---------------------------------------------#
 EMAJ_HOME="/home/postgres/proj/emaj"
 
-#PGBIN82="/usr/local/pg8221/bin"
-#PGPORT82="8221"
-#PGREG82="/home/postgres/postgresql-8.2.21/src/test/regress"
-
 PGBIN83="/usr/local/pg8321/bin"
 PGPORT83="8321"
 PGREG83="/home/postgres/postgresql-8.3.21/src/test/regress"
@@ -44,32 +40,23 @@ function reg_test_version()
 	eval RTVBIN=\${PGBIN$1}
 	eval RTVPORT=\${PGPORT$1}
 	eval RTVREG=\${PGREG$1}
+	export PGPORT=$RTVPORT
 	cd $EMAJ_HOME/test/$1
+# symbolic link will be used to call pgdump in client.sql script
+    ln -s $RTVBIN RTVBIN.lnk
     echo ""
 
 # regression test by itself
 	echo "Run regression test"
 	if [ $1 -lt "91" ]
 	then
-		$RTVREG/pg_regress --schedule=../emaj_sched_$2 --load-language plpgsql --port $RTVPORT
+		$RTVREG/pg_regress --schedule=../emaj_sched_$2 --load-language plpgsql
 	else
-		$RTVREG/pg_regress --schedule=../emaj_sched_$2 --port $RTVPORT
+		$RTVREG/pg_regress --schedule=../emaj_sched_$2
 	fi
 
-# pg_dump test
-	echo "Dump regression database"
-	$RTVBIN/pg_dump -p $RTVPORT regression >results/regression.dump
-
-# Parallel rollback tests for scenario that doesn't mix work with 2 Emaj versions 
-	if [[ ! $2 =~ "_mx_mig" ]];
-	then
-		echo "Parallel rollback test 1"
-		../../php/emajParallelRollback.php -p $RTVPORT -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l >results/prlb1.out
-		diff expected/prlb1.out results/prlb1.out
-		echo "Parallel rollback test 2"
-		../../php/emajParallelRollback.php -p $RTVPORT -d regression -g myGroup1 -m Multi-1 -s 3 >results/prlb2.out
-		diff expected/prlb2.out results/prlb2.out
-	fi
+# end of the regression test
+    rm RTVBIN.lnk
 	cd ../..
     return
 }
@@ -101,6 +88,7 @@ function migrat_test()
 cd $EMAJ_HOME
 
 # update the emaj.control files with the proper emaj version
+# REM: this part is currently in comment, waiting for a fix to solving the sequences dump issue in EXTENSION management
 #sed 's/<directory containing installation scripts, if not SHAREDIR>/\/home\/postgres\/proj\/emaj\/sql/' sql/emaj.control_base >/usr/local/pg913/share/postgresql/extension/emaj.control
 #sed -i 's/0.12.0/0.10.1/g' /usr/local/pg913/share/postgresql/extension/emaj.control
 #cp /usr/local/pg913/share/postgresql/extension/emaj.control /usr/local/pg921/share/postgresql/extension/emaj.control
@@ -162,7 +150,6 @@ case $ANSWER in
 	W|w) reg_test_version "91" "psql_mx_mig";;
 	X|x) reg_test_version "92" "psql_mx_mig";;
 	Y|y)
-#		reg_test_version "82" "psql_mig"
 		reg_test_version "83" "psql_mig"
 		reg_test_version "84" "psql_mig"
 		reg_test_version "90" "psql_mig"
@@ -171,7 +158,6 @@ case $ANSWER in
 		reg_test_version "92" "psql_mig"
 		;;
 	Z|z)
-#		reg_test_version "82" "psql"
 		reg_test_version "83" "psql"
 		reg_test_version "84" "psql"
 		reg_test_version "90" "psql"

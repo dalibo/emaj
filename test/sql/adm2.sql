@@ -297,7 +297,6 @@ alter sequence emaj.emaj_sequence_sequ_id_seq restart 1000;
 alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 1000;
 
 -- the groups are left in their current state for the parallel rollback test.
--- perform some updates to prepare the parallel rollback test
 select count(*) from mySchema1.myTbl4;
 select count(*) from mySchema1.myTbl1;
 select count(*) from mySchema1.myTbl2; 
@@ -309,16 +308,4 @@ select count(*) from mySchema2.myTbl2;
 select count(*) from mySchema2."myTbl3";
 select count(*) from mySchema2.myTbl5;
 select count(*) from mySchema2.myTbl6;
-delete from mySchema1.myTbl4;
-delete from mySchema1.myTbl1;
-delete from mySchema1.myTbl2; 
-delete from mySchema1."myTbl3";
-delete from mySchema1.myTbl2b;
-delete from mySchema2.myTbl4;
-delete from mySchema2.myTbl1;
-delete from mySchema2.myTbl2; 
-delete from mySchema2."myTbl3";
-delete from mySchema2.myTbl5;
-delete from mySchema2.myTbl6 where col61 <> 0;
-alter sequence mySchema2.mySeq1 restart 9999;
 
