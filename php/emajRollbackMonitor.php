@@ -150,7 +150,7 @@ function print_help(){
   echo "  -U,         User name to connect as\n";
   echo "  -W,         passWord associated to the user, if needed\n";
   echo "\nExample:\n";
-  echo "  emajRollbackMonitor.php -i 3 -n 10 \n";
+  echo "  php emajRollbackMonitor.php -i 3 -n 10 \n";
   echo "              performs 10 displays during 30 seconds.\n";
 }
 

@@ -241,8 +241,8 @@ function print_help(){
   echo "Usage:\n";
   echo "  $progName -g <comma separated list of E-Maj group names> -m <E-Maj mark> -s <number of sessions> [OPTION]... \n";
   echo "\nOptions:\n";
-  echo "  -v          verbose mode; writes more information about the processing\n";
   echo "  -l          logged rollback mode (i.e. 'rollbackable' rollback)\n";
+  echo "  -v          verbose mode; writes more information about the processing\n";
   echo "  --help      shows this help, then exit\n";
   echo "  --version   outputs version information, then exit\n";
   echo "\nConnection options:\n";
@@ -252,10 +252,10 @@ function print_help(){
   echo "  -U,         user name to connect as\n";
   echo "  -W,         password associated to the user, if needed\n";
   echo "\nExamples:\n";
-  echo "  php/emajParallelRollback.php -g myGroup1 -m myMark -s 3 \n";
+  echo "  php emajParallelRollback.php -g myGroup1 -m myMark -s 3 \n";
   echo "              performs a parallel rollback of table group myGroup1 to mark\n";
   echo "              myMark using 3 parallel sessions.\n";
-  echo "  php/emajParallelRollback.php -h localhost -p 5432 -d myDb -U emajadm -l -g \"myGroup1,myGroup2\" -m myMark -s 5 -v\n";
+  echo "  php emajParallelRollback.php -h localhost -p 5432 -d myDb -U emajadm -l -g \"myGroup1,myGroup2\" -m myMark -s 5 -v\n";
   echo "              lets the role emajadm perform a parallel logged rollback of 2 table\n";
   echo "              groups to mark myMark using 5 parallel sessions, in verbose mode.\n";
 }
