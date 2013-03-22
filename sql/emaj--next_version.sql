@@ -11,7 +11,7 @@
 --     for instance previously created by
 --	   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
 --	-> the plpgsql language must have been created in the concerned database,
---  (-> the dblink contrib/extension must have been installed.)
+-- It is also advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring capabilities.
 
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
@@ -6389,9 +6389,15 @@ $tmp$
   DECLARE
     v_mpt           INTEGER;
   BEGIN
+-- check the max_prepared_transactions GUC value
     SELECT setting INTO v_mpt FROM pg_catalog.pg_settings WHERE name = 'max_prepared_transactions';
     IF v_mpt <= 1 THEN
       RAISE WARNING 'E-Maj installation: as the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
+    END IF;
+-- check the dblink contrib or extension is already installed
+    PERFORM 0 FROM pg_catalog.pg_proc WHERE proname = 'dblink';
+    IF NOT FOUND THEN
+      RAISE WARNING 'E-Maj installation: the dblink contrib/extension is not installed. It is advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring capabilities.';
     END IF;
     RETURN;
   END;

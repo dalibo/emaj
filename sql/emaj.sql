@@ -11,7 +11,7 @@
 --     for instance previously created by
 --	   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
 --	-> the plpgsql language must have been created in the concerned database,
---  (-> the dblink contrib/extension must have been installed.)
+-- It is also advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring capabilities.
 
 \set ON_ERROR_STOP ON
 \set QUIET ON
@@ -21,7 +21,7 @@ SET client_min_messages TO WARNING;
 
 -- create, execute and drop a specific plpgsql function to check the environment
 -- If all pre-requisites are not met, it generates an error that blocks the E-Maj installation.
-CREATE OR REPLACE FUNCTION public.emaj_tmp_check_envir()
+CREATE OR REPLACE FUNCTION public.emaj_tmp_pre_install()
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
@@ -58,17 +58,12 @@ $tmp$
 -- some secondary schemas remaining
       RAISE EXCEPTION 'E-Maj installation: some secondary schemas (%) need to be dropped before reinstalling E-Maj. You can use the uninstall.sql script or the emaj_drop_group() function or DROP SCHEMA statements.', substring(v_schemaList FROM 1 FOR char_length(v_schemaList) - 2);
     END IF;
--- check the dblink contrib or extension is already installed
-    PERFORM 0 FROM pg_catalog.pg_proc WHERE proname = 'dblink';
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj installation: dblink contrib/extension is not installed. Please install dblink first.';
-    END IF;
 --
     RETURN;
   END;
 $tmp$;
-SELECT public.emaj_tmp_check_envir();
-DROP FUNCTION public.emaj_tmp_check_envir();
+SELECT public.emaj_tmp_pre_install();
+DROP FUNCTION public.emaj_tmp_pre_install();
 
 -- OK, now create E-Maj objects in a single transaction
 
@@ -6441,21 +6436,27 @@ GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_vi
 INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSION>', 'Initialisation completed');
 
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
-CREATE OR REPLACE FUNCTION emaj._tmp_check_setting()
+CREATE OR REPLACE FUNCTION emaj._tmp_post_install()
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
     v_mpt           INTEGER;
   BEGIN
+-- check the max_prepared_transactions GUC value
     SELECT setting INTO v_mpt FROM pg_catalog.pg_settings WHERE name = 'max_prepared_transactions';
     IF v_mpt <= 1 THEN
       RAISE WARNING 'E-Maj installation: as the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
     END IF;
+-- check the dblink contrib or extension is already installed
+    PERFORM 0 FROM pg_catalog.pg_proc WHERE proname = 'dblink';
+    IF NOT FOUND THEN
+      RAISE WARNING 'E-Maj installation: the dblink contrib/extension is not installed. It is advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring capabilities.';
+    END IF;
     RETURN;
   END;
 $tmp$;
-SELECT emaj._tmp_check_setting();
-DROP FUNCTION emaj._tmp_check_setting();
+SELECT emaj._tmp_post_install();
+DROP FUNCTION emaj._tmp_post_install();
 
 COMMIT;
 
