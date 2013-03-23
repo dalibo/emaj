@@ -91,33 +91,49 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime,
 --------------------------------------------
 -- call emajRollbackMonitor.php
 --------------------------------------------
-\! ../../php/emajRollbackMonitor.php -d regression -i 1 -n 2 -vr
- E-Maj (version <NEXT_VERSION>) - Monitoring rollbacks in progress
+\! ../../php/emajRollbackMonitor.php -d regression -i 0.1 -n 2 -l 2 -a 12 -vr
+ E-Maj (version <NEXT_VERSION>) - Monitoring rollbacks activity
 ---------------------------------------------------------------
 [current date and time]
+** rollback 34 started at [rollback start time] for groups {myGroup1,myGroup2}
+   status: COMMITTED ; ended at [rollback end time] 
+   rollback to mark: Multi-1 set at [mark time]
+   3 session(s) to process 9 table(s) and 3 sequence(s) 
+** rollback 35 started at [rollback start time] for groups {myGroup1}
+   status: COMMITTED ; ended at [rollback end time] 
+   rollback to mark: Multi-1 set at [mark time]
+   3 session(s) to process 3 table(s) and 1 sequence(s) 
 -> rollback 1232 started at [rollback start time] for groups {group1232}
    status: EXECUTING ; completion 85 % ; @ 20 secs remaining
-   rollback to mark: mark1232 set at Sat Jan 01 01:00:00 2000 PST
-   1 session(s) processing 3 table(s) and 4 sequence(s) 
+   rollback to mark: mark1232 set at [mark time]
+   1 session(s) to process 3 table(s) and 4 sequence(s) 
 -> rollback 1233 started at [rollback start time] for groups {group1233}
    status: LOCKING ; completion 0 % ; @ 22 mins 20 secs remaining
-   rollback to mark: mark1233 set at Sat Jan 01 01:00:00 2000 PST
-   1 session(s) processing 3 table(s) and 4 sequence(s) 
+   rollback to mark: mark1233 set at [mark time]
+   1 session(s) to process 3 table(s) and 4 sequence(s) 
 -> rollback 1234 started at [rollback start time] for groups {group1234}
    status: PLANNING ; completion 0 % 
-   rollback to mark: mark1234 set at Sat Jan 01 01:00:00 2000 PST
-   1 session(s) processing 3 table(s) and 4 sequence(s) 
+   rollback to mark: mark1234 set at [mark time]
+   1 session(s) to process 3 table(s) and 4 sequence(s) 
 [current date and time]
+** rollback 34 started at [rollback start time] for groups {myGroup1,myGroup2}
+   status: COMMITTED ; ended at [rollback end time] 
+   rollback to mark: Multi-1 set at [mark time]
+   3 session(s) to process 9 table(s) and 3 sequence(s) 
+** rollback 35 started at [rollback start time] for groups {myGroup1}
+   status: COMMITTED ; ended at [rollback end time] 
+   rollback to mark: Multi-1 set at [mark time]
+   3 session(s) to process 3 table(s) and 1 sequence(s) 
 -> rollback 1232 started at [rollback start time] for groups {group1232}
    status: EXECUTING ; completion 85 % ; @ 20 secs remaining
-   rollback to mark: mark1232 set at Sat Jan 01 01:00:00 2000 PST
-   1 session(s) processing 3 table(s) and 4 sequence(s) 
+   rollback to mark: mark1232 set at [mark time]
+   1 session(s) to process 3 table(s) and 4 sequence(s) 
 -> rollback 1233 started at [rollback start time] for groups {group1233}
    status: LOCKING ; completion 0 % ; @ 22 mins 20 secs remaining
-   rollback to mark: mark1233 set at Sat Jan 01 01:00:00 2000 PST
-   1 session(s) processing 3 table(s) and 4 sequence(s) 
+   rollback to mark: mark1233 set at [mark time]
+   1 session(s) to process 3 table(s) and 4 sequence(s) 
 -> rollback 1234 started at [rollback start time] for groups {group1234}
    status: PLANNING ; completion 0 % 
-   rollback to mark: mark1234 set at Sat Jan 01 01:00:00 2000 PST
-   1 session(s) processing 3 table(s) and 4 sequence(s) 
+   rollback to mark: mark1234 set at [mark time]
+   1 session(s) to process 3 table(s) and 4 sequence(s) 
 

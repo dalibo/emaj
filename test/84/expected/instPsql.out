@@ -5090,7 +5090,7 @@ CREATE OR REPLACE FUNCTION emaj.emaj_rollback_activity()
 RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
 $emaj_rollback_activity$
 -- This function returns the list of rollback operations currently in execution, with information about their progress 
--- It doesnt need input parameter.
+-- It doesn't need input parameter.
 -- It returns a set of emaj_rollback_activity_type records.
   BEGIN
 -- cleanup the freshly completed rollback operations, if any

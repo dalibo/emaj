@@ -89,5 +89,5 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime,
 -- call emajRollbackMonitor.php
 --------------------------------------------
 
-\! ../../php/emajRollbackMonitor.php -d regression -i 1 -n 2 -vr
+\! ../../php/emajRollbackMonitor.php -d regression -i 0.1 -n 2 -l 2 -a 12 -vr
 
