@@ -24,13 +24,16 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- Call emajParallelRollback.php
 --------------------------------------------
--- logged rollback for a single group, without dblink connection
---delete from emaj.emaj_param where param_key = 'dblink_user_password';
+-- parallel rollback, but with disabled dblink connection
+delete from emaj.emaj_param where param_key = 'dblink_user_password';
+\! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+insert into emaj.emaj_param (param_key, param_value_text) 
+  values ('dblink_user_password','user=postgres password=postgres');
+
+-- logged rollback for a single group
 \! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 
--- unlogged rollback for 2 groups, with dblink connection
---insert into emaj.emaj_param (param_key, param_value_text) 
---  values ('dblink_user_password','user=postgres password=postgres');
+-- unlogged rollback for 2 groups
 \! ../../php/emajParallelRollback.php -d regression -g myGroup1 -m Multi-1 -s 3
 
 --------------------------------------------

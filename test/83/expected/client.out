@@ -21,17 +21,23 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- Call emajParallelRollback.php
 --------------------------------------------
--- logged rollback for a single group, without dblink connection
---delete from emaj.emaj_param where param_key = 'dblink_user_password';
+-- parallel rollback, but with disabled dblink connection
+delete from emaj.emaj_param where param_key = 'dblink_user_password';
+\! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+ E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
+-----------------------------------------------------------
+PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see documentation) in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 124
+Call of _rlbk_init() function failed pg_krb5_init: krb5_cc_get_principal: No credentials cache found
+insert into emaj.emaj_param (param_key, param_value_text) 
+  values ('dblink_user_password','user=postgres password=postgres');
+-- logged rollback for a single group
 \! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
 ==> Logged rollback completed (9 tables and 3 sequences effectively processed).
 
--- unlogged rollback for 2 groups, with dblink connection
---insert into emaj.emaj_param (param_key, param_value_text) 
---  values ('dblink_user_password','user=postgres password=postgres');
+-- unlogged rollback for 2 groups
 \! ../../php/emajParallelRollback.php -d regression -g myGroup1 -m Multi-1 -s 3
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
