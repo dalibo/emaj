@@ -172,7 +172,7 @@ begin;
 rollback;
 
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 1.407120 sec
+-- should return 1.464120 sec
 
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
@@ -199,7 +199,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',2,'2000/01/01 00:02:00',1200,'0.015 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 1.422982 sec
+-- should return 1.479982 sec
 
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
@@ -217,9 +217,9 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('RLBK_TABLE','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'3.600 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 2.291586 sec
+-- should return 2.348586 sec
 
--- estimate with added statistics about log deletes
+-- estimate with added statistics about log deletes and CTRLxDBLINK pseudo steps
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','mytbl1','',1,'2000/01/01 00:01:00',5350,'0.250 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
@@ -234,8 +234,14 @@ insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','myTbl3','',2,'2000/01/01 00:02:00',151,'0.002 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'0.900 SECONDS'::interval);
+insert into emaj.emaj_rlbk_stat values
+  ('CTRL+DBLINK','','','',1,'2000/01/01 00:01:00',10,'0.005 SECONDS'::interval);
+insert into emaj.emaj_rlbk_stat values
+  ('CTRL-DBLINK','','','',2,'2000/01/01 00:02:00',10,'0.035 SECONDS'::interval);
+insert into emaj.emaj_rlbk_stat values
+  ('CTRL-DBLINK','','','',3,'2000/01/01 00:03:00',10,'0.025 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 2.808341 sec
+-- should return 2.846341 sec
 
 -- estimate with 2 groups and a SET_FK_DEF step
 vacuum analyze myschema1.mytbl4;
@@ -244,7 +250,7 @@ begin;
 -- temporarily insert new rows into myTbl4 of myschema1
   insert into myschema1.myTbl4 select i,'FK...',2,1,'ABC' from generate_series (10,20) as i;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
--- should return 2.844741 sec
+-- should return 2.898741 sec
 rollback;
 
 -- delete all manualy inserted rollback statistics and cleanup the statistics table

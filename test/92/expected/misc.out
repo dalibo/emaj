@@ -408,28 +408,28 @@ rollback;
 select emaj.emaj_estimate_rollback_group(NULL,NULL,FALSE);
 ERROR:  _rlbk_check: group <NULL> has not been created.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames,v_mark)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_group('unknownGroup',NULL,TRUE);
 ERROR:  _rlbk_check: group unknownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames,v_mark)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups('{"myGroup2","unknownGroup"}',NULL,TRUE);
 ERROR:  _rlbk_check: No mark <NULL> exists for group myGroup2.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames,v_mark)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 8 at RETURN
 -- invalid marks
 select emaj.emaj_estimate_rollback_group('myGroup2','dummyMark',TRUE);
 ERROR:  _rlbk_check: No mark dummyMark exists for group myGroup2.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames,v_mark)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups(array['myGroup1','myGroup2'],'Mark21',TRUE);
 ERROR:  _rlbk_check: Mark Mark21 does not represent the same point in time for all groups.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames,v_mark)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 8 at RETURN
 -- group not in logging state
 begin;
@@ -442,7 +442,7 @@ begin;
   select emaj.emaj_estimate_rollback_group('myGroup1','Mark11',FALSE);
 ERROR:  _rlbk_check: Group myGroup1 is not in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames,v_mark)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 rollback;
 -- insert 1 timing parameters (=> so use 3 default values)
@@ -471,10 +471,10 @@ rollback;
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.40712 secs
+ @ 1.46412 secs
 (1 row)
 
--- should return 1.407120 sec
+-- should return 1.464120 sec
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','150 microsecond'::interval);
@@ -506,10 +506,10 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.422982 secs
+ @ 1.479982 secs
 (1 row)
 
--- should return 1.422982 sec
+-- should return 1.479982 sec
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
   ('RLBK_TABLE','myschema2','mytbl1','',1,'2000/01/01 00:01:00',5350,'1.000 SECONDS'::interval);
@@ -528,11 +528,11 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.291586 secs
+ @ 2.348586 secs
 (1 row)
 
--- should return 2.291586 sec
--- estimate with added statistics about log deletes
+-- should return 2.348586 sec
+-- estimate with added statistics about log deletes and CTRLxDBLINK pseudo steps
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','mytbl1','',1,'2000/01/01 00:01:00',5350,'0.250 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
@@ -547,13 +547,19 @@ insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','myTbl3','',2,'2000/01/01 00:02:00',151,'0.002 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'0.900 SECONDS'::interval);
+insert into emaj.emaj_rlbk_stat values
+  ('CTRL+DBLINK','','','',1,'2000/01/01 00:01:00',10,'0.005 SECONDS'::interval);
+insert into emaj.emaj_rlbk_stat values
+  ('CTRL-DBLINK','','','',2,'2000/01/01 00:02:00',10,'0.035 SECONDS'::interval);
+insert into emaj.emaj_rlbk_stat values
+  ('CTRL-DBLINK','','','',3,'2000/01/01 00:03:00',10,'0.025 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.808341 secs
+ @ 2.846341 secs
 (1 row)
 
--- should return 2.808341 sec
+-- should return 2.846341 sec
 -- estimate with 2 groups and a SET_FK_DEF step
 vacuum analyze myschema1.mytbl4;
 select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid and relname = 'mytbl4' and nspname = 'myschema1';
@@ -568,10 +574,10 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 2.844741 secs
+ @ 2.898741 secs
 (1 row)
 
--- should return 2.844741 sec
+-- should return 2.898741 sec
 rollback;
 -- delete all manualy inserted rollback statistics and cleanup the statistics table
 delete from emaj.emaj_rlbk_stat;

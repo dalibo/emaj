@@ -378,13 +378,13 @@ select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_rollback_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
@@ -406,13 +406,13 @@ select emaj.emaj_logged_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
@@ -432,13 +432,13 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mark1B');
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
@@ -453,13 +453,13 @@ insert into emaj.emaj_param (param_key, param_value_text)
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
@@ -474,13 +474,13 @@ begin;
   select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
@@ -496,13 +496,13 @@ update emaj.emaj_param set param_value_text = 'user=postgres password=postgres'
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
+PL/pgSQL function "_rlbk_init" line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
@@ -1670,112 +1670,120 @@ begin;
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, 
              rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_start_datetime)
     values (1232,array['group1232'],'mark1232','2000-01-01 01:00:00',true,1,
-             5,4,3,'EXECUTING',now()-'2 minutes'::interval);
+             5,4,3,'EXECUTING',now()-'0.1 seconds'::interval);
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
-             rlbp_estimated_duration, rlbp_start_time, rlbp_duration)
-    values (1232, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null),
-           (1232, 'RLBK_TABLE','schema','t2','','30 seconds'::interval,null,null),
-           (1232, 'RLBK_TABLE','schema','t3','','20 seconds'::interval,null,null);
+             rlbp_estimated_duration, rlbp_estimated_quantity, rlbp_start_datetime, rlbp_duration)
+    values (1232, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null,null),
+           (1232, 'RLBK_TABLE','schema','t2','','30 seconds'::interval,null,null,null),
+           (1232, 'RLBK_TABLE','schema','t3','','20 seconds'::interval,null,null,null),
+           (1232, 'CTRL+DBLINK','',     '',  '','0.3 second'::interval,3,   null,null);
   select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status | rlbk_remaining  | rlbk_completion_pct 
----------+-------------+-----------------+---------------------
-    1232 | EXECUTING   | @ 1 min 40 secs |                   0
+ rlbk_id | rlbk_status |  rlbk_remaining   | rlbk_completion_pct 
+---------+-------------+-------------------+---------------------
+    1232 | EXECUTING   | @ 1 min 40.3 secs |                   0
 (1 row)
 
 -- the first RLBK_TABLE has started, but the elapse of the step is not yet > estimated duration 
-  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '11 seconds'::interval
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '11.1 seconds'::interval where rlbk_id = 1232;
+  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '11 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't1';
   select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status | rlbk_remaining  | rlbk_completion_pct 
----------+-------------+-----------------+---------------------
-    1232 | EXECUTING   | @ 1 min 29 secs |                  11
+ rlbk_id | rlbk_status |  rlbk_remaining   | rlbk_completion_pct 
+---------+-------------+-------------------+---------------------
+    1232 | EXECUTING   | @ 1 min 29.2 secs |                  11
 (1 row)
 
-  select 1.0 - ((20.0 + 30.0)+(50.0 - 11.0)) / (20.0 + 30.0 + 50.0); -- the completion % should be 11%
+  select 1.0 - ((20.0 + 30.0)+(50.0 - 11.0) + 2*0.3/3) / (11.1 + (20.0 + 30.0)+(50.0 - 11.0) + 2*0.3/3); -- the completion % should be 11%
         ?column?        
 ------------------------
- 0.11000000000000000000
+ 0.11066799601196410768
 (1 row)
 
 -- the first RLBK_TABLE is completed, and the step duration < the estimated duration 
-  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '45 seconds'::interval,
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '45.1 seconds'::interval where rlbk_id = 1232;
+  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '45 seconds'::interval,
                                  rlbp_duration = '45 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't1';
   select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
  rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
 ---------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 50 secs      |                  47
+    1232 | EXECUTING   | @ 50.2 secs    |                  47
 (1 row)
 
-  select 1.0 - (20.0 + 30.0) / (20.0 + 30.0 + 45.0);  -- the completion % should be 47%
+  select 1.0 - (20.0 + 30.0 + 2*0.3/3) / (45.1 + (20.0 + 30.0) + 2*0.3/3);  -- the completion % should be 47%
         ?column?        
 ------------------------
- 0.47368421052631578947
+ 0.47324239244491080797
 (1 row)
 
 -- the second RLBK_TABLE has started, but the elapse of the step is not yet > estimated duration 
-  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '28 seconds'::interval
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '73.1 seconds'::interval where rlbk_id = 1232;
+  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '28 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
   select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
  rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
 ---------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 22 secs      |                  77
+    1232 | EXECUTING   | @ 22.1 secs    |                  77
 (1 row)
 
-  select 1.0 - (20.0 + (30.0 - 28.0)) / (20.0 + 30.0 + 45.0);  -- the completion % should be 77%
+  select 1.0 - (20.0 + (30.0 - 28.0) + 1*0.3/3) / (73.1 + (20.0 + (30.0 - 28.0) + 1*0.3/3));  -- the completion % should be 77%
         ?column?        
 ------------------------
- 0.76842105263157894737
+ 0.76785714285714285714
 (1 row)
 
 -- the second RLBK_TABLE has started, but the elapse of the step is already > estimated duration 
-  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '40 seconds'::interval
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '85.1 seconds'::interval where rlbk_id = 1232;
+  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '40 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
   select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
  rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
 ---------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 20 secs      |                  81
+    1232 | EXECUTING   | @ 20.1 secs    |                  81
 (1 row)
 
-  select 1.0 - (20.0) / (20.0 + 40.0 + 45.0);  -- the completion % should be 81%
+  select 1.0 - (20.0 + 1*0.3/3) / (85.1 + (20.0 + 1*0.3/3));  -- the completion % should be 81%
         ?column?        
 ------------------------
- 0.80952380952380952381
+ 0.80893536121673003802
 (1 row)
 
 -- the second RLBK_TABLE has started, but the elapse of the step is already > estimated duration 
-  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '60 seconds'::interval
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '105.1 seconds'::interval where rlbk_id = 1232;
+  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '60 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
   select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
  rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
 ---------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 20 secs      |                  84
+    1232 | EXECUTING   | @ 20.1 secs    |                  84
 (1 row)
 
-  select 1.0 - (20.0) / (20.0 + 60.0 + 45.0);  -- the completion % should be 84%
+  select 1.0 - (20.0 + 1*0.3/3) / (105.1 + (20.0 + 1*0.3/3 ));  -- the completion % should be 84%
         ?column?        
 ------------------------
- 0.84000000000000000000
+ 0.83945686900958466454
 (1 row)
 
 -- the second RLBK_TABLE is completed, and the step duration > the estimated duration 
-  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '65 seconds'::interval,
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '110.1 seconds'::interval where rlbk_id = 1232;
+  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '65 seconds'::interval,
                                  rlbp_duration = '65 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
   select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
  rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
 ---------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 20 secs      |                  85
+    1232 | EXECUTING   | @ 20.1 secs    |                  85
 (1 row)
 
-  select 1.0 - (20.0) / (20.0 + 65.0 + 45.0);  -- the completion % should be 85%
+  select 1.0 - (20.0 + 1*0.3/3) / (110.1 + (20.0 + 1*0.3/3));  -- the completion % should be 85%
         ?column?        
 ------------------------
- 0.84615384615384615385
+ 0.84562211981566820276
 (1 row)
 
 -- the third RLBK_TABLE has started, and is almost completed 
-  update emaj.emaj_rlbk_plan set rlbp_start_time = now() - '19 seconds'::interval
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '124.1 seconds'::interval where rlbk_id = 1232;
+  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '19 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't3';
   select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
  rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
@@ -1783,10 +1791,10 @@ begin;
     1232 | EXECUTING   | @ 1 sec        |                  99
 (1 row)
 
-  select 1.0 - ((20.0 - 19.0)) / (20.0 + 65.0 + 45.0);  -- the completion % should be 99%
+  select 1.0 - ((20.0 - 19.0)) / (124.1 + (20.0 - 19.0));  -- the completion % should be 99%
         ?column?        
 ------------------------
- 0.99230769230769230769
+ 0.99200639488409272582
 (1 row)
 
 rollback;
@@ -1797,7 +1805,7 @@ begin;
     values (1233,array['group1233'],'mark1233','2000-01-01 01:00:00',true,1,
              5,4,3,'LOCKING',now()-'2 minutes'::interval);
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
-             rlbp_estimated_duration, rlbp_start_time, rlbp_duration)
+             rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
     values (1233, 'LOCK_TABLE','schema','t1','',null,null,null),
            (1233, 'LOCK_TABLE','schema','t2','',null,null,null),
            (1233, 'LOCK_TABLE','schema','t3','',null,null,null);
@@ -1809,7 +1817,7 @@ begin;
 
 -- the rollback operation in LOCKING state now has RLBK_TABLE steps
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
-             rlbp_estimated_duration, rlbp_start_time, rlbp_duration)
+             rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
     values (1233, 'RLBK_TABLE','schema','t1','','0:20:00'::interval,null,null),
            (1233, 'RLBK_TABLE','schema','t2','','0:02:00'::interval,null,null),
            (1233, 'RLBK_TABLE','schema','t3','','0:00:20'::interval,null,null);
@@ -1838,27 +1846,27 @@ rollback;
 -- test end: check rollback tables, reset history and force sequences id
 -----------------------------
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
-       rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, 
+       rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_msg
   from emaj.emaj_rlbk order by rlbk_id;
- rlbk_id |     rlbk_groups     |   rlbk_mark    | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | end_datetime |                         rlbk_msg                          
----------+---------------------+----------------+----------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------+-----------------------------------------------------------
-       1 | {myGroup1}          | Different_Mark | f              |               1 |             5 |                1 |                 0 | COMMITTED   |               4046 | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-       2 | {myGroup2}          | Mark21         | f              |               1 |             6 |                2 |                 0 | COMMITTED   |               4052 | [ts]         | Completed: 0 tables and 2 sequences effectively processed
-       3 | {myGroup1}          | Different_Mark | t              |               1 |             5 |                1 |                 0 | COMMITTED   |               4060 | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-       4 | {myGroup2}          | Mark21         | t              |               1 |             6 |                2 |                 0 | COMMITTED   |               4070 | [ts]         | Completed: 0 tables and 2 sequences effectively processed
-       5 | {myGroup1,myGroup2} | Mark1B         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               4085 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-       6 | {myGroup1,myGroup2} | Mark1B         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               4093 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-       7 | {myGroup1,myGroup2} | Mark1B         | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               4101 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-       8 | {myGroup1,myGroup2} | Mark1B         | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               4113 | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-       9 | {myGroup1}          | Mark12         | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               4153 | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-      10 | {myGroup1}          | Mark11         | f              |               1 |             5 |                1 |                 3 | COMMITTED   |               4165 | [ts]         | Completed: 3 tables and 1 sequences effectively processed
-      11 | {myGroup1}          | Mark12         | t              |               1 |             5 |                1 |                 2 | COMMITTED   |               4201 | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-      12 | {myGroup1}          | Mark11         | t              |               1 |             5 |                1 |                 5 | COMMITTED   |               4216 | [ts]         | Completed: 5 tables and 1 sequences effectively processed
-      13 | {myGroup1}          | Mark13         | f              |               1 |             5 |                1 |                 5 | COMMITTED   |               4238 | [ts]         | Completed: 5 tables and 1 sequences effectively processed
-      14 | {myGroup4}          | mark1          | t              |               1 |             3 |                0 |                 3 | COMMITTED   |               4271 | [ts]         | Completed: 3 tables and 0 sequences effectively processed
-      15 | {myGroup4}          | myGroup4_start | f              |               1 |             3 |                0 |                 3 | COMMITTED   |               4287 | [ts]         | Completed: 3 tables and 0 sequences effectively processed
-      16 | {myGroup4}          | myGroup4_start | f              |               1 |             3 |                0 |                 0 | ABORTED     |               4302 | [ts]         | Completed: 0 tables and 0 sequences effectively processed
+ rlbk_id |     rlbk_groups     |   rlbk_mark    | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_is_dblink_used | end_datetime |                         rlbk_msg                          
+---------+---------------------+----------------+----------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+---------------------+--------------+-----------------------------------------------------------
+       1 | {myGroup1}          | Different_Mark | f              |               1 |             5 |                1 |                 0 | COMMITTED   |               4046 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+       2 | {myGroup2}          | Mark21         | f              |               1 |             6 |                2 |                 0 | COMMITTED   |               4052 | f                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+       3 | {myGroup1}          | Different_Mark | t              |               1 |             5 |                1 |                 0 | COMMITTED   |               4060 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+       4 | {myGroup2}          | Mark21         | t              |               1 |             6 |                2 |                 0 | COMMITTED   |               4070 | f                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+       5 | {myGroup1,myGroup2} | Mark1B         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               4085 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+       6 | {myGroup1,myGroup2} | Mark1B         | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               4093 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+       7 | {myGroup1,myGroup2} | Mark1B         | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               4101 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+       8 | {myGroup1,myGroup2} | Mark1B         | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               4113 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+       9 | {myGroup1}          | Mark12         | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               4153 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      10 | {myGroup1}          | Mark11         | f              |               1 |             5 |                1 |                 3 | COMMITTED   |               4165 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
+      11 | {myGroup1}          | Mark12         | t              |               1 |             5 |                1 |                 2 | COMMITTED   |               4201 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      12 | {myGroup1}          | Mark11         | t              |               1 |             5 |                1 |                 5 | COMMITTED   |               4216 | t                   | [ts]         | Completed: 5 tables and 1 sequences effectively processed
+      13 | {myGroup1}          | Mark13         | f              |               1 |             5 |                1 |                 5 | COMMITTED   |               4238 | t                   | [ts]         | Completed: 5 tables and 1 sequences effectively processed
+      14 | {myGroup4}          | mark1          | t              |               1 |             3 |                0 |                 3 | COMMITTED   |               4271 | t                   | [ts]         | Completed: 3 tables and 0 sequences effectively processed
+      15 | {myGroup4}          | myGroup4_start | f              |               1 |             3 |                0 |                 3 | COMMITTED   |               4287 | t                   | [ts]         | Completed: 3 tables and 0 sequences effectively processed
+      16 | {myGroup4}          | myGroup4_start | f              |               1 |             3 |                0 |                 0 | ABORTED     |               4302 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
 (16 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
@@ -1889,77 +1897,6 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
   from emaj.emaj_rlbk_plan order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey;
  rlbp_rlbk_id |  rlbp_step  | rlbp_schema | rlbp_table |     rlbp_fkey     | rlbp_batch_number | rlbp_session |                                                              rlbp_fkey_def                                                              | rlbp_estimated_quantity | rlbp_estimate_method | rlbp_quantity 
 --------------+-------------+-------------+------------+-------------------+-------------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------+-------------------------+----------------------+---------------
-            1 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            1 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            1 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            1 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            1 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            2 | LOCK_TABLE  | myschema2   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            2 | LOCK_TABLE  | myschema2   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            2 | LOCK_TABLE  | myschema2   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            2 | LOCK_TABLE  | myschema2   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            2 | LOCK_TABLE  | myschema2   | mytbl5     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            2 | LOCK_TABLE  | myschema2   | mytbl6     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            3 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            3 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            3 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            3 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            3 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            4 | LOCK_TABLE  | myschema2   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            4 | LOCK_TABLE  | myschema2   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            4 | LOCK_TABLE  | myschema2   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            4 | LOCK_TABLE  | myschema2   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            4 | LOCK_TABLE  | myschema2   | mytbl5     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            4 | LOCK_TABLE  | myschema2   | mytbl6     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema2   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema2   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema2   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema2   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema2   | mytbl5     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            5 | LOCK_TABLE  | myschema2   | mytbl6     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema2   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema2   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema2   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema2   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema2   | mytbl5     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            6 | LOCK_TABLE  | myschema2   | mytbl6     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema2   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema2   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema2   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema2   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema2   | mytbl5     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            7 | LOCK_TABLE  | myschema2   | mytbl6     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema2   | mytbl1     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema2   | mytbl2     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema2   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema2   | mytbl4     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema2   | mytbl5     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            8 | LOCK_TABLE  | myschema2   | mytbl6     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            9 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-            9 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-            9 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-            9 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                      |              
-            9 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
             9 | DIS_LOG_TRG | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                    3 |              
             9 | DIS_LOG_TRG | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
             9 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
@@ -1972,11 +1909,7 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
             9 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
             9 | ENA_LOG_TRG | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                    3 |              
             9 | ENA_LOG_TRG | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
-           10 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                         |                      |              
-           10 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                      |              
-           10 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-           10 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-           10 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                 1 |            1 |                                                                                                                                         |                         |                      |              
+            9 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      12 |                    3 |              
            10 | DIS_LOG_TRG | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
            10 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
            10 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
@@ -1993,22 +1926,14 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
            10 | ENA_LOG_TRG | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
            10 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
            10 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           11 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-           11 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-           11 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-           11 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                      |              
-           11 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
+           10 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      16 |                    2 |              
            11 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            11 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            11 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
            11 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
            11 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                       1 |                    2 |              
            11 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
-           12 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-           12 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-           12 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                         |                      |              
-           12 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                      |              
-           12 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
+           11 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       6 |                    2 |              
            12 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            12 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            12 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                      15 |                    1 |            15
@@ -2018,11 +1943,7 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
            12 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
            12 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                       4 |                    2 |              
            12 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
-           13 | LOCK_TABLE  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-           13 | LOCK_TABLE  | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-           13 | LOCK_TABLE  | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                         |                      |              
-           13 | LOCK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                      |              
-           13 | LOCK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
+           12 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       9 |                    2 |              
            13 | DIS_LOG_TRG | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            13 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            13 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
@@ -2047,15 +1968,11 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
            13 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
            13 | ENA_LOG_TRG | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
            13 | ENA_LOG_TRG | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           14 | LOCK_TABLE  | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                         |                      |              
-           14 | LOCK_TABLE  | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-           14 | LOCK_TABLE  | myschema4   | mytblm     |                   |                 3 |            1 |                                                                                                                                         |                         |                      |              
+           13 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      24 |                    2 |              
            14 | RLBK_TABLE  | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    3 |             1
            14 | RLBK_TABLE  | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    3 |             1
            14 | RLBK_TABLE  | myschema4   | mytblm     |                   |                 3 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           15 | LOCK_TABLE  | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                         |                      |              
-           15 | LOCK_TABLE  | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                         |                      |              
-           15 | LOCK_TABLE  | myschema4   | mytblm     |                   |                 3 |            1 |                                                                                                                                         |                         |                      |              
+           14 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       3 |                    2 |              
            15 | DIS_LOG_TRG | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
            15 | DIS_LOG_TRG | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            15 | DIS_LOG_TRG | myschema4   | mytblm     |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
@@ -2068,10 +1985,8 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
            15 | ENA_LOG_TRG | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
            15 | ENA_LOG_TRG | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            15 | ENA_LOG_TRG | myschema4   | mytblm     |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | LOCK_TABLE  | myschema4   | mytblc1    |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-           16 | LOCK_TABLE  | myschema4   | mytblc2    |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-           16 | LOCK_TABLE  | myschema4   | mytblm     |                   |                   |            1 |                                                                                                                                         |                         |                      |              
-(182 rows)
+           15 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      12 |                    2 |              
+(89 rows)
 
 select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
@@ -2087,6 +2002,7 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |            9 |             2
  ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |            9 |             0
  ENA_LOG_TRG |             |            |                   |            9 |             2
+ CTRL+DBLINK |             |            |                   |            9 |            12
  DIS_LOG_TRG |             |            |                   |           10 |             3
  DROP_FK     |             |            |                   |           10 |             1
  SET_FK_DEF  |             |            |                   |           10 |             1
@@ -2099,12 +2015,14 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |           10 |             6
  ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |           10 |             0
  ENA_LOG_TRG |             |            |                   |           10 |             3
+ CTRL+DBLINK |             |            |                   |           10 |            16
  DROP_FK     |             |            |                   |           11 |             1
  SET_FK_DEF  |             |            |                   |           11 |             1
  RLBK_TABLE  | myschema1   | myTbl3     |                   |           11 |            10
  RLBK_TABLE  | myschema1   | mytbl4     |                   |           11 |             1
  SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |           11 |             1
  ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |           11 |             0
+ CTRL+DBLINK |             |            |                   |           11 |             6
  DROP_FK     |             |            |                   |           12 |             1
  SET_FK_DEF  |             |            |                   |           12 |             1
  RLBK_TABLE  | myschema1   | mytbl1     |                   |           12 |            15
@@ -2114,6 +2032,7 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  RLBK_TABLE  | myschema1   | mytbl4     |                   |           12 |             2
  SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |           12 |             4
  ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |           12 |             0
+ CTRL+DBLINK |             |            |                   |           12 |             9
  DIS_LOG_TRG |             |            |                   |           13 |             5
  DROP_FK     |             |            |                   |           13 |             1
  SET_FK_DEF  |             |            |                   |           13 |             1
@@ -2130,9 +2049,11 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |           13 |             5
  ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |           13 |             0
  ENA_LOG_TRG |             |            |                   |           13 |             5
+ CTRL+DBLINK |             |            |                   |           13 |            24
  RLBK_TABLE  | myschema4   | mytblc1    |                   |           14 |             1
  RLBK_TABLE  | myschema4   | mytblc2    |                   |           14 |             1
  RLBK_TABLE  | myschema4   | mytblm     |                   |           14 |             1
+ CTRL+DBLINK |             |            |                   |           14 |             3
  DIS_LOG_TRG |             |            |                   |           15 |             3
  RLBK_TABLE  | myschema4   | mytblc1    |                   |           15 |             3
  RLBK_TABLE  | myschema4   | mytblc2    |                   |           15 |             3
@@ -2141,7 +2062,8 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  DELETE_LOG  | myschema4   | mytblc2    |                   |           15 |             3
  DELETE_LOG  | myschema4   | mytblm     |                   |           15 |             3
  ENA_LOG_TRG |             |            |                   |           15 |             3
-(64 rows)
+ CTRL+DBLINK |             |            |                   |           15 |            12
+(71 rows)
 
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
