@@ -1382,7 +1382,7 @@ $_rlbk_tbl$
   END;
 $_rlbk_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_nbSession INT)
 RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_tbl$
 -- This function rollbacks one table to a given point in time represented by the value of the global sequence
@@ -1399,6 +1399,7 @@ $_rlbk_tbl$
     v_logTableName          TEXT;
     v_attname               TEXT;
     v_tmpTable              TEXT;
+    v_tableType             TEXT;
     v_nbPk                  BIGINT;
     v_cols                  TEXT[] = '{}';
     v_colsPk                TEXT[] = '{}';
@@ -1444,10 +1445,21 @@ $_rlbk_tbl$
     END LOOP;
     v_pkColList = array_to_string(v_colsPk,',');
     v_pkCondList = array_to_string(v_condsPk, ' AND ');
--- create the temp table containing all primary key values with their earliest emaj_gid
--- (the table cannot be a TEMP table because it would not be usable with PREPARE command used with parallel rollbacks)
-    v_tmpTable = 'emaj.emaj_tmp_' || pg_backend_pid();
-    EXECUTE 'CREATE TABLE ' || v_tmpTable || ' AS '
+-- create the temporary table containing all primary key values with their earliest emaj_gid
+    IF v_nbSession = 1 THEN
+      v_tableType = 'TEMP';
+      v_tmpTable = 'emaj_tmp_' || pg_backend_pid();
+    ELSE
+--   with multi session parallel rollbacks, the table cannot be a TEMP table because it would not be usable in 2PC
+--   but it may be an UNLOGGED table with pg 9.1+
+      IF v_pgVersion >= '9.1' THEN
+        v_tableType = 'UNLOGGED';
+      ELSE
+        v_tableType = '';
+      END IF;
+      v_tmpTable = 'emaj.emaj_tmp_' || pg_backend_pid();
+    END IF;
+    EXECUTE 'CREATE ' || v_tableType || ' TABLE ' || v_tmpTable || ' AS '
          || '  SELECT ' || v_pkColList || ', min(emaj_gid) as emaj_gid' 
          || '    FROM ' || v_logTableName
          || '    WHERE emaj_gid > ' || v_lastGlobalSeq 
@@ -4434,6 +4446,7 @@ $_rlbk_session_exec$
     v_mark                  TEXT;
     v_timestampMark         TIMESTAMPTZ;
     v_isLoggedRlbk          BOOLEAN;
+    v_nbSession             INT;
     v_lastGlobalSeq         BIGINT;
     v_lastSequenceId        BIGINT;
     v_lastSeqHoleId         BIGINT;
@@ -4446,8 +4459,8 @@ $_rlbk_session_exec$
       v_isDblinkUsable = true;
     END IF;
 -- get the rollack characteristics from the emaj_rlbk table
-    SELECT rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged 
-      INTO v_groupNames, v_mark, v_timestampMark, v_isLoggedRlbk
+    SELECT rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session
+      INTO v_groupNames, v_mark, v_timestampMark, v_isLoggedRlbk, v_nbSession
       FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
 -- fetch the last global sequence and the last id values of emaj_sequence and emaj_seq_hole tables at set mark time
     SELECT mark_global_seq, mark_last_sequence_id, mark_last_seq_hole_id
@@ -4493,7 +4506,7 @@ $_rlbk_session_exec$
                 ' DEFERRED';
       ELSEIF r_step.rlbp_step = 'RLBK_TABLE' THEN
 -- process a table rollback
-        SELECT emaj._rlbk_tbl(rel_schema, rel_tblseq, rel_log_schema, v_lastGlobalSeq) INTO v_nbRows
+        SELECT emaj._rlbk_tbl(rel_schema, rel_tblseq, rel_log_schema, v_lastGlobalSeq, v_nbSession) INTO v_nbRows
           FROM emaj.emaj_relation
           WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
         v_effNbTable = v_effNbTable + 1;
@@ -6344,7 +6357,7 @@ REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_l
 REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_seq(v_schemaName TEXT, v_seqName TEXT, v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_nbSession INT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._delete_log_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_timestamp TIMESTAMPTZ, v_lastGlobalSeq BIGINT, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_isLoggedRlbk BOOLEAN, v_lastSequenceId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) FROM PUBLIC;
@@ -6386,7 +6399,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark 
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_async(v_rlbkId BIGINT, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbsession INT, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId BIGINT, v_batchNumber INT, v_schema TEXT, v_table TEXT) FROM PUBLIC;
@@ -6436,7 +6449,7 @@ GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, 
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_seq(v_schemaName TEXT, v_seqName TEXT, v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_nbSession INT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_log_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_timestamp TIMESTAMPTZ, v_lastGlobalSeq BIGINT, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_isLoggedRlbk BOOLEAN, v_lastSequenceId BIGINT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_adm;
