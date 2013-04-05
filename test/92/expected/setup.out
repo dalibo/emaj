@@ -239,9 +239,10 @@ grant all on mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2 to emaj_regr
 -- should return no row
 select proname, proacl from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proacl is null;
- proname | proacl 
----------+--------
-(0 rows)
+  proname   | proacl 
+------------+--------
+ _rlbk_tbl2 | 
+(1 row)
 
 -----------------------------
 -- check that no user function has the default comment

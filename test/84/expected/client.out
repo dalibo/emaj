@@ -26,22 +26,22 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
 \! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
-PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation) in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 124
-Call of _rlbk_init() function failed pg_krb5_init: krb5_cc_get_principal: No credentials cache found
+PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation) in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 133
+Call of _rlbk_init() function failed 
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
--- logged rollback for a single group
+-- unlogged rollback for 2 groups
 \! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
 ==> Logged rollback completed (9 tables and 3 sequences effectively processed).
 
--- unlogged rollback for 2 groups
-\! ../../php/emajParallelRollback.php -d regression -g myGroup1 -m Multi-1 -s 3
+-- logged rollback for a single group and a single session
+\! ../../php/emajParallelRollback.php -d regression -g myGroup1 -m Multi-1 -s 1
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
-==> Rollback to mark 'Multi-1' is now in progress with 3 sessions...
+==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
 ==> Rollback completed (3 tables and 1 sequences effectively processed).
 
 --------------------------------------------
@@ -99,7 +99,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime,
 ** rollback 35 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: Multi-1 set at [mark time]
-   3 session(s) to process 3 table(s) and 1 sequence(s) 
+   1 session(s) to process 3 table(s) and 1 sequence(s) 
 -> rollback 1232 started at [rollback start time] for groups {group1232}
    status: EXECUTING ; completion 85 % ; @ 20 secs remaining
    rollback to mark: mark1232 set at [mark time]
@@ -120,7 +120,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime,
 ** rollback 35 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: Multi-1 set at [mark time]
-   3 session(s) to process 3 table(s) and 1 sequence(s) 
+   1 session(s) to process 3 table(s) and 1 sequence(s) 
 -> rollback 1232 started at [rollback start time] for groups {group1232}
    status: EXECUTING ; completion 85 % ; @ 20 secs remaining
    rollback to mark: mark1232 set at [mark time]

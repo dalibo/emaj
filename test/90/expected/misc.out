@@ -685,18 +685,18 @@ select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',NULL,NULL);
 ERROR:  emaj_snap_log_group: directory parameter cannot be NULL
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
-CONTEXT:  SQL statement "COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11842 ORDER BY emaj_gid ASC) TO 'unknown_directory/myschema2_mytbl1_log.snap' "
+CONTEXT:  SQL statement "COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11815 ORDER BY emaj_gid ASC) TO 'unknown_directory/myschema2_mytbl1_log.snap' "
 PL/pgSQL function "emaj_snap_log_group" line 111 at EXECUTE statement
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema2_mytbl1_log.snap" for writing: No such file or directory
-CONTEXT:  SQL statement "COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11842 ORDER BY emaj_gid ASC) TO '/unknown_directory/myschema2_mytbl1_log.snap' "
+CONTEXT:  SQL statement "COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11815 ORDER BY emaj_gid ASC) TO '/unknown_directory/myschema2_mytbl1_log.snap' "
 PL/pgSQL function "emaj_snap_log_group" line 111 at EXECUTE statement
 -- invalid COPY TO options
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps', 'dummy_option');
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: ...mp/emaj_test/log_snaps/myschema2_mytbl1_log.snap' dummy_opti...
                                                              ^
-QUERY:  COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11842 ORDER BY emaj_gid ASC) TO '/tmp/emaj_test/log_snaps/myschema2_mytbl1_log.snap' dummy_option
+QUERY:  COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11815 ORDER BY emaj_gid ASC) TO '/tmp/emaj_test/log_snaps/myschema2_mytbl1_log.snap' dummy_option
 CONTEXT:  PL/pgSQL function "emaj_snap_log_group" line 111 at EXECUTE statement
 -- SQL injection attempt
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');

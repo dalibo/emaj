@@ -30,11 +30,11 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
 
--- logged rollback for a single group
+-- unlogged rollback for 2 groups
 \! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 
--- unlogged rollback for 2 groups
-\! ../../php/emajParallelRollback.php -d regression -g myGroup1 -m Multi-1 -s 3
+-- logged rollback for a single group and a single session
+\! ../../php/emajParallelRollback.php -d regression -g myGroup1 -m Multi-1 -s 1
 
 --------------------------------------------
 -- Prepare data for emajRollbackMonitor.php

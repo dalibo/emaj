@@ -1372,14 +1372,14 @@ $_drop_seq$
   END;
 $_drop_seq$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_tbl2(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_tbl$
--- This function rollbacks one table to a given timestamp
+-- This function rollbacks one table to a given point in time represented by the value of the global sequence
 -- The function is called by emaj._rlbk_session_exec()
--- Input: schema name and table name, log schema, global sequence value limit for rollback, mark timestamp,
---        flag to specify if the rollback is logged,
---        last sequence and last hole identifiers to keep (greater ones being to be deleted)
+-- Input: schema name and table name
+--        log schema
+--        global sequence value limit for rollback
 -- Output: number of rolled back events
 -- For unlogged rollback, the log triggers have been disabled previously and will be enabled later.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
@@ -1402,6 +1402,95 @@ $_rlbk_tbl$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('ROLLBACK_TABLE', 'END', v_fullTableName, v_nbRows || ' rolled back rows');
     RETURN v_nbRows;
+  END;
+$_rlbk_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT)
+RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
+$_rlbk_tbl$
+-- This function rollbacks one table to a given point in time represented by the value of the global sequence
+-- The function is called by emaj._rlbk_session_exec()
+-- Input: schema name and table name
+--        log schema
+--        global sequence value limit for rollback
+-- Output: number of rolled back primary keys
+-- For unlogged rollback, the log triggers have been disabled previously and will be enabled later.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
+  DECLARE
+    v_pgVersion             TEXT := emaj._pg_version();
+    v_fullTableName         TEXT;
+    v_logTableName          TEXT;
+    v_attname               TEXT;
+    v_tmpTable              TEXT;
+    v_nbPk                  BIGINT;
+    v_cols                  TEXT[] = '{}';
+    v_colsPk                TEXT[] = '{}';
+    v_condsPk               TEXT[] = '{}';
+    v_colList               TEXT;
+    v_pkColList             TEXT;
+    v_pkCondList            TEXT;
+    r_col                   RECORD;
+  BEGIN
+    v_fullTableName  := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
+    v_logTableName   := quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
+-- insert begin event in history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_lastGlobalSeq);
+-- Build some pieces of SQL statements
+--   build the tables's columns list
+    FOR r_col IN
+      SELECT 'tbl.' || quote_ident(attname) AS col_name FROM pg_catalog.pg_attribute
+        WHERE attrelid = v_fullTableName::regclass
+          AND attnum > 0 AND NOT attisdropped
+        ORDER BY attnum
+      LOOP
+      v_cols = array_append(v_cols, r_col.col_name);
+    END LOOP;
+    v_colList = array_to_string(v_cols,',');
+-- TODO when pg 8.3 will not be supported any more : 
+--   SELECT array_to_string(array_agg('tbl.' || quote_ident(attname)),', ') INTO v_colList 
+--     FROM pg_catalog.pg_attribute
+--     WHERE attrelid = 'myschema1.mytbl1'::regclass AND attnum > 0 AND NOT attisdropped;
+--   build the pkey columns list and the "equality on the primary key" conditions
+    FOR r_col IN
+      SELECT quote_ident(attname) AS col_pk_name, 
+             'tbl.' || quote_ident(attname) || ' = keys.' || quote_ident(attname) AS col_pk_cond
+        FROM pg_catalog.pg_attribute, pg_catalog.pg_index
+        WHERE pg_attribute.attrelid = pg_index.indrelid
+          AND attnum = ANY (indkey)
+          AND indrelid = v_fullTableName::regclass AND indisprimary
+          AND attnum > 0 AND attisdropped = false
+        ORDER BY attnum
+      LOOP
+      v_colsPk = array_append(v_colsPk, r_col.col_pk_name);
+      v_condsPk = array_append(v_condsPk, r_col.col_pk_cond);
+    END LOOP;
+    v_pkColList = array_to_string(v_colsPk,',');
+    v_pkCondList = array_to_string(v_condsPk, ' AND ');
+-- create the temp table containing all primary key values with their earliest emaj_gid
+-- (the table cannot be a TEMP table because it would not be usable with PREPARE command used with parallel rollbacks)
+    v_tmpTable = 'emaj.emaj_tmp_' || pg_backend_pid();
+    EXECUTE 'CREATE TABLE ' || v_tmpTable || ' AS '
+         || '  SELECT ' || v_pkColList || ', min(emaj_gid) as emaj_gid' 
+         || '    FROM ' || v_logTableName
+         || '    WHERE emaj_gid > ' || v_lastGlobalSeq 
+         || '    GROUP BY ' || v_pkColList;
+    GET DIAGNOSTICS v_nbPk = ROW_COUNT;
+-- delete all rows from the application table corresponding to each touched primary key
+--   this deletes rows inserted or updated during the rolled back period
+    EXECUTE 'DELETE FROM ONLY ' || v_fullTableName || ' tbl USING ' || v_tmpTable || ' keys '
+         || '  WHERE ' || v_pkCondList;
+-- inserted into the application table rows that were deleted or updated during the rolled back period
+    EXECUTE 'INSERT INTO ' || v_fullTableName 
+         || '  SELECT ' || v_colList
+         || '    FROM ' || v_logTableName || ' tbl, ' || v_tmpTable || ' keys '
+         || '    WHERE ' || v_pkCondList || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD''';
+-- drop the now useless temporary table
+    EXECUTE 'DROP TABLE ' || v_tmpTable;
+-- insert end event in history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ROLLBACK_TABLE', 'END', v_fullTableName, v_nbPk || ' rolled back primary keys');
+    RETURN v_nbPk;
   END;
 $_rlbk_tbl$;
 
@@ -4569,21 +4658,21 @@ $_rlbk_end$
 -- report duration statistics into the emaj_rlbk_stat table
     v_stmt = 'INSERT INTO emaj.emaj_rlbk_stat (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey,' ||
              '      rlbt_rlbk_id, rlbt_rlbk_datetime, rlbt_quantity, rlbt_duration)' ||
---   copy elementary steps for RLBK_TABLE and DELETE_LOG step types
+--   copy elementary steps for DELETE_LOG step types (record the rlbp_quantity as reference for later forecast)
              '  SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,' ||
              '      rlbp_rlbk_id, rlbk_mark_datetime, rlbp_quantity, rlbp_duration' ||
              '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
              '    WHERE rlbk_id = rlbp_rlbk_id AND rlbp_rlbk_id = ' || v_rlbkId ||
-             '      AND rlbp_step IN (''RLBK_TABLE'',''DELETE_LOG'') ' ||
+             '      AND rlbp_step IN (''DELETE_LOG'') ' ||
              '  UNION ALL ' ||
---   copy elementary steps for ADD_FK and SET_FK_IMM step types
+--   copy elementary steps for RLBK_TABLE, ADD_FK and SET_FK_IMM step types  (record the rlbp_estimated_quantity as reference for later forecast)
              '  SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,' ||
              '      rlbp_rlbk_id, rlbk_mark_datetime, rlbp_estimated_quantity, rlbp_duration' ||
              '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
              '    WHERE rlbk_id = rlbp_rlbk_id AND rlbp_rlbk_id = ' || v_rlbkId ||
-             '      AND rlbp_step IN (''ADD_FK'',''SET_FK_IMM'') ' ||
+             '      AND rlbp_step IN (''RLBK_TABLE'',''ADD_FK'',''SET_FK_IMM'') ' ||
              '  UNION ALL ' ||
---   and for 4 other steps, aggregate other elementary steps into a global row for each step type
+--   for 4 other steps, aggregate other elementary steps into a global row for each step type
              '  SELECT rlbp_step, '''', '''', '''', rlbp_rlbk_id, rlbk_mark_datetime, ' ||
              '      count(*), sum(rlbp_duration)' ||
              '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
@@ -4591,7 +4680,7 @@ $_rlbk_end$
              '      AND rlbp_step IN (''DIS_LOG_TRG'',''DROP_FK'',''SET_FK_DEF'',''ENA_LOG_TRG'') ' ||
              '    GROUP BY 1, 2, 3, 4, 5, 6' ||
              '  UNION ALL ' ||
--- and the final CTRLxDBLINK pseudo step statistic
+--   and the final CTRLxDBLINK pseudo step statistic
              '  SELECT rlbp_step, '''', '''', '''', rlbp_rlbk_id, rlbk_mark_datetime, ' ||
              '      rlbp_estimated_quantity, ' || quote_literal(v_ctrlDuration) ||
              '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||

@@ -116,6 +116,15 @@
         or die("Connection #$i failed".pg_last_error()."\n");
     }
 
+// For each session, start a transaction 
+
+  for ($i = 1 ; $i <= $nbSession ; $i++){
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." Start transaction #$i...\n";
+    $result = pg_query($dbconn[$i],"BEGIN TRANSACTION")
+        or die('Begin transaction #'.$i.' failed: '.pg_last_error()."\n");
+    }
+  pg_free_result($result);
+
 // Call _rlbk_init() on first session
 // This checks the groups and mark, and prepares the parallel rollback by creating well balanced sessions
 
@@ -126,20 +135,6 @@
   $rlbkId = pg_fetch_result($result,0,0);
   pg_free_result($result);
   echo "==> $msgRlbk to mark '$mark' is now in progress with $nbSession sessions...\n";
-
-// test 
-//  $result = pg_query($dbconn[1],"INSERT INTO myschema1.mytbl2b (col21) VALUES (1000)")
-//      or die('INSERT failed '.pg_last_error()."\n");
-//  pg_free_result($result);
-
-// For each session, start a transaction 
-
-  for ($i = 1 ; $i <= $nbSession ; $i++){
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." Start transaction #$i...\n";
-    $result = pg_query($dbconn[$i],"BEGIN TRANSACTION")
-        or die('Begin transaction #'.$i.' failed: '.pg_last_error()."\n");
-    }
-  pg_free_result($result);
 
 // For each session, synchronously call _rlbk_session_lock() to lock all tables
 
@@ -196,23 +191,32 @@
   pg_free_result($result);
   if ($verbose) echo "===> Number of rollbacked sequences for groups '$groups' = $nbSeq\n";
 
-// Commit with 2PC to be sure that all sessions can either commit or rollback in a single transaction
+// If there is only 1 session, perform a usual COMMIT
+
+  if ($nbSession == 1){
+    if ($verbose) echo date("d/m/Y - H:i:s.u")." Commit transaction #1...\n";
+    $result = pg_query($dbconn[1],"COMMIT")
+        or die('Commit prepared #1 failed: '.pg_last_error()."\n");
+  }else{
+
+// else, COMMIT with 2PC to be sure that all sessions can either commit or rollback in a single transaction
 
 // Phase 1 : Prepare transaction
 
-  for ($i = 1 ; $i <= $nbSession ; $i++){
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." Prepare transaction #$i...\n";
-    $result = pg_query($dbconn[$i],"PREPARE TRANSACTION 'emajtx".$i."'")
-        or die('Prepare transaction #'.$i.' failed: '.pg_last_error()."\n");
-    }
+    for ($i = 1 ; $i <= $nbSession ; $i++){
+      if ($verbose) echo date("d/m/Y - H:i:s.u")." Prepare transaction #$i...\n";
+      $result = pg_query($dbconn[$i],"PREPARE TRANSACTION 'emajtx".$i."'")
+          or die('Prepare transaction #'.$i.' failed: '.pg_last_error()."\n");
+      }
 
 // Phase 2 : Commit
 
-  for ($i = 1 ; $i <= $nbSession ; $i++){
-    if ($verbose) echo date("d/m/Y - H:i:s.u")." Commit transaction #$i...\n";
-    $result = pg_query($dbconn[$i],"COMMIT PREPARED 'emajtx".$i."'")
-        or die('Commit prepared #'.$i.' failed: '.pg_last_error()."\n");
-    }
+    for ($i = 1 ; $i <= $nbSession ; $i++){
+      if ($verbose) echo date("d/m/Y - H:i:s.u")." Commit transaction #$i...\n";
+      $result = pg_query($dbconn[$i],"COMMIT PREPARED 'emajtx".$i."'")
+          or die('Commit prepared #'.$i.' failed: '.pg_last_error()."\n");
+      }
+  }
 
 // Call the emaj_cleanup_rollback_state() function to set the rollback event as committed
 
