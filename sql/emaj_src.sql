@@ -1060,7 +1060,7 @@ $_create_tbl$
          || ' ADD COLUMN emaj_user_port INT         DEFAULT inet_client_port()';
 -- creation of the index on the log table
     EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON '
-         ||  v_logTableName || ' (emaj_gid, emaj_tuple DESC) ' || v_idxTblSpace;
+         ||  v_logTableName || ' (emaj_gid, emaj_tuple) ' || v_idxTblSpace;
 -- remove the NOT NULL constraints of application columns.
 --   They are useless and blocking to store truncate event for tables belonging to audit_only tables
     FOR r_column IN
