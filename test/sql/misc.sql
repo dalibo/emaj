@@ -535,11 +535,6 @@ begin;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
   select * from emaj.emaj_verify_all();
 rollback;
--- detection of a missing rollback function
-begin;
-  drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
-  select * from emaj.emaj_verify_all();
-rollback;
 -- detection of a missing truncate trigger
 begin;
   drop trigger myschema1_mytbl1_emaj_trunc_trg on myschema1.mytbl1;
@@ -572,7 +567,6 @@ begin;
   update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
   drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
-  drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
   drop table emaj.myschema1_mytbl1_log;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1';

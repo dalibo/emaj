@@ -1193,21 +1193,19 @@ rollback;
 -- detection of a missing E-Maj secondary schema
 begin;
   drop schema emajb cascade;
-NOTICE:  drop cascades to 5 other objects
+NOTICE:  drop cascades to 4 other objects
 DETAIL:  drop cascades to table emajb.myschema1_mytbl2b_log
 drop cascades to sequence emajb.myschema1_mytbl2b_log_seq
 drop cascades to function emajb.myschema1_mytbl2b_log_fnct()
 drop cascades to trigger myschema1_mytbl2b_emaj_log_trg on table myschema1.mytbl2b
-drop cascades to function emajb.myschema1_mytbl2b_rlbk_fnct(bigint)
   select * from emaj.emaj_verify_all();
-                                        emaj_verify_all                                         
-------------------------------------------------------------------------------------------------
+                                     emaj_verify_all                                      
+------------------------------------------------------------------------------------------
  The E-Maj schema "emajb" does not exist any more.
  In group "myGroup1", the log table "emajb"."myschema1_mytbl2b_log" is not found.
  In group "myGroup1", the log function "emajb"."myschema1_mytbl2b_log_fnct" is not found.
- In group "myGroup1", the rollback function "emajb"."myschema1_mytbl2b_rlbk_fnct" is not found.
  In group "myGroup1", the log trigger "myschema1_mytbl2b_emaj_log_trg" is not found.
-(5 rows)
+(4 rows)
 
 rollback;
 -- detection of a missing log trigger
@@ -1230,16 +1228,6 @@ NOTICE:  drop cascades to trigger myschema1_mytbl1_emaj_log_trg on table myschem
  In group "myGroup1", the log function "emaj"."myschema1_mytbl1_log_fnct" is not found.
  In group "myGroup1", the log trigger "myschema1_mytbl1_emaj_log_trg" is not found.
 (2 rows)
-
-rollback;
--- detection of a missing rollback function
-begin;
-  drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
-  select * from emaj.emaj_verify_all();
-                                       emaj_verify_all                                        
-----------------------------------------------------------------------------------------------
- In group "myGroup1", the rollback function "emaj"."myschema1_mytbl1_rlbk_fnct" is not found.
-(1 row)
 
 rollback;
 -- detection of a missing truncate trigger
@@ -1294,7 +1282,6 @@ begin;
   update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
   drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
-  drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
   drop table emaj.myschema1_mytbl1_log;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1';
@@ -1308,9 +1295,8 @@ begin;
  In group "myGroup2", the sequence "myschema2"."mytbl1" does not exist any more.
  In group "myGroup1", the log table "emaj"."myschema1_mytbl1_log" is not found.
  In group "myGroup1", the log function "emaj"."myschema1_mytbl1_log_fnct" is not found.
- In group "myGroup1", the rollback function "emaj"."myschema1_mytbl1_rlbk_fnct" is not found.
  In group "myGroup1", the log trigger "myschema1_mytbl1_emaj_log_trg" is not found.
-(9 rows)
+(8 rows)
 
 rollback;
 --------------------------------
@@ -1590,7 +1576,7 @@ begin;
     select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schema: cannot drop schema emajb. It probably owns unattended objects. Use the emaj_verify_all() function to get details
 CONTEXT:  SQL statement "SELECT emaj._drop_log_schema(r_schema.rel_log_schema, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 52 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 51 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
   rollback to savepoint sp1;

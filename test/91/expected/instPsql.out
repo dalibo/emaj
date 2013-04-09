@@ -1107,28 +1107,18 @@ $_create_tbl$
 -- Are created in the log schema:
 --    - the associated log table, with its own sequence
 --    - the function that logs the tables updates, defined as a trigger
---    - the rollback function (one per table and only if the group is rollbackable)
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
--- variables for the name of tables, functions, triggers,...
+    v_pgVersion             TEXT := emaj._pg_version();
     v_fullTableName         TEXT;
     v_dataTblSpace          TEXT;
     v_idxTblSpace           TEXT;
     v_logTableName          TEXT;
     v_logIdxName            TEXT;
     v_logFnctName           TEXT;
-    v_rlbkFnctName          TEXT;
-    v_exceptionRlbkFnctName TEXT;
     v_logTriggerName        TEXT;
     v_truncTriggerName      TEXT;
     v_sequenceName          TEXT;
--- variables to hold pieces of SQL
-    v_pkCondList            TEXT;
-    v_colList               TEXT;
-    v_valList               TEXT;
-    v_setList               TEXT;
--- other variables
-    v_pgVersion             TEXT := emaj._pg_version();
     v_relPersistence        CHAR(1);
     v_relIsTemp             BOOLEAN;
     v_relhaspkey            BOOLEAN;
@@ -1137,22 +1127,6 @@ $_create_tbl$
     v_triggerList           TEXT := '';
     r_column                RECORD;
     r_trigger               RECORD;
--- cursor to retrieve all columns of the application table
-    col1_curs CURSOR (tbl regclass) FOR
-      SELECT attname FROM pg_catalog.pg_attribute
-        WHERE attrelid = tbl
-          AND attnum > 0
-          AND attisdropped = false
-      ORDER BY attnum;
--- cursor to retrieve all columns of table's primary key
--- (taking column names in pg_attribute from the table's definition instead of index definition is mandatory
---  starting from pg9.0, joining tables with indkey instead of indexrelid)
-    col2_curs CURSOR (tbl regclass) FOR
-      SELECT attname FROM pg_catalog.pg_attribute, pg_catalog.pg_index
-        WHERE pg_attribute.attrelid = pg_index.indrelid
-          AND attnum = ANY (indkey)
-          AND indrelid = tbl AND indisprimary
-          AND attnum > 0 AND attisdropped = false;
   BEGIN
 -- check the table is neither a temporary nor an unlogged table
     IF v_pgVersion >= '9.1' THEN
@@ -1199,8 +1173,6 @@ $_create_tbl$
     v_logTableName     := quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
     v_logIdxName       := quote_ident(v_schemaName || '_' || v_tableName || '_log_idx');
     v_logFnctName      := quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log_fnct');
-    v_rlbkFnctName     := quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_rlbk_fnct');
-    v_exceptionRlbkFnctName=substring(quote_literal(v_rlbkFnctName) FROM '^(.*).$');   -- suppress last character
     v_logTriggerName   := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_log_trg');
     v_truncTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_trunc_trg');
     v_sequenceName     := quote_ident(v_logSchema) || '.' || quote_ident(emaj._build_log_seq_name(v_schemaName, v_tableName));
@@ -1287,94 +1259,6 @@ $_create_tbl$
       EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_truncTriggerName;
     END IF;
 --
--- create the rollback function, if the table belongs to a rollbackable group
---
-    IF v_isRollbackable THEN
--- First build some pieces of the CREATE FUNCTION statement
---   build the tables's columns list
---     and the SET clause for the UPDATE, from the same columns list
-      v_colList := '';
-      v_valList := '';
-      v_setList := '';
-      OPEN col1_curs (v_fullTableName);
-      LOOP
-        FETCH col1_curs INTO v_attname;
-        EXIT WHEN NOT FOUND;
-        IF v_colList = '' THEN
-           v_colList := quote_ident(v_attname);
-           v_valList := 'rec_log.' || quote_ident(v_attname);
-           v_setList := quote_ident(v_attname) || ' = rec_old_log.' || quote_ident(v_attname);
-        ELSE
-           v_colList := v_colList || ', ' || quote_ident(v_attname);
-           v_valList := v_valList || ', rec_log.' || quote_ident(v_attname);
-           v_setList := v_setList || ', ' || quote_ident(v_attname) || ' = rec_old_log.' || quote_ident(v_attname);
-        END IF;
-      END LOOP;
-      CLOSE col1_curs;
---   build "equality on the primary key" conditions, from the list of the primary key's columns
-      v_pkCondList := '';
-      OPEN col2_curs (v_fullTableName);
-      LOOP
-        FETCH col2_curs INTO v_attname;
-        EXIT WHEN NOT FOUND;
-        IF v_pkCondList = '' THEN
-           v_pkCondList := quote_ident(v_attname) || ' = rec_log.' || quote_ident(v_attname);
-        ELSE
-           v_pkCondList := v_pkCondList || ' AND ' || quote_ident(v_attname) || ' = rec_log.' || quote_ident(v_attname);
-        END IF;
-      END LOOP;
-      CLOSE col2_curs;
--- Then create the rollback function associated to the table
--- At execution, it will loop on each row from the log table in reverse order
---  It will insert the old deleted rows, delete the new inserted row
---  and update the new rows by setting back the old rows
--- The function returns the number of rolled back elementary operations or rows
--- All these functions will be called by the emaj_rlbk_tbl function, which is activated by the
---  emaj_rollback_group function
-      EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_rlbkFnctName || ' (v_lastGlobalSeq BIGINT)'
-           || ' RETURNS BIGINT AS $rlbkfnct$'
-           || '  DECLARE'
-           || '    v_nb_rows       BIGINT := 0;'
-           || '    v_nb_proc_rows  INTEGER;'
-           || '    rec_log     ' || v_logTableName || '%ROWTYPE;'
-           || '    rec_old_log ' || v_logTableName || '%ROWTYPE;'
-           || '    log_curs CURSOR FOR '
-           || '      SELECT * FROM ' || v_logTableName
-           || '        WHERE emaj_gid > v_lastGlobalSeq '
-           || '        ORDER BY emaj_gid DESC, emaj_tuple;'
-           || '  BEGIN'
-           || '    OPEN log_curs;'
-           || '    LOOP '
-           || '      FETCH log_curs INTO rec_log;'
-           || '      EXIT WHEN NOT FOUND;'
-           || '      IF rec_log.emaj_verb = ''INS'' THEN'
---         || '          RAISE NOTICE ''emaj_gid = % ; INS'', rec_log.emaj_gid;'
-           || '          DELETE FROM ONLY ' || v_fullTableName || ' WHERE ' || v_pkCondList || ';'
-           || '      ELSIF rec_log.emaj_verb = ''UPD'' THEN'
---         || '          RAISE NOTICE ''emaj_gid = % ; UPD ; %'', rec_log.emaj_gid,rec_log.emaj_tuple;'
-           || '          FETCH log_curs into rec_old_log;'
---         || '          RAISE NOTICE ''emaj_gid = % ; UPD ; %'', rec_old_log.emaj_gid,rec_old_log.emaj_tuple;'
-           || '          UPDATE ONLY ' || v_fullTableName || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';'
-           || '      ELSIF rec_log.emaj_verb = ''DEL'' THEN'
---         || '          RAISE NOTICE ''emaj_gid = % ; DEL'', rec_log.emaj_gid;'
-           || '          INSERT INTO ' || v_fullTableName || ' (' || v_colList || ') VALUES (' || v_valList || ');'
-           || '      ELSE'
-           || '          RAISE EXCEPTION ' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = % is unknown, emaj_gid = %.'','
-           || '            rec_log.emaj_verb, rec_log.emaj_gid;'
-           || '      END IF;'
-           || '      GET DIAGNOSTICS v_nb_proc_rows = ROW_COUNT;'
-           || '      IF v_nb_proc_rows <> 1 THEN'
-           || '        RAISE EXCEPTION ' || v_exceptionRlbkFnctName || ': internal error - emaj_verb = %, emaj_gid = %, # processed rows = % .'''
-           || '           ,rec_log.emaj_verb, rec_log.emaj_gid, v_nb_proc_rows;'
-           || '      END IF;'
-           || '      v_nb_rows := v_nb_rows + 1;'
-           || '    END LOOP;'
-           || '    CLOSE log_curs;'
---         || '    RAISE NOTICE ''Table ' || v_fullTableName || ' -> % rolled back rows.'', v_nb_rows;'
-           || '    RETURN v_nb_rows;'
-           || '  END;'
-           || '$rlbkfnct$ LANGUAGE plpgsql;';
-      END IF;
 -- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
     FOR r_trigger IN
       SELECT tgname FROM pg_catalog.pg_trigger
@@ -1398,18 +1282,17 @@ $_create_tbl$
     RETURN;
   END;
 $_create_tbl$;
-CREATE OR REPLACE FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_tbl$
 -- The function deletes all what has been created by _create_tbl function
--- Required inputs: schema name, table name, log schema and a boolean indicating whether the related group was created as rollbackable
+-- Required inputs: schema name, table name and log schema
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_pgVersion        TEXT := emaj._pg_version();
     v_fullTableName    TEXT;
     v_logTableName     TEXT;
     v_logFnctName      TEXT;
-    v_rlbkFnctName     TEXT;
     v_logTriggerName   TEXT;
     v_truncTriggerName TEXT;
     v_seqName          TEXT;
@@ -1418,7 +1301,6 @@ $_drop_tbl$
     v_fullTableName    := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
     v_logTableName     := quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
     v_logFnctName      := quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log_fnct');
-    v_rlbkFnctName     := quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_rlbk_fnct');
     v_logTriggerName   := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_log_trg');
     v_truncTriggerName := quote_ident(v_schemaName || '_' || v_tableName || '_emaj_trunc_trg');
     v_seqName          := emaj._build_log_seq_name(v_schemaName, v_tableName);
@@ -1435,11 +1317,8 @@ $_drop_tbl$
         EXECUTE 'DROP TRIGGER IF EXISTS ' || v_truncTriggerName || ' ON ' || v_fullTableName;
       END IF;
     END IF;
--- delete log and rollback functions,
+-- delete the log function
     EXECUTE 'DROP FUNCTION IF EXISTS ' || v_logFnctName || '()';
-    IF v_isRollbackable THEN
-      EXECUTE 'DROP FUNCTION IF EXISTS ' || v_rlbkFnctName || '(bigint)';
-    END IF;
 -- delete the sequence associated to the log table
     EXECUTE 'DROP SEQUENCE IF EXISTS ' || v_fullSeqName;
 -- delete the log table
@@ -1498,38 +1377,6 @@ $_drop_seq$
     RETURN;
   END;
 $_drop_seq$;
-CREATE OR REPLACE FUNCTION emaj._rlbk_tbl2(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT)
-RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
-$_rlbk_tbl$
--- This function rollbacks one table to a given point in time represented by the value of the global sequence
--- The function is called by emaj._rlbk_session_exec()
--- Input: schema name and table name
---        log schema
---        global sequence value limit for rollback
--- Output: number of rolled back events
--- For unlogged rollback, the log triggers have been disabled previously and will be enabled later.
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
-  DECLARE
-    v_fullTableName  TEXT;
-    v_logTableName   TEXT;
-    v_rlbkFnctName   TEXT;
-    v_nbRows         BIGINT;
-  BEGIN
-    v_fullTableName  := quote_ident(v_schemaName) || '.' || quote_ident(v_tableName);
-    v_logTableName   := quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
-    v_rlbkFnctName   := quote_ident(v_logSchema) || '.' ||
-                        quote_ident(v_schemaName || '_' || v_tableName || '_rlbk_fnct');
--- insert begin event in history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_lastGlobalSeq);
--- rollback the table
-    EXECUTE 'SELECT ' || v_rlbkFnctName || '(' || v_lastGlobalSeq || ')' INTO v_nbRows;
--- insert end event in history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ROLLBACK_TABLE', 'END', v_fullTableName, v_nbRows || ' rolled back rows');
-    RETURN v_nbRows;
-  END;
-$_rlbk_tbl$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_nbSession INT)
 RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_tbl$
@@ -1985,7 +1832,7 @@ $_verify_groups$
       IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
--- check log and rollback functions for all tables referenced in the emaj_relation table still exist
+-- check the log function for each table referenced in the emaj_relation table still exist
     FOR r_object IN
                                                   -- the schema and table names are rebuilt from the returned function name
       SELECT substring(fnct FROM '^(.*)_.*_.*_fnct') AS sch, substring(fnct FROM '^.*_(.*)_.*_fnct') AS tbl,
@@ -1993,15 +1840,10 @@ $_verify_groups$
                CASE WHEN substring(fnct FROM '^.*_.*_(.*)_fnct') = 'log' THEN 'log' ELSE 'rollback' END || 
                ' function "' || t.rel_log_schema || '"."' || fnct || '" is not found.' AS msg
         FROM (                                    -- all expected log functions 
-         (SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' AS fnct 
+         SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' AS fnct 
             FROM emaj.emaj_relation 
             WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
-          UNION ALL                               -- plus all expected rollback functions
-          SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' AS fnct 
-            FROM emaj.emaj_relation, emaj.emaj_group
-            WHERE group_name = rel_group AND group_is_rollbackable 
-              AND rel_group = ANY (v_groups) AND rel_kind = 'r' 
-         ) EXCEPT                                 -- minus functions known by postgres
+         EXCEPT                                   -- minus functions known by postgres
          SELECT nspname, proname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
            WHERE pronamespace = pg_namespace.oid AND proname LIKE E'%\_%\_%\_fnct'
              ) AS t, emaj.emaj_relation r         -- join with emaj_relation to get the group name
@@ -2406,14 +2248,13 @@ $_drop_group$
 -- The function is defined as SECURITY DEFINER so that secondary schemas can be dropped
   DECLARE
     v_groupIsLogging BOOLEAN;
-    v_isRollbackable BOOLEAN;
     v_nbTb           INT := 0;
     v_schemaPrefix   TEXT := 'emaj';
     r_tblsq          RECORD;
     r_schema         RECORD;
   BEGIN
 -- check that the group is recorded in emaj_group table
-    SELECT group_is_logging, group_is_rollbackable INTO v_groupIsLogging, v_isRollbackable 
+    SELECT group_is_logging INTO v_groupIsLogging
       FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
       RAISE EXCEPTION '_drop_group: group % has not been created.', v_groupName;
@@ -2432,7 +2273,7 @@ $_drop_group$
         LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
-        PERFORM emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isRollbackable);
+        PERFORM emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema);
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
           PERFORM emaj._drop_seq(r_tblsq.rel_schema, r_tblsq.rel_tblseq);
@@ -2538,7 +2379,7 @@ $emaj_alter_group$
       LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
-        PERFORM emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isRollbackable);
+        PERFORM emaj._drop_tbl(r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema);
 -- add the log schema to the array of log schemas to potentialy drop at the end of the function
         IF r_tblsq.rel_log_schema <> v_emajSchema AND
            (v_logSchemasArray IS NULL OR r_tblsq.rel_log_schema <> ALL (v_logSchemasArray)) THEN
@@ -2575,7 +2416,7 @@ $emaj_alter_group$
 -- then drop the relation (it will be recreated later)
         IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
-          PERFORM emaj._drop_tbl (r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema, v_isRollbackable);
+          PERFORM emaj._drop_tbl (r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_log_schema);
 -- and add the log schema to the list of log schemas to potentialy drop at the end of the function
         IF r_tblsq.rel_log_schema <> v_emajSchema AND
            (v_logSchemasArray IS NULL OR r_tblsq.rel_log_schema <> ALL (v_logSchemasArray)) THEN
@@ -6070,27 +5911,23 @@ $_verify_all_groups$
               (SELECT nspname, relname FROM pg_catalog.pg_namespace, pg_catalog.pg_class
                  WHERE relnamespace = pg_namespace.oid AND relname LIKE E'%\_%\_log')
         ORDER BY rel_schema, rel_tblseq, 1;
--- check log and rollback functions for all tables referenced in the emaj_relation table still exist
+-- check the log function for each table referenced in the emaj_relation table still exist
     RETURN QUERY
       SELECT msg FROM (
-        SELECT substring(fnct FROM '^(.*)_.*_.*_fnct') AS sch, substring(fnct FROM '^.*_(.*)_.*_fnct') AS tbl,
+        SELECT substring(fnct FROM '^(.*)_.*_log_fnct') AS sch, substring(fnct FROM '^.*_(.*)_log_fnct') AS tbl,
                                                 -- schema and table names are rebuilt from the returned function name
-               'In group "' || r.rel_group || '", the ' || 
-                 CASE WHEN substring(fnct FROM '^.*_.*_(.*)_fnct') = 'log' THEN 'log' ELSE 'rollback' END || 
-                 ' function "' || t.rel_log_schema || '"."' || fnct || '" is not found.' AS msg
+               'In group "' || r.rel_group || '", the log function "' || t.rel_log_schema || '"."' || 
+               fnct || '" is not found.' AS msg
           FROM (                                        -- all expected log functions
-           (SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' AS fnct 
+           SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' AS fnct 
               FROM emaj.emaj_relation 
               WHERE rel_kind = 'r'
-            UNION ALL                                   -- plus all expected rollback functions
-            SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' AS fnct 
-              FROM emaj.emaj_relation, emaj.emaj_group
-              WHERE rel_group = group_name AND rel_kind = 'r' AND group_is_rollbackable
-           ) EXCEPT                                     -- minus functions known by postgres
+           EXCEPT                                       -- minus functions known by postgres with the same name profile
            SELECT nspname, proname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-             WHERE pronamespace = pg_namespace.oid AND proname LIKE E'%\_%\_%\_fnct'
+             WHERE pronamespace = pg_namespace.oid AND proname LIKE E'%\_%\_log\_fnct'
                ) AS t, emaj.emaj_relation r             -- join with emaj_relation to get the group name 
-          WHERE r.rel_schema = substring(fnct FROM '^(.*)_.*_.*_fnct') AND r.rel_tblseq = substring(fnct FROM '^.*_(.*)_.*_fnct')
+          WHERE r.rel_schema = substring(fnct FROM '^(.*)_.*_log_fnct') 
+            AND r.rel_tblseq = substring(fnct FROM '^.*_(.*)_log_fnct')
           ORDER BY 1,2,3
       ) AS t;
 -- check log and truncate triggers for all tables referenced in the emaj_relation table still exist
@@ -6231,8 +6068,6 @@ $_verify_all_schemas$
                                                                               -- exclude emaj internal functions
              AND (nspname, proname) NOT IN (                                  -- exclude emaj log functions
                SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_log_fnct' FROM emaj.emaj_relation)
-             AND (nspname, proname) NOT IN (                                  -- exclude emaj rollback functions
-               SELECT rel_log_schema, rel_schema || '_' || rel_tblseq || '_rlbk_fnct' FROM emaj.emaj_relation)
              AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
         UNION ALL
 -- look for unexpected composite types
@@ -6412,7 +6247,7 @@ REVOKE ALL ON FUNCTION emaj._log_truncate_fnct() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._create_seq(v_schemaName TEXT, v_seqName TEXT, v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_nbSession INT) FROM PUBLIC;
@@ -6503,7 +6338,7 @@ GRANT EXECUTE ON FUNCTION emaj._log_truncate_fnct() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._create_seq(v_schemaName TEXT, v_seqName TEXT, v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(v_schemaName TEXT, v_seqName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_nbSession INT) TO emaj_adm;
@@ -7103,7 +6938,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    91
+    90
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 

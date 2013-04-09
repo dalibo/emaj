@@ -296,8 +296,6 @@ drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
 select emaj.emaj_alter_group('myGroup1');
 drop function emaj.myschema1_mytbl1_log_fnct() cascade;
 select emaj.emaj_alter_group('myGroup1');
-drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
-select emaj.emaj_alter_group('myGroup1');
 drop table emaj.myschema1_mytbl1_log;
 select emaj.emaj_alter_group('myGroup1');
 

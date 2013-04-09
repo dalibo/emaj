@@ -107,7 +107,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 ERROR:  tablespace "dummyTablespace" does not exist
 CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log ( LIKE myschema1.mytbl1) TABLESPACE "dummyTablespace""
-PL/pgSQL function "_create_tbl" line 105 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 77 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 , coalesce( $4 ,  $5 ), coalesce( $6 ,  $5 ),  $7 )"
 PL/pgSQL function "emaj_create_group" line 73 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
@@ -346,7 +346,7 @@ begin;
   select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schema: cannot drop schema emajb. It probably owns unattended objects. Use the emaj_verify_all() function to get details
 CONTEXT:  SQL statement "SELECT  emaj._drop_log_schema( $1 ,  $2 )"
-PL/pgSQL function "_drop_group" line 51 at PERFORM
+PL/pgSQL function "_drop_group" line 50 at PERFORM
 SQL statement "SELECT emaj._drop_group( $1 , FALSE)"
 PL/pgSQL function "emaj_drop_group" line 11 at SQL statement
 rollback;
@@ -811,13 +811,6 @@ select emaj.emaj_alter_group('myGroup1');
                 6
 (1 row)
 
-drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
-select emaj.emaj_alter_group('myGroup1');
- emaj_alter_group 
-------------------
-                6
-(1 row)
-
 drop table emaj.myschema1_mytbl1_log;
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
@@ -986,13 +979,11 @@ select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(his
  ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
  ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
  ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
- ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
- ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
  FORCE_DROP_GROUP | BEGIN          | myGroup1         |                                                 | postgres
  FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                                 | postgres
  FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                                 | postgres
  FORCE_DROP_GROUP | END            | myGroup1         | 6 tables/sequences processed                    | postgres
-(142 rows)
+(140 rows)
 
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 200;

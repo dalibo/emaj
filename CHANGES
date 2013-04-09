@@ -5,6 +5,9 @@ E-Maj - Release notes
 Enhancements:
   - the rollback processing has been largely redesigned and recoded so that
     emaj administrators can monitor rollback operations progress.
+  - the rollback processing has also been optimized. The per table rollback 
+    functions are replaced by a more efficient generic table rollback 
+    processing.
   - the emaj_estimate_rollback_duration() function is replaced by two new 
     functions, namely emaj_estimate_rollback_group() and 
     emaj_estimate_rollback_groups(), the later estimating the duration of a 

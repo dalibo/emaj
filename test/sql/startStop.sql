@@ -52,11 +52,6 @@ begin;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
--- detection of a missing rollback function
-begin;
-  drop function emaj.myschema1_mytbl1_rlbk_fnct(bigint);
-  select emaj.emaj_start_group('myGroup1','M1');
-rollback;
 -- detection of a missing truncate trigger (pg 8.4+)
 begin;
   drop trigger myschema1_mytbl1_emaj_trunc_trg on myschema1.mytbl1;
