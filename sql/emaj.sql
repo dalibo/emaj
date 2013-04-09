@@ -416,10 +416,9 @@ CREATE TABLE emaj.emaj_rlbk_stat (
     rlbt_fkey                TEXT        NOT NULL,       -- foreign key name for step on foreign key, or ''
     rlbt_rlbk_id             BIGINT      NOT NULL,       -- rollback id
     rlbt_rlbk_datetime       TIMESTAMPTZ NOT NULL,       -- timestamp of the rollback that has generated the statistic
-    rlbt_quantity            BIGINT      NOT NULL,       -- depending on the step,
-                                                         --   either number of rows processed by the elementary step
-                                                         --   or number of executed steps
-    rlbt_duration            INTERVAL    NOT NULL,       -- duration of the elementary step or sum of durations
+    rlbt_quantity            BIGINT      NOT NULL,       -- depending on the step, either estimated quantity processed
+                                                         --   by the elementary step or number of executed steps
+    rlbt_duration            INTERVAL    NOT NULL,       -- duration or sum of durations of the elementary step(s)
     PRIMARY KEY (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id)
     );
 COMMENT ON TABLE emaj.emaj_rlbk_stat IS
@@ -3939,11 +3938,12 @@ $_rlbk_planning$
           FROM emaj.emaj_rlbk_plan
           WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE';
 -- insert all DELETE_LOG steps. But the duration estimates will be computed later
--- for DELETE_LOG step, compute the estimated number of log rows to delete as 4/3 * estimated number of updates 
--- to rollback (this bets that there will be the same number of INSERT, UPDATE and DELETE verbs)
+-- the estimated number of log rows to delete is set to the the estimated number of updates. This is underestimated 
+--   in particular when UPDATES are logged. But the collected statistics used for duration estimates are also based on
+--   the estimated number of updates.  
       INSERT INTO emaj.emaj_rlbk_plan (
           rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_estimated_quantity
-        ) SELECT v_rlbkId, 'DELETE_LOG', rlbp_schema, rlbp_table, '', rlbp_batch_number, rlbp_estimated_quantity * 4/3
+        ) SELECT v_rlbkId, 'DELETE_LOG', rlbp_schema, rlbp_table, '', rlbp_batch_number, rlbp_estimated_quantity
           FROM emaj.emaj_rlbk_plan
           WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE';
 -- compute the cost for each ENA_LOG_TRG step
@@ -4648,19 +4648,13 @@ $_rlbk_end$
 -- report duration statistics into the emaj_rlbk_stat table
     v_stmt = 'INSERT INTO emaj.emaj_rlbk_stat (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey,' ||
              '      rlbt_rlbk_id, rlbt_rlbk_datetime, rlbt_quantity, rlbt_duration)' ||
---   copy elementary steps for DELETE_LOG step types (record the rlbp_quantity as reference for later forecast)
-             '  SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,' ||
-             '      rlbp_rlbk_id, rlbk_mark_datetime, rlbp_quantity, rlbp_duration' ||
-             '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
-             '    WHERE rlbk_id = rlbp_rlbk_id AND rlbp_rlbk_id = ' || v_rlbkId ||
-             '      AND rlbp_step IN (''DELETE_LOG'') ' ||
-             '  UNION ALL ' ||
---   copy elementary steps for RLBK_TABLE, ADD_FK and SET_FK_IMM step types  (record the rlbp_estimated_quantity as reference for later forecast)
+--   copy elementary steps for RLBK_TABLE, DELETE_LOG, ADD_FK and SET_FK_IMM step types
+--     (record the rlbp_estimated_quantity as reference for later forecast)
              '  SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,' ||
              '      rlbp_rlbk_id, rlbk_mark_datetime, rlbp_estimated_quantity, rlbp_duration' ||
              '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
              '    WHERE rlbk_id = rlbp_rlbk_id AND rlbp_rlbk_id = ' || v_rlbkId ||
-             '      AND rlbp_step IN (''RLBK_TABLE'',''ADD_FK'',''SET_FK_IMM'') ' ||
+             '      AND rlbp_step IN (''RLBK_TABLE'',''DELETE_LOG'',''ADD_FK'',''SET_FK_IMM'') ' ||
              '  UNION ALL ' ||
 --   for 4 other steps, aggregate other elementary steps into a global row for each step type
              '  SELECT rlbp_step, '''', '''', '''', rlbp_rlbk_id, rlbk_mark_datetime, ' ||

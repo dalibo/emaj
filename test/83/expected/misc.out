@@ -471,10 +471,10 @@ rollback;
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.46 secs
+ @ 1.43 secs
 (1 row)
 
--- should return 1.464120 sec
+-- should return 1.425100 sec
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','150 microsecond'::interval);
@@ -506,10 +506,10 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.48 secs
+ @ 1.44 secs
 (1 row)
 
--- should return 1.479982 sec
+-- should return 1.440962 sec
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
   ('RLBK_TABLE','myschema2','mytbl1','',1,'2000/01/01 00:01:00',5350,'1.000 SECONDS'::interval);
@@ -528,10 +528,10 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.35 secs
+ @ 2.31 secs
 (1 row)
 
--- should return 2.348586 sec
+-- should return 2.309566 sec
 -- estimate with added statistics about log deletes and CTRLxDBLINK pseudo steps
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','mytbl1','',1,'2000/01/01 00:01:00',5350,'0.250 SECONDS'::interval);
@@ -556,10 +556,10 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.85 secs
+ @ 2.68 secs
 (1 row)
 
--- should return 2.846341 sec
+-- should return 2.675653 sec
 -- estimate with 2 groups and a SET_FK_DEF step
 vacuum analyze myschema1.mytbl4;
 select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid and relname = 'mytbl4' and nspname = 'myschema1';
@@ -574,10 +574,10 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 2.90 secs
+ @ 2.73 secs
 (1 row)
 
--- should return 2.898741 sec
+-- should return 2.728023 sec
 rollback;
 -- delete all manualy inserted rollback statistics and cleanup the statistics table
 delete from emaj.emaj_rlbk_stat;
