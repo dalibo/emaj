@@ -18,8 +18,8 @@ Enhancements:
     in progress rollback operations. It returns a set of rows of type 
     emaj_rollback_activity_type. They contain a description of each running 
     rollback operation, as well as a remaining duration estimate and a 
-    percentage of work already done. emaj_adm and emaj_viewer roles can call 
-    it.
+    percentage of the work already done. emaj_adm and emaj_viewer roles can 
+    call it.
   - a new client, emajRollbackMonitor.php, is provided to monitor E-Maj 
     rollback operations that are currently in progress.
   - at create_group() or alter_group() time, a check is added to be sure no 
@@ -39,6 +39,8 @@ Enhancements:
   - a new emaj_user_port column is added into each log tables. It holds the 
     ip port of the remote user who performed the recorded update and 
     complements the already existing emaj_user_ip column.
+  - the primary index of each log table is declared as CLUSTER to help the 
+    log tables reorganization.
   - various code improvements, in particular taking benefit from the end of 
     the postgres 8.2 support.
   - some minor coding improvements such as: the replacement of the mark_state 

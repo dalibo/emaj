@@ -671,6 +671,11 @@ begin;
 rollback;
 
 -----------------------------
+-- test a table reclustering (it will use the pkey index as clustered index) 
+-----------------------------
+cluster emaj.myschema1_mytbl1_log ;
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 

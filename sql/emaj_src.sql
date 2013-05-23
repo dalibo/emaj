@@ -1061,6 +1061,8 @@ $_create_tbl$
 -- creation of the index on the log table
     EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON '
          ||  v_logTableName || ' (emaj_gid, emaj_tuple) ' || v_idxTblSpace;
+-- set the index associated to the primary key as cluster index. It may be useful for CLUSTER command.
+    EXECUTE 'ALTER TABLE ONLY ' || v_logTableName || ' CLUSTER ON ' || v_logIdxName;
 -- remove the NOT NULL constraints of application columns.
 --   They are useless and blocking to store truncate event for tables belonging to audit_only tables
     FOR r_column IN
