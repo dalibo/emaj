@@ -1820,7 +1820,7 @@ insert into myTbl4 values (12,'',1,1,'Step 6');
 select emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false), false);
  _rlbk_async 
 -------------
- 
+           4
 (1 row)
 
 -- and check the rollback result

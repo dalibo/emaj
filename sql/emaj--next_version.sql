@@ -3424,19 +3424,22 @@ $_rlbk_groups$
 $_rlbk_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId BIGINT, v_multiGroup BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_async$
 -- The function calls the main rollback functions following the initialisation phase.
 -- It is only called by the phpPgAdmin plugin, in an asynchronous way, so that the rollback can be then monitored by the client.
 -- Input: rollback identifier and a boolean saying if the rollback is a logged rollback
+-- Output: number of tables and sequences effectively processed
   DECLARE
+    v_nbTbl             INT;
+    v_nbSeq             INT;
   BEGIN
 -- simply chain the internal functions
     PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
     PERFORM emaj._rlbk_start_mark(v_rlbkId, v_multiGroup);
-    PERFORM emaj._rlbk_session_exec(v_rlbkId, 1);
-    PERFORM emaj._rlbk_end(v_rlbkId, v_multiGroup);
-    RETURN;
+    SELECT emaj._rlbk_session_exec(v_rlbkId, 1) INTO v_nbTbl;
+    SELECT emaj._rlbk_end(v_rlbkId, v_multiGroup) INTO v_nbSeq;
+    RETURN v_nbTbl + v_nbSeq;
   END;
 $_rlbk_async$;
 
