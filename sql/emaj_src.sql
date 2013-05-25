@@ -358,7 +358,7 @@ $$Contains description of holes in sequence values for E-Maj log tables.$$;
 
 -- table containing rollback events
 CREATE TABLE emaj.emaj_rlbk (
-  rlbk_id                    BIGSERIAL   NOT NULL,       -- rollback id
+  rlbk_id                    SERIAL      NOT NULL,       -- rollback id
   rlbk_groups                TEXT[]      NOT NULL,       -- groups array to rollback
   rlbk_mark                  TEXT        NOT NULL,       -- mark to rollback to
   rlbk_mark_datetime         TIMESTAMPTZ ,               -- timestamp of the mark as recorded into emaj_mark
@@ -387,7 +387,7 @@ CREATE INDEX emaj_rlbk_idx2 ON emaj.emaj_rlbk (rlbk_start_datetime);
 
 -- table containing rollback events sessions
 CREATE TABLE emaj.emaj_rlbk_session (
-  rlbs_rlbk_id               BIGINT      NOT NULL,       -- rollback id
+  rlbs_rlbk_id               INT         NOT NULL,       -- rollback id
   rlbs_session               INT         NOT NULL,       -- session number (from 1 to rlbk_nb_session)
   rlbs_txid                  BIGINT      NOT NULL,       -- id of the tx that executes this rollback session
   rlbs_start_datetime        TIMESTAMPTZ NOT NULL,       -- rollback session start timestamp
@@ -401,7 +401,7 @@ $$Contains description of rollback events sessions.$$;
 
 -- table containing the elementary steps of rollback operations
 CREATE TABLE emaj.emaj_rlbk_plan (
-  rlbp_rlbk_id               BIGINT      NOT NULL,       -- rollback id
+  rlbp_rlbk_id               INT         NOT NULL,       -- rollback id
   rlbp_step                  emaj._rlbk_step_enum
                                          NOT NULL,       -- kind of elementary step in the rollback processing
   rlbp_schema                TEXT        NOT NULL,       -- schema object of the step
@@ -439,7 +439,7 @@ CREATE TABLE emaj.emaj_rlbk_stat (
   rlbt_schema                TEXT        NOT NULL,       -- schema object of the step
   rlbt_table                 TEXT        NOT NULL,       -- table name
   rlbt_fkey                  TEXT        NOT NULL,       -- foreign key name for step on foreign key, or ''
-  rlbt_rlbk_id               BIGINT      NOT NULL,       -- rollback id
+  rlbt_rlbk_id               INT         NOT NULL,       -- rollback id
   rlbt_rlbk_datetime         TIMESTAMPTZ NOT NULL,       -- timestamp of the rollback that has generated the statistic
   rlbt_quantity              BIGINT      NOT NULL,       -- depending on the step, either estimated quantity processed
                                                          --   by the elementary step or number of executed steps
@@ -476,7 +476,7 @@ COMMENT ON TYPE emaj.emaj_detailed_log_stat_type IS
 $$Represents the structure of rows returned by the emaj_detailed_log_stat_group() function.$$;
 
 CREATE TYPE emaj.emaj_rollback_activity_type AS (
-  rlbk_id                    BIGINT,                     -- rollback id
+  rlbk_id                    INT,                        -- rollback id
   rlbk_groups                TEXT[],                     -- groups array to rollback
   rlbk_mark                  TEXT,                       -- mark to rollback to
   rlbk_mark_datetime         TIMESTAMPTZ,                -- timestamp of the mark as recorded into emaj_mark
@@ -3499,7 +3499,7 @@ $_rlbk_groups$
 --        and a boolean saying if the rollback is a logged rollback
 -- Output: number of tables and sequences effectively processed
   DECLARE
-    v_rlbkId                 BIGINT;
+    v_rlbkId                 INT;
     v_nbTbl                  INT;
     v_nbSeq                  INT;
   BEGIN
@@ -3521,7 +3521,7 @@ $_rlbk_groups$
   END;
 $_rlbk_groups$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId BIGINT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_async$
 -- The function calls the main rollback functions following the initialisation phase.
@@ -3542,7 +3542,7 @@ $_rlbk_async$
 $_rlbk_async$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN)
-RETURNS BIGINT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_init$
 -- This is the first step of a rollback group processing.
 -- It tests the environment, the supplied parameters and the foreign key constraints.
@@ -3559,7 +3559,7 @@ $_rlbk_init$
     v_stmt                   TEXT;
     v_dbLinkCnxStatus        INT;
     v_isDblinkUsable         BOOLEAN = false;
-    v_rlbkId                 BIGINT;
+    v_rlbkId                 INT;
     v_timestampMark          TIMESTAMPTZ;
     v_msg                    TEXT;
   BEGIN
@@ -3602,7 +3602,7 @@ $_rlbk_init$
              v_isDblinkUsable || ',' || quote_literal(v_startDateTime) || ') RETURNING rlbk_id';
     IF v_isDblinkUsable THEN
 -- insert a rollback event into the emaj_rlbk table ... either through dblink if possible
-      SELECT rlbk_id INTO v_rlbkId FROM dblink('rlbk#1',v_stmt) AS (rlbk_id BIGINT);
+      SELECT rlbk_id INTO v_rlbkId FROM dblink('rlbk#1',v_stmt) AS (rlbk_id INT);
     ELSE
 -- ... or directly
       EXECUTE v_stmt INTO v_rlbkId;
@@ -3685,7 +3685,7 @@ $_rlbk_check$
   END;
 $_rlbk_check$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_planning(v_rlbkId INT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_planning$
 -- This function builds the rollback steps for a rollback operation.
@@ -4108,7 +4108,7 @@ $_rlbk_planning$
   END;
 $_rlbk_planning$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_set_batch_number(v_rlbkId BIGINT, v_batchNumber INT, v_schema TEXT, v_table TEXT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_set_batch_number$
 -- This function updates the emaj_rlbk_plan table to set the batch_number for one table.
@@ -4145,7 +4145,7 @@ $_rlbk_set_batch_number$
   END;
 $_rlbk_set_batch_number$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_session_lock(v_rlbkId BIGINT, v_session INT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_session_lock(v_rlbkId INT, v_session INT)
 RETURNS void LANGUAGE plpgsql AS
 $_rlbk_session_lock$
 -- It creates the session row in the emaj_rlbk_session table and then locks all the application tables for the session.
@@ -4229,7 +4229,7 @@ $_rlbk_session_lock$
   END;
 $_rlbk_session_lock$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_start_mark(v_rlbkId BIGINT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_start_mark(v_rlbkId INT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_start_mark$
 -- For logged rollback, it sets a mark that materialize the point in time just before the tables rollback.
@@ -4300,7 +4300,7 @@ $_rlbk_start_mark$
   END;
 $_rlbk_start_mark$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(v_rlbkId BIGINT, v_session INT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_session_exec$
 -- This function executes the main part of a rollback operation.
@@ -4445,7 +4445,7 @@ $_rlbk_session_exec$
   END;
 $_rlbk_session_exec$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_end(v_rlbkId BIGINT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_end(v_rlbkId INT, v_multiGroup BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_end$
 -- This is the last step of a rollback group processing. It :
@@ -4599,7 +4599,7 @@ $_rlbk_end$
   END;
 $_rlbk_end$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_error(v_rlbkId BIGINT, v_msg TEXT, v_cnxName TEXT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_error(v_rlbkId INT, v_msg TEXT, v_cnxName TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_error$
 -- This function records a rollback error into the emaj_rlbk table, but only if a dblink connection is open
@@ -4925,7 +4925,7 @@ COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT,TEXT,TEXT) IS
 $$Returns detailed statistics about logged events for an E-Maj group between 2 marks.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN)
-RETURNS interval LANGUAGE plpgsql AS
+RETURNS INTERVAL LANGUAGE plpgsql AS
 $emaj_estimate_rollback_group$
 -- This function computes an approximate duration of a rollback to a predefined mark for a group.
 -- It uses the _estimate_rollback_group() function to effectively compute this estimate
@@ -4940,7 +4940,7 @@ COMMENT ON FUNCTION emaj.emaj_estimate_rollback_group(TEXT,TEXT,BOOLEAN) IS
 $$Estimates the duration of a potential rollback for a tables group to a given mark.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN)
-RETURNS interval LANGUAGE plpgsql AS
+RETURNS INTERVAL LANGUAGE plpgsql AS
 $emaj_estimate_rollback_groups$
 -- This function computes an approximate duration of a rollback to a predefined mark for a groups array.
 -- It uses the _estimate_rollback_group() function to effectively compute this estimate
@@ -4955,7 +4955,7 @@ COMMENT ON FUNCTION emaj.emaj_estimate_rollback_groups(TEXT[],TEXT,BOOLEAN) IS
 $$Estimates the duration of a potential rollback for a set of tables groups to a given mark.$$;
 
 CREATE OR REPLACE FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN)
-RETURNS interval LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INTERVAL LANGUAGE plpgsql SECURITY DEFINER AS
 $_estimate_rollback_groups$
 -- This function effectively computes an approximate duration of a rollback to a predefined mark for a groups array.
 -- It simulates a rollback on 1 session, by calling the _rlbk_planning function that already estimates elementary
@@ -4966,14 +4966,14 @@ $_estimate_rollback_groups$
   DECLARE
     v_markName               TEXT;
     v_fixed_table_rlbk       INTERVAL;
-    v_rlbkId                 BIGINT;
+    v_rlbkId                 INT;
     v_estimDuration          INTERVAL;
     v_nbTblseq               INT;
   BEGIN
 -- check supplied group names and mark parameters
     SELECT emaj._rlbk_check(v_groupNames,v_mark) INTO v_markName;
 -- compute a random negative rollback-id (not to interfere with ids of real rollbacks)
-    SELECT (random() * -10000000000)::bigint INTO v_rlbkId;
+    SELECT (random() * -2147483648)::int INTO v_rlbkId;
 --
 -- simulate a rollback planning
 --
@@ -6165,7 +6165,7 @@ GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_stat    TO emaj_adm;
 
 GRANT ALL ON SEQUENCE emaj.emaj_hist_hist_id_seq     TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_mark_mark_id_seq     TO emaj_adm;
-GRANT ALL ON SEQUENCE emaj.emaj_rlbk_rlbk_id_seq TO emaj_adm;
+GRANT ALL ON SEQUENCE emaj.emaj_rlbk_rlbk_id_seq     TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_adm;
 
@@ -6190,7 +6190,7 @@ GRANT SELECT ON emaj.emaj_rlbk_stat    TO emaj_viewer;
 
 GRANT SELECT ON SEQUENCE emaj.emaj_hist_hist_id_seq     TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_mark_mark_id_seq     TO emaj_viewer;
-GRANT SELECT ON SEQUENCE emaj.emaj_rlbk_rlbk_id_seq TO emaj_viewer;
+GRANT SELECT ON SEQUENCE emaj.emaj_rlbk_rlbk_id_seq     TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_viewer;
 
@@ -6255,16 +6255,16 @@ REVOKE ALL ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEX
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_async(v_rlbkId BIGINT, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId BIGINT, v_batchNumber INT, v_schema TEXT, v_table TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_session_exec(v_rlbkId BIGINT, v_session INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_session_lock(v_rlbkId BIGINT, v_session INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_start_mark(v_rlbkId BIGINT, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_end(v_rlbkId BIGINT, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_error(v_rlbkId BIGINT,v_msg TEXT, v_cnxName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_session_lock(v_rlbkId INT, v_session INT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_start_mark(v_rlbkId INT, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_end(v_rlbkId INT, v_multiGroup BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._rlbk_error(v_rlbkId INT,v_msg TEXT, v_cnxName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_cleanup_rollback_state() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._reset_group(v_groupName TEXT) FROM PUBLIC;
@@ -6348,16 +6348,16 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark 
 GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_async(v_rlbkId BIGINT, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId BIGINT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_session_exec(v_rlbkId BIGINT, v_session INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_session_lock(v_rlbkId BIGINT, v_session INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_start_mark(v_rlbkId BIGINT, v_multiGroup BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_end(v_rlbkId BIGINT, v_multiGroup BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_error(v_rlbkId BIGINT,v_msg TEXT, v_cnxName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_session_lock(v_rlbkId INT, v_session INT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_start_mark(v_rlbkId INT, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_end(v_rlbkId INT, v_multiGroup BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_error(v_rlbkId INT,v_msg TEXT, v_cnxName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._reset_group(v_groupName TEXT) TO emaj_adm;
@@ -6390,8 +6390,8 @@ GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId BIGINT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId BIGINT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
