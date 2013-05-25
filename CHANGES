@@ -4,10 +4,17 @@ E-Maj - Release notes
 ------
 Enhancements:
   - the rollback processing has been largely redesigned and recoded so that
-    emaj administrators can monitor rollback operations progress.
+    emaj administrators can monitor rollback operations progress. This 
+    feature requires can use a dblink connection on the same database. Its 
+    connection parameters are configured in a new 'dblink_user_password' 
+    entry into the emaj_param table.
   - the rollback processing has also been optimized. The per table rollback 
     functions are replaced by a more efficient generic table rollback 
     processing.
+  - for security reason, emaj_viewer roles cannot directly read the 
+    emaj_param table content any more. Instead, this role may access a new 
+    emaj_visible_param view that provides the same visibility, except for the 
+    value of the new 'dblink_user_password' parameter that is masked.
   - the emaj_estimate_rollback_duration() function is replaced by two new 
     functions, namely emaj_estimate_rollback_group() and 
     emaj_estimate_rollback_groups(), the later estimating the duration of a 
@@ -17,7 +24,7 @@ Enhancements:
   - a new emaj_rollback_activity() function provides information about 
     in progress rollback operations. It returns a set of rows of type 
     emaj_rollback_activity_type. They contain a description of each running 
-    rollback operation, as well as a remaining duration estimate and a 
+    rollback operation, as well as  a remaining duration estimate and a 
     percentage of the work already done. emaj_adm and emaj_viewer roles can 
     call it.
   - a new client, emajRollbackMonitor.php, is provided to monitor E-Maj 

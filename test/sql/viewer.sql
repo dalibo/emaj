@@ -8,9 +8,9 @@ grant emaj_viewer to emaj_regression_tests_viewer_user;
 set role emaj_regression_tests_viewer_user;
 --
 -----------------------------
--- authorized table accesses
+-- authorized table or view accesses
 -----------------------------
-select count(*) from emaj.emaj_param;
+select count(*) from emaj.emaj_visible_param;
 select count(*) from emaj.emaj_hist;
 select count(*) from emaj.emaj_group_def;
 select count(*) from emaj.emaj_group;
@@ -41,6 +41,7 @@ select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
 -----------------------------
 -- forbiden table accesses
 -----------------------------
+select count(*) from emaj.emaj_param;
 delete from emaj.emaj_param;
 delete from emaj.emaj_hist;
 delete from emaj.emaj_group_def;

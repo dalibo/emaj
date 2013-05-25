@@ -504,7 +504,7 @@ $$Represents the structure of rows returned by the internal _verify_groups() fun
 
 ------------------------------------
 --                                --
--- 'Fixed' parameters             --
+-- Parameters                     --
 --                                --
 ------------------------------------
 INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','<NEXT_VERSION>');
@@ -531,6 +531,14 @@ INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version'
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1 millisecond'::interval);
 -- The fixed_dblink_rollback_duration parameter defines the fixed cost of dblink use for any rollback step
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','4 millisecond'::interval);
+
+-- view readable by emaj_viewer role. It hides the 'dblink_user_password' parameter's value
+CREATE VIEW emaj.emaj_visible_param AS
+  SELECT param_key,
+         CASE WHEN param_key = 'dblink_user_password' THEN '<masked data>' 
+                                                      ELSE param_value_text END AS param_value_text,
+         param_value_int, param_value_boolean, param_value_interval
+  FROM emaj.emaj_param;
 
 ------------------------------------
 --                                --
@@ -6034,6 +6042,7 @@ $_verify_all_schemas$
                '", the view "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
            FROM pg_catalog.pg_class, pg_catalog.pg_namespace
            WHERE relnamespace = pg_namespace.oid  AND relkind = 'v'
+             AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal views
              AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
         UNION ALL
 -- look for unexpected foreign tables
@@ -6151,6 +6160,7 @@ GRANT ALL ON SCHEMA emaj TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_global_seq TO emaj_adm;
 
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_param        TO emaj_adm;
+GRANT SELECT ON emaj.emaj_visible_param                     TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_hist         TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_group_def    TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_group        TO emaj_adm;
@@ -6175,18 +6185,18 @@ GRANT USAGE ON SCHEMA emaj TO emaj_viewer;
 
 GRANT SELECT ON SEQUENCE emaj.emaj_global_seq TO emaj_viewer;
 
-GRANT SELECT ON emaj.emaj_param        TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_hist         TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_group_def    TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_group        TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_relation     TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_mark         TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_sequence     TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_seq_hole     TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_rlbk         TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_rlbk_session TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_rlbk_plan    TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_rlbk_stat    TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_visible_param       TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_hist                TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_group_def           TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_group               TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_relation            TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_mark                TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_sequence            TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_seq_hole            TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_rlbk                TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_rlbk_session        TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_rlbk_plan           TO emaj_viewer;
+GRANT SELECT ON emaj.emaj_rlbk_stat           TO emaj_viewer;
 
 GRANT SELECT ON SEQUENCE emaj.emaj_hist_hist_id_seq     TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_mark_mark_id_seq     TO emaj_viewer;

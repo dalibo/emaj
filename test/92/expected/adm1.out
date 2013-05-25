@@ -17,6 +17,12 @@ select count(*) from emaj.emaj_param;
      3
 (1 row)
 
+select count(*) from emaj.emaj_visible_param;
+ count 
+-------
+     3
+(1 row)
+
 select count(*) from emaj.emaj_hist;
  count 
 -------
