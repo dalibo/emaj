@@ -27,6 +27,10 @@ PGBIN92="/usr/local/pg921/bin"
 PGPORT92="5921"
 PGREG92="/home/postgres/postgresql-9.2.1/src/test/regress"
 
+PGBIN93="/usr/local/pg93beta1/bin"
+PGPORT93="5931"
+PGREG93="/home/postgres/postgresql-9.3beta1/src/test/regress"
+
 #---------------------------------------------#
 #            Functions definition             #
 #---------------------------------------------#
@@ -103,20 +107,20 @@ echo "--- E-Maj regression tests ---"
 echo " "
 echo "Available tests:"
 echo "----------------"
-#echo "	A- pg 8.2 (port $PGPORT82) standart test"
-echo "	B- pg 8.3 (port $PGPORT83) standart test"
-echo "	C- pg 8.4 (port $PGPORT84) standart test"
-echo "	D- pg 9.0 (port $PGPORT90) standart test"
-echo "	E- pg 9.1 (port $PGPORT91) standart test"
-echo "	F- pg 9.2 (port $PGPORT92) standart test"
+echo "	A- pg 8.3 (port $PGPORT83) standart test"
+echo "	B- pg 8.4 (port $PGPORT84) standart test"
+echo "	C- pg 9.0 (port $PGPORT90) standart test"
+echo "	D- pg 9.1 (port $PGPORT91) standart test"
+echo "	E- pg 9.2 (port $PGPORT92) standart test"
+echo "	F- pg 9.3 (port $PGPORT93) standart test"
 echo "	M- pg 8.4 dump and 9.1 restore"
 #echo "	N- pg 9.1 dump and 9.1 restore"
-#echo "	P- pg 8.2 (port $PGPORT82) starting with E-Maj migration"
-echo "	Q- pg 8.3 (port $PGPORT83) starting with E-Maj migration"
-echo "	R- pg 8.4 (port $PGPORT84) starting with E-Maj migration"
-echo "	S- pg 9.0 (port $PGPORT90) starting with E-Maj migration"
-echo "	T- pg 9.1 (port $PGPORT91) starting with E-Maj migration"
-echo "	U- pg 9.2 (port $PGPORT92) starting with E-Maj migration"
+echo "	P- pg 8.3 (port $PGPORT83) starting with E-Maj migration"
+echo "	Q- pg 8.4 (port $PGPORT84) starting with E-Maj migration"
+echo "	R- pg 9.0 (port $PGPORT90) starting with E-Maj migration"
+echo "	S- pg 9.1 (port $PGPORT91) starting with E-Maj migration"
+echo "	T- pg 9.2 (port $PGPORT92) starting with E-Maj migration"
+echo "	U- pg 9.3 (port $PGPORT93) starting with E-Maj migration"
 echo "	V- pg 9.0 (port $PGPORT90) mixed with E-Maj migration"
 echo "	W- pg 9.1 (port $PGPORT91) mixed with E-Maj migration"
 echo "	X- pg 9.2 (port $PGPORT92) mixed with E-Maj migration"
@@ -128,22 +132,22 @@ read ANSWER
 
 # execute the test
 case $ANSWER in
-#	A|a) reg_test_version "82" "psql";;
-	B|b) reg_test_version "83" "psql" ;;
-	C|c) reg_test_version "84" "psql" ;;
-	D|d) reg_test_version "90" "psql" ;;
+	A|a) reg_test_version "83" "psql" ;;
+	B|b) reg_test_version "84" "psql" ;;
+	C|c) reg_test_version "90" "psql" ;;
 #	E|e) reg_test_version "91" "ext";;
-	E|e) reg_test_version "91" "psql";;
-	F|f) reg_test_version "92" "psql";;
+	D|d) reg_test_version "91" "psql";;
+	E|e) reg_test_version "92" "psql";;
+	F|f) reg_test_version "93" "psql";;
 	M|m) migrat_test "91" "84";;
 #	N|n) migrat_test "91" "91";;
-#	P|p) reg_test_version "82" "psql_mig" ;;
-	Q|q) reg_test_version "83" "psql_mig" ;;
-	R|r) reg_test_version "84" "psql_mig" ;;
-	S|s) reg_test_version "90" "psql_mig" ;;
+	P|p) reg_test_version "83" "psql_mig" ;;
+	Q|q) reg_test_version "84" "psql_mig" ;;
+	R|r) reg_test_version "90" "psql_mig" ;;
 #	T|t) reg_test_version "91" "ext_mig";;
-	T|t) reg_test_version "91" "psql_mig";;
-	U|u) reg_test_version "92" "psql_mig";;
+	S|s) reg_test_version "91" "psql_mig";;
+	T|t) reg_test_version "92" "psql_mig";;
+	U|u) reg_test_version "93" "psql_mig";;
 	V|v) reg_test_version "90" "psql_mx_mig";;
 #	U|u) reg_test_version "82" "psql_mx_mig";;
 #	V|v) reg_test_version "91" "ext_mx_mig";;
@@ -156,6 +160,7 @@ case $ANSWER in
 #		reg_test_version "91" "ext_mig"
 		reg_test_version "91" "psql_mig"
 		reg_test_version "92" "psql_mig"
+		reg_test_version "93" "psql_mig"
 		;;
 	Z|z)
 		reg_test_version "83" "psql"
@@ -164,6 +169,7 @@ case $ANSWER in
 #		reg_test_version "91" "ext"
 		reg_test_version "91" "psql"
 		reg_test_version "92" "psql"
+		reg_test_version "93" "psql"
 		migrat_test "91" "84"
 		;;
 	*) echo "Bad answer..." && exit 2 ;;

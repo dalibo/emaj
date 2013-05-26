@@ -50,6 +50,7 @@ Enhancements:
     log tables reorganization.
   - various code improvements, in particular taking benefit from the end of 
     the postgres 8.2 support.
+  - E-Maj is qualified with postgres 9.3.
   - some minor coding improvements such as: the replacement of the mark_state 
     column in the emaj_mark table by a boolean column named mark_is_deleted ;
     the replacement of the group_state column in the emaj_group table by a 
