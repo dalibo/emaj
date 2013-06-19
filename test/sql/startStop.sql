@@ -118,7 +118,10 @@ select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_co
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -- check old events are deleted
-select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from emaj.emaj_hist order by hist_id;
+select hist_function, hist_event, hist_object, 
+  case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'14(7|8)','<147|8>')
+    else regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g') end,
+  hist_user from emaj.emaj_hist order by hist_id;
 delete from emaj.emaj_param where param_key = 'history_retention';
 
 -----------------------------

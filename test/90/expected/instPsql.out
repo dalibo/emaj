@@ -223,15 +223,15 @@ $tmp$
     r_schema                 RECORD;
   BEGIN
 -- the creation of the function implicitely validates that plpgsql language is created!
--- check postgres version is >= 8.3
---   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') < '8.3' THEN
-      RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
-    END IF;
 -- check the current role is a superuser
     PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
+    END IF;
+-- check postgres version is >= 8.3
+--   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') < '8.3' THEN
+      RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
     END IF;
 -- check there is no E-Maj secondary schema remaining (that could later lead to error)
     v_schemaList = '';
@@ -294,18 +294,6 @@ $tmp$
       COMMENT ON ROLE emaj_adm IS
         $$This role may be granted to other roles in charge of E-Maj administration.$$;
     END IF;
--- give EXECUTE right to emaj_adm on all dblink_connect_u functions.
---   They are revoked by default, but are needed to monitor the rollback operations progress.
---   Note dblink may have been installed in several schemas and we don't know at installation time
---   what will be the search_path of future users.
-    FOR r_fnct IN
-      SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-        WHERE pg_proc.pronamespace = pg_namespace.oid
-          AND proname = 'dblink_connect_u' AND pronargs = 2
-      LOOP
-        EXECUTE 'GRANT EXECUTE ON FUNCTION ' ||
-                quote_ident(r_fnct.nspname) || '.dblink_connect_u(text,text) TO emaj_adm';
-    END LOOP;
 -- does 'emaj_viewer' already exist ?
     PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_viewer';
 -- if no, create it
@@ -6457,26 +6445,51 @@ GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_vi
 -- and insert the init record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSION>', 'Initialisation completed');
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
+-- and display a message about dblink installation
 CREATE OR REPLACE FUNCTION emaj._tmp_post_install()
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
     v_mpt                    INTEGER;
+    v_schemaList             TEXT;
+    r_sch                    RECORD;
   BEGIN
 -- check the max_prepared_transactions GUC value
     SELECT setting INTO v_mpt FROM pg_catalog.pg_settings WHERE name = 'max_prepared_transactions';
     IF v_mpt <= 1 THEN
       RAISE WARNING 'E-Maj installation: as the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
     END IF;
--- check the dblink contrib or extension is already installed
-    PERFORM 0 FROM pg_catalog.pg_proc WHERE proname = 'dblink';
-    IF NOT FOUND THEN
-      RAISE WARNING 'E-Maj installation: the dblink contrib/extension is not installed. It is advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring and E-Maj parallel rollback capabilities.';
+-- check the dblink contrib or extension is already installed and give EXECUTE right to emaj_adm on dblink_connect_u functions
+--   Scan all schemas where dblink is installed
+--   Note dblink may have been installed in several schemas and we don't know at installation time 
+--   what will be the search_path of future users.
+--   Grants on this particular dblink_connect_u function are revoked by default to public, 
+--   but emaj administrators need it to monitor the rollback operations progress.
+    v_schemaList = '';
+    FOR r_sch IN 
+      SELECT DISTINCT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+          WHERE pg_proc.pronamespace = pg_namespace.oid
+            AND proname = 'dblink_connect_u'
+      LOOP
+      IF v_schemaList = '' THEN
+        v_schemaList = r_sch.nspname;
+      ELSE
+        v_schemaList = v_schemaList || ',' || r_sch.nspname;
+      END IF;
+      EXECUTE 'GRANT EXECUTE ON FUNCTION ' || 
+              quote_ident(r_sch.nspname) || '.dblink_connect_u(text,text) TO emaj_adm';
+    END LOOP;
+-- return the output message depending whether dblink is installed or not 
+    IF v_schemaList = '' THEN
+      RAISE WARNING 'E-Maj installation: the dblink contrib/extension is not installed. It is advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring and E-Maj parallel rollback capabilities. (You will need to "GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO emaj_adm" once dblink is installed)';
+    ELSE
+      RAISE WARNING 'E-Maj installation: the dblink functions exist in schema(s): %. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.',v_schemaList;
     END IF;
     RETURN;
   END;
 $tmp$;
 SELECT emaj._tmp_post_install();
+psql:sql/emaj.sql:6433: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
  _tmp_post_install 
 -------------------
  

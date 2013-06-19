@@ -1,66 +1,86 @@
 --
--- E-Maj : logs and rollbacks table updates : Version <NEXT_VERSION>
---
+-- E-Maj: migration from 1.0.2 to 1.1.0
+-- 
 -- This software is distributed under the GNU General Public License.
 --
--- This script is automatically called by a "CREATE EXTENSION emaj;" statement in postgres 9.1+.
+-- This script migrates an existing installation of E-Maj extension.
+-- If version 1.0.2 version has not been yet installed, use emaj.sql script. 
 --
--- This script must be executed by a role having SUPERUSER privileges.
--- Before its execution:
--- 	-> the concerned cluster may contain a tablespace named "tspemaj" to hold E-Maj files,
---     for instance previously created by
---	   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
---	-> the plpgsql language must have been created in the concerned database,
--- It is also advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring capabilities.
 
-COMMENT ON SCHEMA emaj IS
-$$Contains all E-Maj related objects.$$;
-
--- create emaj roles
--- and set tspemaj as current_tablespace if exists
-DO LANGUAGE plpgsql
+\set ON_ERROR_STOP ON
+\set QUIET ON
+SET client_min_messages TO WARNING;
+--SET client_min_messages TO NOTICE;
+\echo 'E-maj upgrade from version 1.0.2 to version 1.1.0'
+\echo 'Checking...'
+------------------------------------
+--                                --
+-- checks                         --
+--                                --
+------------------------------------
+-- Creation of a specific function to check the migration conditions are met.
+-- The function generates an exception if at least one condition is not met.
+DROP FUNCTION IF EXISTS emaj.tmp();
+CREATE FUNCTION emaj.tmp() 
+RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
-    v_pgVersion              TEXT = substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
-    v_stmt                   TEXT;
-    r_fnct                   RECORD;
+    v_emajVersion            TEXT;
+    v_pgVersion              TEXT = emaj._pg_version();
   BEGIN
--- create emaj roles (NOLOGIN), if they do not exist
--- does 'emaj_adm' already exist ?
-    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_adm';
--- if no, create it
+-- check the current role is a superuser
+    PERFORM 0 FROM pg_roles WHERE rolname = current_user AND rolsuper;
     IF NOT FOUND THEN
-      CREATE ROLE emaj_adm;
-      COMMENT ON ROLE emaj_adm IS
-        $$This role may be granted to other roles in charge of E-Maj administration.$$;
+      RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
     END IF;
--- does 'emaj_viewer' already exist ?
-    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = 'emaj_viewer';
--- if no, create it
-    IF NOT FOUND THEN
-      CREATE ROLE emaj_viewer;
-      COMMENT ON ROLE emaj_viewer IS
-        $$This role may be granted to other roles allowed to view E-Maj objects content.$$;
+-- the emaj version registered in emaj_param must be '1.0.2'
+    SELECT param_value_text INTO v_emajVersion FROM emaj.emaj_param WHERE param_key = 'emaj_version';
+    IF v_emajVersion <> '1.0.2' THEN
+      RAISE EXCEPTION 'The current E-Maj version (%) is not 1.0.2',v_emajVersion;
     END IF;
--- if tspemaj tablespace exists,
---   use it as default_tablespace for emaj tables creation
+-- the installed postgres version must be at least 8.3
+    IF v_pgVersion < '8.3' THEN
+      RAISE EXCEPTION 'The current PostgreSQL version (%) is not compatible with E-Maj 1.1.0 (8.3 minimum)',v_pgVersion;
+    END IF;
+    RETURN;
+  END;
+$tmp$;
+SELECT emaj.tmp();
+DROP FUNCTION emaj.tmp();
+
+-- OK, upgrade...
+\echo '... OK, Migration start...'
+
+BEGIN TRANSACTION;
+
+-- lock emaj_group table to avoid any concurrent E-Maj activity
+LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
+
+CREATE OR REPLACE FUNCTION emaj.tmp() 
+RETURNS VOID LANGUAGE plpgsql AS
+$tmp$
+  DECLARE
+  BEGIN
+-- if tspemaj tablespace exists, use it as default_tablespace for emaj tables creation
 --   and grant the create rights on it to emaj_adm
-    PERFORM 0 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
+    PERFORM 0 FROM pg_tablespace WHERE spcname = 'tspemaj';
     IF FOUND THEN
       SET LOCAL default_tablespace TO tspemaj;
       GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
     END IF;
---
     RETURN;
   END;
 $tmp$;
+SELECT emaj.tmp();
+DROP FUNCTION emaj.tmp();
 
-------------------------------------------------
---                                            --
--- emaj enum types, sequences and tables      --
---                                            --
-------------------------------------------------
+\echo 'Updating E-Maj internal objects ...'
 
+--------------------------
+--                      --
+-- emaj enum types      --
+--                      --
+--------------------------
 -- enum of the possible values for the rollback status columns
 CREATE TYPE emaj._rlbk_status_enum AS ENUM (
   'PLANNING',                -- the emaj rollback is in the initial planning phase
@@ -85,66 +105,48 @@ CREATE TYPE emaj._rlbk_step_enum AS ENUM (
   'CTRL-DBLINK'              -- pseudo step representing the periods between 2 steps execution, when dblink is not used
   );
 
--- the emaj_global_seq sequence provides a unique identifier for all rows inserted into all emaj log tables of the database.
--- It is used to order all these rows in insertion time order for rollback as well as other purposes.
--- (So this order is not based on system time that can be unsafe).
--- The sequence is created with the following  (default) characteristics:
--- - increment = 1
--- - no cache (to keep the delivered nextval value in time order)
--- - no cycle (would the end of the sequence be reached, no new log row would be accepted)
-CREATE SEQUENCE emaj.emaj_global_seq;
-COMMENT ON SEQUENCE emaj.emaj_global_seq IS
-$$Global sequence to identifiy all rows of emaj log tables.$$;
+---------------------------------------
+--                                   --
+-- emaj tables, views and sequences  --
+--                                   --
+---------------------------------------
 
--- table containing Emaj parameters
-CREATE TABLE emaj.emaj_param (
-  param_key                  TEXT        NOT NULL,       -- parameter key
-  param_value_text           TEXT,                       -- value if type is text, otherwise NULL
-  param_value_int            BIGINT,                     -- value if type is bigint, otherwise NULL
-  param_value_boolean        BOOLEAN,                    -- value if type is boolean, otherwise NULL
-  param_value_interval       INTERVAL,                   -- value if type is interval, otherwise NULL
-  PRIMARY KEY (param_key)
-  );
-COMMENT ON TABLE emaj.emaj_param IS
-$$Contains E-Maj parameters.$$;
+--
+-- drop the useless tables
+--
+DROP TABLE emaj.emaj_fk;
 
--- table containing the history of all E-Maj events
-CREATE TABLE emaj.emaj_hist (
-  hist_id                    BIGSERIAL   NOT NULL,       -- internal id
-  hist_datetime              TIMESTAMPTZ NOT NULL
-                             DEFAULT clock_timestamp(),  -- insertion time
-  hist_function              TEXT        NOT NULL,       -- main E-Maj function generating the event
-  hist_event                 TEXT,                       -- type of event (often BEGIN or END)
-  hist_object                TEXT,                       -- object supporting the event (often the group name)
-  hist_wording               TEXT,                       -- additional comment
-  hist_user                  TEXT
-                             DEFAULT session_user,       -- the user who call the E-Maj function
-  hist_txid                  BIGINT
-                             DEFAULT txid_current(),     -- and its tx_id
-  PRIMARY KEY (hist_id)
-  );
-COMMENT ON TABLE emaj.emaj_hist IS
-$$Contains E-Maj events history.$$;
+--
+-- process the emaj_group table
+--
+-- create a temporary emaj_group table with the old structure
+CREATE TABLE emaj.emaj_group_old (
+    group_name                TEXT        NOT NULL,
+    group_state               TEXT        NOT NULL,      -- 2 possibles states:
+                                                         --   'LOGGING' between emaj_start_group and emaj_stop_group
+                                                         --   'IDLE' in other cases
+    group_nb_table            INT,                       -- number of tables at emaj_create_group time
+    group_nb_sequence         INT,                       -- number of sequences at emaj_create_group time
+    group_is_rollbackable     BOOLEAN,                   -- false for 'AUDIT_ONLY' groups, true for 'ROLLBACKABLE' groups
+    group_creation_datetime   TIMESTAMPTZ NOT NULL       -- start time of the transaction that created the group
+                              DEFAULT transaction_timestamp(),
+    group_last_alter_datetime TIMESTAMPTZ,               -- date and time of the last emaj_alter_group() exec,
+                                                         -- set to NULL at emaj_create_group() time
+    group_pg_version          TEXT        NOT NULL       -- postgres version at emaj_create_group() time
+                              DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
+    group_comment             TEXT                       -- optional user comment
+    );
 
--- table containing the definition of groups' content. Filled and maintained by the user, it is used by emaj_create_group function.
-CREATE TABLE emaj.emaj_group_def (
-  grpdef_group               TEXT        NOT NULL,       -- name of the group containing this table or sequence
-  grpdef_schema              TEXT        NOT NULL,       -- schema name of this table or sequence
-  grpdef_tblseq              TEXT        NOT NULL,       -- table or sequence name
-  grpdef_priority            INTEGER,                    -- priority level (tables are processed in ascending
-                                                         --   order, with NULL last)
-  grpdef_log_schema_suffix   TEXT,                       -- schema suffix for the log table, functions and sequence
-                                                         --   (NULL for 'emaj' schema)
-  grpdef_log_dat_tsp         TEXT,                       -- tablespace for the log table (NULL to use default value)
-  grpdef_log_idx_tsp         TEXT,                       -- tablespace for the log index (NULL to use default value)
-  PRIMARY KEY (grpdef_group, grpdef_schema, grpdef_tblseq)
--- the group name is included in the pkey so that a table/sequence can be temporarily assigned to several groups
-  );
-COMMENT ON TABLE emaj.emaj_group_def IS
-$$Contains E-Maj groups definition, supplied by the E-Maj administrator.$$;
+-- copy the old emaj_group's content into the temporary table
+INSERT INTO emaj.emaj_group_old SELECT * FROM emaj.emaj_group;
 
--- table containing the defined groups
---     rows are created at emaj_create_group time and deleted at emaj_drop_group time
+-- drop the foreign keys just before the old table
+ALTER TABLE emaj.emaj_relation DROP CONSTRAINT emaj_relation_rel_group_fkey;
+ALTER TABLE emaj.emaj_mark DROP CONSTRAINT emaj_mark_mark_group_fkey;
+
+DROP TABLE emaj.emaj_group;
+
+-- create the new emaj_group table
 CREATE TABLE emaj.emaj_group (
   group_name                 TEXT        NOT NULL,
   group_is_logging           BOOLEAN     NOT NULL,       -- are log triggers activated ?
@@ -165,28 +167,56 @@ CREATE TABLE emaj.emaj_group (
 COMMENT ON TABLE emaj.emaj_group IS
 $$Contains created E-Maj groups.$$;
 
--- table containing the relations (tables and sequences) of created tables groups
-CREATE TABLE emaj.emaj_relation (
-  rel_schema                 TEXT        NOT NULL,       -- schema name containing the relation
-  rel_tblseq                 TEXT        NOT NULL,       -- table or sequence name
-  rel_group                  TEXT        NOT NULL,       -- name of the group that owns the relation
-  rel_priority               INTEGER,                    -- priority level of processing inside the group
-  rel_log_schema             TEXT,                       -- schema for the log table, functions and sequence
-  rel_log_dat_tsp            TEXT,                       -- tablespace for the log table (NULL for sequences)
-  rel_log_idx_tsp            TEXT,                       -- tablespace for the log index (NULL for sequences)
-  rel_kind                   TEXT,                       -- similar to the relkind column of pg_class table
-                                                         --   ('r' = table, 'S' = sequence)
-  PRIMARY KEY (rel_schema, rel_tblseq),
-  FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
-  );
-COMMENT ON TABLE emaj.emaj_relation IS
-$$Contains the content (tables and sequences) of created E-Maj groups.$$;
--- index on emaj_relation used to speedup most functions working on groups with large E-Maj configuration
-CREATE INDEX emaj_relation_idx1 ON emaj.emaj_relation (rel_group, rel_kind);
--- index on emaj_relation used to speedup _verify_schema() with large E-Maj configuration
-CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
+-- populate the new emaj_group table
+INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_nb_table, group_nb_sequence, group_is_rollbackable,
+                            group_creation_datetime, group_pg_version, group_comment)
+  SELECT group_name, 
+         CASE WHEN group_state = 'LOGGING' THEN true ELSE false END, 
+         group_nb_table, group_nb_sequence, group_is_rollbackable,
+         group_creation_datetime, group_pg_version, group_comment
+    FROM emaj.emaj_group_old;
 
--- table containing the marks
+-- recreate the foreign keys
+ALTER TABLE emaj.emaj_relation ADD FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE;
+ALTER TABLE emaj.emaj_mark ADD FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE;
+
+-- and drop the temporary table
+DROP TABLE emaj.emaj_group_old;
+
+--
+-- process the emaj_relation table
+--
+ALTER TABLE emaj.emaj_relation DROP COLUMN rel_session, DROP COLUMN rel_rows;
+
+--
+-- process the emaj_mark table
+--
+-- create a temporary emaj_mark table with the old structure
+CREATE TABLE emaj.emaj_mark_old (
+    mark_group                TEXT        NOT NULL,      -- group for which the mark has been set
+    mark_name                 TEXT        NOT NULL,      -- mark name
+    mark_id                   BIGSERIAL   NOT NULL,      -- serial id used to order rows (not to rely on timestamps
+                                                         -- that are not safe if system time changes)
+    mark_datetime             TIMESTAMPTZ NOT NULL ,      -- precise timestamp of the mark creation, used as a reference
+                                                         --   for other tables like emaj_sequence and all log tables
+    mark_global_seq           BIGINT      NOT NULL,      -- emaj_global_seq last value at mark set (used to rollback tables)
+    mark_state                TEXT,                      -- state of the mark, with 2 possible values:
+                                                         --   'ACTIVE' and 'DELETED'
+    mark_comment              TEXT,                      -- optional user comment
+    mark_txid                 BIGINT                     -- id of the tx that has set the mark
+                              DEFAULT emaj._txid_current(),
+    mark_last_sequence_id     BIGINT,                    -- last sequ_id for the group at the end of the _set_mark_groups operation
+    mark_last_seq_hole_id     BIGINT,                    -- last sqhl_id for the group at _set_mark_groups time
+    mark_log_rows_before_next BIGINT                     -- number of log rows recorded for the group between the mark and the next one (NULL if last mark) - used to speedup marks lists display in phpPgAdmin plugin
+    );
+
+-- copy the old emaj_group's content into the temporary table
+INSERT INTO emaj.emaj_mark_old SELECT * FROM emaj.emaj_mark;
+
+-- drop the old table
+DROP TABLE emaj.emaj_mark;
+
+-- create the new emaj_mark table
 CREATE TABLE emaj.emaj_mark (
   mark_group                 TEXT        NOT NULL,       -- group for which the mark has been set
   mark_name                  TEXT        NOT NULL,       -- mark name
@@ -210,45 +240,25 @@ CREATE TABLE emaj.emaj_mark (
 COMMENT ON TABLE emaj.emaj_mark IS
 $$Contains marks set on E-Maj tables groups.$$;
 
--- table containing the sequences characteristics log
--- (to record at mark time the state of application sequences and sequences used by log tables)
-CREATE TABLE emaj.emaj_sequence (
-  sequ_id                    BIGSERIAL   NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
-                                                         -- on timestamps that are not safe if system time changes)
-  sequ_schema                TEXT        NOT NULL,       -- application or 'emaj' schema that owns the sequence
-  sequ_name                  TEXT        NOT NULL,       -- application or emaj sequence name
-  sequ_datetime              TIMESTAMPTZ NOT NULL,       -- timestamp the sequence characteristics have been recorded
-                                                         --   the same timestamp as referenced in emaj_mark table
-  sequ_mark                  TEXT        NOT NULL,       -- name of the mark associated to the insertion timestamp
-  sequ_last_val              BIGINT      NOT NULL,       -- sequence last value
-  sequ_start_val             BIGINT      NOT NULL,       -- sequence start value, (0 with postgres 8.2)
-  sequ_increment             BIGINT      NOT NULL,       -- sequence increment
-  sequ_max_val               BIGINT      NOT NULL,       -- sequence max value
-  sequ_min_val               BIGINT      NOT NULL,       -- sequence min value
-  sequ_cache_val             BIGINT      NOT NULL,       -- sequence cache value
-  sequ_is_cycled             BOOLEAN     NOT NULL,       -- sequence flag 'is cycled ?'
-  sequ_is_called             BOOLEAN     NOT NULL,       -- sequence flag 'is called ?'
-  PRIMARY KEY (sequ_schema, sequ_name, sequ_datetime)
-  );
-COMMENT ON TABLE emaj.emaj_sequence IS
-$$Contains values of sequences at E-Maj set_mark times.$$;
+-- populate the new emaj_mark table
+INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_id, mark_datetime, mark_global_seq, mark_is_deleted,
+            mark_comment, mark_txid, mark_last_sequence_id, mark_last_seq_hole_id, mark_log_rows_before_next)
+  SELECT mark_group, mark_name, mark_id, mark_datetime, mark_global_seq, 
+         CASE WHEN mark_state = 'DELETED' THEN true ELSE false END, 
+         mark_comment, mark_txid, mark_last_sequence_id, mark_last_seq_hole_id, mark_log_rows_before_next
+    FROM emaj.emaj_mark_old;
 
--- table containing the holes in sequences log
--- these holes are due to rollback operations that do not adjust log sequences
--- the hole size = difference of sequence's current last_value and last value at the rollback mark
-CREATE TABLE emaj.emaj_seq_hole (
-  sqhl_id                    BIGSERIAL   NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
-                                                         -- on timestamps that are not safe if system time changes)
-  sqhl_schema                TEXT        NOT NULL,       -- schema that owns the table
-  sqhl_table                 TEXT        NOT NULL,       -- application table for which a sequence hole is recorded
-                                                         --   in the associated log table
-  sqhl_datetime              TIMESTAMPTZ NOT NULL        -- timestamp of the rollback operation that generated the hole
-                             DEFAULT transaction_timestamp(),
-  sqhl_hole_size             BIGINT      NOT NULL,       -- hole size computed as the difference of 2 sequence last-values
-  PRIMARY KEY (sqhl_schema, sqhl_table, sqhl_datetime)
-  );
-COMMENT ON TABLE emaj.emaj_seq_hole IS
-$$Contains description of holes in sequence values for E-Maj log tables.$$;
+-- set the mark_id_seq sequence value
+SELECT setval('emaj.emaj_mark_mark_id_seq', 
+              (select coalesce(max(mark_id),1) from emaj.emaj_mark), 
+              (select max(mark_id) IS NOT NULL from emaj.emaj_mark));
+
+-- and drop the temporary table
+DROP TABLE emaj.emaj_mark_old;
+
+--
+-- create new table for rollback management
+--
 
 -- table containing rollback events
 CREATE TABLE emaj.emaj_rlbk (
@@ -323,10 +333,10 @@ CREATE TABLE emaj.emaj_rlbk_plan (
 COMMENT ON TABLE emaj.emaj_rlbk_plan IS
 $$Contains description of elementary steps for rollback operations.$$;
 
--- table containing statistics about previously executed rollback operations
--- and used to estimate rollback durations
--- depending on the step, it contains 1 row per elementary step (like 'RLBK_TABLE' or 'DELETE_LOG'),
--- or 1 row per type of step for 1 rollback operation (like 'DROP_FK', or 'DIS_LOG_TRG')
+-- drop the old emaj_rlbk_stat table
+DROP TABLE emaj.emaj_rlbk_stat;
+
+-- create the new emaj_rlbk_stat table
 CREATE TABLE emaj.emaj_rlbk_stat (
   rlbt_step                  emaj._rlbk_step_enum
                                          NOT NULL,       -- kind of elementary step in the rollback processing
@@ -343,32 +353,21 @@ CREATE TABLE emaj.emaj_rlbk_stat (
 COMMENT ON TABLE emaj.emaj_rlbk_stat IS
 $$Contains statistics about previous E-Maj rollback durations.$$;
 
+--
+-- create the emaj_visible_param view
+--
+CREATE VIEW emaj.emaj_visible_param AS
+  SELECT param_key,
+         CASE WHEN param_key = 'dblink_user_password' THEN '<masked data>' 
+                                                      ELSE param_value_text END AS param_value_text,
+         param_value_int, param_value_boolean, param_value_interval
+  FROM emaj.emaj_param;
+
 ------------------------------------
 --                                --
--- emaj composite types           --
+-- Composite types                --
 --                                --
 ------------------------------------
-
-CREATE TYPE emaj.emaj_log_stat_type AS (
-  stat_group                 TEXT,                       -- group name owning the schema.table
-  stat_schema                TEXT,                       -- schema name
-  stat_table                 TEXT,                       -- table name
-  stat_rows                  BIGINT                      -- estimated number of update events recorded for this table
-  );
-COMMENT ON TYPE emaj.emaj_log_stat_type IS
-$$Represents the structure of rows returned by the emaj_log_stat_group() function.$$;
-
-CREATE TYPE emaj.emaj_detailed_log_stat_type AS (
-  stat_group                 TEXT,                       -- group name owning the schema.table
-  stat_schema                TEXT,                       -- schema name
-  stat_table                 TEXT,                       -- table name
-  stat_role                  VARCHAR(32),                -- user having generated update events
-  stat_verb                  VARCHAR(6),                 -- type of SQL statement (INSERT/UPDATE/DELETE)
-  stat_rows                  BIGINT                      -- real number of update events recorded for this table
-  );
-COMMENT ON TYPE emaj.emaj_detailed_log_stat_type IS
-$$Represents the structure of rows returned by the emaj_detailed_log_stat_group() function.$$;
-
 CREATE TYPE emaj.emaj_rollback_activity_type AS (
   rlbk_id                    INT,                        -- rollback id
   rlbk_groups                TEXT[],                     -- groups array to rollback
@@ -388,52 +387,44 @@ CREATE TYPE emaj.emaj_rollback_activity_type AS (
 COMMENT ON TYPE emaj.emaj_rollback_activity_type IS
 $$Represents the structure of rows returned by the emaj_rollback_activity() function.$$;
 
-CREATE TYPE emaj._verify_groups_type AS (                -- this type is not used by functions called by users
-  ver_schema                 TEXT,
-  ver_tblseq                 TEXT,
-  ver_msg                    TEXT
-  );
-COMMENT ON TYPE emaj._verify_groups_type IS
-$$Represents the structure of rows returned by the internal _verify_groups() function.$$;
+------------------------------------
+--                                --
+-- Parameters value               --
+--                                --
+------------------------------------
+-- a parameter is renamed. So update the emaj_param table if this key already exists.
+UPDATE emaj.emaj_param SET param_key = 'fixed_step_rollback_duration' 
+  WHERE param_key = 'fixed_table_with_rollback_duration';
 
 ------------------------------------
 --                                --
--- Parameters                     --
+-- emaj functions: drop obsolete  --
+--    or with modified interface  --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','<NEXT_VERSION>');
 
--- Other parameters are optional. They may be set by E-Maj administrators if needed.
+DROP FUNCTION emaj._check_group_names_array(v_groupNames TEXT[]);
+DROP FUNCTION emaj._check_class(v_schemaName TEXT, v_className TEXT);
+DROP FUNCTION emaj._drop_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_isRollbackable BOOLEAN);
+DROP FUNCTION emaj._rlbk_tbl(v_schemaName TEXT, v_tableName TEXT, v_logSchema TEXT, v_lastGlobalSeq BIGINT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT);
+DROP FUNCTION emaj._rlbk_seq(v_schemaName TEXT, v_seqName TEXT, v_timestamp TIMESTAMPTZ, v_deleteLog BOOLEAN, v_lastSequenceId BIGINT);
+DROP FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN);
+DROP FUNCTION emaj._rlbk_groups_step1(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_nbsession INT, v_multiGroup BOOLEAN);
+DROP FUNCTION emaj._rlbk_groups_set_session(v_groupNames TEXT[], v_schema TEXT, v_table TEXT, v_session INT, v_rows BIGINT);
+DROP FUNCTION emaj._rlbk_groups_step2(v_groupNames TEXT[], v_session INT, v_multiGroup BOOLEAN);
+DROP FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TEXT, v_unloggedRlbk BOOLEAN, v_multiGroup BOOLEAN);
+DROP FUNCTION emaj._rlbk_groups_step4(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN);
+DROP FUNCTION emaj._rlbk_groups_step5(v_groupNames TEXT[], v_mark TEXT, v_session INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN);
+DROP FUNCTION emaj._rlbk_groups_step6(v_groupNames TEXT[], v_session INT, v_unloggedRlbk BOOLEAN);
+DROP FUNCTION emaj._rlbk_groups_step7(v_groupNames TEXT[], v_mark TEXT, v_nbTb INT, v_unloggedRlbk BOOLEAN, v_deleteLog BOOLEAN, v_multiGroup BOOLEAN);
+DROP FUNCTION emaj.emaj_estimate_rollback_duration(v_groupName TEXT, v_mark TEXT);
+DROP FUNCTION emaj.emaj_generate_sql(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT);
 
--- The dblink_user_password parameter defines the role and its associated password, if any, to establish a dblink
--- connection for the monitoring of rollback operations.
---   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('dblink_user_password','user=<user> password=<password>');
-
--- The history_retention parameter defines the time interval when a row remains in the emaj history and rollback tables - default is 1 year
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 year'::interval);
-
--- 6 parameters are used by the emaj_estimate_rollback_group(s) and the rollback functions as default values to compute the approximate duration of a rollback operation.
--- The avg_row_rollback_duration parameter defines the average duration needed to rollback a row.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','100 microsecond'::interval);
--- The avg_row_delete_log_duration parameter defines the average duration needed to delete log rows.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_delete_log_duration','10 microsecond'::interval);
--- The avg_fkey_check_duration parameter defines the average duration needed to check a foreign key.
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_fkey_check_duration','20 microsecond'::interval);
--- The fixed_step_rollback_duration parameter defines the fixed cost for any elementary rollback step
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_step_rollback_duration','2.5 millisecond'::interval);
--- The fixed_table_rollback_duration parameter defines the fixed rollback cost for any table or sequence belonging to a group
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1 millisecond'::interval);
--- The fixed_dblink_rollback_duration parameter defines the fixed cost of dblink use for any rollback step
---   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','4 millisecond'::interval);
-
--- view readable by emaj_viewer role. It hides the 'dblink_user_password' parameter's value
-CREATE VIEW emaj.emaj_visible_param AS
-  SELECT param_key,
-         CASE WHEN param_key = 'dblink_user_password' THEN '<masked data>' 
-                                                      ELSE param_value_text END AS param_value_text,
-         param_value_int, param_value_boolean, param_value_interval
-  FROM emaj.emaj_param;
-
+------------------------------------
+--                                --
+-- emaj functions: recreate all   --
+--                                --
+------------------------------------
 ------------------------------------
 --                                --
 -- Low level Functions            --
@@ -6043,60 +6034,34 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
 
 ------------------------------------
 --                                --
--- rights to emaj roles           --
+-- emaj roles and rights          --
 --                                --
 ------------------------------------
+-- grants on tables and sequences
 
--- emaj_adm needs the appropriate rights on emaj objects to execute all emaj functions
-
-GRANT ALL ON SCHEMA emaj TO emaj_adm;
-
-GRANT ALL ON SEQUENCE emaj.emaj_global_seq TO emaj_adm;
-
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_param        TO emaj_adm;
 GRANT SELECT ON emaj.emaj_visible_param                     TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_hist         TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_group_def    TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_group        TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_relation     TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_mark         TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_sequence     TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_seq_hole     TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk         TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_session TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_plan    TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_stat    TO emaj_adm;
 
-GRANT ALL ON SEQUENCE emaj.emaj_hist_hist_id_seq     TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_mark_mark_id_seq     TO emaj_adm;
 GRANT ALL ON SEQUENCE emaj.emaj_rlbk_rlbk_id_seq     TO emaj_adm;
-GRANT ALL ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_adm;
-GRANT ALL ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_adm;
 
--- emaj_viewer can only view the emaj objects (content of emaj and log tables)
-
-GRANT USAGE ON SCHEMA emaj TO emaj_viewer;
-
-GRANT SELECT ON SEQUENCE emaj.emaj_global_seq TO emaj_viewer;
+REVOKE SELECT ON emaj.emaj_param FROM emaj_viewer;
 
 GRANT SELECT ON emaj.emaj_visible_param       TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_hist                TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_group_def           TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_group               TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_relation            TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_mark                TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_sequence            TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_seq_hole            TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_rlbk                TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_rlbk_session        TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_rlbk_plan           TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_rlbk_stat           TO emaj_viewer;
 
-GRANT SELECT ON SEQUENCE emaj.emaj_hist_hist_id_seq     TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_mark_mark_id_seq     TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_rlbk_rlbk_id_seq     TO emaj_viewer;
-GRANT SELECT ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_viewer;
-GRANT SELECT ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_viewer;
 
 -- revoke grants on all functions from PUBLIC
 REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
@@ -6308,35 +6273,72 @@ GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 
--- add grants to emaj roles on some system functions, needed for ppa plugin
-GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_viewer;
-GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_viewer;
+--------------------------------------------------------------
+--                                                          --
+-- Apply changes to log components                          --
+-- - drop all rollback functions set on application tables  --
+-- - add the emaj_user_port to all log tables               --
+-- - set the log table's pkey as cluster index              --
+--                                                          --
+--------------------------------------------------------------
 
---------------------------------------
---                                  --
--- specific operation for extension --
---                                  --
---------------------------------------
--- register emaj tables content as candidate for pg_dump
-SELECT pg_catalog.pg_extension_config_dump('emaj_param','WHERE param_key <> ''emaj_version''');
-SELECT pg_catalog.pg_extension_config_dump('emaj_hist','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_group_def','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_seq_hole','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_session','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_plan','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
+CREATE OR REPLACE FUNCTION emaj.tmp() 
+RETURNS VOID LANGUAGE plpgsql AS
+$tmp$
+  DECLARE
+    v_logTableName           TEXT;
+    v_logIdxName             TEXT;
+    r_table                  RECORD;
+  BEGIN
+-- For each application table known in emaj_relation and linked to a rollbackable group
+    FOR r_table IN
+      SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_schema || '_' || rel_tblSeq || '_rlbk_fnct') 
+             AS fnctName
+        FROM emaj.emaj_relation, emaj.emaj_group
+        WHERE rel_group = group_name AND rel_kind = 'r' AND group_is_rollbackable
+      LOOP
+-- ... drop the rollback function associated to the table
+      EXECUTE 'DROP FUNCTION ' || r_table.fnctName || ' (v_lastGlobalSeq BIGINT)';
+    END LOOP;
+    RETURN;
+-- For each log table known in emaj_relation
+    FOR r_table IN
+      SELECT rel_log_schema, rel_schema, rel_tblSeq
+        FROM emaj.emaj_relation WHERE rel_kind = 'r'
+      LOOP
+      v_logTableName = quote_ident(v_logSchema) || '.' || quote_ident(v_schemaName || '_' || v_tableName || '_log');
+      v_logIdxName   = quote_ident(v_schemaName || '_' || v_tableName || '_log_idx');
+-- ... add the emaj_user_port column, setting it at null for all existing rows,
+-- ... set the default value for the emaj_txid column to txid_current() (now that all supported pg version has this function)
+-- ... and set the log table's pkey as cluster index
+      EXECUTE 'ALTER TABLE ' || v_logTableName || 
+                ' ADD COLUMN emaj_user_port INT,' ||
+                ' ALTER COLUMN emaj_user_port SET DEFAULT inet_client_port(),' ||
+                ' ALTER COLUMN emaj_txid SET DEFAULT txid_current()', ||
+                ' CLUSTER ON ' || v_logIdxName;
+    END LOOP;
+-- Finaly drop the emaj._txid_current() function, now that no function use it any more
+    DROP FUNCTION emaj._txid_current();
+    RETURN;
+  END;
+$tmp$;
+SELECT emaj.tmp();
+DROP FUNCTION emaj.tmp();
 
--- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSION>', 'Initialisation completed');
+------------------------------------
+--                                --
+-- commit migration               --
+--                                --
+------------------------------------
 
--- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
--- and display a message about dblink installation
-DO LANGUAGE plpgsql
+UPDATE emaj.emaj_param SET param_value_text = '1.1.0' WHERE param_key = 'emaj_version';
+
+-- insert the migration record in the operation history
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.1.0', 'Migration from 1.0.2 completed');
+
+-- post installation checks
+CREATE OR REPLACE FUNCTION emaj._tmp_post_install()
+RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
     v_mpt                    INTEGER;
@@ -6346,7 +6348,7 @@ $tmp$
 -- check the max_prepared_transactions GUC value
     SELECT setting INTO v_mpt FROM pg_catalog.pg_settings WHERE name = 'max_prepared_transactions';
     IF v_mpt <= 1 THEN
-      RAISE WARNING 'E-Maj installation: as the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
+      RAISE WARNING 'E-Maj migration: as the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
     END IF;
 -- check the dblink contrib or extension is already installed and give EXECUTE right to emaj_adm on dblink_connect_u functions
 --   Scan all schemas where dblink is installed
@@ -6358,7 +6360,7 @@ $tmp$
     FOR r_sch IN 
       SELECT DISTINCT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
           WHERE pg_proc.pronamespace = pg_namespace.oid
-            AND proname = 'dblink_connect_u'
+            AND proname = 'dblink'
       LOOP
       IF v_schemaList = '' THEN
         v_schemaList = r_sch.nspname;
@@ -6370,10 +6372,18 @@ $tmp$
     END LOOP;
 -- return the output message depending whether dblink is installed or not 
     IF v_schemaList = '' THEN
-      RAISE WARNING 'E-Maj installation: the dblink contrib/extension is not installed. It is advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring and E-Maj parallel rollback capabilities. (You will need to "GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO emaj_adm" once dblink is installed)';
+      RAISE WARNING 'E-Maj migration: the dblink contrib/extension is not installed. It is advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring and E-Maj parallel rollback capabilities. (You will need to "GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO emaj_adm" once dblink is installed)';
     ELSE
-      RAISE WARNING 'E-Maj installation: the dblink functions exist in schema(s): %. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.',v_schemaList;
+      RAISE WARNING 'E-Maj migration: the dblink functions exist in schema(s): %. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.',v_schemaList;
     END IF;
     RETURN;
   END;
 $tmp$;
+SELECT emaj._tmp_post_install();
+DROP FUNCTION emaj._tmp_post_install();
+
+COMMIT;
+
+SET client_min_messages TO default;
+\echo '>>> E-Maj successfully migrated to 1.1.0'
+
