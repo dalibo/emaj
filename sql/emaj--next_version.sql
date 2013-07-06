@@ -541,10 +541,10 @@ $_dblink_open_cnx$
         END;
       END IF;
     END IF;
--- for rlbk#* connection, record the dblink connection attempt in the emaj_hist table
+-- for connections used for rollback operations, record the dblink connection attempt in the emaj_hist table
     IF substring(v_cnxName from 1 for 5) = 'rlbk#' THEN
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES ('DBLINK','OPEN CNX',v_cnxName,'Status = ' || v_status);
+      INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+        VALUES ('DBLINK_OPEN_CNX',v_cnxName,'Status = ' || v_status);
     END IF;
     RETURN v_status;
   END;
@@ -580,10 +580,10 @@ $_dblink_close_cnx$
     IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
 -- the emaj connection exists, so disconnect
       PERFORM dblink_disconnect(v_cnxName);
--- for emaj* connection, record the dblink disconnection in the emaj_hist table
+-- for connections used for rollback operations, record the dblink disconnection in the emaj_hist table
       IF substring(v_cnxName from 1 for 5) = 'rlbk#' THEN
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-          VALUES ('DBLINK','CLOSE CNX',v_cnxName);
+        INSERT INTO emaj.emaj_hist (hist_function, hist_object)
+          VALUES ('DBLINK_CLOSE_CNX',v_cnxName);
       END IF;
     END IF;
     RETURN;
@@ -3302,7 +3302,7 @@ $emaj_rename_mark_group$
     IF FOUND THEN
        RAISE EXCEPTION 'emaj_rename_mark_group: a mark % already exists for group %.', v_newName, v_groupName;
     END IF;
--- OK, update the sequences table as well
+-- OK, update the sequences table
     UPDATE emaj.emaj_sequence SET sequ_mark = v_newName
       WHERE sequ_datetime =                                         -- the right mark date and time
             (SELECT mark_datetime FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark)
@@ -4389,7 +4389,7 @@ $_rlbk_end$
 -- log in the history the name of all marks that must be deleted due to the rollback
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         SELECT CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END,
-               'DELETE MARK', mark_group, 'mark ' || mark_name || ' is deleted' FROM emaj.emaj_mark
+               'MARK DELETED', mark_group, 'mark ' || mark_name || ' is deleted' FROM emaj.emaj_mark
           WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId ORDER BY mark_id;
 -- delete these useless marks (the related sequences have been already deleted by rollback functions)
       DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId;
@@ -4560,7 +4560,7 @@ $emaj_cleanup_rollback_state$
       END IF;
       UPDATE emaj.emaj_rlbk SET rlbk_status = v_newStatus WHERE rlbk_id = r_rlbk.rlbk_id;
       INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-        VALUES ('CLEANUP_ROLLBACK_STATE', 'rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
+        VALUES ('CLEANUP_RLBK_STATE', 'rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
       v_nbRlbk = v_nbRlbk + 1;
     END LOOP;
     RETURN v_nbRlbk;
