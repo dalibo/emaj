@@ -1,6 +1,12 @@
--- ppa.sql: Create and setup all application objects that will be needed for ppa plugin tests
+-- ppa.sql: Create and setup all application objects that will be needed for the ppa plugin tests
 --
 SET client_min_messages TO WARNING;
+
+------------------------------------------------------------
+-- setup emaj parameters
+------------------------------------------------------------
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES 
+  ('dblink_user_password','user=postgres password=postgres');
 
 ------------------------------------------------------------
 -- create 3 application schemas with tables, sequences, triggers
@@ -151,25 +157,25 @@ CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
 -----------------------------
 -- create roles and give rigths on application objects
 -----------------------------
---create role emaj_regression_tests_adm_user login password '';
---create role emaj_regression_tests_viewer_user login password '';
---create role emaj_regression_tests_anonym_user login password '';
+create role emaj_regression_tests_adm_user login password '';
+create role emaj_regression_tests_viewer_user login password '';
+create role emaj_regression_tests_anonym_user login password '';
 --
-grant all on schema mySchema1, mySchema2, mySchema3 to emaj_regression_tests_adm_user, emaj_regression_tests_viewer_user;
+grant all on schema mySchema1, mySchema2, "phil's schema3" to emaj_regression_tests_adm_user, emaj_regression_tests_viewer_user;
 --
 grant select on mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b to emaj_regression_tests_viewer_user;
 grant select on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4 to emaj_regression_tests_viewer_user;
-grant select on mySchema3.myTbl1, mySchema3.myTbl2 to emaj_regression_tests_viewer_user;
+grant select on "phil's schema3".myTbl1, "phil's schema3".myTbl2 to emaj_regression_tests_viewer_user;
 grant select on sequence mySchema1."myTbl3_col31_seq" to emaj_regression_tests_viewer_user;
 grant select on sequence mySchema2."myTbl3_col31_seq" to emaj_regression_tests_viewer_user;
 --
 grant all on mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b to emaj_regression_tests_adm_user;
 grant all on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4 to emaj_regression_tests_adm_user;
-grant all on mySchema3.myTbl1, mySchema3.myTbl2 to emaj_regression_tests_adm_user;
+grant all on "phil's schema3".myTbl1, "phil's schema3".myTbl2 to emaj_regression_tests_adm_user;
 grant all on sequence mySchema1."myTbl3_col31_seq" to emaj_regression_tests_adm_user;
 grant all on sequence mySchema2."myTbl3_col31_seq" to emaj_regression_tests_adm_user;
 grant all on sequence mySchema2.mySeq1 to emaj_regression_tests_adm_user;
-grant all on sequence mySchema3.mySeq1 to emaj_regression_tests_adm_user;
+grant all on sequence "phil's schema3".mySeq1 to emaj_regression_tests_adm_user;
 
 -----------------------------
 -- prepare and create groups
@@ -260,3 +266,11 @@ insert into myTbl1 values (1,'PQR',E'\014'::bytea);
 insert into "myTbl3" (col33) values (4);
 delete from "myTbl3";
 
+-----------------------------
+-- logged rollback myGroup2 to 'MARK3'
+-----------------------------
+
+select emaj.emaj_set_mark_group('myGroup2','tmp_mark');
+select emaj.emaj_logged_rollback_group('myGroup2','MARK1');
+select emaj.emaj_rollback_group('myGroup2','tmp_mark');
+select emaj.emaj_delete_mark_group('myGroup2','tmp_mark');
