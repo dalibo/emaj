@@ -7,6 +7,12 @@
 --    CREATE ROLE myUser LOGIN PASSWORD '';
 --    GRANT ALL ON DATABASE <this database> TO myUser;
 
+-- Before calling the parallel rollback client, dblink must have been installated 
+-- and the user and password to be used for the dblink connection must have been 
+-- defined, with a statement like:
+--    INSERT INTO emaj.emaj_param (param_key, param_value_text) 
+--      VALUES ('dblink_user_password','user=<user> password=<password>'
+
 -- Once this file is executed, you can type 
 -- ./php/emajParallelRollback.php -g myAppl1 -m BATCH1 -s 3 -v <and connection parameters> 
 

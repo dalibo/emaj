@@ -30,6 +30,7 @@ $emaj_uninstall$
     r_group                 RECORD;
     v_nonIdleGroupList      TEXT;
     v_versionEmaj           TEXT;
+    v_nbObject              INTEGER;
     r_schema                RECORD;
     r_object                RECORD;
     v_roleToDrop            BOOLEAN;
@@ -54,11 +55,11 @@ $emaj_uninstall$
 -- If no, stop
       RAISE EXCEPTION 'emaj_uninstall: The schema ''emaj'' doesn''t exist';
     ELSE
--- If yes, check there are no remaining emaj group not in IDLE state.
+-- If yes, check there are no remaining emaj group in LOGGING.
 -- This check is performed just to be sure that the script is not called at the bad moment.
       v_nonIdleGroupList = '';
       FOR r_group IN 
-        SELECT group_name FROM emaj.emaj_group WHERE group_state <> 'IDLE'
+        SELECT group_name FROM emaj.emaj_group WHERE group_is_logging
       LOOP
         IF v_nonIdleGroupList = '' THEN
           v_nonIdleGroupList = r_group.group_name;
@@ -81,18 +82,25 @@ $emaj_uninstall$
 -- process all E-Maj secondary schemas
     SELECT param_value_text INTO v_versionEmaj FROM emaj.emaj_param WHERE param_key = 'emaj_version';
     IF v_versionEmaj >= '0.12.0' THEN
+-- check that no E-Maj schema contain any non E-Maj object
+      v_nbObject = 0;
+      FOR r_object IN 
+        SELECT msg FROM emaj._verify_all_schemas() msg 
+          WHERE msg NOT LIKE 'The E-Maj schema % does not exist any more.'
+        LOOP
+-- a secondary schema contains objects that do not belong to E-Maj
+        RAISE WARNING '%',r_object.msg;
+        v_nbObject = v_nbObject + 1;
+      END LOOP;
+      IF v_nbObject > 0 THEN
+        RAISE EXCEPTION 'There are unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall function.';
+      END IF;
+-- OK, drop each secondary schema and all its content
       FOR r_schema IN
         SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation 
           WHERE rel_kind = 'r' AND rel_log_schema <> 'emaj' 
           ORDER BY rel_log_schema
         LOOP
-        FOR r_object IN 
-          SELECT msg FROM emaj._verify_schema(r_schema.rel_log_schema) msg 
-            WHERE msg NOT LIKE '%no error detected%' AND msg NOT LIKE '%the schema does NOT exists%'
-          LOOP
--- a secondary schema contains objects that do not belong to E-Maj
-          RAISE EXCEPTION '% . Drop it before reexecuting the uninstall function.',r_object.msg;
-        END LOOP;
         EXECUTE 'DROP SCHEMA IF EXISTS ' || quote_ident(r_schema.rel_log_schema) || ' CASCADE';
       END LOOP;
     END IF;
@@ -229,6 +237,7 @@ $emaj_uninstall$
       REVOKE ALL ON TABLESPACE tspemaj FROM emaj_viewer;
       DROP ROLE emaj_viewer;
       REVOKE ALL ON TABLESPACE tspemaj FROM emaj_adm;
+      REVOKE ALL ON FUNCTION dblink_connect_u(text,text) FROM emaj_adm;
       DROP ROLE emaj_adm;
       RAISE WARNING 'emaj_uninstall: emaj_adm and emaj_viewer roles have been dropped.';
     ELSE

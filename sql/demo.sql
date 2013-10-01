@@ -59,7 +59,7 @@ $emaj_demo_cleanup$
   BEGIN
 -- stop if needed and drop the demo groups
     PERFORM emaj.emaj_force_stop_group(group_name) FROM emaj.emaj_group
-      WHERE group_name IN ('emaj demo group 1','emaj demo group 2') AND group_state = 'LOGGING';
+      WHERE group_name IN ('emaj demo group 1','emaj demo group 2') AND group_is_logging;
     PERFORM emaj.emaj_drop_group(group_name) FROM emaj.emaj_group
       WHERE group_name IN ('emaj demo group 1','emaj demo group 2');
 -- remove demo groups definition from the emaj_group_def table
@@ -318,9 +318,9 @@ select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
 \echo '###                                                                     ###'
 \echo '###########################################################################'
 
-\echo '### Estimate the duration of a rollback to the first mark.'
+\echo '### Estimate the duration of an unlogged rollback to the first mark.'
 \echo '###  (See the documentation to see how this estimate is computed)'
-select emaj.emaj_estimate_rollback_duration('emaj demo group 1','MARK1');
+select emaj.emaj_estimate_rollback_group('emaj demo group 1','MARK1',false);
 
 \echo '###########################################################################'
 \echo '###                                                                     ###'
