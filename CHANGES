@@ -3,6 +3,12 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+
+Bug fixes:
+
+1.1.0
+------
+Enhancements:
   - the rollback processing has been largely redesigned and recoded so that
     emaj administrators can monitor rollback operations progress. This 
     feature requires a dblink connection on the same database. Its connection 
