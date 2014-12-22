@@ -1,5 +1,5 @@
 -- instPsqlMig.sql: Migrate from previous to next E-Maj vesrion while groups are not yet created. 
--- Install E-Maj as simple psql script (mandatory for postgres version prior 9.1)
+-- Install E-Maj as simple psql script
 --
 
 -----------------------------

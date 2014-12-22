@@ -23,7 +23,7 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
-\! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ../../php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation) in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 133
@@ -31,14 +31,14 @@ Call of _rlbk_init() function failed
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
 -- unlogged rollback for 2 groups
-\! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ../../php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
 ==> Logged rollback completed (9 tables and 3 sequences effectively processed).
 
 -- logged rollback for a single group and a single session
-\! ../../php/emajParallelRollback.php -d regression -g myGroup1 -m Multi-1 -s 1
+\! ../../php/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
@@ -88,7 +88,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime,
 --------------------------------------------
 -- call emajRollbackMonitor.php
 --------------------------------------------
-\! ../../php/emajRollbackMonitor.php -d regression -i 0.1 -n 2 -l 2 -a 12 -vr
+\! ../../php/emajRollbackMonitor.php -h localhost -d regression -i 0.1 -n 2 -l 2 -a 12 -vr
  E-Maj (version <NEXT_VERSION>) - Monitoring rollbacks activity
 ---------------------------------------------------------------
 [current date and time]

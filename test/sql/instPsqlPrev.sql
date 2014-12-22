@@ -1,11 +1,11 @@
--- instPsqlPrev.sql: Install previous version of E-Maj as simple psql script (for postgres version prior 9.1)
+-- instPsqlPrev.sql: Install previous version of E-Maj as simple psql script
 -- It installs the previous E-Maj version for migration test.
 --
 ------------------------------------------------------------
 -- install dblink
 ------------------------------------------------------------
--- this 8.4.8 version seems compatible with 8.2 to 9.0 pg version
-\i ~/postgresql-8.4.14/contrib/dblink/dblink.sql
+-- this 8.4.22 version seems compatible with 8.2 to 9.4 pg version
+\i ~/postgresql-8.4.22/contrib/dblink/dblink.sql
 
 -----------------------------
 -- for postgres cluster 8.3 and 9.1, temporarily rename tspemaj tablespace to test both cases

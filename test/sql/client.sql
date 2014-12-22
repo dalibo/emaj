@@ -26,15 +26,15 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
-\! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ../../php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
 
 -- unlogged rollback for 2 groups
-\! ../../php/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ../../php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 
 -- logged rollback for a single group and a single session
-\! ../../php/emajParallelRollback.php -d regression -g myGroup1 -m Multi-1 -s 1
+\! ../../php/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1
 
 --------------------------------------------
 -- Prepare data for emajRollbackMonitor.php
@@ -86,5 +86,5 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime,
 -- call emajRollbackMonitor.php
 --------------------------------------------
 
-\! ../../php/emajRollbackMonitor.php -d regression -i 0.1 -n 2 -l 2 -a 12 -vr
+\! ../../php/emajRollbackMonitor.php -h localhost -d regression -i 0.1 -n 2 -l 2 -a 12 -vr
 

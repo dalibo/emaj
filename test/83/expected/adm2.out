@@ -1574,7 +1574,7 @@ diff --exclude _INFO_s /tmp/emaj_test/snaps/myschema2_myTbl3_col31_seq.snap /tmp
 < myTbl3_col31_seq,20,0,1,9223372036854775807,1,1,f,t
 ---
 > myTbl3_col31_seq,21,0,1,9223372036854775807,1,1,f,f
-diff --exclude _INFO_s /tmp/emaj_test/snaps/phil's schema3_phil's seq\1.snap /tmp/emaj_test/snaps2/phil's schema3_phil's seq\1.snap
+diff --exclude _INFO_s "/tmp/emaj_test/snaps/phil's schema3_phil's seq\\1.snap" "/tmp/emaj_test/snaps2/phil's schema3_phil's seq\\1.snap"
 2c2
 < phil's seq\1,1001,0,1,2000,1000,1,t,t
 ---

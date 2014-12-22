@@ -1,0 +1,992 @@
+-- createDrop.sql : prepare groups content and test emaj_create_group(), emaj_comment_group() 
+-- emaj_drop_group(), emaj_force_drop_group() and emaj_alter_group() functions
+--
+SET client_min_messages TO WARNING;
+-----------------------------
+-- prepare groups
+-----------------------------
+delete from emaj.emaj_group_def;
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20,NULL,NULL,NULL);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,NULL,'tsplog1','tsplog1');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b','tsp log''2','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1,NULL);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C','tsplog1',NULL);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,'tsplog1','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3',NULL,'C');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl5');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl6');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
+-- The third group name contains space, comma # and '
+-- (note myTbl4 from "phil's schema3" remains outside phil's group#3", group)
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','phil''s tbl1',NULL,' #''3');
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\');
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\_col21_seq');
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'phil''s seq\\1');
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblm');
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc1');
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc2');
+insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
+insert into emaj.emaj_group_def values ('dummyGrp1','myschema1','dummyTable');
+insert into emaj.emaj_group_def values ('dummyGrp2','emaj','emaj_param');
+insert into emaj.emaj_group_def values ('dummyGrp2','emajC','myschema1_myTbl3_log');
+insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
+insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
+-----------------------------
+-- emaj_create_group() tests
+-----------------------------
+-- invalid group names
+select emaj.emaj_create_group(NULL);
+ERROR:  emaj_create_group: group name can't be NULL or empty.
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+select emaj.emaj_create_group('',false);
+ERROR:  emaj_create_group: group name can't be NULL or empty.
+-- group is unknown in emaj_group_def
+select emaj.emaj_create_group('unknownGroup');
+ERROR:  emaj_create_group: Group unknownGroup is unknown in emaj_group_def table.
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+select emaj.emaj_create_group('unknownGroup',false);
+ERROR:  emaj_create_group: Group unknownGroup is unknown in emaj_group_def table.
+-- unknown schema or table in emaj_group_def
+select emaj.emaj_create_group('dummyGrp1');
+ERROR:  _check_group_content: one or several tables or sequences do not exist (dummySchema.mytbl4, myschema1.dummyTable).
+CONTEXT:  SQL statement "SELECT emaj._check_group_content(v_groupName)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 39 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+-- group with a temp table
+begin;
+  CREATE TEMPORARY TABLE myTempTbl (
+    col1       INT     NOT NULL,
+    PRIMARY KEY (col1)
+  );
+  insert into emaj.emaj_group_def 
+    select 'myGroup5',nspname,'mytemptbl' from pg_class, pg_namespace
+      where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
+-- should be ko with pg 8.4+
+  select emaj.emaj_create_group('myGroup5');
+ERROR:  _create_tbl: table mytemptbl is a temporary table.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 74 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+rollback;
+-- group with an unlogged table
+begin;
+  insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
+  select emaj.emaj_create_group('myGroup5');
+ERROR:  _create_tbl: table myunloggedtbl is an unlogged table.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 74 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+rollback;
+-- table without pkey for a rollbackable group
+select emaj.emaj_create_group('phil''s group#3",',true);
+ERROR:  _create_tbl: table myTbl2\ has no PRIMARY KEY.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 74 at PERFORM
+-- sequence with a log schema suffix defined in the emaj_group_def table
+begin;
+  update emaj.emaj_group_def set grpdef_log_schema_suffix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_create_group('myGroup1');
+ERROR:  emaj_create_group: Defining a secondary log schema is not allowed for a sequence (myschema1.myTbl3_col31_seq).
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+rollback;
+-- sequence with tablespace defined in the emaj_group_def table
+begin;
+  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_create_group('myGroup1');
+ERROR:  emaj_create_group: Defining log tablespaces is not allowed for a sequence (myschema1.myTbl3_col31_seq).
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+rollback;
+-- table with invalid tablespace
+begin;
+  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'dummyTablespace' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  select emaj.emaj_create_group('myGroup1');
+ERROR:  tablespace "dummyTablespace" does not exist
+CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log ( LIKE myschema1.mytbl1) TABLESPACE "dummyTablespace""
+PL/pgSQL function emaj._create_tbl(text,text,text,text,text,boolean) line 78 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 74 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+rollback;
+-- already existing secondary schema
+begin;
+  create schema emajb;
+  select emaj.emaj_create_group('myGroup1');
+ERROR:  _create_log_schema: schema emajb should not exist. Drop it manually, or modify emaj_group_def table's content.
+CONTEXT:  SQL statement "SELECT emaj._create_log_schema(r_schema.log_schema)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 53 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+rollback;
+-- should be OK
+select emaj.emaj_create_group('myGroup1');
+WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 74 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+ emaj_create_group 
+-------------------
+                 6
+(1 row)
+
+-- should be OK, but with a warning for linked table not protected by E-Maj
+alter table myschema2.myTbl6 add foreign key (col61) references myschema2.myTbl7 (col71) deferrable initially immediate;
+alter table myschema2.myTbl8 add foreign key (col81) references myschema2.myTbl6 (col61) deferrable;
+select emaj.emaj_create_group('myGroup2',true);
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 100 at PERFORM
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 100 at PERFORM
+ emaj_create_group 
+-------------------
+                 8
+(1 row)
+
+-- should be OK, but with a warning for linked table belonging to another group
+begin;
+  update emaj.emaj_group_def set grpdef_group = 'dummyGrp3' 
+    where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+  select emaj.emaj_create_group('phil''s group#3",',false);
+WARNING:  _create_seq: Sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table belong to another tables group (dummyGrp3).
+CONTEXT:  SQL statement "SELECT emaj._create_seq(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_groupName)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 89 at PERFORM
+ emaj_create_group 
+-------------------
+                 3
+(1 row)
+
+rollback;
+-- should be OK
+select emaj.emaj_create_group('phil''s group#3",',false);
+ emaj_create_group 
+-------------------
+                 4
+(1 row)
+
+select emaj.emaj_create_group('myGroup4');
+WARNING:  _create_tbl: table myschema4.mytblm has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 74 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+ emaj_create_group 
+-------------------
+                 3
+(1 row)
+
+-- create a group with a table from an E-Maj secondary schema
+select emaj.emaj_create_group('dummyGrp2',false);
+ERROR:  _check_group_content: one or several tables or sequences belong to an E-Maj schema (emajC.myschema1_myTbl3_log, emaj.emaj_param).
+CONTEXT:  SQL statement "SELECT emaj._check_group_content(v_groupName)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 39 at PERFORM
+-- create a group with a table already belonging to another group
+select emaj.emaj_create_group('dummyGrp3');
+ERROR:  _check_group_content: one or several tables already belong to another group (myschema1.mytbl1 in myGroup1, myschema2.mytbl2 in myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_group_content(v_groupName)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 39 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+-- already created
+select emaj.emaj_create_group('myGroup2');
+ERROR:  emaj_create_group: group myGroup2 is already created.
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+-- impact of created groups
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+ nspname  
+----------
+ emaj
+ emaj #'3
+ emajC
+ emajb
+(4 rows)
+
+select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
+  from emaj.emaj_group order by group_name, group_is_logging;
+    group_name    | group_is_logging | group_nb_table | group_nb_sequence | group_is_rollbackable | group_comment 
+------------------+------------------+----------------+-------------------+-----------------------+---------------
+ myGroup1         | f                |              5 |                 1 | t                     | 
+ myGroup2         | f                |              6 |                 2 | t                     | 
+ myGroup4         | f                |              3 |                 0 | t                     | 
+ phil's group#3", | f                |              2 |                 2 | f                     | 
+(4 rows)
+
+select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq;
+   rel_schema   |    rel_tblseq     |    rel_group     | rel_priority | rel_log_schema | rel_log_dat_tsp | rel_log_idx_tsp | rel_kind 
+----------------+-------------------+------------------+--------------+----------------+-----------------+-----------------+----------
+ myschema1      | myTbl3_col31_seq  | myGroup1         |            1 |                |                 |                 | S
+ myschema1      | myTbl3            | myGroup1         |           10 | emajC          | tsplog1         | tspemaj         | r
+ myschema1      | mytbl1            | myGroup1         |           20 | emaj           | tspemaj         | tspemaj         | r
+ myschema1      | mytbl4            | myGroup1         |           20 | emaj           | tsplog1         | tsp log'2       | r
+ myschema1      | mytbl2            | myGroup1         |              | emaj           | tsplog1         | tsplog1         | r
+ myschema1      | mytbl2b           | myGroup1         |              | emajb          | tsp log'2       | tsp log'2       | r
+ myschema2      | myseq1            | myGroup2         |              |                |                 |                 | S
+ myschema2      | mytbl1            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema2      | mytbl2            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema2      | myTbl3            | myGroup2         |              | emajC          | tspemaj         | tspemaj         | r
+ myschema2      | myTbl3_col31_seq  | myGroup2         |              |                |                 |                 | S
+ myschema2      | mytbl4            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema2      | mytbl5            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema2      | mytbl6            | myGroup2         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema4      | mytblc1           | myGroup4         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema4      | mytblc2           | myGroup4         |              | emaj           | tspemaj         | tspemaj         | r
+ myschema4      | mytblm            | myGroup4         |              | emaj           | tspemaj         | tspemaj         | r
+ phil's schema3 | myTbl2\           | phil's group#3", |              | emaj           | tspemaj         | tspemaj         | r
+ phil's schema3 | myTbl2\_col21_seq | phil's group#3", |              |                |                 |                 | S
+ phil's schema3 | phil's seq\1      | phil's group#3", |              |                |                 |                 | S
+ phil's schema3 | phil's tbl1       | phil's group#3", |              | emaj #'3       | tspemaj         | tspemaj         | r
+(21 rows)
+
+select * from pg_tables where schemaname like 'emaj%' order by tablename;
+ schemaname |           tablename            | tableowner | tablespace | hasindexes | hasrules | hastriggers 
+------------+--------------------------------+------------+------------+------------+----------+-------------
+ emaj       | emaj_group                     | postgres   | tspemaj    | t          | f        | t
+ emaj       | emaj_group_def                 | postgres   | tspemaj    | t          | f        | f
+ emaj       | emaj_hist                      | postgres   | tspemaj    | t          | f        | f
+ emaj       | emaj_mark                      | postgres   | tspemaj    | t          | f        | t
+ emaj       | emaj_param                     | postgres   | tspemaj    | t          | f        | f
+ emaj       | emaj_relation                  | postgres   | tspemaj    | t          | f        | t
+ emaj       | emaj_rlbk                      | postgres   | tspemaj    | t          | f        | t
+ emaj       | emaj_rlbk_plan                 | postgres   | tspemaj    | t          | f        | t
+ emaj       | emaj_rlbk_session              | postgres   | tspemaj    | t          | f        | t
+ emaj       | emaj_rlbk_stat                 | postgres   | tspemaj    | t          | f        | f
+ emaj       | emaj_seq_hole                  | postgres   | tspemaj    | t          | f        | f
+ emaj       | emaj_sequence                  | postgres   | tspemaj    | t          | f        | f
+ emajC      | myschema1_myTbl3_log           | postgres   | tsplog1    | t          | f        | f
+ emaj       | myschema1_mytbl1_log           | postgres   | tspemaj    | t          | f        | f
+ emaj       | myschema1_mytbl2_log           | postgres   | tsplog1    | t          | f        | f
+ emajb      | myschema1_mytbl2b_log          | postgres   | tsp log'2  | t          | f        | f
+ emaj       | myschema1_mytbl4_log           | postgres   | tsplog1    | t          | f        | f
+ emajC      | myschema2_myTbl3_log           | postgres   | tspemaj    | t          | f        | f
+ emaj       | myschema2_mytbl1_log           | postgres   | tspemaj    | t          | f        | f
+ emaj       | myschema2_mytbl2_log           | postgres   | tspemaj    | t          | f        | f
+ emaj       | myschema2_mytbl4_log           | postgres   | tspemaj    | t          | f        | f
+ emaj       | myschema2_mytbl5_log           | postgres   | tspemaj    | t          | f        | f
+ emaj       | myschema2_mytbl6_log           | postgres   | tspemaj    | t          | f        | f
+ emaj       | myschema4_mytblc1_log          | postgres   | tspemaj    | t          | f        | f
+ emaj       | myschema4_mytblc2_log          | postgres   | tspemaj    | t          | f        | f
+ emaj       | myschema4_mytblm_log           | postgres   | tspemaj    | t          | f        | f
+ emaj       | phil's schema3_myTbl2\_log     | postgres   | tspemaj    | t          | f        | f
+ emaj #'3   | phil's schema3_phil's tbl1_log | postgres   | tspemaj    | t          | f        | f
+(28 rows)
+
+-----------------------------
+-- emaj_comment_group() tests
+-----------------------------
+-- unknown group
+select emaj.emaj_comment_group(NULL,NULL);
+ERROR:  emaj_comment_group: group <NULL> has not been created.
+select emaj.emaj_comment_group('unkownGroup',NULL);
+ERROR:  emaj_comment_group: group unkownGroup has not been created.
+-- should be OK
+select emaj.emaj_comment_group('myGroup1','a first comment for group #1');
+ emaj_comment_group 
+--------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_group('myGroup1','a better comment for group #1');
+ emaj_comment_group 
+--------------------
+ 
+(1 row)
+
+select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
+ group_name |         group_comment         
+------------+-------------------------------
+ myGroup1   | a better comment for group #1
+(1 row)
+
+select emaj.emaj_comment_group('myGroup1',NULL);
+ emaj_comment_group 
+--------------------
+ 
+(1 row)
+
+select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
+ group_name | group_comment 
+------------+---------------
+ myGroup1   | 
+(1 row)
+
+-----------------------------
+-- emaj_drop_group() tests
+-----------------------------
+-- unknown group
+select emaj.emaj_drop_group(NULL);
+ERROR:  _drop_group: group <NULL> has not been created.
+CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
+PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+select emaj.emaj_drop_group('unkownGroup');
+ERROR:  _drop_group: group unkownGroup has not been created.
+CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
+PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+-- group in logging state
+select emaj.emaj_start_group('myGroup1','');
+ emaj_start_group 
+------------------
+                6
+(1 row)
+
+select emaj.emaj_drop_group('myGroup1');
+ERROR:  _drop_group: The group myGroup1 cannot be deleted because it is in LOGGING state.
+CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
+PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+select emaj.emaj_stop_group('myGroup1');
+ emaj_stop_group 
+-----------------
+               6
+(1 row)
+
+-- secondary schema with an object blocking the schema drop
+begin;
+  create table emajb.dummy_log (col1 int);
+  select emaj.emaj_drop_group('myGroup1');
+ERROR:  _drop_log_schema: cannot drop schema emajb. It probably owns unattended objects. Use the emaj_verify_all() function to get details
+CONTEXT:  SQL statement "SELECT emaj._drop_log_schema(r_schema.rel_log_schema, v_isForced)"
+PL/pgSQL function emaj._drop_group(text,boolean) line 51 at PERFORM
+SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
+PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+rollback;
+-- should be OK
+select emaj.emaj_drop_group('myGroup1');
+ emaj_drop_group 
+-----------------
+               6
+(1 row)
+
+select emaj.emaj_drop_group('myGroup2');
+ emaj_drop_group 
+-----------------
+               8
+(1 row)
+
+-- already dropped
+select emaj.emaj_drop_group('myGroup2');
+ERROR:  _drop_group: group myGroup2 has not been created.
+CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
+PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+-----------------------------
+-- emaj_force_drop_group() tests
+-----------------------------
+-- unknown group
+select emaj.emaj_force_drop_group(NULL);
+ERROR:  _drop_group: group <NULL> has not been created.
+CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
+PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
+select emaj.emaj_force_drop_group('unkownGroup');
+ERROR:  _drop_group: group unkownGroup has not been created.
+CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
+PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
+-- already dropped
+select emaj.emaj_force_drop_group('myGroup2');
+ERROR:  _drop_group: group myGroup2 has not been created.
+CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
+PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
+-- should be OK
+select emaj.emaj_create_group('myGroup1',false);
+WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 74 at PERFORM
+ emaj_create_group 
+-------------------
+                 6
+(1 row)
+
+select emaj.emaj_start_group('myGroup1','');
+ emaj_start_group 
+------------------
+                6
+(1 row)
+
+select emaj.emaj_force_drop_group('myGroup1');
+ emaj_force_drop_group 
+-----------------------
+                     6
+(1 row)
+
+select emaj.emaj_create_group('myGroup2',true);
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 100 at PERFORM
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 100 at PERFORM
+ emaj_create_group 
+-------------------
+                 8
+(1 row)
+
+select emaj.emaj_force_drop_group('myGroup2');
+ emaj_force_drop_group 
+-----------------------
+                     8
+(1 row)
+
+-----------------------------
+-- emaj_alter_group() tests
+-----------------------------
+-- unknown group
+select emaj.emaj_alter_group(NULL);
+ERROR:  emaj_alter_group: group <NULL> has not been created.
+select emaj.emaj_alter_group('unkownGroup');
+ERROR:  emaj_alter_group: group unkownGroup has not been created.
+-- group in logging state
+select emaj.emaj_create_group('myGroup1');
+WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 74 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+ emaj_create_group 
+-------------------
+                 6
+(1 row)
+
+select emaj.emaj_start_group('myGroup1','');
+ emaj_start_group 
+------------------
+                6
+(1 row)
+
+select emaj.emaj_alter_group('myGroup1');
+ERROR:  emaj_alter_group: The group myGroup1 cannot be altered because it is in LOGGING state.
+select emaj.emaj_stop_group('myGroup1');
+ emaj_stop_group 
+-----------------
+               6
+(1 row)
+
+-- alter a group with a table now already belonging to another group
+begin;
+  select emaj.emaj_create_group('myGroup2');
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 100 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 100 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
+ emaj_create_group 
+-------------------
+                 8
+(1 row)
+
+  insert into emaj.emaj_group_def values ('myGroup1','myschema2','mytbl1');
+  select emaj.emaj_alter_group('myGroup1');
+ERROR:  _check_group_content: one or several tables already belong to another group (myschema2.mytbl1 in myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_group_content(v_groupName)"
+PL/pgSQL function emaj.emaj_alter_group(text) line 48 at PERFORM
+rollback;
+-- the group is now empty
+begin;
+  delete from emaj.emaj_group_def where grpdef_group = 'myGroup1';
+  select emaj.emaj_alter_group('myGroup1');
+ERROR:  emaj_alter_group: Group myGroup1 is unknown in emaj_group_def table.
+rollback;
+-- schema suffix cannot be changed for sequence
+begin;
+  update emaj.emaj_group_def set grpdef_log_schema_suffix = 'dummy' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_alter_group('myGroup1');
+ERROR:  emaj_alter_group: Defining a secondary log schema is not allowed for a sequence (myschema1.myTbl3_col31_seq).
+rollback;
+-- log tablespace cannot be changed for sequence
+begin;
+  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_alter_group('myGroup1');
+ERROR:  emaj_alter_group: Defining log tablespaces is not allowed for a sequence (myschema1.myTbl3_col31_seq).
+rollback;
+begin;
+  update emaj.emaj_group_def set grpdef_log_idx_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_alter_group('myGroup1');
+ERROR:  emaj_alter_group: Defining log tablespaces is not allowed for a sequence (myschema1.myTbl3_col31_seq).
+rollback;
+-- should be OK
+-- nothing to change
+select group_nb_table, group_nb_sequence, case when group_last_alter_datetime is null then 'NULL' else 'NOT NULL' end as is_group_last_alter_datetime_null from emaj.emaj_group where group_name = 'myGroup1';
+ group_nb_table | group_nb_sequence | is_group_last_alter_datetime_null 
+----------------+-------------------+-----------------------------------
+              5 |                 1 | NULL
+(1 row)
+
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select group_nb_table, group_nb_sequence, case when group_last_alter_datetime is null then 'NULL' else 'NOT NULL' end as is_group_last_alter_datetime_null from emaj.emaj_group where group_name = 'myGroup1';
+ group_nb_table | group_nb_sequence | is_group_last_alter_datetime_null 
+----------------+-------------------+-----------------------------------
+              5 |                 1 | NOT NULL
+(1 row)
+
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+ nspname  
+----------
+ emaj
+ emaj #'3
+ emajC
+ emajb
+(4 rows)
+
+-- only 2 tables to remove (+ log schema emajC)
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl4';
+select emaj.emaj_alter_group('myGroup1');
+WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
+PL/pgSQL function emaj.emaj_alter_group(text) line 217 at PERFORM
+WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
+PL/pgSQL function emaj.emaj_alter_group(text) line 217 at PERFORM
+ emaj_alter_group 
+------------------
+                4
+(1 row)
+
+select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+ group_nb_table | group_nb_sequence 
+----------------+-------------------
+              3 |                 1
+(1 row)
+
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+ nspname  
+----------
+ emaj
+ emaj #'3
+ emajb
+(3 rows)
+
+-- only 1 sequence to remove
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+select emaj.emaj_alter_group('myGroup1');
+WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
+PL/pgSQL function emaj.emaj_alter_group(text) line 217 at PERFORM
+WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
+PL/pgSQL function emaj.emaj_alter_group(text) line 217 at PERFORM
+ emaj_alter_group 
+------------------
+                3
+(1 row)
+
+select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+ group_nb_table | group_nb_sequence 
+----------------+-------------------
+              3 |                 0
+(1 row)
+
+-- only 2 tables to add (+ log schema emajC)
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C','tsplog1',NULL);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,'tsplog1','tsp log''2');
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                5
+(1 row)
+
+select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+ group_nb_table | group_nb_sequence 
+----------------+-------------------
+              5 |                 0
+(1 row)
+
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+ nspname  
+----------
+ emaj
+ emaj #'3
+ emajC
+ emajb
+(4 rows)
+
+-- only 1 sequence to add
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1,NULL);
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+ group_nb_table | group_nb_sequence 
+----------------+-------------------
+              5 |                 1
+(1 row)
+
+-- only change the log schema
+update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema1_myTbl3_log';
+ nspname 
+---------
+ emaj
+(1 row)
+
+update emaj.emaj_group_def set grpdef_log_schema_suffix = 'C' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema1_myTbl3_log';
+ nspname 
+---------
+ emajC
+(1 row)
+
+-- only change the log data tablespace for 1 table
+update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
+ spcname 
+---------
+ tspemaj
+(1 row)
+
+update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
+  spcname  
+-----------
+ tsp log'2
+(1 row)
+
+-- change the log data tablespace for all tables of a group
+update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp is NULL then 'tsplog1' when grpdef_log_dat_tsp = 'tsplog1' then 'tsp log''2' else NULL end where grpdef_schema = 'myschema1' and grpdef_tblseq not like '%seq';
+select emaj.emaj_alter_group('myGroup1');
+WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function emaj.emaj_alter_group(text) line 187 at PERFORM
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp = 'tsplog1' then NULL when grpdef_log_dat_tsp = 'tsp log''2' then 'tsplog1' else 'tsp log''2' end where grpdef_schema = 'myschema1' and grpdef_tblseq not like '%seq';
+select emaj.emaj_alter_group('myGroup1');
+WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
+PL/pgSQL function emaj.emaj_alter_group(text) line 187 at PERFORM
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+-- only change the log index tablespace
+update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log_idx';
+ spcname 
+---------
+ tspemaj
+(1 row)
+
+update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log_idx';
+  spcname  
+-----------
+ tsp log'2
+(1 row)
+
+-- only change the priority
+update emaj.emaj_group_def set grpdef_priority = 30 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+ rel_priority 
+--------------
+           30
+(1 row)
+
+update emaj.emaj_group_def set grpdef_priority = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+ rel_priority 
+--------------
+             
+(1 row)
+
+update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+ rel_priority 
+--------------
+           20
+(1 row)
+
+-- change the table structure
+alter table myschema1.mytbl1 add column newcol int;
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+alter table myschema1.mytbl1 rename newcol to newcol2;
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+alter table myschema1.mytbl1 alter column newcol2 type bigint;
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+alter table myschema1.mytbl1 alter column newcol2 set default 0;
+-- NB: changing default has no impact on emaj component 
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+alter table myschema1.mytbl1 drop column newcol2;
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+-- missing emaj components
+drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+drop function emaj.myschema1_mytbl1_log_fnct() cascade;
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+drop table emaj.myschema1_mytbl1_log;
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+-----------------------------
+-- test end: check and force sequences id
+-----------------------------
+select emaj.emaj_force_drop_group('myGroup1');
+ emaj_force_drop_group 
+-----------------------
+                     6
+(1 row)
+
+select emaj.emaj_force_drop_group('myGroup2');
+ERROR:  _drop_group: group myGroup2 has not been created.
+CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
+PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+ nspname  
+----------
+ emaj
+ emaj #'3
+(2 rows)
+
+select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
+  (select * from emaj.emaj_hist order by hist_id) as t
+  where hist_function <> 'EMAJ_INSTALL';
+  hist_function   |   hist_event   |   hist_object    |                 regexp_replace                  | hist_user 
+------------------+----------------+------------------+-------------------------------------------------+-----------
+ CREATE_GROUP     | BEGIN          | myGroup1         | rollbackable                                    | postgres
+ CREATE_GROUP     | SCHEMA CREATED | emajb            |                                                 | postgres
+ CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | myGroup2         | rollbackable                                    | postgres
+ CREATE_GROUP     | END            | myGroup2         | 8 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | phil's group#3", | audit_only                                      | postgres
+ CREATE_GROUP     | SCHEMA CREATED | "emaj #'3"       |                                                 | postgres
+ CREATE_GROUP     | END            | phil's group#3", | 4 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | myGroup4         | rollbackable                                    | postgres
+ CREATE_GROUP     | END            | myGroup4         | 3 tables/sequences processed                    | postgres
+ COMMENT_GROUP    |                | myGroup1         |                                                 | postgres
+ COMMENT_GROUP    |                | myGroup1         |                                                 | postgres
+ COMMENT_GROUP    |                | myGroup1         |                                                 | postgres
+ START_GROUP      | BEGIN          | myGroup1         | With log reset                                  | postgres
+ LOCK_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)                  | postgres
+ SET_MARK_GROUP   | BEGIN          | myGroup1         | MARK_%                                          | postgres
+ SET_MARK_GROUP   | END            | myGroup1         | MARK_%                                          | postgres
+ START_GROUP      | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ STOP_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)                  | postgres
+ SET_MARK_GROUP   | BEGIN          | myGroup1         | STOP_%                                          | postgres
+ SET_MARK_GROUP   | END            | myGroup1         | STOP_%                                          | postgres
+ STOP_GROUP       | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ DROP_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ DROP_GROUP       | SCHEMA DROPPED | emajb            |                                                 | postgres
+ DROP_GROUP       | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ DROP_GROUP       | BEGIN          | myGroup2         |                                                 | postgres
+ DROP_GROUP       | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ DROP_GROUP       | END            | myGroup2         | 8 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | myGroup1         | audit_only                                      | postgres
+ CREATE_GROUP     | SCHEMA CREATED | emajb            |                                                 | postgres
+ CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ START_GROUP      | BEGIN          | myGroup1         | With log reset                                  | postgres
+ LOCK_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)                  | postgres
+ SET_MARK_GROUP   | BEGIN          | myGroup1         | MARK_%                                          | postgres
+ SET_MARK_GROUP   | END            | myGroup1         | MARK_%                                          | postgres
+ START_GROUP      | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ FORCE_DROP_GROUP | BEGIN          | myGroup1         |                                                 | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                                 | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ FORCE_DROP_GROUP | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | myGroup2         | rollbackable                                    | postgres
+ CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ CREATE_GROUP     | END            | myGroup2         | 8 tables/sequences processed                    | postgres
+ FORCE_DROP_GROUP | BEGIN          | myGroup2         |                                                 | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ FORCE_DROP_GROUP | END            | myGroup2         | 8 tables/sequences processed                    | postgres
+ CREATE_GROUP     | BEGIN          | myGroup1         | rollbackable                                    | postgres
+ CREATE_GROUP     | SCHEMA CREATED | emajb            |                                                 | postgres
+ CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ START_GROUP      | BEGIN          | myGroup1         | With log reset                                  | postgres
+ LOCK_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)                  | postgres
+ SET_MARK_GROUP   | BEGIN          | myGroup1         | MARK_%                                          | postgres
+ SET_MARK_GROUP   | END            | myGroup1         | MARK_%                                          | postgres
+ START_GROUP      | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ STOP_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | BEGIN          | myGroup1         |                                                 | postgres
+ LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s)                  | postgres
+ SET_MARK_GROUP   | BEGIN          | myGroup1         | STOP_%                                          | postgres
+ SET_MARK_GROUP   | END            | myGroup1         | STOP_%                                          | postgres
+ STOP_GROUP       | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 2 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 2 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 5 dropped relations and 5 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 5 dropped relations and 5 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 0 dropped relations and 0 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ FORCE_DROP_GROUP | BEGIN          | myGroup1         |                                                 | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                                 | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ FORCE_DROP_GROUP | END            | myGroup1         | 6 tables/sequences processed                    | postgres
+(140 rows)
+
+alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
+alter sequence emaj.emaj_mark_mark_id_seq restart 200;
+alter sequence emaj.emaj_sequence_sequ_id_seq restart 2000;
+alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 200;
