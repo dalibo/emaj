@@ -204,7 +204,7 @@ insert into myTbl6 select i+10, point(i,1.3), '((0,0),(2,2))', circle(point(5,5)
 update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 <= 13;
 
 -- reset directory for snaps
-\! rm -R /tmp/emaj_test/snaps
+\! rm -Rf /tmp/emaj_test/snaps
 \! mkdir /tmp/emaj_test/snaps
 -- ... and snap the all groups
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','CSV HEADER');
@@ -214,7 +214,7 @@ select emaj.emaj_snap_group('phil''s group#3",','/tmp/emaj_test/snaps','CSV HEAD
 \! ls /tmp/emaj_test/snaps
 
 -- reset directory for emaj_gen_sql_group tests
-\! rm -R /tmp/emaj_test/sql_scripts
+\! rm -Rf /tmp/emaj_test/sql_scripts
 \! mkdir /tmp/emaj_test/sql_scripts
 
 --select * from emaj.emaj_mark order by mark_group, mark_id;
@@ -238,7 +238,7 @@ select sum(stat_rows) + 1 as check from emaj.emaj_detailed_log_stat_group('phil'
 \! ls /tmp/emaj_test/sql_scripts
 
 -- reset directory for second set of snaps
-\! rm -R /tmp/emaj_test/snaps2
+\! rm -Rf /tmp/emaj_test/snaps2
 \! mkdir /tmp/emaj_test/snaps2
 -- in a single transaction and as superuser:
 --   rollback groups, replay updates with generated scripts, snap groups again and cancel the transaction
