@@ -5,8 +5,8 @@ SET client_min_messages TO WARNING;
 -- prepare groups
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_tblsq.grpdef_schema, r_tblsq.grpdef_tblseq, v_logSchema, coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp), coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp), v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 74 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 63 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
  emaj_create_group 
 -------------------
@@ -16,11 +16,11 @@ PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 100 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 83 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 100 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 83 at PERFORM
 PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
  emaj_create_group 
 -------------------
