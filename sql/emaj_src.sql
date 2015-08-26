@@ -1717,9 +1717,10 @@ $_verify_groups$
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (v_groups)
           AND rel_kind = 'r'
-          AND (rel_log_schema, rel_log_table) NOT IN
-              (SELECT nspname, relname FROM pg_catalog.pg_namespace, pg_catalog.pg_class
-                 WHERE relnamespace = pg_namespace.oid AND relname LIKE E'%\_%\_log')
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+                 WHERE nspname = rel_log_schema AND relname = rel_log_table
+                   AND relnamespace = pg_namespace.oid AND relname LIKE E'%\_%\_log')
         ORDER BY 1,2,3
     LOOP
       IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
@@ -1751,10 +1752,10 @@ $_verify_groups$
              'In group "' || rel_group || '", the log trigger "' || rel_log_trigger || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
-          AND (rel_schema, rel_tblseq, rel_log_trigger) NOT IN
-              (SELECT nspname, relname, tgname
-                 FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                 WHERE tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_log_trigger
+                   AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
                    AND tgname LIKE E'%\_%\_emaj\_log\_trg')
         ORDER BY 1,2,3
     LOOP
@@ -1768,10 +1769,10 @@ $_verify_groups$
                'In group "' || rel_group || '", the truncate trigger "' || rel_trunc_trigger || '" is not found.' AS msg
           FROM emaj.emaj_relation
         WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
-            AND (rel_schema, rel_tblseq, rel_trunc_trigger) NOT IN
-                (SELECT nspname, relname, tgname
-                   FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                   WHERE tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
+            AND NOT EXISTS
+                (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
+                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger 
+                     AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
                      AND tgname LIKE E'%\_%\_emaj\_trunc\_trg')
         ORDER BY 1,2,3
       LOOP
@@ -1846,8 +1847,9 @@ $_check_fk_groups$
           AND r.rel_group = g.group_name                            -- join on emaj_group table
           AND r.rel_group = ANY (v_groupNames)                      -- only tables of the selected groups
           AND g.group_is_rollbackable                               -- only tables from rollbackable groups
-          AND (nf.nspname,tf.relname) NOT IN                        -- referenced table outside the groups
-              (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames))
+          AND NOT EXISTS                                            -- referenced table outside the groups
+              (SELECT NULL FROM emaj.emaj_relation 
+                 WHERE rel_schema = nf.nspname AND rel_tblseq = tf.relname AND rel_group = ANY (v_groupNames))
       LOOP
       RAISE WARNING '_check_fk_groups: Foreign key %, from table %.%, references %.% that is outside groups (%).',
                 r_fk.conname,r_fk.rel_schema,r_fk.rel_tblseq,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
@@ -1864,8 +1866,9 @@ $_check_fk_groups$
           AND r.rel_group = g.group_name                              -- join on emaj_group table
           AND r.rel_group = ANY (v_groupNames)                        -- only tables of the selected groups
           AND g.group_is_rollbackable                                 -- only tables from rollbackable groups
-          AND (n.nspname,t.relname) NOT IN                            -- referenced table outside the groups
-              (SELECT rel_schema,rel_tblseq FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames))
+          AND NOT EXISTS                                              -- referenced table outside the groups
+              (SELECT NULL FROM emaj.emaj_relation 
+                 WHERE rel_schema = n.nspname AND rel_tblseq = t.relname AND rel_group = ANY (v_groupNames))
       LOOP
       RAISE WARNING '_check_fk_groups: table %.% is referenced by foreign key % from table %.% that is outside groups (%).',
                 r_fk.rel_schema,r_fk.rel_tblseq,r_fk.conname,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
@@ -2238,10 +2241,10 @@ $emaj_alter_group$
     FOR r_rel IN
       SELECT * FROM emaj.emaj_relation
         WHERE rel_group = v_groupName
-          AND (rel_schema, rel_tblseq) NOT IN (
-              SELECT grpdef_schema, grpdef_tblseq
-                FROM emaj.emaj_group_def
-                WHERE grpdef_group = v_groupName)
+          AND NOT EXISTS (
+              SELECT NULL FROM emaj.emaj_group_def
+                WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq 
+                  AND grpdef_group = v_groupName)
       UNION
 -- ... and all relations that are damaged or whose log table is not synchronised with them any more
       SELECT emaj.emaj_relation.*
@@ -2352,10 +2355,10 @@ $emaj_alter_group$
       SELECT emaj.emaj_group_def.*
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE grpdef_group = v_groupName
-          AND (grpdef_schema, grpdef_tblseq) NOT IN (
-              SELECT rel_schema, rel_tblseq
-                FROM emaj.emaj_relation
-                WHERE rel_group = v_groupName)
+          AND NOT EXISTS (
+              SELECT NULL FROM emaj.emaj_relation
+                WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq 
+                  AND rel_group = v_groupName)
           AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
           AND relkind = 'r'
       ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
@@ -2368,10 +2371,10 @@ $emaj_alter_group$
       SELECT emaj.emaj_group_def.*
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE grpdef_group = v_groupName
-          AND (grpdef_schema, grpdef_tblseq) NOT IN (
-              SELECT rel_schema, rel_tblseq
-                FROM emaj.emaj_relation
-                WHERE rel_group = v_groupName)
+          AND NOT EXISTS (
+              SELECT NULL FROM emaj.emaj_relation
+                WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq 
+                  AND rel_group = v_groupName)
           AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
           AND relkind = 'S'
       ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
@@ -4230,9 +4233,10 @@ $_rlbk_start_mark$
 -- (Sessions must lock the tables they will rollback and the planning processing distribute those tables to sessions.)
     PERFORM 1 FROM (SELECT * FROM emaj.emaj_relation
                       WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
-                        AND (rel_schema, rel_tblseq) NOT IN
-                            (SELECT rlbp_schema, rlbp_table FROM emaj.emaj_rlbk_plan
-                              WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE')
+                        AND NOT EXISTS
+                            (SELECT NULL FROM emaj.emaj_rlbk_plan
+                              WHERE rlbp_schema = rel_schema AND rlbp_table = rel_tblseq
+                                AND rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE')
                     ) AS t
       WHERE emaj._log_stat_tbl(t, v_markDatetime, NULL, v_markLastSeqHoleId, NULL) > 0;
     IF FOUND THEN
@@ -5818,9 +5822,10 @@ $_verify_all_groups$
                rel_log_schema || '"."' || rel_schema || '_' || rel_tblseq || '_log" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_kind = 'r'
-          AND (rel_log_schema, rel_log_table) NOT IN
-              (SELECT nspname, relname FROM pg_catalog.pg_namespace, pg_catalog.pg_class
-                 WHERE relnamespace = pg_namespace.oid AND relname LIKE E'%\_%\_log')
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+                 WHERE nspname = rel_log_schema AND relname = rel_log_table 
+                   AND relnamespace = pg_namespace.oid AND relname LIKE E'%\_%\_log')
         ORDER BY rel_schema, rel_tblseq, 1;
 -- check the log function for each table referenced in the emaj_relation table still exist
     RETURN QUERY
@@ -5847,10 +5852,10 @@ $_verify_all_groups$
       SELECT 'In group "' || rel_group || '", the log trigger "' || rel_log_trigger || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_kind = 'r'
-          AND (rel_schema, rel_tblseq, rel_log_trigger) NOT IN
-              (SELECT nspname, relname, tgname
-                 FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                 WHERE tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_log_trigger 
+                   AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
                    AND tgname LIKE E'%\_%\_emaj\_log\_trg')
                          -- do not issue a row if the application table does not exist,
                          -- this case has been already detected
@@ -5864,10 +5869,10 @@ $_verify_all_groups$
         SELECT 'In group "' || rel_group || '", the truncate trigger "' || rel_trunc_trigger || '" is not found.' AS msg
           FROM emaj.emaj_relation
           WHERE rel_kind = 'r'
-            AND (rel_schema, rel_tblseq, rel_trunc_trigger) NOT IN
-                (SELECT nspname, relname, tgname
-                   FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                   WHERE tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
+            AND NOT EXISTS
+                (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
+                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger 
+                     AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
                      AND tgname LIKE E'%\_%\_emaj\_trunc\_trg')
                          -- do not issue a row if the application table does not exist,
                          -- this case has been already detected
@@ -5943,7 +5948,8 @@ $_verify_all_schemas$
     RETURN QUERY
       SELECT DISTINCT 'The E-Maj schema "' || rel_log_schema || '" does not exist any more.' AS msg
         FROM emaj.emaj_relation
-        WHERE rel_log_schema NOT IN (SELECT nspname FROM pg_catalog.pg_namespace)
+        WHERE rel_log_schema IS NOT NULL
+          AND NOT EXISTS (SELECT NULL FROM pg_catalog.pg_namespace WHERE nspname = rel_log_schema)
         ORDER BY msg;
 -- detect all objects that are not directly linked to a known table groups in all E-Maj schemas
 -- scan pg_class, pg_proc, pg_type, pg_conversion, pg_operator, pg_opclass

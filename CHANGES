@@ -10,6 +10,9 @@ Enhancements:
   - some minor coding improvements
 
 Bug fixes:
+  - replace all NOT IN (subquery) by the almost equivalent NOT EXISTS() 
+    syntax. This fixes potential issues with NULL value processing mainly 
+    in the functions that check the E-Maj environment.
 
 1.1.0
 ------
