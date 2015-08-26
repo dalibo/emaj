@@ -3,6 +3,10 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+  - add 6 columns into the emaj_relation table to record the name of all 
+    E-Maj objects related to each application table or sequence. These 
+    columns are used rather than recomputing E-Maj object names. The 
+    emaj._build_log_seq_name() function is dropped.
   - some minor coding improvements
 
 Bug fixes:

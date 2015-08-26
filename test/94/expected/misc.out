@@ -854,7 +854,7 @@ CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(array[v_groupName], v_first
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 21 at SQL statement
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script"
-PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 149 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 150 at SQL statement
 SQL statement "SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location, emaj._check_names_array(v_tblseqs,'table/sequence'))"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 21 at SQL statement
  emaj_gen_sql_group 
@@ -1353,10 +1353,10 @@ PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 205 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 207 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 205 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 207 at PERFORM
  emaj_alter_group 
 ------------------
                 8
@@ -1439,16 +1439,16 @@ PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 205 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 207 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 205 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 207 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 205 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 207 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 205 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 207 at PERFORM
  emaj_alter_group 
 ------------------
                 7
@@ -1477,10 +1477,10 @@ begin;
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 205 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 207 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 205 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 207 at PERFORM
  emaj_alter_group 
 ------------------
                 7
