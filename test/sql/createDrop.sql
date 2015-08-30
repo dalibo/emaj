@@ -6,19 +6,19 @@ SET client_min_messages TO WARNING;
 -- prepare groups
 -----------------------------
 delete from emaj.emaj_group_def;
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20,NULL,NULL,NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,NULL,'tsplog1','tsplog1');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b','tsp log''2','tsp log''2');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1,NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C','tsplog1',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,'tsplog1','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,NULL,NULL,'tsplog1','tsplog1');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b',NULL,'tsp log''2','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,NULL,'tsplog1','tsp log''2');
 
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3',NULL,'C');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl5');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4',NULL,NULL,'myschema2_mytbl4');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl5',NULL,NULL,'otherPrefix4mytbl5');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl6');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
 -- The third group name contains space, comma # and '
@@ -74,6 +74,11 @@ begin;
   update emaj.emaj_group_def set grpdef_log_schema_suffix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
 rollback;
+-- sequence with an emaj names prefix defined in the emaj_group_def table
+begin;
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_create_group('myGroup1');
+rollback;
 -- sequence with tablespace defined in the emaj_group_def table
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -89,6 +94,22 @@ begin;
   create schema emajb;
   select emaj.emaj_create_group('myGroup1');
 rollback;
+-- conflict on emaj names prefix inside the group to create
+begin;
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2';
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'myschema1_mytbl4' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+  select emaj.emaj_create_group('myGroup1');
+rollback;
+-- conflict on emaj names prefix with already create groups
+begin;
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  select emaj.emaj_create_group('myGroup1');
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl1';
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'myschema1_mytbl2' where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl2';
+  select emaj.emaj_create_group('myGroup2');
+rollback;
+
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
 
@@ -234,13 +255,13 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
 -- only 2 tables to add (+ log schema emajC)
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C','tsplog1',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,'tsplog1','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,NULL,'tsplog1','tsp log''2');
 select emaj.emaj_alter_group('myGroup1');
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 -- only 1 sequence to add
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1,NULL);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
 select emaj.emaj_alter_group('myGroup1');
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
 -- only change the log schema
@@ -250,6 +271,13 @@ select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid
 update emaj.emaj_group_def set grpdef_log_schema_suffix = 'C' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 select emaj.emaj_alter_group('myGroup1');
 select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema1_myTbl3_log';
+-- only change the emaj_names_prefix for 1 table
+update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+select emaj.emaj_alter_group('myGroup1');
+select count(*) from "emajC".s1t3_log;
+update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+select emaj.emaj_alter_group('myGroup1');
+select count(*) from "emajC".myschema1_myTbl3_log;
 -- only change the log data tablespace for 1 table
 update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 select emaj.emaj_alter_group('myGroup1');

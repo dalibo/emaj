@@ -6,18 +6,18 @@ SET client_min_messages TO WARNING;
 -- prepare groups
 -----------------------------
 delete from emaj.emaj_group_def;
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20,NULL,NULL,NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,NULL,'tsplog1','tsplog1');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b','tsp log''2','tsp log''2');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1,NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C','tsplog1',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,'tsplog1','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,NULL,NULL,'tsplog1','tsplog1');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b',NULL,'tsp log''2','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,NULL,'tsplog1','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3',NULL,'C');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl5');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4',NULL,NULL,'myschema2_mytbl4');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl5',NULL,NULL,'otherPrefix4mytbl5');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl6');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
 -- The third group name contains space, comma # and '
@@ -99,6 +99,19 @@ CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 )"
 PL/pgSQL function "emaj_create_group" line 75 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 rollback;
+-- sequence with an emaj names prefix defined in the emaj_group_def table
+begin;
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_create_group('myGroup1');
+WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
+PL/pgSQL function "emaj_create_group" line 62 at PERFORM
+PL/pgSQL function "emaj_create_group" line 6 at RETURN
+ERROR:  _create_seq: Defining an emaj names prefix is not allowed for a sequence (myschema1.myTbl3_col31_seq).
+CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 )"
+PL/pgSQL function "emaj_create_group" line 75 at PERFORM
+PL/pgSQL function "emaj_create_group" line 6 at RETURN
+rollback;
 -- sequence with tablespace defined in the emaj_group_def table
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -118,7 +131,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 ERROR:  tablespace "dummyTablespace" does not exist
 CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log ( LIKE myschema1.mytbl1) TABLESPACE "dummyTablespace""
-PL/pgSQL function "_create_tbl" line 90 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 93 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_create_group" line 62 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
@@ -130,6 +143,38 @@ begin;
 ERROR:  _create_log_schema: schema emajb should not exist. Drop it manually, or modify emaj_group_def table's content.
 CONTEXT:  SQL statement "SELECT  emaj._create_log_schema( $1 )"
 PL/pgSQL function "emaj_create_group" line 45 at PERFORM
+PL/pgSQL function "emaj_create_group" line 6 at RETURN
+rollback;
+-- conflict on emaj names prefix inside the group to create
+begin;
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2';
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'myschema1_mytbl4' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+  select emaj.emaj_create_group('myGroup1');
+ERROR:  _check_group_content: one or several emaj prefix are configured for several tables in the group (myschema1_mytbl4, samePrefix).
+CONTEXT:  SQL statement "SELECT  emaj._check_group_content( $1 )"
+PL/pgSQL function "emaj_create_group" line 31 at PERFORM
+PL/pgSQL function "emaj_create_group" line 6 at RETURN
+rollback;
+-- conflict on emaj names prefix with already create groups
+begin;
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  select emaj.emaj_create_group('myGroup1');
+WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
+PL/pgSQL function "emaj_create_group" line 62 at PERFORM
+PL/pgSQL function "emaj_create_group" line 6 at RETURN
+ emaj_create_group 
+-------------------
+                 6
+(1 row)
+
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl1';
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'myschema1_mytbl2' where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl2';
+  select emaj.emaj_create_group('myGroup2');
+ERROR:  _check_group_content: one or several emaj prefix are already used (myschema1_mytbl2, samePrefix).
+CONTEXT:  SQL statement "SELECT  emaj._check_group_content( $1 )"
+PL/pgSQL function "emaj_create_group" line 31 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
 rollback;
 -- should be OK
@@ -239,7 +284,7 @@ select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, r
  myschema2      | myTbl3            | myGroup2         | r        |              | emajC          | myschema2_myTbl3_log           | tspemaj         | myschema2_myTbl3_log_idx           | tspemaj         | myschema2_myTbl3_log_seq           | myschema2_myTbl3_log_fnct           | myschema2_myTbl3_emaj_log_trg           | myschema2_myTbl3_emaj_trunc_trg
  myschema2      | myTbl3_col31_seq  | myGroup2         | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                         | 
  myschema2      | mytbl4            | myGroup2         | r        |              | emaj           | myschema2_mytbl4_log           | tspemaj         | myschema2_mytbl4_log_idx           | tspemaj         | myschema2_mytbl4_log_seq           | myschema2_mytbl4_log_fnct           | myschema2_mytbl4_emaj_log_trg           | myschema2_mytbl4_emaj_trunc_trg
- myschema2      | mytbl5            | myGroup2         | r        |              | emaj           | myschema2_mytbl5_log           | tspemaj         | myschema2_mytbl5_log_idx           | tspemaj         | myschema2_mytbl5_log_seq           | myschema2_mytbl5_log_fnct           | myschema2_mytbl5_emaj_log_trg           | myschema2_mytbl5_emaj_trunc_trg
+ myschema2      | mytbl5            | myGroup2         | r        |              | emaj           | otherPrefix4mytbl5_log         | tspemaj         | otherPrefix4mytbl5_log_idx         | tspemaj         | otherPrefix4mytbl5_log_seq         | otherPrefix4mytbl5_log_fnct         | otherPrefix4mytbl5_emaj_log_trg         | otherPrefix4mytbl5_emaj_trunc_trg
  myschema2      | mytbl6            | myGroup2         | r        |              | emaj           | myschema2_mytbl6_log           | tspemaj         | myschema2_mytbl6_log_idx           | tspemaj         | myschema2_mytbl6_log_seq           | myschema2_mytbl6_log_fnct           | myschema2_mytbl6_emaj_log_trg           | myschema2_mytbl6_emaj_trunc_trg
  myschema4      | mytblc1           | myGroup4         | r        |              | emaj           | myschema4_mytblc1_log          | tspemaj         | myschema4_mytblc1_log_idx          | tspemaj         | myschema4_mytblc1_log_seq          | myschema4_mytblc1_log_fnct          | myschema4_mytblc1_emaj_log_trg          | myschema4_mytblc1_emaj_trunc_trg
  myschema4      | mytblc2           | myGroup4         | r        |              | emaj           | myschema4_mytblc2_log          | tspemaj         | myschema4_mytblc2_log_idx          | tspemaj         | myschema4_mytblc2_log_seq          | myschema4_mytblc2_log_fnct          | myschema4_mytblc2_emaj_log_trg          | myschema4_mytblc2_emaj_trunc_trg
@@ -274,11 +319,11 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emaj       | myschema2_mytbl1_log           | postgres   | tspemaj    | t          | f        | f
  emaj       | myschema2_mytbl2_log           | postgres   | tspemaj    | t          | f        | f
  emaj       | myschema2_mytbl4_log           | postgres   | tspemaj    | t          | f        | f
- emaj       | myschema2_mytbl5_log           | postgres   | tspemaj    | t          | f        | f
  emaj       | myschema2_mytbl6_log           | postgres   | tspemaj    | t          | f        | f
  emaj       | myschema4_mytblc1_log          | postgres   | tspemaj    | t          | f        | f
  emaj       | myschema4_mytblc2_log          | postgres   | tspemaj    | t          | f        | f
  emaj       | myschema4_mytblm_log           | postgres   | tspemaj    | t          | f        | f
+ emaj       | otherPrefix4mytbl5_log         | postgres   | tspemaj    | t          | f        | f
  emaj       | phil's schema3_myTbl2\_log     | postgres   | tspemaj    | t          | f        | f
  emaj #'3   | phil's schema3_phil's tbl1_log | postgres   | tspemaj    | t          | f        | f
 (28 rows)
@@ -503,7 +548,7 @@ begin;
   select emaj.emaj_alter_group('myGroup1');
 ERROR:  _create_seq: Defining a secondary log schema is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 )"
-PL/pgSQL function "emaj_alter_group" line 194 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
 rollback;
 -- log tablespace cannot be changed for sequence
 begin;
@@ -511,14 +556,14 @@ begin;
   select emaj.emaj_alter_group('myGroup1');
 ERROR:  _create_seq: Defining log tablespaces is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 )"
-PL/pgSQL function "emaj_alter_group" line 194 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
 rollback;
 begin;
   update emaj.emaj_group_def set grpdef_log_idx_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_alter_group('myGroup1');
 ERROR:  _create_seq: Defining log tablespaces is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 )"
-PL/pgSQL function "emaj_alter_group" line 194 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
 rollback;
 -- should be OK
 -- nothing to change
@@ -555,10 +600,10 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 206 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 211 at PERFORM
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 206 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 211 at PERFORM
  emaj_alter_group 
 ------------------
                 4
@@ -583,10 +628,10 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 206 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 211 at PERFORM
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 206 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 211 at PERFORM
  emaj_alter_group 
 ------------------
                 3
@@ -599,8 +644,8 @@ select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name =
 (1 row)
 
 -- only 2 tables to add (+ log schema emajC)
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C','tsplog1',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,'tsplog1','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,NULL,'tsplog1','tsp log''2');
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
@@ -623,7 +668,7 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 (4 rows)
 
 -- only 1 sequence to add
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1,NULL);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
@@ -663,6 +708,31 @@ select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid
  emajC
 (1 row)
 
+-- only change the emaj_names_prefix for 1 table
+update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select count(*) from "emajC".s1t3_log;
+ count 
+-------
+     0
+(1 row)
+
+update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
+select count(*) from "emajC".myschema1_myTbl3_log;
+ERROR:  relation "emajC.myschema1_mytbl3_log" does not exist
+LINE 1: select count(*) from "emajC".myschema1_myTbl3_log;
+                             ^
 -- only change the log data tablespace for 1 table
 update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 select emaj.emaj_alter_group('myGroup1');
@@ -695,7 +765,7 @@ update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_alter_group" line 178 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
  emaj_alter_group 
 ------------------
                 6
@@ -705,7 +775,7 @@ update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_alter_group" line 178 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
  emaj_alter_group 
 ------------------
                 6
@@ -949,6 +1019,14 @@ select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(his
  ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
  ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
  ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
+ ALTER_GROUP      | SCHEMA DROPPED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | SCHEMA CREATED | "emajC"          |                                                 | postgres
+ ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
+ ALTER_GROUP      | BEGIN          | myGroup1         |                                                 | postgres
  ALTER_GROUP      | SCHEMA DROPPED | emajb            |                                                 | postgres
  ALTER_GROUP      | SCHEMA CREATED | emajb            |                                                 | postgres
  ALTER_GROUP      | END            | myGroup1         | 1 dropped relations and 1 (re)created relations | postgres
@@ -1002,7 +1080,7 @@ select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(his
  FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                                 | postgres
  FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                                 | postgres
  FORCE_DROP_GROUP | END            | myGroup1         | 6 tables/sequences processed                    | postgres
-(140 rows)
+(148 rows)
 
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 200;

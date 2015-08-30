@@ -644,7 +644,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     4173 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
     4174 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
     4175 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4176 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+    4176 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
     4177 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
     4178 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
     4179 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
@@ -706,7 +706,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     4173 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
     4174 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
     4175 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4176 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+    4176 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
     4177 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
     4178 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
     4179 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
@@ -830,7 +830,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     4173 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
     4174 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
     4175 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4176 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+    4176 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
     4177 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
     4178 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
     4179 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
@@ -914,7 +914,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     4173 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
     4174 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
     4175 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4176 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+    4176 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
     4177 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
     4179 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
     4181 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
@@ -1087,7 +1087,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     4173 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
     4174 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
     4175 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4176 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+    4176 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
     4177 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
     4196 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
     4197 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
@@ -1202,7 +1202,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     4173 | emaj           | myschema2_mytbl2_log_seq           | Mark21              |             1 | f
     4174 | emajC          | myschema2_myTbl3_log_seq           | Mark21              |             1 | f
     4175 | emaj           | myschema2_mytbl4_log_seq           | Mark21              |             1 | f
-    4176 | emaj           | myschema2_mytbl5_log_seq           | Mark21              |             1 | f
+    4176 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21              |             1 | f
     4177 | emaj           | myschema2_mytbl6_log_seq           | Mark21              |             1 | f
     4196 | myschema1      | myTbl3_col31_seq                   | Mark11              |             1 | f
     4197 | emajC          | myschema1_myTbl3_log_seq           | Mark11              |             1 | f
@@ -1320,7 +1320,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     4173 | emaj           | myschema2_mytbl2_log_seq           | Mark21              |             1 | f
     4174 | emajC          | myschema2_myTbl3_log_seq           | Mark21              |             1 | f
     4175 | emaj           | myschema2_mytbl4_log_seq           | Mark21              |             1 | f
-    4176 | emaj           | myschema2_mytbl5_log_seq           | Mark21              |             1 | f
+    4176 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21              |             1 | f
     4177 | emaj           | myschema2_mytbl6_log_seq           | Mark21              |             1 | f
     4196 | myschema1      | myTbl3_col31_seq                   | Mark11              |             1 | f
     4197 | emajC          | myschema1_myTbl3_log_seq           | Mark11              |             1 | f
@@ -1472,7 +1472,7 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     4173 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
     4174 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
     4175 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4176 | emaj           | myschema2_mytbl5_log_seq           | Mark21         |             1 | f
+    4176 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
     4177 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
     4196 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
     4197 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f

@@ -85,7 +85,7 @@ select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
-select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl5_log order by emaj_gid, emaj_tuple desc;
+select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj."otherPrefix4mytbl5_log" order by emaj_gid, emaj_tuple desc;
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -----------------------------
@@ -266,6 +266,30 @@ rollback;
 \! diff --exclude _INFO_s /tmp/emaj_test/snaps /tmp/emaj_test/snaps2
 
 set role emaj_regression_tests_adm_user;
+
+-----------------------------
+-- Step 12 : test use of a table with a very long name (63 characters long)
+-----------------------------
+select emaj.emaj_stop_group('phil''s group#3",');
+
+-- rename the "phil's tbl1" table and alter its group
+reset role;
+alter table "phil's schema3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
+
+set role emaj_regression_tests_adm_user;
+update emaj.emaj_group_def set grpdef_tblseq = 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', grpdef_emaj_names_prefix = 'short' where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s tbl1';
+select emaj.emaj_alter_group('phil''s group#3",');
+
+-- use the table and its group
+select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
+
+update "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name set "phil's col12" = 'GHI' where "phil's col11" between 6 and 9;
+select emaj.emaj_set_mark_group('phil''s group#3",','M2');
+delete from "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
+
+select emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group');
+select emaj.emaj_stop_group('phil''s group#3",');
+select emaj.emaj_drop_group('phil''s group#3",');
 
 -----------------------------
 -- test end: check, reset history and force sequences id

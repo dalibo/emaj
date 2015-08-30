@@ -92,11 +92,11 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime,
  E-Maj (version <NEXT_VERSION>) - Monitoring rollbacks activity
 ---------------------------------------------------------------
 [current date and time]
-** rollback 34 started at [rollback start time] for groups {myGroup1,myGroup2}
+** rollback 35 started at [rollback start time] for groups {myGroup1,myGroup2}
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: Multi-1 set at [mark time]
    3 session(s) to process 9 table(s) and 3 sequence(s) 
-** rollback 35 started at [rollback start time] for groups {myGroup1}
+** rollback 36 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: Multi-1 set at [mark time]
    1 session(s) to process 3 table(s) and 1 sequence(s) 
@@ -113,11 +113,11 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime,
    rollback to mark: mark1234 set at [mark time]
    1 session(s) to process 3 table(s) and 4 sequence(s) 
 [current date and time]
-** rollback 34 started at [rollback start time] for groups {myGroup1,myGroup2}
+** rollback 35 started at [rollback start time] for groups {myGroup1,myGroup2}
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: Multi-1 set at [mark time]
    3 session(s) to process 9 table(s) and 3 sequence(s) 
-** rollback 35 started at [rollback start time] for groups {myGroup1}
+** rollback 36 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time] 
    rollback to mark: Multi-1 set at [mark time]
    1 session(s) to process 3 table(s) and 1 sequence(s) 

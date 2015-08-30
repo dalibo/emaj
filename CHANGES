@@ -3,6 +3,12 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+  - in table emaj_group_def, add a column named grpdef_emaj_names_prefix to
+    set a specific prefix for all objects created by E-Maj for tables. If 
+    set by the E-Maj administrator, this prefix replaces the default 
+    <schema_name>_<application_table_name>. This removes the existing name 
+    size limit of the tables that E-Maj can handle. All prefixes must be 
+    unique inside an E-Maj installation.
   - add 6 columns into the emaj_relation table to record the name of all 
     E-Maj objects related to each application table or sequence. These 
     columns are used rather than recomputing E-Maj object names. The 

@@ -206,6 +206,8 @@ CREATE TABLE emaj.emaj_group_def (
                                                          --   order, with NULL last)
   grpdef_log_schema_suffix   TEXT,                       -- schema suffix for the log table, functions and sequence
                                                          --   (NULL for 'emaj' schema)
+  grpdef_emaj_names_prefix   TEXT,                       -- prefix for all E-Maj objects generated for this table
+                                                         --   (for tables only, NULL = default = <schema>_<table>)
   grpdef_log_dat_tsp         TEXT,                       -- tablespace for the log table (NULL to use default value)
   grpdef_log_idx_tsp         TEXT,                       -- tablespace for the log index (NULL to use default value)
   PRIMARY KEY (grpdef_group, grpdef_schema, grpdef_tblseq)
@@ -751,7 +753,8 @@ $_check_group_content$
 -- It checks that the referenced application tables and sequences,
 --  - exist,
 --  - is not located into an E-Maj schema (to protect against an E-Maj recursive use),
---  - do not already belong to another tables group.
+--  - do not already belong to another tables group,
+--  - will not generate conflicts on emaj objects to create (when emaj names prefix is not the default one)
 -- Input: the name of the tables group to check
   DECLARE
     v_msg                    TEXT = '';
@@ -809,6 +812,38 @@ $_check_group_content$
     IF v_msg <> '' THEN
       RAISE EXCEPTION '_check_group_content: one or several tables already belong to another group (%).', v_msg;
     END IF;
+-- check that several tables of the group have not the same emaj names prefix
+    FOR r_tblsq IN
+        SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq)  AS prefix, count(*)
+          FROM emaj.emaj_group_def
+          WHERE grpdef_group = v_groupName
+        GROUP BY 1 HAVING count(*) > 1 ORDER BY 1
+      LOOP
+      IF v_msg <> '' THEN
+        v_msg = v_msg || ', ';
+      END IF;
+      v_msg = v_msg || r_tblsq.prefix;
+    END LOOP;
+    IF v_msg <> '' THEN
+      RAISE EXCEPTION '_check_group_content: one or several emaj prefix are configured for several tables in the group (%).', v_msg;
+    END IF;
+-- check that emaj names prefix that will be generared will not generate conflict with objects from existing groups
+    FOR r_tblsq IN
+        SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix
+          FROM emaj.emaj_group_def, emaj.emaj_relation
+          WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log' = rel_log_table
+            AND grpdef_group = v_groupName AND rel_group <> v_groupName
+        ORDER BY 1
+      LOOP
+      IF v_msg <> '' THEN
+        v_msg = v_msg || ', ';
+      END IF;
+      v_msg = v_msg || r_tblsq.prefix;
+    END LOOP;
+    IF v_msg <> '' THEN
+      RAISE EXCEPTION '_check_group_content: one or several emaj prefix are already used (%).', v_msg;
+    END IF;
+--
     RETURN;
   END;
 $_check_group_content$;
@@ -952,6 +987,7 @@ $_create_tbl$
     v_pgVersion              TEXT = emaj._pg_version();
     v_emajSchema             TEXT = 'emaj';
     v_schemaPrefix           TEXT = 'emaj';
+    v_emajNamesPrefix        TEXT;
     v_logSchema              TEXT;
     v_fullTableName          TEXT;
     v_logDatTsp              TEXT;
@@ -1008,18 +1044,15 @@ $_create_tbl$
     IF v_isRollbackable AND v_relhaspkey = FALSE THEN
       RAISE EXCEPTION '_create_tbl: table % has no PRIMARY KEY.', r_grpdef.grpdef_tblseq;
     END IF;
--- prepare TABLESPACE clauses for data and index
-    v_logDatTsp = coalesce(r_grpdef.grpdef_log_dat_tsp, v_defTsp);
-    v_logIdxTsp = coalesce(r_grpdef.grpdef_log_idx_tsp, v_defTsp);
-    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logDatTsp),'');
-    v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logIdxTsp),'');
+-- build the prefix of all emaj object to create, by default <schema>_<table>
+    v_emajNamesPrefix = coalesce(r_grpdef.grpdef_emaj_names_prefix, r_grpdef.grpdef_schema || '_' || r_grpdef.grpdef_tblseq);
 -- build the name of emaj components associated to the application table (non schema qualified and not quoted)
-    v_baseLogTableName     = r_grpdef.grpdef_schema || '_' || r_grpdef.grpdef_tblseq || '_log';
-    v_baseLogIdxName       = r_grpdef.grpdef_schema || '_' || r_grpdef.grpdef_tblseq || '_log_idx';
-    v_baseLogFnctName      = r_grpdef.grpdef_schema || '_' || r_grpdef.grpdef_tblseq || '_log_fnct';
-    v_baseLogTriggerName   = r_grpdef.grpdef_schema || '_' || r_grpdef.grpdef_tblseq || '_emaj_log_trg';
-    v_baseTruncTriggerName = r_grpdef.grpdef_schema || '_' || r_grpdef.grpdef_tblseq || '_emaj_trunc_trg';
-    v_baseSequenceName     = r_grpdef.grpdef_schema || '_' || r_grpdef.grpdef_tblseq || '_log_seq';
+    v_baseLogTableName     = v_emajNamesPrefix || '_log';
+    v_baseLogIdxName       = v_emajNamesPrefix || '_log_idx';
+    v_baseLogFnctName      = v_emajNamesPrefix || '_log_fnct';
+    v_baseLogTriggerName   = v_emajNamesPrefix || '_emaj_log_trg';
+    v_baseTruncTriggerName = v_emajNamesPrefix || '_emaj_trunc_trg';
+    v_baseSequenceName     = v_emajNamesPrefix || '_log_seq';
 -- build the different name for table, trigger, functions,...
     v_logSchema        = coalesce(v_schemaPrefix || r_grpdef.grpdef_log_schema_suffix, v_emajSchema);
     v_fullTableName    = quote_ident(r_grpdef.grpdef_schema) || '.' || quote_ident(r_grpdef.grpdef_tblseq);
@@ -1029,6 +1062,11 @@ $_create_tbl$
     v_logTriggerName   = quote_ident(v_baseLogTriggerName);
     v_truncTriggerName = quote_ident(v_baseTruncTriggerName);
     v_sequenceName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseSequenceName);
+-- prepare TABLESPACE clauses for data and index
+    v_logDatTsp = coalesce(r_grpdef.grpdef_log_dat_tsp, v_defTsp);
+    v_logIdxTsp = coalesce(r_grpdef.grpdef_log_idx_tsp, v_defTsp);
+    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logDatTsp),'');
+    v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logIdxTsp),'');
 -- creation of the log table: the log table looks like the application table, with some additional technical columns
     EXECUTE 'DROP TABLE IF EXISTS ' || v_logTableName;
     EXECUTE 'CREATE TABLE ' || v_logTableName
@@ -1170,7 +1208,7 @@ $_drop_tbl$
       END IF;
     END IF;
 -- delete the log function
-    EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '()';
+    EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
 -- delete the sequence associated to the log table
     EXECUTE 'DROP SEQUENCE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence);
 -- delete the log table
@@ -1197,6 +1235,10 @@ $_create_seq$
 -- check no log schema has been set as parameter in the emaj_group_def table
     IF grpdef.grpdef_log_schema_suffix IS NOT NULL THEN
       RAISE EXCEPTION '_create_seq: Defining a secondary log schema is not allowed for a sequence (%.%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq;
+    END IF;
+-- check no emaj name prefix has been set as parameter in the emaj_group_def table
+    IF grpdef.grpdef_emaj_names_prefix IS NOT NULL THEN
+      RAISE EXCEPTION '_create_seq: Defining an emaj names prefix is not allowed for a sequence (%.%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq;
     END IF;
 -- check no tablespace has been set as parameter in the emaj_group_def table
     IF grpdef.grpdef_log_dat_tsp IS NOT NULL OR grpdef.grpdef_log_idx_tsp IS NOT NULL THEN
@@ -1697,26 +1739,23 @@ $_verify_groups$
           AND NOT EXISTS
               (SELECT NULL FROM pg_catalog.pg_namespace, pg_catalog.pg_class
                  WHERE nspname = rel_log_schema AND relname = rel_log_table
-                   AND relnamespace = pg_namespace.oid AND relname LIKE E'%\_%\_log')
+                   AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
       IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
--- check the log function for each table referenced in the emaj_relation table still exist
+-- check the log function for each table referenced in the emaj_relation table still exists
     FOR r_object IN
                                                   -- the schema and table names are rebuilt from the returned function name
-      SELECT substring(fnct FROM '^(.*)_.*_log_fnct') AS sch, substring(fnct FROM '^.*_(.*)_log_fnct') AS tbl,
-             'In group "' || r.rel_group || '", the log function "' || t.rel_log_schema || '"."' || fnct || '" is not found.' AS msg
-        FROM (                                    -- all expected log functions
-         SELECT rel_log_schema, rel_log_function AS fnct
-            FROM emaj.emaj_relation
-            WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
-         EXCEPT                                   -- minus functions known by postgres
-         SELECT nspname, proname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-           WHERE pronamespace = pg_namespace.oid AND proname LIKE E'%\_%\_log\_fnct'
-             ) AS t, emaj.emaj_relation r         -- join with emaj_relation to get the group name
-        WHERE r.rel_schema = substring(fnct FROM '^(.*)_.*_log_fnct') AND r.rel_tblseq = substring(fnct FROM '^.*_(.*)_log_fnct')
+      SELECT rel_schema, rel_tblseq,
+             'In group "' || rel_group || '", the log function "' || rel_log_schema || '"."' || rel_log_function || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+                 WHERE nspname = rel_log_schema AND proname = rel_log_function
+                   AND pronamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
       IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
@@ -1732,8 +1771,7 @@ $_verify_groups$
           AND NOT EXISTS
               (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_log_trigger
-                   AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
-                   AND tgname LIKE E'%\_%\_emaj\_log\_trg')
+                   AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
       IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
@@ -1749,8 +1787,7 @@ $_verify_groups$
             AND NOT EXISTS
                 (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
                    WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger 
-                     AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
-                     AND tgname LIKE E'%\_%\_emaj\_trunc\_trg')
+                     AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
       LOOP
         IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
@@ -1764,16 +1801,16 @@ $_verify_groups$
       SELECT DISTINCT rel_schema, rel_tblseq,
              'In group "' || rel_group || '", the structure of the application table "' ||
                rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' ||
-             rel_log_schema || '"."' || rel_schema || '_' || rel_tblseq || '_log").' AS msg
+             rel_log_schema || '"."' || rel_log_table || '").' AS msg
         FROM (
           (                                       -- application table's columns
-          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
             FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
             WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
               AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
               AND rel_group = ANY (v_groups) AND rel_kind = 'r'
           EXCEPT                                   -- minus log table's columns
-          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
             FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
             WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema AND relname = rel_log_table
               AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
@@ -1781,13 +1818,13 @@ $_verify_groups$
           )
           UNION
           (                                         -- log table's columns
-          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
             FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
             WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema AND relname = rel_log_table
               AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
               AND rel_group = ANY (v_groups) AND rel_kind = 'r'
           EXCEPT                                    -- minus application table's columns
-          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, attname, atttypid, attlen, atttypmod
+          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
             FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
             WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
               AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
@@ -2250,7 +2287,8 @@ $emaj_alter_group$
 --
 -- list relations that still belong to the tables group
     FOR r_tblsq IN
-      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_table, rel_log_dat_tsp, rel_log_idx_tsp, 
+             grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_emaj_names_prefix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
         FROM emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
           AND rel_group = v_groupName
@@ -2259,14 +2297,18 @@ $emaj_alter_group$
       LOOP
 -- now detect other changes that justify to drop and recreate the relation
 -- detect if the log data tablespace in emaj_group_def has changed
-      IF (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_dat_tsp,'') <> coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp,''))
+      IF   (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_dat_tsp,'') <> coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp,''))
         OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_dat_tsp IS NOT NULL)
 -- or if the log index tablespace in emaj_group_def has changed
         OR (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_idx_tsp,'') <> coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp,''))
         OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_idx_tsp IS NOT NULL)
 -- or if the log schema in emaj_group_def has changed
         OR (r_tblsq.rel_kind = 'r' AND r_tblsq.rel_log_schema <> (v_schemaPrefix || coalesce(r_tblsq.grpdef_log_schema_suffix, '')))
-        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_schema_suffix IS NOT NULL) THEN
+        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_schema_suffix IS NOT NULL)
+-- or if the emaj names prefix in emaj_group_def has changed (detected with the log table name)
+        OR (r_tblsq.rel_kind = 'r' AND 
+            r_tblsq.rel_log_table <> (coalesce(r_tblsq.grpdef_emaj_names_prefix, r_tblsq.grpdef_schema || '_' || r_tblsq.grpdef_tblseq) || '_log'))
+        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_emaj_names_prefix IS NOT NULL) THEN
 -- then drop the relation (it will be recreated later)
 -- get the related row in emaj_relation
         SELECT * FROM emaj.emaj_relation WHERE rel_schema = r_tblsq.rel_schema AND rel_tblseq = r_tblsq.rel_tblseq INTO r_rel;
@@ -2274,9 +2316,9 @@ $emaj_alter_group$
 -- if it is a table, delete the related emaj objects
           PERFORM emaj._drop_tbl (r_rel);
 -- and add the log schema to the list of log schemas to potentialy drop at the end of the function
-        IF r_tblsq.rel_log_schema <> v_emajSchema AND
-           (v_logSchemasArray IS NULL OR r_tblsq.rel_log_schema <> ALL (v_logSchemasArray)) THEN
-            v_logSchemasArray = array_append(v_logSchemasArray,r_tblsq.rel_log_schema);
+          IF r_tblsq.rel_log_schema <> v_emajSchema AND
+            (v_logSchemasArray IS NULL OR r_tblsq.rel_log_schema <> ALL (v_logSchemasArray)) THEN
+             v_logSchemasArray = array_append(v_logSchemasArray,r_tblsq.rel_log_schema);
           END IF;
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
@@ -5796,33 +5838,24 @@ $_verify_all_groups$
 -- check the log table for all tables referenced in the emaj_relation table still exist
     RETURN QUERY
       SELECT 'In group "' || rel_group || '", the log table "' ||
-               rel_log_schema || '"."' || rel_schema || '_' || rel_tblseq || '_log" is not found.' AS msg
+               rel_log_schema || '"."' || rel_log_table || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_kind = 'r'
           AND NOT EXISTS
               (SELECT NULL FROM pg_catalog.pg_namespace, pg_catalog.pg_class
                  WHERE nspname = rel_log_schema AND relname = rel_log_table 
-                   AND relnamespace = pg_namespace.oid AND relname LIKE E'%\_%\_log')
+                   AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
 -- check the log function for each table referenced in the emaj_relation table still exist
     RETURN QUERY
-      SELECT msg FROM (
-        SELECT substring(fnct FROM '^(.*)_.*_log_fnct') AS sch, substring(fnct FROM '^.*_(.*)_log_fnct') AS tbl,
-                                                -- schema and table names are rebuilt from the returned function name
-               'In group "' || r.rel_group || '", the log function "' || t.rel_log_schema || '"."' ||
-               fnct || '" is not found.' AS msg
-          FROM (                                        -- all expected log functions
-           SELECT rel_log_schema, rel_log_function AS fnct
-              FROM emaj.emaj_relation
-              WHERE rel_kind = 'r'
-           EXCEPT                                       -- minus functions known by postgres with the same name profile
-           SELECT nspname, proname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-             WHERE pronamespace = pg_namespace.oid AND proname LIKE E'%\_%\_log\_fnct'
-               ) AS t, emaj.emaj_relation r             -- join with emaj_relation to get the group name
-          WHERE r.rel_schema = substring(fnct FROM '^(.*)_.*_log_fnct')
-            AND r.rel_tblseq = substring(fnct FROM '^.*_(.*)_log_fnct')
-          ORDER BY 1,2,3
-      ) AS t;
+      SELECT 'In group "' || rel_group || '", the log function "' || rel_log_schema || '"."' || rel_log_function || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_kind = 'r'
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+                 WHERE nspname = rel_log_schema AND proname = rel_log_function
+                   AND pronamespace = pg_namespace.oid)
+        ORDER BY rel_schema, rel_tblseq, 1;
 -- check log and truncate triggers for all tables referenced in the emaj_relation table still exist
 --   start with log trigger
     RETURN QUERY
@@ -5832,13 +5865,12 @@ $_verify_all_groups$
           AND NOT EXISTS
               (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_log_trigger 
-                   AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
-                   AND tgname LIKE E'%\_%\_emaj\_log\_trg')
+                   AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
                          -- do not issue a row if the application table does not exist,
                          -- this case has been already detected
-          AND (rel_schema, rel_tblseq) IN
-              (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-                 WHERE relnamespace = pg_namespace.oid)
+          AND EXISTS 
+              (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
 --   then truncate trigger if pg 8.4+
     IF v_pgVersion >= '8.4' THEN
@@ -5849,13 +5881,12 @@ $_verify_all_groups$
             AND NOT EXISTS
                 (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
                    WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger 
-                     AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid
-                     AND tgname LIKE E'%\_%\_emaj\_trunc\_trg')
+                     AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
                          -- do not issue a row if the application table does not exist,
                          -- this case has been already detected
-            AND (rel_schema, rel_tblseq) IN
-                (SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-                   WHERE relnamespace = pg_namespace.oid)
+            AND EXISTS 
+                (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+                   WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
           ORDER BY rel_schema, rel_tblseq, 1;
 -- TODO : merge both triggers check when pg 8.3 will not be supported any more
     END IF;
