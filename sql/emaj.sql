@@ -7,10 +7,10 @@
 --
 -- This script must be executed by a role having SUPERUSER privileges.
 -- Before its execution:
--- 	-> the concerned cluster may contain a tablespace named "tspemaj" to hold E-Maj files,
---     for instance previously created by
---	   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
---	-> the plpgsql language must have been created in the concerned database,
+--   -> the concerned cluster may contain a tablespace named "tspemaj" to hold E-Maj files,
+--      for instance previously created by
+--      CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
+--   -> the plpgsql language must have been created in the concerned database,
 -- It is also advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring capabilities.
 
 \set ON_ERROR_STOP ON
@@ -25,7 +25,6 @@ CREATE OR REPLACE FUNCTION public.emaj_tmp_pre_install()
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
-    v_stmt                   TEXT;
     v_schemaList             TEXT;
     r_schema                 RECORD;
   BEGIN
@@ -90,9 +89,6 @@ CREATE OR REPLACE FUNCTION emaj._tmp_create_some_components()
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
   DECLARE
-    v_pgVersion              TEXT = substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
-    v_stmt                   TEXT;
-    r_fnct                   RECORD;
   BEGIN
 -- create emaj roles (NOLOGIN), if they do not exist
 -- does 'emaj_adm' already exist ?
@@ -249,10 +245,10 @@ CREATE TABLE emaj.emaj_relation (
   rel_log_schema             TEXT,                       -- schema for the log table, functions and sequence
   rel_log_table              TEXT,                       -- name of the log table associated (NULL for sequence)
   rel_log_dat_tsp            TEXT,                       -- tablespace for the log table (NULL for sequences)
-  rel_log_index              TEXT,                       -- name of the index of the log table 
+  rel_log_index              TEXT,                       -- name of the index of the log table
   rel_log_idx_tsp            TEXT,                       -- tablespace for the log index (NULL for sequences)
-  rel_log_sequence           TEXT,                       -- name of the log sequence 
-  rel_log_function           TEXT,                       -- name of the function associated to the log trigger 
+  rel_log_sequence           TEXT,                       -- name of the log sequence
+  rel_log_function           TEXT,                       -- name of the function associated to the log trigger
                                                          --   created on the application table
   rel_log_trigger            TEXT,                       -- name of the log trigger
   rel_trunc_trigger          TEXT,                       -- name of the truncate trigger
@@ -509,7 +505,7 @@ INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version'
 -- view readable by emaj_viewer role. It hides the 'dblink_user_password' parameter's value
 CREATE VIEW emaj.emaj_visible_param AS
   SELECT param_key,
-         CASE WHEN param_key = 'dblink_user_password' THEN '<masked data>' 
+         CASE WHEN param_key = 'dblink_user_password' THEN '<masked data>'
                                                       ELSE param_value_text END AS param_value_text,
          param_value_int, param_value_boolean, param_value_interval
   FROM emaj.emaj_param;
@@ -887,7 +883,8 @@ $_check_new_mark$
   END;
 $_check_new_mark$;
 
-CREATE OR REPLACE FUNCTION emaj._forbid_truncate_fnct() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION emaj._forbid_truncate_fnct()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS
 $_forbid_truncate_fnct$
 -- The function is triggered by the execution of TRUNCATE SQL verb on tables of a rollbackable group
 -- in logging mode.
@@ -898,9 +895,10 @@ $_forbid_truncate_fnct$
     END IF;
     RETURN NULL;
   END;
-$_forbid_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
+$_forbid_truncate_fnct$;
 
-CREATE OR REPLACE FUNCTION emaj._log_truncate_fnct() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION emaj._log_truncate_fnct()
+RETURNS TRIGGER  LANGUAGE plpgsql SECURITY DEFINER AS
 $_log_truncate_fnct$
 -- The function is triggered by the execution of TRUNCATE SQL verb on tables of an audit_only group
 -- in logging mode.
@@ -915,7 +913,7 @@ $_log_truncate_fnct$
     END IF;
     RETURN NULL;
   END;
-$_log_truncate_fnct$ LANGUAGE plpgsql SECURITY DEFINER;
+$_log_truncate_fnct$;
 
 CREATE OR REPLACE FUNCTION emaj._create_log_schema(v_logSchemaName TEXT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
@@ -1010,7 +1008,6 @@ $_create_tbl$
     v_relIsTemp              BOOLEAN;
     v_relhaspkey             BOOLEAN;
     v_stmt                   TEXT = '';
-    v_attname                TEXT;
     v_triggerList            TEXT = '';
     r_column                 RECORD;
     r_trigger                RECORD;
@@ -1152,12 +1149,12 @@ $_create_tbl$
       EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_truncTriggerName;
     END IF;
 -- register the table into emaj_relation
-    INSERT INTO emaj.emaj_relation 
-               (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema, 
-                rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table, 
+    INSERT INTO emaj.emaj_relation
+               (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema,
+                rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
                 rel_log_index, rel_log_sequence, rel_log_function, rel_log_trigger, rel_trunc_trigger)
-        VALUES (r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq, r_grpdef.grpdef_group, r_grpdef.grpdef_priority, v_logSchema, 
-                v_logDatTsp, v_logIdxTsp, 'r', v_baseLogTableName, 
+        VALUES (r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq, r_grpdef.grpdef_group, r_grpdef.grpdef_priority, v_logSchema,
+                v_logDatTsp, v_logIdxTsp, 'r', v_baseLogTableName,
                 v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName, v_baseLogTriggerName, v_baseTruncTriggerName);
 --
 -- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
@@ -1299,7 +1296,6 @@ $_rlbk_tbl$
     v_pgVersion              TEXT = emaj._pg_version();
     v_fullTableName          TEXT;
     v_logTableName           TEXT;
-    v_attname                TEXT;
     v_tmpTable               TEXT;
     v_tableType              TEXT;
     v_nbPk                   BIGINT;
@@ -1416,7 +1412,7 @@ $_delete_log_tbl$
 -- and then insert the new sequence hole
     EXECUTE 'INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_hole_size) VALUES ('
       || quote_literal(r_rel.rel_schema) || ',' || quote_literal(r_rel.rel_tblseq) || ', ('
-      || ' SELECT CASE WHEN is_called THEN last_value + increment_by ELSE last_value END FROM ' 
+      || ' SELECT CASE WHEN is_called THEN last_value + increment_by ELSE last_value END FROM '
       || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)
       || ')-('
       || ' SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM '
@@ -1537,7 +1533,7 @@ $_log_stat_tbl$
          AND sequ_datetime = v_tsFirstMark;
     IF v_tsLastMark IS NULL THEN
 -- last mark is NULL, so examine the current state of the log table id
-      EXECUTE 'SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END FROM ' 
+      EXECUTE 'SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END FROM '
            || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence) INTO v_endLastValue;
 --   and count the sum of hole from the start mark time until now
       SELECT coalesce(sum(sqhl_hole_size),0) INTO v_sumHole FROM emaj.emaj_seq_hole
@@ -1682,7 +1678,6 @@ $_verify_groups$
 -- If no error is detected, no row is returned.
   DECLARE
     v_pgVersion              TEXT = emaj._pg_version();
-    v_emajSchema             TEXT = 'emaj';
     v_hint                   TEXT = 'You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.';
     r_object                 RECORD;
   BEGIN
@@ -1786,7 +1781,7 @@ $_verify_groups$
         WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
             AND NOT EXISTS
                 (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger 
+                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger
                      AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
       LOOP
@@ -1862,7 +1857,7 @@ $_check_fk_groups$
           AND r.rel_group = ANY (v_groupNames)                      -- only tables of the selected groups
           AND g.group_is_rollbackable                               -- only tables from rollbackable groups
           AND NOT EXISTS                                            -- referenced table outside the groups
-              (SELECT NULL FROM emaj.emaj_relation 
+              (SELECT NULL FROM emaj.emaj_relation
                  WHERE rel_schema = nf.nspname AND rel_tblseq = tf.relname AND rel_group = ANY (v_groupNames))
       LOOP
       RAISE WARNING '_check_fk_groups: Foreign key %, from table %.%, references %.% that is outside groups (%).',
@@ -1881,7 +1876,7 @@ $_check_fk_groups$
           AND r.rel_group = ANY (v_groupNames)                        -- only tables of the selected groups
           AND g.group_is_rollbackable                                 -- only tables from rollbackable groups
           AND NOT EXISTS                                              -- referenced table outside the groups
-              (SELECT NULL FROM emaj.emaj_relation 
+              (SELECT NULL FROM emaj.emaj_relation
                  WHERE rel_schema = n.nspname AND rel_tblseq = t.relname AND rel_group = ANY (v_groupNames))
       LOOP
       RAISE WARNING '_check_fk_groups: table %.% is referenced by foreign key % from table %.% that is outside groups (%).',
@@ -2257,7 +2252,7 @@ $emaj_alter_group$
         WHERE rel_group = v_groupName
           AND NOT EXISTS (
               SELECT NULL FROM emaj.emaj_group_def
-                WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq 
+                WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
                   AND grpdef_group = v_groupName)
       UNION
 -- ... and all relations that are damaged or whose log table is not synchronised with them any more
@@ -2287,7 +2282,7 @@ $emaj_alter_group$
 --
 -- list relations that still belong to the tables group
     FOR r_tblsq IN
-      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_table, rel_log_dat_tsp, rel_log_idx_tsp, 
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_table, rel_log_dat_tsp, rel_log_idx_tsp,
              grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_emaj_names_prefix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
         FROM emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
@@ -2306,7 +2301,7 @@ $emaj_alter_group$
         OR (r_tblsq.rel_kind = 'r' AND r_tblsq.rel_log_schema <> (v_schemaPrefix || coalesce(r_tblsq.grpdef_log_schema_suffix, '')))
         OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_schema_suffix IS NOT NULL)
 -- or if the emaj names prefix in emaj_group_def has changed (detected with the log table name)
-        OR (r_tblsq.rel_kind = 'r' AND 
+        OR (r_tblsq.rel_kind = 'r' AND
             r_tblsq.rel_log_table <> (coalesce(r_tblsq.grpdef_emaj_names_prefix, r_tblsq.grpdef_schema || '_' || r_tblsq.grpdef_tblseq) || '_log'))
         OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_emaj_names_prefix IS NOT NULL) THEN
 -- then drop the relation (it will be recreated later)
@@ -2376,7 +2371,7 @@ $emaj_alter_group$
         WHERE grpdef_group = v_groupName
           AND NOT EXISTS (
               SELECT NULL FROM emaj.emaj_relation
-                WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq 
+                WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
                   AND rel_group = v_groupName)
           AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
           AND relkind = 'r'
@@ -2392,7 +2387,7 @@ $emaj_alter_group$
         WHERE grpdef_group = v_groupName
           AND NOT EXISTS (
               SELECT NULL FROM emaj.emaj_relation
-                WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq 
+                WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
                   AND rel_group = v_groupName)
           AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
           AND relkind = 'S'
@@ -2407,7 +2402,7 @@ $emaj_alter_group$
     UPDATE emaj.emaj_group SET group_last_alter_datetime = transaction_timestamp(),
                                group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
       WHERE group_name = v_groupName;
---	delete old marks of the tables group from emaj_mark
+-- delete old marks of the tables group from emaj_mark
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
 -- check foreign keys with tables outside the group
     PERFORM emaj._check_fk_groups(array[v_groupName]);
@@ -2515,9 +2510,7 @@ $_start_groups$
     v_groupIsLogging         BOOLEAN;
     v_nbTb                   INT = 0;
     v_markName               TEXT;
-    v_logTableName           TEXT;
     v_fullTableName          TEXT;
-    v_cpt                    BIGINT;
     r_tblsq                  RECORD;
   BEGIN
 -- purge the emaj history, if needed
@@ -2956,7 +2949,6 @@ $_set_mark_groups$
     v_lastSeqHoleId          BIGINT;
     v_lastGlobalSeq          BIGINT;
     v_stmt                   TEXT;
-    v_isDblinkUsable         BOOLEAN = false;
     r_tblsq                  RECORD;
   BEGIN
 -- if requested, record the set mark begin in emaj_hist
@@ -3002,7 +2994,7 @@ $_set_mark_groups$
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
-		  ORDER BY rel_priority, rel_schema, rel_tblseq
+          ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 -- ... record the associated sequence parameters in the emaj sequence table
       v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
@@ -3261,8 +3253,6 @@ $emaj_delete_before_mark_group$
   DECLARE
     v_groupIsLogging         BOOLEAN;
     v_realMark               TEXT;
-    v_markId                 BIGINT;
-    v_datetimeMark           TIMESTAMPTZ;
     v_nbMark                 INT;
   BEGIN
 -- insert begin in the history
@@ -3680,7 +3670,6 @@ $_rlbk_planning$
 -- It is called in an autonomous dblink transaction, if possible.
 -- The function is defined as SECURITY DEFINER so that emaj_viwer role can write into rollback tables without having specific privileges to do it.
   DECLARE
-    v_stmt                   TEXT;
     v_groupNames             TEXT[];
     v_mark                   TEXT;
     v_isLoggedRlbk           BOOLEAN;
@@ -4309,7 +4298,6 @@ $_rlbk_session_exec$
     v_logTriggerName         TEXT;
     v_nbRows                 BIGINT;
     r_step                   RECORD;
-    r_rel                    emaj.emaj_relation%ROWTYPE;
   BEGIN
 -- determine whether the dblink connection for this session is opened
     IF emaj._dblink_is_cnx_opened('rlbk#'||v_session) THEN
@@ -4595,7 +4583,6 @@ $_rlbk_error$
 -- Input: rollback identifier, message to record and the dblink connection name to use
   DECLARE
     v_stmt                   TEXT;
-    v_isDblinkUsable         BOOLEAN = false;
   BEGIN
     IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
       v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_msg = ' || quote_literal(v_msg) ||
@@ -4617,7 +4604,6 @@ $emaj_cleanup_rollback_state$
 -- Output: number of updated rollback events
   DECLARE
     v_nbRlbk                 INT = 0;
-    v_nbVisibleTx            INT;
     v_newStatus              emaj._rlbk_status_enum;
     r_rlbk                   RECORD;
   BEGIN
@@ -4761,12 +4747,6 @@ $emaj_log_stat_group$
     v_tsLastMark             TIMESTAMPTZ;
     v_firstLastSeqHoleId     BIGINT;
     v_lastLastSeqHoleId      BIGINT;
-    v_fullSeqName            TEXT;
-    v_beginLastValue         BIGINT;
-    v_endLastValue           BIGINT;
-    v_sumHole                BIGINT;
-    r_tblsq                  RECORD;
-    r_stat                   RECORD;
   BEGIN
 -- check that the group is recorded in emaj_group table
     SELECT group_is_logging INTO v_groupIsLogging
@@ -5562,8 +5542,6 @@ $_gen_sql_groups$
     v_nbSQL                  INT;
     v_nbSeq                  INT;
     v_cumNbSQL               INT = 0;
-    v_fullTableName          TEXT;
-    v_logTableName           TEXT;
     v_fullSeqName            TEXT;
     v_endComment             TEXT;
     v_conditions             TEXT;
@@ -5798,8 +5776,6 @@ $_verify_all_groups$
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
   DECLARE
     v_pgVersion              TEXT = emaj._pg_version();
-    v_emajSchema             TEXT = 'emaj';
-    r_object                 RECORD;
   BEGIN
 -- check the postgres version at creation time is compatible with the current version
 -- Warning: comparisons on version numbers are alphanumeric.
@@ -5843,7 +5819,7 @@ $_verify_all_groups$
         WHERE rel_kind = 'r'
           AND NOT EXISTS
               (SELECT NULL FROM pg_catalog.pg_namespace, pg_catalog.pg_class
-                 WHERE nspname = rel_log_schema AND relname = rel_log_table 
+                 WHERE nspname = rel_log_schema AND relname = rel_log_table
                    AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
 -- check the log function for each table referenced in the emaj_relation table still exist
@@ -5864,11 +5840,11 @@ $_verify_all_groups$
         WHERE rel_kind = 'r'
           AND NOT EXISTS
               (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_log_trigger 
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_log_trigger
                    AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
                          -- do not issue a row if the application table does not exist,
                          -- this case has been already detected
-          AND EXISTS 
+          AND EXISTS
               (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
@@ -5880,11 +5856,11 @@ $_verify_all_groups$
           WHERE rel_kind = 'r'
             AND NOT EXISTS
                 (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger 
+                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger
                      AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
                          -- do not issue a row if the application table does not exist,
                          -- this case has been already detected
-            AND EXISTS 
+            AND EXISTS
                 (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                    WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
           ORDER BY rel_schema, rel_tblseq, 1;
@@ -5950,7 +5926,6 @@ $_verify_all_schemas$
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
   DECLARE
     v_emajSchema             TEXT = 'emaj';
-    r_object                 RECORD;
   BEGIN
 -- verify that the expected E-Maj schemas still exist
     RETURN QUERY
@@ -6401,12 +6376,12 @@ $tmp$
     END IF;
 -- check the dblink contrib or extension is already installed and give EXECUTE right to emaj_adm on dblink_connect_u functions
 --   Scan all schemas where dblink is installed
---   Note dblink may have been installed in several schemas and we don't know at installation time 
+--   Note dblink may have been installed in several schemas and we don't know at installation time
 --   what will be the search_path of future users.
---   Grants on this particular dblink_connect_u function are revoked by default to public, 
+--   Grants on this particular dblink_connect_u function are revoked by default to public,
 --   but emaj administrators need it to monitor the rollback operations progress.
     v_schemaList = '';
-    FOR r_sch IN 
+    FOR r_sch IN
       SELECT DISTINCT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
           WHERE pg_proc.pronamespace = pg_namespace.oid
             AND proname = 'dblink_connect_u'
@@ -6416,10 +6391,10 @@ $tmp$
       ELSE
         v_schemaList = v_schemaList || ',' || r_sch.nspname;
       END IF;
-      EXECUTE 'GRANT EXECUTE ON FUNCTION ' || 
+      EXECUTE 'GRANT EXECUTE ON FUNCTION ' ||
               quote_ident(r_sch.nspname) || '.dblink_connect_u(text,text) TO emaj_adm';
     END LOOP;
--- return the output message depending whether dblink is installed or not 
+-- return the output message depending whether dblink is installed or not
     IF v_schemaList = '' THEN
       RAISE WARNING 'E-Maj installation: the dblink contrib/extension is not installed. It is advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring and E-Maj parallel rollback capabilities. (You will need to "GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO emaj_adm" once dblink is installed)';
     ELSE

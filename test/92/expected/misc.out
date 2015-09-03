@@ -854,7 +854,7 @@ CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(array[v_groupName], v_first
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 21 at SQL statement
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script"
-PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 150 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 148 at SQL statement
 SQL statement "SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location, emaj._check_names_array(v_tblseqs,'table/sequence'))"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 21 at SQL statement
  emaj_gen_sql_group 

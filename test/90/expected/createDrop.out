@@ -131,7 +131,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 ERROR:  tablespace "dummyTablespace" does not exist
 CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log ( LIKE myschema1.mytbl1) TABLESPACE "dummyTablespace""
-PL/pgSQL function "_create_tbl" line 93 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 92 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function "emaj_create_group" line 62 at PERFORM
 PL/pgSQL function "emaj_create_group" line 6 at RETURN
