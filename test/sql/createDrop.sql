@@ -307,6 +307,7 @@ select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and r
 update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
 select emaj.emaj_alter_group('myGroup1');
 select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+
 -- change the table structure
 alter table myschema1.mytbl1 add column newcol int;
 select emaj.emaj_alter_group('myGroup1');
@@ -319,6 +320,22 @@ alter table myschema1.mytbl1 alter column newcol2 set default 0;
 select emaj.emaj_alter_group('myGroup1');
 alter table myschema1.mytbl1 drop column newcol2;
 select emaj.emaj_alter_group('myGroup1');
+
+-- rename a table and/or change its schema
+alter table myschema1.mytbl1 rename to mytbl1_new_name;
+update emaj.emaj_group_def set grpdef_tblseq = 'mytbl1_new_name' 
+  where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+select emaj.emaj_alter_group('myGroup1');
+alter table myschema1.mytbl1_new_name set schema public;
+update emaj.emaj_group_def set grpdef_schema = 'public'
+  where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1_new_name';
+select emaj.emaj_alter_group('myGroup1');
+alter table public.mytbl1_new_name rename to mytbl1;
+alter table public.mytbl1 set schema myschema1;
+update emaj.emaj_group_def set grpdef_schema = 'myschema1', grpdef_tblseq = 'mytbl1'
+  where grpdef_schema = 'public' and grpdef_tblseq = 'mytbl1_new_name';
+select emaj.emaj_alter_group('myGroup1');
+
 -- missing emaj components
 drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
 select emaj.emaj_alter_group('myGroup1');

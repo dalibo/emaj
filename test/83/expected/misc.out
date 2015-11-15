@@ -1160,6 +1160,8 @@ rollback;
 -- detection of a missing application schema
 begin;
   drop schema myschema1 cascade;
+NOTICE:  drop cascades to table myschema1.mytbl1
+NOTICE:  drop cascades to constraint mytbl4_col44_fkey on table myschema1.mytbl4
 NOTICE:  drop cascades to function myschema1.mytbl2trgfct()
 NOTICE:  drop cascades to trigger mytbl2trg on table myschema1.mytbl2
 NOTICE:  drop cascades to table myschema1.mytbl2b
@@ -1168,7 +1170,6 @@ NOTICE:  drop cascades to table myschema1.mytbl4
 NOTICE:  drop cascades to table myschema1."myTbl3"
 NOTICE:  drop cascades to default for table myschema1."myTbl3" column col31
 NOTICE:  drop cascades to table myschema1.mytbl2
-NOTICE:  drop cascades to table myschema1.mytbl1
   select * from emaj.emaj_verify_all();
                                       emaj_verify_all                                      
 -------------------------------------------------------------------------------------------

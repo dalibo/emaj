@@ -19,6 +19,10 @@ Bug fixes:
   - replace all NOT IN (subquery) by the almost equivalent NOT EXISTS() 
     syntax. This fixes potential issues with NULL value processing mainly 
     in the functions that check the E-Maj environment.
+  - add a CASCADE clause to the DROP FUNCTION statement in the _drop_tbl() 
+    function, to avoid the abort of the emaj_alter_group() function calls 
+    when an application table has been renamed or has been moved into another 
+    schema.
 
 1.1.0
 ------

@@ -1150,12 +1150,12 @@ rollback;
 begin;
   drop schema myschema1 cascade;
 NOTICE:  drop cascades to 6 other objects
-DETAIL:  drop cascades to table myschema1.mytbl1
-drop cascades to table myschema1.mytbl2
+DETAIL:  drop cascades to table myschema1.mytbl2
 drop cascades to table myschema1."myTbl3"
 drop cascades to table myschema1.mytbl4
 drop cascades to table myschema1.mytbl2b
 drop cascades to function myschema1.mytbl2trgfct()
+drop cascades to table myschema1.mytbl1
   select * from emaj.emaj_verify_all();
                                       emaj_verify_all                                      
 -------------------------------------------------------------------------------------------
