@@ -27,7 +27,7 @@ DROP FUNCTION public.emaj_tmp();
 -----------------------------
 -- emaj installation with previous version
 -----------------------------
-\i ../../../emaj-1.0.2/sql/emaj.sql
+\i ../../../emaj-1.1.0/sql/emaj.sql
 
 -----------------------------
 -- check installation

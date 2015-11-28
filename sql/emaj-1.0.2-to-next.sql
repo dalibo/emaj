@@ -1,3 +1,0 @@
---
--- E-Maj: migration from 1.0.2 to 1.1.0
---

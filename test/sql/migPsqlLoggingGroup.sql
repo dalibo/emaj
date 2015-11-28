@@ -1,11 +1,11 @@
 -- migPsqlLoggingGroup.sql: Migrate from previous E-Maj version while groups are in logging state. 
--- Install E-Maj as simple psql script (mandatory for postgres version prior 9.1)
+-- Install E-Maj as simple psql script
 --
 
 -----------------------------
 -- migrate to the target version
 -----------------------------
-\i ../../sql/emaj-1.0.2-to-1.1.0.sql
+\i ../../sql/emaj-1.1.0-to-1.2.0.sql
 
 -----------------------------
 -- check installation

@@ -314,6 +314,7 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from emaj.emaj_hist order by hist_id;
 --
 reset role;
+alter table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 10000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 1000;
