@@ -550,6 +550,14 @@ ERROR:  _create_seq: Defining a secondary log schema is not allowed for a sequen
 CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
 PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
 rollback;
+-- object names prefix cannot be changed for sequence
+begin;
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'dummy' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_alter_group('myGroup1');
+ERROR:  _create_seq: Defining an emaj names prefix is not allowed for a sequence (myschema1.myTbl3_col31_seq).
+CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
+PL/pgSQL function "emaj_alter_group" line 199 at PERFORM
+rollback;
 -- log tablespace cannot be changed for sequence
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
