@@ -1261,6 +1261,58 @@ $_check_fk_groups$
     RETURN;
   END;
 $_check_fk_groups$;
+CREATE OR REPLACE FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN)
+RETURNS void LANGUAGE plpgsql AS
+$_lock_groups$
+-- This function locks all tables of a groups array.
+-- The lock mode is provided by the calling function.
+-- It only locks existing tables. It is calling function's responsability to handle cases when application tables are missing.
+-- Input: array of group names, lock mode, flag indicating whether the function is called to processed several groups
+  DECLARE
+    v_nbRetry                SMALLINT = 0;
+    v_nbTbl                  INT;
+    v_ok                     BOOLEAN = false;
+    v_fullTableName          TEXT;
+    r_tblsq                  RECORD;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES (CASE WHEN v_multiGroup THEN 'LOCK_GROUPS' ELSE 'LOCK_GROUP' END,'BEGIN', array_to_string(v_groupNames,','));
+-- acquire lock on all tables
+-- in case of deadlock, retry up to 5 times
+    WHILE NOT v_ok AND v_nbRetry < 5 LOOP
+      BEGIN
+-- scan all existing tables of the groups
+        v_nbTbl = 0;
+        FOR r_tblsq IN
+            SELECT rel_priority, rel_schema, rel_tblseq
+               FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+               WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+                 AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+               ORDER BY rel_priority, rel_schema, rel_tblseq
+            LOOP
+-- lock the table
+          v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+          EXECUTE 'LOCK TABLE ' || v_fullTableName || ' IN ' || v_lockMode || ' MODE';
+          v_nbTbl = v_nbTbl + 1;
+        END LOOP;
+-- ok, all tables locked
+        v_ok = true;
+      EXCEPTION
+        WHEN deadlock_detected THEN
+          v_nbRetry = v_nbRetry + 1;
+          RAISE NOTICE '_lock_groups: a deadlock has been trapped while locking tables of group %.', v_groupNames;
+      END;
+    END LOOP;
+    IF NOT v_ok THEN
+      RAISE EXCEPTION '_lock_groups: too many (5) deadlocks encountered while locking tables of group %.',v_groupNames;
+    END IF;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'LOCK_GROUPS' ELSE 'LOCK_GROUP' END, 'END', array_to_string(v_groupNames,','), v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
+    RETURN;
+  END;
+$_lock_groups$;
 CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_create_group$
@@ -1687,10 +1739,15 @@ $_start_groups$
     END LOOP;
 -- check and process the supplied mark name
     SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
--- OK, lock all tables to get a stable point ...
--- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
-    PERFORM emaj._lock_groups(v_groupNames,'',v_multiGroup);
--- ... and enable all log triggers for the groups
+-- OK, lock all tables to get a stable point
+--   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
+--   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
+    IF v_pgVersion >= '9.5' THEN
+      PERFORM emaj._lock_groups(v_groupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
+    ELSE
+      PERFORM emaj._lock_groups(v_groupNames,'ACCESS EXCLUSIVE',v_multiGroup);
+    END IF;
+-- enable all log triggers for the groups
     v_nbTb = 0;
 -- for each relation of the group,
     FOR r_tblsq IN
@@ -1761,9 +1818,14 @@ $_stop_groups$
 --
     IF v_validGroupNames IS NOT NULL THEN
 -- OK (no error detected and at least one group in logging state)
--- lock all tables to get a stable point ...
--- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
-      PERFORM emaj._lock_groups(v_validGroupNames,'',v_multiGroup);
+-- lock all tables to get a stable point
+--   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
+--   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
+    IF v_pgVersion >= '9.5' THEN
+      PERFORM emaj._lock_groups(v_validGroupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
+    ELSE
+      PERFORM emaj._lock_groups(v_validGroupNames,'ACCESS EXCLUSIVE',v_multiGroup);
+    END IF;
 -- for each relation of the groups to process,
       FOR r_tblsq IN
           SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_trigger, rel_trunc_trigger FROM emaj.emaj_relation
@@ -2629,6 +2691,102 @@ $_rlbk_planning$
     RETURN v_effNbTable;
   END;
 $_rlbk_planning$;
+CREATE OR REPLACE FUNCTION emaj._rlbk_session_lock(v_rlbkId INT, v_session INT)
+RETURNS void LANGUAGE plpgsql AS
+$_rlbk_session_lock$
+-- It creates the session row in the emaj_rlbk_session table and then locks all the application tables for the session.
+  DECLARE
+    v_pgVersion              TEXT = emaj._pg_version();
+    v_stmt                   TEXT;
+    v_isDblinkUsable         BOOLEAN = false;
+    v_groupNames             TEXT[];
+    v_nbRetry                SMALLINT = 0;
+    v_lockmode               TEXT;
+    v_ok                     BOOLEAN = false;
+    v_nbTbl                  INT;
+    r_tbl                    RECORD;
+  BEGIN
+-- try to open a dblink connection for #session > 1 (the attempt for session 1 has already been done)
+    IF v_session > 1 THEN
+      PERFORM emaj._dblink_open_cnx('rlbk#'||v_session);
+    END IF;
+-- get the rollack characteristics for the emaj_rlbk
+    SELECT rlbk_groups INTO v_groupNames FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
+-- create the session row the emaj_rlbk_session table.
+    v_stmt = 'INSERT INTO emaj.emaj_rlbk_session (rlbs_rlbk_id, rlbs_session, rlbs_txid, rlbs_start_datetime) ' ||
+             'VALUES (' || v_rlbkId || ',' || v_session || ',' || txid_current() || ',' ||
+              quote_literal(clock_timestamp()) || ') RETURNING 1';
+    IF emaj._dblink_is_cnx_opened('rlbk#'||v_session) THEN
+--    IF v_isDblinkUsable THEN
+-- ... either through dblink if possible
+      PERFORM 0 FROM dblink('rlbk#'||v_session,v_stmt) AS (dummy INT);
+      v_isDblinkUsable = true;
+    ELSE
+-- ... or directly
+      EXECUTE v_stmt;
+    END IF;
+-- insert lock begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('LOCK_GROUP', 'BEGIN', array_to_string(v_groupNames,','), 'Rollback session #' || v_session);
+--
+-- acquire locks on tables
+--
+-- in case of deadlock, retry up to 5 times
+    WHILE NOT v_ok AND v_nbRetry < 5 LOOP
+      BEGIN
+        v_nbTbl = 0;
+-- scan all tables of the session, in priority ascending order (priority being defined in emaj_group_def and stored in emaj_relation) 
+        FOR r_tbl IN
+          SELECT quote_ident(rlbp_schema) || '.' || quote_ident(rlbp_table) AS fullName,
+                 EXISTS (SELECT 1 FROM emaj.emaj_rlbk_plan rlbp2 
+                         WHERE rlbp2.rlbp_rlbk_id = v_rlbkId AND rlbp2.rlbp_session = v_session AND 
+                               rlbp2.rlbp_schema = rlbp1.rlbp_schema AND rlbp2.rlbp_table = rlbp1.rlbp_table AND 
+                               rlbp2.rlbp_step = 'DIS_LOG_TRG') AS disLogTrg
+            FROM emaj.emaj_rlbk_plan rlbp1, emaj.emaj_relation
+            WHERE rel_schema = rlbp_schema AND rel_tblseq = rlbp_table
+            AND rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'LOCK_TABLE'
+            AND rlbp_session = v_session
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+            LOOP
+--   lock each table
+--     The locking level is EXCLUSIVE mode, except for tables whose log trigger needs to be disabled/enables when postgres version is prior 9.5. 
+--     In this later case, the ACCESS EXCLUSIVE mode is used, blocking all concurrent accesses to these tables.
+--     In the former case, the EXCLUSIVE mode blocks all concurrent update capabilities of all tables of the groups (including tables with no logged
+--     update to rollback), in order to ensure a stable state of the group at the end of the rollback operation). But these tables can be accessed 
+--     by SELECT statements during the E-Maj rollback.
+          IF v_pgVersion < '9.5' AND r_tbl.disLogTrg THEN
+            v_lockmode = 'ACCESS EXCLUSIVE';
+          ELSE
+            v_lockmode = 'EXCLUSIVE';
+          END IF;
+          EXECUTE 'LOCK TABLE ' || r_tbl.fullName || ' IN ' || v_lockmode || ' MODE';
+          v_nbTbl = v_nbTbl + 1;
+        END LOOP;
+-- ok, all tables locked
+        v_ok = true;
+      EXCEPTION
+        WHEN deadlock_detected THEN
+          v_nbRetry = v_nbRetry + 1;
+          RAISE NOTICE '_rlbk_session_lock: a deadlock has been trapped while locking tables for groups %.', array_to_string(v_groupNames,',');
+      END;
+    END LOOP;
+    IF NOT v_ok THEN
+      PERFORM emaj._rlbk_error(v_rlbkId, '_rlbk_session_lock: too many (5) deadlocks encountered while locking tables', 'rlbk#'||v_session);
+      RAISE EXCEPTION '_rlbk_session_lock: too many (5) deadlocks encountered while locking tables for groups %.',array_to_string(v_groupNames,',');
+    END IF;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('LOCK_GROUP', 'END', array_to_string(v_groupNames,','), 'Rollback session #' || v_session || ': ' || v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
+    RETURN;
+-- TODO: trap and record exception during the rollback operation when pg 8.3 will not be supported any more
+--  EXCEPTION
+--    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+--      RAISE;
+--    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+--      PERFORM emaj._rlbk_error(v_rlbkId, SQLERRM, 'rlbk#'||v_session);
+--      RAISE;
+  END;
+$_rlbk_session_lock$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_start_mark(v_rlbkId INT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_start_mark$
@@ -4030,7 +4188,7 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj._tmp_post_install();
-psql:../../sql/emaj-1.1.0-to-1.2.0.sql:4082: WARNING:  E-Maj migration: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
+psql:../../sql/emaj-1.1.0-to-1.2.0.sql:4242: WARNING:  E-Maj migration: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
  _tmp_post_install 
 -------------------
  

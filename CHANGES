@@ -13,6 +13,14 @@ Enhancements:
     E-Maj objects related to each application table or sequence. These 
     columns are used rather than recomputing E-Maj object names. The 
     emaj._build_log_seq_name() function is dropped.
+  - improve locking for start, stop and rollback groups operations. For 
+    start and stop groups operations, decrease the lock level to SHARE ROW 
+    EXCLUSIVE when the postgres version is at least 9.5, to follow the 
+    postgres improvement in setting lock for ALTER TABLE ENABLE/DISABLE 
+    TRIGGER. For rollback operations, increase the lock level up to ACCESS 
+    EXCLUSIVE when log triggers have to be disabled/enabled and when postgres 
+    version is prior 9.5. This decreases the risk of deadlock during rollback 
+    operation.
   - some minor coding improvements
 
 Bug fixes:

@@ -452,6 +452,14 @@ $$
 SELECT substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
 $$;
 
+CREATE OR REPLACE FUNCTION emaj._pg_version_num()
+RETURNS INTEGER LANGUAGE sql IMMUTABLE AS
+$$
+-- This function returns as an integer the 2 major parts of the current postgresql version (x.y.z => x*100 + y)
+SELECT cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
+            to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER);
+$$;
+
 CREATE OR REPLACE FUNCTION emaj._get_mark_name(TEXT, TEXT)
 RETURNS TEXT LANGUAGE sql AS
 $$
@@ -1828,18 +1836,11 @@ $_lock_groups$
     v_nbTbl                  INT;
     v_ok                     BOOLEAN = false;
     v_fullTableName          TEXT;
-    v_mode                   TEXT;
     r_tblsq                  RECORD;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
       VALUES (CASE WHEN v_multiGroup THEN 'LOCK_GROUPS' ELSE 'LOCK_GROUP' END,'BEGIN', array_to_string(v_groupNames,','));
--- set the value for the lock mode that will be used in the LOCK statement
-    IF v_lockMode = '' THEN
-      v_mode = 'ACCESS EXCLUSIVE';
-    ELSE
-      v_mode = v_lockMode;
-    END IF;
 -- acquire lock on all tables
 -- in case of deadlock, retry up to 5 times
     WHILE NOT v_ok AND v_nbRetry < 5 LOOP
@@ -1855,7 +1856,7 @@ $_lock_groups$
             LOOP
 -- lock the table
           v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-          EXECUTE 'LOCK TABLE ' || v_fullTableName || ' IN ' || v_mode || ' MODE';
+          EXECUTE 'LOCK TABLE ' || v_fullTableName || ' IN ' || v_lockMode || ' MODE';
           v_nbTbl = v_nbTbl + 1;
         END LOOP;
 -- ok, all tables locked
@@ -2435,7 +2436,7 @@ $_start_groups$
 -- Output: number of processed tables
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_i                      INT;
     v_groupIsLogging         BOOLEAN;
     v_nbTb                   INT = 0;
@@ -2474,10 +2475,15 @@ $_start_groups$
     END LOOP;
 -- check and process the supplied mark name
     SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
--- OK, lock all tables to get a stable point ...
--- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
-    PERFORM emaj._lock_groups(v_groupNames,'',v_multiGroup);
--- ... and enable all log triggers for the groups
+-- OK, lock all tables to get a stable point
+--   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
+--   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
+    IF v_pgVersion >= 905 THEN
+      PERFORM emaj._lock_groups(v_groupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
+    ELSE
+      PERFORM emaj._lock_groups(v_groupNames,'ACCESS EXCLUSIVE',v_multiGroup);
+    END IF;
+-- enable all log triggers for the groups
     v_nbTb = 0;
 -- for each relation of the group,
     FOR r_tblsq IN
@@ -2488,7 +2494,7 @@ $_start_groups$
 -- if it is a table, enable the emaj log and truncate triggers
         v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
         EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || quote_ident(r_tblsq.rel_log_trigger);
-        IF v_pgVersion >= '8.4' THEN
+        IF v_pgVersion >= 804 THEN
           EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || quote_ident(r_tblsq.rel_trunc_trigger);
         END IF;
         ELSEIF r_tblsq.rel_kind = 'S' THEN
@@ -2635,7 +2641,7 @@ $_stop_groups$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_validGroupNames        TEXT[];
     v_i                      INT;
     v_groupIsLogging         BOOLEAN;
@@ -2671,9 +2677,14 @@ $_stop_groups$
 --
     IF v_validGroupNames IS NOT NULL THEN
 -- OK (no error detected and at least one group in logging state)
--- lock all tables to get a stable point ...
--- (the ALTER TABLE statements will also set EXCLUSIVE locks, but doing this for all tables at the beginning of the operation decreases the risk for deadlock)
-      PERFORM emaj._lock_groups(v_validGroupNames,'',v_multiGroup);
+-- lock all tables to get a stable point
+--   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
+--   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
+    IF v_pgVersion >= 905 THEN
+      PERFORM emaj._lock_groups(v_validGroupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
+    ELSE
+      PERFORM emaj._lock_groups(v_validGroupNames,'ACCESS EXCLUSIVE',v_multiGroup);
+    END IF;
 -- for each relation of the groups to process,
       FOR r_tblsq IN
           SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_trigger, rel_trunc_trigger FROM emaj.emaj_relation
@@ -2705,7 +2716,7 @@ $_stop_groups$
                 RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist any more.', quote_ident(r_tblsq.rel_log_trigger), v_fullTableName;
               END IF;
           END;
-          IF v_pgVersion >= '8.4' THEN
+          IF v_pgVersion >= 804 THEN
             BEGIN
               EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || quote_ident(r_tblsq.rel_trunc_trigger);
             EXCEPTION
@@ -4054,10 +4065,12 @@ RETURNS void LANGUAGE plpgsql AS
 $_rlbk_session_lock$
 -- It creates the session row in the emaj_rlbk_session table and then locks all the application tables for the session.
   DECLARE
+    v_pgVersion              INT = emaj._pg_version_num();
     v_stmt                   TEXT;
     v_isDblinkUsable         BOOLEAN = false;
     v_groupNames             TEXT[];
     v_nbRetry                SMALLINT = 0;
+    v_lockmode               TEXT;
     v_ok                     BOOLEAN = false;
     v_nbTbl                  INT;
     r_tbl                    RECORD;
@@ -4085,26 +4098,37 @@ $_rlbk_session_lock$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('LOCK_GROUP', 'BEGIN', array_to_string(v_groupNames,','), 'Rollback session #' || v_session);
 --
--- acquire lock on all tables
+-- acquire locks on tables
 --
 -- in case of deadlock, retry up to 5 times
     WHILE NOT v_ok AND v_nbRetry < 5 LOOP
       BEGIN
         v_nbTbl = 0;
--- scan all tables of the session, in the order deducted from the priority defined in emaj_group_def
+-- scan all tables of the session, in priority ascending order (priority being defined in emaj_group_def and stored in emaj_relation)
         FOR r_tbl IN
-          SELECT quote_ident(rlbp_schema) || '.' || quote_ident(rlbp_table) AS fullName
-            FROM emaj.emaj_rlbk_plan, emaj.emaj_relation
+          SELECT quote_ident(rlbp_schema) || '.' || quote_ident(rlbp_table) AS fullName,
+                 EXISTS (SELECT 1 FROM emaj.emaj_rlbk_plan rlbp2
+                         WHERE rlbp2.rlbp_rlbk_id = v_rlbkId AND rlbp2.rlbp_session = v_session AND
+                               rlbp2.rlbp_schema = rlbp1.rlbp_schema AND rlbp2.rlbp_table = rlbp1.rlbp_table AND
+                               rlbp2.rlbp_step = 'DIS_LOG_TRG') AS disLogTrg
+            FROM emaj.emaj_rlbk_plan rlbp1, emaj.emaj_relation
             WHERE rel_schema = rlbp_schema AND rel_tblseq = rlbp_table
             AND rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'LOCK_TABLE'
             AND rlbp_session = v_session
             ORDER BY rel_priority, rel_schema, rel_tblseq
             LOOP
 --   lock each table
---     The locking level is EXCLUSIVE MODE. It blocks all concurrent update capabilities of all tables of the groups
---     (including table with no logged update to rollback, in order to ensure a stable state of the group at the end
---     of the rollback operation). But these tables can be accessed by SELECT statements during the E-Maj rollback.
-          EXECUTE 'LOCK TABLE ' || r_tbl.fullName || ' IN EXCLUSIVE MODE';
+--     The locking level is EXCLUSIVE mode, except for tables whose log trigger needs to be disabled/enables when postgres version is prior 9.5.
+--     In this later case, the ACCESS EXCLUSIVE mode is used, blocking all concurrent accesses to these tables.
+--     In the former case, the EXCLUSIVE mode blocks all concurrent update capabilities of all tables of the groups (including tables with no logged
+--     update to rollback), in order to ensure a stable state of the group at the end of the rollback operation). But these tables can be accessed
+--     by SELECT statements during the E-Maj rollback.
+          IF v_pgVersion < 905 AND r_tbl.disLogTrg THEN
+            v_lockmode = 'ACCESS EXCLUSIVE';
+          ELSE
+            v_lockmode = 'EXCLUSIVE';
+          END IF;
+          EXECUTE 'LOCK TABLE ' || r_tbl.fullName || ' IN ' || v_lockmode || ' MODE';
           v_nbTbl = v_nbTbl + 1;
         END LOOP;
 -- ok, all tables locked
@@ -6077,6 +6101,7 @@ GRANT SELECT ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_viewer;
 
 -- revoke grants on all functions from PUBLIC
 REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj._pg_version_num() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._dblink_open_cnx(v_cnxName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._dblink_close_cnx(v_cnxName TEXT) FROM PUBLIC;
@@ -6168,6 +6193,7 @@ REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 
 -- give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._dblink_open_cnx(v_cnxName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._dblink_close_cnx(v_cnxName TEXT) TO emaj_adm;
@@ -6217,7 +6243,6 @@ GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT,
 GRANT EXECUTE ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
@@ -6260,6 +6285,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 
 -- give appropriate rights on functions to emaj_viewer role
 GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;
