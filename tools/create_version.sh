@@ -85,7 +85,9 @@
 	find test/sql -type f -exec sed -i "s/-to-next.sql/-to-${NEW}.sql/g" '{}' \;
 
 # Change environment directory into tools
-	sed -i "s/\/emaj/\/emaj-${NEW}/" tools/copy2Expected.sh tools/regress.sh tools/gen_emaj.pl
+	sed -i "s/\/emaj/\/emaj-${NEW}/" tools/copy2Expected.sh
+	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/regress.sh
+	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/gen_emaj.pl
 
 	cd ..
 
