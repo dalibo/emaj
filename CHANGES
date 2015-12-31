@@ -3,6 +3,12 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+
+Bug fixes:
+
+1.2.0
+------
+Enhancements:
   - in table emaj_group_def, add a column named grpdef_emaj_names_prefix to
     set a specific prefix for all objects created by E-Maj for tables. If 
     set by the E-Maj administrator, this prefix replaces the default 
