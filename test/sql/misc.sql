@@ -527,7 +527,7 @@ begin;
 rollback;
 -- detection of a missing log trigger
 begin;
-  drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
+  drop trigger emaj_log_trg on myschema1.mytbl1;
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of a missing log function (and trigger)
@@ -537,7 +537,7 @@ begin;
 rollback;
 -- detection of a missing truncate trigger
 begin;
-  drop trigger myschema1_mytbl1_emaj_trunc_trg on myschema1.mytbl1;
+  drop trigger emaj_trunc_trg on myschema1.mytbl1;
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of a missing log table
@@ -565,7 +565,7 @@ begin;
   create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;
   create function emaj.dummy_rlbk_fnct () returns int language sql as $$ select 0 $$;
   update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
-  drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
+  drop trigger emaj_log_trg on myschema1.mytbl1;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
   drop table emaj.myschema1_mytbl1_log;
   alter table myschema1.mytbl1 add column newcol int;
@@ -615,7 +615,7 @@ rollback;
 
 -- cases when a log trigger on an application table is dropped
 begin;
-  drop trigger myschema2_mytbl4_emaj_log_trg on myschema2.mytbl4;
+  drop trigger emaj_log_trg on myschema2.mytbl4;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');

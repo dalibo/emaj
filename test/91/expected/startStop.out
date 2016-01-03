@@ -112,9 +112,9 @@ PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a missing log trigger
 begin;
-  drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
+  drop trigger emaj_log_trg on myschema1.mytbl1;
   select emaj.emaj_start_group('myGroup1','M1');
-ERROR:  _verify_group: In group "myGroup1", the log trigger "myschema1_mytbl1_emaj_log_trg" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_group: In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
@@ -134,9 +134,9 @@ PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a missing truncate trigger (pg 8.4+)
 begin;
-  drop trigger myschema1_mytbl1_emaj_trunc_trg on myschema1.mytbl1;
+  drop trigger emaj_trunc_trg on myschema1.mytbl1;
   select emaj.emaj_start_group('myGroup1','M1');
-ERROR:  _verify_group: In group "myGroup1", the truncate trigger "myschema1_mytbl1_emaj_trunc_trg" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_group: In group "myGroup1", the truncate trigger "emaj_trunc_trg" on table "myschema1"."mytbl1" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
@@ -898,9 +898,9 @@ PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
 rollback;
 -- missing log trigger
 begin;
-  drop trigger myschema2_mytbl4_emaj_log_trg on myschema2.mytbl4;
+  drop trigger emaj_log_trg on myschema2.mytbl4;
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_group: Trigger myschema2_mytbl4_emaj_log_trg on table myschema2.mytbl4 does not exist any more.
+WARNING:  _stop_group: Trigger "emaj_log_trg" on table myschema2.mytbl4 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
  emaj_force_stop_group 

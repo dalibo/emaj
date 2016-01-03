@@ -527,32 +527,32 @@ select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid
 select emaj.emaj_create_group('phil''s group#3",',false);
 NOTICE:  table "phil's schema3_myTbl2\_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_myTbl2\_log""
-PL/pgSQL function "_create_tbl" line 91 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_create_group" line 62 at PERFORM
-NOTICE:  trigger "phil's schema3_myTbl2\_emaj_log_trg" for table "myTbl2\" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_log_trg" ON "phil's schema3"."myTbl2\""
+NOTICE:  trigger "emaj_log_trg" for table "myTbl2\" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."myTbl2\""
+PL/pgSQL function "_create_tbl" line 144 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
+PL/pgSQL function "emaj_create_group" line 62 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "myTbl2\" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."myTbl2\""
 PL/pgSQL function "_create_tbl" line 152 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 62 at PERFORM
-NOTICE:  trigger "phil's schema3_myTbl2\_emaj_trunc_trg" for table "myTbl2\" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_trunc_trg" ON "phil's schema3"."myTbl2\""
-PL/pgSQL function "_create_tbl" line 160 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_create_group" line 62 at PERFORM
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
-PL/pgSQL function "_create_tbl" line 91 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_create_group" line 62 at PERFORM
-NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
+NOTICE:  trigger "emaj_log_trg" for table "phil's tbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
+PL/pgSQL function "_create_tbl" line 144 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
+PL/pgSQL function "emaj_create_group" line 62 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 152 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 62 at PERFORM
-NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function "_create_tbl" line 160 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_create_group" line 62 at PERFORM
  emaj_create_group 
@@ -567,17 +567,17 @@ update emaj.emaj_group_def set grpdef_priority = 1 where grpdef_schema = 'phil''
 select emaj.emaj_alter_group('phil''s group#3",');
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
-PL/pgSQL function "_create_tbl" line 91 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
-NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
+NOTICE:  trigger "emaj_log_trg" for table "phil's tbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
+PL/pgSQL function "_create_tbl" line 144 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
+PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 152 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
-NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function "_create_tbl" line 160 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
  emaj_alter_group 
@@ -605,17 +605,17 @@ update emaj.emaj_group_def set grpdef_priority = NULL where grpdef_schema = 'phi
 select emaj.emaj_alter_group('phil''s group#3",');
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
-PL/pgSQL function "_create_tbl" line 91 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
-NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
+NOTICE:  trigger "emaj_log_trg" for table "phil's tbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
+PL/pgSQL function "_create_tbl" line 144 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
+PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 152 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
-NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function "_create_tbl" line 160 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
  emaj_alter_group 
@@ -642,32 +642,32 @@ set role emaj_regression_tests_adm_user;
 select emaj.emaj_create_group('phil''s group#3",',true);
 NOTICE:  table "phil's schema3_myTbl2\_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_myTbl2\_log""
-PL/pgSQL function "_create_tbl" line 91 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_create_group" line 62 at PERFORM
-NOTICE:  trigger "phil's schema3_myTbl2\_emaj_log_trg" for table "myTbl2\" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_log_trg" ON "phil's schema3"."myTbl2\""
+NOTICE:  trigger "emaj_log_trg" for table "myTbl2\" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."myTbl2\""
+PL/pgSQL function "_create_tbl" line 144 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
+PL/pgSQL function "emaj_create_group" line 62 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "myTbl2\" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."myTbl2\""
 PL/pgSQL function "_create_tbl" line 152 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 62 at PERFORM
-NOTICE:  trigger "phil's schema3_myTbl2\_emaj_trunc_trg" for table "myTbl2\" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_myTbl2\_emaj_trunc_trg" ON "phil's schema3"."myTbl2\""
-PL/pgSQL function "_create_tbl" line 160 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_create_group" line 62 at PERFORM
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
-PL/pgSQL function "_create_tbl" line 91 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_create_group" line 62 at PERFORM
-NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_log_trg" for table "phil's tbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_log_trg" ON "phil's schema3"."phil's tbl1""
+NOTICE:  trigger "emaj_log_trg" for table "phil's tbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
+PL/pgSQL function "_create_tbl" line 144 at EXECUTE statement
+SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
+PL/pgSQL function "emaj_create_group" line 62 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function "_create_tbl" line 152 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 62 at PERFORM
-NOTICE:  trigger "phil's schema3_phil's tbl1_emaj_trunc_trg" for table "phil's tbl1" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS "phil's schema3_phil's tbl1_emaj_trunc_trg" ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function "_create_tbl" line 160 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_create_group" line 62 at PERFORM
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).
@@ -1625,24 +1625,19 @@ alter table "phil's schema3"."phil's tbl1" rename to table_with_very_loooooooooo
 set role emaj_regression_tests_adm_user;
 update emaj.emaj_group_def set grpdef_tblseq = 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', grpdef_emaj_names_prefix = 'short' where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s tbl1';
 select emaj.emaj_alter_group('phil''s group#3",');
-NOTICE:  drop cascades to trigger phil's schema3_phil's tbl1_emaj_log_trg on table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name
+NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name
 CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log_fnct"() CASCADE"
 PL/pgSQL function "_drop_tbl" line 22 at EXECUTE statement
 SQL statement "SELECT  emaj._drop_tbl( $1 )"
 PL/pgSQL function "emaj_alter_group" line 71 at PERFORM
 NOTICE:  table "short_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3".short_log"
-PL/pgSQL function "_create_tbl" line 91 at EXECUTE statement
+PL/pgSQL function "_create_tbl" line 83 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
-NOTICE:  trigger "short_emaj_log_trg" for table "table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS short_emaj_log_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
-PL/pgSQL function "_create_tbl" line 152 at EXECUTE statement
-SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
-NOTICE:  trigger "short_emaj_trunc_trg" for table "table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS short_emaj_trunc_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
-PL/pgSQL function "_create_tbl" line 160 at EXECUTE statement
+NOTICE:  trigger "emaj_log_trg" for table "table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
+PL/pgSQL function "_create_tbl" line 144 at EXECUTE statement
 SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
 PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).

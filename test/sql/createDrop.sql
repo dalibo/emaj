@@ -342,7 +342,7 @@ update emaj.emaj_group_def set grpdef_schema = 'myschema1', grpdef_tblseq = 'myt
 select emaj.emaj_alter_group('myGroup1');
 
 -- missing emaj components
-drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
+drop trigger emaj_log_trg on myschema1.mytbl1;
 select emaj.emaj_alter_group('myGroup1');
 drop function emaj.myschema1_mytbl1_log_fnct() cascade;
 select emaj.emaj_alter_group('myGroup1');

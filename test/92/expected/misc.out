@@ -1197,46 +1197,46 @@ NOTICE:  drop cascades to 4 other objects
 DETAIL:  drop cascades to table emajb.myschema1_mytbl2b_log
 drop cascades to sequence emajb.myschema1_mytbl2b_log_seq
 drop cascades to function emajb.myschema1_mytbl2b_log_fnct()
-drop cascades to trigger myschema1_mytbl2b_emaj_log_trg on table myschema1.mytbl2b
+drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
   select * from emaj.emaj_verify_all();
-                                     emaj_verify_all                                      
-------------------------------------------------------------------------------------------
+                                         emaj_verify_all                                          
+--------------------------------------------------------------------------------------------------
  The E-Maj schema "emajb" does not exist any more.
  In group "myGroup1", the log table "emajb"."myschema1_mytbl2b_log" is not found.
  In group "myGroup1", the log function "emajb"."myschema1_mytbl2b_log_fnct" is not found.
- In group "myGroup1", the log trigger "myschema1_mytbl2b_emaj_log_trg" is not found.
+ In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2b" is not found.
 (4 rows)
 
 rollback;
 -- detection of a missing log trigger
 begin;
-  drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
+  drop trigger emaj_log_trg on myschema1.mytbl1;
   select * from emaj.emaj_verify_all();
-                                  emaj_verify_all                                   
-------------------------------------------------------------------------------------
- In group "myGroup1", the log trigger "myschema1_mytbl1_emaj_log_trg" is not found.
+                                         emaj_verify_all                                         
+-------------------------------------------------------------------------------------------------
+ In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
 (1 row)
 
 rollback;
 -- detection of a missing log function (and trigger)
 begin;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
-NOTICE:  drop cascades to trigger myschema1_mytbl1_emaj_log_trg on table myschema1.mytbl1
+NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
   select * from emaj.emaj_verify_all();
-                                    emaj_verify_all                                     
-----------------------------------------------------------------------------------------
+                                         emaj_verify_all                                         
+-------------------------------------------------------------------------------------------------
  In group "myGroup1", the log function "emaj"."myschema1_mytbl1_log_fnct" is not found.
- In group "myGroup1", the log trigger "myschema1_mytbl1_emaj_log_trg" is not found.
+ In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
 (2 rows)
 
 rollback;
 -- detection of a missing truncate trigger
 begin;
-  drop trigger myschema1_mytbl1_emaj_trunc_trg on myschema1.mytbl1;
+  drop trigger emaj_trunc_trg on myschema1.mytbl1;
   select * from emaj.emaj_verify_all();
-                                      emaj_verify_all                                      
--------------------------------------------------------------------------------------------
- In group "myGroup1", the truncate trigger "myschema1_mytbl1_emaj_trunc_trg" is not found.
+                                            emaj_verify_all                                             
+--------------------------------------------------------------------------------------------------------
+ In group "myGroup1", the truncate trigger "emaj_trunc_trg" on table "myschema1"."mytbl1" is not found.
 (1 row)
 
 rollback;
@@ -1280,7 +1280,7 @@ begin;
   create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;
   create function emaj.dummy_rlbk_fnct () returns int language sql as $$ select 0 $$;
   update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
-  drop trigger myschema1_mytbl1_emaj_log_trg on myschema1.mytbl1;
+  drop trigger emaj_log_trg on myschema1.mytbl1;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
   drop table emaj.myschema1_mytbl1_log;
   alter table myschema1.mytbl1 add column newcol int;
@@ -1295,7 +1295,7 @@ begin;
  In group "myGroup2", the sequence "myschema2"."mytbl1" does not exist any more.
  In group "myGroup1", the log table "emaj"."myschema1_mytbl1_log" is not found.
  In group "myGroup1", the log function "emaj"."myschema1_mytbl1_log_fnct" is not found.
- In group "myGroup1", the log trigger "myschema1_mytbl1_emaj_log_trg" is not found.
+ In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
 (8 rows)
 
 rollback;
@@ -1418,18 +1418,18 @@ PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 rollback;
 -- cases when a log trigger on an application table is dropped
 begin;
-  drop trigger myschema2_mytbl4_emaj_log_trg on myschema2.mytbl4;
+  drop trigger emaj_log_trg on myschema2.mytbl4;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_group: Trigger myschema2_mytbl4_emaj_log_trg on table myschema2.mytbl4 does not exist any more.
+ERROR:  _stop_group: Trigger "emaj_log_trg" on table myschema2.mytbl4 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], 'STOP_%', false, false)"
 PL/pgSQL function emaj.emaj_stop_group(text) line 13 at SQL statement
   rollback to savepoint sp1;
 -- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_group: Trigger myschema2_mytbl4_emaj_log_trg on table myschema2.mytbl4 does not exist any more.
+WARNING:  _stop_group: Trigger "emaj_log_trg" on table myschema2.mytbl4 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
  emaj_force_stop_group 

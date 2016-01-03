@@ -273,8 +273,6 @@ CREATE TABLE emaj.emaj_relation (
   rel_log_sequence           TEXT,                       -- name of the log sequence
   rel_log_function           TEXT,                       -- name of the function associated to the log trigger
                                                          --   created on the application table
-  rel_log_trigger            TEXT,                       -- name of the log trigger
-  rel_trunc_trigger          TEXT,                       -- name of the truncate trigger
   PRIMARY KEY (rel_schema, rel_tblseq),
   FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
   );
@@ -1026,14 +1024,10 @@ $_create_tbl$
     v_baseLogTableName       TEXT;
     v_baseLogIdxName         TEXT;
     v_baseLogFnctName        TEXT;
-    v_baseLogTriggerName     TEXT;
-    v_baseTruncTriggerName   TEXT;
     v_baseSequenceName       TEXT;
     v_logTableName           TEXT;
     v_logIdxName             TEXT;
     v_logFnctName            TEXT;
-    v_logTriggerName         TEXT;
-    v_truncTriggerName       TEXT;
     v_sequenceName           TEXT;
     v_relPersistence         CHAR(1);
     v_relIsTemp              BOOLEAN;
@@ -1078,8 +1072,6 @@ $_create_tbl$
     v_baseLogTableName     = v_emajNamesPrefix || '_log';
     v_baseLogIdxName       = v_emajNamesPrefix || '_log_idx';
     v_baseLogFnctName      = v_emajNamesPrefix || '_log_fnct';
-    v_baseLogTriggerName   = v_emajNamesPrefix || '_emaj_log_trg';
-    v_baseTruncTriggerName = v_emajNamesPrefix || '_emaj_trunc_trg';
     v_baseSequenceName     = v_emajNamesPrefix || '_log_seq';
 -- build the different name for table, trigger, functions,...
     v_logSchema        = coalesce(v_schemaPrefix || r_grpdef.grpdef_log_schema_suffix, v_emajSchema);
@@ -1087,8 +1079,6 @@ $_create_tbl$
     v_logTableName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogTableName);
     v_logIdxName       = quote_ident(v_baseLogIdxName);
     v_logFnctName      = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogFnctName);
-    v_logTriggerName   = quote_ident(v_baseLogTriggerName);
-    v_truncTriggerName = quote_ident(v_baseTruncTriggerName);
     v_sequenceName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseSequenceName);
 -- prepare TABLESPACE clauses for data and index
     v_logDatTsp = coalesce(r_grpdef.grpdef_log_dat_tsp, v_defTsp);
@@ -1157,41 +1147,41 @@ $_create_tbl$
          || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER;';
 -- creation of the log trigger on the application table, using the previously created log function
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
-    EXECUTE 'DROP TRIGGER IF EXISTS ' || v_logTriggerName || ' ON ' || v_fullTableName;
-    EXECUTE 'CREATE TRIGGER ' || v_logTriggerName
+    EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
+    EXECUTE 'CREATE TRIGGER emaj_log_trg'
          || ' AFTER INSERT OR UPDATE OR DELETE ON ' || v_fullTableName
          || '  FOR EACH ROW EXECUTE PROCEDURE ' || v_logFnctName || '()';
-    EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
+    EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
 -- creation of the trigger that manage any TRUNCATE on the application table
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
     IF v_pgVersion >= '8.4' THEN
-      EXECUTE 'DROP TRIGGER IF EXISTS ' || v_truncTriggerName || ' ON ' || v_fullTableName;
+      EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
       IF v_isRollbackable THEN
 -- For rollbackable groups, use the common _forbid_truncate_fnct() function that blocks the operation
-        EXECUTE 'CREATE TRIGGER ' || v_truncTriggerName
+        EXECUTE 'CREATE TRIGGER emaj_trunc_trg'
              || ' BEFORE TRUNCATE ON ' || v_fullTableName
              || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._forbid_truncate_fnct()';
       ELSE
 -- For audit_only groups, use the common _log_truncate_fnct() function that records the operation into the log table
-        EXECUTE 'CREATE TRIGGER ' || v_truncTriggerName
+        EXECUTE 'CREATE TRIGGER emaj_trunc_trg'
              || ' BEFORE TRUNCATE ON ' || v_fullTableName
              || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._log_truncate_fnct()';
       END IF;
-      EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_truncTriggerName;
+      EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
     END IF;
 -- register the table into emaj_relation
     INSERT INTO emaj.emaj_relation
                (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema,
                 rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
-                rel_log_index, rel_log_sequence, rel_log_function, rel_log_trigger, rel_trunc_trigger)
+                rel_log_index, rel_log_sequence, rel_log_function)
         VALUES (r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq, r_grpdef.grpdef_group, r_grpdef.grpdef_priority, v_logSchema,
                 v_logDatTsp, v_logIdxTsp, 'r', v_baseLogTableName,
-                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName, v_baseLogTriggerName, v_baseTruncTriggerName);
+                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName);
 --
 -- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
     FOR r_trigger IN
       SELECT tgname FROM pg_catalog.pg_trigger
-        WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'%emaj\\_%\\_trg'
+        WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'emaj\\_%\\_trg'
     LOOP
       IF v_triggerList = '' THEN
         v_triggerList = v_triggerList || r_trigger.tgname;
@@ -1229,10 +1219,10 @@ $_drop_tbl$
         AND nspname = r_rel.rel_schema AND relname = r_rel.rel_tblseq AND relkind = 'r';
     IF FOUND THEN
 -- delete the log trigger on the application table
-      EXECUTE 'DROP TRIGGER IF EXISTS ' || quote_ident(r_rel.rel_log_trigger) || ' ON ' || v_fullTableName;
+      EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
 -- delete the truncate trigger on the application table
       IF v_pgVersion >= '8.4' THEN
-        EXECUTE 'DROP TRIGGER IF EXISTS ' || quote_ident(r_rel.rel_trunc_trigger) || ' ON ' || v_fullTableName;
+        EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
       END IF;
     END IF;
 -- delete the log function
@@ -1791,12 +1781,13 @@ $_verify_groups$
 --   start with log trigger
     FOR r_object IN
       SELECT rel_schema, rel_tblseq,
-             'In group "' || rel_group || '", the log trigger "' || rel_log_trigger || '" is not found.' AS msg
+             'In group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
           AND NOT EXISTS
               (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_log_trigger
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_log_trg'
                    AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
@@ -1807,12 +1798,13 @@ $_verify_groups$
     IF v_pgVersion >= '8.4' THEN
       FOR r_object IN
         SELECT rel_schema, rel_tblseq,
-               'In group "' || rel_group || '", the truncate trigger "' || rel_trunc_trigger || '" is not found.' AS msg
+               'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
           FROM emaj.emaj_relation
         WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
             AND NOT EXISTS
                 (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger
+                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_trunc_trg'
                      AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
       LOOP
@@ -2580,15 +2572,15 @@ $_start_groups$
     v_nbTb = 0;
 -- for each relation of the group,
     FOR r_tblsq IN
-       SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_trigger, rel_trunc_trigger FROM emaj.emaj_relation
+       SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
          WHERE rel_group = ANY (v_groupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
        LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
         v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-        EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || quote_ident(r_tblsq.rel_log_trigger);
+        EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg';
         IF v_pgVersion >= 804 THEN
-          EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || quote_ident(r_tblsq.rel_trunc_trigger);
+          EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_trunc_trg';
         END IF;
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, nothing to do
@@ -2780,7 +2772,7 @@ $_stop_groups$
     END IF;
 -- for each relation of the groups to process,
       FOR r_tblsq IN
-          SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_trigger, rel_trunc_trigger FROM emaj.emaj_relation
+          SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
             WHERE rel_group = ANY (v_validGroupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
           LOOP
         IF r_tblsq.rel_kind = 'r' THEN
@@ -2788,7 +2780,7 @@ $_stop_groups$
 --   errors are captured so that emaj_force_stop_group() can be silently executed
           v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
           BEGIN
-            EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || quote_ident(r_tblsq.rel_log_trigger);
+            EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
           EXCEPTION
             WHEN invalid_schema_name THEN
               IF v_isForced THEN
@@ -2804,14 +2796,14 @@ $_stop_groups$
               END IF;
             WHEN undefined_object THEN
               IF v_isForced THEN
-                RAISE WARNING '_stop_group: Trigger % on table % does not exist any more.', quote_ident(r_tblsq.rel_log_trigger), v_fullTableName;
+                RAISE WARNING '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
               ELSE
-                RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist any more.', quote_ident(r_tblsq.rel_log_trigger), v_fullTableName;
+                RAISE EXCEPTION '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
               END IF;
           END;
           IF v_pgVersion >= 804 THEN
             BEGIN
-              EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || quote_ident(r_tblsq.rel_trunc_trigger);
+              EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
             EXCEPTION
               WHEN invalid_schema_name THEN
                 IF v_isForced THEN
@@ -2827,9 +2819,9 @@ $_stop_groups$
                 END IF;
               WHEN undefined_object THEN
                 IF v_isForced THEN
-                  RAISE WARNING '_stop_group: Trigger % on table % does not exist any more.', quote_ident(r_tblsq.rel_trunc_trigger), v_fullTableName;
+                  RAISE WARNING '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
                 ELSE
-                  RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist any more.', quote_ident(r_tblsq.rel_trunc_trigger), v_fullTableName;
+                  RAISE EXCEPTION '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
                 END IF;
             END;
           END IF;
@@ -4342,7 +4334,6 @@ $_rlbk_session_exec$
     v_lastGlobalSeq          BIGINT;
     v_lastSequenceId         BIGINT;
     v_lastSeqHoleId          BIGINT;
-    v_logTriggerName         TEXT;
     v_nbRows                 BIGINT;
     r_step                   RECORD;
   BEGIN
@@ -4385,10 +4376,8 @@ $_rlbk_session_exec$
 -- process the step depending on its type
       IF r_step.rlbp_step = 'DIS_LOG_TRG' THEN
 -- process a log trigger disable
-        SELECT quote_ident(rel_log_trigger) INTO v_logTriggerName
-          FROM emaj.emaj_relation WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
         EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                ' DISABLE TRIGGER ' || v_logTriggerName;
+                ' DISABLE TRIGGER emaj_log_trg';
       ELSEIF r_step.rlbp_step = 'DROP_FK' THEN
 -- process a foreign key deletion
         EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
@@ -4418,10 +4407,8 @@ $_rlbk_session_exec$
                 ' ADD CONSTRAINT ' || quote_ident(r_step.rlbp_fkey) || ' ' || r_step.rlbp_fkey_def;
       ELSEIF r_step.rlbp_step = 'ENA_LOG_TRG' THEN
 -- process a log trigger enable
-        SELECT quote_ident(rel_log_trigger) INTO v_logTriggerName
-          FROM emaj.emaj_relation WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
         EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                ' ENABLE TRIGGER ' || v_logTriggerName;
+                ' ENABLE TRIGGER emaj_log_trg';
       END IF;
 -- update the emaj_rlbk_plan table to set the step duration
 -- NB: the computed duration does not include the time needed to update the emaj_rlbk_plan table
@@ -5882,12 +5869,13 @@ $_verify_all_groups$
 -- check log and truncate triggers for all tables referenced in the emaj_relation table still exist
 --   start with log trigger
     RETURN QUERY
-      SELECT 'In group "' || rel_group || '", the log trigger "' || rel_log_trigger || '" is not found.' AS msg
+      SELECT 'In group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_kind = 'r'
           AND NOT EXISTS
               (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_log_trigger
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_log_trg'
                    AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
                          -- do not issue a row if the application table does not exist,
                          -- this case has been already detected
@@ -5898,12 +5886,13 @@ $_verify_all_groups$
 --   then truncate trigger if pg 8.4+
     IF v_pgVersion >= '8.4' THEN
       RETURN QUERY
-        SELECT 'In group "' || rel_group || '", the truncate trigger "' || rel_trunc_trigger || '" is not found.' AS msg
+        SELECT 'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
           FROM emaj.emaj_relation
           WHERE rel_kind = 'r'
             AND NOT EXISTS
                 (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger
+                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_trunc_trg'
                      AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
                          -- do not issue a row if the application table does not exist,
                          -- this case has been already detected
