@@ -682,16 +682,11 @@ CREATE VIEW emaj.emaj_visible_param AS
 -- Low level Functions            --
 --                                --
 ------------------------------------
-CREATE OR REPLACE FUNCTION emaj._pg_version()
-RETURNS TEXT LANGUAGE sql IMMUTABLE AS
-$$
--- This function returns as a string the 2 major parts of the current postgresql version (x.y)
-SELECT substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
-$$;
 CREATE OR REPLACE FUNCTION emaj._pg_version_num()
 RETURNS INTEGER LANGUAGE sql IMMUTABLE AS
 $$
--- This function returns as an integer the 2 major parts of the current postgresql version (x.y.z => x*100 + y)
+-- This function returns as an integer the 2 major parts of the current postgresql version 
+-- x.y.z => x*100 + y. For instance, Postgres version 9.4.12 returns 904
 SELECT cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
             to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER);
 $$;
@@ -1141,7 +1136,7 @@ $_create_tbl$
 --    - the function that logs the tables updates, defined as a trigger
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_emajSchema             TEXT = 'emaj';
     v_schemaPrefix           TEXT = 'emaj';
     v_emajNamesPrefix        TEXT;
@@ -1168,7 +1163,7 @@ $_create_tbl$
     r_trigger                RECORD;
   BEGIN
 -- check the table is neither a temporary nor an unlogged table
-    IF v_pgVersion >= '9.1' THEN
+    IF v_pgVersion >= 901 THEN
       SELECT relpersistence INTO v_relPersistence FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
       IF v_relPersistence = 't' THEN
@@ -1176,7 +1171,7 @@ $_create_tbl$
       ELSIF v_relPersistence = 'u' THEN
         RAISE EXCEPTION '_create_tbl: table % is an unlogged table.', r_grpdef.grpdef_tblseq;
       END IF;
-    ELSIF v_pgVersion >= '8.4' THEN
+    ELSIF v_pgVersion >= 804 THEN
       SELECT relistemp INTO v_relIsTemp FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
       IF v_relIsTemp THEN
@@ -1284,7 +1279,7 @@ $_create_tbl$
     EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
 -- creation of the trigger that manage any TRUNCATE on the application table
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
-    IF v_pgVersion >= '8.4' THEN
+    IF v_pgVersion >= 804 THEN
       EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
       IF v_isRollbackable THEN
 -- For rollbackable groups, use the common _forbid_truncate_fnct() function that blocks the operation
@@ -1338,7 +1333,7 @@ $_drop_tbl$
 -- Required inputs: row from emaj_relation corresponding to the appplication table to proccess
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_fullTableName          TEXT;
   BEGIN
     v_fullTableName    = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
@@ -1350,7 +1345,7 @@ $_drop_tbl$
 -- delete the log trigger on the application table
       EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
 -- delete the truncate trigger on the application table
-      IF v_pgVersion >= '8.4' THEN
+      IF v_pgVersion >= 804 THEN
         EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
       END IF;
     END IF;
@@ -1440,7 +1435,7 @@ $_rlbk_tbl$
 -- For unlogged rollback, the log triggers have been disabled previously and will be enabled later.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_fullTableName          TEXT;
     v_logTableName           TEXT;
     v_tmpTable               TEXT;
@@ -1497,7 +1492,7 @@ $_rlbk_tbl$
     ELSE
 --   with multi session parallel rollbacks, the table cannot be a TEMP table because it would not be usable in 2PC
 --   but it may be an UNLOGGED table with pg 9.1+
-      IF v_pgVersion >= '9.1' THEN
+      IF v_pgVersion >= 901 THEN
         v_tableType = 'UNLOGGED';
       ELSE
         v_tableType = '';
@@ -1577,7 +1572,7 @@ $_rlbk_seq$
 -- Input: the emaj_group_def row related to the application sequence to process, mark timestamp, boolean indicating whether the rollback is logged, and the id of the last sequence to keep
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it is not the owner of the application sequence.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_fullSeqName            TEXT;
     v_stmt                   TEXT;
     mark_seq_rec             RECORD;
@@ -1599,7 +1594,7 @@ $_rlbk_seq$
 -- Read the current sequence's characteristics
     v_fullSeqName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
     v_stmt = 'SELECT last_value, ';
-    IF v_pgVersion <= '8.3' THEN
+    IF v_pgVersion <= 803 THEN
        v_stmt = v_stmt || '0 as start_value, ';
     ELSE
        v_stmt = v_stmt || 'start_value, ';
@@ -1818,14 +1813,14 @@ $_verify_groups$
 -- If onErrorStop boolean is false, it returns a set of _verify_groups_type records, one row per detected unconsistency, including the faulting schema and table or sequence names and a detailed message.
 -- If no error is detected, no row is returned.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_hint                   TEXT = 'You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.';
     r_object                 RECORD;
   BEGIN
 -- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
 -- Let's start with some global checks that always raise an exception if an issue is detected
 -- check the postgres version: E-Maj is not compatible with 8.2-
-    IF v_pgVersion < '8.3' THEN
+    IF v_pgVersion < 803 THEN
       RAISE EXCEPTION 'The current postgres version (%) is not compatible with E-Maj.', version();
     END IF;
 -- check the postgres version at groups creation time is compatible with the current version
@@ -1837,9 +1832,11 @@ $_verify_groups$
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groups)
-          AND ((v_pgVersion = '8.3' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion)
+          AND ((v_pgVersion = 803 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                                           to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) <> v_pgVersion)
 --   for 8.4+, both major versions must be 8.4+
-            OR (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4'))
+            OR (v_pgVersion >= 804 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                                            to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804))
         ORDER BY msg
     LOOP
       RAISE EXCEPTION '_verify_groups: %',r_object.msg;
@@ -1915,7 +1912,7 @@ $_verify_groups$
       RETURN NEXT r_object;
     END LOOP;
 --   then truncate trigger if pg 8.4+
-    IF v_pgVersion >= '8.4' THEN
+    IF v_pgVersion >= 804 THEN
       FOR r_object IN
         SELECT rel_schema, rel_tblseq,
                'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
@@ -3065,7 +3062,7 @@ $_set_mark_groups$
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_nbTb                   INT = 0;
     v_timestamp              TIMESTAMPTZ;
     v_lastSequenceId         BIGINT;
@@ -3094,7 +3091,7 @@ $_set_mark_groups$
                ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
                quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) ||
                ', ' || quote_literal(v_mark) || ', last_value, ';
-      IF v_pgVersion <= '8.3' THEN
+      IF v_pgVersion <= 803 THEN
          v_stmt = v_stmt || '0, ';
       ELSE
          v_stmt = v_stmt || 'start_value, ';
@@ -3125,7 +3122,7 @@ $_set_mark_groups$
                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
                ') SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(r_tblsq.rel_log_sequence) || ', ' ||
                quote_literal(v_timestamp) || ', ' || quote_literal(v_mark) || ', ' || 'last_value, ';
-      IF v_pgVersion <= '8.3' THEN
+      IF v_pgVersion <= 803 THEN
          v_stmt = v_stmt || '0, ';
       ELSE
          v_stmt = v_stmt || 'start_value, ';
@@ -5176,7 +5173,7 @@ $emaj_snap_group$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_nbTb                   INT = 0;
     r_tblsq                  RECORD;
     v_fullTableName          TEXT;
@@ -5250,7 +5247,7 @@ $emaj_snap_group$
                 || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, the statement has no order by
-        IF v_pgVersion <= '8.3' THEN
+        IF v_pgVersion <= 803 THEN
           v_seqCol = 'sequence_name, last_value, 0, increment_by, max_value, min_value, cache_value, is_cycled, is_called';
         ELSE
           v_seqCol = 'sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called';
@@ -5300,7 +5297,7 @@ $emaj_snap_log_group$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_nbTb                   INT = 0;
     r_tblsq                  RECORD;
     v_realFirstMark          TEXT;
@@ -5435,7 +5432,7 @@ $emaj_snap_log_group$
                  ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
                  quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) ||
                  ', ' || quote_literal(v_pseudoMark) || ', last_value, ';
-        IF v_pgVersion <= '8.3' THEN
+        IF v_pgVersion <= 803 THEN
            v_stmt = v_stmt || '0, ';
         ELSE
            v_stmt = v_stmt || 'start_value, ';
@@ -5616,7 +5613,7 @@ $_gen_sql_groups$
 --        - optional array of schema qualified table and sequence names to only process those tables and sequences
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_groupIsLogging         BOOLEAN;
     v_cpt                    INT;
     v_firstMarkCopy          TEXT = v_firstMark;
@@ -5786,7 +5783,7 @@ $_gen_sql_groups$
       v_fullSeqName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       IF v_tsLastMark IS NULL THEN
 -- no supplied last mark, so get current sequence characteritics
-        IF v_pgVersion <= '8.3' THEN
+        IF v_pgVersion <= 803 THEN
 -- .. in pg 8.3-
           EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
                || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
@@ -5801,7 +5798,7 @@ $_gen_sql_groups$
         END IF;
       ELSE
 -- a last mark is supplied, so get sequence characteristics from emaj_sequence table
-        IF v_pgVersion <= '8.3' THEN
+        IF v_pgVersion <= 803 THEN
 -- .. in pg 8.3-
           EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
                || ''' || '' RESTART '' || CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END || '' INCREMENT '' || sequ_increment  || '' MAXVALUE '' || sequ_max_val  || '' MINVALUE '' || sequ_min_val || '' CACHE '' || sequ_cache_val || CASE WHEN NOT sequ_is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
@@ -5865,7 +5862,7 @@ $_verify_all_groups$
 -- The function verifies the consistency of all E-Maj groups.
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
   BEGIN
 -- check the postgres version at creation time is compatible with the current version
 -- Warning: comparisons on version numbers are alphanumeric.
@@ -5875,9 +5872,11 @@ $_verify_all_groups$
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
-        WHERE ((v_pgVersion = '8.3' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion)
+        WHERE ((v_pgVersion = 803 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                                           to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) <> v_pgVersion)
 --   for 8.4+, both major versions must be 8.4+
-            OR (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4'))
+            OR (v_pgVersion >= 804 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                                            to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804))
         ORDER BY msg;
 -- check all application schemas referenced in the emaj_relation table still exist
     RETURN QUERY
@@ -5940,7 +5939,7 @@ $_verify_all_groups$
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
 --   then truncate trigger if pg 8.4+
-    IF v_pgVersion >= '8.4' THEN
+    IF v_pgVersion >= 804 THEN
       RETURN QUERY
         SELECT 'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
                rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
@@ -6127,13 +6126,13 @@ $emaj_verify_all$
 -- emaj objects related to tables and sequences referenced in emaj_relation table.
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_errorFound             BOOLEAN = FALSE;
     r_object                 RECORD;
   BEGIN
 -- Global checks
 -- detect if the current postgres version is at least 8.2
-    IF v_pgVersion < '8.3' THEN
+    IF v_pgVersion < 803 THEN
       RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with E-Maj.';
       v_errorFound = TRUE;
     END IF;
@@ -6223,7 +6222,6 @@ GRANT SELECT ON SEQUENCE emaj.emaj_rlbk_rlbk_id_seq     TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_viewer;
 -- revoke grants on all functions from PUBLIC
-REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._pg_version_num() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._dblink_open_cnx(v_cnxName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) FROM PUBLIC;
@@ -6314,7 +6312,6 @@ REVOKE ALL ON FUNCTION emaj._verify_all_groups() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_all_schemas() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 -- give appropriate rights on functions to emaj_adm role
-GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._dblink_open_cnx(v_cnxName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) TO emaj_adm;
@@ -6405,7 +6402,6 @@ GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 -- give appropriate rights on functions to emaj_viewer role
-GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
@@ -6478,7 +6474,7 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj._tmp_post_install();
-psql:sql/emaj.sql:6421: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
+psql:sql/emaj.sql:6416: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
  _tmp_post_install 
 -------------------
  
@@ -6997,7 +6993,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    90
+    89
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 

@@ -6,6 +6,7 @@ Enhancements:
   - change the name of log and truncate triggers set by E-Maj on application 
     tables. The triggers now have the same name for all tables, respectively 
     emaj_log_trg and emaj_trunc_trg.
+  - minor improvements in the code and in comments.
 
 Bug fixes:
 
