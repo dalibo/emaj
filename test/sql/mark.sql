@@ -1,5 +1,6 @@
 -- mark.sql : test emaj_set_mark_group(), emaj_set_mark_groups(), emaj_comment_mark_group(),
--- emaj_rename_mark_group(), emaj_get_previous_mark_group() and emaj_delete_mark_group() functions
+-- emaj_rename_mark_group(), emaj_get_previous_mark_group(), emaj_delete_mark_group(),
+-- emaj_protect_mark_group() and emaj_unprotect_mark_group() functions
 --
 select emaj.emaj_start_group('myGroup1','Mark1');
 select emaj.emaj_start_group('myGroup2','Mark2');
@@ -56,7 +57,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}',NULL);
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
 
 -- impact of mark set
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 
 -----------------------------
@@ -116,7 +117,7 @@ select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
 select emaj.emaj_rename_mark_group('myGroup2','phil''s mark #1','john''s mark #1');
 
 -- impact of mark rename
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 
 -----------------------------
@@ -170,16 +171,62 @@ select emaj.emaj_delete_before_mark_group('phil''s group#3",','Mark4');
 delete from emaj.emaj_param where param_key = 'history_retention';
 
 -----------------------------
+-- emaj_protect_mark_group() tests
+-----------------------------
+-- group is unknown
+select emaj.emaj_protect_mark_group(NULL,NULL);
+select emaj.emaj_protect_mark_group('unknownGroup',NULL);
+-- group is not rollbackable
+select emaj.emaj_protect_mark_group('phil''s group#3",',NULL);
+-- mark is unknown
+select emaj.emaj_protect_mark_group('myGroup1',NULL);
+select emaj.emaj_protect_mark_group('myGroup1','unknownMark');
+-- should be ok
+select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+-- protect an already protected group
+select emaj.emaj_protect_mark_group('myGroup1','SM1');
+select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+
+-----------------------------
+-- emaj_unprotect_mark_group() tests
+-----------------------------
+-- group is unknown
+select emaj.emaj_unprotect_mark_group(NULL,NULL);
+select emaj.emaj_unprotect_mark_group('unknownGroup',NULL);
+-- group is not rollbackable
+select emaj.emaj_unprotect_mark_group('phil''s group#3",',NULL);
+-- mark is unknown
+select emaj.emaj_unprotect_mark_group('myGroup1',NULL);
+select emaj.emaj_unprotect_mark_group('myGroup1','unknownMark');
+-- should be ok
+select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
+select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+-- protect an already protected group
+select emaj.emaj_unprotect_mark_group('myGroup1','SM1');
+select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+
+-- check mark protections is removed by stop_group functions
+select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected 
+  from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
+select emaj.emaj_stop_group('myGroup1');
+select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected 
+  from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
+
+-----------------------------
 -- test functions with group not in logging state 
 -----------------------------
-select emaj.emaj_stop_group('myGroup1');
+-- myGroup1 is already stopped
 select emaj.emaj_stop_group('myGroup2');
 
 select emaj.emaj_set_mark_group('myGroup1','SM1');
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'SM1');
+select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 
 -- check marks state
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 
 -----------------------------

@@ -1,5 +1,6 @@
 -- startStop.sql : test emaj_start_group(), emaj_start_groups(), 
---                      emaj_stop_group(), emaj_stop_groups() and emaj_force_stop_group() functions
+--                      emaj_stop_group(), emaj_stop_groups(), emaj_force_stop_group(),
+--                      emaj_protect_group() and emaj_unprotect_group() functions
 --
 SET client_min_messages TO WARNING;
 -- prepare groups
@@ -12,7 +13,7 @@ select pg_sleep(1);
 -----------------------------
 -- emaj_start_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown in emaj_group
 select emaj.emaj_start_group(NULL,NULL);
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
 -- reserved mark name
@@ -113,9 +114,9 @@ select "phil's col11", "phil's col12", "phil\s col13",
 SET client_min_messages TO WARNING;
 
 -- impact of started group
-select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_comment 
+select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment 
   from emaj.emaj_group order by group_name, group_is_logging;
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -- check old events are deleted
 select hist_function, hist_event, hist_object, 
@@ -146,9 +147,9 @@ rollback;
 select emaj.emaj_stop_group('myGroup1');
 
 -- impact of stopped group
-select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_comment 
+select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment 
   from emaj.emaj_group order by group_name, group_is_logging;
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -- should be OK
 select emaj.emaj_stop_group('myGroup2','Stop mark');
@@ -162,7 +163,7 @@ begin transaction;
   select emaj.emaj_start_group('myGroup1',NULL);
   select emaj.emaj_start_group('myGroup2','');
 commit;
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 begin transaction;
   select emaj.emaj_stop_group('myGroup1');
@@ -171,7 +172,7 @@ commit;
 
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -----------------------------
 -- emaj_start_groups() tests
@@ -209,9 +210,9 @@ rollback;
 
 -- impact of started group
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
-select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_comment 
+select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment 
   from emaj.emaj_group order by group_name, group_is_logging;
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -----------------------------
 -- emaj_stop_groups() tests
@@ -232,7 +233,7 @@ rollback;
 
 -- should be OK
 select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 
 -- with warning about group names array content
 select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1']);
@@ -269,11 +270,55 @@ select emaj.emaj_force_stop_group('myGroup1');
 select emaj.emaj_force_stop_group('myGroup2');
 
 -- impact of stopped group
-select group_name, group_is_logging, group_nb_table, group_nb_sequence, group_comment 
+select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment 
   from emaj.emaj_group order by group_name, group_is_logging;
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+
+-----------------------------
+-- emaj_protect_group() tests
+-----------------------------
+-- group is unknown
+select emaj.emaj_protect_group(NULL);
+select emaj.emaj_protect_group('unknownGroup');
+-- group is not rollbackable
+select emaj.emaj_protect_group('phil''s group#3",');
+-- group is not in logging state
+select emaj.emaj_protect_group('myGroup1');
+-- should be ok
+select emaj.emaj_start_group('myGroup1','M1');
+select emaj.emaj_protect_group('myGroup1');
+select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
+-- protect an already protected group
+select emaj.emaj_protect_group('myGroup1');
+select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
+-- stop should reset the protection
+select emaj.emaj_stop_group('myGroup1');
+select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
+
+-----------------------------
+-- emaj_unprotect_group() tests
+-----------------------------
+-- group is unknown
+select emaj.emaj_unprotect_group(NULL);
+select emaj.emaj_unprotect_group('unknownGroup');
+-- group is not rollbackable
+select emaj.emaj_unprotect_group('phil''s group#3",');
+-- group is not in logging state
+select emaj.emaj_unprotect_group('myGroup1');
+-- should be ok
+select emaj.emaj_start_group('myGroup1','M1');
+select emaj.emaj_protect_group('myGroup1');
+select emaj.emaj_unprotect_group('myGroup1');
+select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
+-- unprotect an already unprotected group
+select emaj.emaj_unprotect_group('myGroup1');
+select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
+select emaj.emaj_stop_group('myGroup1');
+select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
 
 -- test end: (groups are stopped) reset history and force sequences id
+select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
+  (select * from emaj.emaj_hist order by hist_id) as t;
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 300;

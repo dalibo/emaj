@@ -1,6 +1,6 @@
 -- rollback.sql : test updates log, emaj_rollback_group(), emaj_logged_rollback_group(),
---                emaj_rollback_groups(), and emaj_logged_rollback_groups() functions.
---                also test emaj_cleanup_rollback_state(), and emaj_rollback_activity().
+--                emaj_rollback_groups(), emaj_logged_rollback_groups(),
+--                emaj_cleanup_rollback_state(), and emaj_rollback_activity() functions.
 --
 -----------------------------
 -- rollback nothing tests
@@ -55,6 +55,15 @@ select count(*) from emaj.myschema2_mytbl2_log;
 select count(*) from "emajC"."myschema2_myTbl3_log";
 select count(*) from emaj.myschema2_mytbl4_log;
 
+-- protected group
+select emaj.emaj_protect_group('myGroup1');
+select emaj.emaj_protect_group('myGroup2');
+select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
+select emaj.emaj_logged_rollback_groups('{"myGroup2","myGroup1"}',NULL);
+select emaj.emaj_unprotect_group('myGroup1');
+select emaj.emaj_unprotect_group('myGroup2');
+select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
+
 -- unknown mark name
 select emaj.emaj_rollback_group('myGroup1',NULL);
 select emaj.emaj_rollback_group('myGroup1','DummyMark');
@@ -72,16 +81,37 @@ select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark11');
 -- mark name referencing different points in time
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Different_Mark');
 
--- attemp to rollback an 'audit_only' group
+-- attempt to rollback an 'audit_only' group
 select emaj.emaj_rollback_group('phil''s group#3",','EMAJ_LAST_MARK');
 select emaj.emaj_logged_rollback_group('phil''s group#3",','M1_audit_only');
 
--- attemp to rollback to a stop mark
+-- attempt to rollback to a stop mark
 begin;
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_start_group('myGroup1','StartMark',false);
   select emaj.emaj_rename_mark_group('myGroup1',(select emaj.emaj_get_previous_mark_group('myGroup1','StartMark')), 'GeneratedStopMark');
   select emaj.emaj_rollback_group('myGroup1','GeneratedStopMark');
+rollback;
+
+-- attempt to rollback over protected marks
+begin;
+  select emaj.emaj_set_mark_group('myGroup1','Protected Mark 1');
+  select emaj.emaj_protect_mark_group('myGroup1','Protected Mark 1');
+  select emaj.emaj_set_mark_group('myGroup1','Protected Mark 2');
+  select emaj.emaj_protect_mark_group('myGroup1','Protected Mark 2');
+  select emaj.emaj_rollback_group('myGroup1','Mark11');
+rollback;
+
+-- logged rollback over a protected mark
+begin;
+  select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+  select emaj.emaj_logged_rollback_group('myGroup1','Mark11');
+rollback;
+
+-- rollback to a protected mark
+begin;
+  select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+  select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 rollback;
 
 -- missing application table and mono-group rollback
@@ -168,7 +198,7 @@ select count(*) from myTbl4;
 
 -- set a mark
 select emaj.emaj_set_mark_group('myGroup1','Mark12');
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 
 -- inserts/updates/deletes in myTbl3 and myTbl4
@@ -181,7 +211,7 @@ select count(*) from myTbl4;
 -- set a mark
 select emaj.emaj_set_mark_group('myGroup1','Mark13');
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl2_log order by emaj_gid, emaj_tuple desc;
@@ -194,7 +224,7 @@ alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_rollback_group('myGroup1','Mark12');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -208,7 +238,7 @@ select emaj.emaj_rollback_group('myGroup1','Mark11');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 select emaj.emaj_stop_group('myGroup1');
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
@@ -257,7 +287,7 @@ select count(*) from myTbl4;
 -- set a mark
 select emaj.emaj_set_mark_group('myGroup1','Mark13');
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl2_log order by emaj_gid, emaj_tuple desc;
@@ -270,7 +300,7 @@ alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_logged_rollback_group('myGroup1','Mark12');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -283,7 +313,7 @@ alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_logged_rollback_group('myGroup1','Mark11');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
@@ -300,7 +330,7 @@ alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_rollback_group('myGroup1','Mark13');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_myTbl1_log order by emaj_gid, emaj_tuple desc;

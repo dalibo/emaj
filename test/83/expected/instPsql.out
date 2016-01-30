@@ -408,9 +408,11 @@ CREATE TABLE emaj.emaj_group (
   group_is_logging           BOOLEAN     NOT NULL,       -- are log triggers activated ?
                                                          -- true between emaj_start_group(s) and emaj_stop_group(s)
                                                          -- flase in other cases
+  group_is_rlbk_protected    BOOLEAN     NOT NULL,       -- is the group currently protected against rollback ?
+                                                         -- always true for AUDIT_ONLY groups
   group_nb_table             INT,                        -- number of tables at emaj_create_group time
   group_nb_sequence          INT,                        -- number of sequences at emaj_create_group time
-  group_is_rollbackable      BOOLEAN,                    -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
+  group_is_rollbackable      BOOLEAN     NOT NULL,       -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
   group_creation_datetime    TIMESTAMPTZ NOT NULL        -- start time of the transaction that created the group
                              DEFAULT transaction_timestamp(),
   group_last_alter_datetime  TIMESTAMPTZ,                -- date and time of the last emaj_alter_group() exec,
@@ -457,6 +459,7 @@ CREATE TABLE emaj.emaj_mark (
                                                          --   for other tables like emaj_sequence and all log tables
   mark_global_seq            BIGINT      NOT NULL,       -- emaj_global_seq last value at mark set (used to rollback)
   mark_is_deleted            BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is deleted
+  mark_is_rlbk_protected     BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is protected from rollbacks (false by default)
   mark_comment               TEXT,                       -- optional user comment
   mark_txid                  BIGINT                      -- id of the tx that has set the mark
                              DEFAULT txid_current(),
@@ -685,7 +688,7 @@ CREATE VIEW emaj.emaj_visible_param AS
 CREATE OR REPLACE FUNCTION emaj._pg_version_num()
 RETURNS INTEGER LANGUAGE sql IMMUTABLE AS
 $$
--- This function returns as an integer the 2 major parts of the current postgresql version 
+-- This function returns as an integer the 2 major parts of the current postgresql version
 -- x.y.z => x*100 + y. For instance, Postgres version 9.4.12 returns 904
 SELECT cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
             to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER);
@@ -2124,8 +2127,9 @@ $emaj_create_group$
 -- performs various checks on the group's content described in the emaj_group_def table
     PERFORM emaj._check_group_content(v_groupName);
 -- OK, insert group row in the emaj_group table
-    INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable)
-      VALUES (v_groupName, FALSE,v_isRollbackable);
+-- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable)
+    INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable, group_is_rlbk_protected)
+      VALUES (v_groupName, FALSE, v_isRollbackable, NOT v_isRollbackable);
 -- look for new E-Maj secondary schemas to create
     FOR r_schema IN
       SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
@@ -2937,15 +2941,94 @@ $_stop_groups$
                 (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
                  WHERE mark_group = ANY (v_validGroupNames) AND NOT mark_is_deleted GROUP BY mark_group);
       END IF;
--- set all marks for the groups from the emaj_mark table as 'DELETED' to avoid any further rollback
-      UPDATE emaj.emaj_mark SET mark_is_deleted = TRUE
+-- set all marks for the groups from the emaj_mark table as 'DELETED' to avoid any further rollback and remove protection if any
+      UPDATE emaj.emaj_mark SET mark_is_deleted = TRUE, mark_is_rlbk_protected = FALSE
         WHERE mark_group = ANY (v_validGroupNames) AND NOT mark_is_deleted;
--- update the state of the groups rows from the emaj_group table
-      UPDATE emaj.emaj_group SET group_is_logging = FALSE WHERE group_name = ANY (v_validGroupNames);
+-- update the state of the groups rows from the emaj_group table (the rollback protection of rollbackable groups is reset)
+      UPDATE emaj.emaj_group SET group_is_logging = FALSE, group_is_rlbk_protected = NOT group_is_rollbackable
+        WHERE group_name = ANY (v_validGroupNames);
     END IF;
     RETURN v_nbTb;
   END;
 $_stop_groups$;
+CREATE OR REPLACE FUNCTION emaj.emaj_protect_group(v_groupName TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_protect_group$
+-- This function sets a protection on a group against accidental rollback.
+-- Input: group name
+-- Output: 1 if successful, 0 if the group was already in protected state
+  DECLARE
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_groupIsProtected       BOOLEAN;
+    v_status                 INT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    SELECT group_is_rollbackable, group_is_logging, group_is_rlbk_protected INTO v_groupIsRollbackable, v_groupIsLogging, v_groupIsProtected
+      FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_protect_group: group % has not been created.', v_groupName;
+    END IF;
+-- check that the group is ROLLBACKABLE
+    IF NOT v_groupIsRollbackable THEN
+      RAISE EXCEPTION 'emaj_protect_group: The group % cannot be protected because it is an AUDIT_ONLY group.', v_groupName;
+    END IF;
+-- check that the group is not in LOGGING state
+    IF NOT v_groupIsLogging THEN
+      RAISE EXCEPTION 'emaj_protect_group: The group % cannot be protected because it is not in LOGGING state.', v_groupName;
+    END IF;
+-- OK, set the protection
+    IF v_groupIsProtected THEN
+      v_status = 0;
+    ELSE
+      UPDATE emaj.emaj_group SET group_is_rlbk_protected = TRUE WHERE group_name = v_groupName;
+      v_status = 1;
+    END IF;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('PROTECT_GROUP', v_groupName, 'Status ' || v_status);
+    RETURN v_status;
+  END;
+$emaj_protect_group$;
+COMMENT ON FUNCTION emaj.emaj_protect_group(TEXT) IS
+$$Sets a protection against a rollback on an E-Maj group.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_unprotect_group$
+-- This function unsets a protection on a group against accidental rollback.
+-- Input: group name
+-- Output: 1 if successful, 0 if the group was not already in protected state
+  DECLARE
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_groupIsProtected       BOOLEAN;
+    v_status                 INT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    SELECT group_is_rollbackable, group_is_logging, group_is_rlbk_protected INTO v_groupIsRollbackable, v_groupIsLogging, v_groupIsProtected
+      FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_unprotect_group: group % has not been created.', v_groupName;
+    END IF;
+-- check that the group is ROLLBACKABLE
+    IF NOT v_groupIsRollbackable THEN
+      RAISE EXCEPTION 'emaj_unprotect_group: The group % cannot be unprotected because it is an AUDIT_ONLY group.', v_groupName;
+    END IF;
+-- OK, unset the protection
+    IF NOT v_groupIsProtected THEN
+      v_status = 0;
+    ELSE
+      UPDATE emaj.emaj_group SET group_is_rlbk_protected = FALSE WHERE group_name = v_groupName;
+      v_status = 1;
+    END IF;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('UNPROTECT_GROUP', v_groupName, 'Status ' || v_status);
+    RETURN v_status;
+  END;
+$emaj_unprotect_group$;
+COMMENT ON FUNCTION emaj.emaj_unprotect_group(TEXT) IS
+$$Unsets a protection against a rollback on an E-Maj group.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS int LANGUAGE plpgsql AS
 $emaj_set_mark_group$
@@ -3143,8 +3226,9 @@ $_set_mark_groups$
       FROM emaj.emaj_global_seq;
 -- insert the marks into the emaj_mark table
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
-      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_global_seq, mark_is_deleted, mark_last_sequence_id, mark_last_seq_hole_id)
-        VALUES (v_groupNames[v_i], v_mark, v_timestamp, v_lastGlobalSeq, FALSE, v_lastSequenceId, v_lastSeqHoleId);
+      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_global_seq, mark_is_deleted, mark_is_rlbk_protected,
+                                  mark_last_sequence_id, mark_last_seq_hole_id)
+        VALUES (v_groupNames[v_i], v_mark, v_timestamp, v_lastGlobalSeq, FALSE, FALSE, v_lastSequenceId, v_lastSeqHoleId);
     END LOOP;
 -- before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table
     IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
@@ -3511,6 +3595,106 @@ $emaj_rename_mark_group$
 $emaj_rename_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_rename_mark_group(TEXT,TEXT,TEXT) IS
 $$Renames a mark for an E-Maj group.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_protect_mark_group$
+-- This function sets a protection on a mark for a group against accidental rollback.
+-- Input: group name, mark to protect
+-- Output: 1 if successful, 0 if the mark was already in protected state
+-- The group must be ROLLBACKABLE and in LOGGING state.
+  DECLARE
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_realMark               TEXT;
+    v_markIsProtected        BOOLEAN;
+    v_status                 INT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
+      FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_protect_mark_group: group % has not been created.', v_groupName;
+    END IF;
+-- check that the group is ROLLBACKABLE
+    IF NOT v_groupIsRollbackable THEN
+      RAISE EXCEPTION 'emaj_protect_mark_group: A mark on the group % cannot be protected because it is an AUDIT_ONLY group.', v_groupName;
+    END IF;
+-- check that the group is not in LOGGING state
+    IF NOT v_groupIsLogging THEN
+      RAISE EXCEPTION 'emaj_protect_mark_group: A mark on the group % cannot be protected because it is not in LOGGING state.', v_groupName;
+    END IF;
+-- retrieve and check the mark name
+    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION 'emaj_protect_mark_group: mark % doesn''t exist for group %.', v_mark, v_groupName;
+    END IF;
+-- OK, set the protection
+    SELECT mark_is_rlbk_protected INTO v_markIsProtected FROM emaj.emaj_mark
+      WHERE mark_group = v_groupName AND mark_name = v_realMark;
+    IF v_markIsProtected THEN
+      v_status = 0;
+    ELSE
+      UPDATE emaj.emaj_mark SET mark_is_rlbk_protected = TRUE WHERE mark_group = v_groupName AND mark_name = v_realMark;
+      v_status = 1;
+    END IF;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('PROTECT_MARK', v_groupName, 'Mark ' || v_realMark || ' ; status ' || v_status);
+    RETURN v_status;
+  END;
+$emaj_protect_mark_group$;
+COMMENT ON FUNCTION emaj.emaj_protect_mark_group(TEXT,TEXT) IS
+$$Sets a protection against a rollback on a mark of an E-Maj group.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_unprotect_mark_group$
+-- This function unsets a protection on a mark for a group against accidental rollback.
+-- Input: group name, mark to unprotect
+-- Output: 1 if successful, 0 if the mark was already in unprotected state
+-- The group must be ROLLBACKABLE and in LOGGING state.
+  DECLARE
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_realMark               TEXT;
+    v_markIsProtected        BOOLEAN;
+    v_status                 INT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
+      FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_unprotect_mark_group: group % has not been created.', v_groupName;
+    END IF;
+-- check that the group is ROLLBACKABLE
+    IF NOT v_groupIsRollbackable THEN
+      RAISE EXCEPTION 'emaj_unprotect_mark_group: A mark on the group % cannot be unprotected because it is an AUDIT_ONLY group.', v_groupName;
+    END IF;
+-- check that the group is not in LOGGING state
+    IF NOT v_groupIsLogging THEN
+      RAISE EXCEPTION 'emaj_unprotect_mark_group: A mark on the group % cannot be unprotected because it is not in LOGGING state.', v_groupName;
+    END IF;
+-- retrieve and check the mark name
+    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION 'emaj_unprotect_mark_group: mark % doesn''t exist for group %.', v_mark, v_groupName;
+    END IF;
+-- OK, set the protection
+    SELECT mark_is_rlbk_protected INTO v_markIsProtected FROM emaj.emaj_mark
+      WHERE mark_group = v_groupName AND mark_name = v_realMark;
+    IF NOT v_markIsProtected THEN
+      v_status = 0;
+    ELSE
+      UPDATE emaj.emaj_mark SET mark_is_rlbk_protected = FALSE WHERE mark_group = v_groupName AND mark_name = v_realMark;
+      v_status = 1;
+    END IF;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('UNPROTECT_MARK', v_groupName, 'Mark ' || v_realMark || ' ; status ' || v_status);
+    RETURN v_status;
+  END;
+$emaj_unprotect_mark_group$;
+COMMENT ON FUNCTION emaj.emaj_unprotect_mark_group(TEXT,TEXT) IS
+$$Unsets a protection against a rollback on a mark of an E-Maj group.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_rollback_group$
@@ -3648,11 +3832,11 @@ $_rlbk_init$
 -- lock the groups to rollback
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = ANY(v_groupNames) FOR UPDATE;
 -- check supplied group names and mark parameters
-    SELECT emaj._rlbk_check(v_groupNames,v_mark) INTO v_markName;
+    SELECT emaj._rlbk_check(v_groupNames, v_mark) INTO v_markName;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- get the mark timestamp for the 1st group (as we know this timestamp is the same for all groups of the array)
-    SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
+    SELECT emaj._get_mark_datetime(v_groupNames[1], v_mark) INTO v_timestampMark;
 -- insert begin in the history
     IF v_isLoggedRlbk THEN
       v_msg = 'Logged';
@@ -3723,15 +3907,19 @@ $_rlbk_check$
   DECLARE
     v_i                      INT;
     v_groupIsLogging         BOOLEAN;
-    v_isRollbackable         BOOLEAN;
+    v_groupIsProtected       BOOLEAN;
+    v_groupIsRollbackable    BOOLEAN;
     v_markName               TEXT;
+    v_markId                 BIGINT;
     v_markIsDeleted          BOOLEAN;
+    v_protectedMarkList      TEXT;
     v_cpt                    INT;
+    r_mark                   RECORD;
   BEGIN
 -- check that each group ...
 -- ...is recorded in emaj_group table
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
-      SELECT group_is_logging, group_is_rollbackable INTO v_groupIsLogging, v_isRollbackable
+      SELECT group_is_logging, group_is_rollbackable, group_is_rlbk_protected INTO v_groupIsLogging, v_groupIsRollbackable, v_groupIsProtected
         FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i];
       IF NOT FOUND THEN
         RAISE EXCEPTION '_rlbk_check: group % has not been created.', v_groupNames[v_i];
@@ -3741,8 +3929,12 @@ $_rlbk_check$
         RAISE EXCEPTION '_rlbk_check: Group % is not in LOGGING state.', v_groupNames[v_i];
       END IF;
 -- ... is ROLLBACKABLE
-      IF NOT v_isRollbackable THEN
+      IF NOT v_groupIsRollbackable THEN
         RAISE EXCEPTION '_rlbk_check: Group % has been created for audit only purpose.', v_groupNames[v_i];
+      END IF;
+-- ... is not protected against rollback
+      IF v_groupIsProtected THEN
+        RAISE EXCEPTION '_rlbk_check: Group % is currently protected against rollback.', v_groupNames[v_i];
       END IF;
 -- ... owns the requested mark
       SELECT emaj._get_mark_name(v_groupNames[v_i],v_mark) INTO v_markName;
@@ -3750,10 +3942,25 @@ $_rlbk_check$
         RAISE EXCEPTION '_rlbk_check: No mark % exists for group %.', v_mark, v_groupNames[v_i];
       END IF;
 -- ... and this mark is ACTIVE
-      SELECT mark_is_deleted INTO v_markIsDeleted FROM emaj.emaj_mark
+      SELECT mark_id, mark_is_deleted INTO v_markId, v_markIsDeleted FROM emaj.emaj_mark
         WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
       IF v_markIsDeleted THEN
         RAISE EXCEPTION '_rlbk_check: mark % for group % is not usable for rollback.', v_markName, v_groupNames[v_i];
+      END IF;
+-- ... and the rollback wouldn't delete protected marks
+--TODO : use aggregate when 8.3 will not be supported anymore
+      v_protectedMarkList = '';
+      FOR r_mark IN
+        SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = v_groupNames[v_i] AND mark_id > v_markId AND mark_is_rlbk_protected
+        LOOP
+        IF v_protectedMarkList = '' THEN
+          v_protectedMarkList = r_mark.mark_name;
+        ELSE
+          v_protectedMarkList = v_protectedMarkList || ', ' || r_mark.mark_name;
+        END IF;
+      END LOOP;
+      IF v_protectedMarkList <> '' THEN
+        RAISE EXCEPTION '_rlbk_check: protected marks (%) for group % block the rollback to mark %.', v_protectedMarkList, v_groupNames[v_i], v_markName;
       END IF;
     END LOOP;
 -- get the mark timestamp and check it is the same for all groups of the array
@@ -5036,7 +5243,7 @@ $_estimate_rollback_groups$
     v_nbTblseq               INT;
   BEGIN
 -- check supplied group names and mark parameters
-    SELECT emaj._rlbk_check(v_groupNames,v_mark) INTO v_markName;
+    SELECT emaj._rlbk_check(v_groupNames, v_mark) INTO v_markName;
 -- compute a random negative rollback-id (not to interfere with ids of real rollbacks)
     SELECT (random() * -2147483648)::int INTO v_rlbkId;
 --
@@ -6266,6 +6473,8 @@ REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_protect_group(v_groupName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN) FROM PUBLIC;
@@ -6276,6 +6485,8 @@ REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT
 REVOKE ALL ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
@@ -6356,6 +6567,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) TO emaj_adm
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_protect_group(v_groupName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN) TO emaj_adm;
@@ -6366,6 +6579,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark T
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
@@ -6474,7 +6689,7 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj._tmp_post_install();
-psql:sql/emaj.sql:6416: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
+psql:sql/emaj.sql:6635: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
  _tmp_post_install 
 -------------------
  
@@ -6540,9 +6755,10 @@ Composite type "emaj.emaj_detailed_log_stat_type"
 ---------------------------+--------------------------+----------------------------------------------------------------------------------
  group_name                | text                     | not null
  group_is_logging          | boolean                  | not null
+ group_is_rlbk_protected   | boolean                  | not null
  group_nb_table            | integer                  | 
  group_nb_sequence         | integer                  | 
- group_is_rollbackable     | boolean                  | 
+ group_is_rollbackable     | boolean                  | not null
  group_creation_datetime   | timestamp with time zone | not null default transaction_timestamp()
  group_last_alter_datetime | timestamp with time zone | 
  group_pg_version          | text                     | not null default "substring"(version(), 'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'::text)
@@ -6632,6 +6848,7 @@ Composite type "emaj.emaj_log_stat_type"
  mark_datetime             | timestamp with time zone | not null
  mark_global_seq           | bigint                   | not null
  mark_is_deleted           | boolean                  | not null
+ mark_is_rlbk_protected    | boolean                  | not null
  mark_comment              | text                     | 
  mark_txid                 | bigint                   | default txid_current()
  mark_last_sequence_id     | bigint                   | 
@@ -6964,13 +7181,13 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    89
+    93
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname LIKE E'emaj\\_%';
  count 
 -------
-    41
+    45
 (1 row)
 

@@ -61,13 +61,13 @@ select count(*) from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    16
+    17
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    16
+    17
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
@@ -209,6 +209,10 @@ select emaj.emaj_stop_groups(array['myGroup1']);
 ERROR:  permission denied for function emaj_stop_groups
 select emaj.emaj_stop_groups(array['myGroup1'],NULL);
 ERROR:  permission denied for function emaj_stop_groups
+select emaj.emaj_protect_group('myGroup1');
+ERROR:  permission denied for function emaj_protect_group
+select emaj.emaj_unprotect_group('myGroup1');
+ERROR:  permission denied for function emaj_unprotect_group
 select emaj.emaj_set_mark_group('myGroup1','mark');
 ERROR:  permission denied for function emaj_set_mark_group
 select emaj.emaj_set_mark_groups(array['myGroup1'],'mark');
@@ -221,6 +225,10 @@ select emaj.emaj_delete_before_mark_group('myGroup1','mark');
 ERROR:  permission denied for function emaj_delete_before_mark_group
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','mark');
 ERROR:  permission denied for function emaj_rename_mark_group
+select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+ERROR:  permission denied for function emaj_protect_mark_group
+select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
+ERROR:  permission denied for function emaj_unprotect_mark_group
 select emaj.emaj_rollback_group('myGroup1','mark'); 
 ERROR:  permission denied for function emaj_rollback_group
 select emaj.emaj_rollback_groups(array['myGroup1'],'mark'); 

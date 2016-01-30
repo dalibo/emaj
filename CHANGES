@@ -3,6 +3,19 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+  - two new functions, emaj_protect_group() and emaj_unprotect_group(), 
+    respectively set and unset a specific lock on a group. When such a lock 
+    is set on a group, any rollback attempt on this group returns an error. 
+    Protecting a group is only meaningfull and thus possible if it is not an 
+    audit_only group and if it is in logging state. Stopping a protected 
+    group resets the protection.
+  - two other new functions, emaj_protect_mark_group() and 
+    emaj_unprotect_mark_group(), respectively set and unset a specific lock 
+    on a mark for a group. When such a lock is set on a mark for a group, 
+    any rollback attempt that would jump over the mark returns an error. This 
+    concerns both logged and unlogged rollbacks. Protecting a mark is only 
+    possible if its related group is not an audit_only group and if it is in 
+    logging state. Stopping a group resets the protection set on its marks.
   - change the name of log and truncate triggers set by E-Maj on application 
     tables. The triggers now have the same name for all tables, respectively 
     emaj_log_trg and emaj_trunc_trg.
