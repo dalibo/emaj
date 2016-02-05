@@ -102,7 +102,15 @@ begin;
   select emaj.emaj_rollback_group('myGroup1','Mark11');
 rollback;
 
--- logged rollback over a protected mark
+-- attempt to rollback several groups over one single-mark protected marks
+begin;
+  select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Common Mark 1');
+  select emaj.emaj_set_mark_group('myGroup1','Protected Mark 1');
+  select emaj.emaj_protect_mark_group('myGroup1','Protected Mark 1');
+  select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common Mark 1');
+rollback;
+
+-- attempt to logged-rollback over a protected mark
 begin;
   select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
   select emaj.emaj_logged_rollback_group('myGroup1','Mark11');

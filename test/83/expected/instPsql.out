@@ -3639,7 +3639,7 @@ $emaj_protect_mark_group$
     END IF;
 -- insert event in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-      VALUES ('PROTECT_MARK', v_groupName, 'Mark ' || v_realMark || ' ; status ' || v_status);
+      VALUES ('PROTECT_MARK_GROUP', v_groupName, 'Mark ' || v_realMark || ' ; status ' || v_status);
     RETURN v_status;
   END;
 $emaj_protect_mark_group$;
@@ -3669,10 +3669,6 @@ $emaj_unprotect_mark_group$
     IF NOT v_groupIsRollbackable THEN
       RAISE EXCEPTION 'emaj_unprotect_mark_group: A mark on the group % cannot be unprotected because it is an AUDIT_ONLY group.', v_groupName;
     END IF;
--- check that the group is not in LOGGING state
-    IF NOT v_groupIsLogging THEN
-      RAISE EXCEPTION 'emaj_unprotect_mark_group: A mark on the group % cannot be unprotected because it is not in LOGGING state.', v_groupName;
-    END IF;
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
@@ -3689,7 +3685,7 @@ $emaj_unprotect_mark_group$
     END IF;
 -- insert event in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-      VALUES ('UNPROTECT_MARK', v_groupName, 'Mark ' || v_realMark || ' ; status ' || v_status);
+      VALUES ('UNPROTECT_MARK_GROUP', v_groupName, 'Mark ' || v_realMark || ' ; status ' || v_status);
     RETURN v_status;
   END;
 $emaj_unprotect_mark_group$;
@@ -6689,7 +6685,7 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj._tmp_post_install();
-psql:sql/emaj.sql:6635: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
+psql:sql/emaj.sql:6631: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
  _tmp_post_install 
 -------------------
  
