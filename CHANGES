@@ -19,6 +19,8 @@ Enhancements:
   - change the name of log and truncate triggers set by E-Maj on application 
     tables. The triggers now have the same name for all tables, respectively 
     emaj_log_trg and emaj_trunc_trg.
+  - remove the execute rights granted to emaj_viewer role. It is useless, 
+    even for the phppgadmin plugin.
   - minor improvements in the code and in comments.
 
 Bug fixes:

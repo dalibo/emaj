@@ -44,3 +44,8 @@ drop role emaj_regression_tests_anonym_user;
 -----------------------------
 alter tablespace tspemaj_renamed rename to tspemaj;
 
+--------------------------------------------
+-- Dump the regression database (once the test roles have been dropped)
+--------------------------------------------
+\! RTVBIN.lnk/pg_dump regression >results/regression.dump
+

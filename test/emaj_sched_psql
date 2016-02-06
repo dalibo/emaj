@@ -29,9 +29,9 @@ test: viewer
 test: adm1
 test: adm2
 
-# cleanup regression tests environment
-test: cleanup
-
 # test clients
 test: client
+
+# cleanup regression tests environment
+test: cleanup
 

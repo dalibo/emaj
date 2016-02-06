@@ -86,7 +86,7 @@ migrat_test()
 	cd $EMAJ_HOME/test/$1
 	$RTVBIN/dropdb -p $RTVPORT regression
 	$RTVBIN/createdb -p $RTVPORT regression
-	$RTVBIN/psql -p $RTVPORT regression <../$2/results/regression.dump >results/restore.out
+	$RTVBIN/psql -p $RTVPORT regression <../$2/results/regression.dump >results/restore.out 2>&1 
 	diff expected/restore.out results/restore.out
 	cat ../sql/afterRest.sql|$RTVBIN/psql -p $RTVPORT -a regression >results/afterRest.out
 	diff expected/afterRest.out results/afterRest.out

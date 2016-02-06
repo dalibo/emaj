@@ -17,11 +17,6 @@ delete from mySchema2.myTbl6 where col61 <> 0;
 alter sequence mySchema2.mySeq1 restart 9999;
 
 --------------------------------------------
--- Dump the regression database
---------------------------------------------
-\! RTVBIN.lnk/pg_dump regression >results/regression.dump
-
---------------------------------------------
 -- Call emajParallelRollback.php
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
@@ -83,8 +78,8 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime,
            5,4,3,'PLANNING',now()-'1 minute'::interval);
 
 --------------------------------------------
--- call emajRollbackMonitor.php
+-- call emajRollbackMonitor.php using an emaj_viewer role
 --------------------------------------------
 
-\! ../../php/emajRollbackMonitor.php -h localhost -d regression -i 0.1 -n 2 -l 2 -a 12 -vr
+\! ../../php/emajRollbackMonitor.php -h localhost -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -vr
 

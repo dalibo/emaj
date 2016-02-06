@@ -21,6 +21,7 @@ CREATE SCHEMA
 ALTER SCHEMA
 CREATE SCHEMA
 ALTER SCHEMA
+ERROR:  language "plpgsql" already exists
 ALTER LANGUAGE
 SET
 CREATE TYPE
@@ -443,7 +444,7 @@ ALTER TABLE
 COMMENT
  setval 
 --------
- 100405
+ 100465
 (1 row)
 
 CREATE TABLE
@@ -457,7 +458,7 @@ ALTER TABLE
 ALTER SEQUENCE
  setval 
 --------
-  10000
+  10057
 (1 row)
 
 CREATE TABLE
@@ -468,24 +469,7 @@ ALTER TABLE
 ALTER SEQUENCE
  setval 
 --------
-   1000
-(1 row)
-
-CREATE TABLE
-ALTER TABLE
-COMMENT
-CREATE TABLE
-ALTER TABLE
-COMMENT
-CREATE TABLE
-ALTER TABLE
-COMMENT
-CREATE SEQUENCE
-ALTER TABLE
-ALTER SEQUENCE
- setval 
---------
-     36
+   1003
 (1 row)
 
 CREATE TABLE
@@ -502,7 +486,24 @@ ALTER TABLE
 ALTER SEQUENCE
  setval 
 --------
-   1000
+     38
+(1 row)
+
+CREATE TABLE
+ALTER TABLE
+COMMENT
+CREATE TABLE
+ALTER TABLE
+COMMENT
+CREATE TABLE
+ALTER TABLE
+COMMENT
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+ setval 
+--------
+   1002
 (1 row)
 
 CREATE TABLE
@@ -513,7 +514,7 @@ ALTER TABLE
 ALTER SEQUENCE
  setval 
 --------
-   1000
+   1027
 (1 row)
 
 CREATE VIEW
@@ -524,7 +525,7 @@ CREATE SEQUENCE
 ALTER TABLE
  setval 
 --------
-     73
+     93
 (1 row)
 
 SET
@@ -534,7 +535,7 @@ CREATE SEQUENCE
 ALTER TABLE
  setval 
 --------
-      6
+      9
 (1 row)
 
 CREATE TABLE
@@ -553,7 +554,7 @@ CREATE SEQUENCE
 ALTER TABLE
  setval 
 --------
-     25
+     35
 (1 row)
 
 CREATE TABLE
@@ -562,7 +563,7 @@ CREATE SEQUENCE
 ALTER TABLE
  setval 
 --------
-      4
+      6
 (1 row)
 
 CREATE TABLE
@@ -571,7 +572,7 @@ CREATE SEQUENCE
 ALTER TABLE
  setval 
 --------
-     12
+     14
 (1 row)
 
 CREATE TABLE
@@ -580,7 +581,7 @@ CREATE SEQUENCE
 ALTER TABLE
  setval 
 --------
-     70
+     77
 (1 row)
 
 CREATE TABLE
@@ -589,20 +590,10 @@ CREATE SEQUENCE
 ALTER TABLE
  setval 
 --------
-     16
+     17
 (1 row)
 
 SET
-SET
-CREATE TABLE
-ALTER TABLE
-CREATE SEQUENCE
-ALTER TABLE
- setval 
---------
-     50
-(1 row)
-
 SET
 CREATE TABLE
 ALTER TABLE
@@ -610,7 +601,17 @@ CREATE SEQUENCE
 ALTER TABLE
  setval 
 --------
-     20
+     55
+(1 row)
+
+SET
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ setval 
+--------
+     30
 (1 row)
 
 SET
@@ -667,7 +668,7 @@ CREATE SEQUENCE
 ALTER TABLE
  setval 
 --------
-   9999
+   1004
 (1 row)
 
 CREATE TABLE
@@ -931,7 +932,6 @@ GRANT
 GRANT
 REVOKE
 REVOKE
-GRANT
 GRANT
 GRANT
 REVOKE
