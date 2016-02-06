@@ -71,7 +71,7 @@ All the information details needed to install and use E-Maj are provided in the 
 To reach this user's guide, just untar the supplied file by :
 tar -xvzf emaj-<version>.tar.gz
 
-Unfortunately, due to current limitations in EXTENSION management by PostgreSQL, it is not possible to install E-Maj as a standart EXTENSION.
+The installation does not use the CREATE EXTENSION syntax yet. A future E-Maj version will use it when PostgreSQL versions prior 9.1 will not be supported anymore.
 
 
 5- E-Maj plugin for phpPgAdmin
