@@ -109,10 +109,14 @@ select emaj.emaj_logged_rollback_group('myGroup2','M3');
 -- Checking steps 1 to 3
 -----------------------------
 -- emaj tables
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
+select group_name, group_is_logging, 
+--     group_is_rlbk_protected, 
+       group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
   from emaj.emaj_group order by group_nb_table;
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, 
+--     mark_is_rlbk_protected, 
+       mark_comment, mark_last_seq_hole_id, mark_last_sequence_id from emaj.emaj_mark order by mark_id;
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;

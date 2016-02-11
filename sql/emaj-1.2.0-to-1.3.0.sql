@@ -1,10 +1,3 @@
--- migPsqlLoggingGroup.sql: Migrate from previous E-Maj version while groups are in logging state. 
--- Install E-Maj as simple psql script
---
------------------------------
--- migrate to the target version
------------------------------
-\i ../../sql/emaj-1.2.0-to-1.3.0.sql
 --
 -- E-Maj: migration from 1.2.0 to 1.3.0
 --
@@ -13,14 +6,13 @@
 -- This script migrates an existing installation of E-Maj extension.
 -- If E-Maj is not yet installed, use the emaj.sql script. 
 --
+
 \set ON_ERROR_STOP ON
 \set QUIET ON
 SET client_min_messages TO WARNING;
 --SET client_min_messages TO NOTICE;
 \echo 'E-maj upgrade from version 1.2.0 to version 1.3.0'
-E-maj upgrade from version 1.2.0 to version 1.3.0
 \echo 'Checking...'
-Checking...
 ------------------------------------
 --                                --
 -- checks                         --
@@ -54,18 +46,16 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj.tmp();
- tmp 
------
- 
-(1 row)
-
 DROP FUNCTION emaj.tmp();
+
 -- OK, upgrade...
 \echo '... OK, Migration start...'
-... OK, Migration start...
+
 BEGIN TRANSACTION;
+
 -- lock emaj_group table to avoid any concurrent E-Maj activity
 LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
+
 CREATE OR REPLACE FUNCTION emaj.tmp() 
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
@@ -82,14 +72,10 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj.tmp();
- tmp 
------
- 
-(1 row)
-
 DROP FUNCTION emaj.tmp();
+
 \echo 'Updating E-Maj internal objects ...'
-Updating E-Maj internal objects ...
+
 ---------------------------------------
 --                                   --
 -- emaj tables, views and sequences  --
@@ -98,14 +84,18 @@ Updating E-Maj internal objects ...
 -- drop the foreign keys impacted by the migration
 ALTER TABLE emaj.emaj_mark DROP CONSTRAINT emaj_mark_mark_group_fkey;
 ALTER TABLE emaj.emaj_relation DROP CONSTRAINT emaj_relation_rel_group_fkey;
+
 --
 -- process the emaj_group table
 --
 -- create a temporary table with the old structure and copy the source content
 CREATE TEMP TABLE tmp_group_old (LIKE emaj.emaj_group);
+
 INSERT INTO tmp_group_old SELECT * FROM emaj.emaj_group;
+
 -- drop the old table
 DROP TABLE emaj.emaj_group;
+
 -- create the new table, with its indexes, comment, constraints (except foreign key)...
 CREATE TABLE emaj.emaj_group (
   group_name                 TEXT        NOT NULL,
@@ -128,24 +118,30 @@ CREATE TABLE emaj.emaj_group (
   );
 COMMENT ON TABLE emaj.emaj_group IS
 $$Contains created E-Maj groups.$$;
+
 -- populate the new table
 INSERT INTO emaj.emaj_group
   SELECT group_name, group_is_logging, FALSE, group_nb_table, group_nb_sequence, group_is_rollbackable, 
          group_creation_datetime, group_last_alter_datetime, group_pg_version, group_comment
     FROM tmp_group_old;
+
 -- and drop the temporary table
 DROP TABLE tmp_group_old;
+
 --
 -- process the emaj_relation table
 --
 -- create a temporary table with the old structure and copy the source content
 CREATE TEMP TABLE tmp_relation_old (LIKE emaj.emaj_relation);
+
 INSERT INTO tmp_relation_old SELECT * FROM emaj.emaj_relation;
+
 -- drop the old table
 DROP TABLE emaj.emaj_relation CASCADE;
 -- The CASCADE clause is needed for the emaj_relation table, because its structure is referenced in 7 functions:
 --   emaj._drop_tbl(), emaj._drop_seq(), emaj._rlbk_tbl(), emaj._delete_log_tbl(), emaj._rlbk_seq(), emaj._log_stat_tbl(), emaj._gen_sql_tbl()
 -- These functions need to be recreated as well as their grants.
+
 -- create the new table, with its indexes, comment, constraints (except foreign key)...
 CREATE TABLE emaj.emaj_relation (
   rel_schema                 TEXT        NOT NULL,       -- schema name containing the relation
@@ -170,28 +166,30 @@ $$Contains the content (tables and sequences) of created E-Maj groups.$$;
 CREATE INDEX emaj_relation_idx1 ON emaj.emaj_relation (rel_group, rel_kind);
 -- index on emaj_relation used to speedup _verify_schema() with large E-Maj configuration
 CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
+
 -- populate the new table
 INSERT INTO emaj.emaj_relation
   SELECT rel_schema, rel_tblseq, rel_group, rel_kind, rel_priority, rel_log_schema,
          rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function
     FROM tmp_relation_old;
+
 -- the tmp_relation_old temporary table will be dropped later, after its content will be used to rename the triggers
+
 --
 -- process the emaj_mark table
 --
 -- create a temporary table with the old structure and copy the source content
 CREATE TEMP TABLE tmp_mark_old (LIKE emaj.emaj_mark);
+
 INSERT INTO tmp_mark_old SELECT * FROM emaj.emaj_mark;
+
 -- create a sequence to keep a trace of the sequence current values associated to the mark_id column
 CREATE TEMPORARY SEQUENCE tmp_mark_old_mark_id_seq;
 SELECT setval('tmp_mark_old_mark_id_seq',last_value,is_called) FROM emaj.emaj_mark_mark_id_seq;
- setval 
---------
-     11
-(1 row)
 
 -- drop the old table
 DROP TABLE emaj.emaj_mark;
+
 -- create the new table, with its indexes, comment, constraints (except foreign key)...
 CREATE TABLE emaj.emaj_mark (
   mark_group                 TEXT        NOT NULL,       -- group for which the mark has been set
@@ -215,24 +213,24 @@ CREATE TABLE emaj.emaj_mark (
   );
 COMMENT ON TABLE emaj.emaj_mark IS
 $$Contains marks set on E-Maj tables groups.$$;
+
 -- populate the new table
 INSERT INTO emaj.emaj_mark
   SELECT mark_group, mark_name, mark_id, mark_datetime, mark_global_seq, mark_is_deleted, FALSE, 
          mark_comment, mark_txid, mark_last_sequence_id, mark_last_seq_hole_id, mark_log_rows_before_next
     FROM tmp_mark_old;
+
 -- reset the original current value of the sequence associated to the mark_id column
 SELECT setval('emaj.emaj_mark_mark_id_seq',last_value,is_called) FROM tmp_mark_old_mark_id_seq;
- setval 
---------
-     11
-(1 row)
 
 -- and drop the temporary table and sequence
 DROP TABLE tmp_mark_old;
 DROP SEQUENCE tmp_mark_old_mark_id_seq;
+
 -- create the foreign keys dropped at the beginning of the tables migration or not yet created for the new tables
 ALTER TABLE emaj.emaj_relation ADD FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE;
 ALTER TABLE emaj.emaj_mark ADD FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE;
+
 ------------------------------------
 --                                --
 -- emaj functions: drop obsolete  --
@@ -240,11 +238,13 @@ ALTER TABLE emaj.emaj_mark ADD FOREIGN KEY (mark_group) REFERENCES emaj.emaj_gro
 --                                --
 ------------------------------------
 DROP FUNCTION emaj._pg_version();
+
 ------------------------------------
 --                                --
 -- emaj functions: recreate all   --
 --                                --
 ------------------------------------
+
 ------------------------------------
 --                                --
 -- Low level Functions            --
@@ -258,11 +258,13 @@ $$
 SELECT cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
             to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER);
 $$;
+
 ---------------------------------------------------
 --                                               --
 -- Elementary functions for tables and sequences --
 --                                               --
 ---------------------------------------------------
+
 CREATE OR REPLACE FUNCTION emaj._create_tbl(r_grpdef emaj.emaj_group_def, v_groupName TEXT, v_isRollbackable BOOLEAN, v_defTsp TEXT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_tbl$
@@ -463,6 +465,7 @@ $_create_tbl$
     RETURN;
   END;
 $_create_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_tbl$
@@ -499,6 +502,7 @@ $_drop_tbl$
     RETURN;
   END;
 $_drop_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._drop_seq(r_rel emaj.emaj_relation)
 RETURNS void LANGUAGE plpgsql AS
 $_drop_seq$
@@ -510,6 +514,7 @@ $_drop_seq$
     RETURN;
   END;
 $_drop_seq$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, v_lastGlobalSeq BIGINT, v_nbSession INT)
 RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_tbl$
@@ -608,6 +613,7 @@ $_rlbk_tbl$
     RETURN v_nbPk;
   END;
 $_rlbk_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._delete_log_tbl(r_rel emaj.emaj_relation, v_timestamp TIMESTAMPTZ, v_lastGlobalSeq BIGINT, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_delete_log_tbl$
@@ -650,6 +656,7 @@ $_delete_log_tbl$
     RETURN v_nbRows;
   END;
 $_delete_log_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, v_timestamp TIMESTAMPTZ, v_isLoggedRlbk BOOLEAN, v_lastSequenceId BIGINT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_seq$
@@ -736,6 +743,7 @@ $_rlbk_seq$
     RETURN;
   END;
 $_rlbk_seq$;
+
 CREATE OR REPLACE FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_log_stat_tbl$
@@ -780,6 +788,7 @@ $_log_stat_tbl$
     RETURN (v_endLastValue - v_beginLastValue - v_sumHole);
   END;
 $_log_stat_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_conditions TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $_gen_sql_tbl$
@@ -885,11 +894,13 @@ $_gen_sql_tbl$
     RETURN v_nbSQL;
   END;
 $_gen_sql_tbl$;
+
 ------------------------------------------------
 ----                                        ----
 ----       Functions to manage groups       ----
 ----                                        ----
 ------------------------------------------------
+
 CREATE OR REPLACE FUNCTION emaj._verify_groups(v_groups TEXT[], v_onErrorStop BOOLEAN)
 RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
 $_verify_groups$
@@ -1060,6 +1071,7 @@ $_verify_groups$
     RETURN;
   END;
 $_verify_groups$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_create_group$
@@ -1154,6 +1166,7 @@ $emaj_create_group$
 $emaj_create_group$;
 COMMENT ON FUNCTION emaj.emaj_create_group(TEXT, BOOLEAN) IS
 $$Creates an E-Maj group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_start_groups$
@@ -1237,6 +1250,7 @@ $_start_groups$
     RETURN v_nbTb;
   END;
 $_start_groups$;
+
 CREATE OR REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_stop_groups$
@@ -1369,6 +1383,7 @@ $_stop_groups$
     RETURN v_nbTb;
   END;
 $_stop_groups$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_protect_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_protect_group$
@@ -1410,6 +1425,7 @@ $emaj_protect_group$
 $emaj_protect_group$;
 COMMENT ON FUNCTION emaj.emaj_protect_group(TEXT) IS
 $$Sets a protection against a rollback on an E-Maj group.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_unprotect_group$
@@ -1447,6 +1463,7 @@ $emaj_unprotect_group$
 $emaj_unprotect_group$;
 COMMENT ON FUNCTION emaj.emaj_unprotect_group(TEXT) IS
 $$Unsets a protection against a rollback on an E-Maj group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN)
 RETURNS int LANGUAGE plpgsql AS
 $_set_mark_groups$
@@ -1562,6 +1579,7 @@ $_set_mark_groups$
     RETURN v_nbTb;
   END;
 $_set_mark_groups$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_protect_mark_group$
@@ -1612,6 +1630,7 @@ $emaj_protect_mark_group$
 $emaj_protect_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_protect_mark_group(TEXT,TEXT) IS
 $$Sets a protection against a rollback on a mark of an E-Maj group.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_unprotect_mark_group$
@@ -1658,6 +1677,7 @@ $emaj_unprotect_mark_group$
 $emaj_unprotect_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_unprotect_mark_group(TEXT,TEXT) IS
 $$Unsets a protection against a rollback on a mark of an E-Maj group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_init$
@@ -1749,6 +1769,7 @@ $_rlbk_init$
     RETURN v_rlbkId;
   END;
 $_rlbk_init$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_rlbk_check$
@@ -1823,6 +1844,7 @@ $_rlbk_check$
     RETURN v_markName;
   END;
 $_rlbk_check$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_session_exec$
@@ -1964,6 +1986,7 @@ $_rlbk_session_exec$
 --      RAISE;
   END;
 $_rlbk_session_exec$;
+
 CREATE OR REPLACE FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN)
 RETURNS INTERVAL LANGUAGE plpgsql SECURITY DEFINER AS
 $_estimate_rollback_groups$
@@ -2015,6 +2038,7 @@ $_estimate_rollback_groups$
     RETURN v_estimDuration;
   END;
 $_estimate_rollback_groups$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $emaj_snap_group$
@@ -2135,6 +2159,7 @@ $emaj_snap_group$
 $emaj_snap_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $emaj_snap_log_group$
@@ -2334,6 +2359,7 @@ $emaj_snap_log_group$
 $emaj_snap_log_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
+
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $_gen_sql_groups$
@@ -2589,11 +2615,13 @@ $_gen_sql_groups$
     RETURN v_cumNbSQL;
   END;
 $_gen_sql_groups$;
+
 ------------------------------------
 --                                --
 -- Global purpose functions       --
 --                                --
 ------------------------------------
+
 CREATE OR REPLACE FUNCTION emaj._verify_all_groups()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_all_groups$
@@ -2747,6 +2775,7 @@ $_verify_all_groups$
     RETURN;
   END;
 $_verify_all_groups$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $emaj_verify_all$
@@ -2787,6 +2816,7 @@ $emaj_verify_all$
 $emaj_verify_all$;
 COMMENT ON FUNCTION emaj.emaj_verify_all() IS
 $$Verifies the consistency between existing E-Maj and application objects.$$;
+
 -- Set comments for all internal functions,
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
 INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
@@ -2803,11 +2833,13 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
           WHERE nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
             AND pg_description.description IS NULL
        );
+
 ------------------------------------
 --                                --
 -- emaj roles and rights          --
 --                                --
 ------------------------------------
+
 -- grants on tables and sequences
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_group        TO emaj_adm;
 GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_relation     TO emaj_adm;
@@ -2815,13 +2847,16 @@ GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_mark         TO emaj_adm;
 GRANT SELECT ON emaj.emaj_group               TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_relation            TO emaj_viewer;
 GRANT SELECT ON emaj.emaj_mark                TO emaj_viewer;
+
 GRANT ALL ON SEQUENCE emaj.emaj_mark_mark_id_seq     TO emaj_adm;
 GRANT SELECT ON SEQUENCE emaj.emaj_mark_mark_id_seq     TO emaj_viewer;
+
 -- revoke grants on all functions from PUBLIC
 REVOKE ALL ON FUNCTION emaj.emaj_protect_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
+
 REVOKE ALL ON FUNCTION emaj._drop_tbl(emaj.emaj_relation) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._drop_seq(emaj.emaj_relation) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._rlbk_tbl(emaj.emaj_relation,bigint,integer) FROM PUBLIC;
@@ -2829,11 +2864,13 @@ REVOKE ALL ON FUNCTION emaj._delete_log_tbl(emaj.emaj_relation,timestamp with ti
 REVOKE ALL ON FUNCTION emaj._rlbk_seq(emaj.emaj_relation,timestamp with time zone,boolean,bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._log_stat_tbl(emaj.emaj_relation,timestamp with time zone,timestamp with time zone,bigint,bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._gen_sql_tbl(emaj.emaj_relation,text) FROM PUBLIC;
+
 -- give appropriate rights on functions to emaj_adm role
 GRANT EXECUTE ON FUNCTION emaj.emaj_protect_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
+
 GRANT EXECUTE ON FUNCTION emaj._drop_tbl(emaj.emaj_relation) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._drop_seq(emaj.emaj_relation) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(emaj.emaj_relation,bigint,integer) TO emaj_adm;
@@ -2841,8 +2878,10 @@ GRANT EXECUTE ON FUNCTION emaj._delete_log_tbl(emaj.emaj_relation,timestamp with
 GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(emaj.emaj_relation,timestamp with time zone,boolean,bigint) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(emaj.emaj_relation,timestamp with time zone,timestamp with time zone,bigint,bigint) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._gen_sql_tbl(emaj.emaj_relation,text) TO emaj_adm;
+
 -- give appropriate rights on functions to emaj_viewer role
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(emaj.emaj_relation,timestamp with time zone,timestamp with time zone,bigint,bigint) TO emaj_viewer;
+
 --------------------------------------------------------------
 --                                                          --
 -- Apply changes to log components:                         --
@@ -2850,6 +2889,7 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(emaj.emaj_relation,timestamp with t
 --   application tables known as belonging to a group       --
 --                                                          --
 --------------------------------------------------------------
+
 CREATE OR REPLACE FUNCTION emaj.tmp() 
 RETURNS VOID LANGUAGE plpgsql AS
 $tmp$
@@ -2875,22 +2915,22 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj.tmp();
- tmp 
------
- 
-(1 row)
-
 DROP FUNCTION emaj.tmp();
+
 -- The temporary table containing the old emaj_relation table's content can now be dropped
 DROP TABLE tmp_relation_old;
+
 ------------------------------------
 --                                --
 -- commit migration               --
 --                                --
 ------------------------------------
+
 UPDATE emaj.emaj_param SET param_value_text = '1.3.0' WHERE param_key = 'emaj_version';
+
 -- insert the migration record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.3.0', 'Migration from 1.2.0 completed');
+
 -- post installation checks
 CREATE OR REPLACE FUNCTION emaj._tmp_post_install()
 RETURNS VOID LANGUAGE plpgsql AS
@@ -2935,24 +2975,10 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj._tmp_post_install();
-psql:../../sql/emaj-1.2.0-to-1.3.0.sql:2977: WARNING:  E-Maj migration: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
- _tmp_post_install 
--------------------
- 
-(1 row)
-
 DROP FUNCTION emaj._tmp_post_install();
+
 COMMIT;
+
 SET client_min_messages TO default;
 \echo '>>> E-Maj successfully migrated to 1.3.0'
->>> E-Maj successfully migrated to 1.3.0
------------------------------
--- check installation
------------------------------
--- check the emaj_param content
-SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
- param_value_text 
-------------------
- 1.3.0
-(1 row)
 

@@ -317,8 +317,10 @@ select emaj.emaj_stop_group('myGroup1');
 select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
 
 -- test end: (groups are stopped) reset history and force sequences id
-select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist order by hist_id) as t;
+select hist_id, hist_function, hist_event, hist_object, 
+  case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'16(1|2)','<161|162>')
+    else regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g') end,
+  hist_user from emaj.emaj_hist order by hist_id;
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 300;
