@@ -192,12 +192,6 @@ SELECT setval('tmp_mark_old_mark_id_seq',last_value,is_called) FROM emaj.emaj_ma
 
 -- drop the old table
 DROP TABLE emaj.emaj_mark;
-select * from tmp_mark_old_mark_id_seq;  -- debug ----------------------------------------------------------------------------
-      sequence_name       | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
---------------------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
- tmp_mark_old_mark_id_seq |         11 |           1 |            1 | 9223372036854775807 |         1 |           1 |       0 | f         | t
-(1 row)
-
 -- create the new table, with its indexes, comment, constraints (except foreign key)...
 CREATE TABLE emaj.emaj_mark (
   mark_group                 TEXT        NOT NULL,       -- group for which the mark has been set
@@ -2941,7 +2935,7 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj._tmp_post_install();
-psql:../../sql/emaj-1.2.0-to-1.3.0.sql:2978: WARNING:  E-Maj migration: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
+psql:../../sql/emaj-1.2.0-to-1.3.0.sql:2977: WARNING:  E-Maj migration: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
  _tmp_post_install 
 -------------------
  

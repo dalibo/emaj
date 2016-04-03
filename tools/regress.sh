@@ -15,29 +15,29 @@ PGBIN84="/usr/local/pg8422/bin"
 PGPORT84="5484"
 PGREG84="/home/postgres/postgresql-8.4.22/src/test/regress"
 
-PGBIN90="/usr/local/pg9018/bin"
+PGBIN90="/usr/local/pg9023/bin"
 PGPORT90="5490"
-PGREG90="/home/postgres/postgresql-9.0.18/src/test/regress"
+PGREG90="/home/postgres/postgresql-9.0.23/src/test/regress"
 
-PGBIN91="/usr/local/pg9114/bin"
+PGBIN91="/usr/local/pg9121/bin"
 PGPORT91="5491"
-PGREG91="/home/postgres/postgresql-9.1.14/src/test/regress"
+PGREG91="/home/postgres/postgresql-9.1.21/src/test/regress"
 
-PGBIN92="/usr/local/pg929/bin"
+PGBIN92="/usr/local/pg9216/bin"
 PGPORT92="5492"
-PGREG92="/home/postgres/postgresql-9.2.9/src/test/regress"
+PGREG92="/home/postgres/postgresql-9.2.16/src/test/regress"
 
-PGBIN93="/usr/local/pg935/bin"
+PGBIN93="/usr/local/pg9312/bin"
 PGPORT93="5493"
-PGREG93="/home/postgres/postgresql-9.3.5/src/test/regress"
+PGREG93="/home/postgres/postgresql-9.3.12/src/test/regress"
 
-PGBIN94="/usr/local/pg944/bin"
+PGBIN94="/usr/local/pg947/bin"
 PGPORT94="5494"
-PGREG94="/home/postgres/postgresql-9.4.4/src/test/regress"
+PGREG94="/home/postgres/postgresql-9.4.7/src/test/regress"
 
-PGBIN95="/usr/local/pg95a2/bin"
+PGBIN95="/usr/local/pg952/bin"
 PGPORT95="5495"
-PGREG95="/home/postgres/postgresql-9.5alpha2/src/test/regress"
+PGREG95="/home/postgres/postgresql-9.5.2/src/test/regress"
 
 #---------------------------------------------#
 #            Functions definition             #
