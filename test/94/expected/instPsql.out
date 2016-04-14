@@ -3,192 +3,19 @@
 -----------------------------
 -- install dblink
 -----------------------------
--- this 8.4.22 version seems compatible with 8.3 to 9.4 pg version
-\i ~/postgresql-8.4.22/contrib/dblink/dblink.sql
-/* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.18 2009/06/09 17:41:02 tgl Exp $ */
--- Adjust this setting to control where the objects get created.
-SET search_path = public;
--- dblink_connect now restricts non-superusers to password
--- authenticated connections
-CREATE OR REPLACE FUNCTION dblink_connect (text)
-RETURNS text
-AS '$libdir/dblink','dblink_connect'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_connect (text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_connect'
-LANGUAGE C STRICT;
--- dblink_connect_u allows non-superusers to use
--- non-password authenticated connections, but initially
--- privileges are revoked from public
-CREATE OR REPLACE FUNCTION dblink_connect_u (text)
-RETURNS text
-AS '$libdir/dblink','dblink_connect'
-LANGUAGE C STRICT SECURITY DEFINER;
-CREATE OR REPLACE FUNCTION dblink_connect_u (text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_connect'
-LANGUAGE C STRICT SECURITY DEFINER;
-REVOKE ALL ON FUNCTION dblink_connect_u (text) FROM public;
-REVOKE ALL ON FUNCTION dblink_connect_u (text, text) FROM public;
-CREATE OR REPLACE FUNCTION dblink_disconnect ()
-RETURNS text
-AS '$libdir/dblink','dblink_disconnect'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_disconnect (text)
-RETURNS text
-AS '$libdir/dblink','dblink_disconnect'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_open (text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_open'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_open (text, text, boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_open'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_open (text, text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_open'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_open (text, text, text, boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_open'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_fetch (text, int)
-RETURNS setof record
-AS '$libdir/dblink','dblink_fetch'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_fetch (text, int, boolean)
-RETURNS setof record
-AS '$libdir/dblink','dblink_fetch'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_fetch (text, text, int)
-RETURNS setof record
-AS '$libdir/dblink','dblink_fetch'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_fetch (text, text, int, boolean)
-RETURNS setof record
-AS '$libdir/dblink','dblink_fetch'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_close (text)
-RETURNS text
-AS '$libdir/dblink','dblink_close'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_close (text, boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_close'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_close (text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_close'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_close (text, text, boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_close'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink (text, text)
-RETURNS setof record
-AS '$libdir/dblink','dblink_record'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink (text, text, boolean)
-RETURNS setof record
-AS '$libdir/dblink','dblink_record'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink (text)
-RETURNS setof record
-AS '$libdir/dblink','dblink_record'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink (text, boolean)
-RETURNS setof record
-AS '$libdir/dblink','dblink_record'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_exec (text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_exec'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_exec (text, text, boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_exec'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_exec (text)
-RETURNS text
-AS '$libdir/dblink','dblink_exec'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_exec (text,boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_exec'
-LANGUAGE C STRICT;
-CREATE TYPE dblink_pkey_results AS (position int, colname text);
-CREATE OR REPLACE FUNCTION dblink_get_pkey (text)
-RETURNS setof dblink_pkey_results
-AS '$libdir/dblink','dblink_get_pkey'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_build_sql_insert (text, int2vector, int, _text, _text)
-RETURNS text
-AS '$libdir/dblink','dblink_build_sql_insert'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_build_sql_delete (text, int2vector, int, _text)
-RETURNS text
-AS '$libdir/dblink','dblink_build_sql_delete'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_build_sql_update (text, int2vector, int, _text, _text)
-RETURNS text
-AS '$libdir/dblink','dblink_build_sql_update'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_current_query ()
-RETURNS text
-AS '$libdir/dblink','dblink_current_query'
-LANGUAGE C;
-CREATE OR REPLACE FUNCTION dblink_send_query(text, text)
-RETURNS int4
-AS '$libdir/dblink', 'dblink_send_query'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_is_busy(text)
-RETURNS int4
-AS '$libdir/dblink', 'dblink_is_busy'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_get_result(text)
-RETURNS SETOF record
-AS '$libdir/dblink', 'dblink_get_result'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_get_result(text, bool)
-RETURNS SETOF record
-AS '$libdir/dblink', 'dblink_get_result'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_get_connections()
-RETURNS text[]
-AS '$libdir/dblink', 'dblink_get_connections'
-LANGUAGE C;
-CREATE OR REPLACE FUNCTION dblink_cancel_query(text)
-RETURNS text
-AS '$libdir/dblink', 'dblink_cancel_query'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_error_message(text)
-RETURNS text
-AS '$libdir/dblink', 'dblink_error_message'
-LANGUAGE C STRICT;
+CREATE EXTENSION dblink;
 -----------------------------
--- for postgres cluster 8.3 and 9.1, temporarily rename tspemaj tablespace to test both cases
+-- for postgres cluster 9.1 and 9.4, temporarily rename tspemaj tablespace to test both cases
 -----------------------------
-CREATE or REPLACE FUNCTION public.emaj_tmp() 
-RETURNS VOID LANGUAGE plpgsql AS 
-$tmp$
+DO LANGUAGE plpgsql 
+$$
   DECLARE
   BEGIN
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('8.3', '9.1') THEN
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('9.1', '9.4') THEN
       ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
     END IF;
-    RETURN; 
   END;
-$tmp$;
-SELECT public.emaj_tmp();
- emaj_tmp 
-----------
- 
-(1 row)
-
-DROP FUNCTION public.emaj_tmp();
+$$;
 -----------------------------
 -- emaj installation
 -----------------------------
@@ -227,9 +54,9 @@ $tmp$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
     END IF;
--- check postgres version is >= 8.3
---   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') < '8.3' THEN
+-- check postgres version is >= 9.1
+    IF cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
+            to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER) < 90q1 THEN
       RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
     END IF;
 -- check there is no E-Maj secondary schema remaining (that could later lead to error)
@@ -6760,11 +6587,10 @@ Composite type "emaj.emaj_detailed_log_stat_type"
  group_pg_version          | text                     | not null default "substring"(version(), 'PostgreSQL\s([.,0-9,A-Z,a-z]*)'::text)
  group_comment             | text                     | 
 Indexes:
-    "emaj_group_pkey" PRIMARY KEY, btree (group_name), tablespace "tspemaj"
+    "emaj_group_pkey" PRIMARY KEY, btree (group_name)
 Referenced by:
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
-Tablespace: "tspemaj"
 
           Table "emaj.emaj_group_def"
           Column          |  Type   | Modifiers 
@@ -6778,8 +6604,7 @@ Tablespace: "tspemaj"
  grpdef_log_dat_tsp       | text    | 
  grpdef_log_idx_tsp       | text    | 
 Indexes:
-    "emaj_group_def_pkey" PRIMARY KEY, btree (grpdef_group, grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "emaj_group_def_pkey" PRIMARY KEY, btree (grpdef_group, grpdef_schema, grpdef_tblseq)
 
    Index "emaj.emaj_group_def_pkey"
     Column     | Type |  Definition   
@@ -6788,14 +6613,12 @@ Tablespace: "tspemaj"
  grpdef_schema | text | grpdef_schema
  grpdef_tblseq | text | grpdef_tblseq
 primary key, btree, for table "emaj.emaj_group_def"
-Tablespace: "tspemaj"
 
   Index "emaj.emaj_group_pkey"
    Column   | Type | Definition 
 ------------+------+------------
  group_name | text | group_name
 primary key, btree, for table "emaj.emaj_group"
-Tablespace: "tspemaj"
 
                                            Table "emaj.emaj_hist"
     Column     |           Type           |                            Modifiers                             
@@ -6809,8 +6632,7 @@ Tablespace: "tspemaj"
  hist_user     | text                     | default "session_user"()
  hist_txid     | bigint                   | default txid_current()
 Indexes:
-    "emaj_hist_pkey" PRIMARY KEY, btree (hist_id), tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "emaj_hist_pkey" PRIMARY KEY, btree (hist_id)
 
       Sequence "emaj.emaj_hist_hist_id_seq"
     Column     |  Type   |         Value         
@@ -6832,7 +6654,6 @@ Owned by: emaj.emaj_hist.hist_id
 ---------+--------+------------
  hist_id | bigint | hist_id
 primary key, btree, for table "emaj.emaj_hist"
-Tablespace: "tspemaj"
 
 Composite type "emaj.emaj_log_stat_type"
    Column    |  Type  | Modifiers 
@@ -6858,10 +6679,9 @@ Composite type "emaj.emaj_log_stat_type"
  mark_last_seq_hole_id     | bigint                   | 
  mark_log_rows_before_next | bigint                   | 
 Indexes:
-    "emaj_mark_pkey" PRIMARY KEY, btree (mark_group, mark_name), tablespace "tspemaj"
+    "emaj_mark_pkey" PRIMARY KEY, btree (mark_group, mark_name)
 Foreign-key constraints:
     "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
-Tablespace: "tspemaj"
 
       Sequence "emaj.emaj_mark_mark_id_seq"
     Column     |  Type   |         Value         
@@ -6884,7 +6704,6 @@ Owned by: emaj.emaj_mark.mark_id
  mark_group | text | mark_group
  mark_name  | text | mark_name
 primary key, btree, for table "emaj.emaj_mark"
-Tablespace: "tspemaj"
 
            Table "emaj.emaj_param"
         Column        |   Type   | Modifiers 
@@ -6895,15 +6714,13 @@ Tablespace: "tspemaj"
  param_value_boolean  | boolean  | 
  param_value_interval | interval | 
 Indexes:
-    "emaj_param_pkey" PRIMARY KEY, btree (param_key), tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "emaj_param_pkey" PRIMARY KEY, btree (param_key)
 
  Index "emaj.emaj_param_pkey"
   Column   | Type | Definition 
 -----------+------+------------
  param_key | text | param_key
 primary key, btree, for table "emaj.emaj_param"
-Tablespace: "tspemaj"
 
        Table "emaj.emaj_relation"
       Column      |  Type   | Modifiers 
@@ -6921,12 +6738,11 @@ Tablespace: "tspemaj"
  rel_log_sequence | text    | 
  rel_log_function | text    | 
 Indexes:
-    "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq), tablespace "tspemaj"
-    "emaj_relation_idx1" btree (rel_group, rel_kind), tablespace "tspemaj"
-    "emaj_relation_idx2" btree (rel_log_schema), tablespace "tspemaj"
+    "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq)
+    "emaj_relation_idx1" btree (rel_group, rel_kind)
+    "emaj_relation_idx2" btree (rel_log_schema)
 Foreign-key constraints:
     "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
-Tablespace: "tspemaj"
 
 Index "emaj.emaj_relation_idx1"
   Column   | Type | Definition 
@@ -6934,14 +6750,12 @@ Index "emaj.emaj_relation_idx1"
  rel_group | text | rel_group
  rel_kind  | text | rel_kind
 btree, for table "emaj.emaj_relation"
-Tablespace: "tspemaj"
 
     Index "emaj.emaj_relation_idx2"
      Column     | Type |   Definition   
 ----------------+------+----------------
  rel_log_schema | text | rel_log_schema
 btree, for table "emaj.emaj_relation"
-Tablespace: "tspemaj"
 
 Index "emaj.emaj_relation_pkey"
    Column   | Type | Definition 
@@ -6949,7 +6763,6 @@ Index "emaj.emaj_relation_pkey"
  rel_schema | text | rel_schema
  rel_tblseq | text | rel_tblseq
 primary key, btree, for table "emaj.emaj_relation"
-Tablespace: "tspemaj"
 
                                               Table "emaj.emaj_rlbk"
        Column        |           Type           |                            Modifiers                             
@@ -6970,34 +6783,30 @@ Tablespace: "tspemaj"
  rlbk_end_datetime   | timestamp with time zone | 
  rlbk_msg            | text                     | 
 Indexes:
-    "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id), tablespace "tspemaj"
-    "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum]), tablespace "tspemaj"
-    "emaj_rlbk_idx2" btree (rlbk_start_datetime), tablespace "tspemaj"
+    "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id)
+    "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum])
+    "emaj_rlbk_idx2" btree (rlbk_start_datetime)
 Referenced by:
     TABLE "emaj.emaj_rlbk_plan" CONSTRAINT "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
     TABLE "emaj.emaj_rlbk_session" CONSTRAINT "emaj_rlbk_session_rlbs_rlbk_id_fkey" FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
-Tablespace: "tspemaj"
 
             Index "emaj.emaj_rlbk_idx1"
    Column    |          Type          | Definition  
 -------------+------------------------+-------------
  rlbk_status | emaj._rlbk_status_enum | rlbk_status
 btree, for table "emaj.emaj_rlbk", predicate (rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum]))
-Tablespace: "tspemaj"
 
                      Index "emaj.emaj_rlbk_idx2"
        Column        |           Type           |     Definition      
 ---------------------+--------------------------+---------------------
  rlbk_start_datetime | timestamp with time zone | rlbk_start_datetime
 btree, for table "emaj.emaj_rlbk"
-Tablespace: "tspemaj"
 
   Index "emaj.emaj_rlbk_pkey"
  Column  |  Type   | Definition 
 ---------+---------+------------
  rlbk_id | integer | rlbk_id
 primary key, btree, for table "emaj.emaj_rlbk"
-Tablespace: "tspemaj"
 
                   Table "emaj.emaj_rlbk_plan"
          Column          |           Type           | Modifiers 
@@ -7017,10 +6826,9 @@ Tablespace: "tspemaj"
  rlbp_quantity           | bigint                   | 
  rlbp_duration           | interval                 | 
 Indexes:
-    "emaj_rlbk_plan_pkey" PRIMARY KEY, btree (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey), tablespace "tspemaj"
+    "emaj_rlbk_plan_pkey" PRIMARY KEY, btree (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey)
 Foreign-key constraints:
     "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
-Tablespace: "tspemaj"
 
           Index "emaj.emaj_rlbk_plan_pkey"
     Column    |         Type         |  Definition  
@@ -7031,7 +6839,6 @@ Tablespace: "tspemaj"
  rlbp_table   | text                 | rlbp_table
  rlbp_fkey    | text                 | rlbp_fkey
 primary key, btree, for table "emaj.emaj_rlbk_plan"
-Tablespace: "tspemaj"
 
       Sequence "emaj.emaj_rlbk_rlbk_id_seq"
     Column     |  Type   |         Value         
@@ -7057,10 +6864,9 @@ Owned by: emaj.emaj_rlbk.rlbk_id
  rlbs_start_datetime | timestamp with time zone | not null
  rlbs_end_datetime   | timestamp with time zone | 
 Indexes:
-    "emaj_rlbk_session_pkey" PRIMARY KEY, btree (rlbs_rlbk_id, rlbs_session), tablespace "tspemaj"
+    "emaj_rlbk_session_pkey" PRIMARY KEY, btree (rlbs_rlbk_id, rlbs_session)
 Foreign-key constraints:
     "emaj_rlbk_session_rlbs_rlbk_id_fkey" FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
-Tablespace: "tspemaj"
 
   Index "emaj.emaj_rlbk_session_pkey"
     Column    |  Type   |  Definition  
@@ -7068,7 +6874,6 @@ Tablespace: "tspemaj"
  rlbs_rlbk_id | integer | rlbs_rlbk_id
  rlbs_session | integer | rlbs_session
 primary key, btree, for table "emaj.emaj_rlbk_session"
-Tablespace: "tspemaj"
 
                 Table "emaj.emaj_rlbk_stat"
        Column       |           Type           | Modifiers 
@@ -7082,8 +6887,7 @@ Tablespace: "tspemaj"
  rlbt_quantity      | bigint                   | not null
  rlbt_duration      | interval                 | not null
 Indexes:
-    "emaj_rlbk_stat_pkey" PRIMARY KEY, btree (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id), tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "emaj_rlbk_stat_pkey" PRIMARY KEY, btree (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id)
 
           Index "emaj.emaj_rlbk_stat_pkey"
     Column    |         Type         |  Definition  
@@ -7094,7 +6898,6 @@ Tablespace: "tspemaj"
  rlbt_fkey    | text                 | rlbt_fkey
  rlbt_rlbk_id | integer              | rlbt_rlbk_id
 primary key, btree, for table "emaj.emaj_rlbk_stat"
-Tablespace: "tspemaj"
 
      Composite type "emaj.emaj_rollback_activity_type"
        Column        |           Type           | Modifiers 
@@ -7123,8 +6926,7 @@ Tablespace: "tspemaj"
  sqhl_datetime  | timestamp with time zone | not null default transaction_timestamp()
  sqhl_hole_size | bigint                   | not null
 Indexes:
-    "emaj_seq_hole_pkey" PRIMARY KEY, btree (sqhl_schema, sqhl_table, sqhl_datetime), tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "emaj_seq_hole_pkey" PRIMARY KEY, btree (sqhl_schema, sqhl_table, sqhl_datetime)
 
              Index "emaj.emaj_seq_hole_pkey"
     Column     |           Type           |  Definition   
@@ -7133,7 +6935,6 @@ Tablespace: "tspemaj"
  sqhl_table    | text                     | sqhl_table
  sqhl_datetime | timestamp with time zone | sqhl_datetime
 primary key, btree, for table "emaj.emaj_seq_hole"
-Tablespace: "tspemaj"
 
       Sequence "emaj.emaj_seq_hole_sqhl_id_seq"
     Column     |  Type   |           Value           
@@ -7167,8 +6968,7 @@ Owned by: emaj.emaj_seq_hole.sqhl_id
  sequ_is_cycled | boolean                  | not null
  sequ_is_called | boolean                  | not null
 Indexes:
-    "emaj_sequence_pkey" PRIMARY KEY, btree (sequ_schema, sequ_name, sequ_datetime), tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "emaj_sequence_pkey" PRIMARY KEY, btree (sequ_schema, sequ_name, sequ_datetime)
 
              Index "emaj.emaj_sequence_pkey"
     Column     |           Type           |  Definition   
@@ -7177,7 +6977,6 @@ Tablespace: "tspemaj"
  sequ_name     | text                     | sequ_name
  sequ_datetime | timestamp with time zone | sequ_datetime
 primary key, btree, for table "emaj.emaj_sequence"
-Tablespace: "tspemaj"
 
       Sequence "emaj.emaj_sequence_sequ_id_seq"
     Column     |  Type   |           Value           

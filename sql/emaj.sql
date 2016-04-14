@@ -34,9 +34,9 @@ $tmp$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
     END IF;
--- check postgres version is >= 8.3
---   (warning, the test is alphanumeric => to be adapted when pg 10.0 will appear!)
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') < '8.3' THEN
+-- check postgres version is >= 9.1
+    IF cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
+            to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER) < 90q1 THEN
       RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
     END IF;
 -- check there is no E-Maj secondary schema remaining (that could later lead to error)

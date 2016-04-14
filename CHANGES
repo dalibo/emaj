@@ -3,6 +3,7 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+  - PostgreSQL versions prior 9.1 are not supported by E-Maj anymore.
 
 Bug fixes:
 

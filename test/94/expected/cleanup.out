@@ -39,7 +39,6 @@ drop role emaj_regression_tests_anonym_user;
 -- reset tspemaj tablespace to its right name if it has been changed by installation script  
 -----------------------------
 alter tablespace tspemaj_renamed rename to tspemaj;
-ERROR:  tablespace "tspemaj_renamed" does not exist
 --------------------------------------------
 -- Dump the regression database (once the test roles have been dropped)
 --------------------------------------------

@@ -3,25 +3,20 @@
 -----------------------------
 -- install dblink
 -----------------------------
--- this 8.4.22 version seems compatible with 8.3 to 9.4 pg version
-\i ~/postgresql-8.4.22/contrib/dblink/dblink.sql
+CREATE EXTENSION dblink;
 
 -----------------------------
--- for postgres cluster 8.3 and 9.1, temporarily rename tspemaj tablespace to test both cases
+-- for postgres cluster 9.1 and 9.4, temporarily rename tspemaj tablespace to test both cases
 -----------------------------
-CREATE or REPLACE FUNCTION public.emaj_tmp() 
-RETURNS VOID LANGUAGE plpgsql AS 
-$tmp$
+DO LANGUAGE plpgsql 
+$$
   DECLARE
   BEGIN
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('8.3', '9.1') THEN
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('9.1', '9.4') THEN
       ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
     END IF;
-    RETURN; 
   END;
-$tmp$;
-SELECT public.emaj_tmp();
-DROP FUNCTION public.emaj_tmp();
+$$;
 
 -----------------------------
 -- emaj installation
