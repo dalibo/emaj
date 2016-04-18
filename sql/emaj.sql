@@ -1858,6 +1858,7 @@ $_check_fk_groups$
           AND NOT EXISTS                                            -- referenced table outside the groups
               (SELECT NULL FROM emaj.emaj_relation
                  WHERE rel_schema = nf.nspname AND rel_tblseq = tf.relname AND rel_group = ANY (v_groupNames))
+        ORDER BY 1,2,3
       LOOP
       RAISE WARNING '_check_fk_groups: Foreign key %, from table %.%, references %.% that is outside groups (%).',
                 r_fk.conname,r_fk.rel_schema,r_fk.rel_tblseq,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
@@ -1877,6 +1878,7 @@ $_check_fk_groups$
           AND NOT EXISTS                                              -- referenced table outside the groups
               (SELECT NULL FROM emaj.emaj_relation
                  WHERE rel_schema = n.nspname AND rel_tblseq = t.relname AND rel_group = ANY (v_groupNames))
+        ORDER BY 1,2,3
       LOOP
       RAISE WARNING '_check_fk_groups: table %.% is referenced by foreign key % from table %.% that is outside groups (%).',
                 r_fk.rel_schema,r_fk.rel_tblseq,r_fk.conname,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
