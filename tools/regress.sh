@@ -7,24 +7,24 @@
 #---------------------------------------------#
 EMAJ_HOME="/home/postgres/proj/emaj"
 
-PGBIN91="/usr/local/pg9121/bin"
 PGPORT91="5491"
+PGDIR91="/usr/local/pg9121"
 PGREG91="/home/postgres/postgresql-9.1.21/src/test/regress"
 
-PGBIN92="/usr/local/pg9216/bin"
 PGPORT92="5492"
+PGDIR92="/usr/local/pg9216"
 PGREG92="/home/postgres/postgresql-9.2.16/src/test/regress"
 
-PGBIN93="/usr/local/pg9312/bin"
 PGPORT93="5493"
+PGDIR93="/usr/local/pg9312"
 PGREG93="/home/postgres/postgresql-9.3.12/src/test/regress"
 
-PGBIN94="/usr/local/pg947/bin"
 PGPORT94="5494"
+PGDIR94="/usr/local/pg947"
 PGREG94="/home/postgres/postgresql-9.4.7/src/test/regress"
 
-PGBIN95="/usr/local/pg952/bin"
 PGPORT95="5495"
+PGDIR95="/usr/local/pg952"
 PGREG95="/home/postgres/postgresql-9.5.2/src/test/regress"
 
 #---------------------------------------------#
@@ -37,7 +37,7 @@ PGREG95="/home/postgres/postgresql-9.5.2/src/test/regress"
 reg_test_version()
 {
 # initialisation
-	eval RTVBIN=\${PGBIN$1}
+	eval RTVBIN=\${PGDIR$1}/bin
 	eval RTVPORT=\${PGPORT$1}
 	eval RTVREG=\${PGREG$1}
 	export PGPORT=$RTVPORT
@@ -62,7 +62,7 @@ reg_test_version()
 migrat_test()
 {
 	echo "Reload $1 regression database from $2 dump"
-	eval RTVBIN=\${PGBIN$1}
+	eval RTVBIN=\${PGDIR$1}/bin
 	eval RTVPORT=\${PGPORT$1}
 	eval RTVREG=\${PGREG$1}
 	cd $EMAJ_HOME/test/$1
@@ -85,10 +85,11 @@ migrat_test()
 cd $EMAJ_HOME
 
 # update the emaj.control files with the proper emaj version
-# REM: this part is currently in comment, waiting for a fix to solving the sequences dump issue in EXTENSION management
-#sed 's/<directory containing installation scripts, if not SHAREDIR>/\/home\/postgres\/proj\/emaj\/sql/' sql/emaj.control_base >/usr/local/pg913/share/postgresql/extension/emaj.control
-#sed -i 's/0.12.0/0.10.1/g' /usr/local/pg913/share/postgresql/extension/emaj.control
-#cp /usr/local/pg913/share/postgresql/extension/emaj.control /usr/local/pg921/share/postgresql/extension/emaj.control
+echo "Customizing emaj.control files..."
+for dir in $PGDIR91 $PGDIR92 $PGDIR93 $PGDIR94 $PGDIR95 ; do
+	sudo cp sql/emaj.control $dir/share/postgresql/extension/emaj.control
+	sudo sed -ri "s/^#directory\s+= .*$/directory = '\/home\/postgres\/proj\/emaj\/sql\/'/" $dir/share/postgresql/extension/emaj.control
+done
 
 # refresh both installation scripts before running tests
 echo " "
@@ -107,6 +108,7 @@ echo "	d- pg 9.4 (port $PGPORT94) standart test"
 echo "	e- pg 9.5 (port $PGPORT95) standart test"
 echo "	m- pg 9.1 dump and 9.5 restore"
 echo "	t- all tests, from a to h + M"
+echo "	x- pg 9.1 (port $PGPORT91) created with psql script"
 echo "	A- pg 9.1 (port $PGPORT91) starting with E-Maj migration"
 echo "	B- pg 9.2 (port $PGPORT92) starting with E-Maj migration"
 echo "	C- pg 9.3 (port $PGPORT93) starting with E-Maj migration"
@@ -122,21 +124,21 @@ read ANSWER
 
 # execute the test
 case $ANSWER in
-	a) reg_test_version "91" "psql";;
-#	a) reg_test_version "91" "ext";;
-	b) reg_test_version "92" "psql";;
-	c) reg_test_version "93" "psql";;
-	d) reg_test_version "94" "psql";;
-	e) reg_test_version "95" "psql";;
+	a) reg_test_version "91" "ext";;
+	b) reg_test_version "92" "ext";;
+	c) reg_test_version "93" "ext";;
+	d) reg_test_version "94" "ext";;
+	e) reg_test_version "95" "ext";;
 	m) migrat_test "95" "91";;
 	t)
-		reg_test_version "91" "psql"
-		reg_test_version "92" "psql"
-		reg_test_version "93" "psql"
-		reg_test_version "94" "psql"
-		reg_test_version "95" "psql"
+		reg_test_version "91" "ext"
+		reg_test_version "92" "ext"
+		reg_test_version "93" "ext"
+		reg_test_version "94" "ext"
+		reg_test_version "95" "ext"
 		migrat_test "95" "91"
 		;;
+	x) reg_test_version "91" "psql";;
 	A) reg_test_version "91" "psql_mig";;
 #	A) reg_test_version "91" "ext_mig";;
 	B) reg_test_version "92" "psql_mig";;

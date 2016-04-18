@@ -4,32 +4,36 @@
 --
 
 -----------------------------
--- for postgres cluster 8.3 and 9.1, temporarily rename tspemaj tablespace 
+-- install dblink
 -----------------------------
-CREATE or REPLACE FUNCTION public.emaj_tmp() 
-RETURNS VOID LANGUAGE plpgsql AS 
-$tmp$
-  DECLARE
-  BEGIN
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('8.3', '9.1') THEN
-      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
-    END IF;
-    RETURN; 
-  END;
-$tmp$;
-SELECT public.emaj_tmp();
-DROP FUNCTION public.emaj_tmp();
+CREATE EXTENSION IF NOT EXISTS dblink;
 
 -----------------------------
--- emaj installation using psql script
+-- for postgres cluster 9.1 and 9.4, temporarily rename tspemaj tablespace to test both cases
+-----------------------------
+DO LANGUAGE plpgsql 
+$$
+  DECLARE
+  BEGIN
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('9.1', '9.4') THEN
+      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
+    END IF;
+  END;
+$$;
+
+-----------------------------
+-- emaj installation using the psql script
 -----------------------------
 \i sql/emaj.sql
 
 -- check the extension is available in the right version 
 select * from pg_available_extension_versions where name = 'emaj';
 
+-- look at all available update paths
+select * from pg_extension_update_paths('emaj');
+
 -- transform emaj object as extension
-CREATE EXTENSION emaj FROM unpackaged;
+CREATE EXTENSION emaj VERSION '1.3.0' FROM unpackaged;
 
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
@@ -46,7 +50,7 @@ select proname from pg_proc,pg_namespace where pronamespace = pg_namespace.oid a
 -----------------------------
 -- emaj installation as extension
 -----------------------------
-CREATE EXTENSION emaj;
+CREATE EXTENSION emaj VERSION 'next_version';
 
 -----------------------------
 -- check installation

@@ -36,7 +36,7 @@ $tmp$
     END IF;
 -- check postgres version is >= 9.1
     IF cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
-            to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER) < 90q1 THEN
+            to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER) < 901 THEN
       RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
     END IF;
 -- check there is no E-Maj secondary schema remaining (that could later lead to error)
