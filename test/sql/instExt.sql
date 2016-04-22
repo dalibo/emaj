@@ -22,32 +22,6 @@ $$
 $$;
 
 -----------------------------
--- emaj installation using the psql script
------------------------------
-\i sql/emaj.sql
-
--- check the extension is available in the right version 
-select * from pg_available_extension_versions where name = 'emaj';
-
--- look at all available update paths
-select * from pg_extension_update_paths('emaj');
-
--- transform emaj object as extension
-CREATE EXTENSION emaj VERSION '1.3.0' FROM unpackaged;
-
--- check impact in catalog
-select extname, extversion from pg_extension where extname = 'emaj';
-
--- drop the extension
-DROP EXTENSION emaj;
-
--- verify that all emaj tables, types and functions have been included in the extension and then deleted 
--- both tables and functions list should be empty 
-
-select relname from pg_class,pg_namespace where relnamespace = pg_namespace.oid and nspname = 'emaj';
-select proname from pg_proc,pg_namespace where pronamespace = pg_namespace.oid and nspname = 'emaj';
-
------------------------------
 -- emaj installation as extension
 -----------------------------
 CREATE EXTENSION emaj VERSION 'next_version';
