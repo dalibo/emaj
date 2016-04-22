@@ -6340,252 +6340,39 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
 
 ------------------------------------
 --                                --
--- rights to emaj roles           --
+-- rights on emaj components      --
 --                                --
 ------------------------------------
 
--- emaj_adm needs the appropriate rights on emaj objects to execute all emaj functions
+-- global rights on functions
+--
+
+-- revoke all rights on all created functions from PUBLIC
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA emaj FROM PUBLIC;
+
+-- rights given to emaj_adm
+--
+-- emaj_adm can execute all emaj functions and access all emaj tables without any restrictions
 
 GRANT ALL ON SCHEMA emaj TO emaj_adm;
+GRANT ALL ON ALL TABLES IN SCHEMA emaj TO emaj_adm;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA emaj TO emaj_adm;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
 
-GRANT ALL ON SEQUENCE emaj.emaj_global_seq TO emaj_adm;
-
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_param        TO emaj_adm;
-GRANT SELECT ON emaj.emaj_visible_param                     TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_hist         TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_group_def    TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_group        TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_relation     TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_mark         TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_sequence     TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_seq_hole     TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk         TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_session TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_plan    TO emaj_adm;
-GRANT SELECT,INSERT,UPDATE,DELETE ON emaj.emaj_rlbk_stat    TO emaj_adm;
-
-GRANT ALL ON SEQUENCE emaj.emaj_hist_hist_id_seq     TO emaj_adm;
-GRANT ALL ON SEQUENCE emaj.emaj_mark_mark_id_seq     TO emaj_adm;
-GRANT ALL ON SEQUENCE emaj.emaj_rlbk_rlbk_id_seq     TO emaj_adm;
-GRANT ALL ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_adm;
-GRANT ALL ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_adm;
-
--- emaj_viewer can only view the emaj objects (content of emaj and log tables)
+-- rights given to emaj_viewer
+--
+-- emaj_viewer can only 
+-- ... view the emaj objects, i.e. the content of emaj and log tables,
+--     except the emaj_param table that emaj_viewer should only see through the emaj_visible_param view 
+--     that hides the password used by the configured dblink user
 
 GRANT USAGE ON SCHEMA emaj TO emaj_viewer;
+GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
+GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 
-GRANT SELECT ON SEQUENCE emaj.emaj_global_seq TO emaj_viewer;
+REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
-GRANT SELECT ON emaj.emaj_visible_param       TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_hist                TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_group_def           TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_group               TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_relation            TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_mark                TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_sequence            TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_seq_hole            TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_rlbk                TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_rlbk_session        TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_rlbk_plan           TO emaj_viewer;
-GRANT SELECT ON emaj.emaj_rlbk_stat           TO emaj_viewer;
-
-GRANT SELECT ON SEQUENCE emaj.emaj_hist_hist_id_seq     TO emaj_viewer;
-GRANT SELECT ON SEQUENCE emaj.emaj_mark_mark_id_seq     TO emaj_viewer;
-GRANT SELECT ON SEQUENCE emaj.emaj_rlbk_rlbk_id_seq     TO emaj_viewer;
-GRANT SELECT ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_viewer;
-GRANT SELECT ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_viewer;
-
--- revoke grants on all functions from PUBLIC
-REVOKE ALL ON FUNCTION emaj._pg_version_num() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._dblink_open_cnx(v_cnxName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._dblink_close_cnx(v_cnxName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._purge_hist() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._get_mark_name(TEXT, TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._check_names_array(v_groupNames TEXT[], v_type TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._check_group_content(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._forbid_truncate_fnct() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._log_truncate_fnct() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._create_tbl(grpdef emaj.emaj_group_def, v_groupName TEXT, v_isRollbackable BOOLEAN, v_defTsp TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._create_seq(grpdef emaj.emaj_group_def, v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._drop_seq(r_rel emaj.emaj_relation) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, v_lastGlobalSeq BIGINT, v_nbSession INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._delete_log_tbl(r_rel emaj.emaj_relation, v_timestamp TIMESTAMPTZ, v_lastGlobalSeq BIGINT, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, v_timestamp TIMESTAMPTZ, v_isLoggedRlbk BOOLEAN, v_lastSequenceId BIGINT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_conditions TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_alter_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT, v_resetLog BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_protect_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_session_lock(v_rlbkId INT, v_session INT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_start_mark(v_rlbkId INT, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_end(v_rlbkId INT, v_multiGroup BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rlbk_error(v_rlbkId INT,v_msg TEXT, v_cnxName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_cleanup_rollback_state() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._reset_group(v_groupName TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_rollback_activity() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._rollback_activity() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_gen_sql_groups(v_groupName TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._verify_all_groups() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj._verify_all_schemas() FROM PUBLIC;
-REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
-
--- give appropriate rights on functions to emaj_adm role
-GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._dblink_open_cnx(v_cnxName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._dblink_close_cnx(v_cnxName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._purge_hist() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._check_names_array(v_groupNames TEXT[], v_type TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._check_group_content(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._check_new_mark(INOUT v_mark TEXT, v_groupNames TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._forbid_truncate_fnct() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._log_truncate_fnct() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._create_log_schema(v_logSchemaName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._create_tbl(grpdef emaj.emaj_group_def, v_groupName TEXT, v_isRollbackable BOOLEAN, v_defTsp TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._create_seq(grpdef emaj.emaj_group_def, v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._drop_seq(r_rel emaj.emaj_relation) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, v_lastGlobalSeq BIGINT, v_nbSession INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._delete_log_tbl(r_rel emaj.emaj_relation, v_timestamp TIMESTAMPTZ, v_lastGlobalSeq BIGINT, v_lastSequenceId BIGINT, v_lastSeqHoleId BIGINT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, v_timestamp TIMESTAMPTZ, v_isLoggedRlbk BOOLEAN, v_lastSequenceId BIGINT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_conditions TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._check_fk_groups(v_groupName TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_drop_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_force_drop_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_alter_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT, v_resetLog BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_protect_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_session_lock(v_rlbkId INT, v_session INT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_start_mark(v_rlbkId INT, v_multiGroup BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_end(v_rlbkId INT, v_multiGroup BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_error(v_rlbkId INT,v_msg TEXT, v_cnxName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_reset_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._reset_group(v_groupName TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_activity() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._rollback_activity() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_adm;
-GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
-
--- give appropriate rights on functions to emaj_viewer role
+-- ... and execute a subset of emaj functions for which rights are explicitely granted
 GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;

@@ -6,6 +6,8 @@ Enhancements:
   - E-Maj is now installed as a standard extension using the CREATE
     EXTENSION SQL command.
   - PostgreSQL versions prior 9.1 are not supported by E-Maj anymore.
+  - various changes in the functions code to take benefit from the features 
+    brought by 8.4 to 9.1 postgres versions.
 
 Bug fixes:
 
