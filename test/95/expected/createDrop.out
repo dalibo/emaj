@@ -41,13 +41,11 @@ insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
 -- invalid group names
 select emaj.emaj_create_group(NULL);
 ERROR:  emaj_create_group: group name can't be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 select emaj.emaj_create_group('',false);
 ERROR:  emaj_create_group: group name can't be NULL or empty.
 -- group is unknown in emaj_group_def
 select emaj.emaj_create_group('unknownGroup');
 ERROR:  emaj_create_group: Group unknownGroup is unknown in emaj_group_def table.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 select emaj.emaj_create_group('unknownGroup',false);
 ERROR:  emaj_create_group: Group unknownGroup is unknown in emaj_group_def table.
 -- unknown schema or table in emaj_group_def
@@ -55,7 +53,6 @@ select emaj.emaj_create_group('dummyGrp1');
 ERROR:  _check_group_content: one or several tables or sequences do not exist (dummySchema.mytbl4, myschema1.dummyTable).
 CONTEXT:  SQL statement "SELECT emaj._check_group_content(v_groupName)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 -- group with a temp table
 begin;
   CREATE TEMPORARY TABLE myTempTbl (
@@ -70,7 +67,6 @@ begin;
 ERROR:  _create_tbl: table mytemptbl is a temporary table.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 rollback;
 -- group with an unlogged table
 begin;
@@ -79,7 +75,6 @@ begin;
 ERROR:  _create_tbl: table myunloggedtbl is an unlogged table.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
@@ -93,11 +88,9 @@ begin;
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 ERROR:  _create_seq: Defining a secondary log schema is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 77 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 rollback;
 -- sequence with an emaj names prefix defined in the emaj_group_def table
 begin;
@@ -106,11 +99,9 @@ begin;
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 ERROR:  _create_seq: Defining an emaj names prefix is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 77 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 rollback;
 -- sequence with tablespace defined in the emaj_group_def table
 begin;
@@ -119,11 +110,9 @@ begin;
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 ERROR:  _create_seq: Defining log tablespaces is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 77 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 rollback;
 -- table with invalid tablespace
 begin;
@@ -134,7 +123,6 @@ CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log ( LIKE myschema1
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,text,boolean,text) line 85 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 rollback;
 -- already existing secondary schema
 begin;
@@ -143,7 +131,6 @@ begin;
 ERROR:  _create_log_schema: schema emajb should not exist. Drop it manually, or modify emaj_group_def table's content.
 CONTEXT:  SQL statement "SELECT emaj._create_log_schema(r_schema.log_schema)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 47 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 rollback;
 -- conflict on emaj names prefix inside the group to create
 begin;
@@ -154,7 +141,6 @@ begin;
 ERROR:  _check_group_content: one or several emaj prefix are configured for several tables in the group (myschema1_mytbl4, samePrefix).
 CONTEXT:  SQL statement "SELECT emaj._check_group_content(v_groupName)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 rollback;
 -- conflict on emaj names prefix with already create groups
 begin;
@@ -163,7 +149,6 @@ begin;
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
  emaj_create_group 
 -------------------
                  6
@@ -175,14 +160,12 @@ PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 ERROR:  _check_group_content: one or several emaj prefix are already used (myschema1_mytbl2, samePrefix).
 CONTEXT:  SQL statement "SELECT emaj._check_group_content(v_groupName)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
  emaj_create_group 
 -------------------
                  6
@@ -228,7 +211,6 @@ select emaj.emaj_create_group('myGroup4');
 WARNING:  _create_tbl: table myschema4.mytblm has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
  emaj_create_group 
 -------------------
                  3
@@ -244,11 +226,9 @@ select emaj.emaj_create_group('dummyGrp3');
 ERROR:  _check_group_content: one or several tables already belong to another group (myschema1.mytbl1 in myGroup1, myschema2.mytbl2 in myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_group_content(v_groupName)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 -- already created
 select emaj.emaj_create_group('myGroup2');
 ERROR:  emaj_create_group: group myGroup2 is already created.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 -- impact of created groups
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  nspname  
@@ -494,7 +474,6 @@ select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
  emaj_create_group 
 -------------------
                  6
@@ -520,11 +499,9 @@ begin;
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
 PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
-PL/pgSQL function emaj.emaj_create_group(text) line 7 at RETURN
  emaj_create_group 
 -------------------
                  8

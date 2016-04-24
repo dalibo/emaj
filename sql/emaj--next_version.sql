@@ -656,7 +656,7 @@ $_check_names_array$
     v_outputNames            TEXT[];
     v_i                      INT;
   BEGIN
-    IF array_upper(v_names,1) >= 1 THEN
+    IF v_names IS NOT NULL AND array_upper(v_names,1) >= 1 THEN
 -- if there are elements, build the result array
       FOR v_i IN 1 .. array_upper(v_names,1) LOOP
 -- look for not NULL & not empty name
@@ -1875,26 +1875,12 @@ $_lock_groups$
   END;
 $_lock_groups$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT)
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_create_group$
--- This function is the simplified form of the emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN) function
--- The created groups are considered 'rollbackable'
--- Input: group name
--- Output: number of processed tables and sequences
-  BEGIN
-    RETURN emaj.emaj_create_group(v_groupName,true);
-  END;
-$emaj_create_group$;
-COMMENT ON FUNCTION emaj.emaj_create_group(TEXT) IS
-$$Creates a rollbackable E-Maj group.$$;
-
-CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN DEFAULT true)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_create_group$
 -- This function creates emaj objects for all tables of a group
 -- It also creates the secondary E-Maj schemas when needed
--- Input: group name, boolean indicating wether the group is rollbackable or not
+-- Input: group name, boolean indicating wether the group is rollbackable or not (true by default)
 -- Output: number of processed tables and sequences
   DECLARE
     v_nbTbl                  INT = 0;
@@ -2345,20 +2331,7 @@ $emaj_alter_group$;
 COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT) IS
 $$Alter an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_start_group$
--- This function activates the log triggers of all the tables for a group and set a first mark
--- This is the short form for emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN)
---   where v_resetLog is true.
-  BEGIN
-    RETURN emaj.emaj_start_group(v_groupName, v_mark, true);
-  END;
-$emaj_start_group$;
-COMMENT ON FUNCTION emaj.emaj_start_group(TEXT,TEXT) IS
-$$Starts an E-Maj group (short form).$$;
-
-CREATE OR REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN DEFAULT true)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_start_group$
 -- This function activates the log triggers of all the tables for a group and set a first mark
@@ -2367,7 +2340,7 @@ $emaj_start_group$
 --        name of the mark to set
 --          '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
 --          a null or '' mark is transformed into 'MARK_%',
---        boolean indicating whether the log tables of the group must be reset.
+--        boolean indicating whether the log tables of the group must be reset, true by default.
 -- Output: number of processed tables and sequences
   DECLARE
     v_nbTblSeq               INT;
@@ -2386,20 +2359,7 @@ $emaj_start_group$;
 COMMENT ON FUNCTION emaj.emaj_start_group(TEXT,TEXT,BOOLEAN) IS
 $$Starts an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_start_groups$
--- This function activates the log triggers of all the tables for a groups array and set a first mark
--- This is the short form for emaj.emaj_start_groups(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN)
---   where v_resetLog is true.
-  BEGIN
-    RETURN emaj.emaj_start_groups(v_groupNames, v_mark, true);
-  END;
-$emaj_start_groups$;
-COMMENT ON FUNCTION emaj.emaj_start_groups(TEXT[],TEXT) IS
-$$Starts several E-Maj groups (short form).$$;
-
-CREATE OR REPLACE FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT, v_resetLog BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT, v_resetLog BOOLEAN DEFAULT true)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_start_groups$
 -- This function activates the log triggers of all the tables for a groups array and set a first mark
@@ -2407,7 +2367,7 @@ $emaj_start_groups$
 --        name of the mark to set
 --          '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
 --          a null or '' mark is transformed into 'MARK_%',
---        boolean indicating whether the log tables of the group must be reset.
+--        boolean indicating whether the log tables of the group must be reset, true by default.
 -- Output: total number of processed tables and sequences
   DECLARE
     v_nbTblSeq               INT;
@@ -2510,36 +2470,12 @@ $_start_groups$
   END;
 $_start_groups$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_stop_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT DEFAULT 'STOP_%')
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_stop_group$
 -- This function de-activates the log triggers of all the tables for a group.
 -- Execute several emaj_stop_group functions for the same group doesn't produce any error.
--- Input: group name
--- Output: number of processed tables and sequences
-  DECLARE
-    v_nbTblSeq               INT;
-  BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES ('STOP_GROUP', 'BEGIN', v_groupName);
--- call the common _stop_groups function
-    SELECT emaj._stop_groups(array[v_groupName], 'STOP_%', false, false) INTO v_nbTblSeq;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('STOP_GROUP', 'END', v_groupName, v_nbTblSeq || ' tables/sequences processed');
-    RETURN v_nbTblSeq;
-  END;
-$emaj_stop_group$;
-COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT) IS
-$$Stops an E-Maj group.$$;
-
-CREATE OR REPLACE FUNCTION emaj.emaj_stop_group(v_groupName TEXT, v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_stop_group$
--- This function de-activates the log triggers of all the tables for a group.
--- Execute several emaj_stop_group functions for the same group doesn't produce any error.
--- Input: group name, stop mark name to set
+-- Input: group name, stop mark name to set (by default, STOP_<current timestamp>)
 -- Output: number of processed tables and sequences
   DECLARE
     v_nbTblSeq               INT;
@@ -2558,36 +2494,12 @@ $emaj_stop_group$;
 COMMENT ON FUNCTION emaj.emaj_stop_group(TEXT,TEXT) IS
 $$Stops an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[])
+CREATE OR REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT DEFAULT 'STOP_%')
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_stop_groups$
 -- This function de-activates the log triggers of all the tables for a groups array.
 -- Groups already not in LOGGING state are simply not processed.
--- Input: array of group names
--- Output: number of processed tables and sequences
-  DECLARE
-    v_nbTblSeq               INT;
-  BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES ('STOP_GROUPS', 'BEGIN', array_to_string(v_groupNames,','));
--- call the common _stop_groups function
-    SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false) INTO v_nbTblSeq;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('STOP_GROUPS', 'END', array_to_string(v_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
-    RETURN v_nbTblSeq;
-  END;
-$emaj_stop_groups$;
-COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[]) IS
-$$Stops several E-Maj groups.$$;
-
-CREATE OR REPLACE FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_stop_groups$
--- This function de-activates the log triggers of all the tables for a groups array.
--- Groups already not in LOGGING state are simply not processed.
--- Input: array of group names, stop mark name to set
+-- Input: array of group names, stop mark name to set (by default, STOP_<current timestamp>)
 -- Output: number of processed tables and sequences
   DECLARE
     v_nbTblSeq               INT;
@@ -5530,7 +5442,7 @@ $emaj_snap_log_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[] DEFAULT NULL)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_group$
 -- This function generates a SQL script representing all updates performed on a tables group between 2 marks
@@ -5540,6 +5452,7 @@ $emaj_gen_sql_group$
 --        - start mark, NULL representing the first mark
 --        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
 --        - absolute pathname describing the file that will hold the result
+--        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
     v_cumNbSQL              INT;
@@ -5548,42 +5461,12 @@ $emaj_gen_sql_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('GEN_SQL_GROUP', 'BEGIN', v_groupName,
        CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
-       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
-       || v_location);
+       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END ||
+       ' towards ' || v_location ||
+       CASE WHEN v_tblseqs IS NOT NULL THEN ' with tables/sequences filtering' ELSE '' END );
 -- call the _gen_sql_groups() function that effectively processes the request
-    SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location, NULL) INTO v_cumNbSQL;
--- insert end in the history and return
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUP', 'END', v_groupName, v_cumNbSQL || ' generated statements');
-    RETURN v_cumNbSQL;
-  END;
-$emaj_gen_sql_group$;
-COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
-$$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
-
-CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
-$emaj_gen_sql_group$
--- This function generates a SQL script representing all updates performed on a tables group between 2 marks
--- or beetween a mark and the current situation. The result is stored into an external file.
--- It call the _gen_sql_groups() function to effetively process the request
--- Input: - tables group
---        - start mark, NULL representing the first mark
---        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
---        - absolute pathname describing the file that will hold the result
---        - array of schema qualified table and sequence names to only process those tables and sequences
--- Output: number of generated SQL statements (non counting comments and transaction management)
-  DECLARE
-    v_cumNbSQL              INT;
-  BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUP', 'BEGIN', v_groupName,
-       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
-       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
-       || v_location || ' with tables/sequences filtering');
--- call the _gen_sql_groups() function that effectively processes the request
-    SELECT emaj._gen_sql_groups(array[v_groupName], v_firstMark, v_lastMark, v_location, emaj._check_names_array(v_tblseqs,'table/sequence')) INTO v_cumNbSQL;
+    SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs) 
+      INTO v_cumNbSQL;
 -- insert end in the history and return
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('GEN_SQL_GROUP', 'END', v_groupName, v_cumNbSQL || ' generated statements');
@@ -5593,7 +5476,7 @@ $emaj_gen_sql_group$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[] DEFAULT NULL)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a set of tables groups between 2 marks
@@ -5603,6 +5486,7 @@ $emaj_gen_sql_groups$
 --        - start mark, NULL representing the first mark
 --        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
 --        - absolute pathname describing the file that will hold the result
+--        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
     v_cumNbSQL               INT;
@@ -5611,44 +5495,11 @@ $emaj_gen_sql_groups$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('GEN_SQL_GROUPS', 'BEGIN', array_to_string(v_groupNames,','),
        CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
-       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
-       || v_location);
+       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || 
+       ' towards ' || v_location || 
+       CASE WHEN v_tblseqs IS NOT NULL THEN ' with tables/sequences filtering' ELSE '' END );
 -- call the _gen_sql_groups() function that effectively processes the request
-    SELECT emaj._gen_sql_groups(emaj._check_names_array(v_groupNames,'group'), v_firstMark, v_lastMark, v_location, NULL)
-      INTO v_cumNbSQL;
--- insert end in the history and return
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUPS', 'END', array_to_string(v_groupNames,','), v_cumNbSQL || ' generated statements');
-    RETURN v_cumNbSQL;
-  END;
-$emaj_gen_sql_groups$;
-COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) IS
-$$Generates a sql script corresponding to all updates performed on a set of tables groups between two marks and stores it into a given file.$$;
-
-CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
-$emaj_gen_sql_groups$
--- This function generates a SQL script representing all updates performed on a set of tables groups between 2 marks
--- or beetween a mark and the current situation. The result is stored into an external file.
--- It call the _gen_sql_groups() function to effetively process the request
--- Input: - tables groups array
---        - start mark, NULL representing the first mark
---        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
---        - absolute pathname describing the file that will hold the result
---        - array of schema qualified table and sequence names to only process those tables and sequences
--- Output: number of generated SQL statements (non counting comments and transaction management)
-  DECLARE
-    v_cumNbSQL               INT;
-  BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('GEN_SQL_GROUPS', 'BEGIN', array_to_string(v_groupNames,','),
-       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
-       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
-       || v_location || ' with tables/sequences filtering');
--- call the _gen_sql_groups() function that effectively processes the request
-    SELECT emaj._gen_sql_groups(emaj._check_names_array(v_groupNames,'group'), v_firstMark, v_lastMark, v_location, emaj._check_names_array(v_tblseqs,'table/sequence'))
-      INTO v_cumNbSQL;
+    SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs) INTO v_cumNbSQL;
 -- insert end in the history and return
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('GEN_SQL_GROUPS', 'END', array_to_string(v_groupNames,','), v_cumNbSQL || ' generated statements');
@@ -5677,6 +5528,7 @@ $_gen_sql_groups$
   DECLARE
     v_pgVersion              INT = emaj._pg_version_num();
     v_groupIsLogging         BOOLEAN;
+    v_tblList                TEXT;
     v_cpt                    INT;
     v_firstMarkCopy          TEXT = v_firstMark;
     v_realFirstMark          TEXT;
@@ -5700,9 +5552,17 @@ $_gen_sql_groups$
     r_tblsq                  RECORD;
     r_rel                    emaj.emaj_relation%ROWTYPE;
   BEGIN
--- if the group names array is null, immediately return 0
+-- check group names array and stop the processing if it is null
+    v_groupNames = emaj._check_names_array(v_groupNames,'group');
     IF v_groupNames IS NULL THEN
       RETURN 0;
+    END IF;
+-- if table/sequence names are supplied, check them
+    IF v_tblseqs IS NOT NULL THEN
+      IF v_tblseqs = array[''] THEN
+        RAISE EXCEPTION '_gen_sql_groups: filtered table/sequence names array cannot be empty.';
+      END IF;
+      v_tblseqs = emaj._check_names_array(v_tblseqs,'table/sequence');
     END IF;
 -- check that each group ...
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
@@ -5713,13 +5573,14 @@ $_gen_sql_groups$
         RAISE EXCEPTION '_gen_sql_groups: group % has not been created.', v_groupNames[v_i];
       END IF;
 -- ... has no tables without pkey
-      SELECT count(*) INTO v_cpt FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
+      SELECT string_agg(rel_schema || '.' || rel_tblseq,',') INTO v_tblList
+        FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
         WHERE relnamespace = pg_namespace.oid
-          AND nspname = rel_schema AND relname =  rel_tblseq
+          AND nspname = rel_schema AND relname = rel_tblseq
           AND rel_group = v_groupNames[v_i] AND rel_kind = 'r'
           AND relhaspkey = false;
-      IF v_cpt > 0 THEN
-        RAISE EXCEPTION '_gen_sql_groups: Tables group % contains % tables without pkey.', v_groupNames[v_i], v_cpt;
+      IF v_tblList IS NOT NULL THEN
+        RAISE EXCEPTION '_gen_sql_groups: Tables group % contains tables without pkey (%).', v_groupNames[v_i], v_tblList;
       END IF;
 -- If the first mark supplied is NULL or empty, get the first mark for the current processed group
 --   (in fact the first one) and override the supplied first mark
@@ -5780,9 +5641,6 @@ $_gen_sql_groups$
 -- check the array of tables and sequences to filter, if supplied.
 -- each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups
     IF v_tblseqs IS NOT NULL THEN
-      IF v_tblseqs = array[''] THEN
-        RAISE EXCEPTION '_gen_sql_groups: filtered table/sequence names array cannot be empty.';
-      END IF;
       v_tblseqErr = '';
       FOR r_tblsq IN
         SELECT t FROM regexp_split_to_table(array_to_string(v_tblseqs,'?'),E'\\?') AS t

@@ -10,7 +10,9 @@ Enhancements:
     brought by 8.4 to 9.1 postgres versions.
 
 Bug fixes:
-
+  - the emaj_gen_sql_group() and emaj_gen_sql_groups() functions now properly  
+    generate an error if the "list of tables/sequences to filter" parameter 
+    is empty.
 
 1.3.0
 ------

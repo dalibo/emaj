@@ -8,7 +8,6 @@ select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
 PL/pgSQL function "emaj_create_group" line 64 at PERFORM
-PL/pgSQL function "emaj_create_group" line 7 at RETURN
  emaj_create_group 
 -------------------
                  6
@@ -18,11 +17,9 @@ select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
 PL/pgSQL function "emaj_create_group" line 84 at PERFORM
-PL/pgSQL function "emaj_create_group" line 7 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
 PL/pgSQL function "emaj_create_group" line 84 at PERFORM
-PL/pgSQL function "emaj_create_group" line 7 at RETURN
  emaj_create_group 
 -------------------
                  8
@@ -43,7 +40,6 @@ select emaj.emaj_start_group(NULL,NULL);
 ERROR:  _start_group: group <NULL> has not been created.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
 ERROR:  _start_group: group unknownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
@@ -55,7 +51,6 @@ CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
 PL/pgSQL function "_start_groups" line 46 at SQL statement
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 -- detection of too old group
 begin;
   update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
@@ -65,7 +60,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a missing application schema
 begin;
@@ -76,7 +70,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a missing application relation
 begin;
@@ -87,7 +80,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of relation type change (a table is now a sequence!)
 begin;
@@ -98,7 +90,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a missing E-Maj secondary schema
 begin;
@@ -109,7 +100,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a missing log trigger
 begin;
@@ -120,7 +110,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a missing log function
 begin;
@@ -131,7 +120,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a missing truncate trigger (pg 8.4+)
 begin;
@@ -142,7 +130,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a missing log table
 begin;
@@ -153,7 +140,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a change in the application table structure (new column)
 begin;
@@ -166,7 +152,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- detection of a change in the application table structure (column type change)
 begin;
@@ -178,7 +163,6 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_start_groups" line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 rollback;
 -- should be OK
 select emaj.emaj_start_group('myGroup1','Mark1');
@@ -232,19 +216,16 @@ CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
 PL/pgSQL function "_start_groups" line 43 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
 PL/pgSQL function "_start_groups" line 43 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
 PL/pgSQL function "_start_groups" line 43 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
  emaj_start_group 
 ------------------
                 8
@@ -279,7 +260,6 @@ select emaj.emaj_start_group('myGroup2','Mark3');
 ERROR:  _start_group: The group myGroup2 cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 -- check how truncate reacts  - tables are empty anyway
 -- ... for a rollbackable group (must be blocked in pg 8.4+)
 SET client_min_messages TO NOTICE;
@@ -379,11 +359,11 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 -- unknown group
 select emaj.emaj_stop_group(NULL);
 ERROR:  _stop_group: group <NULL> has not been created.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], 'STOP_%', false, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 select emaj.emaj_stop_group('unkownGroup');
 ERROR:  _stop_group: group unkownGroup has not been created.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], 'STOP_%', false, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 select emaj.emaj_stop_group(NULL,NULL);
 ERROR:  _stop_group: group <NULL> has not been created.
@@ -412,7 +392,7 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_group: Table myschema2."myTbl3" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], 'STOP_%', false, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 rollback;
 -- should be OK
@@ -454,7 +434,7 @@ select emaj.emaj_stop_group('myGroup2','Stop mark');
 -- warning, already stopped
 select emaj.emaj_stop_group('myGroup2');
 WARNING:  _stop_group: Group myGroup2 cannot be stopped because it is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], 'STOP_%', false, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
  emaj_stop_group 
 -----------------
@@ -484,13 +464,11 @@ CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
 PL/pgSQL function "_start_groups" line 43 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
 PL/pgSQL function "_start_groups" line 43 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
-PL/pgSQL function "emaj_start_group" line 6 at RETURN
  emaj_start_group 
 ------------------
                 8
@@ -559,11 +537,9 @@ select emaj.emaj_start_groups('{""}',NULL);
 WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
 WARNING:  _check_names_array: No group name to process.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
  emaj_start_groups 
 -------------------
                  0
@@ -587,7 +563,6 @@ CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
 PL/pgSQL function "_start_groups" line 46 at SQL statement
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
 -- second group is already started
 select emaj.emaj_start_group('myGroup2','Mark1',true);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
@@ -634,47 +609,38 @@ begin;
 WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
 WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
 WARNING:  _check_names_array: duplicate group name myGroup2.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
 WARNING:  _check_names_array: duplicate group name myGroup2.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
 WARNING:  _check_names_array: duplicate group name myGroup1.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema2.mytbl4 that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
 PL/pgSQL function "_start_groups" line 43 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
 WARNING:  _check_fk_groups: Foreign key mytbl4_col44_fkey, from table myschema2.mytbl4, references myschema1.mytbl1 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
 PL/pgSQL function "_start_groups" line 43 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
 PL/pgSQL function "_start_groups" line 43 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
 PL/pgSQL function "_start_groups" line 43 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-PL/pgSQL function "emaj_start_groups" line 6 at RETURN
  emaj_start_groups 
 -------------------
                 14
@@ -722,7 +688,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 -- NULL group names array
 select emaj.emaj_stop_groups(NULL);
 WARNING:  _check_names_array: No group name to process.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
  emaj_stop_groups 
 ------------------
@@ -732,10 +698,10 @@ PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 -- at least one group is unknown in emaj_group_def
 select emaj.emaj_stop_groups('{""}');
 WARNING:  _check_names_array: a group name is NULL or empty.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 WARNING:  _check_names_array: No group name to process.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
  emaj_stop_groups 
 ------------------
@@ -744,21 +710,21 @@ PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 
 select emaj.emaj_stop_groups('{"unknownGroup",""}');
 WARNING:  _check_names_array: a group name is NULL or empty.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 ERROR:  _stop_group: group unknownGroup has not been created.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 select emaj.emaj_stop_groups('{"myGroup1","unknownGroup"}');
 ERROR:  _stop_group: group unknownGroup has not been created.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 ERROR:  _stop_group: Table myschema2."myTbl3" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 rollback;
 -- should be OK
@@ -781,25 +747,25 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 -- with warning about group names array content
 select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1']);
 WARNING:  _check_names_array: a group name is NULL or empty.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 WARNING:  _check_names_array: a group name is NULL or empty.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 WARNING:  _check_names_array: duplicate group name myGroup2.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 WARNING:  _check_names_array: duplicate group name myGroup2.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 WARNING:  _check_names_array: duplicate group name myGroup1.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 WARNING:  _stop_group: Group myGroup1 cannot be stopped because it is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 WARNING:  _stop_group: Group myGroup2 cannot be stopped because it is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), 'STOP_%', true, false)"
+CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
  emaj_stop_groups 
 ------------------

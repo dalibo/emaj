@@ -511,13 +511,13 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    93
+    86
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname LIKE E'emaj\\_%';
  count 
 -------
-    45
+    38
 (1 row)
 
