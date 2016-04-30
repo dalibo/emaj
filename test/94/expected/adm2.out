@@ -16,12 +16,12 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
  emaj_start_groups 
@@ -103,29 +103,29 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback')
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 ERROR:  _check_new_mark: Group myGroup1 already contains a mark named Multi-1.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 46 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 45 at SQL statement
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 -- really start both groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1b', false);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
  emaj_start_groups 
@@ -683,12 +683,12 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
 select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 WARNING:  _check_fk_groups: table phil's schema3.phil's tbl1 is referenced by foreign key mytbl4_col44_fkey from table phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
  emaj_start_group 
@@ -1652,12 +1652,12 @@ PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
 select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
 WARNING:  _check_fk_groups: Foreign key mytbl2_col21_fkey, from table phil's schema3.myTbl2\, references phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 WARNING:  _check_fk_groups: table phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name is referenced by foreign key mytbl4_col44_fkey from table phil's schema3.mytbl4 that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupNames[v_i]])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
  emaj_start_group 

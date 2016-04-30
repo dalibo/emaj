@@ -2354,7 +2354,6 @@ $_start_groups$
 -- Output: number of processed tables
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_i                      INT;
     v_groupIsLogging         BOOLEAN;
     v_nbTb                   INT = 0;
@@ -2396,7 +2395,7 @@ $_start_groups$
 -- OK, lock all tables to get a stable point
 --   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
 --   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
-    IF v_pgVersion >= 905 THEN
+    IF emaj._pg_version_num() >= 905 THEN
       PERFORM emaj._lock_groups(v_groupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
     ELSE
       PERFORM emaj._lock_groups(v_groupNames,'ACCESS EXCLUSIVE',v_multiGroup);
@@ -2508,7 +2507,6 @@ $_stop_groups$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_validGroupNames        TEXT[];
     v_i                      INT;
     v_groupIsLogging         BOOLEAN;
@@ -2547,7 +2545,7 @@ $_stop_groups$
 -- lock all tables to get a stable point
 --   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
 --   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
-    IF v_pgVersion >= 905 THEN
+    IF emaj._pg_version_num() >= 905 THEN
       PERFORM emaj._lock_groups(v_validGroupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
     ELSE
       PERFORM emaj._lock_groups(v_validGroupNames,'ACCESS EXCLUSIVE',v_multiGroup);
@@ -4118,7 +4116,6 @@ RETURNS void LANGUAGE plpgsql AS
 $_rlbk_session_lock$
 -- It creates the session row in the emaj_rlbk_session table and then locks all the application tables for the session.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_stmt                   TEXT;
     v_isDblinkUsable         BOOLEAN = false;
     v_groupNames             TEXT[];
@@ -4176,7 +4173,7 @@ $_rlbk_session_lock$
 --     In the former case, the EXCLUSIVE mode blocks all concurrent update capabilities of all tables of the groups (including tables with no logged
 --     update to rollback), in order to ensure a stable state of the group at the end of the rollback operation). But these tables can be accessed
 --     by SELECT statements during the E-Maj rollback.
-          IF v_pgVersion < 905 AND r_tbl.disLogTrg THEN
+          IF emaj._pg_version_num() < 905 AND r_tbl.disLogTrg THEN
             v_lockmode = 'ACCESS EXCLUSIVE';
           ELSE
             v_lockmode = 'EXCLUSIVE';
