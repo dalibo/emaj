@@ -1751,40 +1751,40 @@ $_verify_groups$
 -- check all log tables have a structure consistent with the application tables they reference
 --      (same columns and same formats). It only returns one row per faulting table.
     FOR r_object IN
+      WITH cte_app_tables_columns AS (                -- application table's columns
+          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
+              AND rel_group = ANY (v_groups) AND rel_kind = 'r'),
+           cte_log_tables_columns AS (                -- log table's columns
+          SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema
+              AND relname = rel_log_table
+              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
+              AND rel_group = ANY (v_groups) AND rel_kind = 'r')
       SELECT DISTINCT rel_schema, rel_tblseq,
              'In group "' || rel_group || '", the structure of the application table "' ||
                rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' ||
              rel_log_schema || '"."' || rel_log_table || '").' AS msg
         FROM (
-          (                                       -- application table's columns
+          (                                        -- application table's columns
           SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
-            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
-              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
-              AND rel_group = ANY (v_groups) AND rel_kind = 'r'
+            FROM cte_app_tables_columns
           EXCEPT                                   -- minus log table's columns
           SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
-            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema AND relname = rel_log_table
-              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
-              AND rel_group = ANY (v_groups) AND rel_kind = 'r'
+            FROM cte_log_tables_columns
           )
           UNION
           (                                         -- log table's columns
           SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
-            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema AND relname = rel_log_table
-              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
-              AND rel_group = ANY (v_groups) AND rel_kind = 'r'
+            FROM cte_log_tables_columns
           EXCEPT                                    -- minus application table's columns
           SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
-            FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
-              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
-              AND rel_group = ANY (v_groups) AND rel_kind = 'r'
+            FROM cte_app_tables_columns
           )) AS t
         ORDER BY 1,2,3
--- TODO : use CTE to improve performance, when pg 8.3 will not be supported any more
     LOOP
       if v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
@@ -5797,7 +5797,7 @@ $_verify_all_groups$
                    AND pronamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
 -- check log and truncate triggers for all tables referenced in the emaj_relation table still exist
---   start with log trigger
+--   start with log triggers
     RETURN QUERY
       SELECT 'In group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
                rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
@@ -5807,13 +5807,13 @@ $_verify_all_groups$
               (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_log_trg'
                    AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
-                         -- do not issue a row if the application table does not exist,
-                         -- this case has been already detected
+                       -- do not issue a row if the application table does not exist,
+                       -- this case has been already detected
           AND EXISTS
               (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
---   then truncate trigger
+--   then truncate triggers
     RETURN QUERY
       SELECT 'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
              rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
@@ -5833,6 +5833,19 @@ $_verify_all_groups$
 --      (same columns and same formats). It only returns one row per faulting table.
     RETURN QUERY
       SELECT msg FROM (
+        WITH cte_app_tables_columns AS (                -- application table's columns
+            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
+                AND rel_kind = 'r'),
+             cte_log_tables_columns AS (                -- log table's columns
+            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema
+                AND relname = rel_log_table
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
+                AND rel_kind = 'r')
         SELECT DISTINCT rel_schema, rel_tblseq,
                'In group "' || rel_group || '", the structure of the application table "' ||
                  rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' ||
@@ -5840,32 +5853,18 @@ $_verify_all_groups$
           FROM (
             (                                           -- application table's columns
             SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
-              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-              WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
-                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
-                AND rel_kind = 'r'
+              FROM cte_app_tables_columns
             EXCEPT                                      -- minus log table's columns
             SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
-              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-              WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema
-                AND relname = rel_log_table
-                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
-                AND rel_kind = 'r'
+              FROM cte_log_tables_columns
             )
             UNION
             (                                           -- log table's columns
             SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
-              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-              WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema
-                AND relname = rel_log_table
-                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false AND attname NOT LIKE 'emaj%'
-                AND rel_kind = 'r'
+              FROM cte_log_tables_columns
             EXCEPT                                      --  minus application table's columns
             SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
-              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
-              WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
-                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = false
-                AND rel_kind = 'r'
+              FROM cte_app_tables_columns
             )) AS t
                            -- do not issue a row if the log or application table does not exist,
                            -- these cases have been already detected
@@ -5877,7 +5876,6 @@ $_verify_all_groups$
                  WHERE relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
         ) AS t;
--- TODO : use CTE to improve performance, when pg 8.3 will not be supported any more
     RETURN;
   END;
 $_verify_all_groups$;
@@ -5901,6 +5899,7 @@ $_verify_all_schemas$
 -- scan pg_class, pg_proc, pg_type, pg_conversion, pg_operator, pg_opclass
     RETURN QUERY
       SELECT msg FROM (
+        WITH cte_logschemas AS (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
 -- look for unexpected tables
         SELECT nspname, 1, 'In schema "' || nspname ||
                '", the table "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
@@ -5909,7 +5908,7 @@ $_verify_all_schemas$
              AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal tables
              AND NOT EXISTS                                                   -- exclude emaj log tables
                 (SELECT NULL FROM emaj.emaj_relation WHERE rel_log_schema = nspname AND rel_log_table = relname)
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected sequences
         SELECT nspname, 2, 'In schema "' || nspname ||
@@ -5919,7 +5918,7 @@ $_verify_all_schemas$
              AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal sequences
              AND NOT EXISTS                                                   -- exclude emaj log table sequences
                 (SELECT NULL FROM emaj.emaj_relation WHERE rel_log_schema = nspname AND rel_log_sequence = relname)
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected functions
         SELECT nspname, 3, 'In schema "' || nspname ||
@@ -5930,7 +5929,7 @@ $_verify_all_schemas$
                                                                               -- exclude emaj internal functions
              AND NOT EXISTS (                                                 -- exclude emaj log functions
                SELECT NULL FROM emaj.emaj_relation WHERE rel_log_schema = nspname AND rel_log_function = proname)
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected composite types
         SELECT nspname, 4, 'In schema "' || nspname ||
@@ -5939,7 +5938,7 @@ $_verify_all_schemas$
            WHERE relnamespace = pg_namespace.oid AND relkind = 'c'
              AND (nspname <> v_emajSchema OR (relname NOT LIKE E'emaj\\_%' AND relname NOT LIKE E'\\_%'))
                                                                               -- exclude emaj internal types
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected views
         SELECT nspname, 5, 'In schema "' || nspname ||
@@ -5947,48 +5946,44 @@ $_verify_all_schemas$
            FROM pg_catalog.pg_class, pg_catalog.pg_namespace
            WHERE relnamespace = pg_namespace.oid  AND relkind = 'v'
              AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal views
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected foreign tables
         SELECT nspname, 6, 'In schema "' || nspname ||
                '", the foreign table "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
            FROM pg_catalog.pg_class, pg_catalog.pg_namespace
            WHERE relnamespace = pg_namespace.oid  AND relkind = 'f'
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected domains
         SELECT nspname, 7, 'In schema "' || nspname ||
                '", the domain "' || nspname || '"."' || typname || '" is not an E-Maj component.' AS msg
            FROM pg_catalog.pg_type, pg_catalog.pg_namespace
            WHERE typnamespace = pg_namespace.oid AND typisdefined and typtype = 'd'
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected conversions
         SELECT nspname, 8, 'In schema "' || nspname ||
                '", the conversion "' || nspname || '"."' || conname || '" is not an E-Maj component.' AS msg
            FROM pg_catalog.pg_conversion, pg_catalog.pg_namespace
            WHERE connamespace = pg_namespace.oid
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected operators
         SELECT nspname, 9, 'In schema "' || nspname ||
                '", the operator "' || nspname || '"."' || oprname || '" is not an E-Maj component.' AS msg
            FROM pg_catalog.pg_operator, pg_catalog.pg_namespace
            WHERE oprnamespace = pg_namespace.oid
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected operator classes
         SELECT nspname, 10, 'In schema "' || nspname ||
                '", the operator class "' || nspname || '"."' || opcname || '" is not an E-Maj component.' AS msg
            FROM pg_catalog.pg_opclass, pg_catalog.pg_namespace
            WHERE opcnamespace = pg_namespace.oid
-             AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
+             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         ORDER BY 1, 2, 3
       ) AS t;
--- TODO: when pg version 8.3- will not be supported, the following CTE could be used to minimize the number of emaj_relation scan to build the schemas list
---        WITH logschemas AS ( SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation )
---  replacing all "AND nspname IN (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)" conditions by
---                "AND nspname IN (SELECT rel_log_schema FROM logschemas)"
     RETURN;
   END;
 $_verify_all_schemas$;
