@@ -1158,21 +1158,19 @@ $_create_tbl$
     EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
 -- creation of the trigger that manage any TRUNCATE on the application table
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
-    IF v_pgVersion >= 804 THEN
-      EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
-      IF v_isRollbackable THEN
+    EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
+    IF v_isRollbackable THEN
 -- For rollbackable groups, use the common _forbid_truncate_fnct() function that blocks the operation
-        EXECUTE 'CREATE TRIGGER emaj_trunc_trg'
-             || ' BEFORE TRUNCATE ON ' || v_fullTableName
-             || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._forbid_truncate_fnct()';
-      ELSE
+      EXECUTE 'CREATE TRIGGER emaj_trunc_trg'
+           || ' BEFORE TRUNCATE ON ' || v_fullTableName
+           || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._forbid_truncate_fnct()';
+    ELSE
 -- For audit_only groups, use the common _log_truncate_fnct() function that records the operation into the log table
-        EXECUTE 'CREATE TRIGGER emaj_trunc_trg'
-             || ' BEFORE TRUNCATE ON ' || v_fullTableName
-             || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._log_truncate_fnct()';
-      END IF;
-      EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
+      EXECUTE 'CREATE TRIGGER emaj_trunc_trg'
+           || ' BEFORE TRUNCATE ON ' || v_fullTableName
+           || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._log_truncate_fnct()';
     END IF;
+    EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
 -- register the table into emaj_relation
     INSERT INTO emaj.emaj_relation
                (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema,
@@ -1213,7 +1211,6 @@ $_drop_tbl$
 -- Required inputs: row from emaj_relation corresponding to the appplication table to proccess
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_fullTableName          TEXT;
   BEGIN
     v_fullTableName    = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
@@ -1222,12 +1219,9 @@ $_drop_tbl$
       WHERE relnamespace = pg_namespace.oid
         AND nspname = r_rel.rel_schema AND relname = r_rel.rel_tblseq AND relkind = 'r';
     IF FOUND THEN
--- delete the log trigger on the application table
+-- delete the log and truncate triggers on the application table
       EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
--- delete the truncate trigger on the application table
-      IF v_pgVersion >= 804 THEN
-        EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
-      END IF;
+      EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
     END IF;
 -- delete the log function
     EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
@@ -1792,25 +1786,22 @@ $_verify_groups$
       IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
---   then truncate trigger if pg 8.4+
-    IF v_pgVersion >= 804 THEN
-      FOR r_object IN
-        SELECT rel_schema, rel_tblseq,
-               'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
-               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
-          FROM emaj.emaj_relation
-        WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
-            AND NOT EXISTS
-                (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_trunc_trg'
-                     AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
-        ORDER BY 1,2,3
-      LOOP
-        IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
-        RETURN NEXT r_object;
-      END LOOP;
--- TODO : merge both triggers check when pg 8.3 will not be supported any more
-    END IF;
+--   then truncate trigger
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq,
+             'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+      WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_trunc_trg'
+                   AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
+      ORDER BY 1,2,3
+    LOOP
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
 -- check all log tables have a structure consistent with the application tables they reference
 --      (same columns and same formats). It only returns one row per faulting table.
     FOR r_object IN
@@ -2539,10 +2530,7 @@ $_start_groups$
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
         v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-        EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg';
-        IF v_pgVersion >= 804 THEN
-          EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_trunc_trg';
-        END IF;
+        EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg';
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, nothing to do
       END IF;
@@ -2714,30 +2702,28 @@ $_stop_groups$
                 RAISE EXCEPTION '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
               END IF;
           END;
-          IF v_pgVersion >= 804 THEN
-            BEGIN
-              EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
-            EXCEPTION
-              WHEN invalid_schema_name THEN
-                IF v_isForced THEN
-                  RAISE WARNING '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
-                ELSE
-                  RAISE EXCEPTION '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
-                END IF;
-              WHEN undefined_table THEN
-                IF v_isForced THEN
-                  RAISE WARNING '_stop_group: Table % does not exist any more.', v_fullTableName;
-                ELSE
-                  RAISE EXCEPTION '_stop_group: Table % does not exist any more.', v_fullTableName;
-                END IF;
-              WHEN undefined_object THEN
-                IF v_isForced THEN
-                  RAISE WARNING '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
-                ELSE
-                  RAISE EXCEPTION '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
-                END IF;
-            END;
-          END IF;
+          BEGIN
+            EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
+          EXCEPTION
+            WHEN invalid_schema_name THEN
+              IF v_isForced THEN
+                RAISE WARNING '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
+              ELSE
+                RAISE EXCEPTION '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
+              END IF;
+            WHEN undefined_table THEN
+              IF v_isForced THEN
+                RAISE WARNING '_stop_group: Table % does not exist any more.', v_fullTableName;
+              ELSE
+                RAISE EXCEPTION '_stop_group: Table % does not exist any more.', v_fullTableName;
+              END IF;
+            WHEN undefined_object THEN
+              IF v_isForced THEN
+                RAISE WARNING '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
+              ELSE
+                RAISE EXCEPTION '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
+              END IF;
+          END;
           ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, nothing to do
         END IF;
@@ -5891,25 +5877,22 @@ $_verify_all_groups$
               (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
---   then truncate trigger if pg 8.4+
-    IF v_pgVersion >= 804 THEN
-      RETURN QUERY
-        SELECT 'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
-               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
-          FROM emaj.emaj_relation
-          WHERE rel_kind = 'r'
-            AND NOT EXISTS
-                (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_trunc_trg'
-                     AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
-                         -- do not issue a row if the application table does not exist,
-                         -- this case has been already detected
-            AND EXISTS
-                (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-                   WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
-          ORDER BY rel_schema, rel_tblseq, 1;
--- TODO : merge both triggers check when pg 8.3 will not be supported any more
-    END IF;
+--   then truncate trigger
+    RETURN QUERY
+      SELECT 'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_kind = 'r'
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_trunc_trg'
+                   AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
+                       -- do not issue a row if the application table does not exist,
+                       -- this case has been already detected
+          AND EXISTS
+              (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
+        ORDER BY rel_schema, rel_tblseq, 1;
 -- check all log tables have a structure consistent with the application tables they reference
 --      (same columns and same formats). It only returns one row per faulting table.
     RETURN QUERY
