@@ -5626,11 +5626,10 @@ $_gen_sql_groups$
     IF v_tblseqs IS NOT NULL THEN
       v_tblseqErr = '';
       FOR r_tblsq IN
-        SELECT t FROM regexp_split_to_table(array_to_string(v_tblseqs,'?'),E'\\?') AS t
+        SELECT t FROM unnest(v_tblseqs) AS t
           EXCEPT
         SELECT rel_schema || '.' || rel_tblseq FROM emaj.emaj_relation
           WHERE rel_group = ANY (v_groupNames)
--- TODO regexp_split_to_table(array_to_string) to be transformed into unnest() when pg 8.3 will not be supported any more
         LOOP
         v_tblseqErr = v_tblseqErr || r_tblsq.t || ', ';
       END LOOP;
