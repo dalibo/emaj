@@ -985,7 +985,6 @@ $_create_tbl$
 --    - the function that logs the tables updates, defined as a trigger
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_emajSchema             TEXT = 'emaj';
     v_schemaPrefix           TEXT = 'emaj';
     v_emajNamesPrefix        TEXT;
@@ -1012,23 +1011,12 @@ $_create_tbl$
     r_trigger                RECORD;
   BEGIN
 -- check the table is neither a temporary nor an unlogged table
-    IF v_pgVersion >= 901 THEN
-      SELECT relpersistence INTO v_relPersistence FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
-      IF v_relPersistence = 't' THEN
-        RAISE EXCEPTION '_create_tbl: table % is a temporary table.', r_grpdef.grpdef_tblseq;
-      ELSIF v_relPersistence = 'u' THEN
-        RAISE EXCEPTION '_create_tbl: table % is an unlogged table.', r_grpdef.grpdef_tblseq;
-      END IF;
-    ELSIF v_pgVersion >= 804 THEN
-      SELECT relistemp INTO v_relIsTemp FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
-      IF v_relIsTemp THEN
-        RAISE EXCEPTION '_create_tbl: table % is a temporary table.', r_grpdef.grpdef_tblseq;
-      END IF;
-    END IF;
-    IF v_isRollbackable AND v_relhaspkey = FALSE THEN
-      RAISE EXCEPTION '_create_tbl: table % has no PRIMARY KEY.', r_grpdef.grpdef_tblseq;
+    SELECT relpersistence INTO v_relPersistence FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+      WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
+    IF v_relPersistence = 't' THEN
+      RAISE EXCEPTION '_create_tbl: table % is a temporary table.', r_grpdef.grpdef_tblseq;
+    ELSIF v_relPersistence = 'u' THEN
+      RAISE EXCEPTION '_create_tbl: table % is an unlogged table.', r_grpdef.grpdef_tblseq;
     END IF;
 -- check the table has a primary key
     SELECT true INTO v_relhaspkey FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
@@ -1282,7 +1270,6 @@ $_rlbk_tbl$
 -- For unlogged rollback, the log triggers have been disabled previously and will be enabled later.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_fullTableName          TEXT;
     v_logTableName           TEXT;
     v_tmpTable               TEXT;
@@ -1338,12 +1325,8 @@ $_rlbk_tbl$
       v_tmpTable = 'emaj_tmp_' || pg_backend_pid();
     ELSE
 --   with multi session parallel rollbacks, the table cannot be a TEMP table because it would not be usable in 2PC
---   but it may be an UNLOGGED table with pg 9.1+
-      IF v_pgVersion >= 901 THEN
-        v_tableType = 'UNLOGGED';
-      ELSE
-        v_tableType = '';
-      END IF;
+--   but it may be an UNLOGGED table
+      v_tableType = 'UNLOGGED';
       v_tmpTable = 'emaj.emaj_tmp_' || pg_backend_pid();
     END IF;
     EXECUTE 'CREATE ' || v_tableType || ' TABLE ' || v_tmpTable || ' AS '
