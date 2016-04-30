@@ -1641,30 +1641,23 @@ $_verify_groups$
 -- If onErrorStop boolean is false, it returns a set of _verify_groups_type records, one row per detected unconsistency, including the faulting schema and table or sequence names and a detailed message.
 -- If no error is detected, no row is returned.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_hint                   TEXT = 'You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.';
     r_object                 RECORD;
   BEGIN
 -- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
 -- Let's start with some global checks that always raise an exception if an issue is detected
--- check the postgres version: E-Maj is not compatible with 8.2-
-    IF v_pgVersion < 803 THEN
+-- check the postgres version: E-Maj is not compatible with 9.0-
+    IF emaj._pg_version_num() < 901 THEN
       RAISE EXCEPTION 'The current postgres version (%) is not compatible with E-Maj.', version();
     END IF;
--- check the postgres version at groups creation time is compatible with the current version
--- Warning: comparisons on version numbers are alphanumeric.
---          But we suppose these tests will not be useful any more when pg 10.0 will appear!
---   for 8.3, both major versions must be the same
+-- check the postgres version at groups creation time is compatible (i.e. >= 8.4)
     FOR r_object IN
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groups)
-          AND ((v_pgVersion = 803 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
-                                           to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) <> v_pgVersion)
---   for 8.4+, both major versions must be 8.4+
-            OR (v_pgVersion >= 804 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
-                                            to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804))
+          AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                   to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804
         ORDER BY msg
     LOOP
       RAISE EXCEPTION '_verify_groups: %',r_object.msg;
@@ -5754,21 +5747,14 @@ $_verify_all_groups$
 -- The function verifies the consistency of all E-Maj groups.
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
   BEGIN
--- check the postgres version at creation time is compatible with the current version
--- Warning: comparisons on version numbers are alphanumeric.
---          But we suppose these tests will not be useful any more when pg 10.0 will appear!
---   for 8.3, both major versions must be the same
+-- check the postgres version at groups creation time is compatible (i.e. >= 8.4)
     RETURN QUERY
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
-        WHERE ((v_pgVersion = 803 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
-                                           to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) <> v_pgVersion)
---   for 8.4+, both major versions must be 8.4+
-            OR (v_pgVersion >= 804 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
-                                            to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804))
+        WHERE cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                   to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804
         ORDER BY msg;
 -- check all application schemas referenced in the emaj_relation table still exist
     RETURN QUERY
@@ -6017,13 +6003,12 @@ $emaj_verify_all$
 -- emaj objects related to tables and sequences referenced in emaj_relation table.
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_errorFound             BOOLEAN = FALSE;
     r_object                 RECORD;
   BEGIN
 -- Global checks
--- detect if the current postgres version is at least 8.2
-    IF v_pgVersion < 803 THEN
+-- detect if the current postgres version is at least 9.1
+    IF emaj._pg_version_num() < 901 THEN
       RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with E-Maj.';
       v_errorFound = TRUE;
     END IF;
