@@ -1362,7 +1362,6 @@ $_rlbk_seq$
 -- Input: the emaj_group_def row related to the application sequence to process, mark timestamp, boolean indicating whether the rollback is logged, and the id of the last sequence to keep
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it is not the owner of the application sequence.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_fullSeqName            TEXT;
     v_stmt                   TEXT;
     mark_seq_rec             RECORD;
@@ -1383,15 +1382,9 @@ $_rlbk_seq$
     END;
 -- Read the current sequence's characteristics
     v_fullSeqName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
-    v_stmt = 'SELECT last_value, ';
-    IF v_pgVersion <= 803 THEN
-       v_stmt = v_stmt || '0 as start_value, ';
-    ELSE
-       v_stmt = v_stmt || 'start_value, ';
-    END IF;
-    v_stmt = v_stmt || 'increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM '
-                    || v_fullSeqName;
-    EXECUTE v_stmt INTO STRICT curr_seq_rec;
+    EXECUTE 'SELECT last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM '
+             || v_fullSeqName
+            INTO STRICT curr_seq_rec;
 -- Build the ALTER SEQUENCE statement, depending on the differences between the present values and the related
 --   values at the requested mark time
     v_stmt='';
@@ -1426,7 +1419,6 @@ $_rlbk_seq$
     END IF;
 -- and execute the statement if at least one parameter has changed
     IF v_stmt <> '' THEN
---    RAISE NOTICE 'Rollback sequence % with%', v_fullSeqName, v_stmt;
       EXECUTE 'ALTER SEQUENCE ' || v_fullSeqName || v_stmt;
     END IF;
 -- if the caller requires it, delete the rolled back intermediate sequences from the sequence table
@@ -2875,7 +2867,6 @@ $_set_mark_groups$
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_nbTb                   INT = 0;
     v_timestamp              TIMESTAMPTZ;
     v_lastSequenceId         BIGINT;
@@ -2898,21 +2889,14 @@ $_set_mark_groups$
           ORDER BY rel_priority, rel_schema, rel_tblseq
       LOOP
 -- for each sequence of the groups, record the sequence parameters into the emaj_sequence table
-      v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
+      EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
                'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' ||
                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
                ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
                quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) ||
-               ', ' || quote_literal(v_mark) || ', last_value, ';
-      IF v_pgVersion <= 803 THEN
-         v_stmt = v_stmt || '0, ';
-      ELSE
-         v_stmt = v_stmt || 'start_value, ';
-      END IF;
-      v_stmt = v_stmt ||
+               ', ' || quote_literal(v_mark) || ', last_value, start_value, ' ||
                'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
                'FROM ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-      EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- record the number of log rows for the old last mark of each group
@@ -2930,20 +2914,13 @@ $_set_mark_groups$
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 -- ... record the associated sequence parameters in the emaj sequence table
-      v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
+      EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
                'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' ||
                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
                ') SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(r_tblsq.rel_log_sequence) || ', ' ||
-               quote_literal(v_timestamp) || ', ' || quote_literal(v_mark) || ', ' || 'last_value, ';
-      IF v_pgVersion <= 803 THEN
-         v_stmt = v_stmt || '0, ';
-      ELSE
-         v_stmt = v_stmt || 'start_value, ';
-      END IF;
-      v_stmt = v_stmt ||
+               quote_literal(v_timestamp) || ', ' || quote_literal(v_mark) || ', ' || 'last_value, start_value, ' ||
                'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence);
-      EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- record the marks
@@ -5141,7 +5118,6 @@ $emaj_snap_group$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_nbTb                   INT = 0;
     r_tblsq                  RECORD;
     v_fullTableName          TEXT;
@@ -5149,7 +5125,6 @@ $emaj_snap_group$
     v_colList                TEXT;
     v_fileName               TEXT;
     v_stmt                   TEXT;
-    v_seqCol                 TEXT;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -5211,20 +5186,15 @@ $emaj_snap_group$
           END LOOP;
         END IF;
 --   prepare the COPY statement
-        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO '
-                || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
-        ELSEIF r_tblsq.rel_kind = 'S' THEN
+        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ' ||
+                quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+      ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, the statement has no order by
-        IF v_pgVersion <= 803 THEN
-          v_seqCol = 'sequence_name, last_value, 0, increment_by, max_value, min_value, cache_value, is_cycled, is_called';
-        ELSE
-          v_seqCol = 'sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called';
-        END IF;
-        v_stmt= 'COPY (SELECT ' || v_seqCol || ' FROM ' || v_fullTableName || ') TO '
-                || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+        v_stmt= 'COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, ' ||
+                'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName || ') TO ' ||
+                quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
       END IF;
 -- and finaly perform the COPY
---    raise notice 'emaj_snap_group: Executing %',v_stmt;
       EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;
@@ -5266,7 +5236,6 @@ $emaj_snap_log_group$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_nbTb                   INT = 0;
     r_tblsq                  RECORD;
     v_realFirstMark          TEXT;
@@ -5282,7 +5251,6 @@ $emaj_snap_log_group$
     v_stmt                   TEXT;
     v_timestamp              TIMESTAMPTZ;
     v_pseudoMark             TEXT;
-    v_fullSeqName            TEXT;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -5394,22 +5362,14 @@ $emaj_snap_log_group$
             WHERE rel_group = v_groupName AND rel_kind = 'S' ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 -- ... temporary record the sequence parameters in the emaj sequence table
-        v_fullSeqName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-        v_stmt = 'INSERT INTO emaj.emaj_sequence (' ||
-                 'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' ||
-                 'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                 ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
-                 quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) ||
-                 ', ' || quote_literal(v_pseudoMark) || ', last_value, ';
-        IF v_pgVersion <= 803 THEN
-           v_stmt = v_stmt || '0, ';
-        ELSE
-           v_stmt = v_stmt || 'start_value, ';
-        END IF;
-        v_stmt = v_stmt ||
-                 'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-                 'FROM ' || v_fullSeqName;
-        EXECUTE v_stmt;
+        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
+                'sequ_schema, sequ_name, sequ_datetime, sequ_mark, sequ_last_val, sequ_start_val, ' ||
+                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
+                quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) ||
+                ', ' || quote_literal(v_pseudoMark) || ', last_value, start_value, ' ||
+                'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       END LOOP;
 -- generate the file for sequences current state
       v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_timestamp,'HH24.MI.SS.MS');
@@ -5526,7 +5486,6 @@ $_gen_sql_groups$
 --        - optional array of schema qualified table and sequence names to only process those tables and sequences
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
-    v_pgVersion              INT = emaj._pg_version_num();
     v_groupIsLogging         BOOLEAN;
     v_tblList                TEXT;
     v_cpt                    INT;
@@ -5703,40 +5662,17 @@ $_gen_sql_groups$
       v_fullSeqName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       IF v_tsLastMark IS NULL THEN
 -- no supplied last mark, so get current sequence characteritics
-        IF v_pgVersion <= 803 THEN
--- .. in pg 8.3-
-          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
-               || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
+        EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
+                || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
                || 'FROM ' || v_fullSeqName INTO v_rqSeq;
---raise notice '1 - sequence % -> %',v_fullSeqName,v_rqSeq;
-        ELSE
--- .. in pg 8.4+
-          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
-               || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
-               || 'FROM ' || v_fullSeqName INTO v_rqSeq;
---raise notice '2 - sequence % -> %',v_fullSeqName,v_rqSeq;
-        END IF;
       ELSE
 -- a last mark is supplied, so get sequence characteristics from emaj_sequence table
-        IF v_pgVersion <= 803 THEN
--- .. in pg 8.3-
-          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
-               || ''' || '' RESTART '' || CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END || '' INCREMENT '' || sequ_increment  || '' MAXVALUE '' || sequ_max_val  || '' MINVALUE '' || sequ_min_val || '' CACHE '' || sequ_cache_val || CASE WHEN NOT sequ_is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
-               || 'FROM emaj.emaj_sequence '
-               || 'WHERE sequ_schema = ' || quote_literal(r_tblsq.rel_schema)
-               || '  AND sequ_name = ' || quote_literal(r_tblsq.rel_tblseq)
-               || '  AND sequ_datetime = ''' || v_tsLastMark || '''' INTO v_rqSeq;
---raise notice '3 - sequence % -> %',v_fullSeqName,v_rqSeq;
-        ELSE
--- .. in pg 8.4+
-          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
+        EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
                || ''' || '' RESTART '' || CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END || '' START '' || sequ_start_val || '' INCREMENT '' || sequ_increment  || '' MAXVALUE '' || sequ_max_val  || '' MINVALUE '' || sequ_min_val || '' CACHE '' || sequ_cache_val || CASE WHEN NOT sequ_is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
                || 'FROM emaj.emaj_sequence '
                || 'WHERE sequ_schema = ' || quote_literal(r_tblsq.rel_schema)
                || '  AND sequ_name = ' || quote_literal(r_tblsq.rel_tblseq)
                || '  AND sequ_datetime = ''' || v_tsLastMark || '''' INTO v_rqSeq;
---raise notice '4 - sequence % -> %',v_fullSeqName,v_rqSeq;
-        END IF;
       END IF;
 -- insert into temp table
       v_nbSeq = v_nbSeq + 1;
