@@ -4255,20 +4255,20 @@ $_rlbk_session_lock$
       END;
     END LOOP;
     IF NOT v_ok THEN
-      PERFORM emaj._rlbk_error(v_rlbkId, '_rlbk_session_lock: too many (5) deadlocks encountered while locking tables', 'rlbk#'||v_session);
+      PERFORM emaj._rlbk_error(v_rlbkId, '_rlbk_session_lock: too many (5) deadlocks encountered while locking tables', v_session);
       RAISE EXCEPTION '_rlbk_session_lock: too many (5) deadlocks encountered while locking tables for groups %.',array_to_string(v_groupNames,',');
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('LOCK_GROUP', 'END', array_to_string(v_groupNames,','), 'Rollback session #' || v_session || ': ' || v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
     RETURN;
--- TODO: trap and record exception during the rollback operation when pg 8.3 will not be supported any more
---  EXCEPTION
---    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
---      RAISE;
---    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
---      PERFORM emaj._rlbk_error(v_rlbkId, SQLERRM, 'rlbk#'||v_session);
---      RAISE;
+-- trap and record exception during the rollback operation
+  EXCEPTION
+    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+      RAISE;
+    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+      PERFORM emaj._rlbk_error(v_rlbkId, 'In _rlbk_session_lock() for session ' || v_session || ': ' || SQLERRM, 'rlbk#'||v_session);
+      RAISE;
   END;
 $_rlbk_session_lock$;
 
@@ -4318,7 +4318,7 @@ $_rlbk_start_mark$
       WHERE emaj._log_stat_tbl(t, v_markDatetime, NULL, v_markLastSeqHoleId, NULL) > 0;
     IF FOUND THEN
       v_errorMsg = 'The rollback operation has been cancelled due to concurrent activity at E-Maj rollback planning time on tables to process.';
-      PERFORM emaj._rlbk_error(v_rlbkId, v_errorMsg, 'rlbk#1');
+      PERFORM emaj._rlbk_error(v_rlbkId, v_errorMsg, 1);
       RAISE EXCEPTION '_rlbk_start_mark: % Please retry.', v_errorMsg;
     END IF;
     IF v_isLoggedRlbk THEN
@@ -4334,13 +4334,13 @@ $_rlbk_start_mark$
       PERFORM 0 FROM dblink('rlbk#1',v_stmt) AS (dummy INT);
     END IF;
     RETURN;
--- TODO: trap and record exception during the rollback operation when pg 8.3 will not be supported any more
---  EXCEPTION
---    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
---      RAISE;
---    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
---      PERFORM emaj._rlbk_error(v_rlbkId, SQLERRM, 'rlbk#1');
---      RAISE;
+-- trap and record exception during the rollback operation
+  EXCEPTION
+    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+      RAISE;
+    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+      PERFORM emaj._rlbk_error(v_rlbkId, 'In _rlbk_start_mark(): ' || SQLERRM, 'rlbk#1');
+      RAISE;
   END;
 $_rlbk_start_mark$;
 
@@ -4464,6 +4464,7 @@ $_rlbk_session_exec$
     v_stmt = 'UPDATE emaj.emaj_rlbk_session SET rlbs_end_datetime = clock_timestamp()' ||
              ' WHERE rlbs_rlbk_id = ' || v_rlbkId || ' AND rlbs_session = ' || v_session ||
              ' RETURNING 1';
+--if v_rlbkId = 37 and v_session = 2 then select 'exec', 0/0; end if;
     IF v_isDblinkUsable THEN
 -- ... either through dblink if possible
       PERFORM 0 FROM dblink('rlbk#'||v_session,v_stmt) AS (dummy INT);
@@ -4476,13 +4477,13 @@ $_rlbk_session_exec$
       EXECUTE v_stmt;
     END IF;
     RETURN v_effNbTable;
--- TODO: trap and record exception during the rollback operation when pg 8.3 will not be supported any more
---  EXCEPTION
---    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
---      RAISE;
---    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
---      PERFORM emaj._rlbk_error(v_rlbkId, SQLERRM, 'rlbk#'||v_session);
---      RAISE;
+-- trap and record exception during the rollback operation
+  EXCEPTION
+    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+      RAISE;
+    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+      PERFORM emaj._rlbk_error(v_rlbkId, 'In _rlbk_session_exec() for session ' || v_session || ': ' || SQLERRM, 'rlbk#'||v_session);
+      RAISE;
   END;
 $_rlbk_session_exec$;
 
@@ -4630,13 +4631,13 @@ $_rlbk_end$
                ' WHERE rlbk_id = ' || v_rlbkId;
     END IF;
     RETURN v_nbSeq;
--- TODO: trap and record exception during the rollback operation when pg 8.3 will not be supported any more
---  EXCEPTION
---    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
---      RAISE;
---    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
---      PERFORM emaj._rlbk_error(v_rlbkId, SQLERRM, 'rlbk#1');
---      RAISE;
+-- trap and record exception during the rollback operation
+  EXCEPTION
+    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+      RAISE;
+    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+      PERFORM emaj._rlbk_error(v_rlbkId, 'In _rlbk_end(): ' || SQLERRM, 'rlbk#1');
+      RAISE;
   END;
 $_rlbk_end$;
 
@@ -4644,13 +4645,15 @@ CREATE OR REPLACE FUNCTION emaj._rlbk_error(v_rlbkId INT, v_msg TEXT, v_cnxName 
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_error$
 -- This function records a rollback error into the emaj_rlbk table, but only if a dblink connection is open
--- Input: rollback identifier, message to record and the dblink connection name to use
+-- Input: rollback identifier, message to record and dblink connection name
+-- If the rollback operation is already in aborted state, one keeps the emaj_rlbk data unchanged
   DECLARE
     v_stmt                   TEXT;
   BEGIN
     IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
-      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_msg = ' || quote_literal(v_msg) ||
-               ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''ABORTED'', rlbk_msg = ' || quote_literal(v_msg) || 
+               ', rlbk_end_datetime =  clock_timestamp() ' ||
+               'WHERE rlbk_id = ' || v_rlbkId || ' AND rlbk_status <> ''ABORTED'' RETURNING 1';
       PERFORM 0 FROM dblink(v_cnxName,v_stmt) AS (dummy INT);
     END IF;
     RETURN;
