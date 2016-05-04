@@ -2138,18 +2138,19 @@ $emaj_alter_group$
         WHERE rel_schema = ver_schema AND rel_tblseq = ver_tblseq
       ORDER BY rel_priority, rel_schema, rel_tblseq
       LOOP
-      IF r_rel.rel_kind = 'r' THEN
+      CASE r_rel.rel_kind 
+        WHEN 'r' THEN
 -- if it is a table, delete the related emaj objects
-        PERFORM emaj._drop_tbl(r_rel);
--- add the log schema to the array of log schemas to potentialy drop at the end of the function
-        IF r_rel.rel_log_schema <> v_emajSchema AND
-           (v_logSchemasArray IS NULL OR r_rel.rel_log_schema <> ALL (v_logSchemasArray)) THEN
-          v_logSchemasArray = array_append(v_logSchemasArray,r_rel.rel_log_schema);
-        END IF;
-      ELSEIF r_rel.rel_kind = 'S' THEN
+          PERFORM emaj._drop_tbl(r_rel);
+--   and add the log schema to the array of log schemas to potentialy drop at the end of the function
+          IF r_rel.rel_log_schema <> v_emajSchema AND
+             (v_logSchemasArray IS NULL OR r_rel.rel_log_schema <> ALL (v_logSchemasArray)) THEN
+            v_logSchemasArray = array_append(v_logSchemasArray,r_rel.rel_log_schema);
+          END IF;
+        WHEN 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
-        PERFORM emaj._drop_seq(r_rel);
-      END IF;
+          PERFORM emaj._drop_seq(r_rel);
+      END CASE;
 -- delete the related row in emaj_relation
       DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
       v_nbDrop = v_nbDrop + 1;
@@ -2407,13 +2408,14 @@ $_start_groups$
        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
          WHERE rel_group = ANY (v_groupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
        LOOP
-      IF r_tblsq.rel_kind = 'r' THEN
+      CASE r_tblsq.rel_kind 
+        WHEN 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
-        v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-        EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg';
-        ELSEIF r_tblsq.rel_kind = 'S' THEN
+          v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+          EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg';
+        WHEN 'S' THEN
 -- if it is a sequence, nothing to do
-      END IF;
+      END CASE;
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- update the state of the group row from the emaj_group table
@@ -2555,57 +2557,58 @@ $_stop_groups$
           SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
             WHERE rel_group = ANY (v_validGroupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
           LOOP
-        IF r_tblsq.rel_kind = 'r' THEN
+          CASE r_tblsq.rel_kind
+            WHEN 'r' THEN
 -- if it is a table, disable the emaj log and truncate triggers
 --   errors are captured so that emaj_force_stop_group() can be silently executed
-          v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-          BEGIN
-            EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
-          EXCEPTION
-            WHEN invalid_schema_name THEN
-              IF v_isForced THEN
-                RAISE WARNING '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
-              ELSE
-                RAISE EXCEPTION '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
-              END IF;
-            WHEN undefined_table THEN
-              IF v_isForced THEN
-                RAISE WARNING '_stop_group: Table % does not exist any more.', v_fullTableName;
-              ELSE
-                RAISE EXCEPTION '_stop_group: Table % does not exist any more.', v_fullTableName;
-              END IF;
-            WHEN undefined_object THEN
-              IF v_isForced THEN
-                RAISE WARNING '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
-              ELSE
-                RAISE EXCEPTION '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
-              END IF;
-          END;
-          BEGIN
-            EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
-          EXCEPTION
-            WHEN invalid_schema_name THEN
-              IF v_isForced THEN
-                RAISE WARNING '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
-              ELSE
-                RAISE EXCEPTION '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
-              END IF;
-            WHEN undefined_table THEN
-              IF v_isForced THEN
-                RAISE WARNING '_stop_group: Table % does not exist any more.', v_fullTableName;
-              ELSE
-                RAISE EXCEPTION '_stop_group: Table % does not exist any more.', v_fullTableName;
-              END IF;
-            WHEN undefined_object THEN
-              IF v_isForced THEN
-                RAISE WARNING '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
-              ELSE
-                RAISE EXCEPTION '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
-              END IF;
-          END;
-          ELSEIF r_tblsq.rel_kind = 'S' THEN
+              v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+              BEGIN
+                EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
+              EXCEPTION
+                WHEN invalid_schema_name THEN
+                  IF v_isForced THEN
+                    RAISE WARNING '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
+                  ELSE
+                    RAISE EXCEPTION '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
+                  END IF;
+                WHEN undefined_table THEN
+                  IF v_isForced THEN
+                    RAISE WARNING '_stop_group: Table % does not exist any more.', v_fullTableName;
+                  ELSE
+                    RAISE EXCEPTION '_stop_group: Table % does not exist any more.', v_fullTableName;
+                  END IF;
+                WHEN undefined_object THEN
+                  IF v_isForced THEN
+                    RAISE WARNING '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
+                  ELSE
+                    RAISE EXCEPTION '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
+                  END IF;
+              END;
+              BEGIN
+                EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
+              EXCEPTION
+                WHEN invalid_schema_name THEN
+                  IF v_isForced THEN
+                    RAISE WARNING '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
+                  ELSE
+                    RAISE EXCEPTION '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
+                  END IF;
+                WHEN undefined_table THEN
+                  IF v_isForced THEN
+                    RAISE WARNING '_stop_group: Table % does not exist any more.', v_fullTableName;
+                  ELSE
+                    RAISE EXCEPTION '_stop_group: Table % does not exist any more.', v_fullTableName;
+                  END IF;
+                WHEN undefined_object THEN
+                  IF v_isForced THEN
+                    RAISE WARNING '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
+                  ELSE
+                    RAISE EXCEPTION '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
+                  END IF;
+              END;
+            WHEN 'S' THEN
 -- if it is a sequence, nothing to do
-        END IF;
+        END CASE;
         v_nbTb = v_nbTb + 1;
       END LOOP;
       IF NOT v_isForced THEN
@@ -4332,42 +4335,43 @@ $_rlbk_session_exec$
         EXECUTE v_stmt;
       END IF;
 -- process the step depending on its type
-      IF r_step.rlbp_step = 'DIS_LOG_TRG' THEN
+      CASE r_step.rlbp_step
+        WHEN 'DIS_LOG_TRG' THEN
 -- process a log trigger disable
-        EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                ' DISABLE TRIGGER emaj_log_trg';
-      ELSEIF r_step.rlbp_step = 'DROP_FK' THEN
+          EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
+                  ' DISABLE TRIGGER emaj_log_trg';
+        WHEN 'DROP_FK' THEN
 -- process a foreign key deletion
-        EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                ' DROP CONSTRAINT ' || quote_ident(r_step.rlbp_fkey);
-      ELSEIF r_step.rlbp_step = 'SET_FK_DEF' THEN
+          EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
+                  ' DROP CONSTRAINT ' || quote_ident(r_step.rlbp_fkey);
+        WHEN 'SET_FK_DEF' THEN
 -- set a foreign key deferred
-        EXECUTE 'SET CONSTRAINTS ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_fkey) ||
-                ' DEFERRED';
-      ELSEIF r_step.rlbp_step = 'RLBK_TABLE' THEN
+          EXECUTE 'SET CONSTRAINTS ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_fkey) ||
+                  ' DEFERRED';
+        WHEN 'RLBK_TABLE' THEN
 -- process a table rollback
-        SELECT emaj._rlbk_tbl(emaj_relation.*, v_lastGlobalSeq, v_nbSession) INTO v_nbRows
-          FROM emaj.emaj_relation
-          WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
-        v_effNbTable = v_effNbTable + 1;
-      ELSEIF r_step.rlbp_step = 'DELETE_LOG' THEN
+          SELECT emaj._rlbk_tbl(emaj_relation.*, v_lastGlobalSeq, v_nbSession) INTO v_nbRows
+            FROM emaj.emaj_relation
+            WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
+          v_effNbTable = v_effNbTable + 1;
+        WHEN 'DELETE_LOG' THEN
 -- process the deletion of log rows
-        SELECT emaj._delete_log_tbl(emaj_relation.*, v_timestampMark, v_lastGlobalSeq, v_lastSequenceId, v_lastSeqHoleId) INTO v_nbRows
-          FROM emaj.emaj_relation
-          WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
-      ELSEIF r_step.rlbp_step = 'SET_FK_IMM' THEN
+          SELECT emaj._delete_log_tbl(emaj_relation.*, v_timestampMark, v_lastGlobalSeq, v_lastSequenceId, v_lastSeqHoleId) INTO v_nbRows
+            FROM emaj.emaj_relation
+            WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
+        WHEN 'SET_FK_IMM' THEN
 -- set a foreign key immediate
-        EXECUTE 'SET CONSTRAINTS ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_fkey) ||
-                ' IMMEDIATE';
-      ELSEIF r_step.rlbp_step = 'ADD_FK' THEN
+          EXECUTE 'SET CONSTRAINTS ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_fkey) ||
+                  ' IMMEDIATE';
+        WHEN 'ADD_FK' THEN
 -- process a foreign key creation
-        EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                ' ADD CONSTRAINT ' || quote_ident(r_step.rlbp_fkey) || ' ' || r_step.rlbp_fkey_def;
-      ELSEIF r_step.rlbp_step = 'ENA_LOG_TRG' THEN
+          EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
+                  ' ADD CONSTRAINT ' || quote_ident(r_step.rlbp_fkey) || ' ' || r_step.rlbp_fkey_def;
+        WHEN 'ENA_LOG_TRG' THEN
 -- process a log trigger enable
-        EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                ' ENABLE TRIGGER emaj_log_trg';
-      END IF;
+          EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
+                  ' ENABLE TRIGGER emaj_log_trg';
+      END CASE;
 -- update the emaj_rlbk_plan table to set the step duration
 -- NB: the computed duration does not include the time needed to update the emaj_rlbk_plan table
       v_stmt = 'UPDATE emaj.emaj_rlbk_plan SET rlbp_duration = ' || quote_literal(clock_timestamp()) || ' - rlbp_start_datetime';
@@ -4392,7 +4396,6 @@ $_rlbk_session_exec$
     v_stmt = 'UPDATE emaj.emaj_rlbk_session SET rlbs_end_datetime = clock_timestamp()' ||
              ' WHERE rlbs_rlbk_id = ' || v_rlbkId || ' AND rlbs_session = ' || v_session ||
              ' RETURNING 1';
---if v_rlbkId = 37 and v_session = 2 then select 'exec', 0/0; end if;
     IF v_isDblinkUsable THEN
 -- ... either through dblink if possible
       PERFORM 0 FROM dblink('rlbk#'||v_session,v_stmt) AS (dummy INT);
@@ -4699,20 +4702,21 @@ $_reset_group$
         SELECT * FROM emaj.emaj_relation
           WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
-      IF r_rel.rel_kind = 'r' THEN
+      CASE r_rel.rel_kind
+        WHEN 'r' THEN
 -- if it is a table,
 --   truncate the related log table
-        EXECUTE 'TRUNCATE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
+          EXECUTE 'TRUNCATE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
 --   delete rows from emaj_sequence related to the associated log sequence
-        DELETE FROM emaj.emaj_sequence
-          WHERE sequ_schema = r_rel.rel_log_schema
-            AND sequ_name = r_rel.rel_log_sequence;
+          DELETE FROM emaj.emaj_sequence
+            WHERE sequ_schema = r_rel.rel_log_schema
+              AND sequ_name = r_rel.rel_log_sequence;
 --   and reset the log sequence
-        PERFORM setval(quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence), 1, false);
-      ELSEIF r_rel.rel_kind = 'S' THEN
+          PERFORM setval(quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence), 1, false);
+        WHEN 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
-        PERFORM emaj._drop_seq (r_rel);
-      END IF;
+          PERFORM emaj._drop_seq (r_rel);
+      END CASE;
       v_nbTb = v_nbTb + 1;
     END LOOP;
     RETURN v_nbTb;
@@ -4848,37 +4852,36 @@ $emaj_detailed_log_stat_group$
 -- for each table of the emaj_relation table
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_kind, rel_log_table FROM emaj.emaj_relation
-          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
+          WHERE rel_group = v_groupName AND rel_kind = 'r'
+          ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
-      IF r_tblsq.rel_kind = 'r' THEN
--- if it is a table, count the number of operations per type (INSERT, UPDATE and DELETE) and role
+-- count the number of operations per type (INSERT, UPDATE and DELETE) and role
 -- compute the log table name and its sequence name for this table
-        v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
+      v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
 -- prepare and execute the statement
-        v_stmt= 'SELECT ' || quote_literal(v_groupName) || '::TEXT as emaj_group,'
-             || ' ' || quote_literal(r_tblsq.rel_schema) || '::TEXT as emaj_schema,'
-             || ' ' || quote_literal(r_tblsq.rel_tblseq) || '::TEXT as emaj_table,'
-             || ' emaj_user,'
-             || ' CASE WHEN emaj_verb = ''INS'' THEN ''INSERT'''
-             ||      ' WHEN emaj_verb = ''UPD'' THEN ''UPDATE'''
-             ||      ' WHEN emaj_verb = ''DEL'' THEN ''DELETE'''
-             ||      ' ELSE ''?'' END::VARCHAR(6) as emaj_verb,'
-             || ' count(*) as emaj_rows'
-             || ' FROM ' || v_logTableName
-             || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'')';
-        IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN v_stmt = v_stmt
-             || ' AND emaj_gid > '|| v_firstEmajGid ;
-        END IF;
-        IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN v_stmt = v_stmt
-             || ' AND emaj_gid <= '|| v_lastEmajGid ;
-        END IF;
-        v_stmt = v_stmt
-             || ' GROUP BY emaj_group, emaj_schema, emaj_table, emaj_user, emaj_verb'
-             || ' ORDER BY emaj_user, emaj_verb';
-        FOR r_stat IN EXECUTE v_stmt LOOP
-          RETURN NEXT r_stat;
-        END LOOP;
+      v_stmt= 'SELECT ' || quote_literal(v_groupName) || '::TEXT as emaj_group,'
+           || ' ' || quote_literal(r_tblsq.rel_schema) || '::TEXT as emaj_schema,'
+           || ' ' || quote_literal(r_tblsq.rel_tblseq) || '::TEXT as emaj_table,'
+           || ' emaj_user,'
+           || ' CASE WHEN emaj_verb = ''INS'' THEN ''INSERT'''
+           ||      ' WHEN emaj_verb = ''UPD'' THEN ''UPDATE'''
+           ||      ' WHEN emaj_verb = ''DEL'' THEN ''DELETE'''
+           ||      ' ELSE ''?'' END::VARCHAR(6) as emaj_verb,'
+           || ' count(*) as emaj_rows'
+           || ' FROM ' || v_logTableName
+           || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'')';
+      IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN v_stmt = v_stmt
+           || ' AND emaj_gid > '|| v_firstEmajGid ;
       END IF;
+      IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN v_stmt = v_stmt
+           || ' AND emaj_gid <= '|| v_lastEmajGid ;
+      END IF;
+      v_stmt = v_stmt
+           || ' GROUP BY emaj_group, emaj_schema, emaj_table, emaj_user, emaj_verb'
+           || ' ORDER BY emaj_user, emaj_verb';
+      FOR r_stat IN EXECUTE v_stmt LOOP
+        RETURN NEXT r_stat;
+      END LOOP;
     END LOOP;
     RETURN;
   END;
@@ -5103,36 +5106,37 @@ $emaj_snap_group$
         LOOP
       v_fileName = v_dir || '/' || r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap';
       v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-      IF r_tblsq.rel_kind = 'r' THEN
+      CASE r_tblsq.rel_kind
+        WHEN 'r' THEN
 -- if it is a table,
 --   first build the order by column list
-        PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
-          WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid AND
-                contype = 'p' AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
-        IF FOUND THEN
+          PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+            WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid AND
+                  contype = 'p' AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
+          IF FOUND THEN
 --   the table has a pkey,
-          SELECT string_agg(quote_ident(attname), ',') INTO v_colList FROM (
-            SELECT attname FROM pg_catalog.pg_attribute, pg_catalog.pg_index
-              WHERE pg_attribute.attrelid = pg_index.indrelid
-                AND attnum = ANY (indkey)
-                AND indrelid = v_fullTableName::regclass AND indisprimary
-                AND attnum > 0 AND attisdropped = false) AS t;
-        ELSE
+            SELECT string_agg(quote_ident(attname), ',') INTO v_colList FROM (
+              SELECT attname FROM pg_catalog.pg_attribute, pg_catalog.pg_index
+                WHERE pg_attribute.attrelid = pg_index.indrelid
+                  AND attnum = ANY (indkey)
+                  AND indrelid = v_fullTableName::regclass AND indisprimary
+                  AND attnum > 0 AND attisdropped = false) AS t;
+          ELSE
 --   the table has no pkey
-          SELECT string_agg(quote_ident(attname), ',') INTO v_colList FROM (
-            SELECT attname FROM pg_catalog.pg_attribute
-              WHERE attrelid = v_fullTableName::regclass
-                AND attnum > 0  AND attisdropped = false) AS t;
-        END IF;
+            SELECT string_agg(quote_ident(attname), ',') INTO v_colList FROM (
+              SELECT attname FROM pg_catalog.pg_attribute
+                WHERE attrelid = v_fullTableName::regclass
+                  AND attnum > 0  AND attisdropped = false) AS t;
+          END IF;
 --   prepare the COPY statement
-        v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ' ||
-                quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
-      ELSEIF r_tblsq.rel_kind = 'S' THEN
+          v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ' ||
+                  quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+        WHEN 'S' THEN
 -- if it is a sequence, the statement has no order by
-        v_stmt= 'COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, ' ||
-                'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName || ') TO ' ||
-                quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
-      END IF;
+          v_stmt= 'COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, ' ||
+                  'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName || ') TO ' ||
+                  quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+      END CASE;
 -- and finaly perform the COPY
       EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
@@ -5298,7 +5302,8 @@ $emaj_snap_log_group$
 -- for each sequence of the groups, ...
       FOR r_tblsq IN
           SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation
-            WHERE rel_group = v_groupName AND rel_kind = 'S' ORDER BY rel_priority, rel_schema, rel_tblseq
+            WHERE rel_group = v_groupName AND rel_kind = 'S' 
+            ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 -- ... temporary record the sequence parameters in the emaj sequence table
         EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
@@ -5354,7 +5359,7 @@ $emaj_gen_sql_group$
 --        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
-    v_cumNbSQL              INT;
+    v_cumNbSQL               INT;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)

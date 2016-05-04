@@ -600,18 +600,18 @@ ERROR:  emaj_snap_group: directory parameter cannot be NULL
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO 'unknown_directory/myschema1_myTbl3_col31_seq.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 80 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 81 at EXECUTE
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3_col31_seq.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/unknown_directory/myschema1_myTbl3_col31_seq.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 80 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 81 at EXECUTE
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','dummy_option');
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: .../emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/tmp/emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 80 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 81 at EXECUTE
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_group: invalid COPY options parameter format
@@ -1343,10 +1343,10 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean) line 84 at PERFORM
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 213 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 213 at PERFORM
  emaj_alter_group 
 ------------------
                 8
@@ -1427,16 +1427,16 @@ PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 213 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 213 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema2.mytbl4 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 213 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 213 at PERFORM
  emaj_alter_group 
 ------------------
                 7
@@ -1465,10 +1465,10 @@ begin;
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 213 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 213 at PERFORM
  emaj_alter_group 
 ------------------
                 7
