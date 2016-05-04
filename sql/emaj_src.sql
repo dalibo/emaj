@@ -55,22 +55,18 @@ $tmp$
       RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
     END IF;
 -- check there is no E-Maj secondary schema remaining (that could later lead to error)
-    v_schemaList = '';
     BEGIN
 -- try to join an old emaj.emaj_relation table and the postgres schemas table
 -- (if there is an error (schema or table or column not there), continue)
-      FOR r_schema IN
-          SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
-            WHERE rel_log_schema <> 'emaj'
-              AND EXISTS (SELECT 0 FROM pg_catalog.pg_namespace WHERE nspname = rel_log_schema)
-        LOOP
-        v_schemaList = v_schemaList || r_schema.rel_log_schema || ', ';
-      END LOOP;
+      SELECT string_agg(DISTINCT rel_log_schema, ', ') INTO v_schemaList
+        FROM emaj.emaj_relation
+        WHERE rel_log_schema <> 'emaj'
+         AND EXISTS (SELECT 0 FROM pg_catalog.pg_namespace WHERE nspname = rel_log_schema)
     EXCEPTION WHEN OTHERS THEN -- do nothing
     END;
-    IF v_schemaList <> '' THEN
+    IF v_schemaList IS NOT NULL THEN
 -- some secondary schemas remaining
-      RAISE EXCEPTION 'E-Maj installation: some secondary schemas (%) need to be dropped before reinstalling E-Maj. You can use the uninstall.sql script or the emaj_drop_group() function or DROP SCHEMA statements.', substring(v_schemaList FROM 1 FOR char_length(v_schemaList) - 2);
+      RAISE EXCEPTION 'E-Maj installation: some secondary schemas (%) need to be dropped before reinstalling E-Maj. You can use the uninstall.sql script or the emaj_drop_group() function or DROP SCHEMA statements.', v_schemaList;
     END IF;
 --
     RETURN;
@@ -615,7 +611,7 @@ $_dblink_open_cnx$
       v_status = -2;                      -- dblink is not visible in the search_path
     ELSIF NOT has_function_privilege('dblink_connect_u(text, text)', 'execute') THEN
       v_status = -3;                      -- current role has not the execute rights on dblink functions
-    ELSIF substring(v_cnxName from 1 for 5) = 'rlbk#' AND
+    ELSIF substring(v_cnxName FROM 1 FOR 5) = 'rlbk#' AND
           current_setting('transaction_isolation') <> 'read committed' THEN
       v_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
                                           --   READ COMMITTED transaction
@@ -642,7 +638,7 @@ $_dblink_open_cnx$
       END IF;
     END IF;
 -- for connections used for rollback operations, record the dblink connection attempt in the emaj_hist table
-    IF substring(v_cnxName from 1 for 5) = 'rlbk#' THEN
+    IF substring(v_cnxName FROM 1 FOR 5) = 'rlbk#' THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
         VALUES ('DBLINK_OPEN_CNX',v_cnxName,'Status = ' || v_status);
     END IF;
@@ -681,7 +677,7 @@ $_dblink_close_cnx$
 -- the emaj connection exists, so disconnect
       PERFORM dblink_disconnect(v_cnxName);
 -- for connections used for rollback operations, record the dblink disconnection in the emaj_hist table
-      IF substring(v_cnxName from 1 for 5) = 'rlbk#' THEN
+      IF substring(v_cnxName FROM 1 FOR 5) = 'rlbk#' THEN
         INSERT INTO emaj.emaj_hist (hist_function, hist_object)
           VALUES ('DBLINK_CLOSE_CNX',v_cnxName);
       END IF;
@@ -786,28 +782,21 @@ $_check_group_content$
 --  - will not generate conflicts on emaj objects to create (when emaj names prefix is not the default one)
 -- Input: the name of the tables group to check
   DECLARE
-    v_msg                    TEXT = '';
-    r_tblsq                  RECORD;
+    v_msg                    TEXT;
   BEGIN
 -- check that all application tables and sequences listed for the group really exist
-    FOR r_tblsq IN
+    SELECT string_agg(full_name, ', ') INTO v_msg FROM (
       SELECT grpdef_schema || '.' || grpdef_tblseq AS full_name
         FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName
       EXCEPT
       SELECT nspname || '.' || relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S')
-      ORDER BY 1
-      LOOP
-      IF v_msg <> '' THEN
-        v_msg = v_msg || ', ';
-      END IF;
-      v_msg = v_msg || r_tblsq.full_name;
-    END LOOP;
-    IF v_msg <> '' THEN
+      ORDER BY 1) AS t;
+    IF v_msg IS NOT NULL THEN
       RAISE EXCEPTION '_check_group_content: one or several tables or sequences do not exist (%).', v_msg;
     END IF;
 -- check no application schema listed for the group in the emaj_group_def table is an E-Maj schema
-    FOR r_tblsq IN
+    SELECT string_agg(full_name, ', ') INTO v_msg FROM (
       SELECT grpdef_schema || '.' || grpdef_tblseq AS full_name
         FROM emaj.emaj_group_def
         WHERE grpdef_group = v_groupName
@@ -815,61 +804,37 @@ $_check_group_content$
                 SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
                 UNION
                 SELECT 'emaj')
-        ORDER BY 1
-      LOOP
-      IF v_msg <> '' THEN
-        v_msg = v_msg || ', ';
-      END IF;
-      v_msg = v_msg || r_tblsq.full_name;
-    END LOOP;
-    IF v_msg <> '' THEN
+        ORDER BY 1) AS t;
+    IF v_msg IS NOT NULL THEN
       RAISE EXCEPTION '_check_group_content: one or several tables or sequences belong to an E-Maj schema (%).', v_msg;
     END IF;
 -- check that no table or sequence of the new group already belongs to another created group
-    FOR r_tblsq IN
-        SELECT grpdef_schema || '.' || grpdef_tblseq || ' in ' || rel_group AS full_name
-          FROM emaj.emaj_group_def, emaj.emaj_relation
-          WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
-            AND grpdef_group = v_groupName AND rel_group <> v_groupName
-        ORDER BY 1
-      LOOP
-      IF v_msg <> '' THEN
-        v_msg = v_msg || ', ';
-      END IF;
-      v_msg = v_msg || r_tblsq.full_name;
-    END LOOP;
-    IF v_msg <> '' THEN
+    SELECT string_agg(full_name, ', ') INTO v_msg FROM (
+      SELECT grpdef_schema || '.' || grpdef_tblseq || ' in ' || rel_group AS full_name
+        FROM emaj.emaj_group_def, emaj.emaj_relation
+        WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
+          AND grpdef_group = v_groupName AND rel_group <> v_groupName
+      ORDER BY 1) AS t;
+    IF v_msg IS NOT NULL THEN
       RAISE EXCEPTION '_check_group_content: one or several tables already belong to another group (%).', v_msg;
     END IF;
 -- check that several tables of the group have not the same emaj names prefix
-    FOR r_tblsq IN
-        SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq)  AS prefix, count(*)
-          FROM emaj.emaj_group_def
-          WHERE grpdef_group = v_groupName
-        GROUP BY 1 HAVING count(*) > 1 ORDER BY 1
-      LOOP
-      IF v_msg <> '' THEN
-        v_msg = v_msg || ', ';
-      END IF;
-      v_msg = v_msg || r_tblsq.prefix;
-    END LOOP;
-    IF v_msg <> '' THEN
+    SELECT string_agg(prefix, ', ') INTO v_msg FROM (
+      SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq)  AS prefix, count(*)
+        FROM emaj.emaj_group_def
+        WHERE grpdef_group = v_groupName
+      GROUP BY 1 HAVING count(*) > 1 ORDER BY 1) AS t;
+    IF v_msg IS NOT NULL THEN
       RAISE EXCEPTION '_check_group_content: one or several emaj prefix are configured for several tables in the group (%).', v_msg;
     END IF;
 -- check that emaj names prefix that will be generared will not generate conflict with objects from existing groups
-    FOR r_tblsq IN
-        SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix
-          FROM emaj.emaj_group_def, emaj.emaj_relation
-          WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log' = rel_log_table
-            AND grpdef_group = v_groupName AND rel_group <> v_groupName
-        ORDER BY 1
-      LOOP
-      IF v_msg <> '' THEN
-        v_msg = v_msg || ', ';
-      END IF;
-      v_msg = v_msg || r_tblsq.prefix;
-    END LOOP;
-    IF v_msg <> '' THEN
+    SELECT string_agg(prefix, ', ') INTO v_msg FROM (
+      SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix
+        FROM emaj.emaj_group_def, emaj.emaj_relation
+        WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log' = rel_log_table
+          AND grpdef_group = v_groupName AND rel_group <> v_groupName
+      ORDER BY 1) AS t;
+    IF v_msg IS NOT NULL THEN
       RAISE EXCEPTION '_check_group_content: one or several emaj prefix are already used (%).', v_msg;
     END IF;
 --
@@ -1035,10 +1000,8 @@ $_create_tbl$
     v_relPersistence         CHAR(1);
     v_relIsTemp              BOOLEAN;
     v_relhaspkey             BOOLEAN;
-    v_stmt                   TEXT = '';
-    v_triggerList            TEXT = '';
-    r_column                 RECORD;
-    r_trigger                RECORD;
+    v_stmt                   TEXT;
+    v_triggerList            TEXT;
   BEGIN
 -- check the table is neither a temporary nor an unlogged table
     SELECT relpersistence INTO v_relPersistence FROM pg_catalog.pg_class, pg_catalog.pg_namespace
@@ -1080,7 +1043,7 @@ $_create_tbl$
 -- creation of the log table: the log table looks like the application table, with some additional technical columns
     EXECUTE 'DROP TABLE IF EXISTS ' || v_logTableName;
     EXECUTE 'CREATE TABLE ' || v_logTableName
-         || ' ( LIKE ' || v_fullTableName || ') ' || v_dataTblSpace;
+         || ' (LIKE ' || v_fullTableName || ') ' || v_dataTblSpace;
     EXECUTE 'ALTER TABLE ' || v_logTableName
          || ' ADD COLUMN emaj_verb      VARCHAR(3),'
          || ' ADD COLUMN emaj_tuple     VARCHAR(3),'
@@ -1097,20 +1060,13 @@ $_create_tbl$
     EXECUTE 'ALTER TABLE ONLY ' || v_logTableName || ' CLUSTER ON ' || v_logIdxName;
 -- remove the NOT NULL constraints of application columns.
 --   They are useless and blocking to store truncate event for tables belonging to audit_only tables
-    FOR r_column IN
+    SELECT string_agg(action, ',') INTO v_stmt FROM (
       SELECT ' ALTER COLUMN ' || quote_ident(attname) || ' DROP NOT NULL' AS action
         FROM pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND attrelid = pg_class.oid
           AND nspname = v_logSchema AND relname = v_baseLogTableName
-          AND attnum > 0 AND attnotnull AND attisdropped = false AND attname NOT LIKE E'emaj\\_%'
-    LOOP
-      IF v_stmt = '' THEN
-        v_stmt = v_stmt || r_column.action;
-      ELSE
-        v_stmt = v_stmt || ',' || r_column.action;
-      END IF;
-    END LOOP;
-    IF v_stmt <> '' THEN
+          AND attnum > 0 AND attnotnull AND attisdropped = false AND attname NOT LIKE E'emaj\\_%') AS t;
+    IF v_stmt IS NOT NULL THEN
       EXECUTE 'ALTER TABLE ' || v_logTableName || v_stmt;
     END IF;
 -- create the sequence associated to the log table
@@ -1169,18 +1125,11 @@ $_create_tbl$
                 v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName);
 --
 -- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
-    FOR r_trigger IN
+    SELECT string_agg(tgname, ', ') INTO v_triggerList FROM (
       SELECT tgname FROM pg_catalog.pg_trigger
-        WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'emaj\\_%\\_trg'
-    LOOP
-      IF v_triggerList = '' THEN
-        v_triggerList = v_triggerList || r_trigger.tgname;
-      ELSE
-        v_triggerList = v_triggerList || ', ' || r_trigger.tgname;
-      END IF;
-    END LOOP;
+        WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'emaj\\_%\\_trg') AS t;
 -- if yes, issue a warning (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
-    IF v_triggerList <> '' THEN
+    IF v_triggerList IS NOT NULL THEN
       RAISE WARNING '_create_tbl: table % has triggers (%). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.', v_fullTableName, v_triggerList;
     END IF;
 -- grant appropriate rights to both emaj roles
@@ -1305,13 +1254,9 @@ $_rlbk_tbl$
     v_tmpTable               TEXT;
     v_tableType              TEXT;
     v_nbPk                   BIGINT;
-    v_cols                   TEXT[] = '{}';
-    v_colsPk                 TEXT[] = '{}';
-    v_condsPk                TEXT[] = '{}';
     v_colList                TEXT;
     v_pkColList              TEXT;
     v_pkCondList             TEXT;
-    r_col                    RECORD;
   BEGIN
     v_fullTableName  = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
     v_logTableName   = quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
@@ -1320,21 +1265,13 @@ $_rlbk_tbl$
       VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_lastGlobalSeq);
 -- Build some pieces of SQL statements
 --   build the tables's columns list
-    FOR r_col IN
+    SELECT string_agg(col_name, ',') INTO v_colList FROM (
       SELECT 'tbl.' || quote_ident(attname) AS col_name FROM pg_catalog.pg_attribute
         WHERE attrelid = v_fullTableName::regclass
           AND attnum > 0 AND NOT attisdropped
-        ORDER BY attnum
-      LOOP
-      v_cols = array_append(v_cols, r_col.col_name);
-    END LOOP;
-    v_colList = array_to_string(v_cols,',');
--- TODO when pg 8.3 will not be supported any more :
---   SELECT array_to_string(array_agg('tbl.' || quote_ident(attname)),', ') INTO v_colList
---     FROM pg_catalog.pg_attribute
---     WHERE attrelid = 'myschema1.mytbl1'::regclass AND attnum > 0 AND NOT attisdropped;
+        ORDER BY attnum) AS t;
 --   build the pkey columns list and the "equality on the primary key" conditions
-    FOR r_col IN
+    SELECT string_agg(col_pk_name, ','), string_agg(col_pk_cond, ' AND ') INTO v_pkColList, v_pkCondList FROM (
       SELECT quote_ident(attname) AS col_pk_name,
              'tbl.' || quote_ident(attname) || ' = keys.' || quote_ident(attname) AS col_pk_cond
         FROM pg_catalog.pg_attribute, pg_catalog.pg_index
@@ -1342,13 +1279,11 @@ $_rlbk_tbl$
           AND attnum = ANY (indkey)
           AND indrelid = v_fullTableName::regclass AND indisprimary
           AND attnum > 0 AND attisdropped = false
-        ORDER BY attnum
-      LOOP
-      v_colsPk = array_append(v_colsPk, r_col.col_pk_name);
-      v_condsPk = array_append(v_condsPk, r_col.col_pk_cond);
-    END LOOP;
-    v_pkColList = array_to_string(v_colsPk,',');
-    v_pkCondList = array_to_string(v_condsPk, ' AND ');
+        ORDER BY attnum) AS t;
+-- internal check that lists are not NULL (they should not be)
+    IF v_colList IS NULL OR v_pkColList IS NULL OR v_pkCondList IS NULL THEN
+      RAISE EXCEPTION 'Internal error: at least one list is NULL (columns list = %, pk columns list = %, conditions list = %)',v_colList, v_pkColList, v_pkCondList;
+    END IF;
 -- create the temporary table containing all primary key values with their earliest emaj_gid
     IF v_nbSession = 1 THEN
       v_tableType = 'TEMP';
@@ -3723,18 +3658,11 @@ $_rlbk_check$
         RAISE EXCEPTION '_rlbk_check: mark % for group % is not usable for rollback.', v_markName, v_groupNames[v_i];
       END IF;
 -- ... and the rollback wouldn't delete protected marks
---TODO : use aggregate when 8.3 will not be supported anymore
-      v_protectedMarkList = '';
-      FOR r_mark IN
-        SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = v_groupNames[v_i] AND mark_id > v_markId AND mark_is_rlbk_protected
-        LOOP
-        IF v_protectedMarkList = '' THEN
-          v_protectedMarkList = r_mark.mark_name;
-        ELSE
-          v_protectedMarkList = v_protectedMarkList || ', ' || r_mark.mark_name;
-        END IF;
-      END LOOP;
-      IF v_protectedMarkList <> '' THEN
+      SELECT string_agg(mark_name,', ') INTO v_protectedMarkList FROM (
+        SELECT mark_name FROM emaj.emaj_mark 
+          WHERE mark_group = v_groupNames[v_i] AND mark_id > v_markId AND mark_is_rlbk_protected
+          ORDER BY mark_id) AS t;
+      IF v_protectedMarkList IS NOT NULL THEN
         RAISE EXCEPTION '_rlbk_check: protected marks (%) for group % block the rollback to mark %.', v_protectedMarkList, v_groupNames[v_i], v_markName;
       END IF;
     END LOOP;
@@ -5178,7 +5106,6 @@ $emaj_snap_group$
     v_nbTb                   INT = 0;
     r_tblsq                  RECORD;
     v_fullTableName          TEXT;
-    r_col                    RECORD;
     v_colList                TEXT;
     v_fileName               TEXT;
     v_stmt                   TEXT;
@@ -5209,38 +5136,23 @@ $emaj_snap_group$
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table,
 --   first build the order by column list
-        v_colList = '';
         PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
           WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid AND
                 contype = 'p' AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
         IF FOUND THEN
 --   the table has a pkey,
-          FOR r_col IN
-              SELECT attname FROM pg_catalog.pg_attribute, pg_catalog.pg_index
-                WHERE pg_attribute.attrelid = pg_index.indrelid
-                  AND attnum = ANY (indkey)
-                  AND indrelid = v_fullTableName::regclass AND indisprimary
-                  AND attnum > 0 AND attisdropped = false
-              LOOP
-            IF v_colList = '' THEN
-               v_colList = quote_ident(r_col.attname);
-            ELSE
-               v_colList = v_colList || ',' || quote_ident(r_col.attname);
-            END IF;
-          END LOOP;
+          SELECT string_agg(quote_ident(attname), ',') INTO v_colList FROM (
+            SELECT attname FROM pg_catalog.pg_attribute, pg_catalog.pg_index
+              WHERE pg_attribute.attrelid = pg_index.indrelid
+                AND attnum = ANY (indkey)
+                AND indrelid = v_fullTableName::regclass AND indisprimary
+                AND attnum > 0 AND attisdropped = false) AS t;
         ELSE
 --   the table has no pkey
-          FOR r_col IN
-              SELECT attname FROM pg_catalog.pg_attribute
-                WHERE attrelid = v_fullTableName::regclass
-                  AND attnum > 0  AND attisdropped = false
-              LOOP
-            IF v_colList = '' THEN
-               v_colList = quote_ident(r_col.attname);
-            ELSE
-               v_colList = v_colList || ',' || quote_ident(r_col.attname);
-            END IF;
-          END LOOP;
+          SELECT string_agg(quote_ident(attname), ',') INTO v_colList FROM (
+            SELECT attname FROM pg_catalog.pg_attribute
+              WHERE attrelid = v_fullTableName::regclass
+                AND attnum > 0  AND attisdropped = false) AS t;
         END IF;
 --   prepare the COPY statement
         v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ' ||
@@ -5657,17 +5569,13 @@ $_gen_sql_groups$
 -- check the array of tables and sequences to filter, if supplied.
 -- each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups
     IF v_tblseqs IS NOT NULL THEN
-      v_tblseqErr = '';
-      FOR r_tblsq IN
+      SELECT string_agg(t,', ') INTO v_tblseqErr FROM (
         SELECT t FROM unnest(v_tblseqs) AS t
           EXCEPT
         SELECT rel_schema || '.' || rel_tblseq FROM emaj.emaj_relation
           WHERE rel_group = ANY (v_groupNames)
-        LOOP
-        v_tblseqErr = v_tblseqErr || r_tblsq.t || ', ';
-      END LOOP;
-      IF v_tblseqErr <> '' THEN
-        v_tblseqErr = substring(v_tblseqErr FROM 1 FOR char_length(v_tblseqErr) - 2);
+        ) AS t2;
+      IF v_tblseqErr IS NOT NULL THEN
         RAISE EXCEPTION '_gen_sql_groups: some tables and/or sequences (%) do not belong to any of the selected tables groups.', v_tblseqErr;
       END IF;
     END IF;

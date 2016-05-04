@@ -600,18 +600,18 @@ ERROR:  emaj_snap_group: directory parameter cannot be NULL
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO 'unknown_directory/myschema1_myTbl3_col31_seq.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 96 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 80 at EXECUTE
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3_col31_seq.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/unknown_directory/myschema1_myTbl3_col31_seq.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 96 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 80 at EXECUTE
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','dummy_option');
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: .../emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/tmp/emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 96 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 80 at EXECUTE
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_group: invalid COPY options parameter format
@@ -880,7 +880,7 @@ PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script"
-PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 153 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 149 at SQL statement
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
  emaj_gen_sql_group 
