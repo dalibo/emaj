@@ -715,20 +715,20 @@ $_check_names_array$
 -- Output: validated names array
   DECLARE
     v_outputNames            TEXT[];
-    v_i                      INT;
+    v_aName                  TEXT;
   BEGIN
     IF v_names IS NOT NULL AND array_upper(v_names,1) >= 1 THEN
 -- if there are elements, build the result array
-      FOR v_i IN 1 .. array_upper(v_names,1) LOOP
+      FOREACH v_aName IN ARRAY v_names LOOP
 -- look for not NULL & not empty name
-        IF v_names[v_i] IS NULL OR v_names[v_i] = '' THEN
+        IF v_aName IS NULL OR v_aName = '' THEN
           RAISE WARNING '_check_names_array: a % name is NULL or empty.', v_type;
 -- look for duplicate name
-        ELSEIF v_outputNames IS NOT NULL AND v_names[v_i] = ANY (v_outputNames) THEN
-          RAISE WARNING '_check_names_array: duplicate % name %.', v_type, v_names[v_i];
+        ELSEIF v_outputNames IS NOT NULL AND v_aName = ANY (v_outputNames) THEN
+          RAISE WARNING '_check_names_array: duplicate % name %.', v_type, v_aName;
         ELSE
 -- OK, keep the name
-          v_outputNames = array_append (v_outputNames, v_names[v_i]);
+          v_outputNames = array_append (v_outputNames, v_aName);
         END IF;
       END LOOP;
     END IF;
@@ -822,8 +822,8 @@ $_check_new_mark$
 --        The array of group names may be NULL to avoid the check against groups
 -- Output: internal name of the mark
   DECLARE
-    v_i                      INT;
     v_markName               TEXT = v_mark;
+    v_aGroupName             TEXT;
   BEGIN
 -- check the mark name is not 'EMAJ_LAST_MARK'
     IF v_mark = 'EMAJ_LAST_MARK' THEN
@@ -838,12 +838,12 @@ $_check_new_mark$
 -- if requested, check the existence of the mark in groups
     IF v_groupNames IS NOT NULL THEN
 -- for each group of the array,
-      FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
+      FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
 -- ... if a mark with the same name already exists for the group, stop
         PERFORM 0 FROM emaj.emaj_mark
-          WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
+          WHERE mark_group = v_aGroupName AND mark_name = v_markName;
         IF FOUND THEN
-           RAISE EXCEPTION '_check_new_mark: Group % already contains a mark named %.', v_groupNames[v_i], v_markName;
+           RAISE EXCEPTION '_check_new_mark: Group % already contains a mark named %.', v_aGroupName, v_markName;
         END IF;
       END LOOP;
     END IF;
@@ -2087,6 +2087,7 @@ $emaj_alter_group$
     v_isRollbackable         BOOLEAN;
     v_logSchema              TEXT;
     v_logSchemasArray        TEXT[];
+    v_aLogSchema             TEXT;
     v_defTsp                 TEXT;
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
     r_rel                    emaj.emaj_relation%ROWTYPE;
@@ -2212,15 +2213,14 @@ $emaj_alter_group$
     PERFORM emaj._reset_group(v_groupName);
 -- drop useless log schemas, using the list of potential schemas to drop built previously
     IF v_logSchemasArray IS NOT NULL THEN
-      FOR v_i IN 1 .. array_upper(v_logSchemasArray,1)
-        LOOP
-        PERFORM 0 FROM emaj.emaj_relation WHERE rel_log_schema = v_logSchemasArray [v_i] LIMIT 1;
+      FOREACH v_aLogSchema IN ARRAY v_logSchemasArray LOOP
+        PERFORM 0 FROM emaj.emaj_relation WHERE rel_log_schema = v_aLogSchema LIMIT 1;
         IF NOT FOUND THEN
 -- drop the log schema
-          PERFORM emaj._drop_log_schema(v_logSchemasArray [v_i], false);
+          PERFORM emaj._drop_log_schema(v_aLogSchema, false);
 -- and record the schema drop in emaj_hist table
           INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-            VALUES ('ALTER_GROUP','SCHEMA DROPPED',quote_ident(v_logSchemasArray [v_i]));
+            VALUES ('ALTER_GROUP','SCHEMA DROPPED',quote_ident(v_aLogSchema));
         END IF;
       END LOOP;
     END IF;
@@ -2355,7 +2355,7 @@ $_start_groups$
 -- Output: number of processed tables
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
-    v_i                      INT;
+    v_aGroupName             TEXT;
     v_groupIsLogging         BOOLEAN;
     v_nbTb                   INT = 0;
     v_markName               TEXT;
@@ -2369,27 +2369,27 @@ $_start_groups$
       RETURN 0;
     END IF;
 -- check that each group is recorded in emaj_group table
-    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
+    FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
       SELECT group_is_logging INTO v_groupIsLogging
-        FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
+        FROM emaj.emaj_group WHERE group_name = v_aGroupName FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_start_group: group % has not been created.', v_groupNames[v_i];
+        RAISE EXCEPTION '_start_group: group % has not been created.', v_aGroupName;
       END IF;
 -- ... and is not in LOGGING state
       IF v_groupIsLogging THEN
-        RAISE EXCEPTION '_start_group: The group % cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.', v_groupNames[v_i];
+        RAISE EXCEPTION '_start_group: The group % cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.', v_aGroupName;
       END IF;
     END LOOP;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- for each group,
-    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
+    FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
       if v_resetLog THEN
 -- ... if requested by the user, call the emaj_reset_group function to erase remaining traces from previous logs
-        SELECT emaj._reset_group(v_groupNames[v_i]) INTO v_nbTb;
+        SELECT emaj._reset_group(v_aGroupName) INTO v_nbTb;
       END IF;
 -- ... and check foreign keys with tables outside the group
-      PERFORM emaj._check_fk_groups(array[v_groupNames[v_i]]);
+      PERFORM emaj._check_fk_groups(array[v_aGroupName]);
     END LOOP;
 -- check and process the supplied mark name
     SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
@@ -2510,7 +2510,7 @@ $_stop_groups$
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and sequences.
   DECLARE
     v_validGroupNames        TEXT[];
-    v_i                      INT;
+    v_aGroupName             TEXT;
     v_groupIsLogging         BOOLEAN;
     v_nbTb                   INT = 0;
     v_markName               TEXT;
@@ -2522,19 +2522,19 @@ $_stop_groups$
       RETURN 0;
     END IF;
 -- for each group of the array,
-    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
+    FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
 -- ... check that the group is recorded in emaj_group table
       SELECT group_is_logging INTO v_groupIsLogging
-        FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i] FOR UPDATE;
+        FROM emaj.emaj_group WHERE group_name = v_aGroupName FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_stop_group: group % has not been created.', v_groupNames[v_i];
+        RAISE EXCEPTION '_stop_group: group % has not been created.', v_aGroupName;
       END IF;
 -- ... check that the group is in LOGGING state
       IF NOT v_groupIsLogging THEN
-        RAISE WARNING '_stop_group: Group % cannot be stopped because it is not in LOGGING state.', v_groupNames[v_i];
+        RAISE WARNING '_stop_group: Group % cannot be stopped because it is not in LOGGING state.', v_aGroupName;
       ELSE
 -- ... if OK, add the group into the array of groups to process
-        v_validGroupNames = v_validGroupNames || array[v_groupNames[v_i]];
+        v_validGroupNames = v_validGroupNames || array[v_aGroupName];
       END IF;
     END LOOP;
 -- check and process the supplied mark name (except if the function is called by emaj_force_stop_group())
@@ -2768,6 +2768,7 @@ $emaj_set_mark_groups$
 -- Output: number of processed tables and sequences
   DECLARE
     v_validGroupNames        TEXT[];
+    v_aGroupName             TEXT;
     v_groupIsLogging         BOOLEAN;
     v_markName               TEXT;
     v_nbTb                   INT;
@@ -2786,17 +2787,17 @@ $emaj_set_mark_groups$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('SET_MARK_GROUPS', 'BEGIN', array_to_string(v_groupNames,','), v_mark);
 -- for each group...
-    FOR v_i IN 1 .. array_upper(v_validGroupNames,1) LOOP
+    FOREACH v_aGroupName IN ARRAY v_validGroupNames LOOP
 -- ... check that the group is recorded in emaj_group table
 -- (the SELECT is coded FOR UPDATE to lock the accessed group, avoiding any operation on this group at the same time)
       SELECT group_is_logging INTO v_groupIsLogging
-        FROM emaj.emaj_group WHERE group_name = v_validGroupNames[v_i] FOR UPDATE;
+        FROM emaj.emaj_group WHERE group_name = v_aGroupName FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION 'emaj_set_mark_groups: group % has not been created.', v_validGroupNames[v_i];
+        RAISE EXCEPTION 'emaj_set_mark_groups: group % has not been created.', v_aGroupName;
       END IF;
 -- ... check that the group is in LOGGING state
       IF NOT v_groupIsLogging THEN
-        RAISE EXCEPTION 'emaj_set_mark_groups: A mark cannot be set for group % because it is not in LOGGING state. An emaj_start_group function must be previously executed.', v_validGroupNames[v_i];
+        RAISE EXCEPTION 'emaj_set_mark_groups: A mark cannot be set for group % because it is not in LOGGING state. An emaj_start_group function must be previously executed.', v_aGroupName;
       END IF;
     END LOOP;
 -- check that no group is damaged
@@ -3588,7 +3589,7 @@ $_rlbk_check$
 -- and emaj_estimate_rollback_groups() functions.
 -- It returns the real mark name.
   DECLARE
-    v_i                      INT;
+    v_aGroupName             TEXT;
     v_groupIsLogging         BOOLEAN;
     v_groupIsProtected       BOOLEAN;
     v_groupIsRollbackable    BOOLEAN;
@@ -3601,42 +3602,42 @@ $_rlbk_check$
   BEGIN
 -- check that each group ...
 -- ...is recorded in emaj_group table
-    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
+    FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
       SELECT group_is_logging, group_is_rollbackable, group_is_rlbk_protected INTO v_groupIsLogging, v_groupIsRollbackable, v_groupIsProtected
-        FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i];
+        FROM emaj.emaj_group WHERE group_name = v_aGroupName;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_rlbk_check: group % has not been created.', v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_check: group % has not been created.', v_aGroupName;
       END IF;
 -- ... is in LOGGING state
       IF NOT v_groupIsLogging THEN
-        RAISE EXCEPTION '_rlbk_check: Group % is not in LOGGING state.', v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_check: Group % is not in LOGGING state.', v_aGroupName;
       END IF;
 -- ... is ROLLBACKABLE
       IF NOT v_groupIsRollbackable THEN
-        RAISE EXCEPTION '_rlbk_check: Group % has been created for audit only purpose.', v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_check: Group % has been created for audit only purpose.', v_aGroupName;
       END IF;
 -- ... is not protected against rollback
       IF v_groupIsProtected THEN
-        RAISE EXCEPTION '_rlbk_check: Group % is currently protected against rollback.', v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_check: Group % is currently protected against rollback.', v_aGroupName;
       END IF;
 -- ... owns the requested mark
-      SELECT emaj._get_mark_name(v_groupNames[v_i],v_mark) INTO v_markName;
+      SELECT emaj._get_mark_name(v_aGroupName,v_mark) INTO v_markName;
       IF NOT FOUND OR v_markName IS NULL THEN
-        RAISE EXCEPTION '_rlbk_check: No mark % exists for group %.', v_mark, v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_check: No mark % exists for group %.', v_mark, v_aGroupName;
       END IF;
 -- ... and this mark is ACTIVE
       SELECT mark_id, mark_is_deleted INTO v_markId, v_markIsDeleted FROM emaj.emaj_mark
-        WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
+        WHERE mark_group = v_aGroupName AND mark_name = v_markName;
       IF v_markIsDeleted THEN
-        RAISE EXCEPTION '_rlbk_check: mark % for group % is not usable for rollback.', v_markName, v_groupNames[v_i];
+        RAISE EXCEPTION '_rlbk_check: mark % for group % is not usable for rollback.', v_markName, v_aGroupName;
       END IF;
 -- ... and the rollback wouldn't delete protected marks
       SELECT string_agg(mark_name,', ') INTO v_protectedMarkList FROM (
         SELECT mark_name FROM emaj.emaj_mark 
-          WHERE mark_group = v_groupNames[v_i] AND mark_id > v_markId AND mark_is_rlbk_protected
+          WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
           ORDER BY mark_id) AS t;
       IF v_protectedMarkList IS NOT NULL THEN
-        RAISE EXCEPTION '_rlbk_check: protected marks (%) for group % block the rollback to mark %.', v_protectedMarkList, v_groupNames[v_i], v_markName;
+        RAISE EXCEPTION '_rlbk_check: protected marks (%) for group % block the rollback to mark %.', v_protectedMarkList, v_aGroupName, v_markName;
       END IF;
     END LOOP;
 -- get the mark timestamp and check it is the same for all groups of the array
@@ -3745,7 +3746,6 @@ $_rlbk_planning$
         v_batchNumber = v_batchNumber + 1;
       END IF;
     END LOOP;
--- TODO: when CTE will be available for all supported pg versions, use them to replace the recursive call to _rlbk_set_batch_number()
 --
 -- if unlogged rollback, register into emaj_rlbk_plan "disable log triggers", "deletes from log tables"
 -- and "enable log trigger" steps
@@ -5430,6 +5430,7 @@ $_gen_sql_groups$
 --        - optional array of schema qualified table and sequence names to only process those tables and sequences
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
+    v_aGroupName             TEXT;
     v_groupIsLogging         BOOLEAN;
     v_tblList                TEXT;
     v_cpt                    INT;
@@ -5468,42 +5469,42 @@ $_gen_sql_groups$
       v_tblseqs = emaj._check_names_array(v_tblseqs,'table/sequence');
     END IF;
 -- check that each group ...
-    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
+    FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
 -- ...is recorded into the emaj_group table
       SELECT group_is_logging INTO v_groupIsLogging
-        FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i];
+        FROM emaj.emaj_group WHERE group_name = v_aGroupName;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_gen_sql_groups: group % has not been created.', v_groupNames[v_i];
+        RAISE EXCEPTION '_gen_sql_groups: group % has not been created.', v_aGroupName;
       END IF;
 -- ... has no tables without pkey
       SELECT string_agg(rel_schema || '.' || rel_tblseq,',') INTO v_tblList
         FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
         WHERE relnamespace = pg_namespace.oid
           AND nspname = rel_schema AND relname = rel_tblseq
-          AND rel_group = v_groupNames[v_i] AND rel_kind = 'r'
+          AND rel_group = v_aGroupName AND rel_kind = 'r'
           AND relhaspkey = false;
       IF v_tblList IS NOT NULL THEN
-        RAISE EXCEPTION '_gen_sql_groups: Tables group % contains tables without pkey (%).', v_groupNames[v_i], v_tblList;
+        RAISE EXCEPTION '_gen_sql_groups: Tables group % contains tables without pkey (%).', v_aGroupName, v_tblList;
       END IF;
 -- If the first mark supplied is NULL or empty, get the first mark for the current processed group
 --   (in fact the first one) and override the supplied first mark
       IF v_firstMarkCopy IS NULL OR v_firstMarkCopy = '' THEN
         SELECT mark_name INTO v_firstMarkCopy
-          FROM emaj.emaj_mark WHERE mark_group = v_groupNames[v_i] ORDER BY mark_id LIMIT 1;
+          FROM emaj.emaj_mark WHERE mark_group = v_aGroupName ORDER BY mark_id LIMIT 1;
         IF NOT FOUND THEN
-           RAISE EXCEPTION '_gen_sql_groups: No initial mark can be found for group %.', v_groupNames[v_i];
+           RAISE EXCEPTION '_gen_sql_groups: No initial mark can be found for group %.', v_aGroupName;
         END IF;
       END IF;
 -- ... owns the requested first mark
-      SELECT emaj._get_mark_name(v_groupNames[v_i],v_firstMarkCopy) INTO v_realFirstMark;
+      SELECT emaj._get_mark_name(v_aGroupName,v_firstMarkCopy) INTO v_realFirstMark;
       IF v_realFirstMark IS NULL THEN
-        RAISE EXCEPTION '_gen_sql_groups: No mark % exists for group %.', v_firstMarkCopy, v_groupNames[v_i];
+        RAISE EXCEPTION '_gen_sql_groups: No mark % exists for group %.', v_firstMarkCopy, v_aGroupName;
       END IF;
 -- ... and owns the requested last mark, if supplied
       IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
-        SELECT emaj._get_mark_name(v_groupNames[v_i],v_lastMark) INTO v_realLastMark;
+        SELECT emaj._get_mark_name(v_aGroupName,v_lastMark) INTO v_realLastMark;
         IF v_realLastMark IS NULL THEN
-          RAISE EXCEPTION '_gen_sql_groups: No mark % exists for group %.', v_lastMark, v_groupNames[v_i];
+          RAISE EXCEPTION '_gen_sql_groups: No mark % exists for group %.', v_lastMark, v_aGroupName;
         END IF;
       END IF;
     END LOOP;

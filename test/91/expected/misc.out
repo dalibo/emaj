@@ -755,7 +755,7 @@ myschema2_mytbl6_log.snap
 -- group is unknown in emaj_group_def
 select emaj.emaj_gen_sql_group(NULL, NULL, NULL, NULL);
 WARNING:  _check_names_array: No group name to process.
-CONTEXT:  PL/pgSQL function "_gen_sql_groups" line 42 at assignment
+CONTEXT:  PL/pgSQL function "_gen_sql_groups" line 43 at assignment
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function "emaj_gen_sql_group" line 22 at SQL statement
  emaj_gen_sql_group 
@@ -769,7 +769,7 @@ CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NO
 PL/pgSQL function "emaj_gen_sql_group" line 22 at SQL statement
 select emaj.emaj_gen_sql_groups(NULL, NULL, NULL, NULL);
 WARNING:  _check_names_array: No group name to process.
-CONTEXT:  PL/pgSQL function "_gen_sql_groups" line 42 at assignment
+CONTEXT:  PL/pgSQL function "_gen_sql_groups" line 43 at assignment
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function "emaj_gen_sql_groups" line 22 at SQL statement
  emaj_gen_sql_groups 
@@ -880,7 +880,7 @@ PL/pgSQL function "emaj_gen_sql_groups" line 22 at SQL statement
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script"
-PL/pgSQL function "_gen_sql_groups" line 149 at SQL statement
+PL/pgSQL function "_gen_sql_groups" line 150 at SQL statement
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function "emaj_gen_sql_group" line 22 at SQL statement
  emaj_gen_sql_group 
@@ -1001,11 +1001,11 @@ select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_te
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Multi-3', '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl4','myschema2.mytbl4','myschema1.mytbl4','myschema2.mytbl4']);
 WARNING:  _check_names_array: duplicate table/sequence name myschema1.mytbl4.
-CONTEXT:  PL/pgSQL function "_gen_sql_groups" line 51 at assignment
+CONTEXT:  PL/pgSQL function "_gen_sql_groups" line 52 at assignment
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function "emaj_gen_sql_groups" line 22 at SQL statement
 WARNING:  _check_names_array: duplicate table/sequence name myschema2.mytbl4.
-CONTEXT:  PL/pgSQL function "_gen_sql_groups" line 51 at assignment
+CONTEXT:  PL/pgSQL function "_gen_sql_groups" line 52 at assignment
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function "emaj_gen_sql_groups" line 22 at SQL statement
  emaj_gen_sql_groups 

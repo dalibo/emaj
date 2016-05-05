@@ -511,7 +511,7 @@ PL/pgSQL function "emaj_create_group" line 84 at PERFORM
   select emaj.emaj_alter_group('myGroup1');
 ERROR:  _check_group_content: one or several tables already belong to another group (myschema2.mytbl1 in myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_group_content(v_groupName)"
-PL/pgSQL function "emaj_alter_group" line 44 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 45 at PERFORM
 rollback;
 -- the group is now empty
 begin;
