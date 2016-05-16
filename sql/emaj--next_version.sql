@@ -22,6 +22,11 @@ DO LANGUAGE plpgsql
 $tmp$
   DECLARE
   BEGIN
+-- check the current role is a superuser
+    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
+    END IF;
 -- check postgres version is >= 9.1
     IF cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
             to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER) < 901 THEN
