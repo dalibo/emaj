@@ -8,7 +8,7 @@ Enhancements:
   - PostgreSQL versions prior 9.1 are not supported by E-Maj anymore.
   - various changes in the functions code to take benefit from the features 
     brought by 8.4 to 9.1 postgres versions.
-  - In rollback functions, trap all exceptions that may happen when the 
+  - in rollback functions, trap all exceptions that may happen when the 
     rollback uses autonomous transactions with dblink and set the proper 
     aborted state of the rollback operation in the emaj_rlbk table.
 

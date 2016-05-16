@@ -50,23 +50,23 @@
   foreach (array_keys($options) as $opt) switch ($opt) {
     case 'd':
       $dbname = $options['d'];
-      $conn_string = $conn_string.'dbname='.$dbname.' ';
+      $conn_string .= 'dbname='.$dbname.' ';
       break;
     case 'h':
       $host = $options['h'];
-      $conn_string = $conn_string.'host='.$host.' ';
+      $conn_string .= 'host='.$host.' ';
       break;
     case 'p':
       $port = $options['p'];
-      $conn_string = $conn_string.'port='.$port.' ';
+      $conn_string .= 'port='.$port.' ';
       break;
     case 'U':
       $username = $options['U'];
-      $conn_string = $conn_string.'user='.$username.' ';
+      $conn_string .= 'user='.$username.' ';
       break;
     case 'W':
       $password = $options['W'];
-      $conn_string = $conn_string.'password='.$username.' ';
+      $conn_string .= 'password='.$username.' ';
       break;
     case 'a':
       if (! is_numeric($options['a']) )
@@ -103,6 +103,7 @@
       $regressTest = true;
       break;
   }
+  $conn_string .= 'application_name='.$progName;
 
 // Open a database session.
 //   Connection parameters are optional. If not supplied, the environment variables and PostgreSQL default values are used
