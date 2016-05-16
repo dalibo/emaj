@@ -912,7 +912,6 @@ $_create_tbl$
     v_logFnctName            TEXT;
     v_sequenceName           TEXT;
     v_relPersistence         CHAR(1);
-    v_relIsTemp              BOOLEAN;
     v_relhaspkey             BOOLEAN;
     v_stmt                   TEXT;
     v_triggerList            TEXT;
@@ -2348,7 +2347,7 @@ $_start_groups$
        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
          WHERE rel_group = ANY (v_groupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
        LOOP
-      CASE r_tblsq.rel_kind 
+      CASE r_tblsq.rel_kind
         WHEN 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
           v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
@@ -2776,7 +2775,6 @@ $_set_mark_groups$
     v_lastSequenceId         BIGINT;
     v_lastSeqHoleId          BIGINT;
     v_lastGlobalSeq          BIGINT;
-    v_stmt                   TEXT;
     r_tblsq                  RECORD;
   BEGIN
 -- if requested, record the set mark begin in emaj_hist
@@ -3320,7 +3318,7 @@ $emaj_rollback_group$
 -- Output: number of processed tables and sequences
   BEGIN
 -- just (unlogged) rollback the group (with boolean: isLoggedRlbk = false, multiGroup = false)
-    return emaj._rlbk_groups(array[v_groupName], v_mark, false, false);
+    RETURN emaj._rlbk_groups(array[v_groupName], v_mark, false, false);
   END;
 $emaj_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT) IS
@@ -3334,7 +3332,7 @@ $emaj_rollback_groups$
 -- Output: number of processed tables and sequences
   BEGIN
 -- just (unlogged) rollback the groups (with boolean: isLoggedRlbk = false, multiGroup = true)
-    return emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, false, true);
+    RETURN emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, false, true);
   END;
 $emaj_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT) IS
@@ -3352,7 +3350,7 @@ $emaj_logged_rollback_group$
 -- Output: number of processed tables and sequences
   BEGIN
 -- just "logged-rollback" the group (with boolean: isLoggedRlbk = true, multiGroup = false)
-    return emaj._rlbk_groups(array[v_groupName], v_mark, true, false);
+    RETURN emaj._rlbk_groups(array[v_groupName], v_mark, true, false);
   END;
 $emaj_logged_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT) IS
@@ -3370,7 +3368,7 @@ $emaj_logged_rollback_groups$
 -- Output: number of processed tables and sequences
   BEGIN
 -- just "logged-rollback" the groups (with boolean: isLoggedRlbk = true, multiGroup = true)
-    return emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, true);
+    RETURN emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, true);
   END;
 $emaj_logged_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT) IS
@@ -3538,7 +3536,6 @@ $_rlbk_check$
     v_markIsDeleted          BOOLEAN;
     v_protectedMarkList      TEXT;
     v_cpt                    INT;
-    r_mark                   RECORD;
   BEGIN
 -- check that each group ...
 -- ...is recorded in emaj_group table
@@ -3573,7 +3570,7 @@ $_rlbk_check$
       END IF;
 -- ... and the rollback wouldn't delete protected marks
       SELECT string_agg(mark_name,', ') INTO v_protectedMarkList FROM (
-        SELECT mark_name FROM emaj.emaj_mark 
+        SELECT mark_name FROM emaj.emaj_mark
           WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
           ORDER BY mark_id) AS t;
       IF v_protectedMarkList IS NOT NULL THEN
@@ -4522,7 +4519,7 @@ $_rlbk_error$
     v_stmt                   TEXT;
   BEGIN
     IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
-      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''ABORTED'', rlbk_msg = ' || quote_literal(v_msg) || 
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''ABORTED'', rlbk_msg = ' || quote_literal(v_msg) ||
                ', rlbk_end_datetime =  clock_timestamp() ' ||
                'WHERE rlbk_id = ' || v_rlbkId || ' AND rlbk_status <> ''ABORTED'' RETURNING 1';
       PERFORM 0 FROM dblink(v_cnxName,v_stmt) AS (dummy INT);
@@ -5242,7 +5239,7 @@ $emaj_snap_log_group$
 -- for each sequence of the groups, ...
       FOR r_tblsq IN
           SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation
-            WHERE rel_group = v_groupName AND rel_kind = 'S' 
+            WHERE rel_group = v_groupName AND rel_kind = 'S'
             ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 -- ... temporary record the sequence parameters in the emaj sequence table
@@ -5309,7 +5306,7 @@ $emaj_gen_sql_group$
        ' towards ' || v_location ||
        CASE WHEN v_tblseqs IS NOT NULL THEN ' with tables/sequences filtering' ELSE '' END );
 -- call the _gen_sql_groups() function that effectively processes the request
-    SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs) 
+    SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)
       INTO v_cumNbSQL;
 -- insert end in the history and return
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -5339,8 +5336,8 @@ $emaj_gen_sql_groups$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('GEN_SQL_GROUPS', 'BEGIN', array_to_string(v_groupNames,','),
        CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
-       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || 
-       ' towards ' || v_location || 
+       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END ||
+       ' towards ' || v_location ||
        CASE WHEN v_tblseqs IS NOT NULL THEN ' with tables/sequences filtering' ELSE '' END );
 -- call the _gen_sql_groups() function that effectively processes the request
     SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs) INTO v_cumNbSQL;
@@ -5924,9 +5921,9 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
 
 -- rights given to emaj_viewer
 --
--- emaj_viewer can only 
+-- emaj_viewer can only
 -- ... view the emaj objects, i.e. the content of emaj and log tables,
---     except the emaj_param table that emaj_viewer should only see through the emaj_visible_param view 
+--     except the emaj_param table that emaj_viewer should only see through the emaj_visible_param view
 --     that hides the password used by the configured dblink user
 
 GRANT USAGE ON SCHEMA emaj TO emaj_viewer;
