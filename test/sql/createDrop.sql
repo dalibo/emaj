@@ -249,7 +249,8 @@ select group_nb_table, group_nb_sequence, case when group_last_alter_datetime is
 select emaj.emaj_alter_group('myGroup1');
 select group_nb_table, group_nb_sequence, case when group_last_alter_datetime is null then 'NULL' else 'NOT NULL' end as is_group_last_alter_datetime_null from emaj.emaj_group where group_name = 'myGroup1';
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
--- only 2 tables to remove (+ log schema emajC)
+-- only 3 tables to remove (+ log schemas emajb and emajC)
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl4';
 select emaj.emaj_alter_group('myGroup1');
@@ -259,7 +260,8 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
 select emaj.emaj_alter_group('myGroup1');
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
--- only 2 tables to add (+ log schema emajC)
+-- 3 tables to add (+ log schemas emajb and emajC)
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b',NULL,'tsp log''2','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,NULL,'tsplog1','tsp log''2');
 select emaj.emaj_alter_group('myGroup1');

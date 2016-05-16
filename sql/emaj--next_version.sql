@@ -667,7 +667,7 @@ $_check_names_array$
           RAISE WARNING '_check_names_array: duplicate % name %.', v_type, v_aName;
         ELSE
 -- OK, keep the name
-          v_outputNames = array_append (v_outputNames, v_aName);
+          v_outputNames = v_outputNames || v_aName;
         END IF;
       END LOOP;
     END IF;
@@ -2025,7 +2025,8 @@ $emaj_alter_group$
     v_groupIsLogging         BOOLEAN;
     v_isRollbackable         BOOLEAN;
     v_logSchema              TEXT;
-    v_logSchemasArray        TEXT[];
+    v_logSchemasToDrop       TEXT[];
+    v_logSchemasToCreate     TEXT[];
     v_aLogSchema             TEXT;
     v_defTsp                 TEXT;
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
@@ -2061,6 +2062,27 @@ $emaj_alter_group$
 --     by first dropping their emaj components and letting the last step recreate them
 --   - new relations in the tables group, by (re)creating their emaj components
 --
+-- build the list of secondary log schemas that will need to be dropped once obsolete log tables will be dropped
+    SELECT array_agg(rel_log_schema) INTO v_logSchemasToDrop FROM (
+      SELECT rel_log_schema FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND rel_log_schema <> v_emajSchema                -- secondary log schemas that currently exist for the group
+      EXCEPT
+      SELECT rel_log_schema FROM emaj.emaj_relation
+        WHERE rel_group <> v_groupName                                                  -- minus those that exist for other groups
+      EXCEPT
+      SELECT v_schemaPrefix || grpdef_log_schema_suffix FROM emaj.emaj_group_def
+        WHERE grpdef_group = v_groupName
+          AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- minus those that will remain for the group
+    ) AS t;
+-- build the list of secondary log schemas that will need to be created before new log tables will be created
+    SELECT array_agg(log_schema) INTO v_logSchemasToCreate FROM (
+      SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
+        WHERE grpdef_group = v_groupName
+          AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- secondary log schemas needed for the group
+      EXCEPT
+      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                            -- minus those already created
+      ORDER BY 1
+    ) AS t;
 -- list all relations that do not belong to the tables group any more
     FOR r_rel IN
       SELECT * FROM emaj.emaj_relation
@@ -2078,15 +2100,10 @@ $emaj_alter_group$
         WHERE rel_schema = ver_schema AND rel_tblseq = ver_tblseq
       ORDER BY rel_priority, rel_schema, rel_tblseq
       LOOP
-      CASE r_rel.rel_kind 
+      CASE r_rel.rel_kind
         WHEN 'r' THEN
 -- if it is a table, delete the related emaj objects
           PERFORM emaj._drop_tbl(r_rel);
---   and add the log schema to the array of log schemas to potentialy drop at the end of the function
-          IF r_rel.rel_log_schema <> v_emajSchema AND
-             (v_logSchemasArray IS NULL OR r_rel.rel_log_schema <> ALL (v_logSchemasArray)) THEN
-            v_logSchemasArray = array_append(v_logSchemasArray,r_rel.rel_log_schema);
-          END IF;
         WHEN 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
           PERFORM emaj._drop_seq(r_rel);
@@ -2126,11 +2143,6 @@ $emaj_alter_group$
         IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, delete the related emaj objects
           PERFORM emaj._drop_tbl (r_rel);
--- and add the log schema to the list of log schemas to potentialy drop at the end of the function
-          IF r_tblsq.rel_log_schema <> v_emajSchema AND
-            (v_logSchemasArray IS NULL OR r_tblsq.rel_log_schema <> ALL (v_logSchemasArray)) THEN
-             v_logSchemasArray = array_append(v_logSchemasArray,r_tblsq.rel_log_schema);
-          END IF;
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, delete all related data from emaj_sequence table
           PERFORM emaj._drop_seq (r_rel);
@@ -2150,34 +2162,26 @@ $emaj_alter_group$
 --
 -- cleanup all remaining log tables
     PERFORM emaj._reset_group(v_groupName);
--- drop useless log schemas, using the list of potential schemas to drop built previously
-    IF v_logSchemasArray IS NOT NULL THEN
-      FOREACH v_aLogSchema IN ARRAY v_logSchemasArray LOOP
-        PERFORM 0 FROM emaj.emaj_relation WHERE rel_log_schema = v_aLogSchema LIMIT 1;
-        IF NOT FOUND THEN
--- drop the log schema
-          PERFORM emaj._drop_log_schema(v_aLogSchema, false);
--- and record the schema drop in emaj_hist table
-          INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-            VALUES ('ALTER_GROUP','SCHEMA DROPPED',quote_ident(v_aLogSchema));
-        END IF;
+-- drop useless log schemas, using the list of schemas to drop built previously
+    IF v_logSchemasToDrop IS NOT NULL THEN
+      FOREACH v_aLogSchema IN ARRAY v_logSchemasToDrop LOOP
+--   drop the log schema
+        PERFORM emaj._drop_log_schema(v_aLogSchema, false);
+--   and record the schema drop in emaj_hist table
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+          VALUES ('ALTER_GROUP','SCHEMA DROPPED',quote_ident(v_aLogSchema));
       END LOOP;
     END IF;
--- look for new E-Maj secondary schemas to create
-    FOR r_schema IN
-      SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
-        WHERE grpdef_group = v_groupName
-          AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''
-      EXCEPT
-      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
-      ORDER BY 1
-      LOOP
--- create the schema
-      PERFORM emaj._create_log_schema(r_schema.log_schema);
--- and record the schema creation in emaj_hist table
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-        VALUES ('ALTER_GROUP','SCHEMA CREATED',quote_ident(r_schema.log_schema));
-    END LOOP;
+-- create new log schemas, using the list of potential schemas to create built previously
+    IF v_logSchemasToCreate IS NOT NULL THEN
+      FOREACH v_aLogSchema IN ARRAY v_logSchemasToCreate LOOP
+--   create the schema
+        PERFORM emaj._create_log_schema(v_aLogSchema);
+--   and record the schema creation in emaj_hist table
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+          VALUES ('ALTER_GROUP','SCHEMA CREATED',quote_ident(v_aLogSchema));
+      END LOOP;
+    END IF;
 --
 -- get and process new tables in the tables group (really new or intentionaly dropped in the preceeding steps)
     FOR r_grpdef IN
