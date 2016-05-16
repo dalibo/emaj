@@ -2377,11 +2377,11 @@ $_start_groups$
       SELECT group_is_logging INTO v_groupIsLogging
         FROM emaj.emaj_group WHERE group_name = v_aGroupName FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_start_group: group % has not been created.', v_aGroupName;
+        RAISE EXCEPTION '_start_groups: group % has not been created.', v_aGroupName;
       END IF;
 -- ... and is not in LOGGING state
       IF v_groupIsLogging THEN
-        RAISE EXCEPTION '_start_group: The group % cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.', v_aGroupName;
+        RAISE EXCEPTION '_start_groups: The group % cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.', v_aGroupName;
       END IF;
     END LOOP;
 -- check that no group is damaged
@@ -2531,11 +2531,11 @@ $_stop_groups$
       SELECT group_is_logging INTO v_groupIsLogging
         FROM emaj.emaj_group WHERE group_name = v_aGroupName FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_stop_group: group % has not been created.', v_aGroupName;
+        RAISE EXCEPTION '_stop_groups: group % has not been created.', v_aGroupName;
       END IF;
 -- ... check that the group is in LOGGING state
       IF NOT v_groupIsLogging THEN
-        RAISE WARNING '_stop_group: Group % cannot be stopped because it is not in LOGGING state.', v_aGroupName;
+        RAISE WARNING '_stop_groups: Group % cannot be stopped because it is not in LOGGING state.', v_aGroupName;
       ELSE
 -- ... if OK, add the group into the array of groups to process
         v_validGroupNames = v_validGroupNames || array[v_aGroupName];
@@ -2571,21 +2571,21 @@ $_stop_groups$
               EXCEPTION
                 WHEN invalid_schema_name THEN
                   IF v_isForced THEN
-                    RAISE WARNING '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
+                    RAISE WARNING '_stop_groups: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
                   ELSE
-                    RAISE EXCEPTION '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
+                    RAISE EXCEPTION '_stop_groups: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
                   END IF;
                 WHEN undefined_table THEN
                   IF v_isForced THEN
-                    RAISE WARNING '_stop_group: Table % does not exist any more.', v_fullTableName;
+                    RAISE WARNING '_stop_groups: Table % does not exist any more.', v_fullTableName;
                   ELSE
-                    RAISE EXCEPTION '_stop_group: Table % does not exist any more.', v_fullTableName;
+                    RAISE EXCEPTION '_stop_groups: Table % does not exist any more.', v_fullTableName;
                   END IF;
                 WHEN undefined_object THEN
                   IF v_isForced THEN
-                    RAISE WARNING '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
+                    RAISE WARNING '_stop_groups: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
                   ELSE
-                    RAISE EXCEPTION '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
+                    RAISE EXCEPTION '_stop_groups: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
                   END IF;
               END;
               BEGIN
@@ -2593,21 +2593,21 @@ $_stop_groups$
               EXCEPTION
                 WHEN invalid_schema_name THEN
                   IF v_isForced THEN
-                    RAISE WARNING '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
+                    RAISE WARNING '_stop_groups: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
                   ELSE
-                    RAISE EXCEPTION '_stop_group: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
+                    RAISE EXCEPTION '_stop_groups: Schema % does not exist any more.', quote_ident(r_tblsq.rel_schema);
                   END IF;
                 WHEN undefined_table THEN
                   IF v_isForced THEN
-                    RAISE WARNING '_stop_group: Table % does not exist any more.', v_fullTableName;
+                    RAISE WARNING '_stop_groups: Table % does not exist any more.', v_fullTableName;
                   ELSE
-                    RAISE EXCEPTION '_stop_group: Table % does not exist any more.', v_fullTableName;
+                    RAISE EXCEPTION '_stop_groups: Table % does not exist any more.', v_fullTableName;
                   END IF;
                 WHEN undefined_object THEN
                   IF v_isForced THEN
-                    RAISE WARNING '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
+                    RAISE WARNING '_stop_groups: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
                   ELSE
-                    RAISE EXCEPTION '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
+                    RAISE EXCEPTION '_stop_groups: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
                   END IF;
               END;
             WHEN 'S' THEN

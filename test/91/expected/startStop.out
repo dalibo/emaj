@@ -37,11 +37,11 @@ select pg_sleep(1);
 -----------------------------
 -- group is unknown in emaj_group
 select emaj.emaj_start_group(NULL,NULL);
-ERROR:  _start_group: group <NULL> has not been created.
+ERROR:  _start_groups: group <NULL> has not been created.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
-ERROR:  _start_group: group unknownGroup has not been created.
+ERROR:  _start_groups: group unknownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 -- reserved mark name
@@ -257,7 +257,7 @@ PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 
 -- group already started
 select emaj.emaj_start_group('myGroup2','Mark3');
-ERROR:  _start_group: The group myGroup2 cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.
+ERROR:  _start_groups: The group myGroup2 cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 -- check how truncate reacts  - tables are empty anyway
@@ -358,19 +358,19 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 -----------------------------
 -- unknown group
 select emaj.emaj_stop_group(NULL);
-ERROR:  _stop_group: group <NULL> has not been created.
+ERROR:  _stop_groups: group <NULL> has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 select emaj.emaj_stop_group('unkownGroup');
-ERROR:  _stop_group: group unkownGroup has not been created.
+ERROR:  _stop_groups: group unkownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 select emaj.emaj_stop_group(NULL,NULL);
-ERROR:  _stop_group: group <NULL> has not been created.
+ERROR:  _stop_groups: group <NULL> has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 select emaj.emaj_stop_group('unkownGroup',NULL);
-ERROR:  _stop_group: group unkownGroup has not been created.
+ERROR:  _stop_groups: group unkownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 -- invalid mark
@@ -391,7 +391,7 @@ PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_group: Table myschema2."myTbl3" does not exist any more.
+ERROR:  _stop_groups: Table myschema2."myTbl3" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 rollback;
@@ -433,7 +433,7 @@ select emaj.emaj_stop_group('myGroup2','Stop mark');
 
 -- warning, already stopped
 select emaj.emaj_stop_group('myGroup2');
-WARNING:  _stop_group: Group myGroup2 cannot be stopped because it is not in LOGGING state.
+WARNING:  _stop_groups: Group myGroup2 cannot be stopped because it is not in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
  emaj_stop_group 
@@ -442,7 +442,7 @@ PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 (1 row)
 
 select emaj.emaj_stop_group('myGroup2','Stop mark 2');
-WARNING:  _stop_group: Group myGroup2 cannot be stopped because it is not in LOGGING state.
+WARNING:  _stop_groups: Group myGroup2 cannot be stopped because it is not in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
  emaj_stop_group 
@@ -549,11 +549,11 @@ select emaj.emaj_start_groups('{"unknownGroup",""}',NULL,true);
 WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-ERROR:  _start_group: group unknownGroup has not been created.
+ERROR:  _start_groups: group unknownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 select emaj.emaj_start_groups('{"myGroup1","unknownGroup"}',NULL,false);
-ERROR:  _start_group: group unknownGroup has not been created.
+ERROR:  _start_groups: group unknownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 -- reserved mark name
@@ -581,7 +581,7 @@ PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 (1 row)
 
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',false);
-ERROR:  _start_group: The group myGroup2 cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.
+ERROR:  _start_groups: The group myGroup2 cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 select emaj.emaj_stop_group('myGroup2');
@@ -712,18 +712,18 @@ select emaj.emaj_stop_groups('{"unknownGroup",""}');
 WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
-ERROR:  _stop_group: group unknownGroup has not been created.
+ERROR:  _stop_groups: group unknownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 select emaj.emaj_stop_groups('{"myGroup1","unknownGroup"}');
-ERROR:  _stop_group: group unknownGroup has not been created.
+ERROR:  _stop_groups: group unknownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
-ERROR:  _stop_group: Table myschema2."myTbl3" does not exist any more.
+ERROR:  _stop_groups: Table myschema2."myTbl3" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 rollback;
@@ -761,10 +761,10 @@ PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 WARNING:  _check_names_array: duplicate group name myGroup1.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
-WARNING:  _stop_group: Group myGroup1 cannot be stopped because it is not in LOGGING state.
+WARNING:  _stop_groups: Group myGroup1 cannot be stopped because it is not in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
-WARNING:  _stop_group: Group myGroup2 cannot be stopped because it is not in LOGGING state.
+WARNING:  _stop_groups: Group myGroup2 cannot be stopped because it is not in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
  emaj_stop_groups 
@@ -793,11 +793,11 @@ PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 
 -- unknown group
 select emaj.emaj_force_stop_group(NULL);
-ERROR:  _stop_group: group <NULL> has not been created.
+ERROR:  _stop_groups: group <NULL> has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
 select emaj.emaj_force_stop_group('unkownGroup');
-ERROR:  _stop_group: group unkownGroup has not been created.
+ERROR:  _stop_groups: group unkownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
 -- should be OK
@@ -805,40 +805,40 @@ PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
 begin;
   drop schema mySchema2 cascade;
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Schema myschema2 does not exist any more.
+WARNING:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
  emaj_force_stop_group 
@@ -851,10 +851,10 @@ rollback;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_group: Table myschema2."myTbl3" does not exist any more.
+WARNING:  _stop_groups: Table myschema2."myTbl3" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
-WARNING:  _stop_group: Table myschema2."myTbl3" does not exist any more.
+WARNING:  _stop_groups: Table myschema2."myTbl3" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
  emaj_force_stop_group 
@@ -867,7 +867,7 @@ rollback;
 begin;
   drop trigger emaj_log_trg on myschema2.mytbl4;
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_group: Trigger "emaj_log_trg" on table myschema2.mytbl4 does not exist any more.
+WARNING:  _stop_groups: Trigger "emaj_log_trg" on table myschema2.mytbl4 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
  emaj_force_stop_group 
@@ -891,7 +891,7 @@ select emaj.emaj_force_stop_group('myGroup1');
 
 -- warning, already stopped
 select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_group: Group myGroup2 cannot be stopped because it is not in LOGGING state.
+WARNING:  _stop_groups: Group myGroup2 cannot be stopped because it is not in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function "emaj_force_stop_group" line 15 at SQL statement
  emaj_force_stop_group 
