@@ -48,7 +48,7 @@ PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: EMAJ_LAST_MARK is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function "_start_groups" line 45 at SQL statement
+PL/pgSQL function "_start_groups" line 42 at SQL statement
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 -- detection of too old group
@@ -173,13 +173,13 @@ select emaj.emaj_start_group('myGroup1','Mark1');
 
 select emaj.emaj_start_group('myGroup2','Mark2',true);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
  emaj_start_group 
@@ -212,18 +212,18 @@ begin;
     FOREIGN KEY (col44,col45) REFERENCES myschema1.myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL;
   select emaj.emaj_start_group('myGroup2','Mark2');
 WARNING:  _check_fk_groups: Foreign key mytbl4_col44_fkey, from table myschema2.mytbl4, references myschema1.mytbl1 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
  emaj_start_group 
@@ -241,13 +241,13 @@ select emaj.emaj_start_group('myGroup1','%abc%',true);
 
 select emaj.emaj_start_group('myGroup2','',false);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
  emaj_start_group 
@@ -460,13 +460,13 @@ begin transaction;
 
   select emaj.emaj_start_group('myGroup2','');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
  emaj_start_group 
@@ -560,19 +560,19 @@ PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: EMAJ_LAST_MARK is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function "_start_groups" line 45 at SQL statement
+PL/pgSQL function "_start_groups" line 42 at SQL statement
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 -- second group is already started
 select emaj.emaj_start_group('myGroup2','Mark1',true);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
  emaj_start_group 
@@ -621,24 +621,14 @@ PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 WARNING:  _check_names_array: duplicate group name myGroup1.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema2.mytbl4 that is outside groups (myGroup1).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-WARNING:  _check_fk_groups: Foreign key mytbl4_col44_fkey, from table myschema2.mytbl4, references myschema1.mytbl1 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
-SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
-PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
-SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
-PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
  emaj_start_groups 
@@ -649,14 +639,14 @@ PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 rollback;
 -- impact of started group
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
-WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
  emaj_start_groups 
@@ -776,14 +766,14 @@ PL/pgSQL function "emaj_stop_groups" line 13 at SQL statement
 -- emaj_force_stop_group() tests
 -----------------------------
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
-WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
+WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
  emaj_start_groups 

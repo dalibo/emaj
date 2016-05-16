@@ -2416,15 +2416,12 @@ $_start_groups$
     END LOOP;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
--- for each group,
-    FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
-      if v_resetLog THEN
--- ... if requested by the user, call the emaj_reset_group function to erase remaining traces from previous logs
-        SELECT emaj._reset_group(v_aGroupName) INTO v_nbTb;
-      END IF;
--- ... and check foreign keys with tables outside the group
-      PERFORM emaj._check_fk_groups(array[v_aGroupName]);
-    END LOOP;
+-- check foreign keys with tables outside the group
+    PERFORM emaj._check_fk_groups(v_groupNames);
+-- if requested by the user, call the emaj_reset_group() function to erase remaining traces from previous logs
+    if v_resetLog THEN
+      PERFORM emaj._reset_group(unnest(v_groupNames));
+    END IF;
 -- check and process the supplied mark name
     SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
 -- OK, lock all tables to get a stable point

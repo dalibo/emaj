@@ -422,13 +422,13 @@ select emaj.emaj_start_group('myGroup1','M1');
 delete from emaj.emaj_param where param_key = 'history_retention';
 select emaj.emaj_start_group('myGroup2','M1');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_aGroupName])"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
  emaj_start_group 
