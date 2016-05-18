@@ -2233,7 +2233,7 @@ $emaj_alter_group$;
 COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT) IS
 $$Alter an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT, v_resetLog BOOLEAN DEFAULT true)
+CREATE OR REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT DEFAULT 'START_%', v_resetLog BOOLEAN DEFAULT true)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_start_group$
 -- This function activates the log triggers of all the tables for a group and set a first mark
@@ -2241,7 +2241,7 @@ $emaj_start_group$
 -- Input: group name,
 --        name of the mark to set
 --          '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
---          a null or '' mark is transformed into 'MARK_%',
+--          if omitted or if null or '', the mark is set to 'START_%', % representing the current timestamp 
 --        boolean indicating whether the log tables of the group must be reset, true by default.
 -- Output: number of processed tables and sequences
   DECLARE
@@ -2261,14 +2261,14 @@ $emaj_start_group$;
 COMMENT ON FUNCTION emaj.emaj_start_group(TEXT,TEXT,BOOLEAN) IS
 $$Starts an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT, v_resetLog BOOLEAN DEFAULT true)
+CREATE OR REPLACE FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT DEFAULT 'START_%', v_resetLog BOOLEAN DEFAULT true)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_start_groups$
 -- This function activates the log triggers of all the tables for a groups array and set a first mark
 -- Input: array of group names,
---        name of the mark to set
+--        name of the mark to set (if omitted, START_<current timestamp>)
 --          '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
---          a null or '' mark is transformed into 'MARK_%',
+--          if omitted or if null or '', the mark is set to 'START_%', % representing the current timestamp
 --        boolean indicating whether the log tables of the group must be reset, true by default.
 -- Output: total number of processed tables and sequences
   DECLARE
@@ -2331,6 +2331,9 @@ $_start_groups$
       PERFORM emaj._reset_group(unnest(v_groupNames));
     END IF;
 -- check and process the supplied mark name
+    IF v_mark IS NULL OR v_mark = '' THEN
+      v_mark = 'START_%';
+    END IF;
     SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
 -- OK, lock all tables to get a stable point
 --   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.

@@ -113,7 +113,7 @@ SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'g
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 ERROR:  _check_new_mark: Group myGroup1 already contains a mark named Multi-1.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function "_start_groups" line 42 at SQL statement
+PL/pgSQL function "_start_groups" line 45 at SQL statement
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 -- really start both groups

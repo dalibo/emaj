@@ -11,6 +11,11 @@ Enhancements:
   - in rollback functions, trap all exceptions that may happen when the 
     rollback uses autonomous transactions with dblink and set the proper 
     aborted state of the rollback operation in the emaj_rlbk table.
+  - in emaj_start_group() and emaj_start_groups() functions, allow to not 
+    supply the mark name parameter. In this case, the default mark name is
+    built as START_hh.mm.ss.ms, using the current timestamp. A mark name set 
+    to NULL or '' is now also transformed into START_hh.mm.ss.ms.
+
 
 Bug fixes:
   - the emaj_gen_sql_group() and emaj_gen_sql_groups() functions now properly  

@@ -48,7 +48,7 @@ PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statem
 select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: EMAJ_LAST_MARK is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 45 at SQL statement
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 -- detection of too old group
@@ -261,12 +261,12 @@ ERROR:  _start_groups: The group myGroup2 cannot be started because it is in LOG
 CONTEXT:  SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 -- check how truncate reacts  - tables are empty anyway
--- ... for a rollbackable group (must be blocked in pg 8.4+)
+-- ... for a rollbackable group (must be blocked)
 SET client_min_messages TO NOTICE;
 truncate myschema1.mytbl1 cascade;
 NOTICE:  truncate cascades to table "mytbl4"
 ERROR:  emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (myschema1.mytbl1) are currently protected by E-Maj. Consider stopping the group before issuing a TRUNCATE.
--- ... for an audit_only group (must be logged in pg 8.4+)
+-- ... for an audit_only group (must be logged)
 truncate "phil's schema3"."phil's tbl1" cascade;
 NOTICE:  truncate cascades to table "mytbl4"
 NOTICE:  truncate cascades to table "myTbl2\"
@@ -297,7 +297,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      202 | phil's group#3", | Mark3          |               0 | f               | f                      |              |                   199 |                  2017 |                          
      204 | myGroup2         | STOP_%         |               0 | t               | f                      |              |                   199 |                  2031 |                         0
      206 | myGroup1         | %abc%          |               0 | f               | f                      |              |                   199 |                  2045 |                          
-     207 | myGroup2         | MARK_%         |               0 | f               | f                      |              |                   199 |                  2053 |                          
+     207 | myGroup2         | START_%        |               0 | f               | f                      |              |                   199 |                  2053 |                          
 (5 rows)
 
 -- check old events are deleted
@@ -347,8 +347,8 @@ select hist_function, hist_event, hist_object,
  START_GROUP    | BEGIN      | myGroup2         | Without log reset              | postgres
  LOCK_GROUP     | BEGIN      | myGroup2         |                                | postgres
  LOCK_GROUP     | END        | myGroup2         | 6 tables locked, 0 deadlock(s) | postgres
- SET_MARK_GROUP | BEGIN      | myGroup2         | MARK_%                         | postgres
- SET_MARK_GROUP | END        | myGroup2         | MARK_%                         | postgres
+ SET_MARK_GROUP | BEGIN      | myGroup2         | START_%                        | postgres
+ SET_MARK_GROUP | END        | myGroup2         | START_%                        | postgres
  START_GROUP    | END        | myGroup2         | 8 tables/sequences processed   | postgres
 (43 rows)
 
@@ -420,7 +420,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      202 | phil's group#3", | Mark3          |               0 | f               | f                      |              |                   199 |                  2017 |                          
      204 | myGroup2         | STOP_%         |               0 | t               | f                      |              |                   199 |                  2031 |                         0
      206 | myGroup1         | %abc%          |               0 | t               | f                      |              |                   199 |                  2045 |                         0
-     207 | myGroup2         | MARK_%         |               0 | f               | f                      |              |                   199 |                  2053 |                          
+     207 | myGroup2         | START_%        |               0 | f               | f                      |              |                   199 |                  2053 |                          
      208 | myGroup1         | STOP_%         |               2 | t               | f                      |              |                   199 |                  2059 |                         0
 (6 rows)
 
@@ -452,7 +452,7 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 13 at SQL statement
 
 -- start with auto-mark in a single transaction
 begin transaction;
-  select emaj.emaj_start_group('myGroup1',NULL);
+  select emaj.emaj_start_group('myGroup1');
  emaj_start_group 
 ------------------
                 6
@@ -479,8 +479,8 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+-----------------+------------------------+--------------+-----------------------+-----------------------+---------------------------
      202 | phil's group#3", | Mark3          |               0 | f               | f                      |              |                   199 |                  2017 |                          
-     210 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   199 |                  2073 |                          
-     211 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   199 |                  2081 |                          
+     210 | myGroup1         | START_%        |               2 | f               | f                      |              |                   199 |                  2073 |                          
+     211 | myGroup2         | START_%        |               2 | f               | f                      |              |                   199 |                  2081 |                          
 (3 rows)
 
 begin transaction;
@@ -508,7 +508,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
 ---------+------------------+----------------+-----------------+-----------------+------------------------+--------------+-----------------------+-----------------------+---------------------------
      202 | phil's group#3", | Mark3          |               0 | f               | f                      |              |                   199 |                  2017 |                          
-     211 | myGroup2         | MARK_%         |               2 | t               | f                      |              |                   199 |                  2081 |                         0
+     211 | myGroup2         | START_%        |               2 | t               | f                      |              |                   199 |                  2081 |                         0
      213 | myGroup2         | STOP_%         |               2 | t               | f                      |              |                   199 |                  2095 |                         0
      214 | myGroup1         | Foo%Bar        |               2 | f               | f                      |              |                   199 |                  2101 |                          
 (4 rows)
@@ -560,7 +560,7 @@ PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL sta
 select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: EMAJ_LAST_MARK is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 42 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 45 at SQL statement
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 -- second group is already started
@@ -1082,8 +1082,8 @@ select hist_id, hist_function, hist_event, hist_object,
     2077 | START_GROUP      | BEGIN      | myGroup2                                      | Without log reset               | postgres
     2078 | LOCK_GROUP       | BEGIN      | myGroup2                                      |                                 | postgres
     2079 | LOCK_GROUP       | END        | myGroup2                                      | 6 tables locked, 0 deadlock(s)  | postgres
-    2080 | SET_MARK_GROUP   | BEGIN      | myGroup2                                      | MARK_%                          | postgres
-    2081 | SET_MARK_GROUP   | END        | myGroup2                                      | MARK_%                          | postgres
+    2080 | SET_MARK_GROUP   | BEGIN      | myGroup2                                      | START_%                         | postgres
+    2081 | SET_MARK_GROUP   | END        | myGroup2                                      | START_%                         | postgres
     2082 | START_GROUP      | END        | myGroup2                                      | 8 tables/sequences processed    | postgres
     2093 | STOP_GROUP       | BEGIN      | myGroup1                                      |                                 | postgres
     2094 | LOCK_GROUP       | BEGIN      | myGroup1                                      |                                 | postgres
@@ -1104,14 +1104,14 @@ select hist_id, hist_function, hist_event, hist_object,
     2109 | START_GROUP      | BEGIN      | myGroup1                                      | With log reset                  | postgres
     2110 | LOCK_GROUP       | BEGIN      | myGroup1                                      |                                 | postgres
     2111 | LOCK_GROUP       | END        | myGroup1                                      | 5 tables locked, 0 deadlock(s)  | postgres
-    2112 | SET_MARK_GROUP   | BEGIN      | myGroup1                                      | MARK_%                          | postgres
-    2113 | SET_MARK_GROUP   | END        | myGroup1                                      | MARK_%                          | postgres
+    2112 | SET_MARK_GROUP   | BEGIN      | myGroup1                                      | START_%                         | postgres
+    2113 | SET_MARK_GROUP   | END        | myGroup1                                      | START_%                         | postgres
     2114 | START_GROUP      | END        | myGroup1                                      | 6 tables/sequences processed    | postgres
     2115 | START_GROUP      | BEGIN      | myGroup2                                      | With log reset                  | postgres
     2116 | LOCK_GROUP       | BEGIN      | myGroup2                                      |                                 | postgres
     2117 | LOCK_GROUP       | END        | myGroup2                                      | 6 tables locked, 0 deadlock(s)  | postgres
-    2118 | SET_MARK_GROUP   | BEGIN      | myGroup2                                      | MARK_%                          | postgres
-    2119 | SET_MARK_GROUP   | END        | myGroup2                                      | MARK_%                          | postgres
+    2118 | SET_MARK_GROUP   | BEGIN      | myGroup2                                      | START_%                         | postgres
+    2119 | SET_MARK_GROUP   | END        | myGroup2                                      | START_%                         | postgres
     2120 | START_GROUP      | END        | myGroup2                                      | 8 tables/sequences processed    | postgres
     2121 | STOP_GROUP       | BEGIN      | myGroup1                                      |                                 | postgres
     2122 | LOCK_GROUP       | BEGIN      | myGroup1                                      |                                 | postgres

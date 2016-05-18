@@ -101,11 +101,11 @@ select emaj.emaj_start_group('myGroup2','',false);
 select emaj.emaj_start_group('myGroup2','Mark3');
 
 -- check how truncate reacts  - tables are empty anyway
--- ... for a rollbackable group (must be blocked in pg 8.4+)
+-- ... for a rollbackable group (must be blocked)
 SET client_min_messages TO NOTICE;
 
 truncate myschema1.mytbl1 cascade;
--- ... for an audit_only group (must be logged in pg 8.4+)
+-- ... for an audit_only group (must be logged)
 truncate "phil's schema3"."phil's tbl1" cascade;
 select "phil's col11", "phil's col12", "phil\s col13", 
        emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, emaj_user_port 
@@ -160,7 +160,7 @@ select emaj.emaj_stop_group('myGroup2','Stop mark 2');
 
 -- start with auto-mark in a single transaction
 begin transaction;
-  select emaj.emaj_start_group('myGroup1',NULL);
+  select emaj.emaj_start_group('myGroup1');
   select emaj.emaj_start_group('myGroup2','');
 commit;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
