@@ -2709,13 +2709,13 @@ $emaj_unprotect_group$;
 COMMENT ON FUNCTION emaj.emaj_unprotect_group(TEXT) IS
 $$Unsets a protection against a rollback on an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT DEFAULT NULL)
 RETURNS int LANGUAGE plpgsql AS
 $emaj_set_mark_group$
 -- This function inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the group
 -- Input: group name, mark to set
 --        '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
---        a null or '' mark is transformed into 'MARK_%'
+--        if omitted or if null or '', the mark is set to 'MARK_%', % representing the current timestamp
 -- Output: number of processed tables and sequences
   DECLARE
     v_groupIsLogging         BOOLEAN;
@@ -2755,13 +2755,13 @@ $emaj_set_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_set_mark_group(TEXT,TEXT) IS
 $$Sets a mark on an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT DEFAULT NULL)
 RETURNS int LANGUAGE plpgsql AS
 $emaj_set_mark_groups$
 -- This function inserts a mark in the emaj_mark table and takes an image of the sequences definitions for several groups at a time
 -- Input: array of group names, mark to set
 --        '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
---        a null or '' mark is transformed into 'MARK_%'
+--        if omitted or if null or '', the mark is set to 'MARK_%', % representing the current timestamp
 -- Output: number of processed tables and sequences
   DECLARE
     v_validGroupNames        TEXT[];

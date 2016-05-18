@@ -28,6 +28,10 @@ begin transaction;
   select emaj.emaj_set_mark_group('myGroup2','');
 commit;
 
+-- default value for mark name
+select pg_sleep(0.001);
+select emaj.emaj_set_mark_group('myGroup2');
+
 -- use of % in mark name
 select emaj.emaj_set_mark_group('myGroup1','Foo%Bar');
 
@@ -51,7 +55,10 @@ select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2',
 
 -- generated mark name
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','');
+select pg_sleep(0.001);
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}',NULL);
+select pg_sleep(0.001);
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}');
 
 -- use of % in mark name
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
