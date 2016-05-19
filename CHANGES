@@ -18,6 +18,8 @@ Enhancements:
   - in emaj_set_mark_group() and emaj_set_mark_groups() functions, allow to 
     not supply the mark name parameter. In this case, the default mark name 
     is built as MARK_hh.mm.ss.ms, using the current timestamp.
+  - in emaj_stop_group() and emaj_stop_groups() functions, if the supplied 
+    mark name is NULL or '', it is now transformed into STOP_hh.mm.ss.ms.
 
 Bug fixes:
   - the emaj_gen_sql_group() and emaj_gen_sql_groups() functions now properly  

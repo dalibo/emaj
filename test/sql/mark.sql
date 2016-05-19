@@ -102,7 +102,7 @@ select emaj.emaj_get_previous_mark_group('myGroup1',(select min(mark_datetime) f
 
 select emaj.emaj_get_previous_mark_group('myGroup2','SM1');
 select coalesce(emaj.emaj_get_previous_mark_group('myGroup2','Mark2'),'No previous mark');
-select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2','EMAJ_LAST_MARK')))));
+select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2','EMAJ_LAST_MARK')))))));
 
 -----------------------------
 -- emaj_rename_mark_group() tests

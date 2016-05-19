@@ -437,10 +437,10 @@ select coalesce(emaj.emaj_get_previous_mark_group('myGroup2','Mark2'),'No previo
  No previous mark
 (1 row)
 
-select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2','EMAJ_LAST_MARK')))));
+select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2','EMAJ_LAST_MARK')))))));
  emaj_get_previous_mark_group 
 ------------------------------
- MARK_09.30.10.715
+ SM3
 (1 row)
 
 -----------------------------

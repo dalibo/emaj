@@ -1362,7 +1362,7 @@ begin;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: Table myschema2.mytbl4 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
   rollback to savepoint sp1;
 -- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
@@ -1412,7 +1412,7 @@ begin;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: Trigger "emaj_log_trg" on table myschema2.mytbl4 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
   rollback to savepoint sp1;
 -- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
@@ -1491,7 +1491,7 @@ begin;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: Schema myschema2 does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
   rollback to savepoint sp1;
 -- the only solution is to force the group's stop and drop the group
   select emaj.emaj_force_stop_group('myGroup2');

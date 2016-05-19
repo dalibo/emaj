@@ -360,40 +360,40 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 select emaj.emaj_stop_group(NULL);
 ERROR:  _stop_groups: group <NULL> has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
 select emaj.emaj_stop_group('unkownGroup');
 ERROR:  _stop_groups: group unkownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
 select emaj.emaj_stop_group(NULL,NULL);
 ERROR:  _stop_groups: group <NULL> has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
 select emaj.emaj_stop_group('unkownGroup',NULL);
 ERROR:  _stop_groups: group unkownGroup has not been created.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
 -- invalid mark
 select emaj.emaj_stop_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: EMAJ_LAST_MARK is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function "_stop_groups" line 37 at SQL statement
+PL/pgSQL function "_stop_groups" line 40 at SQL statement
 SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
 -- already existing mark
 select emaj.emaj_stop_group('phil''s group#3",','Mark3');
 ERROR:  _check_new_mark: Group phil's group#3", already contains a mark named Mark3.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function "_stop_groups" line 37 at SQL statement
+PL/pgSQL function "_stop_groups" line 40 at SQL statement
 SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: Table myschema2."myTbl3" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
 rollback;
 -- should be OK
 select emaj.emaj_stop_group('myGroup1');
@@ -435,7 +435,7 @@ select emaj.emaj_stop_group('myGroup2','Stop mark');
 select emaj.emaj_stop_group('myGroup2');
 WARNING:  _stop_groups: Group myGroup2 cannot be stopped because it is not in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
  emaj_stop_group 
 -----------------
                0
@@ -444,7 +444,7 @@ PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
 select emaj.emaj_stop_group('myGroup2','Stop mark 2');
 WARNING:  _stop_groups: Group myGroup2 cannot be stopped because it is not in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function "emaj_stop_group" line 13 at SQL statement
+PL/pgSQL function "emaj_stop_group" line 16 at SQL statement
  emaj_stop_group 
 -----------------
                0
@@ -490,7 +490,7 @@ begin transaction;
                6
 (1 row)
 
-  select emaj.emaj_stop_group('myGroup2');
+  select emaj.emaj_stop_group('myGroup2','');
  emaj_stop_group 
 -----------------
                8
@@ -516,7 +516,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 -----------------------------
 -- emaj_start_groups() tests
 -----------------------------
-select emaj.emaj_stop_group('myGroup1');
+select emaj.emaj_stop_group('myGroup1',NULL);
  emaj_stop_group 
 -----------------
                6

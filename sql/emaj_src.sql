@@ -2464,7 +2464,10 @@ RETURNS INT LANGUAGE plpgsql AS
 $emaj_stop_group$
 -- This function de-activates the log triggers of all the tables for a group.
 -- Execute several emaj_stop_group functions for the same group doesn't produce any error.
--- Input: group name, stop mark name to set (by default, STOP_<current timestamp>)
+-- Input: group name
+--        name of the mark to set (if omitted, STOP_<current timestamp>)
+--          '%' wild characters in mark name are transformed into a characters sequence built from the current timestamp
+--          if omitted or if null or '', the mark is set to 'STOP_%', % representing the current timestamp
 -- Output: number of processed tables and sequences
   DECLARE
     v_nbTblSeq               INT;
@@ -2570,6 +2573,9 @@ $_stop_groups$
       END IF;
     END LOOP;
 -- check and process the supplied mark name (except if the function is called by emaj_force_stop_group())
+    IF v_mark IS NULL OR v_mark = '' THEN
+      v_mark = 'STOP_%';
+    END IF;
     IF NOT v_isForced THEN
       SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
     END IF;

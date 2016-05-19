@@ -167,7 +167,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 
 begin transaction;
   select emaj.emaj_stop_group('myGroup1');
-  select emaj.emaj_stop_group('myGroup2');
+  select emaj.emaj_stop_group('myGroup2','');
 commit;
 
 -- use of % in start mark name
@@ -177,7 +177,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 -----------------------------
 -- emaj_start_groups() tests
 -----------------------------
-select emaj.emaj_stop_group('myGroup1');
+select emaj.emaj_stop_group('myGroup1',NULL);
 -- NULL group names array
 select emaj.emaj_start_groups(NULL,NULL,NULL);
 
