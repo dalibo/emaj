@@ -179,29 +179,29 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
 (1 row)
 
 -- impact of mark set
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+----------------+-----------------+-----------------+------------------------+--------------+-----------------------+-----------------------+---------------------------
-     202 | phil's group#3", | Mark3          |               0 | f               | f                      |              |                   199 |                  2017 |                          
-     300 | myGroup1         | Mark1          |               2 | f               | f                      |              |                   299 |                  3005 |                         0
-     301 | myGroup2         | Mark2          |               2 | f               | f                      |              |                   299 |                  3013 |                         0
-     302 | myGroup1         | SM1            |               2 | f               | f                      |              |                   299 |                  3019 |                         0
-     303 | myGroup2         | SM1            |               2 | f               | f                      |              |                   299 |                  3027 |                         0
-     304 | myGroup2         | phil's mark #1 |               2 | f               | f                      |              |                   299 |                  3035 |                         0
-     305 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3041 |                         0
-     306 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3049 |                         0
-     307 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3057 |                         0
-     308 | myGroup1         | Foo%Bar        |               2 | f               | f                      |              |                   299 |                  3063 |                         0
-     309 | myGroup1         | SM3            |               2 | f               | f                      |              |                   299 |                  3077 |                         0
-     310 | myGroup2         | SM3            |               2 | f               | f                      |              |                   299 |                  3077 |                         0
-     311 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3091 |                         0
-     312 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3091 |                         0
-     313 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3105 |                         0
-     314 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3105 |                         0
-     315 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3119 |                         0
-     316 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3119 |                         0
-     317 | myGroup1         | Bar%Foo        |               2 | f               | f                      |              |                   299 |                  3133 |                          
-     318 | myGroup2         | Bar%Foo        |               2 | f               | f                      |              |                   299 |                  3133 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+-----------------+-----------------+------------------------+--------------+-----------------------+-----------------------+---------------------------+------------------------------
+     202 | phil's group#3", | Mark3          |               0 | f               | f                      |              |                   199 |                  2017 |                           | 
+     300 | myGroup1         | Mark1          |               2 | f               | f                      |              |                   299 |                  3005 |                         0 | 
+     301 | myGroup2         | Mark2          |               2 | f               | f                      |              |                   299 |                  3013 |                         0 | 
+     302 | myGroup1         | SM1            |               2 | f               | f                      |              |                   299 |                  3019 |                         0 | 
+     303 | myGroup2         | SM1            |               2 | f               | f                      |              |                   299 |                  3027 |                         0 | 
+     304 | myGroup2         | phil's mark #1 |               2 | f               | f                      |              |                   299 |                  3035 |                         0 | 
+     305 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3041 |                         0 | 
+     306 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3049 |                         0 | 
+     307 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3057 |                         0 | 
+     308 | myGroup1         | Foo%Bar        |               2 | f               | f                      |              |                   299 |                  3063 |                         0 | 
+     309 | myGroup1         | SM3            |               2 | f               | f                      |              |                   299 |                  3077 |                         0 | 
+     310 | myGroup2         | SM3            |               2 | f               | f                      |              |                   299 |                  3077 |                         0 | 
+     311 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3091 |                         0 | 
+     312 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3091 |                         0 | 
+     313 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3105 |                         0 | 
+     314 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3105 |                         0 | 
+     315 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3119 |                         0 | 
+     316 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3119 |                         0 | 
+     317 | myGroup1         | Bar%Foo        |               2 | f               | f                      |              |                   299 |                  3133 |                           | 
+     318 | myGroup2         | Bar%Foo        |               2 | f               | f                      |              |                   299 |                  3133 |                           | 
 (20 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -460,13 +460,13 @@ ERROR:  emaj_rename_mark_group: EMAJ_LAST_MARK is not an allowed name for a new 
 select emaj.emaj_rename_mark_group('myGroup1','Mark1',NULL);
 ERROR:  emaj_rename_mark_group: <NULL> is not an allowed name for a new mark.
 -- should be OK
-select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','SM2');
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM2');
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
+select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','SM2');
  emaj_rename_mark_group 
 ------------------------
  
@@ -478,30 +478,38 @@ select emaj.emaj_rename_mark_group('myGroup2','phil''s mark #1','john''s mark #1
  
 (1 row)
 
+-- simulate SM2 is the end mark of a logged rollback operations on both myGroup1 and myGroup2 groups
+update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'Mark1' where mark_name = 'SM2';
+select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
 -- impact of mark rename
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+----------------+-----------------+-----------------+------------------------+-------------------------------+-----------------------+-----------------------+---------------------------
-     202 | phil's group#3", | Mark3          |               0 | f               | f                      |                               |                   199 |                  2017 |                          
-     300 | myGroup1         | First Mark     |               2 | f               | f                      |                               |                   299 |                  3005 |                         0
-     301 | myGroup2         | Mark2          |               2 | f               | f                      |                               |                   299 |                  3013 |                         0
-     302 | myGroup1         | SM1            |               2 | f               | f                      | a better comment for group #1 |                   299 |                  3019 |                         0
-     303 | myGroup2         | SM1            |               2 | f               | f                      |                               |                   299 |                  3027 |                         0
-     304 | myGroup2         | john's mark #1 |               2 | f               | f                      | a good phil's comment!        |                   299 |                  3035 |                         0
-     305 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3041 |                         0
-     306 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3049 |                         0
-     307 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3057 |                         0
-     308 | myGroup1         | Foo%Bar        |               2 | f               | f                      |                               |                   299 |                  3063 |                         0
-     309 | myGroup1         | SM3            |               2 | f               | f                      |                               |                   299 |                  3077 |                         0
-     310 | myGroup2         | SM3            |               2 | f               | f                      |                               |                   299 |                  3077 |                         0
-     311 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3091 |                         0
-     312 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3091 |                         0
-     313 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3105 |                         0
-     314 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3105 |                         0
-     315 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3119 |                         0
-     316 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3119 |                         0
-     317 | myGroup1         | Bar%Foo        |               2 | f               | f                      |                               |                   299 |                  3133 |                          
-     318 | myGroup2         | SM2            |               2 | f               | f                      | a comment for group #2        |                   299 |                  3133 |                          
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+-----------------+-----------------+------------------------+-------------------------------+-----------------------+-----------------------+---------------------------+------------------------------
+     202 | phil's group#3", | Mark3          |               0 | f               | f                      |                               |                   199 |                  2017 |                           | 
+     300 | myGroup1         | First Mark     |               2 | f               | f                      |                               |                   299 |                  3005 |                         0 | 
+     301 | myGroup2         | Mark2          |               2 | f               | f                      |                               |                   299 |                  3013 |                         0 | 
+     302 | myGroup1         | SM1            |               2 | f               | f                      | a better comment for group #1 |                   299 |                  3019 |                         0 | 
+     303 | myGroup2         | SM1            |               2 | f               | f                      |                               |                   299 |                  3027 |                         0 | 
+     304 | myGroup2         | john's mark #1 |               2 | f               | f                      | a good phil's comment!        |                   299 |                  3035 |                         0 | 
+     305 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3041 |                         0 | 
+     306 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3049 |                         0 | 
+     307 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3057 |                         0 | 
+     308 | myGroup1         | Foo%Bar        |               2 | f               | f                      |                               |                   299 |                  3063 |                         0 | 
+     309 | myGroup1         | SM3            |               2 | f               | f                      |                               |                   299 |                  3077 |                         0 | 
+     310 | myGroup2         | SM3            |               2 | f               | f                      |                               |                   299 |                  3077 |                         0 | 
+     311 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3091 |                         0 | 
+     312 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3091 |                         0 | 
+     313 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3105 |                         0 | 
+     314 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3105 |                         0 | 
+     315 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3119 |                         0 | 
+     316 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3119 |                         0 | 
+     317 | myGroup1         | SM2            |               2 | f               | f                      |                               |                   299 |                  3133 |                           | First Mark
+     318 | myGroup2         | SM2            |               2 | f               | f                      | a comment for group #2        |                   299 |                  3133 |                           | Mark1
 (20 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -631,14 +639,14 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     3117 | emaj           | myschema2_mytbl4_log_seq           | MARK_%         |             1 | f
     3118 | emaj           | otherPrefix4mytbl5_log_seq         | MARK_%         |             1 | f
     3119 | emaj           | myschema2_mytbl6_log_seq           | MARK_%         |             1 | f
-    3120 | myschema1      | myTbl3_col31_seq                   | Bar%Foo        |             1 | f
+    3120 | myschema1      | myTbl3_col31_seq                   | SM2            |             1 | f
     3121 | myschema2      | myseq1                             | SM2            |          1000 | f
     3122 | myschema2      | myTbl3_col31_seq                   | SM2            |             1 | f
-    3123 | emajC          | myschema1_myTbl3_log_seq           | Bar%Foo        |             1 | f
-    3124 | emaj           | myschema1_mytbl1_log_seq           | Bar%Foo        |             1 | f
-    3125 | emaj           | myschema1_mytbl4_log_seq           | Bar%Foo        |             1 | f
-    3126 | emaj           | myschema1_mytbl2_log_seq           | Bar%Foo        |             1 | f
-    3127 | emajb          | myschema1_mytbl2b_log_seq          | Bar%Foo        |             1 | f
+    3123 | emajC          | myschema1_myTbl3_log_seq           | SM2            |             1 | f
+    3124 | emaj           | myschema1_mytbl1_log_seq           | SM2            |             1 | f
+    3125 | emaj           | myschema1_mytbl4_log_seq           | SM2            |             1 | f
+    3126 | emaj           | myschema1_mytbl2_log_seq           | SM2            |             1 | f
+    3127 | emajb          | myschema1_mytbl2b_log_seq          | SM2            |             1 | f
     3128 | emaj           | myschema2_mytbl1_log_seq           | SM2            |             1 | f
     3129 | emaj           | myschema2_mytbl2_log_seq           | SM2            |             1 | f
     3130 | emajC          | myschema2_myTbl3_log_seq           | SM2            |             1 | f
@@ -660,11 +668,25 @@ select emaj.emaj_delete_mark_group('myGroup2',NULL);
 ERROR:  emaj_delete_mark_group: <NULL> is not a known mark for group myGroup2.
 select emaj.emaj_delete_mark_group('myGroup2','DummyMark');
 ERROR:  emaj_delete_mark_group: DummyMark is not a known mark for group myGroup2.
--- should be OK
+-- next attempts should be OK
 select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_delete_mark_group 
 ------------------------
                       1
+(1 row)
+
+-- simulate SM3 is an end mark of a logged rollback operations on myGroup1 group
+update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group = 'myGroup1' and mark_name = 'SM3';
+select emaj.emaj_delete_mark_group('myGroup1','SM1');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'SM3';
+ mark_group | mark_name | mark_logged_rlbk_target_mark 
+------------+-----------+------------------------------
+ myGroup1   | SM3       | 
 (1 row)
 
 select emaj.emaj_delete_mark_group('myGroup1','First Mark');
@@ -673,19 +695,14 @@ select emaj.emaj_delete_mark_group('myGroup1','First Mark');
                       1
 (1 row)
 
-select emaj.emaj_delete_mark_group('myGroup1',mark_name) from 
+select sum(emaj.emaj_delete_mark_group('myGroup1',mark_name)) from 
  (select mark_name from emaj.emaj_mark
-    where mark_group = 'myGroup1' and (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d' or mark_name = 'SM3')
+    where mark_group = 'myGroup1' and (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d')
     order by mark_id) as t;
- emaj_delete_mark_group 
-------------------------
-                      1
-                      1
-                      1
-                      1
-                      1
-                      1
-(6 rows)
+ sum 
+-----
+   5
+(1 row)
 
 select emaj.emaj_delete_mark_group('myGroup2','john''s mark #1');
  emaj_delete_mark_group 
@@ -693,9 +710,9 @@ select emaj.emaj_delete_mark_group('myGroup2','john''s mark #1');
                       1
 (1 row)
 
--- at least 1 mark should remain
-select emaj.emaj_delete_mark_group('myGroup1','SM1');
-ERROR:  emaj_delete_mark_group: SM1 is the only mark. It cannot be deleted.
+-- error: at least 1 mark should remain
+select emaj.emaj_delete_mark_group('myGroup1','SM3');
+ERROR:  emaj_delete_mark_group: SM3 is the only mark of the group. It cannot be deleted.
 -----------------------------
 -- emaj_delete_before_mark_group() tests
 -----------------------------
@@ -715,7 +732,7 @@ select emaj.emaj_delete_before_mark_group('myGroup2',NULL);
 (1 row)
 
 -- should be OK
-select emaj.emaj_delete_before_mark_group('myGroup1','SM1');
+select emaj.emaj_delete_before_mark_group('myGroup1','SM3');
  emaj_delete_before_mark_group 
 -------------------------------
                              0
@@ -727,6 +744,9 @@ select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
                              0
 (1 row)
 
+-- simulate SM2 is an end mark of a logged rollback operations on myGroup2 group
+update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group = 'myGroup2' and mark_name = 'SM2';
+-- and delete marks including SM1
 select emaj.emaj_delete_before_mark_group('myGroup2',
       (select emaj.emaj_get_previous_mark_group('myGroup2',
              (select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM2')+'0.000001 SECOND'::interval)));
@@ -735,7 +755,13 @@ select emaj.emaj_delete_before_mark_group('myGroup2',
                              8
 (1 row)
 
--- check emaj_delete_before_mark_group also cleans up the emaj_hist table
+select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM2';
+ mark_group | mark_name | mark_logged_rlbk_target_mark 
+------------+-----------+------------------------------
+ myGroup2   | SM2       | 
+(1 row)
+
+-- check emaj_delete_before_mark_group() also cleans up the emaj_hist table
 insert into emaj.emaj_param (param_key, param_value_interval) values ('history_retention','0 second'::interval);
 select emaj.emaj_set_mark_group('phil''s group#3",','Mark4');
  emaj_set_mark_group 
@@ -776,11 +802,11 @@ select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
  mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
 ---------+-----------+------------+-----------------+------------------------
-     302 | SM1       | myGroup1   | f               | t
+     309 | SM3       | myGroup1   | f               | t
 (1 row)
 
 -- protect an already protected group
-select emaj.emaj_protect_mark_group('myGroup1','SM1');
+select emaj.emaj_protect_mark_group('myGroup1','SM3');
  emaj_protect_mark_group 
 -------------------------
                        0
@@ -789,7 +815,7 @@ select emaj.emaj_protect_mark_group('myGroup1','SM1');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
  mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
 ---------+-----------+------------+-----------------+------------------------
-     302 | SM1       | myGroup1   | f               | t
+     309 | SM3       | myGroup1   | f               | t
 (1 row)
 
 -----------------------------
@@ -818,11 +844,11 @@ select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
  mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
 ---------+-----------+------------+-----------------+------------------------
-     302 | SM1       | myGroup1   | f               | f
+     309 | SM3       | myGroup1   | f               | f
 (1 row)
 
 -- protect an already protected group
-select emaj.emaj_unprotect_mark_group('myGroup1','SM1');
+select emaj.emaj_unprotect_mark_group('myGroup1','SM3');
  emaj_unprotect_mark_group 
 ---------------------------
                          0
@@ -831,7 +857,7 @@ select emaj.emaj_unprotect_mark_group('myGroup1','SM1');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
  mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
 ---------+-----------+------------+-----------------+------------------------
-     302 | SM1       | myGroup1   | f               | f
+     309 | SM3       | myGroup1   | f               | f
 (1 row)
 
 -- check mark protections is removed by stop_group functions
@@ -845,7 +871,7 @@ select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),
   from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
  regexp_replace | mark_is_deleted | mark_is_rlbk_protected 
 ----------------+-----------------+------------------------
- SM1            | f               | t
+ SM3            | f               | t
 (1 row)
 
 select emaj.emaj_stop_group('myGroup1');
@@ -858,7 +884,7 @@ select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),
   from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
  regexp_replace | mark_is_deleted | mark_is_rlbk_protected 
 ----------------+-----------------+------------------------
- SM1            | t               | f
+ SM3            | t               | f
  STOP_%         | t               | f
 (2 rows)
 
@@ -885,25 +911,25 @@ select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 (1 row)
 
 -- check marks state
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next 
----------+------------------+----------------+-----------------+-----------------+------------------------+-------------------------------+-----------------------+-----------------------+---------------------------
-     302 | myGroup1         | SM1            |               2 | t               | f                      | a better comment for group #1 |                   299 |                  3019 |                         0
-     318 | myGroup2         | SM2            |               2 | t               | f                      | a comment for group #2        |                   299 |                  3133 |                         0
-     319 | phil's group#3", | Mark4          |               2 | f               | f                      |                               |                   299 |                  3137 |                          
-     320 | myGroup1         | STOP_%         |               2 | t               | f                      |                               |                   299 |                  3143 |                         0
-     321 | myGroup2         | STOP_%         |               2 | t               | f                      |                               |                   299 |                  3151 |                         0
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |      mark_comment      | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+-----------------+-----------------+------------------------+------------------------+-----------------------+-----------------------+---------------------------+------------------------------
+     309 | myGroup1         | SM3            |               2 | t               | f                      |                        |                   299 |                  3077 |                         0 | 
+     318 | myGroup2         | SM2            |               2 | t               | f                      | a comment for group #2 |                   299 |                  3133 |                         0 | 
+     319 | phil's group#3", | Mark4          |               2 | f               | f                      |                        |                   299 |                  3137 |                           | 
+     320 | myGroup1         | STOP_%         |               2 | t               | f                      |                        |                   299 |                  3143 |                         0 | 
+     321 | myGroup2         | STOP_%         |               2 | t               | f                      |                        |                   299 |                  3151 |                         0 | 
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
  sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
 ---------+----------------+------------------------------------+----------------+---------------+----------------
-    3014 | myschema1      | myTbl3_col31_seq                   | SM1            |             1 | f
-    3015 | emajC          | myschema1_myTbl3_log_seq           | SM1            |             1 | f
-    3016 | emaj           | myschema1_mytbl1_log_seq           | SM1            |             1 | f
-    3017 | emaj           | myschema1_mytbl4_log_seq           | SM1            |             1 | f
-    3018 | emaj           | myschema1_mytbl2_log_seq           | SM1            |             1 | f
-    3019 | emajb          | myschema1_mytbl2b_log_seq          | SM1            |             1 | f
+    3064 | myschema1      | myTbl3_col31_seq                   | SM3            |             1 | f
+    3067 | emajC          | myschema1_myTbl3_log_seq           | SM3            |             1 | f
+    3068 | emaj           | myschema1_mytbl1_log_seq           | SM3            |             1 | f
+    3069 | emaj           | myschema1_mytbl4_log_seq           | SM3            |             1 | f
+    3070 | emaj           | myschema1_mytbl2_log_seq           | SM3            |             1 | f
+    3071 | emajb          | myschema1_mytbl2b_log_seq          | SM3            |             1 | f
     3121 | myschema2      | myseq1                             | SM2            |          1000 | f
     3122 | myschema2      | myTbl3_col31_seq                   | SM2            |             1 | f
     3128 | emaj           | myschema2_mytbl1_log_seq           | SM2            |             1 | f
@@ -939,36 +965,6 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id |      hist_function       | hist_event |  regexp_replace   |                 regexp_replace                  | hist_user 
 ---------+--------------------------+------------+-------------------+-------------------------------------------------+-----------
-    3018 | SET_MARK_GROUP           | END        | myGroup1          | SM1                                             | postgres
-    3019 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
-    3020 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3021 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    3022 | SET_MARK_GROUP           | END        | myGroup2          | SM1                                             | postgres
-    3023 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
-    3024 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3025 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    3026 | SET_MARK_GROUP           | END        | myGroup2          | phil's mark #1                                  | postgres
-    3028 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
-    3029 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    3030 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    3031 | SET_MARK_GROUP           | END        | myGroup1          | MARK_%                                          | postgres
-    3032 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
-    3033 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3034 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    3035 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                          | postgres
-    3036 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
-    3037 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3038 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    3039 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                          | postgres
-    3040 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
-    3041 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    3042 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    3043 | SET_MARK_GROUP           | END        | myGroup1          | Foo%Bar                                         | postgres
-    3044 | SET_MARK_GROUPS          | BEGIN      |                   |                                                 | postgres
-    3045 | SET_MARK_GROUPS          | END        |                   |                                                 | postgres
-    3048 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | SM3                                             | postgres
-    3049 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    3050 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
     3051 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | SM3                                             | postgres
     3053 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
     3054 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
@@ -992,63 +988,65 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     3072 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
     3073 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark Bar%Foo                                    | postgres
     3074 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark phil's mark #1                             | postgres
-    3080 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                  | postgres
-    3081 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                             | postgres
-    3082 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                           | postgres
-    3083 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                        | postgres
+    3080 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3081 | RENAME_MARK_GROUP        | END        | myGroup1          | Bar%Foo renamed SM2                             | postgres
+    3082 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                  | postgres
+    3083 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                             | postgres
     3084 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | phil's mark #1                                  | postgres
     3085 | RENAME_MARK_GROUP        | END        | myGroup2          | phil's mark #1 renamed john's mark #1           | postgres
-    3090 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    3091 | DELETE_MARK_GROUP        | END        | myGroup1          | Bar%Foo                                         | postgres
-    3092 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                      | postgres
-    3093 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                      | postgres
-    3094 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    3095 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    3096 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                         | postgres
-    3097 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                         | postgres
-    3098 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM3                                             | postgres
-    3099 | DELETE_MARK_GROUP        | END        | myGroup1          | SM3                                             | postgres
-    3100 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    3101 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3086 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                           | postgres
+    3087 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                        | postgres
+    3092 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3093 | DELETE_MARK_GROUP        | END        | myGroup1          | SM2                                             | postgres
+    3094 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM1                                             | postgres
+    3095 | DELETE_MARK_GROUP        | END        | myGroup1          | SM1                                             | postgres
+    3096 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                      | postgres
+    3097 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                      | postgres
+    3098 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3099 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3100 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                         | postgres
+    3101 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                         | postgres
     3102 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
     3103 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
     3104 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
     3105 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    3106 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                  | postgres
-    3107 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                  | postgres
-    3112 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                                 | postgres
-    3113 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM1                                             | postgres
-    3114 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM1 is now the initial mark   | postgres
-    3115 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    3116 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM1 is now the initial mark   | postgres
-    3117 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
-    3118 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
-    3119 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
-    3120 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
-    3121 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
-    3122 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
-    3123 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
-    3124 | PURGE_HISTORY            |            |                   | 15 emaj_hist rows deleted                       | postgres
-    3125 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
-    3126 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM1 ; status 1                             | postgres
-    3127 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM1 ; status 0                             | postgres
-    3128 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM1 ; status 1                             | postgres
-    3129 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM1 ; status 0                             | postgres
-    3130 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM1 ; status 1                             | postgres
-    3131 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    3132 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    3133 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    3134 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
-    3135 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
-    3136 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                    | postgres
-    3137 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3138 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3139 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    3140 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
-    3141 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
-    3142 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
-    3145 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark STOP_% ; status 0                          | postgres
-(109 rows)
+    3106 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3107 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3108 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                  | postgres
+    3109 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                  | postgres
+    3114 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                                 | postgres
+    3115 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM3                                             | postgres
+    3116 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
+    3117 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3118 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
+    3119 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
+    3120 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
+    3121 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
+    3122 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
+    3123 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
+    3124 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
+    3125 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
+    3126 | PURGE_HISTORY            |            |                   | 45 emaj_hist rows deleted                       | postgres
+    3127 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
+    3128 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    3129 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres
+    3130 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    3131 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 0                             | postgres
+    3132 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    3133 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3134 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3135 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    3136 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
+    3137 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
+    3138 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                    | postgres
+    3139 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3140 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3141 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3142 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
+    3143 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
+    3144 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
+    3147 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark STOP_% ; status 0                          | postgres
+(81 rows)
 
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;

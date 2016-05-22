@@ -160,11 +160,11 @@ $$Global sequence to identifiy all rows of emaj log tables.$$;
 
 -- table containing Emaj parameters
 CREATE TABLE emaj.emaj_param (
-  param_key                  TEXT        NOT NULL,       -- parameter key
-  param_value_text           TEXT,                       -- value if type is text, otherwise NULL
-  param_value_int            BIGINT,                     -- value if type is bigint, otherwise NULL
-  param_value_boolean        BOOLEAN,                    -- value if type is boolean, otherwise NULL
-  param_value_interval       INTERVAL,                   -- value if type is interval, otherwise NULL
+  param_key                    TEXT        NOT NULL,       -- parameter key
+  param_value_text             TEXT,                       -- value if type is text, otherwise NULL
+  param_value_int              BIGINT,                     -- value if type is bigint, otherwise NULL
+  param_value_boolean          BOOLEAN,                    -- value if type is boolean, otherwise NULL
+  param_value_interval         INTERVAL,                   -- value if type is interval, otherwise NULL
   PRIMARY KEY (param_key)
   );
 COMMENT ON TABLE emaj.emaj_param IS
@@ -172,17 +172,17 @@ $$Contains E-Maj parameters.$$;
 
 -- table containing the history of all E-Maj events
 CREATE TABLE emaj.emaj_hist (
-  hist_id                    BIGSERIAL   NOT NULL,       -- internal id
-  hist_datetime              TIMESTAMPTZ NOT NULL
-                             DEFAULT clock_timestamp(),  -- insertion time
-  hist_function              TEXT        NOT NULL,       -- main E-Maj function generating the event
-  hist_event                 TEXT,                       -- type of event (often BEGIN or END)
-  hist_object                TEXT,                       -- object supporting the event (often the group name)
-  hist_wording               TEXT,                       -- additional comment
-  hist_user                  TEXT
-                             DEFAULT session_user,       -- the user who call the E-Maj function
-  hist_txid                  BIGINT
-                             DEFAULT txid_current(),     -- and its tx_id
+  hist_id                      BIGSERIAL   NOT NULL,       -- internal id
+  hist_datetime                TIMESTAMPTZ NOT NULL
+                               DEFAULT clock_timestamp(),  -- insertion time
+  hist_function                TEXT        NOT NULL,       -- main E-Maj function generating the event
+  hist_event                   TEXT,                       -- type of event (often BEGIN or END)
+  hist_object                  TEXT,                       -- object supporting the event (often the group name)
+  hist_wording                 TEXT,                       -- additional comment
+  hist_user                    TEXT
+                               DEFAULT session_user,       -- the user who call the E-Maj function
+  hist_txid                    BIGINT
+                               DEFAULT txid_current(),     -- and its tx_id
   PRIMARY KEY (hist_id)
   );
 COMMENT ON TABLE emaj.emaj_hist IS
@@ -190,17 +190,17 @@ $$Contains E-Maj events history.$$;
 
 -- table containing the definition of groups' content. Filled and maintained by the user, it is used by emaj_create_group function.
 CREATE TABLE emaj.emaj_group_def (
-  grpdef_group               TEXT        NOT NULL,       -- name of the group containing this table or sequence
-  grpdef_schema              TEXT        NOT NULL,       -- schema name of this table or sequence
-  grpdef_tblseq              TEXT        NOT NULL,       -- table or sequence name
-  grpdef_priority            INTEGER,                    -- priority level (tables are processed in ascending
-                                                         --   order, with NULL last)
-  grpdef_log_schema_suffix   TEXT,                       -- schema suffix for the log table, functions and sequence
-                                                         --   (NULL for 'emaj' schema)
-  grpdef_emaj_names_prefix   TEXT,                       -- prefix for all E-Maj objects generated for this table
-                                                         --   (for tables only, NULL = default = <schema>_<table>)
-  grpdef_log_dat_tsp         TEXT,                       -- tablespace for the log table (NULL to use default value)
-  grpdef_log_idx_tsp         TEXT,                       -- tablespace for the log index (NULL to use default value)
+  grpdef_group                 TEXT        NOT NULL,       -- name of the group containing this table or sequence
+  grpdef_schema                TEXT        NOT NULL,       -- schema name of this table or sequence
+  grpdef_tblseq                TEXT        NOT NULL,       -- table or sequence name
+  grpdef_priority              INTEGER,                    -- priority level (tables are processed in ascending
+                                                           --   order, with NULL last)
+  grpdef_log_schema_suffix     TEXT,                       -- schema suffix for the log table, functions and sequence
+                                                           --   (NULL for 'emaj' schema)
+  grpdef_emaj_names_prefix     TEXT,                       -- prefix for all E-Maj objects generated for this table
+                                                           --   (for tables only, NULL = default = <schema>_<table>)
+  grpdef_log_dat_tsp           TEXT,                       -- tablespace for the log table (NULL to use default value)
+  grpdef_log_idx_tsp           TEXT,                       -- tablespace for the log index (NULL to use default value)
   PRIMARY KEY (grpdef_group, grpdef_schema, grpdef_tblseq)
 -- the group name is included in the pkey so that a table/sequence can be temporarily assigned to several groups
   );
@@ -210,22 +210,22 @@ $$Contains E-Maj groups definition, supplied by the E-Maj administrator.$$;
 -- table containing the defined groups
 --     rows are created at emaj_create_group time and deleted at emaj_drop_group time
 CREATE TABLE emaj.emaj_group (
-  group_name                 TEXT        NOT NULL,
-  group_is_logging           BOOLEAN     NOT NULL,       -- are log triggers activated ?
-                                                         -- true between emaj_start_group(s) and emaj_stop_group(s)
-                                                         -- flase in other cases
-  group_is_rlbk_protected    BOOLEAN     NOT NULL,       -- is the group currently protected against rollback ?
-                                                         -- always true for AUDIT_ONLY groups
-  group_nb_table             INT,                        -- number of tables at emaj_create_group time
-  group_nb_sequence          INT,                        -- number of sequences at emaj_create_group time
-  group_is_rollbackable      BOOLEAN     NOT NULL,       -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
-  group_creation_datetime    TIMESTAMPTZ NOT NULL        -- start time of the transaction that created the group
-                             DEFAULT transaction_timestamp(),
-  group_last_alter_datetime  TIMESTAMPTZ,                -- date and time of the last emaj_alter_group() exec,
-                                                         -- set to NULL at emaj_create_group() time
-  group_pg_version           TEXT        NOT NULL        -- postgres version at emaj_create_group() time
-                             DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
-  group_comment              TEXT,                       -- optional user comment
+  group_name                   TEXT        NOT NULL,
+  group_is_logging             BOOLEAN     NOT NULL,       -- are log triggers activated ?
+                                                           -- true between emaj_start_group(s) and emaj_stop_group(s)
+                                                           -- flase in other cases
+  group_is_rlbk_protected      BOOLEAN     NOT NULL,       -- is the group currently protected against rollback ?
+                                                           -- always true for AUDIT_ONLY groups
+  group_nb_table               INT,                        -- number of tables at emaj_create_group time
+  group_nb_sequence            INT,                        -- number of sequences at emaj_create_group time
+  group_is_rollbackable        BOOLEAN     NOT NULL,       -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
+  group_creation_datetime      TIMESTAMPTZ NOT NULL        -- start time of the transaction that created the group
+                               DEFAULT transaction_timestamp(),
+  group_last_alter_datetime    TIMESTAMPTZ,                -- date and time of the last emaj_alter_group() exec,
+                                                           -- set to NULL at emaj_create_group() time
+  group_pg_version             TEXT        NOT NULL        -- postgres version at emaj_create_group() time
+                               DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
+  group_comment                TEXT,                       -- optional user comment
   PRIMARY KEY (group_name)
   );
 COMMENT ON TABLE emaj.emaj_group IS
@@ -233,19 +233,19 @@ $$Contains created E-Maj groups.$$;
 
 -- table containing the relations (tables and sequences) of created tables groups
 CREATE TABLE emaj.emaj_relation (
-  rel_schema                 TEXT        NOT NULL,       -- schema name containing the relation
-  rel_tblseq                 TEXT        NOT NULL,       -- application table or sequence name
-  rel_group                  TEXT        NOT NULL,       -- name of the group that owns the relation
-  rel_kind                   TEXT,                       -- similar to the relkind column of pg_class table
-                                                         --   ('r' = table, 'S' = sequence)
-  rel_priority               INTEGER,                    -- priority level of processing inside the group
-  rel_log_schema             TEXT,                       -- schema for the log table, functions and sequence
-  rel_log_table              TEXT,                       -- name of the log table associated (NULL for sequence)
-  rel_log_dat_tsp            TEXT,                       -- tablespace for the log table (NULL for sequences)
-  rel_log_index              TEXT,                       -- name of the index of the log table
-  rel_log_idx_tsp            TEXT,                       -- tablespace for the log index (NULL for sequences)
-  rel_log_sequence           TEXT,                       -- name of the log sequence
-  rel_log_function           TEXT,                       -- name of the function associated to the log trigger
+  rel_schema                   TEXT        NOT NULL,       -- schema name containing the relation
+  rel_tblseq                   TEXT        NOT NULL,       -- application table or sequence name
+  rel_group                    TEXT        NOT NULL,       -- name of the group that owns the relation
+  rel_kind                     TEXT,                       -- similar to the relkind column of pg_class table
+                                                           --   ('r' = table, 'S' = sequence)
+  rel_priority                 INTEGER,                    -- priority level of processing inside the group
+  rel_log_schema               TEXT,                       -- schema for the log table, functions and sequence
+  rel_log_table                TEXT,                       -- name of the log table associated (NULL for sequence)
+  rel_log_dat_tsp              TEXT,                       -- tablespace for the log table (NULL for sequences)
+  rel_log_index                TEXT,                       -- name of the index of the log table
+  rel_log_idx_tsp              TEXT,                       -- tablespace for the log index (NULL for sequences)
+  rel_log_sequence             TEXT,                       -- name of the log sequence
+  rel_log_function             TEXT,                       -- name of the function associated to the log trigger
                                                          --   created on the application table
   PRIMARY KEY (rel_schema, rel_tblseq),
   FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
@@ -259,23 +259,24 @@ CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
 
 -- table containing the marks
 CREATE TABLE emaj.emaj_mark (
-  mark_group                 TEXT        NOT NULL,       -- group for which the mark has been set
-  mark_name                  TEXT        NOT NULL,       -- mark name
-  mark_id                    BIGSERIAL   NOT NULL,       -- serial id used to order rows (not to rely on timestamps
-                                                         -- that are not safe if system time changes)
-  mark_datetime              TIMESTAMPTZ NOT NULL,       -- precise timestamp of the mark creation, used as a reference
-                                                         --   for other tables like emaj_sequence and all log tables
-  mark_global_seq            BIGINT      NOT NULL,       -- emaj_global_seq last value at mark set (used to rollback)
-  mark_is_deleted            BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is deleted
-  mark_is_rlbk_protected     BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is protected from rollbacks (false by default)
-  mark_comment               TEXT,                       -- optional user comment
-  mark_txid                  BIGINT                      -- id of the tx that has set the mark
-                             DEFAULT txid_current(),
-  mark_last_sequence_id      BIGINT,                     -- last sequ_id for the group at the end of the _set_mark_groups operation
-  mark_last_seq_hole_id      BIGINT,                     -- last sqhl_id for the group at _set_mark_groups time
-  mark_log_rows_before_next  BIGINT,                     -- number of log rows recorded for the group between the mark
-                                                         -- and the next one (NULL if last mark)
-                                                         -- used to speedup marks list display in phpPgAdmin plugin
+  mark_group                   TEXT        NOT NULL,       -- group for which the mark has been set
+  mark_name                    TEXT        NOT NULL,       -- mark name
+  mark_id                      BIGSERIAL   NOT NULL,       -- serial id used to order rows (not to rely on timestamps
+                                                           -- that are not safe if system time changes)
+  mark_datetime                TIMESTAMPTZ NOT NULL,       -- precise timestamp of the mark creation, used as a reference
+                                                           --   for other tables like emaj_sequence and all log tables
+  mark_global_seq              BIGINT      NOT NULL,       -- emaj_global_seq last value at mark set (used to rollback)
+  mark_is_deleted              BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is deleted
+  mark_is_rlbk_protected       BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is protected from rollbacks (false by default)
+  mark_comment                 TEXT,                       -- optional user comment
+  mark_txid                    BIGINT                      -- id of the tx that has set the mark
+                               DEFAULT txid_current(),
+  mark_last_sequence_id        BIGINT,                     -- last sequ_id for the group at the end of the _set_mark_groups operation
+  mark_last_seq_hole_id        BIGINT,                     -- last sqhl_id for the group at _set_mark_groups time
+  mark_log_rows_before_next    BIGINT,                     -- number of log rows recorded for the group between the mark
+                                                           -- and the next one (NULL if last mark)
+                                                           -- used to speedup marks list display in phpPgAdmin plugin
+  mark_logged_rlbk_target_mark TEXT,                       -- for marks generated by logged_rollback functions, name of the rollback target mark
   PRIMARY KEY (mark_group, mark_name),
   FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
   );
@@ -285,21 +286,21 @@ $$Contains marks set on E-Maj tables groups.$$;
 -- table containing the sequences characteristics log
 -- (to record at mark time the state of application sequences and sequences used by log tables)
 CREATE TABLE emaj.emaj_sequence (
-  sequ_id                    BIGSERIAL   NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
-                                                         -- on timestamps that are not safe if system time changes)
-  sequ_schema                TEXT        NOT NULL,       -- application or 'emaj' schema that owns the sequence
-  sequ_name                  TEXT        NOT NULL,       -- application or emaj sequence name
-  sequ_datetime              TIMESTAMPTZ NOT NULL,       -- timestamp the sequence characteristics have been recorded
-                                                         --   the same timestamp as referenced in emaj_mark table
-  sequ_mark                  TEXT        NOT NULL,       -- name of the mark associated to the insertion timestamp
-  sequ_last_val              BIGINT      NOT NULL,       -- sequence last value
-  sequ_start_val             BIGINT      NOT NULL,       -- sequence start value, (0 with postgres 8.2)
-  sequ_increment             BIGINT      NOT NULL,       -- sequence increment
-  sequ_max_val               BIGINT      NOT NULL,       -- sequence max value
-  sequ_min_val               BIGINT      NOT NULL,       -- sequence min value
-  sequ_cache_val             BIGINT      NOT NULL,       -- sequence cache value
-  sequ_is_cycled             BOOLEAN     NOT NULL,       -- sequence flag 'is cycled ?'
-  sequ_is_called             BOOLEAN     NOT NULL,       -- sequence flag 'is called ?'
+  sequ_id                      BIGSERIAL   NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
+                                                           -- on timestamps that are not safe if system time changes)
+  sequ_schema                  TEXT        NOT NULL,       -- application or 'emaj' schema that owns the sequence
+  sequ_name                    TEXT        NOT NULL,       -- application or emaj sequence name
+  sequ_datetime                TIMESTAMPTZ NOT NULL,       -- timestamp the sequence characteristics have been recorded
+                                                           --   the same timestamp as referenced in emaj_mark table
+  sequ_mark                    TEXT        NOT NULL,       -- name of the mark associated to the insertion timestamp
+  sequ_last_val                BIGINT      NOT NULL,       -- sequence last value
+  sequ_start_val               BIGINT      NOT NULL,       -- sequence start value, (0 with postgres 8.2)
+  sequ_increment               BIGINT      NOT NULL,       -- sequence increment
+  sequ_max_val                 BIGINT      NOT NULL,       -- sequence max value
+  sequ_min_val                 BIGINT      NOT NULL,       -- sequence min value
+  sequ_cache_val               BIGINT      NOT NULL,       -- sequence cache value
+  sequ_is_cycled               BOOLEAN     NOT NULL,       -- sequence flag 'is cycled ?'
+  sequ_is_called               BOOLEAN     NOT NULL,       -- sequence flag 'is called ?'
   PRIMARY KEY (sequ_schema, sequ_name, sequ_datetime)
   );
 COMMENT ON TABLE emaj.emaj_sequence IS
@@ -309,14 +310,14 @@ $$Contains values of sequences at E-Maj set_mark times.$$;
 -- these holes are due to rollback operations that do not adjust log sequences
 -- the hole size = difference of sequence's current last_value and last value at the rollback mark
 CREATE TABLE emaj.emaj_seq_hole (
-  sqhl_id                    BIGSERIAL   NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
-                                                         -- on timestamps that are not safe if system time changes)
-  sqhl_schema                TEXT        NOT NULL,       -- schema that owns the table
-  sqhl_table                 TEXT        NOT NULL,       -- application table for which a sequence hole is recorded
-                                                         --   in the associated log table
-  sqhl_datetime              TIMESTAMPTZ NOT NULL        -- timestamp of the rollback operation that generated the hole
-                             DEFAULT transaction_timestamp(),
-  sqhl_hole_size             BIGINT      NOT NULL,       -- hole size computed as the difference of 2 sequence last-values
+  sqhl_id                      BIGSERIAL   NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
+                                                           -- on timestamps that are not safe if system time changes)
+  sqhl_schema                  TEXT        NOT NULL,       -- schema that owns the table
+  sqhl_table                   TEXT        NOT NULL,       -- application table for which a sequence hole is recorded
+                                                           --   in the associated log table
+  sqhl_datetime                TIMESTAMPTZ NOT NULL        -- timestamp of the rollback operation that generated the hole
+                               DEFAULT transaction_timestamp(),
+  sqhl_hole_size               BIGINT      NOT NULL,       -- hole size computed as the difference of 2 sequence last-values
   PRIMARY KEY (sqhl_schema, sqhl_table, sqhl_datetime)
   );
 COMMENT ON TABLE emaj.emaj_seq_hole IS
@@ -324,23 +325,23 @@ $$Contains description of holes in sequence values for E-Maj log tables.$$;
 
 -- table containing rollback events
 CREATE TABLE emaj.emaj_rlbk (
-  rlbk_id                    SERIAL      NOT NULL,       -- rollback id
-  rlbk_groups                TEXT[]      NOT NULL,       -- groups array to rollback
-  rlbk_mark                  TEXT        NOT NULL,       -- mark to rollback to
-  rlbk_mark_datetime         TIMESTAMPTZ ,               -- timestamp of the mark as recorded into emaj_mark
-  rlbk_is_logged             BOOLEAN     NOT NULL,       -- rollback type: true = logged rollback
-  rlbk_nb_session            INT         NOT NULL,       -- number of requested rollback sessions
-  rlbk_nb_table              INT         ,               -- total number of tables in groups
-  rlbk_nb_sequence           INT         ,               -- number of sequences to rollback
-  rlbk_eff_nb_table          INT         ,               -- number of tables with rows to rollback
-  rlbk_status                emaj._rlbk_status_enum,     -- rollback status
-  rlbk_begin_hist_id         BIGINT      ,               -- hist_id of the rollback BEGIN event in the emaj_hist
-                                                         --   used to know if the rollback has been committed or not
-  rlbk_is_dblink_used        BOOLEAN     ,               -- boolean indicating whether dblink connection are used
-  rlbk_start_datetime        TIMESTAMPTZ ,               -- clock timestamp of the rollback BEGIN event in emaj_hist
-  rlbk_end_datetime          TIMESTAMPTZ,                -- clock time the rollback has been completed,
-                                                         --   NULL if rollback is in progress or aborted
-  rlbk_msg                   TEXT,                       -- result message
+  rlbk_id                      SERIAL      NOT NULL,       -- rollback id
+  rlbk_groups                  TEXT[]      NOT NULL,       -- groups array to rollback
+  rlbk_mark                    TEXT        NOT NULL,       -- mark to rollback to
+  rlbk_mark_datetime           TIMESTAMPTZ ,               -- timestamp of the mark as recorded into emaj_mark
+  rlbk_is_logged               BOOLEAN     NOT NULL,       -- rollback type: true = logged rollback
+  rlbk_nb_session              INT         NOT NULL,       -- number of requested rollback sessions
+  rlbk_nb_table                INT         ,               -- total number of tables in groups
+  rlbk_nb_sequence             INT         ,               -- number of sequences to rollback
+  rlbk_eff_nb_table            INT         ,               -- number of tables with rows to rollback
+  rlbk_status                  emaj._rlbk_status_enum,     -- rollback status
+  rlbk_begin_hist_id           BIGINT      ,               -- hist_id of the rollback BEGIN event in the emaj_hist
+                                                           --   used to know if the rollback has been committed or not
+  rlbk_is_dblink_used          BOOLEAN     ,               -- boolean indicating whether dblink connection are used
+  rlbk_start_datetime          TIMESTAMPTZ ,               -- clock timestamp of the rollback BEGIN event in emaj_hist
+  rlbk_end_datetime            TIMESTAMPTZ,                -- clock time the rollback has been completed,
+                                                           --   NULL if rollback is in progress or aborted
+  rlbk_msg                     TEXT,                       -- result message
   PRIMARY KEY (rlbk_id)
   );
 COMMENT ON TABLE emaj.emaj_rlbk IS
@@ -353,11 +354,11 @@ CREATE INDEX emaj_rlbk_idx2 ON emaj.emaj_rlbk (rlbk_start_datetime);
 
 -- table containing rollback events sessions
 CREATE TABLE emaj.emaj_rlbk_session (
-  rlbs_rlbk_id               INT         NOT NULL,       -- rollback id
-  rlbs_session               INT         NOT NULL,       -- session number (from 1 to rlbk_nb_session)
-  rlbs_txid                  BIGINT      NOT NULL,       -- id of the tx that executes this rollback session
-  rlbs_start_datetime        TIMESTAMPTZ NOT NULL,       -- rollback session start timestamp
-  rlbs_end_datetime          TIMESTAMPTZ,                -- clock time the rollback session has been completed,
+  rlbs_rlbk_id                 INT         NOT NULL,       -- rollback id
+  rlbs_session                 INT         NOT NULL,       -- session number (from 1 to rlbk_nb_session)
+  rlbs_txid                    BIGINT      NOT NULL,       -- id of the tx that executes this rollback session
+  rlbs_start_datetime          TIMESTAMPTZ NOT NULL,       -- rollback session start timestamp
+  rlbs_end_datetime            TIMESTAMPTZ,                -- clock time the rollback session has been completed,
                                                          --   NULL if rollback is in progress
   PRIMARY KEY (rlbs_rlbk_id, rlbs_session),
   FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id)
@@ -367,28 +368,28 @@ $$Contains description of rollback events sessions.$$;
 
 -- table containing the elementary steps of rollback operations
 CREATE TABLE emaj.emaj_rlbk_plan (
-  rlbp_rlbk_id               INT         NOT NULL,       -- rollback id
-  rlbp_step                  emaj._rlbk_step_enum
-                                         NOT NULL,       -- kind of elementary step in the rollback processing
-  rlbp_schema                TEXT        NOT NULL,       -- schema object of the step
-  rlbp_table                 TEXT        NOT NULL,       -- table name
-  rlbp_fkey                  TEXT        NOT NULL,       -- foreign key name for step on foreign key, or ''
-  rlbp_batch_number          INT,                        -- identifies a set of tables linked by foreign keys
-  rlbp_session               INT,                        -- session number the step is affected to
-  rlbp_fkey_def              TEXT,                       -- foreign key definition used to recreate it, or NULL
-  rlbp_estimated_quantity    BIGINT,                     -- for RLBK_TABLE, estimated number of updates to rollback
-                                                         -- for DELETE_LOG, estimated number of rows to delete
-                                                         -- for fkeys, estimated number of keys to check
-  rlbp_estimated_duration    INTERVAL,                   -- estimated elapse time for the step processing
-  rlbp_estimate_method       INT,                        -- method used to compute the estimated duration
-                                                         --  1: use rollback stats with volume in same order of magnitude
-                                                         --  2: use all previous rollback stats
-                                                         --  3: use only parameters (from emaj_param or default values)
-  rlbp_start_datetime        TIMESTAMPTZ,                -- clock start time of the step, NULL is not yet started
-  rlbp_quantity              BIGINT,                     -- for RLBK_TABLE, number of effectively rolled back updates
-                                                         -- for DELETE_LOG, number of effectively deleted log rows
-                                                         -- null for fkeys
-  rlbp_duration              INTERVAL,                   -- real elapse time of the step, NULL is not yet completed
+  rlbp_rlbk_id                 INT         NOT NULL,       -- rollback id
+  rlbp_step                    emaj._rlbk_step_enum
+                                           NOT NULL,       -- kind of elementary step in the rollback processing
+  rlbp_schema                  TEXT        NOT NULL,       -- schema object of the step
+  rlbp_table                   TEXT        NOT NULL,       -- table name
+  rlbp_fkey                    TEXT        NOT NULL,       -- foreign key name for step on foreign key, or ''
+  rlbp_batch_number            INT,                        -- identifies a set of tables linked by foreign keys
+  rlbp_session                 INT,                        -- session number the step is affected to
+  rlbp_fkey_def                TEXT,                       -- foreign key definition used to recreate it, or NULL
+  rlbp_estimated_quantity      BIGINT,                     -- for RLBK_TABLE, estimated number of updates to rollback
+                                                           -- for DELETE_LOG, estimated number of rows to delete
+                                                           -- for fkeys, estimated number of keys to check
+  rlbp_estimated_duration      INTERVAL,                   -- estimated elapse time for the step processing
+  rlbp_estimate_method         INT,                        -- method used to compute the estimated duration
+                                                           --  1: use rollback stats with volume in same order of magnitude
+                                                           --  2: use all previous rollback stats
+                                                           --  3: use only parameters (from emaj_param or default values)
+  rlbp_start_datetime          TIMESTAMPTZ,                -- clock start time of the step, NULL is not yet started
+  rlbp_quantity                BIGINT,                     -- for RLBK_TABLE, number of effectively rolled back updates
+                                                           -- for DELETE_LOG, number of effectively deleted log rows
+                                                           -- null for fkeys
+  rlbp_duration                INTERVAL,                   -- real elapse time of the step, NULL is not yet completed
   PRIMARY KEY (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey),
   FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id)
   );
@@ -400,16 +401,16 @@ $$Contains description of elementary steps for rollback operations.$$;
 -- depending on the step, it contains 1 row per elementary step (like 'RLBK_TABLE' or 'DELETE_LOG'),
 -- or 1 row per type of step for 1 rollback operation (like 'DROP_FK', or 'DIS_LOG_TRG')
 CREATE TABLE emaj.emaj_rlbk_stat (
-  rlbt_step                  emaj._rlbk_step_enum
-                                         NOT NULL,       -- kind of elementary step in the rollback processing
-  rlbt_schema                TEXT        NOT NULL,       -- schema object of the step
-  rlbt_table                 TEXT        NOT NULL,       -- table name
-  rlbt_fkey                  TEXT        NOT NULL,       -- foreign key name for step on foreign key, or ''
-  rlbt_rlbk_id               INT         NOT NULL,       -- rollback id
-  rlbt_rlbk_datetime         TIMESTAMPTZ NOT NULL,       -- timestamp of the rollback that has generated the statistic
-  rlbt_quantity              BIGINT      NOT NULL,       -- depending on the step, either estimated quantity processed
-                                                         --   by the elementary step or number of executed steps
-  rlbt_duration              INTERVAL    NOT NULL,       -- duration or sum of durations of the elementary step(s)
+  rlbt_step                    emaj._rlbk_step_enum
+                                           NOT NULL,       -- kind of elementary step in the rollback processing
+  rlbt_schema                  TEXT        NOT NULL,       -- schema object of the step
+  rlbt_table                   TEXT        NOT NULL,       -- table name
+  rlbt_fkey                    TEXT        NOT NULL,       -- foreign key name for step on foreign key, or ''
+  rlbt_rlbk_id                 INT         NOT NULL,       -- rollback id
+  rlbt_rlbk_datetime           TIMESTAMPTZ NOT NULL,       -- timestamp of the rollback that has generated the statistic
+  rlbt_quantity                BIGINT      NOT NULL,       -- depending on the step, either estimated quantity processed
+                                                           --   by the elementary step or number of executed steps
+  rlbt_duration                INTERVAL    NOT NULL,       -- duration or sum of durations of the elementary step(s)
   PRIMARY KEY (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id)
   );
 COMMENT ON TABLE emaj.emaj_rlbk_stat IS
@@ -422,48 +423,48 @@ $$Contains statistics about previous E-Maj rollback durations.$$;
 ------------------------------------
 
 CREATE TYPE emaj.emaj_log_stat_type AS (
-  stat_group                 TEXT,                       -- group name owning the schema.table
-  stat_schema                TEXT,                       -- schema name
-  stat_table                 TEXT,                       -- table name
-  stat_rows                  BIGINT                      -- estimated number of update events recorded for this table
+  stat_group                   TEXT,                       -- group name owning the schema.table
+  stat_schema                  TEXT,                       -- schema name
+  stat_table                   TEXT,                       -- table name
+  stat_rows                    BIGINT                      -- estimated number of update events recorded for this table
   );
 COMMENT ON TYPE emaj.emaj_log_stat_type IS
 $$Represents the structure of rows returned by the emaj_log_stat_group() function.$$;
 
 CREATE TYPE emaj.emaj_detailed_log_stat_type AS (
-  stat_group                 TEXT,                       -- group name owning the schema.table
-  stat_schema                TEXT,                       -- schema name
-  stat_table                 TEXT,                       -- table name
-  stat_role                  VARCHAR(32),                -- user having generated update events
-  stat_verb                  VARCHAR(6),                 -- type of SQL statement (INSERT/UPDATE/DELETE)
-  stat_rows                  BIGINT                      -- real number of update events recorded for this table
+  stat_group                   TEXT,                       -- group name owning the schema.table
+  stat_schema                  TEXT,                       -- schema name
+  stat_table                   TEXT,                       -- table name
+  stat_role                    VARCHAR(32),                -- user having generated update events
+  stat_verb                    VARCHAR(6),                 -- type of SQL statement (INSERT/UPDATE/DELETE)
+  stat_rows                    BIGINT                      -- real number of update events recorded for this table
   );
 COMMENT ON TYPE emaj.emaj_detailed_log_stat_type IS
 $$Represents the structure of rows returned by the emaj_detailed_log_stat_group() function.$$;
 
 CREATE TYPE emaj.emaj_rollback_activity_type AS (
-  rlbk_id                    INT,                        -- rollback id
-  rlbk_groups                TEXT[],                     -- groups array to rollback
-  rlbk_mark                  TEXT,                       -- mark to rollback to
-  rlbk_mark_datetime         TIMESTAMPTZ,                -- timestamp of the mark as recorded into emaj_mark
-  rlbk_is_logged             BOOLEAN,                    -- rollback type: true = logged rollback
-  rlbk_nb_session            INT,                        -- number of requested sessions
-  rlbk_nb_table              INT,                        -- total number of tables in groups
-  rlbk_nb_sequence           INT,                        -- number of sequences to rollback
-  rlbk_eff_nb_table          INT,                        -- number of tables with rows to rollback
-  rlbk_status                emaj._rlbk_status_enum,     -- rollback status
-  rlbk_start_datetime        TIMESTAMPTZ,                -- clock timestamp of the rollback BEGIN event in emaj_hist
-  rlbk_elapse                INTERVAL,                   -- elapse time since the begining of the execution
-  rlbk_remaining             INTERVAL,                   -- estimated remaining time to complete the rollback
-  rlbk_completion_pct        SMALLINT                    -- estimated percentage of the rollback operation
+  rlbk_id                      INT,                        -- rollback id
+  rlbk_groups                  TEXT[],                     -- groups array to rollback
+  rlbk_mark                    TEXT,                       -- mark to rollback to
+  rlbk_mark_datetime           TIMESTAMPTZ,                -- timestamp of the mark as recorded into emaj_mark
+  rlbk_is_logged               BOOLEAN,                    -- rollback type: true = logged rollback
+  rlbk_nb_session              INT,                        -- number of requested sessions
+  rlbk_nb_table                INT,                        -- total number of tables in groups
+  rlbk_nb_sequence             INT,                        -- number of sequences to rollback
+  rlbk_eff_nb_table            INT,                        -- number of tables with rows to rollback
+  rlbk_status                  emaj._rlbk_status_enum,     -- rollback status
+  rlbk_start_datetime          TIMESTAMPTZ,                -- clock timestamp of the rollback BEGIN event in emaj_hist
+  rlbk_elapse                  INTERVAL,                   -- elapse time since the begining of the execution
+  rlbk_remaining               INTERVAL,                   -- estimated remaining time to complete the rollback
+  rlbk_completion_pct          SMALLINT                    -- estimated percentage of the rollback operation
   );
 COMMENT ON TYPE emaj.emaj_rollback_activity_type IS
 $$Represents the structure of rows returned by the emaj_rollback_activity() function.$$;
 
 CREATE TYPE emaj._verify_groups_type AS (                -- this type is not used by functions called by users
-  ver_schema                 TEXT,
-  ver_tblseq                 TEXT,
-  ver_msg                    TEXT
+  ver_schema                   TEXT,
+  ver_tblseq                   TEXT,
+  ver_msg                      TEXT
   );
 COMMENT ON TYPE emaj._verify_groups_type IS
 $$Represents the structure of rows returned by the internal _verify_groups() function.$$;
@@ -2822,7 +2823,7 @@ $emaj_set_mark_groups$;
 COMMENT ON FUNCTION emaj.emaj_set_mark_groups(TEXT[],TEXT) IS
 $$Sets a mark on several E-Maj groups.$$;
 
-CREATE OR REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN, v_logged_rlbk_target_mark TEXT DEFAULT NULL)
 RETURNS int LANGUAGE plpgsql AS
 $_set_mark_groups$
 -- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
@@ -2831,6 +2832,7 @@ $_set_mark_groups$
 -- Input: group names array, mark to set,
 --        boolean indicating whether the function is called by a multi group function
 --        boolean indicating whether the event has to be recorded into the emaj_hist table
+--        name of the rollback target mark when this mark is created by the logged_rollback functions (NULL by default)
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
@@ -2900,8 +2902,8 @@ $_set_mark_groups$
 -- insert the marks into the emaj_mark table
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
       INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_global_seq, mark_is_deleted, mark_is_rlbk_protected,
-                                  mark_last_sequence_id, mark_last_seq_hole_id)
-        VALUES (v_groupNames[v_i], v_mark, v_timestamp, v_lastGlobalSeq, FALSE, FALSE, v_lastSequenceId, v_lastSeqHoleId);
+                                  mark_last_sequence_id, mark_last_seq_hole_id, mark_logged_rlbk_target_mark)
+        VALUES (v_groupNames[v_i], v_mark, v_timestamp, v_lastGlobalSeq, FALSE, FALSE, v_lastSequenceId, v_lastSeqHoleId, v_logged_rlbk_target_mark);
     END LOOP;
 -- before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table
     IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
@@ -3058,11 +3060,11 @@ $emaj_delete_mark_group$
     IF v_realMark IS NULL THEN
       RAISE EXCEPTION 'emaj_delete_mark_group: % is not a known mark for group %.', v_mark, v_groupName;
     END IF;
--- count the number of mark in the group
+-- count the number of marks in the group
     SELECT count(*) INTO v_cpt FROM emaj.emaj_mark WHERE mark_group = v_groupName;
 -- and check there are at least 2 marks for the group
     IF v_cpt < 2 THEN
-       RAISE EXCEPTION 'emaj_delete_mark_group: % is the only mark. It cannot be deleted.', v_mark;
+      RAISE EXCEPTION 'emaj_delete_mark_group: % is the only mark of the group. It cannot be deleted.', v_mark;
     END IF;
 -- OK, now get the id and timestamp of the mark to delete
     SELECT mark_id, mark_datetime INTO v_markId, v_datetimeMark
@@ -3098,14 +3100,18 @@ $emaj_delete_mark_group$
         WHERE mark_group = v_groupName AND mark_id > v_markId ORDER BY mark_id LIMIT 1;
       IF NOT FOUND THEN
 --       no next mark, so update the previous mark with NULL
-         UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
-           WHERE mark_group = v_groupName AND mark_name = v_previousMark;
+        UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
+          WHERE mark_group = v_groupName AND mark_name = v_previousMark;
       ELSE
 --       update the previous mark with the emaj_log_stat_group() call's result
-         UPDATE emaj.emaj_mark SET mark_log_rows_before_next =
-             (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(v_groupName, v_previousMark, v_nextMark))
-           WHERE mark_group = v_groupName AND mark_name = v_previousMark;
+        UPDATE emaj.emaj_mark SET mark_log_rows_before_next =
+            (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(v_groupName, v_previousMark, v_nextMark))
+          WHERE mark_group = v_groupName AND mark_name = v_previousMark;
       END IF;
+--   ... reset the mark_logged_rlbk_target_mark column to null for other marks of the group
+--       that may have the deleted mark as target mark from a previous logged rollback operation
+      UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = NULL
+        WHERE mark_group = v_groupName AND mark_logged_rlbk_target_mark = v_realMark;
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -3210,6 +3216,13 @@ $_delete_before_mark_group$
         AND (sequ_mark, sequ_datetime) IN
             (SELECT mark_name, mark_datetime FROM emaj.emaj_mark
               WHERE mark_group = v_groupName AND mark_id < v_markId);
+-- in emaj_mark, reset the mark_logged_rlbk_target_mark column to null for marks of the group that will remain
+--    and that may have one of the deleted marks as target mark from a previous logged rollback operation
+    UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = NULL
+      WHERE mark_group = v_groupName AND mark_id >= v_markId 
+        AND mark_logged_rlbk_target_mark IN (
+            SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id < v_markId
+            );
 -- and finaly delete marks
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id < v_markId;
     GET DIAGNOSTICS v_nbMark = ROW_COUNT;
@@ -3267,6 +3280,9 @@ $emaj_rename_mark_group$
 -- and then update the emaj_mark table
     UPDATE emaj.emaj_mark SET mark_name = v_newName
       WHERE mark_group = v_groupName AND mark_name = v_realMark;
+-- also rename mark names recorded in the mark_logged_rlbk_target_mark column if needed
+    UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = v_newName
+      WHERE mark_group = v_groupName AND mark_logged_rlbk_target_mark = v_realMark;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('RENAME_MARK_GROUP', 'END', v_groupName, v_realMark || ' renamed ' || v_newName);
@@ -4537,7 +4553,7 @@ $_rlbk_end$
 -- this mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the rollback start time
     IF v_isLoggedRlbk THEN
       v_markName = 'RLBK_' || v_mark || '_' || to_char(v_rlbk_datetime, 'HH24.MI.SS.MS') || '_DONE';
-      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true, v_mark);
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
