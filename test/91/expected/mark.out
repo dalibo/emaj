@@ -179,29 +179,29 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
 (1 row)
 
 -- impact of mark set
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+-----------------+-----------------+------------------------+--------------+-----------------------+-----------------------+---------------------------+------------------------------
-     202 | phil's group#3", | Mark3          |               0 | f               | f                      |              |                   199 |                  2017 |                           | 
-     300 | myGroup1         | Mark1          |               2 | f               | f                      |              |                   299 |                  3005 |                         0 | 
-     301 | myGroup2         | Mark2          |               2 | f               | f                      |              |                   299 |                  3013 |                         0 | 
-     302 | myGroup1         | SM1            |               2 | f               | f                      |              |                   299 |                  3019 |                         0 | 
-     303 | myGroup2         | SM1            |               2 | f               | f                      |              |                   299 |                  3027 |                         0 | 
-     304 | myGroup2         | phil's mark #1 |               2 | f               | f                      |              |                   299 |                  3035 |                         0 | 
-     305 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3041 |                         0 | 
-     306 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3049 |                         0 | 
-     307 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3057 |                         0 | 
-     308 | myGroup1         | Foo%Bar        |               2 | f               | f                      |              |                   299 |                  3063 |                         0 | 
-     309 | myGroup1         | SM3            |               2 | f               | f                      |              |                   299 |                  3077 |                         0 | 
-     310 | myGroup2         | SM3            |               2 | f               | f                      |              |                   299 |                  3077 |                         0 | 
-     311 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3091 |                         0 | 
-     312 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3091 |                         0 | 
-     313 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3105 |                         0 | 
-     314 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3105 |                         0 | 
-     315 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3119 |                         0 | 
-     316 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                   299 |                  3119 |                         0 | 
-     317 | myGroup1         | Bar%Foo        |               2 | f               | f                      |              |                   299 |                  3133 |                           | 
-     318 | myGroup2         | Bar%Foo        |               2 | f               | f                      |              |                   299 |                  3133 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+-----------------+-----------------+------------------------+--------------+-----------------------+---------------------------+------------------------------
+     202 | phil's group#3", | Mark3          |               0 | f               | f                      |              |                  2017 |                           | 
+     300 | myGroup1         | Mark1          |               2 | f               | f                      |              |                  3005 |                         0 | 
+     301 | myGroup2         | Mark2          |               2 | f               | f                      |              |                  3013 |                         0 | 
+     302 | myGroup1         | SM1            |               2 | f               | f                      |              |                  3019 |                         0 | 
+     303 | myGroup2         | SM1            |               2 | f               | f                      |              |                  3027 |                         0 | 
+     304 | myGroup2         | phil's mark #1 |               2 | f               | f                      |              |                  3035 |                         0 | 
+     305 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                  3041 |                         0 | 
+     306 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                  3049 |                         0 | 
+     307 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                  3057 |                         0 | 
+     308 | myGroup1         | Foo%Bar        |               2 | f               | f                      |              |                  3063 |                         0 | 
+     309 | myGroup1         | SM3            |               2 | f               | f                      |              |                  3077 |                         0 | 
+     310 | myGroup2         | SM3            |               2 | f               | f                      |              |                  3077 |                         0 | 
+     311 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                  3091 |                         0 | 
+     312 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                  3091 |                         0 | 
+     313 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                  3105 |                         0 | 
+     314 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                  3105 |                         0 | 
+     315 | myGroup1         | MARK_%         |               2 | f               | f                      |              |                  3119 |                         0 | 
+     316 | myGroup2         | MARK_%         |               2 | f               | f                      |              |                  3119 |                         0 | 
+     317 | myGroup1         | Bar%Foo        |               2 | f               | f                      |              |                  3133 |                           | 
+     318 | myGroup2         | Bar%Foo        |               2 | f               | f                      |              |                  3133 |                           | 
 (20 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -487,29 +487,29 @@ select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
 (1 row)
 
 -- impact of mark rename
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |         mark_comment          | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+-----------------+-----------------+------------------------+-------------------------------+-----------------------+-----------------------+---------------------------+------------------------------
-     202 | phil's group#3", | Mark3          |               0 | f               | f                      |                               |                   199 |                  2017 |                           | 
-     300 | myGroup1         | First Mark     |               2 | f               | f                      |                               |                   299 |                  3005 |                         0 | 
-     301 | myGroup2         | Mark2          |               2 | f               | f                      |                               |                   299 |                  3013 |                         0 | 
-     302 | myGroup1         | SM1            |               2 | f               | f                      | a better comment for group #1 |                   299 |                  3019 |                         0 | 
-     303 | myGroup2         | SM1            |               2 | f               | f                      |                               |                   299 |                  3027 |                         0 | 
-     304 | myGroup2         | john's mark #1 |               2 | f               | f                      | a good phil's comment!        |                   299 |                  3035 |                         0 | 
-     305 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3041 |                         0 | 
-     306 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3049 |                         0 | 
-     307 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3057 |                         0 | 
-     308 | myGroup1         | Foo%Bar        |               2 | f               | f                      |                               |                   299 |                  3063 |                         0 | 
-     309 | myGroup1         | SM3            |               2 | f               | f                      |                               |                   299 |                  3077 |                         0 | 
-     310 | myGroup2         | SM3            |               2 | f               | f                      |                               |                   299 |                  3077 |                         0 | 
-     311 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3091 |                         0 | 
-     312 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3091 |                         0 | 
-     313 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3105 |                         0 | 
-     314 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3105 |                         0 | 
-     315 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3119 |                         0 | 
-     316 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                   299 |                  3119 |                         0 | 
-     317 | myGroup1         | SM2            |               2 | f               | f                      |                               |                   299 |                  3133 |                           | First Mark
-     318 | myGroup2         | SM2            |               2 | f               | f                      | a comment for group #2        |                   299 |                  3133 |                           | Mark1
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |         mark_comment          | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+-----------------+-----------------+------------------------+-------------------------------+-----------------------+---------------------------+------------------------------
+     202 | phil's group#3", | Mark3          |               0 | f               | f                      |                               |                  2017 |                           | 
+     300 | myGroup1         | First Mark     |               2 | f               | f                      |                               |                  3005 |                         0 | 
+     301 | myGroup2         | Mark2          |               2 | f               | f                      |                               |                  3013 |                         0 | 
+     302 | myGroup1         | SM1            |               2 | f               | f                      | a better comment for group #1 |                  3019 |                         0 | 
+     303 | myGroup2         | SM1            |               2 | f               | f                      |                               |                  3027 |                         0 | 
+     304 | myGroup2         | john's mark #1 |               2 | f               | f                      | a good phil's comment!        |                  3035 |                         0 | 
+     305 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                  3041 |                         0 | 
+     306 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                  3049 |                         0 | 
+     307 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                  3057 |                         0 | 
+     308 | myGroup1         | Foo%Bar        |               2 | f               | f                      |                               |                  3063 |                         0 | 
+     309 | myGroup1         | SM3            |               2 | f               | f                      |                               |                  3077 |                         0 | 
+     310 | myGroup2         | SM3            |               2 | f               | f                      |                               |                  3077 |                         0 | 
+     311 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                  3091 |                         0 | 
+     312 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                  3091 |                         0 | 
+     313 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                  3105 |                         0 | 
+     314 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                  3105 |                         0 | 
+     315 | myGroup1         | MARK_%         |               2 | f               | f                      |                               |                  3119 |                         0 | 
+     316 | myGroup2         | MARK_%         |               2 | f               | f                      |                               |                  3119 |                         0 | 
+     317 | myGroup1         | SM2            |               2 | f               | f                      |                               |                  3133 |                           | First Mark
+     318 | myGroup2         | SM2            |               2 | f               | f                      | a comment for group #2        |                  3133 |                           | Mark1
 (20 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -911,14 +911,14 @@ select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 (1 row)
 
 -- check marks state
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |      mark_comment      | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+-----------------+-----------------+------------------------+------------------------+-----------------------+-----------------------+---------------------------+------------------------------
-     309 | myGroup1         | SM3            |               2 | t               | f                      |                        |                   299 |                  3077 |                         0 | 
-     318 | myGroup2         | SM2            |               2 | t               | f                      | a comment for group #2 |                   299 |                  3133 |                         0 | 
-     319 | phil's group#3", | Mark4          |               2 | f               | f                      |                        |                   299 |                  3137 |                           | 
-     320 | myGroup1         | STOP_%         |               2 | t               | f                      |                        |                   299 |                  3143 |                         0 | 
-     321 | myGroup2         | STOP_%         |               2 | t               | f                      |                        |                   299 |                  3151 |                         0 | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |      mark_comment      | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+-----------------+-----------------+------------------------+------------------------+-----------------------+---------------------------+------------------------------
+     309 | myGroup1         | SM3            |               2 | t               | f                      |                        |                  3077 |                         0 | 
+     318 | myGroup2         | SM2            |               2 | t               | f                      | a comment for group #2 |                  3133 |                         0 | 
+     319 | phil's group#3", | Mark4          |               2 | f               | f                      |                        |                  3137 |                           | 
+     320 | myGroup1         | STOP_%         |               2 | t               | f                      |                        |                  3143 |                         0 | 
+     321 | myGroup2         | STOP_%         |               2 | t               | f                      |                        |                  3151 |                         0 | 
 (5 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1052,4 +1052,3 @@ truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 400;
 alter sequence emaj.emaj_sequence_sequ_id_seq restart 4000;
-alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 400;

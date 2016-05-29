@@ -72,9 +72,9 @@ select emaj.emaj_rollback_group('myGroup2','M3');
 -- Checking step 8
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
-select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
+select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
@@ -160,9 +160,9 @@ select emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3');
 -- Checking step 10
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
-select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
+select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
 select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
 -- user tables
@@ -188,7 +188,7 @@ select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 -- Checking step 11
 -----------------------------
 -- emaj tables
-select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
+select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
 select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
 
@@ -334,7 +334,6 @@ truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 10000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 1000;
 alter sequence emaj.emaj_sequence_sequ_id_seq restart 1000;
-alter sequence emaj.emaj_seq_hole_sqhl_id_seq restart 1000;
 
 -- the groups are left in their current state for the parallel rollback test.
 select count(*) from mySchema1.myTbl4;

@@ -189,7 +189,6 @@ Composite type "emaj.emaj_log_stat_type"
  mark_comment                 | text                     | 
  mark_txid                    | bigint                   | default txid_current()
  mark_last_sequence_id        | bigint                   | 
- mark_last_seq_hole_id        | bigint                   | 
  mark_log_rows_before_next    | bigint                   | 
  mark_logged_rlbk_target_mark | text                     | 
 Indexes:
@@ -449,41 +448,28 @@ Tablespace: "tspemaj"
  rlbk_remaining      | interval                 | 
  rlbk_completion_pct | smallint                 | 
 
-                                            Table "emaj.emaj_seq_hole"
-     Column     |           Type           |                              Modifiers                               
-----------------+--------------------------+----------------------------------------------------------------------
- sqhl_id        | bigint                   | not null default nextval('emaj.emaj_seq_hole_sqhl_id_seq'::regclass)
- sqhl_schema    | text                     | not null
- sqhl_table     | text                     | not null
- sqhl_datetime  | timestamp with time zone | not null default transaction_timestamp()
- sqhl_hole_size | bigint                   | not null
+                Table "emaj.emaj_seq_hole"
+       Column       |           Type           | Modifiers 
+--------------------+--------------------------+-----------
+ sqhl_schema        | text                     | not null
+ sqhl_table         | text                     | not null
+ sqhl_begin_mark_id | bigint                   | not null
+ sqhl_begin_mark_ts | timestamp with time zone | 
+ sqhl_end_mark_id   | bigint                   | not null
+ sqhl_end_mark_ts   | timestamp with time zone | 
+ sqhl_hole_size     | bigint                   | not null
 Indexes:
-    "emaj_seq_hole_pkey" PRIMARY KEY, btree (sqhl_schema, sqhl_table, sqhl_datetime), tablespace "tspemaj"
+    "emaj_seq_hole_pkey" PRIMARY KEY, btree (sqhl_schema, sqhl_table, sqhl_begin_mark_id), tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-             Index "emaj.emaj_seq_hole_pkey"
-    Column     |           Type           |  Definition   
----------------+--------------------------+---------------
- sqhl_schema   | text                     | sqhl_schema
- sqhl_table    | text                     | sqhl_table
- sqhl_datetime | timestamp with time zone | sqhl_datetime
+         Index "emaj.emaj_seq_hole_pkey"
+       Column       |  Type  |     Definition     
+--------------------+--------+--------------------
+ sqhl_schema        | text   | sqhl_schema
+ sqhl_table         | text   | sqhl_table
+ sqhl_begin_mark_id | bigint | sqhl_begin_mark_id
 primary key, btree, for table "emaj.emaj_seq_hole"
 Tablespace: "tspemaj"
-
-      Sequence "emaj.emaj_seq_hole_sqhl_id_seq"
-    Column     |  Type   |           Value           
----------------+---------+---------------------------
- sequence_name | name    | emaj_seq_hole_sqhl_id_seq
- last_value    | bigint  | 1
- start_value   | bigint  | 1
- increment_by  | bigint  | 1
- max_value     | bigint  | 9223372036854775807
- min_value     | bigint  | 1
- cache_value   | bigint  | 1
- log_cnt       | bigint  | 0
- is_cycled     | boolean | f
- is_called     | boolean | f
-Owned by: emaj.emaj_seq_hole.sqhl_id
 
                                             Table "emaj.emaj_sequence"
      Column     |           Type           |                              Modifiers                               

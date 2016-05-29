@@ -158,8 +158,8 @@ select * from emaj.emaj_relation;
 (0 rows)
 
 select * from emaj.emaj_mark;
- mark_group | mark_name | mark_id | mark_datetime | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_txid | mark_last_sequence_id | mark_last_seq_hole_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+-----------+---------+---------------+-----------------+-----------------+------------------------+--------------+-----------+-----------------------+-----------------------+---------------------------+------------------------------
+ mark_group | mark_name | mark_id | mark_datetime | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_txid | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------+---------+---------------+-----------------+-----------------+------------------------+--------------+-----------+-----------------------+---------------------------+------------------------------
 (0 rows)
 
 select * from emaj.emaj_sequence;
@@ -168,8 +168,8 @@ select * from emaj.emaj_sequence;
 (0 rows)
 
 select * from emaj.emaj_seq_hole;
- sqhl_id | sqhl_schema | sqhl_table | sqhl_datetime | sqhl_hole_size 
----------+-------------+------------+---------------+----------------
+ sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_begin_mark_ts | sqhl_end_mark_id | sqhl_end_mark_ts | sqhl_hole_size 
+-------------+------------+--------------------+--------------------+------------------+------------------+----------------
 (0 rows)
 
 select count(*) from emaj.emaj_rlbk;
@@ -492,13 +492,13 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  myGroup2   | t                | f                       |              6 |                 2 | t                     | 
 (2 rows)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id | mark_group | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_is_rlbk_protected |  mark_comment  | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+----------------+-----------------+-----------------+------------------------+------------------------+----------------+-----------------------+-----------------------+---------------------------+------------------------------
-     602 | myGroup1   | M1             |           99999 | f               | f                      | f                      |                |                   599 |                  6015 |                        27 | 
-     603 | myGroup2   | M1             |           99999 | f               | f                      | f                      |                |                   599 |                  6023 |                           | 
-     604 | myGroup1   | M2             |          100026 | f               | f                      | f                      |                |                   599 |                  6029 |                        11 | 
-     605 | myGroup1   | M3             |          100037 | f               | f                      | f                      | Third mark set |                   599 |                  6035 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_is_rlbk_protected |  mark_comment  | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+----------------+-----------------+-----------------+------------------------+------------------------+----------------+-----------------------+---------------------------+------------------------------
+     602 | myGroup1   | M1             |           99999 | f               | f                      | f                      |                |                  6015 |                        27 | 
+     603 | myGroup2   | M1             |           99999 | f               | f                      | f                      |                |                  6023 |                           | 
+     604 | myGroup1   | M2             |          100026 | f               | f                      | f                      |                |                  6029 |                        11 | 
+     605 | myGroup1   | M3             |          100037 | f               | f                      | f                      | Third mark set |                  6035 |                           | 
 (4 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -728,15 +728,15 @@ select emaj.emaj_set_mark_group('myGroup2','M3');
 -- Checking step 2
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id | mark_group | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+----------------+-----------------+-----------------+------------------------+----------------+-----------------------+-----------------------+---------------------------+------------------------------
-     602 | myGroup1   | M1             |           99999 | f               | f                      |                |                   599 |                  6015 |                        27 | 
-     603 | myGroup2   | M1             |           99999 | f               | f                      |                |                   599 |                  6023 |                        41 | 
-     604 | myGroup1   | M2             |          100026 | f               | f                      |                |                   599 |                  6029 |                        11 | 
-     605 | myGroup1   | M3             |          100037 | f               | f                      | Third mark set |                   599 |                  6035 |                           | 
-     606 | myGroup2   | M2             |          100078 | f               | f                      |                |                   599 |                  6043 |                         8 | 
-     607 | myGroup2   | M3             |          100086 | f               | f                      |                |                   599 |                  6051 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+----------------+-----------------+-----------------+------------------------+----------------+-----------------------+---------------------------+------------------------------
+     602 | myGroup1   | M1             |           99999 | f               | f                      |                |                  6015 |                        27 | 
+     603 | myGroup2   | M1             |           99999 | f               | f                      |                |                  6023 |                        41 | 
+     604 | myGroup1   | M2             |          100026 | f               | f                      |                |                  6029 |                        11 | 
+     605 | myGroup1   | M3             |          100037 | f               | f                      | Third mark set |                  6035 |                           | 
+     606 | myGroup2   | M2             |          100078 | f               | f                      |                |                  6043 |                         8 | 
+     607 | myGroup2   | M3             |          100086 | f               | f                      |                |                  6051 |                           | 
 (6 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -988,19 +988,19 @@ set role emaj_regression_tests_adm_user;
 -- Checking step 3
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id | mark_group | regexp_replace  | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+-----------------+-----------------+-----------------+------------------------+----------------+-----------------------+-----------------------+---------------------------+------------------------------
-     602 | myGroup1   | M1              |           99999 | f               | f                      |                |                   599 |                  6015 |                        27 | 
-     603 | myGroup2   | M1              |           99999 | f               | f                      |                |                   599 |                  6023 |                        41 | 
-     604 | myGroup1   | M2              |          100026 | f               | f                      |                |                   599 |                  6029 |                        11 | 
-     605 | myGroup1   | M3              |          100037 | f               | f                      | Third mark set |                   599 |                  6035 |                           | 
-     606 | myGroup2   | M2              |          100078 | f               | f                      |                |                   599 |                  6043 |                         8 | 
-     607 | myGroup2   | M3              |          100086 | f               | f                      |                |                   599 |                  6051 |                         0 | 
-     608 | myGroup2   | RLBK_M2_%_START |          100086 | f               | f                      |                |                   599 |                  6059 |                         6 | 
-     609 | myGroup2   | RLBK_M2_%_DONE  |          100092 | f               | f                      |                |                   599 |                  6067 |                         0 | M2
-     610 | myGroup2   | RLBK_M3_%_START |          100092 | f               | f                      |                |                   599 |                  6075 |                         6 | 
-     611 | myGroup2   | RLBK_M3_%_DONE  |          100098 | f               | f                      |                |                   599 |                  6083 |                           | M3
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group | regexp_replace  | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+-----------------+-----------------+-----------------+------------------------+----------------+-----------------------+---------------------------+------------------------------
+     602 | myGroup1   | M1              |           99999 | f               | f                      |                |                  6015 |                        27 | 
+     603 | myGroup2   | M1              |           99999 | f               | f                      |                |                  6023 |                        41 | 
+     604 | myGroup1   | M2              |          100026 | f               | f                      |                |                  6029 |                        11 | 
+     605 | myGroup1   | M3              |          100037 | f               | f                      | Third mark set |                  6035 |                           | 
+     606 | myGroup2   | M2              |          100078 | f               | f                      |                |                  6043 |                         8 | 
+     607 | myGroup2   | M3              |          100086 | f               | f                      |                |                  6051 |                         0 | 
+     608 | myGroup2   | RLBK_M2_%_START |          100086 | f               | f                      |                |                  6059 |                         6 | 
+     609 | myGroup2   | RLBK_M2_%_DONE  |          100092 | f               | f                      |                |                  6067 |                         0 | M2
+     610 | myGroup2   | RLBK_M3_%_START |          100092 | f               | f                      |                |                  6075 |                         6 | 
+     611 | myGroup2   | RLBK_M3_%_DONE  |          100098 | f               | f                      |                |                  6083 |                           | M3
 (10 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1288,21 +1288,21 @@ select emaj.emaj_set_mark_group('myGroup1','M6');
 -- Checking step 4
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id | mark_group | regexp_replace  | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+-----------------+-----------------+-----------------+------------------------+--------------+-----------------------+-----------------------+---------------------------+------------------------------
-     602 | myGroup1   | M1              |           99999 | f               | f                      |              |                   599 |                  6015 |                        27 | 
-     603 | myGroup2   | M1              |           99999 | f               | f                      |              |                   599 |                  6023 |                        41 | 
-     604 | myGroup1   | M2              |          100026 | f               | f                      |              |                   599 |                  6029 |                        13 | 
-     606 | myGroup2   | M2              |          100078 | f               | f                      |              |                   599 |                  6043 |                         8 | 
-     607 | myGroup2   | M3              |          100086 | f               | f                      |              |                   599 |                  6051 |                         0 | 
-     608 | myGroup2   | RLBK_M2_%_START |          100086 | f               | f                      |              |                   599 |                  6059 |                         6 | 
-     609 | myGroup2   | RLBK_M2_%_DONE  |          100092 | f               | f                      |              |                   599 |                  6067 |                         0 | M2
-     610 | myGroup2   | RLBK_M3_%_START |          100092 | f               | f                      |              |                   599 |                  6075 |                         6 | 
-     611 | myGroup2   | RLBK_M3_%_DONE  |          100098 | f               | f                      |              |                   599 |                  6083 |                           | M3
-     612 | myGroup1   | M4              |          100111 | f               | f                      |              |                   601 |                  6089 |                        10 | 
-     613 | myGroup1   | M5              |          100121 | f               | f                      |              |                   601 |                  6095 |                         0 | 
-     614 | myGroup1   | M6              |          100121 | f               | f                      |              |                   601 |                  6101 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group | regexp_replace  | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+-----------------+-----------------+-----------------+------------------------+--------------+-----------------------+---------------------------+------------------------------
+     602 | myGroup1   | M1              |           99999 | f               | f                      |              |                  6015 |                        27 | 
+     603 | myGroup2   | M1              |           99999 | f               | f                      |              |                  6023 |                        41 | 
+     604 | myGroup1   | M2              |          100026 | f               | f                      |              |                  6029 |                        13 | 
+     606 | myGroup2   | M2              |          100078 | f               | f                      |              |                  6043 |                         8 | 
+     607 | myGroup2   | M3              |          100086 | f               | f                      |              |                  6051 |                         0 | 
+     608 | myGroup2   | RLBK_M2_%_START |          100086 | f               | f                      |              |                  6059 |                         6 | 
+     609 | myGroup2   | RLBK_M2_%_DONE  |          100092 | f               | f                      |              |                  6067 |                         0 | M2
+     610 | myGroup2   | RLBK_M3_%_START |          100092 | f               | f                      |              |                  6075 |                         6 | 
+     611 | myGroup2   | RLBK_M3_%_DONE  |          100098 | f               | f                      |              |                  6083 |                           | M3
+     613 | myGroup1   | M4              |          100111 | f               | f                      |              |                  6089 |                        10 | 
+     614 | myGroup1   | M5              |          100121 | f               | f                      |              |                  6095 |                         0 | 
+     615 | myGroup1   | M6              |          100121 | f               | f                      |              |                  6101 |                           | 
 (12 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1591,17 +1591,17 @@ PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 -- Checking step 5
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id | mark_group | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+----------------+-----------------+-----------------+------------------------+--------------+-----------------------+-----------------------+---------------------------+------------------------------
-     602 | myGroup1   | M1             |           99999 | f               | f                      |              |                   599 |                  6015 |                        27 | 
-     603 | myGroup2   | M1             |           99999 | f               | f                      |              |                   599 |                  6023 |                        41 | 
-     604 | myGroup1   | M2             |          100026 | f               | f                      |              |                   599 |                  6029 |                        13 | 
-     606 | myGroup2   | M2             |          100078 | f               | f                      |              |                   599 |                  6043 |                         8 | 
-     607 | myGroup2   | M3             |          100086 | f               | f                      |              |                   599 |                  6051 |                           | 
-     612 | myGroup1   | M4             |          100111 | f               | f                      |              |                   601 |                  6089 |                        10 | 
-     613 | myGroup1   | M5             |          100121 | f               | f                      |              |                   601 |                  6095 |                         0 | 
-     614 | myGroup1   | M6             |          100121 | f               | f                      |              |                   601 |                  6101 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group | regexp_replace | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+----------------+-----------------+-----------------+------------------------+--------------+-----------------------+---------------------------+------------------------------
+     602 | myGroup1   | M1             |           99999 | f               | f                      |              |                  6015 |                        27 | 
+     603 | myGroup2   | M1             |           99999 | f               | f                      |              |                  6023 |                        41 | 
+     604 | myGroup1   | M2             |          100026 | f               | f                      |              |                  6029 |                        13 | 
+     606 | myGroup2   | M2             |          100078 | f               | f                      |              |                  6043 |                         8 | 
+     607 | myGroup2   | M3             |          100086 | f               | f                      |              |                  6051 |                           | 
+     613 | myGroup1   | M4             |          100111 | f               | f                      |              |                  6089 |                        10 | 
+     614 | myGroup1   | M5             |          100121 | f               | f                      |              |                  6095 |                         0 | 
+     615 | myGroup1   | M6             |          100121 | f               | f                      |              |                  6101 |                           | 
 (8 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1684,14 +1684,14 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     6114 | emajC       | myschema2_myTbl3_log_seq   | RLBK_M2_%_DONE  |            10 | t
 (75 rows)
 
-select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
- sqhl_id | sqhl_schema | sqhl_table | sqhl_hole_size 
----------+-------------+------------+----------------
-     600 | myschema1   | mytbl1     |              3
-     601 | myschema1   | mytbl4     |              8
-     602 | myschema2   | mytbl6     |              9
-     603 | myschema2   | mytbl4     |              6
-     604 | myschema2   | mytbl5     |              3
+select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
+ sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_end_mark_id | sqhl_hole_size 
+-------------+------------+--------------------+------------------+----------------
+ myschema1   | mytbl1     |                604 |              612 |              3
+ myschema1   | mytbl4     |                604 |              612 |              8
+ myschema2   | mytbl4     |                607 |              618 |              6
+ myschema2   | mytbl5     |                607 |              618 |              3
+ myschema2   | mytbl6     |                607 |              618 |              9
 (5 rows)
 
 -- user tables
@@ -1885,18 +1885,18 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb
 -- Checking step 6
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id | mark_group | regexp_replace  | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+-----------------+-----------------+-----------------+------------------------+--------------+-----------------------+-----------------------+---------------------------+------------------------------
-     602 | myGroup1   | M1              |           99999 | f               | f                      |              |                   599 |                  6015 |                        27 | 
-     603 | myGroup2   | M1              |           99999 | f               | f                      |              |                   599 |                  6023 |                        41 | 
-     604 | myGroup1   | M2              |          100026 | f               | f                      |              |                   599 |                  6029 |                        13 | 
-     606 | myGroup2   | M2              |          100078 | f               | f                      |              |                   599 |                  6043 |                         8 | 
-     607 | myGroup2   | M3              |          100086 | f               | f                      |              |                   599 |                  6051 |                           | 
-     612 | myGroup1   | M4              |          100111 | f               | f                      |              |                   601 |                  6089 |                        10 | 
-     613 | myGroup1   | M5              |          100121 | f               | f                      |              |                   601 |                  6095 |                         3 | 
-     617 | myGroup1   | RLBK_M4_%_START |          100133 | f               | f                      |              |                   606 |                  6123 |                        23 | 
-     618 | myGroup1   | RLBK_M4_%_DONE  |          100156 | f               | f                      |              |                   606 |                  6129 |                           | M4
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group | regexp_replace  | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+-----------------+-----------------+-----------------+------------------------+--------------+-----------------------+---------------------------+------------------------------
+     602 | myGroup1   | M1              |           99999 | f               | f                      |              |                  6015 |                        27 | 
+     603 | myGroup2   | M1              |           99999 | f               | f                      |              |                  6023 |                        41 | 
+     604 | myGroup1   | M2              |          100026 | f               | f                      |              |                  6029 |                        13 | 
+     606 | myGroup2   | M2              |          100078 | f               | f                      |              |                  6043 |                         8 | 
+     607 | myGroup2   | M3              |          100086 | f               | f                      |              |                  6051 |                           | 
+     613 | myGroup1   | M4              |          100111 | f               | f                      |              |                  6089 |                        10 | 
+     614 | myGroup1   | M5              |          100121 | f               | f                      |              |                  6095 |                         3 | 
+     620 | myGroup1   | RLBK_M4_%_START |          100133 | f               | f                      |              |                  6123 |                        23 | 
+     621 | myGroup1   | RLBK_M4_%_DONE  |          100156 | f               | f                      |              |                  6129 |                           | M4
 (9 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -2002,16 +2002,16 @@ select * from
 (0 rows)
 
 --
-select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
- sqhl_id | sqhl_schema | sqhl_table | sqhl_hole_size 
----------+-------------+------------+----------------
-     600 | myschema1   | mytbl1     |              3
-     601 | myschema1   | mytbl4     |              8
-     602 | myschema2   | mytbl6     |              9
-     603 | myschema2   | mytbl4     |              6
-     604 | myschema2   | mytbl5     |              3
-     605 | myschema1   | mytbl1     |              1
-     606 | myschema1   | mytbl4     |              2
+select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
+ sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_end_mark_id | sqhl_hole_size 
+-------------+------------+--------------------+------------------+----------------
+ myschema1   | mytbl1     |                604 |              612 |              3
+ myschema1   | mytbl1     |                614 |              619 |              1
+ myschema1   | mytbl4     |                604 |              612 |              8
+ myschema1   | mytbl4     |                614 |              619 |              2
+ myschema2   | mytbl4     |                607 |              618 |              6
+ myschema2   | mytbl5     |                607 |              618 |              3
+ myschema2   | mytbl6     |                607 |              618 |              9
 (7 rows)
 
 -- user tables
@@ -2229,15 +2229,15 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 -- Checking step 7
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id | mark_group |        regexp_replace        | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_seq_hole_id | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+------------------------------+-----------------+-----------------+------------------------+--------------+-----------------------+-----------------------+---------------------------+------------------------------
-     603 | myGroup2   | M1                           |           99999 | f               | f                      |              |                   599 |                  6023 |                        41 | 
-     606 | myGroup2   | M2                           |          100078 | f               | f                      |              |                   599 |                  6043 |                         8 | 
-     607 | myGroup2   | M3                           |          100086 | f               | f                      |              |                   599 |                  6051 |                           | 
-     612 | myGroup1   | M4                           |          100111 | f               | f                      |              |                   601 |                  6089 |                        10 | 
-     613 | myGroup1   | M5                           |          100121 | f               | f                      |              |                   601 |                  6095 |                         3 | 
-     617 | myGroup1   | Before logged rollback to M4 |          100133 | f               | f                      |              |                   606 |                  6123 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group |        regexp_replace        | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+------------------------------+-----------------+-----------------+------------------------+--------------+-----------------------+---------------------------+------------------------------
+     603 | myGroup2   | M1                           |           99999 | f               | f                      |              |                  6023 |                        41 | 
+     606 | myGroup2   | M2                           |          100078 | f               | f                      |              |                  6043 |                         8 | 
+     607 | myGroup2   | M3                           |          100086 | f               | f                      |              |                  6051 |                           | 
+     613 | myGroup1   | M4                           |          100111 | f               | f                      |              |                  6089 |                        10 | 
+     614 | myGroup1   | M5                           |          100121 | f               | f                      |              |                  6095 |                         3 | 
+     620 | myGroup1   | Before logged rollback to M4 |          100133 | f               | f                      |              |                  6123 |                           | 
 (6 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -2311,14 +2311,14 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     6123 | emajb       | myschema1_mytbl2b_log_seq  | Before logged rollback to M4 |             1 | f
 (66 rows)
 
-select sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
- sqhl_id | sqhl_schema | sqhl_table | sqhl_hole_size 
----------+-------------+------------+----------------
-     602 | myschema2   | mytbl6     |              9
-     603 | myschema2   | mytbl4     |              6
-     604 | myschema2   | mytbl5     |              3
-     605 | myschema1   | mytbl1     |              1
-     606 | myschema1   | mytbl4     |              2
+select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
+ sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_end_mark_id | sqhl_hole_size 
+-------------+------------+--------------------+------------------+----------------
+ myschema1   | mytbl1     |                614 |              619 |              1
+ myschema1   | mytbl4     |                614 |              619 |              2
+ myschema2   | mytbl4     |                607 |              618 |              6
+ myschema2   | mytbl5     |                607 |              618 |              3
+ myschema2   | mytbl6     |                607 |              618 |              9
 (5 rows)
 
 -- user tables

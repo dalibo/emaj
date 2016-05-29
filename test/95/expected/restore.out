@@ -199,7 +199,7 @@ COPY 56
 COPY 12
  setval 
 --------
-   1003
+   1004
 (1 row)
 
 COPY 2
@@ -214,11 +214,6 @@ COPY 174
 COPY 22
 COPY 140
 COPY 9
- setval 
---------
-   1002
-(1 row)
-
 COPY 153
  setval 
 --------
