@@ -49,7 +49,7 @@ select relname,relkind from pg_class where relname like 'emaj_%';
 select * from emaj.emaj_global_seq;
   sequence_name  | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
 -----------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
- emaj_global_seq |     100465 |           1 |            1 | 9223372036854775807 |         1 |           1 |       0 | f         | t
+ emaj_global_seq |     100640 |           1 |            1 | 9223372036854775807 |         1 |           1 |       0 | f         | t
 (1 row)
 
 -----------------------------
@@ -107,10 +107,10 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     1000 | myschema1   | myTbl3_col31_seq           | RLBK_Multi-1_%_START         |            21 | f
     1001 | myschema2   | myseq1                     | RLBK_Multi-1_%_START         |          9999 | f
     1002 | myschema2   | myTbl3_col31_seq           | RLBK_Multi-1_%_START         |            21 | f
-    1003 | emajC       | myschema1_myTbl3_log_seq   | RLBK_Multi-1_%_START         |            50 | t
-    1004 | emaj        | myschema1_mytbl1_log_seq   | RLBK_Multi-1_%_START         |            73 | t
-    1005 | emaj        | myschema1_mytbl4_log_seq   | RLBK_Multi-1_%_START         |            14 | t
-    1006 | emaj        | myschema1_mytbl2_log_seq   | RLBK_Multi-1_%_START         |             6 | t
+    1003 | emajC       | myschema1_myTbl3_log_seq   | RLBK_Multi-1_%_START         |            90 | t
+    1004 | emaj        | myschema1_mytbl1_log_seq   | RLBK_Multi-1_%_START         |           184 | t
+    1005 | emaj        | myschema1_mytbl4_log_seq   | RLBK_Multi-1_%_START         |            23 | t
+    1006 | emaj        | myschema1_mytbl2_log_seq   | RLBK_Multi-1_%_START         |            21 | t
     1007 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_Multi-1_%_START         |             1 | f
     1008 | emaj        | myschema2_mytbl1_log_seq   | RLBK_Multi-1_%_START         |            25 | t
     1009 | emaj        | myschema2_mytbl2_log_seq   | RLBK_Multi-1_%_START         |             4 | t
@@ -121,10 +121,10 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     1014 | myschema1   | myTbl3_col31_seq           | RLBK_Multi-1_%_DONE          |            21 | f
     1015 | myschema2   | myseq1                     | RLBK_Multi-1_%_DONE          |          1004 | f
     1016 | myschema2   | myTbl3_col31_seq           | RLBK_Multi-1_%_DONE          |            21 | f
-    1017 | emajC       | myschema1_myTbl3_log_seq   | RLBK_Multi-1_%_DONE          |            55 | t
-    1018 | emaj        | myschema1_mytbl1_log_seq   | RLBK_Multi-1_%_DONE          |            93 | t
-    1019 | emaj        | myschema1_mytbl4_log_seq   | RLBK_Multi-1_%_DONE          |            14 | t
-    1020 | emaj        | myschema1_mytbl2_log_seq   | RLBK_Multi-1_%_DONE          |             9 | t
+    1017 | emajC       | myschema1_myTbl3_log_seq   | RLBK_Multi-1_%_DONE          |            95 | t
+    1018 | emaj        | myschema1_mytbl1_log_seq   | RLBK_Multi-1_%_DONE          |           204 | t
+    1019 | emaj        | myschema1_mytbl4_log_seq   | RLBK_Multi-1_%_DONE          |            23 | t
+    1020 | emaj        | myschema1_mytbl2_log_seq   | RLBK_Multi-1_%_DONE          |            24 | t
     1021 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_Multi-1_%_DONE          |             1 | f
     1022 | emaj        | myschema2_mytbl1_log_seq   | RLBK_Multi-1_%_DONE          |            35 | t
     1023 | emaj        | myschema2_mytbl2_log_seq   | RLBK_Multi-1_%_DONE          |             6 | t
@@ -265,7 +265,33 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     6225 | emaj        | myschema2_mytbl4_log_seq   | Multi-1                      |            10 | t
     6226 | emaj        | otherPrefix4mytbl5_log_seq | Multi-1                      |             7 | t
     6227 | emaj        | myschema2_mytbl6_log_seq   | Multi-1                      |            23 | t
-(161 rows)
+    6299 | emaj        | myschema1_mytbl4_log_seq   | MC1                          |            14 | t
+    6301 | emajb       | myschema1_mytbl2b_log_seq  | MC1                          |             1 | f
+    6317 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC1_DONE                |            14 | t
+    6319 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC1_DONE                |             1 | f
+    6323 | emaj        | myschema1_mytbl4_log_seq   | MC3                          |            14 | t
+    6325 | emajb       | myschema1_mytbl2b_log_seq  | MC3                          |             1 | f
+    6347 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC3_%_DONE              |            17 | t
+    6349 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC3_%_DONE              |             1 | f
+    6353 | emaj        | myschema1_mytbl4_log_seq   | MC6                          |            17 | t
+    6355 | emajb       | myschema1_mytbl2b_log_seq  | MC6                          |             1 | f
+    6395 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC6_%_DONE              |            20 | t
+    6397 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC6_%_DONE              |             1 | f
+    6401 | emaj        | myschema1_mytbl4_log_seq   | MC10                         |            20 | t
+    6403 | emajb       | myschema1_mytbl2b_log_seq  | MC10                         |             1 | f
+    6431 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC10_%_DONE             |            23 | t
+    6433 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC10_%_DONE             |             1 | f
+    6437 | emaj        | myschema1_mytbl4_log_seq   | MC15                         |            23 | t
+    6439 | emajb       | myschema1_mytbl2b_log_seq  | MC15                         |             1 | f
+    6455 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC15_DONE               |            23 | t
+    6457 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC15_DONE               |             1 | f
+    6461 | emaj        | myschema1_mytbl4_log_seq   | MC17                         |            23 | t
+    6463 | emajb       | myschema1_mytbl2b_log_seq  | MC17                         |             1 | f
+    6467 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC16_%_START            |            23 | t
+    6469 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC16_%_START            |             1 | f
+    6473 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC16_%_DONE             |            23 | t
+    6475 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC16_%_DONE             |             1 | f
+(187 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
@@ -327,94 +353,94 @@ select * from mySchema2.myTbl4 order by col41;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13  | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+--------+-----------+------------+----------
-     4 | ABC        | \x0c   | DEL       | OLD        |   100368
-     5 | ABC        | \x0c   | DEL       | OLD        |   100369
-     6 | ABC        | \x0c   | DEL       | OLD        |   100370
-     7 | ABC        | \x0c   | DEL       | OLD        |   100371
-     8 | ABC        | \x0c   | DEL       | OLD        |   100372
-     9 | ABC        | \x0c   | DEL       | OLD        |   100373
-    10 | ABC        | \x0c   | DEL       | OLD        |   100374
-     1 | ABC        | \x1c   | DEL       | OLD        |   100375
-     2 | ABC        | \x1c   | DEL       | OLD        |   100376
-     3 | ABC        | \x1c   | DEL       | OLD        |   100377
-     4 | ABC        | \x0c   | INS       | NEW        |   100413
-    10 | ABC        | \x0c   | INS       | NEW        |   100414
-     7 | ABC        | \x0c   | INS       | NEW        |   100415
-     9 | ABC        | \x0c   | INS       | NEW        |   100416
-     5 | ABC        | \x0c   | INS       | NEW        |   100417
-     2 | ABC        | \x1c   | INS       | NEW        |   100418
-     6 | ABC        | \x0c   | INS       | NEW        |   100419
-     3 | ABC        | \x1c   | INS       | NEW        |   100420
-     1 | ABC        | \x1c   | INS       | NEW        |   100421
-     8 | ABC        | \x0c   | INS       | NEW        |   100422
-   101 | KLM        | \x000c | INS       | NEW        |   100466
-   102 | KLM        | \x000c | INS       | NEW        |   100467
-   103 | KLM        | \x000c | INS       | NEW        |   100468
-   104 | KLM        | \x000c | INS       | NEW        |   100469
-   105 | KLM        | \x000c | INS       | NEW        |   100470
-   106 | KLM        | \x000c | INS       | NEW        |   100471
-   107 | KLM        | \x000c | INS       | NEW        |   100472
-   108 | KLM        | \x000c | INS       | NEW        |   100473
-   109 | KLM        | \x000c | INS       | NEW        |   100474
-   110 | KLM        | \x000c | INS       | NEW        |   100475
-   111 | KLM        | \x000c | INS       | NEW        |   100476
-   106 | KLM        | \x000c | UPD       | OLD        |   100477
-   106 | KLM        | \x001c | UPD       | NEW        |   100477
-   107 | KLM        | \x000c | UPD       | OLD        |   100478
-   107 | KLM        | \x001c | UPD       | NEW        |   100478
-   108 | KLM        | \x000c | UPD       | OLD        |   100479
-   108 | KLM        | \x001c | UPD       | NEW        |   100479
-   109 | KLM        | \x000c | UPD       | OLD        |   100480
-   109 | KLM        | \x001c | UPD       | NEW        |   100480
-   110 | KLM        | \x000c | UPD       | OLD        |   100481
-   110 | KLM        | \x001c | UPD       | NEW        |   100481
-   111 | KLM        | \x000c | UPD       | OLD        |   100482
-   111 | KLM        | \x001c | UPD       | NEW        |   100482
-   111 | KLM        | \x001c | DEL       | OLD        |   100484
+     4 | ABC        | \x0c   | DEL       | OLD        |   100543
+     5 | ABC        | \x0c   | DEL       | OLD        |   100544
+     6 | ABC        | \x0c   | DEL       | OLD        |   100545
+     7 | ABC        | \x0c   | DEL       | OLD        |   100546
+     8 | ABC        | \x0c   | DEL       | OLD        |   100547
+     9 | ABC        | \x0c   | DEL       | OLD        |   100548
+    10 | ABC        | \x0c   | DEL       | OLD        |   100549
+     1 | ABC        | \x1c   | DEL       | OLD        |   100550
+     2 | ABC        | \x1c   | DEL       | OLD        |   100551
+     3 | ABC        | \x1c   | DEL       | OLD        |   100552
+     4 | ABC        | \x0c   | INS       | NEW        |   100601
+    10 | ABC        | \x0c   | INS       | NEW        |   100602
+     7 | ABC        | \x0c   | INS       | NEW        |   100603
+     9 | ABC        | \x0c   | INS       | NEW        |   100604
+     5 | ABC        | \x0c   | INS       | NEW        |   100605
+     2 | ABC        | \x1c   | INS       | NEW        |   100606
+     6 | ABC        | \x0c   | INS       | NEW        |   100607
+     3 | ABC        | \x1c   | INS       | NEW        |   100608
+     1 | ABC        | \x1c   | INS       | NEW        |   100610
+     8 | ABC        | \x0c   | INS       | NEW        |   100611
+   101 | KLM        | \x000c | INS       | NEW        |   100641
+   102 | KLM        | \x000c | INS       | NEW        |   100642
+   103 | KLM        | \x000c | INS       | NEW        |   100643
+   104 | KLM        | \x000c | INS       | NEW        |   100644
+   105 | KLM        | \x000c | INS       | NEW        |   100645
+   106 | KLM        | \x000c | INS       | NEW        |   100646
+   107 | KLM        | \x000c | INS       | NEW        |   100647
+   108 | KLM        | \x000c | INS       | NEW        |   100648
+   109 | KLM        | \x000c | INS       | NEW        |   100649
+   110 | KLM        | \x000c | INS       | NEW        |   100650
+   111 | KLM        | \x000c | INS       | NEW        |   100651
+   106 | KLM        | \x000c | UPD       | OLD        |   100652
+   106 | KLM        | \x001c | UPD       | NEW        |   100652
+   107 | KLM        | \x000c | UPD       | OLD        |   100653
+   107 | KLM        | \x001c | UPD       | NEW        |   100653
+   108 | KLM        | \x000c | UPD       | OLD        |   100654
+   108 | KLM        | \x001c | UPD       | NEW        |   100654
+   109 | KLM        | \x000c | UPD       | OLD        |   100655
+   109 | KLM        | \x001c | UPD       | NEW        |   100655
+   110 | KLM        | \x000c | UPD       | OLD        |   100656
+   110 | KLM        | \x001c | UPD       | NEW        |   100656
+   111 | KLM        | \x000c | UPD       | OLD        |   100657
+   111 | KLM        | \x001c | UPD       | NEW        |   100657
+   111 | KLM        | \x001c | DEL       | OLD        |   100659
 (44 rows)
 
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
  col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+------------+-----------+------------+----------
-     1 | ABC   | 2010-01-01 | DEL       | OLD        |   100378
-     2 | DEF   |            | DEL       | OLD        |   100379
-     1 | ABC   | 2010-01-01 | INS       | NEW        |   100443
-     2 | DEF   |            | INS       | NEW        |   100444
-   100 | KLM   | 2012-12-31 | INS       | NEW        |   100483
+     1 | ABC   | 2010-01-01 | DEL       | OLD        |   100553
+     2 | DEF   |            | DEL       | OLD        |   100554
+     1 | ABC   | 2010-01-01 | INS       | NEW        |   100621
+     2 | DEF   |            | INS       | NEW        |   100622
+   100 | KLM   | 2012-12-31 | INS       | NEW        |   100658
 (5 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
-    11 | 10.00 | DEL       | OLD        |   100380
-    12 | 10.00 | DEL       | OLD        |   100381
-    13 | 10.00 | DEL       | OLD        |   100382
-    14 | 10.00 | DEL       | OLD        |   100383
-    15 | 10.00 | DEL       | OLD        |   100384
-    16 | 10.00 | DEL       | OLD        |   100385
-    17 | 10.00 | DEL       | OLD        |   100386
-    18 | 10.00 | DEL       | OLD        |   100387
-    19 | 10.00 | DEL       | OLD        |   100388
-    20 | 10.00 | DEL       | OLD        |   100389
-    11 | 10.00 | INS       | NEW        |   100450
-    16 | 10.00 | INS       | NEW        |   100451
-    14 | 10.00 | INS       | NEW        |   100452
-    17 | 10.00 | INS       | NEW        |   100453
-    15 | 10.00 | INS       | NEW        |   100454
-    19 | 10.00 | INS       | NEW        |   100455
-    20 | 10.00 | INS       | NEW        |   100456
-    12 | 10.00 | INS       | NEW        |   100457
-    18 | 10.00 | INS       | NEW        |   100458
-    13 | 10.00 | INS       | NEW        |   100459
+    11 | 10.00 | DEL       | OLD        |   100555
+    12 | 10.00 | DEL       | OLD        |   100556
+    13 | 10.00 | DEL       | OLD        |   100557
+    14 | 10.00 | DEL       | OLD        |   100558
+    15 | 10.00 | DEL       | OLD        |   100559
+    16 | 10.00 | DEL       | OLD        |   100560
+    17 | 10.00 | DEL       | OLD        |   100561
+    18 | 10.00 | DEL       | OLD        |   100562
+    19 | 10.00 | DEL       | OLD        |   100563
+    20 | 10.00 | DEL       | OLD        |   100564
+    11 | 10.00 | INS       | NEW        |   100625
+    16 | 10.00 | INS       | NEW        |   100626
+    14 | 10.00 | INS       | NEW        |   100627
+    17 | 10.00 | INS       | NEW        |   100628
+    15 | 10.00 | INS       | NEW        |   100629
+    19 | 10.00 | INS       | NEW        |   100630
+    20 | 10.00 | INS       | NEW        |   100631
+    12 | 10.00 | INS       | NEW        |   100632
+    18 | 10.00 | INS       | NEW        |   100633
+    13 | 10.00 | INS       | NEW        |   100634
 (20 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
  col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+------------+-----------+------------+----------
-     1 | FK... |     2 |     1 | ABC        | DEL       | OLD        |   100366
-     2 | FK... |     2 |     1 | ABC        | DEL       | OLD        |   100367
-     1 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100445
-     2 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100446
+     1 | FK... |     2 |     1 | ABC        | DEL       | OLD        |   100541
+     2 | FK... |     2 |     1 | ABC        | DEL       | OLD        |   100542
+     1 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100623
+     2 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100624
 (4 rows)
 
 --
@@ -476,10 +502,10 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     1000 | myschema1   | myTbl3_col31_seq           | RLBK_Multi-1_%_START         |            21 | f
     1001 | myschema2   | myseq1                     | RLBK_Multi-1_%_START         |          9999 | f
     1002 | myschema2   | myTbl3_col31_seq           | RLBK_Multi-1_%_START         |            21 | f
-    1003 | emajC       | myschema1_myTbl3_log_seq   | RLBK_Multi-1_%_START         |            50 | t
-    1004 | emaj        | myschema1_mytbl1_log_seq   | RLBK_Multi-1_%_START         |            73 | t
-    1005 | emaj        | myschema1_mytbl4_log_seq   | RLBK_Multi-1_%_START         |            14 | t
-    1006 | emaj        | myschema1_mytbl2_log_seq   | RLBK_Multi-1_%_START         |             6 | t
+    1003 | emajC       | myschema1_myTbl3_log_seq   | RLBK_Multi-1_%_START         |            90 | t
+    1004 | emaj        | myschema1_mytbl1_log_seq   | RLBK_Multi-1_%_START         |           184 | t
+    1005 | emaj        | myschema1_mytbl4_log_seq   | RLBK_Multi-1_%_START         |            23 | t
+    1006 | emaj        | myschema1_mytbl2_log_seq   | RLBK_Multi-1_%_START         |            21 | t
     1007 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_Multi-1_%_START         |             1 | f
     1008 | emaj        | myschema2_mytbl1_log_seq   | RLBK_Multi-1_%_START         |            25 | t
     1009 | emaj        | myschema2_mytbl2_log_seq   | RLBK_Multi-1_%_START         |             4 | t
@@ -490,10 +516,10 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     1014 | myschema1   | myTbl3_col31_seq           | RLBK_Multi-1_%_DONE          |            21 | f
     1015 | myschema2   | myseq1                     | RLBK_Multi-1_%_DONE          |          1004 | f
     1016 | myschema2   | myTbl3_col31_seq           | RLBK_Multi-1_%_DONE          |            21 | f
-    1017 | emajC       | myschema1_myTbl3_log_seq   | RLBK_Multi-1_%_DONE          |            55 | t
-    1018 | emaj        | myschema1_mytbl1_log_seq   | RLBK_Multi-1_%_DONE          |            93 | t
-    1019 | emaj        | myschema1_mytbl4_log_seq   | RLBK_Multi-1_%_DONE          |            14 | t
-    1020 | emaj        | myschema1_mytbl2_log_seq   | RLBK_Multi-1_%_DONE          |             9 | t
+    1017 | emajC       | myschema1_myTbl3_log_seq   | RLBK_Multi-1_%_DONE          |            95 | t
+    1018 | emaj        | myschema1_mytbl1_log_seq   | RLBK_Multi-1_%_DONE          |           204 | t
+    1019 | emaj        | myschema1_mytbl4_log_seq   | RLBK_Multi-1_%_DONE          |            23 | t
+    1020 | emaj        | myschema1_mytbl2_log_seq   | RLBK_Multi-1_%_DONE          |            24 | t
     1021 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_Multi-1_%_DONE          |             1 | f
     1022 | emaj        | myschema2_mytbl1_log_seq   | RLBK_Multi-1_%_DONE          |            35 | t
     1023 | emaj        | myschema2_mytbl2_log_seq   | RLBK_Multi-1_%_DONE          |             6 | t
@@ -634,7 +660,33 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     6225 | emaj        | myschema2_mytbl4_log_seq   | Multi-1                      |            10 | t
     6226 | emaj        | otherPrefix4mytbl5_log_seq | Multi-1                      |             7 | t
     6227 | emaj        | myschema2_mytbl6_log_seq   | Multi-1                      |            23 | t
-(161 rows)
+    6299 | emaj        | myschema1_mytbl4_log_seq   | MC1                          |            14 | t
+    6301 | emajb       | myschema1_mytbl2b_log_seq  | MC1                          |             1 | f
+    6317 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC1_DONE                |            14 | t
+    6319 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC1_DONE                |             1 | f
+    6323 | emaj        | myschema1_mytbl4_log_seq   | MC3                          |            14 | t
+    6325 | emajb       | myschema1_mytbl2b_log_seq  | MC3                          |             1 | f
+    6347 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC3_%_DONE              |            17 | t
+    6349 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC3_%_DONE              |             1 | f
+    6353 | emaj        | myschema1_mytbl4_log_seq   | MC6                          |            17 | t
+    6355 | emajb       | myschema1_mytbl2b_log_seq  | MC6                          |             1 | f
+    6395 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC6_%_DONE              |            20 | t
+    6397 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC6_%_DONE              |             1 | f
+    6401 | emaj        | myschema1_mytbl4_log_seq   | MC10                         |            20 | t
+    6403 | emajb       | myschema1_mytbl2b_log_seq  | MC10                         |             1 | f
+    6431 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC10_%_DONE             |            23 | t
+    6433 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC10_%_DONE             |             1 | f
+    6437 | emaj        | myschema1_mytbl4_log_seq   | MC15                         |            23 | t
+    6439 | emajb       | myschema1_mytbl2b_log_seq  | MC15                         |             1 | f
+    6455 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC15_DONE               |            23 | t
+    6457 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC15_DONE               |             1 | f
+    6461 | emaj        | myschema1_mytbl4_log_seq   | MC17                         |            23 | t
+    6463 | emajb       | myschema1_mytbl2b_log_seq  | MC17                         |             1 | f
+    6467 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC16_%_START            |            23 | t
+    6469 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC16_%_START            |             1 | f
+    6473 | emaj        | myschema1_mytbl4_log_seq   | RLBK_MC16_%_DONE             |            23 | t
+    6475 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC16_%_DONE             |             1 | f
+(187 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
@@ -718,97 +770,97 @@ select emaj.emaj_stop_group('myGroup2');
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
- hist_id |   hist_function    |  hist_event  |         hist_object          |                         regexp_replace                         | hist_user 
----------+--------------------+--------------+------------------------------+----------------------------------------------------------------+-----------
-       1 | EMAJ_INSTALL       |              | E-Maj <NEXT_VERSION>         | Initialisation completed                                       | postgres
-   10002 | ROLLBACK_GROUPS    | BEGIN        | myGroup1,myGroup2            | Logged rollback to mark Multi-1 (timestamp)                    | postgres
-   10003 | DBLINK_OPEN_CNX    |              | rlbk#1                       | Status = 1                                                     | postgres
-   10004 | LOCK_GROUP         | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
-   10005 | LOCK_GROUP         | END          | myGroup1,myGroup2            | Rollback session #1: 2 tables locked, 0 deadlock(s)            | postgres
-   10006 | DBLINK_OPEN_CNX    |              | rlbk#2                       | Status = 1                                                     | postgres
-   10007 | LOCK_GROUP         | BEGIN        | myGroup1,myGroup2            | Rollback session #2                                            | postgres
-   10008 | LOCK_GROUP         | END          | myGroup1,myGroup2            | Rollback session #2: 5 tables locked, 0 deadlock(s)            | postgres
-   10009 | DBLINK_OPEN_CNX    |              | rlbk#3                       | Status = 1                                                     | postgres
-   10010 | LOCK_GROUP         | BEGIN        | myGroup1,myGroup2            | Rollback session #3                                            | postgres
-   10011 | LOCK_GROUP         | END          | myGroup1,myGroup2            | Rollback session #3: 4 tables locked, 0 deadlock(s)            | postgres
-   10012 | SET_MARK_GROUPS    | BEGIN        | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                           | postgres
-   10013 | SET_MARK_GROUPS    | END          | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                           | postgres
-   10014 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 100161                            | postgres
-   10015 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 100161                            | postgres
-   10016 | ROLLBACK_TABLE     | END          | myschema2.mytbl6             | 14 rolled back primary keys                                    | postgres
-   10017 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 100161                            | postgres
-   10018 | ROLLBACK_TABLE     | END          | myschema2.mytbl1             | 10 rolled back primary keys                                    | postgres
-   10019 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 100161                            | postgres
-   10020 | ROLLBACK_TABLE     | END          | myschema1.mytbl1             | 20 rolled back primary keys                                    | postgres
-   10021 | ROLLBACK_TABLE     | END          | myschema2.mytbl2             | 2 rolled back primary keys                                     | postgres
-   10022 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 100161                            | postgres
-   10023 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 100161                            | postgres
-   10024 | ROLLBACK_TABLE     | END          | myschema2.mytbl4             | 2 rolled back primary keys                                     | postgres
-   10025 | ROLLBACK_TABLE     | END          | myschema1.mytbl2             | 3 rolled back primary keys                                     | postgres
-   10026 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 100161                            | postgres
-   10027 | ROLLBACK_TABLE     | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 100161                            | postgres
-   10028 | ROLLBACK_TABLE     | END          | myschema2."myTbl3"           | 10 rolled back primary keys                                    | postgres
-   10029 | ROLLBACK_TABLE     | END          | myschema2.mytbl5             | 3 rolled back primary keys                                     | postgres
-   10030 | ROLLBACK_TABLE     | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 100161                            | postgres
-   10031 | ROLLBACK_TABLE     | END          | myschema1."myTbl3"           | 5 rolled back primary keys                                     | postgres
-   10032 | DBLINK_CLOSE_CNX   |              | rlbk#3                       |                                                                | postgres
-   10033 | DBLINK_CLOSE_CNX   |              | rlbk#2                       |                                                                | postgres
-   10034 | ROLLBACK_SEQUENCE  |              | myschema1."myTbl3_col31_seq" | RESTART 21                                                     | postgres
-   10035 | ROLLBACK_SEQUENCE  |              | myschema2.myseq1             | RESTART 1004                                                   | postgres
-   10036 | ROLLBACK_SEQUENCE  |              | myschema2."myTbl3_col31_seq" | RESTART 21                                                     | postgres
-   10037 | SET_MARK_GROUPS    | BEGIN        | myGroup1,myGroup2            | RLBK_Multi-1_%_DONE                                            | postgres
-   10038 | SET_MARK_GROUPS    | END          | myGroup1,myGroup2            | RLBK_Multi-1_%_DONE                                            | postgres
-   10039 | ROLLBACK_GROUPS    | END          | myGroup1,myGroup2            | Rollback_id 37, 9 tables and 3 sequences effectively processed | postgres
-   10040 | DBLINK_CLOSE_CNX   |              | rlbk#1                       |                                                                | postgres
-   10041 | CLEANUP_RLBK_STATE |              | rollback id 37               | set to COMMITTED                                               | postgres
-   10042 | ROLLBACK_GROUP     | BEGIN        | myGroup1                     | Unlogged rollback to mark Multi-1 (timestamp)                  | postgres
-   10043 | DBLINK_OPEN_CNX    |              | rlbk#1                       | Status = 1                                                     | postgres
-   10044 | LOCK_GROUP         | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-   10045 | LOCK_GROUP         | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-   10046 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 100161                            | postgres
-   10047 | ROLLBACK_TABLE     | END          | myschema1.mytbl1             | 20 rolled back primary keys                                    | postgres
-   10048 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 100161                            | postgres
-   10049 | ROLLBACK_TABLE     | END          | myschema1.mytbl2             | 3 rolled back primary keys                                     | postgres
-   10050 | ROLLBACK_TABLE     | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 100161                            | postgres
-   10051 | ROLLBACK_TABLE     | END          | myschema1."myTbl3"           | 5 rolled back primary keys                                     | postgres
-   10052 | ROLLBACK_GROUP     | MARK DELETED | myGroup1                     | mark RLBK_Multi-1_%_START is deleted                           | postgres
-   10053 | ROLLBACK_GROUP     | MARK DELETED | myGroup1                     | mark RLBK_Multi-1_%_DONE is deleted                            | postgres
-   10054 | ROLLBACK_SEQUENCE  |              | myschema1."myTbl3_col31_seq" | RESTART 21                                                     | postgres
-   10055 | ROLLBACK_GROUP     | END          | myGroup1                     | Rollback_id 38, 3 tables and 1 sequences effectively processed | postgres
-   10056 | DBLINK_CLOSE_CNX   |              | rlbk#1                       |                                                                | postgres
-   10057 | CLEANUP_RLBK_STATE |              | rollback id 38               | set to COMMITTED                                               | postgres
-   10058 | SET_MARK_GROUP     | BEGIN        | myGroup2                     |                                                                | postgres
-   10059 | LOCK_GROUP         | BEGIN        | myGroup2                     |                                                                | postgres
-   10060 | LOCK_GROUP         | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                 | postgres
-   10061 | SET_MARK_GROUP     | END          | myGroup2                     | After restore mark                                             | postgres
-   10062 | ROLLBACK_GROUP     | BEGIN        | myGroup2                     | Unlogged rollback to mark Multi-1 (timestamp)                  | postgres
-   10063 | DBLINK_OPEN_CNX    |              | rlbk#1                       | Status = -2                                                    | postgres
-   10064 | LOCK_GROUP         | BEGIN        | myGroup2                     | Rollback session #1                                            | postgres
-   10065 | LOCK_GROUP         | END          | myGroup2                     | Rollback session #1: 6 tables locked, 0 deadlock(s)            | postgres
-   10066 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 100161                            | postgres
-   10067 | ROLLBACK_TABLE     | END          | myschema2.mytbl6             | 14 rolled back primary keys                                    | postgres
-   10068 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 100161                            | postgres
-   10069 | ROLLBACK_TABLE     | END          | myschema2.mytbl1             | 21 rolled back primary keys                                    | postgres
-   10070 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 100161                            | postgres
-   10071 | ROLLBACK_TABLE     | END          | myschema2.mytbl2             | 3 rolled back primary keys                                     | postgres
-   10072 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 100161                            | postgres
-   10073 | ROLLBACK_TABLE     | END          | myschema2.mytbl4             | 2 rolled back primary keys                                     | postgres
-   10074 | ROLLBACK_TABLE     | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 100161                            | postgres
-   10075 | ROLLBACK_TABLE     | END          | myschema2."myTbl3"           | 10 rolled back primary keys                                    | postgres
-   10076 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 100161                            | postgres
-   10077 | ROLLBACK_TABLE     | END          | myschema2.mytbl5             | 3 rolled back primary keys                                     | postgres
-   10078 | ROLLBACK_GROUP     | MARK DELETED | myGroup2                     | mark RLBK_Multi-1_%_START is deleted                           | postgres
-   10079 | ROLLBACK_GROUP     | MARK DELETED | myGroup2                     | mark RLBK_Multi-1_%_DONE is deleted                            | postgres
-   10080 | ROLLBACK_GROUP     | MARK DELETED | myGroup2                     | mark After restore mark is deleted                             | postgres
-   10081 | ROLLBACK_SEQUENCE  |              | myschema2.myseq1             | RESTART 1004                                                   | postgres
-   10082 | ROLLBACK_SEQUENCE  |              | myschema2."myTbl3_col31_seq" | RESTART 21                                                     | postgres
-   10083 | ROLLBACK_GROUP     | END          | myGroup2                     | Rollback_id 39, 6 tables and 2 sequences effectively processed | postgres
-   10084 | STOP_GROUP         | BEGIN        | myGroup2                     |                                                                | postgres
-   10085 | LOCK_GROUP         | BEGIN        | myGroup2                     |                                                                | postgres
-   10086 | LOCK_GROUP         | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                 | postgres
-   10087 | SET_MARK_GROUP     | BEGIN        | myGroup2                     | STOP_%                                                         | postgres
-   10088 | SET_MARK_GROUP     | END          | myGroup2                     | STOP_%                                                         | postgres
-   10089 | STOP_GROUP         | END          | myGroup2                     | 8 tables/sequences processed                                   | postgres
+ hist_id |   hist_function    |  hist_event  |         hist_object          |                         regexp_replace                          | hist_user 
+---------+--------------------+--------------+------------------------------+-----------------------------------------------------------------+-----------
+       1 | EMAJ_INSTALL       |              | E-Maj <NEXT_VERSION>         | Initialisation completed                                        | postgres
+   10002 | ROLLBACK_GROUPS    | BEGIN        | myGroup1,myGroup2            | Logged rollback to mark Multi-1 (timestamp)                     | postgres
+   10003 | DBLINK_OPEN_CNX    |              | rlbk#1                       | Status = 1                                                      | postgres
+   10004 | LOCK_GROUP         | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                             | postgres
+   10005 | LOCK_GROUP         | END          | myGroup1,myGroup2            | Rollback session #1: 2 tables locked, 0 deadlock(s)             | postgres
+   10006 | DBLINK_OPEN_CNX    |              | rlbk#2                       | Status = 1                                                      | postgres
+   10007 | LOCK_GROUP         | BEGIN        | myGroup1,myGroup2            | Rollback session #2                                             | postgres
+   10008 | LOCK_GROUP         | END          | myGroup1,myGroup2            | Rollback session #2: 5 tables locked, 0 deadlock(s)             | postgres
+   10009 | DBLINK_OPEN_CNX    |              | rlbk#3                       | Status = 1                                                      | postgres
+   10010 | LOCK_GROUP         | BEGIN        | myGroup1,myGroup2            | Rollback session #3                                             | postgres
+   10011 | LOCK_GROUP         | END          | myGroup1,myGroup2            | Rollback session #3: 4 tables locked, 0 deadlock(s)             | postgres
+   10012 | SET_MARK_GROUPS    | BEGIN        | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                            | postgres
+   10013 | SET_MARK_GROUPS    | END          | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                            | postgres
+   10014 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
+   10015 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
+   10016 | ROLLBACK_TABLE     | END          | myschema1.mytbl1             | 20 rolled back primary keys                                     | postgres
+   10017 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 100161                             | postgres
+   10018 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
+   10019 | ROLLBACK_TABLE     | END          | myschema2.mytbl1             | 10 rolled back primary keys                                     | postgres
+   10020 | ROLLBACK_TABLE     | END          | myschema2.mytbl6             | 14 rolled back primary keys                                     | postgres
+   10021 | ROLLBACK_TABLE     | END          | myschema1.mytbl2             | 3 rolled back primary keys                                      | postgres
+   10022 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
+   10023 | ROLLBACK_TABLE     | END          | myschema2.mytbl2             | 2 rolled back primary keys                                      | postgres
+   10024 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 100161                             | postgres
+   10025 | ROLLBACK_TABLE     | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
+   10026 | ROLLBACK_TABLE     | END          | myschema2.mytbl4             | 2 rolled back primary keys                                      | postgres
+   10027 | ROLLBACK_TABLE     | END          | myschema2."myTbl3"           | 10 rolled back primary keys                                     | postgres
+   10028 | ROLLBACK_TABLE     | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
+   10029 | ROLLBACK_TABLE     | END          | myschema1."myTbl3"           | 5 rolled back primary keys                                      | postgres
+   10030 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 100161                             | postgres
+   10031 | DBLINK_CLOSE_CNX   |              | rlbk#2                       |                                                                 | postgres
+   10032 | ROLLBACK_TABLE     | END          | myschema2.mytbl5             | 3 rolled back primary keys                                      | postgres
+   10033 | DBLINK_CLOSE_CNX   |              | rlbk#3                       |                                                                 | postgres
+   10034 | ROLLBACK_SEQUENCE  |              | myschema1."myTbl3_col31_seq" | RESTART 21                                                      | postgres
+   10035 | ROLLBACK_SEQUENCE  |              | myschema2.myseq1             | RESTART 1004                                                    | postgres
+   10036 | ROLLBACK_SEQUENCE  |              | myschema2."myTbl3_col31_seq" | RESTART 21                                                      | postgres
+   10037 | SET_MARK_GROUPS    | BEGIN        | myGroup1,myGroup2            | RLBK_Multi-1_%_DONE                                             | postgres
+   10038 | SET_MARK_GROUPS    | END          | myGroup1,myGroup2            | RLBK_Multi-1_%_DONE                                             | postgres
+   10039 | ROLLBACK_GROUPS    | END          | myGroup1,myGroup2            | Rollback_id 200, 9 tables and 3 sequences effectively processed | postgres
+   10040 | DBLINK_CLOSE_CNX   |              | rlbk#1                       |                                                                 | postgres
+   10041 | CLEANUP_RLBK_STATE |              | rollback id 200              | set to COMMITTED                                                | postgres
+   10042 | ROLLBACK_GROUP     | BEGIN        | myGroup1                     | Unlogged rollback to mark Multi-1 (timestamp)                   | postgres
+   10043 | DBLINK_OPEN_CNX    |              | rlbk#1                       | Status = 1                                                      | postgres
+   10044 | LOCK_GROUP         | BEGIN        | myGroup1                     | Rollback session #1                                             | postgres
+   10045 | LOCK_GROUP         | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)             | postgres
+   10046 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
+   10047 | ROLLBACK_TABLE     | END          | myschema1.mytbl1             | 20 rolled back primary keys                                     | postgres
+   10048 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
+   10049 | ROLLBACK_TABLE     | END          | myschema1.mytbl2             | 3 rolled back primary keys                                      | postgres
+   10050 | ROLLBACK_TABLE     | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
+   10051 | ROLLBACK_TABLE     | END          | myschema1."myTbl3"           | 5 rolled back primary keys                                      | postgres
+   10052 | ROLLBACK_GROUP     | MARK DELETED | myGroup1                     | mark RLBK_Multi-1_%_START is deleted                            | postgres
+   10053 | ROLLBACK_GROUP     | MARK DELETED | myGroup1                     | mark RLBK_Multi-1_%_DONE is deleted                             | postgres
+   10054 | ROLLBACK_SEQUENCE  |              | myschema1."myTbl3_col31_seq" | RESTART 21                                                      | postgres
+   10055 | ROLLBACK_GROUP     | END          | myGroup1                     | Rollback_id 201, 3 tables and 1 sequences effectively processed | postgres
+   10056 | DBLINK_CLOSE_CNX   |              | rlbk#1                       |                                                                 | postgres
+   10057 | CLEANUP_RLBK_STATE |              | rollback id 201              | set to COMMITTED                                                | postgres
+   10058 | SET_MARK_GROUP     | BEGIN        | myGroup2                     |                                                                 | postgres
+   10059 | LOCK_GROUP         | BEGIN        | myGroup2                     |                                                                 | postgres
+   10060 | LOCK_GROUP         | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                  | postgres
+   10061 | SET_MARK_GROUP     | END          | myGroup2                     | After restore mark                                              | postgres
+   10062 | ROLLBACK_GROUP     | BEGIN        | myGroup2                     | Unlogged rollback to mark Multi-1 (timestamp)                   | postgres
+   10063 | DBLINK_OPEN_CNX    |              | rlbk#1                       | Status = -2                                                     | postgres
+   10064 | LOCK_GROUP         | BEGIN        | myGroup2                     | Rollback session #1                                             | postgres
+   10065 | LOCK_GROUP         | END          | myGroup2                     | Rollback session #1: 6 tables locked, 0 deadlock(s)             | postgres
+   10066 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 100161                             | postgres
+   10067 | ROLLBACK_TABLE     | END          | myschema2.mytbl6             | 14 rolled back primary keys                                     | postgres
+   10068 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
+   10069 | ROLLBACK_TABLE     | END          | myschema2.mytbl1             | 21 rolled back primary keys                                     | postgres
+   10070 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
+   10071 | ROLLBACK_TABLE     | END          | myschema2.mytbl2             | 3 rolled back primary keys                                      | postgres
+   10072 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 100161                             | postgres
+   10073 | ROLLBACK_TABLE     | END          | myschema2.mytbl4             | 2 rolled back primary keys                                      | postgres
+   10074 | ROLLBACK_TABLE     | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
+   10075 | ROLLBACK_TABLE     | END          | myschema2."myTbl3"           | 10 rolled back primary keys                                     | postgres
+   10076 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 100161                             | postgres
+   10077 | ROLLBACK_TABLE     | END          | myschema2.mytbl5             | 3 rolled back primary keys                                      | postgres
+   10078 | ROLLBACK_GROUP     | MARK DELETED | myGroup2                     | mark RLBK_Multi-1_%_START is deleted                            | postgres
+   10079 | ROLLBACK_GROUP     | MARK DELETED | myGroup2                     | mark RLBK_Multi-1_%_DONE is deleted                             | postgres
+   10080 | ROLLBACK_GROUP     | MARK DELETED | myGroup2                     | mark After restore mark is deleted                              | postgres
+   10081 | ROLLBACK_SEQUENCE  |              | myschema2.myseq1             | RESTART 1004                                                    | postgres
+   10082 | ROLLBACK_SEQUENCE  |              | myschema2."myTbl3_col31_seq" | RESTART 21                                                      | postgres
+   10083 | ROLLBACK_GROUP     | END          | myGroup2                     | Rollback_id 202, 6 tables and 2 sequences effectively processed | postgres
+   10084 | STOP_GROUP         | BEGIN        | myGroup2                     |                                                                 | postgres
+   10085 | LOCK_GROUP         | BEGIN        | myGroup2                     |                                                                 | postgres
+   10086 | LOCK_GROUP         | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                  | postgres
+   10087 | SET_MARK_GROUP     | BEGIN        | myGroup2                     | STOP_%                                                          | postgres
+   10088 | SET_MARK_GROUP     | END          | myGroup2                     | STOP_%                                                          | postgres
+   10089 | STOP_GROUP         | END          | myGroup2                     | 8 tables/sequences processed                                    | postgres
 (89 rows)
 
 --

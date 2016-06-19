@@ -1,6 +1,7 @@
 -- rollback.sql : test updates log, emaj_rollback_group(), emaj_logged_rollback_group(),
 --                emaj_rollback_groups(), emaj_logged_rollback_groups(),
---                emaj_cleanup_rollback_state(), and emaj_rollback_activity() functions.
+--                emaj_cleanup_rollback_state(), emaj_rollback_activity()
+--                and emaj_consolidate_rollback_group() functions.
 --
 -----------------------------
 -- rollback nothing tests
@@ -267,7 +268,7 @@ select count(*) from "emajC"."myschema1_myTbl3_log";
 select count(*) from emaj.myschema1_mytbl4_log;
 
 -----------------------------
--- log phase #2 with 2 unlogged rollbacks
+-- log phase #2 with 2 logged rollbacks
 -----------------------------
 -- Populate application tables
 set search_path=public,myschema1;
@@ -372,15 +373,6 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb
  from emaj.emaj_rlbk order by rlbk_id desc limit 1; 
 
 -----------------------------
--- test emaj_cleanup_rollback_state()
------------------------------
--- rollback a transaction with an E-Maj rollback to generate an ABORTED rollback event
-begin;
-  select emaj.emaj_rollback_group('myGroup4','myGroup4_start');
-rollback;
-select emaj.emaj_cleanup_rollback_state();
-
------------------------------
 -- test emaj_rollback_activity()
 -----------------------------
 -- insert necessary rows into rollback tables in order to test various cases of emaj_rollback_activity() reports.
@@ -471,8 +463,70 @@ begin;
          rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct 
     from emaj._rollback_activity();
 rollback;
+
 -----------------------------
--- test end: check rollback tables, reset history and force sequences id
+-- test emaj_consolidate_rollback_group()
+-----------------------------
+-- group is NULL or unknown
+select emaj.emaj_consolidate_rollback_group(NULL,NULL);
+select emaj.emaj_consolidate_rollback_group('unknownGroup',NULL);
+
+-- mark is unknown
+select emaj.emaj_consolidate_rollback_group('myGroup1',NULL);
+select emaj.emaj_consolidate_rollback_group('myGroup1','unknown mark');
+
+-- mark is known but is not an end rollback mark
+select emaj.emaj_consolidate_rollback_group('myGroup1','Mark12');
+
+-- mark is an end rollback mark but the rollback target mark is invalid
+begin;
+  update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'dummy' where mark_name = 'Mark12';
+  select emaj.emaj_consolidate_rollback_group('myGroup1','Mark12');
+rollback;
+
+-- should be ok
+set search_path=public,myschema1;
+
+-- rollback without log rows to delete
+select emaj.emaj_set_mark_group('myGroup1','Conso_M1');
+select emaj.emaj_logged_rollback_group('myGroup1','Conso_M1');
+select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
+
+-- mark Conso_M1, updates, mark Conso_M2, updates, logged rlbk back to Conso_M1, updates, rename both marks, consolidate, check and cancel
+select emaj.emaj_set_mark_group('myGroup1','Conso_M2');
+insert into myTbl1 select i, 'Test', 'Conso' from generate_series (1000,1011) as i;
+insert into myTbl2 values (1000,'TC1',NULL);
+delete from myTbl1 where col11 > 1010;
+
+select emaj.emaj_set_mark_group('myGroup1','Conso_M3');
+update myTbl2 set col22 = 'TC2' WHERE col22 ='TC1';
+
+select emaj.emaj_logged_rollback_group('myGroup1','Conso_M2');
+insert into myTbl2 values (1000,'TC3',NULL);
+
+select emaj.emaj_rename_mark_group('myGroup1','Conso_M2','Renamed_conso_M2');
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Renamed_last_mark');
+select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
+
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
+select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_id;
+select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by sqhl_begin_mark_id;
+
+select emaj.emaj_rollback_group('myGroup1','Conso_M1');
+
+-----------------------------
+-- test emaj_cleanup_rollback_state()
+-----------------------------
+-- rollback a transaction with an E-Maj rollback to generate an ABORTED rollback event
+begin;
+  select emaj.emaj_rollback_group('myGroup4','myGroup4_start');
+rollback;
+select rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session from emaj.emaj_rlbk
+  where rlbk_status in ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED') order by rlbk_id;
+select emaj.emaj_cleanup_rollback_state();
+
+-----------------------------
+-- check rollback tables
 -----------------------------
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
@@ -487,10 +541,14 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
 select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
 
+-----------------------------
+-- test end: reset history and force sequences id
+-----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 5000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 500;
 alter sequence emaj.emaj_sequence_sequ_id_seq restart 5000;
+alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 100;
 

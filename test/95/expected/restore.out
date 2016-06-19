@@ -185,7 +185,7 @@ ALTER TABLE
 SET
  setval 
 --------
- 100465
+ 100640
 (1 row)
 
 COPY 2
@@ -204,17 +204,17 @@ COPY 12
 
 COPY 2
 COPY 14
-COPY 23
-COPY 174
+COPY 32
+COPY 239
  setval 
 --------
-     38
+    201
 (1 row)
 
-COPY 22
-COPY 140
-COPY 9
-COPY 153
+COPY 31
+COPY 203
+COPY 12
+COPY 179
  setval 
 --------
    1027
@@ -223,19 +223,19 @@ COPY 153
 COPY 2
  setval 
 --------
-     93
+    204
 (1 row)
 
 COPY 0
  setval 
 --------
-      9
+     24
 (1 row)
 
 COPY 4
  setval 
 --------
-     14
+     23
 (1 row)
 
 COPY 20
@@ -272,7 +272,7 @@ SET
 COPY 45
  setval 
 --------
-     55
+     95
 (1 row)
 
 COPY 20
@@ -300,7 +300,7 @@ COPY 3
 COPY 0
  setval 
 --------
-      8
+     13
 (1 row)
 
 COPY 0

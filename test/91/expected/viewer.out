@@ -61,19 +61,19 @@ select count(*) from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    17
+    20
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    17
+    20
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-    89
+   108
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;

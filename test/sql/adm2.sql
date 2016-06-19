@@ -307,6 +307,131 @@ select emaj.emaj_unprotect_mark_group('myGroup1','Mark_to_protect');
 select emaj.emaj_delete_mark_group('myGroup1','Mark_to_protect');
 
 -----------------------------
+-- Step 14 : test complex use of rollbacks consolidations
+-----------------------------
+set search_path=public,myschema1;
+
+-- 2 consolidations of 2 logged rollbacks
+-- Multi-1 MC1 MC2 RMC1S RMC1D      MC3 MC4 MC5 RMC3S RMC3D
+--         ^       lrg(MC1)         ^           lrg(MC3)
+--         xxxxxxxxxxxxxxx conso(RMC1D)
+-- 	       	                        xxxxxxxxxxxxxxxxxxx conso(RMC3D)
+
+select emaj.emaj_set_mark_group('myGroup1','MC1');
+insert into myTbl1 select i, 'Test', 'Conso' from generate_series (2000,2012) as i;
+insert into myTbl2 values (2000,'TC1',NULL);
+delete from myTbl1 where col11 > 2010;
+
+select emaj.emaj_set_mark_group('myGroup1','MC2');
+update myTbl2 set col22 = 'TC2' WHERE col22 ='TC1';
+
+select emaj.emaj_logged_rollback_group('myGroup1','MC1');
+insert into myTbl2 values (2000,'TC3',NULL);
+
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC1_DONE');
+
+select emaj.emaj_set_mark_group('myGroup1','MC3');
+insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
+insert into myTbl4 values (2000,'FK...',1,10,'ABC');
+update myTbl4 set col43 = NULL where col41 = 2000;
+
+select emaj.emaj_set_mark_group('myGroup1','MC4');
+select emaj.emaj_set_mark_group('myGroup1','MC5');
+
+select emaj.emaj_logged_rollback_group('myGroup1','MC3');
+
+select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC1_DONE');
+select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
+
+select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+
+-- 2 consolidations of 2 nested logged rollbacks
+-- MC6 MC7 MC8  RMC8S RMC8D M9 RMC6S RMC6D
+--         ^    lrg(MC8)
+--         xxxxxxxxxxxx conso(RMC8D)
+-- ^                           lrb(MC6)
+-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx conso(RMC6D)
+
+select emaj.emaj_set_mark_group('myGroup1','MC6');
+insert into myTbl1 select i, 'Test', 'Conso' from generate_series (2000,2012) as i;
+insert into myTbl2 values (3000,'TC6',NULL);
+delete from myTbl1 where col11 > 2010;
+
+select emaj.emaj_set_mark_group('myGroup1','MC7');
+update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
+
+select emaj.emaj_set_mark_group('myGroup1','MC8');
+insert into myTbl2 values (3001,'TC8',NULL);
+
+select emaj.emaj_logged_rollback_group('myGroup1','MC8');
+select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
+
+select emaj.emaj_set_mark_group('myGroup1','MC9');
+insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
+insert into myTbl4 values (2000,'FK...',1,10,'ABC');
+update myTbl4 set col43 = NULL where col41 = 2000;
+
+select emaj.emaj_logged_rollback_group('myGroup1','MC6');
+select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
+
+select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+
+-- consolidation of 2 logged rollbacks referencing the same mark
+-- MC10  RMC10S RMC10D M11 RMC10S RMC10D
+-- ^     lrg(MC10)
+-- ^                       lrb(MC10)
+-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx conso(RMC10D)
+
+select emaj.emaj_set_mark_group('myGroup1','MC10');
+insert into myTbl1 select i, 'Test', 'Conso' from generate_series (3000,3010) as i;
+delete from myTbl1 where col11 > 3005;
+
+select emaj.emaj_logged_rollback_group('myGroup1','MC10');
+update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
+
+select emaj.emaj_set_mark_group('myGroup1','MC11');
+insert into myTbl4 values (3000,'FK...',1,10,'ABC');
+update myTbl4 set col43 = NULL where col41 = 3000;
+
+select emaj.emaj_logged_rollback_group('myGroup1','MC10');
+select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
+
+select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+
+-- consolidation of 1 from 2 overlapping logged rollbacks
+-- MC15 MC16 RMC15S RMC15D MC17 RMC16S RMC16D
+-- ^         lrg(MC15)
+--      ^                       lrg(MC16)
+-- xxxxxxxxxxxxxxxxx conso(RMC15D)
+
+select emaj.emaj_set_mark_group('myGroup1','MC15');
+insert into myTbl1 select i, 'Test', 'Conso' from generate_series (4000,4012) as i;
+insert into myTbl2 values (4000,'TC15',NULL);
+delete from myTbl1 where col11 > 4010;
+
+select emaj.emaj_set_mark_group('myGroup1','MC16');
+update myTbl2 set col22 = 'TC16' WHERE col22 ='TC15';
+
+select emaj.emaj_logged_rollback_group('myGroup1','MC15');
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC15_DONE');
+
+select emaj.emaj_set_mark_group('myGroup1','MC17');
+insert into myTbl2 values (4001,'TC15',NULL);
+
+select emaj.emaj_logged_rollback_group('myGroup1','MC16');
+select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC15_DONE');
+
+select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+select * from myTbl1 order by col11;
+select * from myTbl2 order by col21;
+
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
+select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_id;
+select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by sqhl_begin_mark_id;
+
+select emaj.emaj_rollback_group('myGroup1','Multi-1');
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 -- first set all rollback events state
@@ -334,6 +459,7 @@ truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 10000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 1000;
 alter sequence emaj.emaj_sequence_sequ_id_seq restart 1000;
+alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 200;
 
 -- the groups are left in their current state for the parallel rollback test.
 select count(*) from mySchema1.myTbl4;

@@ -8,9 +8,12 @@ Enhancements:
   - PostgreSQL versions prior 9.1 are not supported by E-Maj anymore.
   - various changes in the functions code to take benefit from the features 
     brought by 8.4 to 9.1 postgres versions.
-  - in rollback functions, trap all exceptions that may happen when the 
-    rollback uses autonomous transactions with dblink and set the proper 
-    aborted state of the rollback operation in the emaj_rlbk table.
+  - a new emaj_consolidate_rollback_group() function consolidates a rollback
+    for a group. It means the function transforms a logged rollback already
+    executed as if it were an unlogged rollback, by deleting all the log
+    records and marks between the mark used as target for the already
+    executed logged rollback and the mark that has taged the end of this
+    rollback.
   - in emaj_start_group() and emaj_start_groups() functions, allow to not 
     supply the mark name parameter. In this case, the default mark name is
     built as START_hh.mm.ss.ms, using the current timestamp. A mark name set 
@@ -20,6 +23,9 @@ Enhancements:
     is built as MARK_hh.mm.ss.ms, using the current timestamp.
   - in emaj_stop_group() and emaj_stop_groups() functions, if the supplied 
     mark name is NULL or '', it is now transformed into STOP_hh.mm.ss.ms.
+  - in rollback functions, trap all exceptions that may happen when the 
+    rollback uses autonomous transactions with dblink and set the proper 
+    aborted state of the rollback operation in the emaj_rlbk table.
 
 Bug fixes:
   - the emaj_gen_sql_group() and emaj_gen_sql_groups() functions now properly  
