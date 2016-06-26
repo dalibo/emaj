@@ -21,5 +21,8 @@ cp $EMAJ_HOME/test/94/results/*.out $EMAJ_HOME/test/94/expected/.
 rm $EMAJ_HOME/test/95/expected/*
 cp $EMAJ_HOME/test/95/results/*.out $EMAJ_HOME/test/95/expected/.
 
+rm $EMAJ_HOME/test/96/expected/*
+cp $EMAJ_HOME/test/96/results/*.out $EMAJ_HOME/test/96/expected/.
+
 echo ".out files successfully copied from 'results' to 'expected' directories"
 

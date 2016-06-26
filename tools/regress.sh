@@ -27,6 +27,10 @@ PGPORT95="5495"
 PGDIR95="/usr/local/pg952"
 PGREG95="/home/postgres/postgresql-9.5.2/src/test/regress"
 
+PGPORT96="5496"
+PGDIR96="/usr/local/pg96beta2"
+PGREG96="/home/postgres/postgresql-9.6beta2/src/test/regress"
+
 #---------------------------------------------#
 #            Functions definition             #
 #---------------------------------------------#
@@ -106,6 +110,7 @@ echo "	b- pg 9.2 (port $PGPORT92) standart test"
 echo "	c- pg 9.3 (port $PGPORT93) standart test"
 echo "	d- pg 9.4 (port $PGPORT94) standart test"
 echo "	e- pg 9.5 (port $PGPORT95) standart test"
+echo "	f- pg 9.6 (port $PGPORT96) standart test"
 echo "	m- pg 9.1 dump and 9.5 restore"
 echo "	t- all tests, from a to h + M"
 echo "	x- pg 9.1 (port $PGPORT91) created with psql script"
@@ -114,6 +119,7 @@ echo "	B- pg 9.2 (port $PGPORT92) starting with E-Maj migration"
 echo "	C- pg 9.3 (port $PGPORT93) starting with E-Maj migration"
 echo "	D- pg 9.4 (port $PGPORT94) starting with E-Maj migration"
 echo "	E- pg 9.5 (port $PGPORT95) starting with E-Maj migration"
+echo "	F- pg 9.6 (port $PGPORT96) starting with E-Maj migration"
 echo "	T- all tests with E-Maj migration, from A to H"
 echo "	V- pg 9.1 (port $PGPORT91) mixed with E-Maj migration"
 echo "	W- pg 9.3 (port $PGPORT93) mixed with E-Maj migration"
@@ -129,6 +135,7 @@ case $ANSWER in
 	c) reg_test_version "93" "ext";;
 	d) reg_test_version "94" "ext";;
 	e) reg_test_version "95" "ext";;
+	f) reg_test_version "96" "ext";;
 	m) migrat_test "95" "91";;
 	t)
 		reg_test_version "91" "ext"
@@ -136,6 +143,7 @@ case $ANSWER in
 		reg_test_version "93" "ext"
 		reg_test_version "94" "ext"
 		reg_test_version "95" "ext"
+		reg_test_version "96" "ext"
 		migrat_test "95" "91"
 		;;
 	x) reg_test_version "91" "psql";;
@@ -145,12 +153,14 @@ case $ANSWER in
 	C) reg_test_version "93" "psql_mig";;
 	D) reg_test_version "94" "psql_mig";;
 	E) reg_test_version "95" "psql_mig";;
+	F) reg_test_version "96" "psql_mig";;
 	T)
 		reg_test_version "91" "psql_mig"
 		reg_test_version "92" "psql_mig"
 		reg_test_version "93" "psql_mig"
 		reg_test_version "94" "psql_mig"
 		reg_test_version "95" "psql_mig"
+		reg_test_version "96" "psql_mig"
 		;;
 	V|v) reg_test_version "91" "psql_mx_mig";;
 #	V|v) reg_test_version "91" "ext_mx_mig";;
