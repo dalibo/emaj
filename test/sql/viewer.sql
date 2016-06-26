@@ -36,6 +36,7 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
 select emaj.emaj_estimate_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
 select emaj.emaj_estimate_rollback_groups(array['myGroup1'],emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
 select * from emaj.emaj_rollback_activity();
+select * from emaj.emaj_get_consolidable_rollbacks();
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
 
 -----------------------------
@@ -84,6 +85,7 @@ select emaj.emaj_rollback_group('myGroup1','mark');
 select emaj.emaj_rollback_groups(array['myGroup1'],'mark'); 
 select emaj.emaj_logged_rollback_group('myGroup1','mark');
 select emaj.emaj_logged_rollback_groups(array['myGroup1'],'mark');
+select emaj.emaj_consolidate_rollback_group('myGroup1','mark');
 select emaj.emaj_reset_group('myGroup1');
 select emaj.emaj_snap_group('myGroup1','/tmp',NULL);
 select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp',NULL);

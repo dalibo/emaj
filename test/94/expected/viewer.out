@@ -147,6 +147,11 @@ select * from emaj.emaj_rollback_activity();
 ---------+-------------+-----------+--------------------+----------------+-----------------+---------------+------------------+-------------------+-------------+---------------------+-------------+----------------+---------------------
 (0 rows)
 
+select * from emaj.emaj_get_consolidable_rollbacks();
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_id | cons_rows 
+------------+----------------------------+--------------------------+-------------------------+-----------------------+-----------
+(0 rows)
+
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
  substr 
 --------
@@ -237,6 +242,8 @@ select emaj.emaj_logged_rollback_group('myGroup1','mark');
 ERROR:  permission denied for function emaj_logged_rollback_group
 select emaj.emaj_logged_rollback_groups(array['myGroup1'],'mark');
 ERROR:  permission denied for function emaj_logged_rollback_groups
+select emaj.emaj_consolidate_rollback_group('myGroup1','mark');
+ERROR:  permission denied for function emaj_consolidate_rollback_group
 select emaj.emaj_reset_group('myGroup1');
 ERROR:  permission denied for function emaj_reset_group
 select emaj.emaj_snap_group('myGroup1','/tmp',NULL);

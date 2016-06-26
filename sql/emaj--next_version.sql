@@ -407,6 +407,17 @@ CREATE TYPE emaj.emaj_rollback_activity_type AS (
 COMMENT ON TYPE emaj.emaj_rollback_activity_type IS
 $$Represents the structure of rows returned by the emaj_rollback_activity() function.$$;
 
+CREATE TYPE emaj.emaj_consolidable_rollback_type AS (
+  cons_group                   TEXT,                       -- group name
+  cons_target_rlbk_mark_name   TEXT,                       -- name of the mark used as target of the logged rollback operation
+  cons_target_rlbk_mark_id     BIGINT,                     -- id of the mark used as target of the logged rollback operation
+  cons_end_rlbk_mark_name      TEXT,                       -- name of the mark set at the end of the logged rollback operation
+  cons_end_rlbk_mark_id        BIGINT,                     -- id of the mark set at the end of the logged rollback operation
+  cons_rows                    BIGINT                      -- estimated number of update events that can be consolidated for the rollback
+  );
+COMMENT ON TYPE emaj.emaj_consolidable_rollback_type IS
+$$Represents the structure of rows returned by the emaj_get_consolidable_rollbacks() function.$$;
+
 CREATE TYPE emaj._verify_groups_type AS (                -- this type is not used by functions called by users
   ver_schema                   TEXT,
   ver_tblseq                   TEXT,
@@ -4711,6 +4722,48 @@ $emaj_consolidate_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_consolidate_rollback_group(TEXT,TEXT) IS
 $$Consolidate a rollback for a group.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_get_consolidable_rollbacks()
+RETURNS SETOF emaj.emaj_consolidable_rollback_type LANGUAGE plpgsql AS
+$emaj_get_consolidable_rollbacks$
+-- This function returns the list of logged rollback operations that can be consolidated, defined as a marks range for a group.
+-- It doesn't need input parameter.
+-- It returns a set of emaj_consolidable_rollback_type records, sorted by ascending rollback time.
+-- The cons_group and cons_end_rlbk_mark_name returned columns can be used as input parameters for the emaj_consolidate_rollback_group() function.
+  DECLARE
+    r_mark                   RECORD;
+  BEGIN
+-- search all marks range corresponding to any logged rollback operation
+    FOR r_mark IN
+      SELECT m1.mark_group AS cons_group,
+             m2.mark_name AS cons_target_rlbk_mark_name, m2.mark_id AS cons_target_rlbk_mark_id,
+             m1.mark_name AS cons_end_rlbk_mark_name, m1.mark_id AS cons_end_rlbk_mark_id,
+             cast(0 AS BIGINT) AS cons_rows
+        FROM emaj.emaj_mark m1
+          JOIN emaj.emaj_mark m2 ON (m2.mark_name = m1.mark_logged_rlbk_target_mark AND m2.mark_group = m1.mark_group)
+          WHERE m1.mark_logged_rlbk_target_mark IS NOT NULL
+          ORDER BY m1.mark_id
+      LOOP
+-- compute the number of updates for this mark range
+      SELECT cast(sum(stat_rows) AS BIGINT) INTO r_mark.cons_rows
+        FROM emaj.emaj_log_stat_group(r_mark.cons_group, r_mark.cons_target_rlbk_mark_name, r_mark.cons_end_rlbk_mark_name);
+-- and return a row
+      RETURN NEXT r_mark;
+    END LOOP;
+-- TODO: When postgres 9.2- will not be supported anymore, the following statement with a LATERAL clause will be usable to replace the loop
+--    RETURN QUERY
+--      SELECT m1.mark_group AS cons_group, m2.mark_name AS cons_target_rlbk_mark_name, m2.mark_id AS cons_target_rlbk_mark_id,
+--             m1.mark_name AS cons_end_rlbk_mark_name, m1.mark_id AS cons_end_rlbk_mark_id, cast(sum(stat_rows) AS BIGINT) AS cons_rows
+--        FROM emaj.emaj_mark m1
+--          JOIN emaj.emaj_mark m2 ON (m2.mark_name = m1.mark_logged_rlbk_target_mark AND m2.mark_group = m1.mark_group)
+--          LEFT OUTER JOIN LATERAL emaj.emaj_log_stat_group(m1.mark_group, m1.mark_logged_rlbk_target_mark, m1.mark_name) ON TRUE
+--          WHERE m1.mark_logged_rlbk_target_mark IS NOT NULL
+--          GROUP BY 1,2,3,4,5
+--          ORDER BY m1.mark_id;
+  END;
+$emaj_get_consolidable_rollbacks$;
+COMMENT ON FUNCTION emaj.emaj_get_consolidable_rollbacks() IS
+$$Returns the list of logged rollback operations that can be consolidated.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_reset_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $emaj_reset_group$
@@ -6081,6 +6134,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[]
 GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_activity() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rollback_activity() TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_consolidable_rollbacks() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;

@@ -14,6 +14,11 @@ Enhancements:
     records and marks between the mark used as target for the already
     executed logged rollback and the mark that has taged the end of this
     rollback.
+  - a new emaj_get_consolidable_rollbacks() function returns the list of 
+    logged rollback operations that may be consolidated. Two of the returned 
+    columns can directly feed the emaj_consolidate_rollback_group() function. 
+    It also gives information about the amount of log updates that may be 
+    deleted.
   - in emaj_start_group() and emaj_start_groups() functions, allow to not 
     supply the mark name parameter. In this case, the default mark name is
     built as START_hh.mm.ss.ms, using the current timestamp. A mark name set 

@@ -1,7 +1,7 @@
 -- rollback.sql : test updates log, emaj_rollback_group(), emaj_logged_rollback_group(),
 --                emaj_rollback_groups(), emaj_logged_rollback_groups(),
---                emaj_cleanup_rollback_state(), emaj_rollback_activity()
---                and emaj_consolidate_rollback_group() functions.
+--                emaj_cleanup_rollback_state(), emaj_rollback_activity(),
+--                emaj_consolidate_rollback_group() and emaj_get_consolidable_rollbacks() functions.
 --
 -----------------------------
 -- rollback nothing tests
@@ -465,7 +465,7 @@ begin;
 rollback;
 
 -----------------------------
--- test emaj_consolidate_rollback_group()
+-- test emaj_consolidate_rollback_group() and emaj_get_consolidable_rollbacks()
 -----------------------------
 -- group is NULL or unknown
 select emaj.emaj_consolidate_rollback_group(NULL,NULL);
@@ -506,6 +506,15 @@ insert into myTbl2 values (1000,'TC3',NULL);
 
 select emaj.emaj_rename_mark_group('myGroup1','Conso_M2','Renamed_conso_M2');
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Renamed_last_mark');
+select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id, 
+       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_id, cons_rows 
+  from emaj.emaj_get_consolidable_rollbacks();
+
+select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
+select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id, 
+       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_id, cons_rows 
+  from emaj.emaj_get_consolidable_rollbacks();
+-- consolidate a rollback already consolidated
 select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;

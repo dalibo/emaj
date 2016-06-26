@@ -56,6 +56,16 @@ Composite type "emaj._verify_groups_type"
  ver_tblseq | text | 
  ver_msg    | text | 
 
+Composite type "emaj.emaj_consolidable_rollback_type"
+           Column           |  Type  | Modifiers 
+----------------------------+--------+-----------
+ cons_group                 | text   | 
+ cons_target_rlbk_mark_name | text   | 
+ cons_target_rlbk_mark_id   | bigint | 
+ cons_end_rlbk_mark_name    | text   | 
+ cons_end_rlbk_mark_id      | bigint | 
+ cons_rows                  | bigint | 
+
 Composite type "emaj.emaj_detailed_log_stat_type"
    Column    |         Type          | Modifiers 
 -------------+-----------------------+-----------
@@ -503,13 +513,13 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    87
+    88
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname LIKE E'emaj\\_%';
  count 
 -------
-    39
+    40
 (1 row)
 
