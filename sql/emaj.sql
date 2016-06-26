@@ -527,10 +527,8 @@ CREATE VIEW emaj.emaj_visible_param AS
 CREATE OR REPLACE FUNCTION emaj._pg_version_num()
 RETURNS INTEGER LANGUAGE sql IMMUTABLE AS
 $$
--- This function returns as an integer the 2 major parts of the current postgresql version
--- x.y.z => x*100 + y. For instance, Postgres version 9.4.12 returns 904
-SELECT cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
-            to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER);
+-- This function returns as an integer the current postgresql version
+SELECT current_setting('server_version_num')::int;
 $$;
 
 CREATE OR REPLACE FUNCTION emaj._get_mark_name(TEXT, TEXT)
@@ -1593,17 +1591,17 @@ $_verify_groups$
 -- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
 -- Let's start with some global checks that always raise an exception if an issue is detected
 -- check the postgres version: E-Maj is not compatible with 9.0-
-    IF emaj._pg_version_num() < 901 THEN
+    IF emaj._pg_version_num() < 90100 THEN
       RAISE EXCEPTION 'The current postgres version (%) is not compatible with E-Maj.', version();
     END IF;
--- check the postgres version at groups creation time is compatible (i.e. >= 8.4)
+-- check the postgres version at groups creation time is compatible (i.e. >= 9.1)
     FOR r_object IN
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groups)
           AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
-                   to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804
+                   to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 901
         ORDER BY msg
     LOOP
       RAISE EXCEPTION '_verify_groups: %',r_object.msg;
@@ -2411,7 +2409,7 @@ $_start_groups$
 -- OK, lock all tables to get a stable point
 --   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
 --   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
-    IF emaj._pg_version_num() >= 905 THEN
+    IF emaj._pg_version_num() >= 90500 THEN
       PERFORM emaj._lock_groups(v_groupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
     ELSE
       PERFORM emaj._lock_groups(v_groupNames,'ACCESS EXCLUSIVE',v_multiGroup);
@@ -2568,7 +2566,7 @@ $_stop_groups$
 -- lock all tables to get a stable point
 --   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
 --   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
-    IF emaj._pg_version_num() >= 905 THEN
+    IF emaj._pg_version_num() >= 90500 THEN
       PERFORM emaj._lock_groups(v_validGroupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
     ELSE
       PERFORM emaj._lock_groups(v_validGroupNames,'ACCESS EXCLUSIVE',v_multiGroup);
@@ -4246,7 +4244,7 @@ $_rlbk_session_lock$
 --     In the former case, the EXCLUSIVE mode blocks all concurrent update capabilities of all tables of the groups (including tables with no logged
 --     update to rollback), in order to ensure a stable state of the group at the end of the rollback operation). But these tables can be accessed
 --     by SELECT statements during the E-Maj rollback.
-          IF emaj._pg_version_num() < 905 AND r_tbl.disLogTrg THEN
+          IF emaj._pg_version_num() < 90500 AND r_tbl.disLogTrg THEN
             v_lockmode = 'ACCESS EXCLUSIVE';
           ELSE
             v_lockmode = 'EXCLUSIVE';
@@ -5836,13 +5834,13 @@ $_verify_all_groups$
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
   DECLARE
   BEGIN
--- check the postgres version at groups creation time is compatible (i.e. >= 8.4)
+-- check the postgres version at groups creation time is compatible (i.e. >= 9.1)
     RETURN QUERY
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
         WHERE cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
-                   to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804
+                   to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 901
         ORDER BY msg;
 -- check all application schemas referenced in the emaj_relation table still exist
     RETURN QUERY
@@ -6091,7 +6089,7 @@ $emaj_verify_all$
   BEGIN
 -- Global checks
 -- detect if the current postgres version is at least 9.1
-    IF emaj._pg_version_num() < 901 THEN
+    IF emaj._pg_version_num() < 90100 THEN
       RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with E-Maj.';
       v_errorFound = TRUE;
     END IF;
