@@ -1505,7 +1505,7 @@ $_log_stat_tbl$
 $_log_stat_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_conditions TEXT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $_gen_sql_tbl$
 -- This function generates SQL commands representing all updates performed on a table between 2 marks
 -- or beetween a mark and the current situation. These command are stored into a temporary table created
@@ -1527,7 +1527,7 @@ $_gen_sql_tbl$
     v_rqUpdate               TEXT;
     v_rqDelete               TEXT;
     v_rqTruncate             TEXT;
-    v_nbSQL                  INT;
+    v_nbSQL                  BIGINT;
     r_col                    RECORD;
   BEGIN
 -- build schema specified table name and log table name
@@ -5558,7 +5558,7 @@ COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[] DEFAULT NULL)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_group$
 -- This function generates a SQL script representing all updates performed on a tables group between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -5570,7 +5570,7 @@ $emaj_gen_sql_group$
 --        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
-    v_cumNbSQL               INT;
+    v_cumNbSQL               BIGINT;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -5592,7 +5592,7 @@ COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, 
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[] DEFAULT NULL)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $emaj_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a set of tables groups between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -5604,7 +5604,7 @@ $emaj_gen_sql_groups$
 --        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
-    v_cumNbSQL               INT;
+    v_cumNbSQL               BIGINT;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -5625,7 +5625,7 @@ COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TE
 $$Generates a sql script corresponding to all updates performed on a set of tables groups between two marks and stores it into a given file.$$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -5655,9 +5655,9 @@ $_gen_sql_groups$
     v_tsFirstMark            TIMESTAMPTZ;
     v_tsLastMark             TIMESTAMPTZ;
     v_tblseqErr              TEXT;
-    v_nbSQL                  INT;
+    v_nbSQL                  BIGINT;
     v_nbSeq                  INT;
-    v_cumNbSQL               INT = 0;
+    v_cumNbSQL               BIGINT = 0;
     v_fullSeqName            TEXT;
     v_endComment             TEXT;
     v_conditions             TEXT;

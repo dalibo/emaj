@@ -28,6 +28,9 @@ Enhancements:
     is built as MARK_hh.mm.ss.ms, using the current timestamp.
   - in emaj_stop_group() and emaj_stop_groups() functions, if the supplied 
     mark name is NULL or '', it is now transformed into STOP_hh.mm.ss.ms.
+  - for emaj_gen_sql_group() and emaj_gen_sql_groups() functions, change the 
+    type of the returned value representing the number of generated sql 
+    statements to BIGINT.
   - in rollback functions, trap all exceptions that may happen when the 
     rollback uses autonomous transactions with dblink and set the proper 
     aborted state of the rollback operation in the emaj_rlbk table.
