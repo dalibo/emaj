@@ -226,7 +226,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist
 NOTICE:  table "myschema1_mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
-WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
@@ -260,8 +260,8 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl5" does not exist
 NOTICE:  table "myschema2_mytbl6_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl6" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl6" does not exist, skipping
-WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
  emaj_create_group 
 -------------------
                  8
@@ -283,8 +283,8 @@ select emaj.emaj_start_group('myGroup1','M1');
 
 delete from emaj.emaj_param where param_key = 'history_retention';
 select emaj.emaj_start_group('myGroup2','M1');
-WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
  emaj_start_group 
 ------------------
                 8
@@ -801,16 +801,16 @@ analyze mytbl4;
 revoke execute on function dblink_connect_u(text,text) from emaj_adm;
 set role emaj_regression_tests_adm_user;
 select emaj.emaj_logged_rollback_group('myGroup2','M2');
-WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
  emaj_logged_rollback_group 
 ----------------------------
                           5
 (1 row)
 
 select emaj.emaj_logged_rollback_group('myGroup2','M3');
-WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
  emaj_logged_rollback_group 
 ----------------------------
                           5
@@ -1386,8 +1386,8 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------
 select emaj.emaj_logged_rollback_group('myGroup2','M2');
-WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
  emaj_logged_rollback_group 
 ----------------------------
                           5
@@ -1395,8 +1395,8 @@ WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key 
 
 --
 select emaj.emaj_rollback_group('myGroup2','M3');
-WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
  emaj_rollback_group 
 ---------------------
                    5
@@ -2287,38 +2287,38 @@ select * from emaj.emaj_verify_all();
 (1 row)
 
 select emaj.emaj_create_group('dummyGroup');
-ERROR:  emaj_create_group: Group dummyGroup is unknown in emaj_group_def table.
+ERROR:  emaj_create_group: Group "dummyGroup" is unknown in emaj_group_def table.
 CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 24 at RAISE
 select emaj.emaj_drop_group('dummyGroup');
-ERROR:  _drop_group: group dummyGroup has not been created.
+ERROR:  _drop_group: group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 select emaj.emaj_force_drop_group('dummyGroup');
-ERROR:  _drop_group: group dummyGroup has not been created.
+ERROR:  _drop_group: group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 select emaj.emaj_get_previous_mark_group('dummyGroup', '2010-01-01');
-ERROR:  emaj_get_previous_mark_group: group dummyGroup has not been created.
+ERROR:  emaj_get_previous_mark_group: group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 14 at RAISE
 select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
-ERROR:  emaj_get_previous_mark_group: group dummyGroup has not been created.
+ERROR:  emaj_get_previous_mark_group: group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 14 at RAISE
 select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL); 
-ERROR:  emaj_log_stat_group: group dummyGroup has not been created.
+ERROR:  emaj_log_stat_group: group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 25 at RAISE
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);
-ERROR:  emaj_detailed_log_stat_group: group dummyGroup has not been created.
+ERROR:  emaj_detailed_log_stat_group: group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 29 at RAISE
 select emaj.emaj_estimate_rollback_group('dummyGroup', 'dummyMark', TRUE);
-ERROR:  _rlbk_check: group dummyGroup has not been created.
+ERROR:  _rlbk_check: group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text) line 22 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
-ERROR:  _rlbk_check: group dummyGroup has not been created.
+ERROR:  _rlbk_check: group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text) line 22 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement

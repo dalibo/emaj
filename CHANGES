@@ -34,6 +34,8 @@ Enhancements:
   - in rollback functions, trap all exceptions that may happen when the 
     rollback uses autonomous transactions with dblink and set the proper 
     aborted state of the rollback operation in the emaj_rlbk table.
+  - in error and warning messages, all groups, marks, schemas or tables names 
+    are surrounded by double quotes to improve the readability.
 
 Bug fixes:
   - the emaj_gen_sql_group() and emaj_gen_sql_groups() functions now properly  
