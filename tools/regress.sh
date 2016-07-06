@@ -6,6 +6,7 @@
 #            Parameters definition            #
 #---------------------------------------------#
 EMAJ_HOME="/home/postgres/proj/emaj"
+DB_HOME="/home/postgres"
 
 PGPORT91="5491"
 PGDIR91="/usr/local/pg9121"
@@ -81,6 +82,41 @@ migrat_test()
 	cd ../..
 	return
 }
+# Function pg_upgrade_test(): test of a postgres version change
+# arguments: $1 pg major version for source cluster
+#            $2 pg major version for target cluster
+#			 $3 pgdata subdirectory in PG_HOME of the target cluster
+pg_upgrade_test()
+{
+	echo "pg_upgrade cluster from $1 version to the cluster regression database from $2 dump"
+	eval RTVBIN1=\${PGDIR$1}/bin
+	eval RTVPORT=\${PGPORT$1}
+	eval RTVBIN2=\${PGDIR$2}/bin
+	eval RTVREG=\${PGREG$2}
+	echo "--> initializing the new cluster..."
+	cd $DB_HOME
+	rm -Rf $3
+	mkdir $3
+	$RTVBIN2/initdb -D $3
+	sed -i "s/#port = 5432/port = 154$2/" $3/postgresql.conf
+	echo "--> stopping the old cluster..."
+	$RTVBIN1/pg_ctl -D $DB_HOME/db$1 stop
+	echo "--> upgrading the cluster..."
+	$RTVBIN2/pg_upgrade -b $RTVBIN1 -B $RTVBIN2 -d $DB_HOME/db$1 -D $DB_HOME/$3 -p $RTVPORT -P 154$2
+	echo "--> starting the new cluster..."
+	$RTVBIN2/pg_ctl -D $DB_HOME/$3 start
+	sleep 2
+	echo "--> running regression test..."
+#	$RTVREG/pg_regress --schedule=../emaj_sched_$4
+
+	echo "--> stopping the new cluster..."
+	$RTVBIN2/pg_ctl -D $DB_HOME/$3 stop
+	sleep 2
+	echo "--> restarting the old cluster..."
+	$RTVBIN1/pg_ctl -D $DB_HOME/db$1 start
+	sleep 2
+	return
+}
 
 #---------------------------------------------#
 #                  Script body                #
@@ -113,6 +149,7 @@ echo "	e- pg 9.5 (port $PGPORT95) standart test"
 echo "	f- pg 9.6 (port $PGPORT96) standart test"
 echo "	m- pg 9.1 dump and 9.5 restore"
 echo "	t- all tests, from a to h + M"
+echo "	u- pg 9.1 upgraded to pg 9.5"
 echo "	x- pg 9.1 (port $PGPORT91) created with psql script"
 echo "	A- pg 9.1 (port $PGPORT91) starting with E-Maj migration"
 echo "	B- pg 9.2 (port $PGPORT92) starting with E-Maj migration"
@@ -146,6 +183,7 @@ case $ANSWER in
 		reg_test_version "96" "ext"
 		migrat_test "95" "91"
 		;;
+	u) pg_upgrade_test "91" "95" "db95b";;
 	x) reg_test_version "91" "psql";;
 	A) reg_test_version "91" "psql_mig";;
 #	A) reg_test_version "91" "ext_mig";;
