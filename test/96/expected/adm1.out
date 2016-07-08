@@ -2291,12 +2291,12 @@ ERROR:  emaj_create_group: Group "dummyGroup" is unknown in emaj_group_def table
 CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 24 at RAISE
 select emaj.emaj_drop_group('dummyGroup');
 ERROR:  _drop_group: group "dummyGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 19 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 select emaj.emaj_force_drop_group('dummyGroup');
 ERROR:  _drop_group: group "dummyGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 19 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 select emaj.emaj_get_previous_mark_group('dummyGroup', '2010-01-01');

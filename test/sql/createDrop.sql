@@ -38,6 +38,14 @@ insert into emaj.emaj_group_def values ('dummyGrp2','emaj','emaj_param');
 insert into emaj.emaj_group_def values ('dummyGrp2','emajC','myschema1_myTbl3_log');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
+
+-----------------------------
+-- disable event triggers 
+-----------------------------
+-- this is done to allow tests with missing or renamed or altered components
+-- triggers will be re-enabled in misc.sql
+select emaj.emaj_disable_protection_by_event_triggers();
+
 -----------------------------
 -- emaj_create_group() tests
 -----------------------------

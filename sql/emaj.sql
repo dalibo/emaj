@@ -2022,6 +2022,7 @@ $_drop_group$
 -- The function is defined as SECURITY DEFINER so that secondary schemas can be dropped
   DECLARE
     v_groupIsLogging         BOOLEAN;
+    v_event_trigger_array    TEXT[];
     v_nbTb                   INT = 0;
     v_schemaPrefix           TEXT = 'emaj';
     r_rel                    emaj.emaj_relation%ROWTYPE;
@@ -2040,7 +2041,10 @@ $_drop_group$
         RAISE EXCEPTION '_drop_group: The group "%" cannot be deleted because it is in LOGGING state.', v_groupName;
       END IF;
     END IF;
--- OK, delete the emaj objets for each table of the group
+-- OK
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+    SELECT emaj._disable_event_triggers() INTO v_event_trigger_array;
+-- delete the emaj objets for each table of the group
     FOR r_rel IN
         SELECT * FROM emaj.emaj_relation
           WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
@@ -2072,6 +2076,8 @@ $_drop_group$
 -- delete group row from the emaj_group table.
 --   By cascade, it also deletes rows from emaj_relation and emaj_mark
     DELETE FROM emaj.emaj_group WHERE group_name = v_groupName;
+-- enable previously disabled event triggers
+    PERFORM emaj._enable_event_triggers(v_event_trigger_array);
     RETURN v_nbTb;
   END;
 $_drop_group$;
@@ -2099,6 +2105,7 @@ $emaj_alter_group$
     v_logSchemasToCreate     TEXT[];
     v_aLogSchema             TEXT;
     v_defTsp                 TEXT;
+    v_event_trigger_array    TEXT[];
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
     r_rel                    emaj.emaj_relation%ROWTYPE;
     r_tblsq                  RECORD;
@@ -2126,7 +2133,10 @@ $emaj_alter_group$
     PERFORM emaj._check_group_content(v_groupName);
 -- define the default tablespace, NULL if tspemaj tablespace doesn't exist
     SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
--- OK, we can now process:
+-- OK
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+    SELECT emaj._disable_event_triggers() INTO v_event_trigger_array;
+-- We can now process:
 --   - relations that do not belong to the tables group any more, by dropping their emaj components
 --   - relations that continue to belong to the tables group but with different characteristics,
 --     by first dropping their emaj components and letting the last step recreate them
@@ -2293,6 +2303,8 @@ $emaj_alter_group$
       WHERE group_name = v_groupName;
 -- delete old marks of the tables group from emaj_mark
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
+-- enable previously disabled event triggers
+    PERFORM emaj._enable_event_triggers(v_event_trigger_array);
 -- check foreign keys with tables outside the group
     PERFORM emaj._check_fk_groups(array[v_groupName]);
 -- insert end in the history
@@ -6093,6 +6105,13 @@ $emaj_verify_all$
       RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with E-Maj.';
       v_errorFound = TRUE;
     END IF;
+-- With postgres 9.3+, report a warning if some E-Maj event triggers exist but are not enabled
+    IF emaj._pg_version_num() >= 90300 THEN
+      PERFORM 1 FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
+      IF FOUND THEN
+        RETURN NEXT 'Warning: some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.';
+      END IF;
+    END IF;
 -- check all E-Maj primary and secondary schemas
     FOR r_object IN
       SELECT msg FROM emaj._verify_all_schemas() msg
@@ -6117,22 +6136,267 @@ $emaj_verify_all$;
 COMMENT ON FUNCTION emaj.emaj_verify_all() IS
 $$Verifies the consistency between existing E-Maj and application objects.$$;
 
--- Set comments for all internal functions,
--- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
-INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
-  SELECT pg_proc.oid, pg_class.oid, 0 , 'E-Maj internal function'
-    FROM pg_catalog.pg_proc, pg_catalog.pg_class
-    WHERE pg_class.relname = 'pg_proc'
-      AND pg_proc.oid IN               -- list all emaj functions that do not have yet a comment in pg_description
-       (SELECT pg_proc.oid
-          FROM pg_catalog.pg_proc
-               JOIN pg_catalog.pg_namespace ON (pronamespace=pg_namespace.oid)
-               LEFT OUTER JOIN pg_catalog.pg_description ON (pg_description.objoid = pg_proc.oid
-                                     AND classoid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_proc')
-                                     AND objsubid = 0)
-          WHERE nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
-            AND pg_description.description IS NULL
-       );
+-----------------------------------------
+--                                     --
+-- event triggers and related function --
+--                                     --
+-----------------------------------------
+--
+-- Event triggers creation depends on postgres version:
+-- - sql_drop event trigger needs postgres 9.3+
+-- - table_rewrite trigger needs postgres 9.5+
+-- If E-Maj has been installed with older postgres versions, and this version has then been upgraded, the
+-- set_event_triggers_protection.sql script can be used to add the missing components.
+
+DO $$
+BEGIN
+
+-- beginning of 9.3+ specific code
+IF emaj._pg_version_num() >= 90300 THEN
+-- sql_drop event trigger are only possible with postgres 9.3+
+
+CREATE OR REPLACE FUNCTION emaj._sql_drop_fnct()
+ RETURNS event_trigger LANGUAGE plpgsql AS
+$_sql_drop_fnct$
+-- This function is called by the emaj_sql_drop_trg event trigger
+-- Unless the 'protect_emaj_objects' parameter is explicitely set to false in emaj_param,
+-- the function blocks any ddl operation that leads to a drop of
+--   - an application table or a sequence registered into an E-Maj group
+--   - a log table, a log sequence, a log function or a log trigger
+  DECLARE
+    v_protect_emaj_objects   BOOLEAN = true;
+    v_groupName              TEXT;
+    r_dropped                RECORD;
+  BEGIN
+-- get the 'protect_emaj_objects' parameter from emaj_param. If it doesn't exist, keep it as true
+    SELECT param_value_boolean FROM emaj.emaj_param WHERE param_key = 'protect_emaj_objects' INTO v_protect_emaj_objects;
+-- if protect_emaj_objects is false, exit immediately
+    IF NOT v_protect_emaj_objects THEN 
+      RETURN;
+    END IF;
+-- scan all dropped objects
+    FOR r_dropped IN
+      SELECT object_type, schema_name, object_name, object_identity FROM pg_event_trigger_dropped_objects()
+    LOOP
+      CASE 
+        WHEN r_dropped.object_type = 'table' THEN
+-- the object is a table
+--   look at the emaj_relation table to verify that the table being dropped does not belong to any created group
+          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
+            WHERE rel_schema = r_dropped.schema_name AND rel_tblseq = r_dropped.object_name;
+          IF FOUND THEN
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application table "%.%". But it belongs to the tables group "%".',
+                            r_dropped.schema_name, r_dropped.object_name, v_groupName;
+          END IF;
+--   look at the emaj_relation table to verify that the table being dropped is not a log table
+          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
+            WHERE rel_log_schema = r_dropped.schema_name AND rel_log_table = r_dropped.object_name;
+          IF FOUND THEN
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log table "%.%". But the associated application table belongs to the tables group "%".',
+                            r_dropped.schema_name, r_dropped.object_name, v_groupName;
+          END IF;
+        WHEN r_dropped.object_type = 'sequence' THEN
+-- the object is a sequence
+--   look at the emaj_relation table to verify that the sequence being dropped does not belong to any created group
+          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
+            WHERE rel_schema = r_dropped.schema_name AND rel_tblseq = r_dropped.object_name;
+          IF FOUND THEN
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application sequence "%.%". But it belongs to the tables group "%".',
+                            r_dropped.schema_name, r_dropped.object_name, v_groupName;
+          END IF;
+--   look at the emaj_relation table to verify that the sequence being dropped is not a log sequence
+          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
+            WHERE rel_log_schema = r_dropped.schema_name AND rel_log_sequence = r_dropped.object_name;
+          IF FOUND THEN
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log sequence "%.%". But the associated application table belongs to the tables group "%".',
+                            r_dropped.schema_name, r_dropped.object_name, v_groupName;
+          END IF;
+        WHEN r_dropped.object_type = 'function' THEN
+-- the object is a function
+--   look at the emaj_relation table to verify that the function being dropped is not a log function
+          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
+            WHERE rel_schema = r_dropped.schema_name AND rel_log_function = r_dropped.object_name;
+          IF FOUND THEN
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log function "%.%".  But the associated application table belongs to the tables group "%".',
+                            r_dropped.schema_name, r_dropped.object_name, v_groupName;
+          END IF;
+        WHEN r_dropped.object_type = 'trigger' THEN
+-- the object is a trigger
+--   look at the trigger name pattern to identify emaj trigger
+          IF r_dropped.object_identity LIKE 'emaj_log_trg%' OR r_dropped.object_identity LIKE 'emaj_trunc_trg%' THEN
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the "%" E-Maj trigger.', r_dropped.object_identity;
+          END IF;
+        ELSE
+          CONTINUE;
+      END CASE;
+    END LOOP;
+  END;
+$_sql_drop_fnct$;
+
+EXECUTE '
+DROP EVENT TRIGGER IF EXISTS emaj_sql_drop_trg;
+CREATE EVENT TRIGGER emaj_sql_drop_trg
+  ON sql_drop
+  WHEN TAG IN (''DROP FUNCTION'',''DROP SCHEMA'',''DROP SEQUENCE'',''DROP TABLE'',''DROP TRIGGER'')
+  EXECUTE PROCEDURE emaj._sql_drop_fnct();
+';
+
+-- end of 9.3+ specific code
+END IF;
+-- beginning of 9.5+ specific code
+
+IF emaj._pg_version_num() >= 90500 THEN
+-- table_rewrite event trigger are only possible with postgres 9.5+
+
+CREATE OR REPLACE FUNCTION emaj._table_rewrite_fnct()
+ RETURNS event_trigger LANGUAGE plpgsql AS
+$_table_rewrite_fnct$
+-- This function is called by the emaj_table_rewrite_trg event trigger
+-- Unless the 'protect_emaj_objects' parameter is explicitely set to false in emaj_param, 
+-- the function blocks any ddl operation that leads to a table rewrite for:
+--   - an application table registered into an E-Maj group
+--   - an E-Maj log table
+  DECLARE
+    v_protect_emaj_objects   BOOLEAN = true;
+    v_tableSchema            TEXT;
+    v_tableName              TEXT;
+    v_groupName              TEXT;
+  BEGIN
+-- get the 'protect_emaj_objects' parameter from emaj_param. If it doesn't exist, keep it as true
+    SELECT param_value_boolean FROM emaj.emaj_param WHERE param_key = 'protect_emaj_objects' INTO v_protect_emaj_objects;
+-- if protect_emaj_objects is false, exit immediately
+    IF NOT v_protect_emaj_objects THEN 
+      RETURN;
+    END IF;
+-- get the schema and table names of the altered table
+    SELECT nspname, relname INTO v_tableSchema, v_tableName FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+      WHERE relnamespace = pg_namespace.oid AND pg_class.oid = pg_event_trigger_table_rewrite_oid();
+-- look at the emaj_relation table to verify that the table being rewritten does not belong to any created group
+    SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
+      WHERE rel_schema = v_tableSchema AND rel_tblseq = v_tableName;
+    IF FOUND THEN
+-- the table is an application table that belongs to a group, so raise an exception
+      RAISE EXCEPTION 'E-Maj event trigger: attempting to change the application table "%.%" structure. But the table belongs to the tables group "%".',
+                      v_tableSchema, v_tableName , v_groupName;
+    END IF;
+-- look at the emaj_relation table to verify that the table being rewritten is not a known log table
+    SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
+      WHERE rel_log_schema = v_tableSchema AND rel_log_table = v_tableName;
+    IF FOUND THEN
+-- the table is an E-Maj log table, so raise an exception
+      RAISE EXCEPTION 'E-Maj event trigger: attempting to change the log table "%.%" structure. But the table belongs to the tables group "%".',
+                      v_tableSchema, v_tableName , v_groupName;
+    END IF;
+  END;
+$_table_rewrite_fnct$;
+
+EXECUTE '
+DROP EVENT TRIGGER IF EXISTS emaj_table_rewrite_trg;
+CREATE EVENT TRIGGER emaj_table_rewrite_trg
+  ON table_rewrite
+  EXECUTE PROCEDURE emaj._table_rewrite_fnct();
+';
+
+-- end of 9.5+ specific code
+END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_disable_protection_by_event_triggers()
+ RETURNS INT LANGUAGE plpgsql AS
+$emaj_disable_protection_by_event_triggers$
+-- This function disables all known E-Maj event triggers that are in enabled state.
+-- It may be used by an emaj_adm role.
+-- Output: number of effectively disabled event triggers
+  DECLARE
+    v_event_trigger_array TEXT[];
+  BEGIN
+-- call the _disable_event_triggers() function and get the disabled event trigger names array
+    SELECT emaj._disable_event_triggers() INTO v_event_trigger_array;
+-- insert a row into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('DISABLE_PROTECTION', 'EVENT TRIGGERS DISABLED',
+              CASE WHEN v_event_trigger_array <> ARRAY[]::TEXT[] THEN array_to_string(v_event_trigger_array, ', ') ELSE '<none>' END);
+-- return the number of disabled event triggers
+    RETURN coalesce(array_length(v_event_trigger_array,1),0);
+  END;
+$emaj_disable_protection_by_event_triggers$;
+
+COMMENT ON FUNCTION emaj.emaj_disable_protection_by_event_triggers() IS
+$$Disables the protection of E-Maj components by event triggers.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_enable_protection_by_event_triggers()
+ RETURNS INT LANGUAGE plpgsql AS
+$emaj_enable_protection_by_event_triggers$
+-- This function enables all known E-Maj event triggers that are in disabled state.
+-- It may be used by an emaj_adm role.
+-- Output: number of effectively enabled event triggers
+  DECLARE
+    v_event_trigger_array    TEXT[];
+  BEGIN
+    IF emaj._pg_version_num() >= 90300 THEN
+-- build the event trigger names array from the pg_event_trigger table
+-- (pg_event_trigger table doesn't exists in 9.2- postgres versions)
+      SELECT coalesce(array_agg(evtname),ARRAY[]::TEXT[]) INTO v_event_trigger_array
+        FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
+-- call the _enable_event_triggers() function
+      PERFORM emaj._enable_event_triggers(v_event_trigger_array);
+    END IF;
+-- insert a row into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('ENABLE_PROTECTION', 'EVENT TRIGGERS ENABLED',
+              CASE WHEN v_event_trigger_array <> ARRAY[]::TEXT[] THEN array_to_string(v_event_trigger_array, ', ') ELSE '<none>' END);
+-- return the number of disabled event triggers
+    RETURN coalesce(array_length(v_event_trigger_array,1),0);
+  END;
+$emaj_enable_protection_by_event_triggers$;
+
+COMMENT ON FUNCTION emaj.emaj_enable_protection_by_event_triggers() IS
+$$Enables the protection of E-Maj components by event triggers.$$;
+
+CREATE OR REPLACE FUNCTION emaj._disable_event_triggers()
+ RETURNS TEXT[] LANGUAGE plpgsql SECURITY DEFINER AS
+$_disable_event_triggers$
+-- This function disables all known E-Maj event triggers that are in enabled state.
+-- The function is called by functions that alter or drop E-Maj components, such as emaj_drop_group().
+-- It is also called by the user emaj_disable_event_triggers_protection() function.
+-- Output: array of effectively disabled event trigger names. It can be reused as input when calling _enable_event_triggers()
+  DECLARE
+    v_event_trigger          TEXT;
+    v_event_trigger_array    TEXT[] = ARRAY[]::TEXT[];
+  BEGIN
+    IF emaj._pg_version_num() >= 90300 THEN 
+-- build the event trigger names array from the pg_event_trigger table
+-- (pg_event_trigger table doesn't exists in 9.2- postgres versions)
+      SELECT coalesce(array_agg(evtname),ARRAY[]::TEXT[]) INTO v_event_trigger_array
+        FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled <> 'D';
+-- disable each event trigger
+      FOREACH v_event_trigger IN ARRAY v_event_trigger_array
+      LOOP
+        EXECUTE 'ALTER EVENT TRIGGER ' || v_event_trigger || ' DISABLE';
+      END LOOP;
+    END IF;
+    RETURN v_event_trigger_array;
+  END;
+$_disable_event_triggers$;
+
+CREATE OR REPLACE FUNCTION emaj._enable_event_triggers(v_event_trigger_array TEXT[])
+ RETURNS TEXT[] LANGUAGE plpgsql SECURITY DEFINER AS
+$_enable_event_triggers$
+-- This function enables all event triggers supplied as parameter
+-- The function is called by functions that alter or drop E-Maj components, such as emaj_drop_group().
+-- It is also called by the user emaj_enable_event_triggers_protection() function.
+-- Input: array of event trigger names to enable
+-- Output: same array
+  DECLARE
+    v_event_trigger          TEXT;
+  BEGIN
+    FOREACH v_event_trigger IN ARRAY v_event_trigger_array
+    LOOP
+      EXECUTE 'ALTER EVENT TRIGGER ' || v_event_trigger || ' ENABLE';
+    END LOOP;
+    RETURN v_event_trigger_array;
+  END;
+$_enable_event_triggers$;
 
 ------------------------------------
 --                                --
@@ -6198,6 +6462,23 @@ GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_vi
 
 -- and insert the init record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSION>', 'Initialisation completed');
+
+-- Set comments for all internal functions,
+-- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
+INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
+  SELECT pg_proc.oid, pg_class.oid, 0 , 'E-Maj internal function'
+    FROM pg_catalog.pg_proc, pg_catalog.pg_class
+    WHERE pg_class.relname = 'pg_proc'
+      AND pg_proc.oid IN               -- list all emaj functions that do not have yet a comment in pg_description
+       (SELECT pg_proc.oid
+          FROM pg_catalog.pg_proc
+               JOIN pg_catalog.pg_namespace ON (pronamespace=pg_namespace.oid)
+               LEFT OUTER JOIN pg_catalog.pg_description ON (pg_description.objoid = pg_proc.oid
+                                     AND classoid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_proc')
+                                     AND objsubid = 0)
+          WHERE nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
+            AND pg_description.description IS NULL
+       );
 
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 -- and display a message about dblink installation

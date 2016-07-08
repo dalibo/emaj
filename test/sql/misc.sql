@@ -671,6 +671,63 @@ begin;
 rollback;
 
 -----------------------------
+-- test event triggers
+-----------------------------
+-- disable twice event trigger (already disabled at the beginning of the createDrop.sql script)
+select emaj.emaj_disable_protection_by_event_triggers();
+
+-- enable twice
+select emaj.emaj_enable_protection_by_event_triggers();
+select emaj.emaj_enable_protection_by_event_triggers();
+
+-- drop or alter various E-Maj components
+--
+-- drop application components
+begin;
+  drop table myschema1.mytbl1 cascade;
+rollback;
+begin;
+  drop sequence myschema2.mySeq1;
+rollback;
+begin;
+  drop schema myschema1 cascade;
+rollback;
+
+-- drop emaj components
+begin;
+  drop table emaj.myschema1_mytbl1_log;
+rollback;
+begin;
+  drop sequence emaj.myschema1_mytbl1_log_seq;
+rollback;
+begin;
+  drop function emaj.myschema1_mytbl1_log_fnct() cascade;
+rollback;
+begin;
+  drop trigger emaj_log_trg on myschema1.mytbl1;
+rollback;
+-- change a table structure that leads to a table rewrite
+begin;
+  alter table myschema1.mytbl1 add column newcol int default 1;
+rollback;
+begin;
+  alter table emaj.myschema1_mytbl1_log add column newcol int default 1;
+rollback;
+
+-- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
+begin;
+  alter table myschema1.mytbl1 rename to mytbl1_new_name;
+  alter table myschema1.mytbl1_new_name set schema public;
+  alter schema myschema1 rename to renamed_myschema1;
+rollback;
+-- change a table structure that doesn't lead to a table rewrite (not covered by event triggers in pg9.6-)
+begin;
+  alter table myschema1.mytbl1 add column another_newcol boolean;
+rollback;
+
+-- finaly leave the event triggers enabled
+
+-----------------------------
 -- test a table reclustering (it will use the pkey index as clustered index) 
 -----------------------------
 cluster emaj.myschema1_mytbl1_log ;

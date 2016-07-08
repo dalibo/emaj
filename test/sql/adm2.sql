@@ -93,13 +93,15 @@ select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid
 -----------------------------
 select emaj.emaj_create_group('phil''s group#3",',false);
 
+-- disable event triggers for this step to allow an application table structure change
+select emaj.emaj_disable_protection_by_event_triggers();
+
 reset role;
 alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(11);
 
 set role emaj_regression_tests_adm_user;
 update emaj.emaj_group_def set grpdef_priority = 1 where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
 select emaj.emaj_alter_group('phil''s group#3",');
---select rel_priority from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'phil''s tbl1';
 select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
 select emaj.emaj_stop_group('phil''s group#3",');
 
@@ -110,6 +112,8 @@ set role emaj_regression_tests_adm_user;
 update emaj.emaj_group_def set grpdef_priority = NULL where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
 select emaj.emaj_alter_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
+
+select emaj.emaj_enable_protection_by_event_triggers();
 
 -----------------------------
 -- Step 10 : for phil''s group#3", recreate the group as rollbackable, update tables, 
