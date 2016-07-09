@@ -682,7 +682,7 @@ select emaj.emaj_enable_protection_by_event_triggers();
 
 -- drop or alter various E-Maj components
 --
--- drop application components
+-- drop application components (the related tables group is currently in logging state)
 begin;
   drop table myschema1.mytbl1 cascade;
 rollback;
@@ -695,13 +695,13 @@ rollback;
 
 -- drop emaj components
 begin;
-  drop table emaj.myschema1_mytbl1_log;
+  drop table "emajC"."myschema1_myTbl3_log";
 rollback;
 begin;
   drop sequence emaj.myschema1_mytbl1_log_seq;
 rollback;
 begin;
-  drop function emaj.myschema1_mytbl1_log_fnct() cascade;
+  drop function "emajC"."myschema1_myTbl3_log_fnct"() cascade;
 rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
@@ -725,12 +725,21 @@ begin;
   alter table myschema1.mytbl1 add column another_newcol boolean;
 rollback;
 
+-- perform changes on application components with the related tables group stopped (the event triggers should accept)
+begin;
+  select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
+  alter table myschema1.mytbl1 add column newcol int default 1;
+  drop table myschema1.mytbl1 cascade;
+  drop sequence myschema2.mySeq1;
+rollback;
+
 -- finaly leave the event triggers enabled
 
 -----------------------------
--- test a table reclustering (it will use the pkey index as clustered index) 
+-- test a table reclustering (it will use the pkey index as clustered index) and a vacuum full
 -----------------------------
-cluster emaj.myschema1_mytbl1_log ;
+cluster emaj.myschema1_mytbl1_log;
+vacuum full emaj.myschema1_mytbl1_log;
 
 -----------------------------
 -- test end: check, reset history and force sequences id

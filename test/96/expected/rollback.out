@@ -2073,17 +2073,17 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     4323 | emajb       | myschema1_mytbl2b_log_seq | Renamed_last_mark    |            10 | t
 (35 rows)
 
-select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by sqhl_begin_mark_id;
+select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by sqhl_begin_mark_id, sqhl_schema, sqhl_table;
  sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_end_mark_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
  myschema1   | mytbl1     |                444 |              449 |             10
  myschema1   | mytbl2     |                444 |              449 |              2
- myschema1   | mytbl4     |                444 |              449 |              1
- myschema1   | myTbl3     |                444 |              449 |             10
  myschema1   | mytbl2b    |                444 |              449 |              2
- myschema1   | mytbl2b    |                458 |              461 |              6
- myschema1   | mytbl2     |                458 |              461 |              3
+ myschema1   | myTbl3     |                444 |              449 |             10
+ myschema1   | mytbl4     |                444 |              449 |              1
  myschema1   | mytbl1     |                458 |              461 |             24
+ myschema1   | mytbl2     |                458 |              461 |              3
+ myschema1   | mytbl2b    |                458 |              461 |              6
 (8 rows)
 
 select emaj.emaj_rollback_group('myGroup1','Conso_M1');

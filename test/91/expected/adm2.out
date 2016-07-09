@@ -2235,24 +2235,24 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     6475 | emajb       | myschema1_mytbl2b_log_seq | RLBK_MC16_%_DONE             |             1 | f
 (116 rows)
 
-select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by sqhl_begin_mark_id;
+select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by sqhl_begin_mark_id, sqhl_schema, sqhl_table;
  sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_end_mark_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
  myschema1   | mytbl1     |                614 |              619 |              1
  myschema1   | mytbl4     |                614 |              619 |              2
  myschema1   | mytbl1     |                636 |              650 |             20
- myschema1   | mytbl2     |                660 |              663 |              3
  myschema1   | mytbl1     |                660 |              663 |             26
- myschema1   | mytbl4     |                664 |              668 |              3
+ myschema1   | mytbl2     |                660 |              663 |              3
  myschema1   | myTbl3     |                664 |              668 |             20
- myschema1   | mytbl2     |                669 |              676 |              5
- myschema1   | mytbl4     |                669 |              676 |              3
+ myschema1   | mytbl4     |                664 |              668 |              3
  myschema1   | mytbl1     |                669 |              676 |             26
+ myschema1   | mytbl2     |                669 |              676 |              5
  myschema1   | myTbl3     |                669 |              676 |             20
- myschema1   | mytbl4     |                677 |              682 |              3
+ myschema1   | mytbl4     |                669 |              676 |              3
  myschema1   | mytbl1     |                677 |              682 |             22
- myschema1   | mytbl2     |                683 |              686 |              3
+ myschema1   | mytbl4     |                677 |              682 |              3
  myschema1   | mytbl1     |                683 |              686 |             26
+ myschema1   | mytbl2     |                683 |              686 |              3
 (15 rows)
 
 select emaj.emaj_rollback_group('myGroup1','Multi-1');

@@ -6161,7 +6161,7 @@ $_sql_drop_fnct$
 -- This function is called by the emaj_sql_drop_trg event trigger
 -- Unless the 'protect_emaj_objects' parameter is explicitely set to false in emaj_param,
 -- the function blocks any ddl operation that leads to a drop of
---   - an application table or a sequence registered into an E-Maj group
+--   - an application table or a sequence registered into an active (not stopped) E-Maj group
 --   - a log table, a log sequence, a log function or a log trigger
   DECLARE
     v_protect_emaj_objects   BOOLEAN = true;
@@ -6176,55 +6176,61 @@ $_sql_drop_fnct$
     END IF;
 -- scan all dropped objects
     FOR r_dropped IN
-      SELECT object_type, schema_name, object_name, object_identity FROM pg_event_trigger_dropped_objects()
+      SELECT * FROM pg_event_trigger_dropped_objects()
+----      SELECT object_type, schema_name, object_name, object_identity, original FROM pg_event_trigger_dropped_objects()
+---- (original column is not known in pg9.4- versions)
     LOOP
       CASE 
         WHEN r_dropped.object_type = 'table' THEN
 -- the object is a table
---   look at the emaj_relation table to verify that the table being dropped does not belong to any created group
-          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
-            WHERE rel_schema = r_dropped.schema_name AND rel_tblseq = r_dropped.object_name;
+--   look at the emaj_relation table to verify that the table being dropped does not belong to any active (not stopped) group
+          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation, emaj.emaj_group
+            WHERE rel_schema = r_dropped.schema_name AND rel_tblseq = r_dropped.object_name
+              AND group_name = rel_group AND group_is_logging;
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application table "%.%". But it belongs to the tables group "%".',
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application table "%.%". But it belongs to the active tables group "%".',
                             r_dropped.schema_name, r_dropped.object_name, v_groupName;
           END IF;
 --   look at the emaj_relation table to verify that the table being dropped is not a log table
-          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
+          PERFORM 1 FROM emaj.emaj_relation
             WHERE rel_log_schema = r_dropped.schema_name AND rel_log_table = r_dropped.object_name;
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log table "%.%". But the associated application table belongs to the tables group "%".',
-                            r_dropped.schema_name, r_dropped.object_name, v_groupName;
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log table "%.%". But dropping an E-Maj log table is not allowed.',
+                            r_dropped.schema_name, r_dropped.object_name;
           END IF;
         WHEN r_dropped.object_type = 'sequence' THEN
 -- the object is a sequence
---   look at the emaj_relation table to verify that the sequence being dropped does not belong to any created group
-          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
-            WHERE rel_schema = r_dropped.schema_name AND rel_tblseq = r_dropped.object_name;
+--   look at the emaj_relation table to verify that the sequence being dropped does not belong to any active (not stopped) group
+          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation, emaj.emaj_group
+            WHERE rel_schema = r_dropped.schema_name AND rel_tblseq = r_dropped.object_name
+              AND group_name = rel_group AND group_is_logging;
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application sequence "%.%". But it belongs to the tables group "%".',
-                            r_dropped.schema_name, r_dropped.object_name, v_groupName;
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application sequence "%.%". But it belongs to the active tables group "%".', r_dropped.schema_name, r_dropped.object_name, v_groupName;
           END IF;
 --   look at the emaj_relation table to verify that the sequence being dropped is not a log sequence
-          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
+          PERFORM 1 FROM emaj.emaj_relation
             WHERE rel_log_schema = r_dropped.schema_name AND rel_log_sequence = r_dropped.object_name;
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log sequence "%.%". But the associated application table belongs to the tables group "%".',
-                            r_dropped.schema_name, r_dropped.object_name, v_groupName;
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log sequence "%.%". But dropping an E-Maj sequence is not allowed.', r_dropped.schema_name, r_dropped.object_name;
           END IF;
         WHEN r_dropped.object_type = 'function' THEN
 -- the object is a function
 --   look at the emaj_relation table to verify that the function being dropped is not a log function
-          SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
-            WHERE rel_schema = r_dropped.schema_name AND rel_log_function = r_dropped.object_name;
+          PERFORM 1 FROM emaj.emaj_relation
+            WHERE  r_dropped.object_identity = quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_function) || '()';
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log function "%.%".  But the associated application table belongs to the tables group "%".',
-                            r_dropped.schema_name, r_dropped.object_name, v_groupName;
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log function "%". But dropping an E-Maj log function is not allowed.', r_dropped.object_identity;
           END IF;
         WHEN r_dropped.object_type = 'trigger' THEN
 -- the object is a trigger
+--   if postgres version is 9.5+ (to see the 'original' column of the pg_event_trigger_dropped_objects() function), 
 --   look at the trigger name pattern to identify emaj trigger
-          IF r_dropped.object_identity LIKE 'emaj_log_trg%' OR r_dropped.object_identity LIKE 'emaj_trunc_trg%' THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the "%" E-Maj trigger.', r_dropped.object_identity;
+--   and do not raise an exception if the triggers drop is derived from a drop of a table or a function
+          IF emaj._pg_version_num() >= 90500 THEN
+            IF r_dropped.original AND 
+               (r_dropped.object_identity LIKE 'emaj_log_trg%' OR r_dropped.object_identity LIKE 'emaj_trunc_trg%') THEN
+              RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the "%" E-Maj trigger. But dropping an E-Maj trigger is not allowed.', r_dropped.object_identity;
+            END IF;
           END IF;
         ELSE
           CONTINUE;
@@ -6254,7 +6260,7 @@ $_table_rewrite_fnct$
 -- This function is called by the emaj_table_rewrite_trg event trigger
 -- Unless the 'protect_emaj_objects' parameter is explicitely set to false in emaj_param, 
 -- the function blocks any ddl operation that leads to a table rewrite for:
---   - an application table registered into an E-Maj group
+--   - an application table registered into an active (not stopped) E-Maj group
 --   - an E-Maj log table
   DECLARE
     v_protect_emaj_objects   BOOLEAN = true;
@@ -6271,12 +6277,13 @@ $_table_rewrite_fnct$
 -- get the schema and table names of the altered table
     SELECT nspname, relname INTO v_tableSchema, v_tableName FROM pg_catalog.pg_class, pg_catalog.pg_namespace
       WHERE relnamespace = pg_namespace.oid AND pg_class.oid = pg_event_trigger_table_rewrite_oid();
--- look at the emaj_relation table to verify that the table being rewritten does not belong to any created group
-    SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
-      WHERE rel_schema = v_tableSchema AND rel_tblseq = v_tableName;
+-- look at the emaj_relation table to verify that the table being rewritten does not belong to any active (not stopped) group
+    SELECT rel_group INTO v_groupName FROM emaj.emaj_relation, emaj.emaj_group
+      WHERE rel_schema = v_tableSchema AND rel_tblseq = v_tableName
+              AND group_name = rel_group AND group_is_logging;
     IF FOUND THEN
 -- the table is an application table that belongs to a group, so raise an exception
-      RAISE EXCEPTION 'E-Maj event trigger: attempting to change the application table "%.%" structure. But the table belongs to the tables group "%".',
+      RAISE EXCEPTION 'E-Maj event trigger: attempting to change the application table "%.%" structure. But the table belongs to the active tables group "%".',
                       v_tableSchema, v_tableName , v_groupName;
     END IF;
 -- look at the emaj_relation table to verify that the table being rewritten is not a known log table

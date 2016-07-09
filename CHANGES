@@ -20,10 +20,10 @@ Enhancements:
     It also gives information about the amount of log updates that may be 
     deleted.
   - when postgres version allows it, add event triggers to protect 
-    application or E-Maj components against drop or come table structure 
-    changes. 2 new functions, emaj_disable_protection_by_event_triggers() and 
-    emaj_enable_protection_by_event_triggers(), disable and re-enable these 
-    event triggers if needed.
+    application or E-Maj components against drop or some table structure 
+    changes. The new functions emaj_disable_protection_by_event_triggers() 
+    and emaj_enable_protection_by_event_triggers() respectively disable and 
+    re-enable these event triggers if needed.
   - in emaj_start_group() and emaj_start_groups() functions, allow to not 
     supply the mark name parameter. In this case, the default mark name is
     built as START_hh.mm.ss.ms, using the current timestamp. A mark name set 
