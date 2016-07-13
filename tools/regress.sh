@@ -126,7 +126,7 @@ cd $EMAJ_HOME
 
 # update the emaj.control files with the proper emaj version
 echo "Customizing emaj.control files..."
-for dir in $PGDIR91 $PGDIR92 $PGDIR93 $PGDIR94 $PGDIR95 ; do
+for dir in $PGDIR91 $PGDIR92 $PGDIR93 $PGDIR94 $PGDIR95 $PGDIR96 ; do
 	sudo cp sql/emaj.control $dir/share/postgresql/extension/emaj.control
 	sudo sed -ri "s/^#directory\s+= .*$/directory = '\/home\/postgres\/proj\/emaj\/sql\/'/" $dir/share/postgresql/extension/emaj.control
 done

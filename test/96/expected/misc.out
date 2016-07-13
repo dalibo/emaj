@@ -1612,7 +1612,7 @@ select emaj.emaj_disable_protection_by_event_triggers();
 select emaj.emaj_enable_protection_by_event_triggers();
  emaj_enable_protection_by_event_triggers 
 ------------------------------------------
-                                        2
+                                        3
 (1 row)
 
 select emaj.emaj_enable_protection_by_event_triggers();
@@ -1627,49 +1627,64 @@ select emaj.emaj_enable_protection_by_event_triggers();
 begin;
   drop table myschema1.mytbl1 cascade;
 ERROR:  E-Maj event trigger: attempting to drop the application table "myschema1.mytbl1". But it belongs to the active tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._sql_drop_fnct() line 32 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 41 at RAISE
 rollback;
 begin;
   drop sequence myschema2.mySeq1;
 ERROR:  E-Maj event trigger: attempting to drop the application sequence "myschema2.myseq1". But it belongs to the active tables group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._sql_drop_fnct() line 49 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 57 at RAISE
 rollback;
 begin;
   drop schema myschema1 cascade;
-ERROR:  E-Maj event trigger: attempting to drop the application table "myschema1.mytbl2". But it belongs to the active tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._sql_drop_fnct() line 32 at RAISE
+ERROR:  E-Maj event trigger: attempting to drop the application schema "myschema1". But it belongs to the active tables groups "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 26 at RAISE
 rollback;
 -- drop emaj components
 begin;
   drop table "emajC"."myschema1_myTbl3_log";
 ERROR:  E-Maj event trigger: attempting to drop the log table "emajC.myschema1_myTbl3_log". But dropping an E-Maj log table is not allowed.
-CONTEXT:  PL/pgSQL function emaj._sql_drop_fnct() line 39 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 47 at RAISE
 rollback;
 begin;
   drop sequence emaj.myschema1_mytbl1_log_seq;
 ERROR:  E-Maj event trigger: attempting to drop the log sequence "emaj.myschema1_mytbl1_log_seq". But dropping an E-Maj sequence is not allowed.
-CONTEXT:  PL/pgSQL function emaj._sql_drop_fnct() line 55 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 63 at RAISE
 rollback;
 begin;
   drop function "emajC"."myschema1_myTbl3_log_fnct"() cascade;
 ERROR:  E-Maj event trigger: attempting to drop the log function ""emajC"."myschema1_myTbl3_log_fnct"()". But dropping an E-Maj log function is not allowed.
-CONTEXT:  PL/pgSQL function emaj._sql_drop_fnct() line 63 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 71 at RAISE
 rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
 ERROR:  E-Maj event trigger: attempting to drop the "emaj_log_trg on myschema1.mytbl1" E-Maj trigger. But dropping an E-Maj trigger is not allowed.
-CONTEXT:  PL/pgSQL function emaj._sql_drop_fnct() line 73 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 81 at RAISE
+rollback;
+begin;
+  drop schema emaj cascade;
+ERROR:  E-Maj event trigger: attempting to drop the schema "emaj". Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.
+CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 16 at RAISE
+rollback;
+begin;
+  drop schema emajb cascade;
+ERROR:  E-Maj event trigger: attempting to drop the schema "emajb". But dropping an E-Maj schema is not allowed.
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 32 at RAISE
+rollback;
+begin;
+  drop extension emaj cascade;
+ERROR:  E-Maj event trigger: attempting to drop the emaj extension. Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.
+CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 20 at RAISE
 rollback;
 -- change a table structure that leads to a table rewrite
 begin;
   alter table myschema1.mytbl1 add column newcol int default 1;
 ERROR:  E-Maj event trigger: attempting to change the application table "myschema1.mytbl1" structure. But the table belongs to the active tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._table_rewrite_fnct() line 28 at RAISE
+CONTEXT:  PL/pgSQL function _emaj_event_trigger_table_rewrite_fnct() line 20 at RAISE
 rollback;
 begin;
   alter table emaj.myschema1_mytbl1_log add column newcol int default 1;
 ERROR:  E-Maj event trigger: attempting to change the log table "emaj.myschema1_mytbl1_log" structure. But the table belongs to the tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._table_rewrite_fnct() line 36 at RAISE
+CONTEXT:  PL/pgSQL function _emaj_event_trigger_table_rewrite_fnct() line 28 at RAISE
 rollback;
 -- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
 begin;
@@ -1783,7 +1798,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     5129 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering        | postgres
     5130 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 100 generated statements                                                                                           | postgres
     5189 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |                   | <none>                                                                                                             | postgres
-    5190 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | emaj_sql_drop_trg, emaj_table_rewrite_trg                                                                          | postgres
+    5190 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                                     | postgres
     5191 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
 (79 rows)
 

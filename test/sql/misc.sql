@@ -706,6 +706,15 @@ rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
 rollback;
+begin;
+  drop schema emaj cascade;
+rollback;
+begin;
+  drop schema emajb cascade;
+rollback;
+begin;
+  drop extension emaj cascade;
+rollback;
 -- change a table structure that leads to a table rewrite
 begin;
   alter table myschema1.mytbl1 add column newcol int default 1;

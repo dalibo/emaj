@@ -1,3 +1,4 @@
+-- emaj_uninstall.sql
 --
 -- E-MAJ uninstall script : Version <NEXT_VERSION>
 -- 
@@ -12,11 +13,9 @@
 
 \set ON_ERROR_STOP ON
 \set ECHO none
---\set QUIET ON
-SET client_min_messages TO WARNING;
-\echo 'E-maj objects deletion...'
+\echo '>>> Starting E-Maj uninstallation procedure...'
 
-BEGIN TRANSACTION;
+SET client_min_messages TO WARNING;
 
 -- A single DO procedure performs the operation
 
@@ -57,13 +56,6 @@ $emaj_uninstall$
       RAISE EXCEPTION 'emaj_uninstall: The schema ''emaj'' doesn''t exist';
     END IF;
 --
--- Check there are no remaining emaj group in LOGGING state
--- This check is performed just to be sure that the script is not called at the bad moment
-    SELECT string_agg(group_name, ', ') INTO v_nonIdleGroupList FROM emaj.emaj_group WHERE group_is_logging;
-    IF v_nonIdleGroupList IS NOT NULL THEN
-      RAISE EXCEPTION 'emaj_uninstall: There are remaining active groups (not in IDLE state): %. Stop them before restarting the uninstall script',v_nonIdleGroupList;
-    END IF;
---
 -- Check that no E-Maj schema contain any non E-Maj object
     v_nbObject = 0;
     FOR r_object IN 
@@ -93,11 +85,14 @@ $emaj_uninstall$
 -- Drop all created groups, bypassing potential errors, to remove all components not directly linked to the EXTENSION
     PERFORM emaj.emaj_force_drop_group(group_name) FROM emaj.emaj_group;
 --
--- Finaly drop the emaj extension
+-- Drop the emaj extension
     DROP EXTENSION emaj;
 --
--- and drop the primary schema.
+-- Drop the primary schema.
     DROP SCHEMA IF EXISTS emaj CASCADE;
+--
+-- Drop the event trigger that is external to the extension, and its function
+    DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
 --
 -- Also revoke grants given on postgres function to both emaj roles
     REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_viewer;
@@ -206,8 +201,6 @@ $emaj_uninstall$
     RETURN;
   END;
 $emaj_uninstall$;
-
-COMMIT;
 
 SET client_min_messages TO default;
 \echo '>>> E-maj successfully uninstalled'

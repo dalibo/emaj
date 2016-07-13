@@ -6148,39 +6148,98 @@ $$Verifies the consistency between existing E-Maj and application objects.$$;
 -- If E-Maj has been installed with older postgres versions, and this version has then been upgraded, the
 -- set_event_triggers_protection.sql script can be used to add the missing components.
 
-DO $$
+DO
+$do$
 BEGIN
 
 -- beginning of 9.3+ specific code
 IF emaj._pg_version_num() >= 90300 THEN
 -- sql_drop event trigger are only possible with postgres 9.3+
 
-CREATE OR REPLACE FUNCTION emaj._sql_drop_fnct()
+CREATE OR REPLACE FUNCTION public._emaj_protection_event_trigger_fnct()
  RETURNS event_trigger LANGUAGE plpgsql AS
-$_sql_drop_fnct$
--- This function is called by the emaj_sql_drop_trg event trigger
--- Unless the 'protect_emaj_objects' parameter is explicitely set to false in emaj_param,
--- the function blocks any ddl operation that leads to a drop of
---   - an application table or a sequence registered into an active (not stopped) E-Maj group
---   - a log table, a log sequence, a log function or a log trigger
+$_emaj_protection_event_trigger_fnct$
+-- This function is called by the emaj_protection_trg event trigger
+-- The function only blocks any attempt to drop the emaj schema or the emaj extension
+-- It is located into the public schema to be able to detect the emaj schema removal attempt
+-- It is also unlinked from the emaj extension to be able to detest the emaj extension removal attempt
+-- Another pair of function and event trigger handles all other drop attempts
   DECLARE
-    v_protect_emaj_objects   BOOLEAN = true;
+    r_dropped                RECORD;
+  BEGIN
+-- scan all dropped objects
+    FOR r_dropped IN
+      SELECT object_type, object_name FROM pg_event_trigger_dropped_objects()
+    LOOP
+      IF r_dropped.object_type = 'schema' AND r_dropped.object_name = 'emaj' THEN
+-- detecting an attempt to drop the emaj object
+        RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the schema "emaj". Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.';
+      END IF;
+      IF r_dropped.object_type = 'extension' AND r_dropped.object_name = 'emaj' THEN
+-- detecting an attempt to drop the emaj extension
+        RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the emaj extension. Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.';
+      END IF;
+    END LOOP;
+  END;
+$_emaj_protection_event_trigger_fnct$;
+COMMENT ON FUNCTION public._emaj_protection_event_trigger_fnct() IS
+$$E-Maj extension: support of the emaj_protection_trg event trigger.$$;
+
+-- all commands involving an event trigger is submitted by an EXECUTE instruction
+-- this is needed for compatibility with pre 9.3 postgres version that do not know event triggers
+EXECUTE '
+DROP EVENT TRIGGER IF EXISTS emaj_protection_trg;
+CREATE EVENT TRIGGER emaj_protection_trg
+  ON sql_drop
+  WHEN TAG IN (''DROP EXTENSION'',''DROP SCHEMA'')
+  EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
+';
+EXECUTE '
+COMMENT ON EVENT TRIGGER emaj_protection_trg IS
+$$Blocks the removal of the emaj extension or schema.$$;
+';
+
+-- remove both event trigger components from the extension, so that they can fire the "DROP EXTENSION emaj"
+ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
+EXECUTE '
+ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
+';
+
+CREATE OR REPLACE FUNCTION emaj._event_trigger_sql_drop_fnct()
+ RETURNS event_trigger LANGUAGE plpgsql AS
+$_event_trigger_sql_drop_fnct$
+-- This function is called by the emaj_sql_drop_trg event trigger
+-- The function blocks any ddl operation that leads to a drop of
+--   - an application table or a sequence registered into an active (not stopped) E-Maj group, or a schema containing such tables/sequence
+--   - an E-Maj schema, a log table, a log sequence, a log function or a log trigger
+-- The drop of emaj schema or extension is managed by another event trigger
+  DECLARE
     v_groupName              TEXT;
     r_dropped                RECORD;
   BEGIN
--- get the 'protect_emaj_objects' parameter from emaj_param. If it doesn't exist, keep it as true
-    SELECT param_value_boolean FROM emaj.emaj_param WHERE param_key = 'protect_emaj_objects' INTO v_protect_emaj_objects;
--- if protect_emaj_objects is false, exit immediately
-    IF NOT v_protect_emaj_objects THEN 
-      RETURN;
-    END IF;
 -- scan all dropped objects
     FOR r_dropped IN
       SELECT * FROM pg_event_trigger_dropped_objects()
-----      SELECT object_type, schema_name, object_name, object_identity, original FROM pg_event_trigger_dropped_objects()
----- (original column is not known in pg9.4- versions)
+-- TODO: when postgres 9.4 will not be supported any more, replace the statement by:
+--      SELECT object_type, schema_name, object_name, object_identity, original FROM pg_event_trigger_dropped_objects()
+-- (the 'original' column is not known in pg9.4- versions)
     LOOP
-      CASE 
+      CASE
+        WHEN r_dropped.object_type = 'schema' THEN
+-- the object is a schema
+--   look at the emaj_relation table to verify that the schema being dropped does not belong to any active (not stopped) group
+          SELECT string_agg(DISTINCT rel_group, ', ') INTO v_groupName FROM emaj.emaj_relation, emaj.emaj_group
+            WHERE rel_schema = r_dropped.object_name
+              AND group_name = rel_group AND group_is_logging;
+          IF v_groupName IS NOT NULL THEN
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application schema "%". But it belongs to the active tables groups "%".', r_dropped.object_name, v_groupName;
+          END IF;
+--   look at the emaj_relation table to verify that the schema being dropped is not an E-Maj schema containing log tables
+          PERFORM 1 FROM emaj.emaj_relation
+            WHERE rel_log_schema = r_dropped.object_name;
+          IF FOUND THEN
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the schema "%". But dropping an E-Maj schema is not allowed.', r_dropped.object_name;
+          END IF;
         WHEN r_dropped.object_type = 'table' THEN
 -- the object is a table
 --   look at the emaj_relation table to verify that the table being dropped does not belong to any active (not stopped) group
@@ -6188,8 +6247,7 @@ $_sql_drop_fnct$
             WHERE rel_schema = r_dropped.schema_name AND rel_tblseq = r_dropped.object_name
               AND group_name = rel_group AND group_is_logging;
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application table "%.%". But it belongs to the active tables group "%".',
-                            r_dropped.schema_name, r_dropped.object_name, v_groupName;
+            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application table "%.%". But it belongs to the active tables group "%".', r_dropped.schema_name, r_dropped.object_name, v_groupName;
           END IF;
 --   look at the emaj_relation table to verify that the table being dropped is not a log table
           PERFORM 1 FROM emaj.emaj_relation
@@ -6223,11 +6281,11 @@ $_sql_drop_fnct$
           END IF;
         WHEN r_dropped.object_type = 'trigger' THEN
 -- the object is a trigger
---   if postgres version is 9.5+ (to see the 'original' column of the pg_event_trigger_dropped_objects() function), 
+--   if postgres version is 9.5+ (to see the 'original' column of the pg_event_trigger_dropped_objects() function),
 --   look at the trigger name pattern to identify emaj trigger
 --   and do not raise an exception if the triggers drop is derived from a drop of a table or a function
           IF emaj._pg_version_num() >= 90500 THEN
-            IF r_dropped.original AND 
+            IF r_dropped.original AND
                (r_dropped.object_identity LIKE 'emaj_log_trg%' OR r_dropped.object_identity LIKE 'emaj_trunc_trg%') THEN
               RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the "%" E-Maj trigger. But dropping an E-Maj trigger is not allowed.', r_dropped.object_identity;
             END IF;
@@ -6237,43 +6295,42 @@ $_sql_drop_fnct$
       END CASE;
     END LOOP;
   END;
-$_sql_drop_fnct$;
+$_event_trigger_sql_drop_fnct$;
+
+COMMENT ON FUNCTION emaj._event_trigger_sql_drop_fnct() IS
+$$E-Maj extension: support of the emaj_sql_drop_trg event trigger.$$;
 
 EXECUTE '
 DROP EVENT TRIGGER IF EXISTS emaj_sql_drop_trg;
 CREATE EVENT TRIGGER emaj_sql_drop_trg
   ON sql_drop
   WHEN TAG IN (''DROP FUNCTION'',''DROP SCHEMA'',''DROP SEQUENCE'',''DROP TABLE'',''DROP TRIGGER'')
-  EXECUTE PROCEDURE emaj._sql_drop_fnct();
+  EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
+';
+EXECUTE '
+COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
+$$Controls the removal of E-Maj components.$$;
 ';
 
 -- end of 9.3+ specific code
 END IF;
--- beginning of 9.5+ specific code
 
+-- beginning of 9.5+ specific code
 IF emaj._pg_version_num() >= 90500 THEN
 -- table_rewrite event trigger are only possible with postgres 9.5+
 
-CREATE OR REPLACE FUNCTION emaj._table_rewrite_fnct()
+CREATE OR REPLACE FUNCTION public._emaj_event_trigger_table_rewrite_fnct()
  RETURNS event_trigger LANGUAGE plpgsql AS
-$_table_rewrite_fnct$
+$_emaj_event_trigger_table_rewrite_fnct$
 -- This function is called by the emaj_table_rewrite_trg event trigger
--- Unless the 'protect_emaj_objects' parameter is explicitely set to false in emaj_param, 
--- the function blocks any ddl operation that leads to a table rewrite for:
+-- The function blocks any ddl operation that leads to a table rewrite for:
 --   - an application table registered into an active (not stopped) E-Maj group
 --   - an E-Maj log table
   DECLARE
-    v_protect_emaj_objects   BOOLEAN = true;
     v_tableSchema            TEXT;
     v_tableName              TEXT;
     v_groupName              TEXT;
   BEGIN
--- get the 'protect_emaj_objects' parameter from emaj_param. If it doesn't exist, keep it as true
-    SELECT param_value_boolean FROM emaj.emaj_param WHERE param_key = 'protect_emaj_objects' INTO v_protect_emaj_objects;
--- if protect_emaj_objects is false, exit immediately
-    IF NOT v_protect_emaj_objects THEN 
-      RETURN;
-    END IF;
 -- get the schema and table names of the altered table
     SELECT nspname, relname INTO v_tableSchema, v_tableName FROM pg_catalog.pg_class, pg_catalog.pg_namespace
       WHERE relnamespace = pg_namespace.oid AND pg_class.oid = pg_event_trigger_table_rewrite_oid();
@@ -6295,18 +6352,25 @@ $_table_rewrite_fnct$
                       v_tableSchema, v_tableName , v_groupName;
     END IF;
   END;
-$_table_rewrite_fnct$;
+$_emaj_event_trigger_table_rewrite_fnct$;
+
+COMMENT ON FUNCTION public._emaj_event_trigger_table_rewrite_fnct() IS
+$$E-Maj extension: support of the emaj_table_rewrite_trg event trigger.$$;
 
 EXECUTE '
 DROP EVENT TRIGGER IF EXISTS emaj_table_rewrite_trg;
 CREATE EVENT TRIGGER emaj_table_rewrite_trg
   ON table_rewrite
-  EXECUTE PROCEDURE emaj._table_rewrite_fnct();
+  EXECUTE PROCEDURE public._emaj_event_trigger_table_rewrite_fnct();
+';
+EXECUTE '
+COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
+$$Controls some changes in E-Maj tables structure.$$;
 ';
 
 -- end of 9.5+ specific code
 END IF;
-END $$;
+END $do$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_disable_protection_by_event_triggers()
  RETURNS INT LANGUAGE plpgsql AS
@@ -6371,7 +6435,7 @@ $_disable_event_triggers$
     v_event_trigger          TEXT;
     v_event_trigger_array    TEXT[] = ARRAY[]::TEXT[];
   BEGIN
-    IF emaj._pg_version_num() >= 90300 THEN 
+    IF emaj._pg_version_num() >= 90300 THEN
 -- build the event trigger names array from the pg_event_trigger table
 -- (pg_event_trigger table doesn't exists in 9.2- postgres versions)
       SELECT coalesce(array_agg(evtname),ARRAY[]::TEXT[]) INTO v_event_trigger_array
