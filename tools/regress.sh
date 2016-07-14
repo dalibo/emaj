@@ -132,8 +132,8 @@ for dir in $PGDIR91 $PGDIR92 $PGDIR93 $PGDIR94 $PGDIR95 $PGDIR96 ; do
 done
 
 # refresh both installation scripts before running tests
-echo " "
-perl ${EMAJ_HOME}/tools/gen_emaj.pl
+#echo " "
+#perl ${EMAJ_HOME}/tools/gen_emaj.pl
 
 # choose a test
 echo " "
