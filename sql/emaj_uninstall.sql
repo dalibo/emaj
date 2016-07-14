@@ -75,11 +75,17 @@ $emaj_uninstall$
 -- Disable event triggers that would block the DROP EXTENSION command
     PERFORM emaj.emaj_disable_protection_by_event_triggers();
 --
--- If the emaj_demo_cleanup function exists (created by the demo script), execute it
+-- If the emaj_demo_cleanup function exists (created by the emaj_demo.sql script), execute it
     PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
       WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_demo_cleanup';
     IF FOUND THEN
       PERFORM emaj.emaj_demo_cleanup();
+    END IF;
+-- If the emaj_parallel_rollback_test_cleanup function exists (created by the emaj_prepare_parallel_rollback_test.sql script), execute it
+    PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
+      WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_parallel_rollback_test_cleanup';
+    IF FOUND THEN
+      PERFORM emaj.emaj_parallel_rollback_test_cleanup();
     END IF;
 --
 -- Drop all created groups, bypassing potential errors, to remove all components not directly linked to the EXTENSION
@@ -99,18 +105,6 @@ $emaj_uninstall$
     REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_viewer;
     REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_adm;
     REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_adm;
---
--- Check if the schema 'myschema' used by test scripts exists
-    PERFORM 1 FROM pg_namespace WHERE nspname = 'myschema';
-    IF FOUND THEN
-      RAISE WARNING 'emaj_uninstall: A schema myschema exists on the database. It may have been created by an emaj test script. You can drop it if you wish using a "DROP SCHEMA myschema CASCADE;" statement.';
-    END IF;
---
--- Check if the role 'myuser' used by test scripts exists
-    PERFORM 1 FROM pg_roles WHERE rolname = 'myuser';
-    IF FOUND THEN
-      RAISE WARNING 'emaj_uninstall: A role myuser exists on the cluster. It may have been created by an emaj test script. You can drop it if you wish using a "DROP ROLE myuser;" statement.';
-    END IF;
 --
 -- Does tablespace tspemaj exist ? If yes, return a hint about its drop
     SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj') INTO v_existTspemaj;
