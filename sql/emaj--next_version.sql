@@ -6,12 +6,10 @@
 -- This script is automatically called by a "CREATE EXTENSION emaj;" statement in postgres 9.1+.
 --
 -- This script must be executed by a role having SUPERUSER privileges.
--- Before its execution:
---   -> the concerned cluster may contain a tablespace named "tspemaj" to hold E-Maj files,
---      for instance previously created by
---      CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
---   -> the plpgsql language must have been created in the concerned database,
--- It is also advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring capabilities.
+-- The current cluster may already contain a tablespace named "tspemaj" to hold E-Maj files,
+--   for instance previously created by a statement like:
+--   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
+-- The emaj extension also installs the dblink extension into the database if it is not already installed.
 
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
@@ -28,9 +26,8 @@ $tmp$
       RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
     END IF;
 -- check postgres version is >= 9.1
-    IF cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
-            to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER) < 901 THEN
-      RAISE EXCEPTION 'E-Maj installation: the current postgres version is too old for E-Maj.';
+    IF current_setting('server_version_num')::int < 90100 THEN
+      RAISE EXCEPTION 'E-Maj installation: the current postgres version (%) is too old for E-Maj.', current_setting('server_version');
     END IF;
 -- create emaj roles (NOLOGIN), if they do not exist
 -- does 'emaj_adm' already exist ?
@@ -6523,18 +6520,13 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
        );
 
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
--- and display a message about dblink installation
 DO LANGUAGE plpgsql
 $tmp$
   DECLARE
-    v_mpt                    INTEGER;
-    v_schemaList             TEXT;
-    r_sch                    RECORD;
   BEGIN
 -- check the max_prepared_transactions GUC value
-    SELECT setting INTO v_mpt FROM pg_catalog.pg_settings WHERE name = 'max_prepared_transactions';
-    IF v_mpt <= 1 THEN
-      RAISE WARNING 'E-Maj installation: as the max_prepared_transactions parameter is set to "%" on this cluster, no parallel rollback is possible.',v_mpt;
+    IF current_setting('max_prepared_transactions')::int <= 1 THEN
+      RAISE WARNING 'E-Maj installation: as the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback is possible.', current_setting('max_prepared_transactions');
     END IF;
     RETURN;
   END;
