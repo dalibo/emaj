@@ -52,6 +52,10 @@ $do$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj parallel rollback test setup: the "dblink_user_password" parameter is unknown in emaj_param';
     END IF;
+-- check the max_prepared_transactions GUC value
+    IF current_setting('max_prepared_transactions')::int <= 1 THEN
+      RAISE EXCEPTION 'E-Maj parallel rollback test setup: the "max_prepared_transactions" parameter value (%) on this cluster is too low to let parallel rollbacks work.',current_setting('max_prepared_transactions');
+    END IF;
 -- if the emaj_parallel_rollback_test_cleanup function exists (created by a previous run of this script), execute it
     PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
       WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_parallel_rollback_test_cleanup';
