@@ -1,4 +1,4 @@
--- demo.sql : Version <NEXT_VERSION>
+-- emaj_demo.sql : Version <NEXT_VERSION>
 --
 -- This test script must be executed with a superuser role.
 -- E-Maj extension must have been previously installed.
@@ -10,7 +10,7 @@
 
 \echo '###########################################################################'
 \echo '###                                                                     ###'
-\echo '###                          EMAJ Demo start                            ###'
+\echo '###                          E-Maj Demo start                           ###'
 \echo '###                                                                     ###'
 \echo '###########################################################################'
 
@@ -19,9 +19,8 @@
 SET client_min_messages TO WARNING;
 
 \echo '### Check the E-Maj environment.'
-CREATE or REPLACE FUNCTION public.emaj_demo_tmp()
-RETURNS TEXT LANGUAGE plpgsql AS
-$tmp$
+DO LANGUAGE plpgsql
+$do$
   DECLARE
     v_msg          TEXT;
   BEGIN
@@ -30,26 +29,19 @@ $tmp$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj demo: the current user (%) is not a superuser.', current_user;
     END IF;
--- check E-Maj is installed, by checking that the emaj schema exists
-    PERFORM 1 FROM pg_namespace WHERE nspname = 'emaj';
+-- check E-Maj is installed as an extension
+    PERFORM 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj';
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj demo: the schema ''emaj'' doesn''t exist. Is E-Maj really installed ?';
+      RAISE EXCEPTION 'E-Maj demo: E-Maj is not installed, or is not installed as an EXTENSION';
     END IF;
--- get the installed emaj version 
-    SELECT 'E-Maj version ' || param_value_text || ' found into this database' INTO v_msg 
-      FROM emaj.emaj_param WHERE param_key = 'emaj_version';
--- if the emaj_demo_cleanup function exists (created by a previous run of the demo script), execute it 
+-- if the emaj_demo_cleanup function exists (created by a previous run of the demo script), execute it
     PERFORM 0 FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
       WHERE pronamespace = pg_namespace.oid AND nspname = 'emaj' AND proname = 'emaj_demo_cleanup';
     IF FOUND THEN
       PERFORM emaj.emaj_demo_cleanup();
     END IF;
--- the function drops itself before exiting
-    DROP FUNCTION public.emaj_demo_tmp();
-    RETURN v_msg;
   END;
-$tmp$;
-SELECT public.emaj_demo_tmp();
+$do$;
 
 \echo '### Create the emaj.emaj_demo_cleanup() function to use later in order to remove objects created by this script.'
 CREATE or REPLACE FUNCTION emaj.emaj_demo_cleanup()
@@ -73,6 +65,9 @@ $emaj_demo_cleanup$
 $emaj_demo_cleanup$;
 
 \set ECHO queries
+
+\echo '### Get the E-Maj version installed in the current database.'
+SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 
 \echo '###########################################################################'
 \echo '###                                                                     ###'
@@ -120,7 +115,7 @@ CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
 \echo '###########################################################################'
 \echo '###                                                                     ###'
 \echo '###  Now let us define and create 2 rollbackable groups                 ###'
-\echo '###  "maj demo group 1" and "maj demo group 2".                         ###'
+\echo '###  "emaj demo group 1" and "emaj demo group 2".                       ###'
 \echo '###                                                                     ###'
 \echo '###########################################################################'
 
@@ -141,7 +136,7 @@ select emaj.emaj_create_group('emaj demo group 2',true);
 \echo '### Set a comment for the first table group.'
 select emaj.emaj_comment_group('emaj demo group 1','This group has no sequence');
 
-\echo '### Look at our groups in the internal emaj_group table (They should be IDLE state).'
+\echo '### Look at our groups in the internal emaj_group table (They are currently not logging).'
 select * from emaj.emaj_group where group_name in ('emaj demo group 1','emaj demo group 2');
 
 \echo '### Look at the content of the emaj_demo schema containing our log tables.'
@@ -217,7 +212,7 @@ select emaj.emaj_set_mark_group('emaj demo group 1','MARK3');
 update myTbl4 set col43 = NULL where col41 between 5 and 10;
 update myTbl2 set col23 = col23 + '1 YEAR'::interval;
 
-\echo '### Look at the known marks for our group 1 (there should be 3 active marks).'
+\echo '### Look at the known marks for our group 1 (there should be 3 undeleted marks).'
 select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
 
 \echo '### Count the total number of logged updates.'
@@ -235,12 +230,12 @@ select emaj.emaj_rollback_group('emaj demo group 1','MARK2');
 \echo '### Look at the known marks for our group 1. MARK 3 has disappeared.'
 select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
 
-\echo '### Count the total number of logged updates. 20 have been rollbacked'
+\echo '### Count the total number of logged updates. 20 - among the 23 - have been rollbacked'
 select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1',NULL,NULL);
 
 \echo '###########################################################################'
 \echo '###                                                                     ###'
-\echo '###  Let us chain again some updates and set mark.                      ###'
+\echo '###  Let us chain again some updates and set marks.                     ###'
 \echo '###                                                                     ###'
 \echo '###########################################################################'
 
@@ -269,15 +264,15 @@ select emaj.emaj_set_mark_group('emaj demo group 1','MARK5');
 select * from myTbl2 where col23 < current_date;
 select * from myTbl4 where col43 is NULL;
 
-\echo '### (unlogged) rollback to MARK2.'
+\echo '### Perform a logged rollback to MARK2.'
 select emaj.emaj_logged_rollback_group('emaj demo group 1','MARK4');
 
 \echo '### Check the resulting tables content.'
 select * from myTbl2 where col23 < current_date;
 select * from myTbl4 where col43 is NULL;
 
-\echo '### Latests updates have been canceled. But old MARK4 is still. 2 new marks frame the rollback operation.'
-select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
+\echo '### Latests updates have been canceled. But the old MARK4 still exists. And 2 new marks frame the rollback operation.'
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_id;
 \echo '### And the rollback operation has been logged.'
 select * from emaj_demo.emaj_demo_app_schema_mytbl4_log;
 
@@ -292,10 +287,10 @@ select emaj.emaj_delete_mark_group('emaj demo group 1',emaj.emaj_get_previous_ma
 
 \echo '### Rename and comment the mark corresponding to the logged rollback stop (RLBK_MARK4_<time>_STOP).'
 select emaj.emaj_rename_mark_group('emaj demo group 1','EMAJ_LAST_MARK','End of rollback');
-select emaj.emaj_comment_mark_group('emaj demo group 1','End of rollback','This mark correspond to the end of the logged rollback');
+select emaj.emaj_comment_mark_group('emaj demo group 1','End of rollback','This mark corresponds to the end of the logged rollback');
 
 \echo '### Look at the result in the emaj_group table.'
-select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_id;
 
 \echo '### Find the name of the mark set 1 micro-second ago.'
 select emaj.emaj_get_previous_mark_group('emaj demo group 1',current_timestamp - '1 microsecond'::interval);
@@ -309,8 +304,8 @@ select emaj.emaj_get_previous_mark_group('emaj demo group 1',current_timestamp -
 \echo '### (unlogged) rollback to MARK5.'
 select emaj.emaj_rollback_group('emaj demo group 1','MARK5');
 
-\echo '### ... and look at the result in the emaj_group table.'
-select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
+\echo '### ... and look at the result in the emaj_mark table.'
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_id;
 
 \echo '###########################################################################'
 \echo '###                                                                     ###'
@@ -361,7 +356,7 @@ select * from emaj_demo_app_schema.mySeq1;
 \echo '###########################################################################'
 
 \echo '### Look at the emaj_group table.'
-select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2');
+select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2') order by mark_id;
 
 \unset ON_ERROR_STOP
 
@@ -391,9 +386,9 @@ select * from emaj_demo.emaj_demo_app_schema_mytbl4_log;
 \echo '### Purge the obsolete log.'
 select emaj.emaj_delete_before_mark_group('emaj demo group 1','MARK5');
 
-\echo '### Look at the result in the log table and in the emaj_group table.'
+\echo '### Look at the result in the log table and in the emaj_mark table.'
 select * from emaj_demo.emaj_demo_app_schema_mytbl4_log;
-select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_id;
 
 \echo '###########################################################################'
 \echo '###                                                                     ###'
@@ -408,7 +403,7 @@ select emaj.emaj_stop_group('emaj demo group 1');
 select emaj.emaj_stop_group('emaj demo group 2','Our own stop mark for the second group');
 
 \echo '### The marks are still there but are logically deleted.'
-select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2');
+select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2') order by mark_id;
 
 \echo '### The log rows are still there too, but are not usable for any rollback.'
 select * from emaj_demo."emaj_demo_app_schema_myTbl3_log";
