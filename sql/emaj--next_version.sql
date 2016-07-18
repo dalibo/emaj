@@ -17,7 +17,7 @@ $$Contains all E-Maj related objects.$$;
 -- create emaj roles
 -- and set tspemaj as current_tablespace if exists
 DO LANGUAGE plpgsql
-$tmp$
+$do$
   DECLARE
   BEGIN
 -- check the current role is a superuser
@@ -57,7 +57,7 @@ $tmp$
 --
     RETURN;
   END;
-$tmp$;
+$do$;
 
 ------------------------------------------------
 --                                            --
@@ -6521,7 +6521,7 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
 
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 DO LANGUAGE plpgsql
-$tmp$
+$do$
   DECLARE
   BEGIN
 -- check the max_prepared_transactions GUC value
@@ -6530,4 +6530,4 @@ $tmp$
     END IF;
     RETURN;
   END;
-$tmp$;
+$do$;

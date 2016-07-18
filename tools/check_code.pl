@@ -59,11 +59,11 @@ use warnings; use strict;
     }
 
 # pattern detection
-    # Beginning of the CREATE FUNCTION sql verb
+    # Beginning of a CREATE FUNCTION sql verb
     if ($line =~ /^CREATE OR REPLACE FUNCTION\s+(.*?)\.(.*?)\(/) {
       $schema = $1; $fnctName = $2;
       if ($status != 0) {
-        die "ERROR : the function $fnctName start but the end of the preceeding one has not been detected\n";
+        die "ERROR : the function $fnctName starts but the end of the preceeding function or DO block one has not been detected\n";
       }
       $status = 1;
       $language = '';
@@ -71,12 +71,25 @@ use warnings; use strict;
       $procedure = '';
 #print("$schema . $fnctName\n");
     }
+    # Beginning of a DO sql verb
+    if ($line =~ /^DO /) {
+      $schema = //; $fnctName = 'do';
+      if ($status != 0) {
+        die "ERROR : the DO block starts but the end of the preceeding function of DO block one has not been detected\n";
+      }
+      $status = 1;
+      $language = 'plpgsql';
+      @varNames = ();
+      $procedure = '';
+print("$schema . $fnctName\n");
+    }
+
     # Language definition 
     if ($status == 1 && $line =~ /LANGUAGE\s+(.*?)\s+/) {
       $language = $1;
 #print("    language: $language\n");
     }
-    # Pattern $...$ that starts the function body definition
+    # Pattern $...$ that starts the function or DO block body definition
     if ($status == 1 && $line =~ /^\$(.*)\$(.*)/) {
       $startFnctMark = $1;
       $status = 2;
