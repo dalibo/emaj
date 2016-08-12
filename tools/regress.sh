@@ -29,8 +29,8 @@ PGDIR95="/usr/local/pg952"
 PGREG95="/home/postgres/postgresql-9.5.2/src/test/regress"
 
 PGPORT96="5496"
-PGDIR96="/usr/local/pg96beta2"
-PGREG96="/home/postgres/postgresql-9.6beta2/src/test/regress"
+PGDIR96="/usr/local/pg96beta3"
+PGREG96="/home/postgres/postgresql-9.6beta3/src/test/regress"
 
 #---------------------------------------------#
 #            Functions definition             #
@@ -184,26 +184,23 @@ case $ANSWER in
 		migrat_test "95" "91"
 		;;
 	u) pg_upgrade_test "91" "95" "db95b";;
-	x) reg_test_version "91" "psql";;
-	A) reg_test_version "91" "psql_mig";;
-#	A) reg_test_version "91" "ext_mig";;
-	B) reg_test_version "92" "psql_mig";;
-	C) reg_test_version "93" "psql_mig";;
-	D) reg_test_version "94" "psql_mig";;
-	E) reg_test_version "95" "psql_mig";;
-	F) reg_test_version "96" "psql_mig";;
+	A) reg_test_version "91" "ext_mig";;
+	B) reg_test_version "92" "ext_mig";;
+	C) reg_test_version "93" "ext_mig";;
+	D) reg_test_version "94" "ext_mig";;
+	E) reg_test_version "95" "ext_mig";;
+	F) reg_test_version "96" "ext_mig";;
 	T)
-		reg_test_version "91" "psql_mig"
-		reg_test_version "92" "psql_mig"
-		reg_test_version "93" "psql_mig"
-		reg_test_version "94" "psql_mig"
-		reg_test_version "95" "psql_mig"
-		reg_test_version "96" "psql_mig"
+		reg_test_version "91" "ext_mig"
+		reg_test_version "92" "ext_mig"
+		reg_test_version "93" "ext_mig"
+		reg_test_version "94" "ext_mig"
+		reg_test_version "95" "ext_mig"
+		reg_test_version "96" "ext_mig"
 		;;
-	V|v) reg_test_version "91" "psql_mx_mig";;
-#	V|v) reg_test_version "91" "ext_mx_mig";;
-	W|w) reg_test_version "93" "psql_mx_mig";;
-	X|x) reg_test_version "95" "psql_mx_mig";;
+	V|v) reg_test_version "91" "ext_mx_mig";;
+	W|w) reg_test_version "93" "ext_mx_mig";;
+	X|x) reg_test_version "95" "ext_mx_mig";;
 	*) echo "Bad answer..." && exit 2 ;;
 esac
 

@@ -1,18 +1,40 @@
--- instExtPrev.sql : install previous version of E-Maj as an extension (for postgres version 9.1+)
+-- instExtPrev.sql : install previous version of E-Maj as an extension
 --
+------------------------------------------------------------
+-- install dblink
+------------------------------------------------------------
+CREATE EXTENSION dblink;
+
 -----------------------------
--- emaj installation in 0.10.1
+-- for postgres cluster 9.1 and 9.4, temporarily rename tspemaj tablespace to test both cases
 -----------------------------
-\! cp /usr/local/pg912/share/postgresql/extension/emaj.control.0.10.1 /usr/local/pg912/share/postgresql/extension/emaj.control
+DO LANGUAGE plpgsql 
+$$
+  DECLARE
+  BEGIN
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('9.1', '9.4') THEN
+      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
+    END IF;
+  END;
+$$;
+
+------------------------------------------------------------
+-- emaj installation in 1.3.0 (with the psql script)
+------------------------------------------------------------
+\i ../../../emaj-1.3.0/sql/emaj.sql
+
+------------------------------------------------------------
+-- transform emaj 1.3.0 into extension
+------------------------------------------------------------
 
 -- check the extension is available
 select * from pg_available_extension_versions where name = 'emaj';
 
-CREATE EXTENSION emaj;
+CREATE EXTENSION emaj VERSION "1.3.0" FROM "unpackaged";
 
------------------------------
+------------------------------------------------------------
 -- check installation
------------------------------
+------------------------------------------------------------
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
 

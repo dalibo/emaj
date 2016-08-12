@@ -120,7 +120,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 
 -- check old events are deleted
 select hist_function, hist_event, hist_object, 
-  case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'16(1|2)','<161|162>')
+  case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'14(4|6)','<144|146>')
     else regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g') end,
   hist_user from emaj.emaj_hist order by hist_id;
 delete from emaj.emaj_param where param_key = 'history_retention';
@@ -318,7 +318,7 @@ select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where grou
 
 -- test end: (groups are stopped) reset history and force sequences id
 select hist_id, hist_function, hist_event, hist_object, 
-  case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'16(1|2)','<161|162>')
+  case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'14(4|6)','<144|146>')
     else regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g') end,
   hist_user from emaj.emaj_hist order by hist_id;
 truncate emaj.emaj_hist;

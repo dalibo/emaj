@@ -47,7 +47,7 @@ select emaj.emaj_start_group('myGroup2','M1');
 select emaj.emaj_start_group('phil''s group#3",','M1');
 
 -----------------------------
--- Step 1 : for myGroup1, update tables and set 2 marks
+-- Step 1 : for myGroup1, update tables, set 2 marks, perform 2 unlogged rollbacks and protect the group and its last mark
 -----------------------------
 -- 
 set search_path=myschema1;
@@ -60,7 +60,6 @@ insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
 select emaj.emaj_set_mark_group('myGroup1','M2');
 --
-set search_path=myschema1;
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
 update myTbl4 set col43 = 2;
@@ -70,6 +69,15 @@ update myTbl1 set col12='DEF' where col11 <= 2;
 --
 select emaj.emaj_set_mark_group('myGroup1','M3');
 select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
+--
+delete from myTbl1 where col11 > 3;
+select emaj.emaj_rollback_group('myGroup1','M3');
+insert into myTbl2 values (3,'GHI',NULL);
+update myTbl4 set col43 = 3 where col41 = 2;
+select emaj.emaj_rollback_group('myGroup1','M3');
+--
+select emaj.emaj_protect_mark_group('myGroup1','M3');
+select emaj.emaj_protect_group('myGroup1');
 
 -----------------------------
 -- Step 2 : for myGroup2, start, update tables and set 2 marks 
@@ -100,7 +108,7 @@ update myTbl4 set col43 = 2;
 --
 select emaj.emaj_set_mark_group('myGroup2','M3');
 -----------------------------
--- Step 3 : for myGroup2, double logged rollback then delete first mark 
+-- Step 3 : for myGroup2, double logged rollback
 -----------------------------
 select emaj.emaj_logged_rollback_group('myGroup2','M2');
 select emaj.emaj_logged_rollback_group('myGroup2','M3');
@@ -109,15 +117,13 @@ select emaj.emaj_logged_rollback_group('myGroup2','M3');
 -- Checking steps 1 to 3
 -----------------------------
 -- emaj tables
-select group_name, group_is_logging, 
---     group_is_rlbk_protected, 
+select group_name, group_is_logging, group_is_rlbk_protected, 
        group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
   from emaj.emaj_group order by group_nb_table;
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, 
---     mark_is_rlbk_protected, 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected, 
        mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next
--- , mark_logged_rlbk_target_mark 
+--, mark_logged_rlbk_target_mark 
   from emaj.emaj_mark order by mark_id;
 
 -- log tables

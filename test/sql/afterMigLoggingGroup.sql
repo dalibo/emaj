@@ -8,13 +8,17 @@
 select * from emaj.emaj_verify_all();
 
 -----------------------------
--- Step 2 : for myGroup1, update tables, then rollback then update tables again then set 3 marks
+-- Step 2 : for myGroup1, update tables, then unprotect and rollback then update tables again then set 3 marks
 -----------------------------
 set search_path=myschema1;
 --
 update "myTbl3" set col33 = col33 / 2;
 --
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;
+select emaj.emaj_rollback_group('myGroup1','M2');
+select emaj.emaj_unprotect_group('myGroup1');
+select emaj.emaj_rollback_group('myGroup1','M2');
+select emaj.emaj_unprotect_mark_group('myGroup1','M3');
 select emaj.emaj_rollback_group('myGroup1','M2');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --

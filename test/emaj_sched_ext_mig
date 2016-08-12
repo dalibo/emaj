@@ -2,7 +2,6 @@
 # Schedule file for regression tests, with E-Maj installed as an extension, using a migration path
 
 # E-Maj installation
-test: instExtPrev
 test: instExtMig
 
 # Regression tests setup
@@ -30,9 +29,9 @@ test: viewer
 test: adm1
 test: adm2
 
-# cleanup regression tests environment
-test: cleanup
-
 # test clients
 test: client
+
+# cleanup regression tests environment
+test: cleanup
 

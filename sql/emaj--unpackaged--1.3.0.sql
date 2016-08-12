@@ -135,3 +135,6 @@ ALTER EXTENSION emaj ADD FUNCTION emaj._verify_all_groups();
 ALTER EXTENSION emaj ADD FUNCTION emaj._verify_all_schemas();
 ALTER EXTENSION emaj ADD FUNCTION emaj.emaj_verify_all();
 
+-- and insert the operation into the history
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.3.0', 'E-Maj transformed into an EXTENSION');
+
