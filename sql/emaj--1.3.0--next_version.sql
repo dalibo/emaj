@@ -6,6 +6,9 @@
 -- This script upgrades an existing installation of E-Maj extension.
 --
 
+-- complain if this script is executed in psql, rather than via an ALTER EXTENSION statement
+\echo Use "ALTER EXTENSION emaj UPDATE TO..." to upgrade the E-Maj extension. \quit
+
 --SET client_min_messages TO WARNING;
 SET client_min_messages TO NOTICE;
 
@@ -398,7 +401,7 @@ $_drop_log_schema$
 -- The function is created as SECURITY DEFINER so that secondary schemas can be dropped in any case
   DECLARE
   BEGIN
--- check that the schema doesn't already exist
+-- check that the schema exists
     PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = v_logSchemaName;
     IF NOT FOUND THEN
       RAISE EXCEPTION '_drop_log_schema: schema "%" doesn''t exist.',v_logSchemaName;
@@ -3482,11 +3485,11 @@ $_rlbk_session_exec$
     SELECT rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, rlbk_start_datetime
       INTO v_groupNames, v_mark, v_timestampMark, v_isLoggedRlbk, v_nbSession, v_rlbkStartTs
       FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
--- fetch the mark_id, the last global sequence and the last id values of emaj_sequence and emaj_seq_hole tables at set mark time for the first group of the groups array (they all share the same values - except for the mark_id)
+-- fetch the mark_id, the last global sequence and the last id values of the emaj_sequence table at set_mark time for the first group of the groups array (they all share the same values - except for the mark_id)
     SELECT mark_id, mark_global_seq, mark_last_sequence_id
       INTO v_rlbkMarkId, v_lastGlobalSeq, v_lastSequenceId FROM emaj.emaj_mark
       WHERE mark_group = v_groupNames[1] AND mark_name = v_mark;
--- generate a pseudo mark in emaj_mark by advancing the mark_id sequence. It will be used to identify sequence holes if unlogged rollback.
+-- generate a pseudo mark (one for all groups) in emaj_mark by advancing the mark_id sequence. It will be used to identify sequence holes if unlogged rollback.
     IF NOT v_isLoggedRlbk THEN
       PERFORM nextval('emaj.emaj_mark_mark_id_seq');
       SELECT currval('emaj.emaj_mark_mark_id_seq') INTO v_genMarkId;

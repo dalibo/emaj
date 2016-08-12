@@ -11,6 +11,9 @@
 --   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
 -- The emaj extension also installs the dblink extension into the database if it is not already installed.
 
+-- complain if this script is executed in psql, rather than via a CREATE EXTENSION statement
+\echo Use "CREATE EXTENSION emaj" to install the E-Maj extension. \quit
+
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 
@@ -155,7 +158,7 @@ CREATE TABLE emaj.emaj_group (
   group_name                   TEXT        NOT NULL,
   group_is_logging             BOOLEAN     NOT NULL,       -- are log triggers activated ?
                                                            -- true between emaj_start_group(s) and emaj_stop_group(s)
-                                                           -- flase in other cases
+                                                           -- false in other cases
   group_is_rlbk_protected      BOOLEAN     NOT NULL,       -- is the group currently protected against rollback ?
                                                            -- always true for AUDIT_ONLY groups
   group_nb_table               INT,                        -- number of tables at emaj_create_group time
@@ -235,7 +238,7 @@ CREATE TABLE emaj.emaj_sequence (
                                                            --   the same timestamp as referenced in emaj_mark table
   sequ_mark                    TEXT        NOT NULL,       -- name of the mark associated to the insertion timestamp
   sequ_last_val                BIGINT      NOT NULL,       -- sequence last value
-  sequ_start_val               BIGINT      NOT NULL,       -- sequence start value, (0 with postgres 8.2)
+  sequ_start_val               BIGINT      NOT NULL,       -- sequence start value
   sequ_increment               BIGINT      NOT NULL,       -- sequence increment
   sequ_max_val                 BIGINT      NOT NULL,       -- sequence max value
   sequ_min_val                 BIGINT      NOT NULL,       -- sequence min value
@@ -864,7 +867,7 @@ $_drop_log_schema$
 -- The function is created as SECURITY DEFINER so that secondary schemas can be dropped in any case
   DECLARE
   BEGIN
--- check that the schema doesn't already exist
+-- check that the schema exists
     PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = v_logSchemaName;
     IF NOT FOUND THEN
       RAISE EXCEPTION '_drop_log_schema: schema "%" doesn''t exist.',v_logSchemaName;
@@ -4337,11 +4340,11 @@ $_rlbk_session_exec$
     SELECT rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, rlbk_start_datetime
       INTO v_groupNames, v_mark, v_timestampMark, v_isLoggedRlbk, v_nbSession, v_rlbkStartTs
       FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
--- fetch the mark_id, the last global sequence and the last id values of emaj_sequence and emaj_seq_hole tables at set mark time for the first group of the groups array (they all share the same values - except for the mark_id)
+-- fetch the mark_id, the last global sequence and the last id values of the emaj_sequence table at set_mark time for the first group of the groups array (they all share the same values - except for the mark_id)
     SELECT mark_id, mark_global_seq, mark_last_sequence_id
       INTO v_rlbkMarkId, v_lastGlobalSeq, v_lastSequenceId FROM emaj.emaj_mark
       WHERE mark_group = v_groupNames[1] AND mark_name = v_mark;
--- generate a pseudo mark in emaj_mark by advancing the mark_id sequence. It will be used to identify sequence holes if unlogged rollback.
+-- generate a pseudo mark (one for all groups) in emaj_mark by advancing the mark_id sequence. It will be used to identify sequence holes if unlogged rollback.
     IF NOT v_isLoggedRlbk THEN
       PERFORM nextval('emaj.emaj_mark_mark_id_seq');
       SELECT currval('emaj.emaj_mark_mark_id_seq') INTO v_genMarkId;
