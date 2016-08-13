@@ -274,17 +274,17 @@ CREATE TABLE emaj.emaj_rlbk (
   rlbk_id                      SERIAL      NOT NULL,       -- rollback id
   rlbk_groups                  TEXT[]      NOT NULL,       -- groups array to rollback
   rlbk_mark                    TEXT        NOT NULL,       -- mark to rollback to
-  rlbk_mark_datetime           TIMESTAMPTZ ,               -- timestamp of the mark as recorded into emaj_mark
+  rlbk_mark_datetime           TIMESTAMPTZ,                -- timestamp of the mark as recorded into emaj_mark
   rlbk_is_logged               BOOLEAN     NOT NULL,       -- rollback type: true = logged rollback
   rlbk_nb_session              INT         NOT NULL,       -- number of requested rollback sessions
-  rlbk_nb_table                INT         ,               -- total number of tables in groups
-  rlbk_nb_sequence             INT         ,               -- number of sequences to rollback
-  rlbk_eff_nb_table            INT         ,               -- number of tables with rows to rollback
+  rlbk_nb_table                INT,                        -- total number of tables in groups
+  rlbk_nb_sequence             INT,                        -- number of sequences to rollback
+  rlbk_eff_nb_table            INT,                        -- number of tables with rows to rollback
   rlbk_status                  emaj._rlbk_status_enum,     -- rollback status
-  rlbk_begin_hist_id           BIGINT      ,               -- hist_id of the rollback BEGIN event in the emaj_hist
+  rlbk_begin_hist_id           BIGINT,                     -- hist_id of the rollback BEGIN event in the emaj_hist
                                                            --   used to know if the rollback has been committed or not
-  rlbk_is_dblink_used          BOOLEAN     ,               -- boolean indicating whether dblink connection are used
-  rlbk_start_datetime          TIMESTAMPTZ ,               -- clock timestamp of the rollback BEGIN event in emaj_hist
+  rlbk_is_dblink_used          BOOLEAN,                    -- boolean indicating whether dblink connection are used
+  rlbk_start_datetime          TIMESTAMPTZ,                -- clock timestamp of the rollback BEGIN event in emaj_hist
   rlbk_end_datetime            TIMESTAMPTZ,                -- clock time the rollback has been completed,
                                                            --   NULL if rollback is in progress or aborted
   rlbk_msg                     TEXT,                       -- result message
@@ -305,7 +305,7 @@ CREATE TABLE emaj.emaj_rlbk_session (
   rlbs_txid                    BIGINT      NOT NULL,       -- id of the tx that executes this rollback session
   rlbs_start_datetime          TIMESTAMPTZ NOT NULL,       -- rollback session start timestamp
   rlbs_end_datetime            TIMESTAMPTZ,                -- clock time the rollback session has been completed,
-                                                         --   NULL if rollback is in progress
+                                                           --   NULL if rollback is in progress
   PRIMARY KEY (rlbs_rlbk_id, rlbs_session),
   FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id)
   );
@@ -615,9 +615,9 @@ CREATE OR REPLACE FUNCTION emaj._purge_hist()
 RETURNS VOID LANGUAGE plpgsql AS
 $_purge_hist$
 -- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter, but
---   not deleting event traces after the oldest active mark.
--- It also purges oldest rows from emaj_rlbk, emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
--- It is called at start group time and when oldest marks are deleted.
+--   not deleting event traces neither after the oldest active mark or after the oldest not committed or aborted rollback operation.
+-- It also purges oldest rows from the emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
+-- The function is called at start group time and when oldest marks are deleted.
   DECLARE
     v_datetimeLimit          TIMESTAMPTZ;
     v_nbPurgedHist           BIGINT;
@@ -627,11 +627,13 @@ $_purge_hist$
   BEGIN
 -- compute the timestamp limit
    SELECT MIN(datetime) FROM
-     (                                           -- compute the oldest non deleted mark for all groups
-       (SELECT MIN(mark_datetime) FROM emaj.emaj_mark WHERE NOT mark_is_deleted)
-     UNION ALL                                   -- compute the current timestamp of now minus the history_retention
+     (                                           -- compute the timestamp limit from the history_retention parameter
        (SELECT current_timestamp -
           coalesce((SELECT param_value_interval FROM emaj.emaj_param WHERE param_key = 'history_retention'),'1 YEAR'))
+     UNION ALL                                   -- get the timestamp of the oldest non deleted mark for all groups
+       (SELECT MIN(mark_datetime) FROM emaj.emaj_mark WHERE NOT mark_is_deleted)
+     UNION ALL                                   -- get the timestamp of the oldest non committed or aborted rollback
+       (SELECT MIN(rlbk_start_datetime) FROM emaj.emaj_rlbk WHERE rlbk_status <> 'COMMITTED' AND rlbk_status <> 'ABORTED')
      ) AS t(datetime) INTO v_datetimeLimit;
 -- delete oldest rows from emaj_hist
     DELETE FROM emaj.emaj_hist WHERE hist_datetime < v_datetimeLimit;
@@ -645,9 +647,12 @@ $_purge_hist$
 -- and purge rollback tables
     IF v_maxRlbkId IS NOT NULL THEN
       DELETE FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id <= v_maxRlbkId;
-      DELETE FROM emaj.emaj_rlbk_session WHERE rlbs_rlbk_id <= v_maxRlbkId;
-      DELETE FROM emaj.emaj_rlbk WHERE rlbk_id <= v_maxRlbkId;
-      GET DIAGNOSTICS v_nbPurgedRlbk = ROW_COUNT;
+      WITH deleted_rlbk AS (
+        DELETE FROM emaj.emaj_rlbk_session 
+          WHERE rlbs_rlbk_id <= v_maxRlbkId 
+          RETURNING rlbs_rlbk_id
+        )
+        SELECT COUNT (DISTINCT rlbs_rlbk_id) INTO v_nbPurgedRlbk FROM deleted_rlbk;
       v_wording = v_wording || ' ; ' || v_nbPurgedRlbk || ' rollback events deleted';
     END IF;
 -- record the purge into the history if there are significant data

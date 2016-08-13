@@ -204,7 +204,7 @@ COPY 12
 
 COPY 2
 COPY 14
-COPY 32
+COPY 52
 COPY 239
  setval 
 --------

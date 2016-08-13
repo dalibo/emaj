@@ -38,6 +38,9 @@ Enhancements:
   - for emaj_gen_sql_group() and emaj_gen_sql_groups() functions, change the 
     type of the returned value representing the number of generated sql 
     statements to BIGINT.
+  - the purge of the history now keeps the events after the beginning of 
+    possibly in progress rollbacks. It also doesn't purge the internal 
+    emaj_rlbk table anymore.
   - in rollback functions, trap all exceptions that may happen when the 
     rollback uses autonomous transactions with dblink and set the proper 
     aborted state of the rollback operation in the emaj_rlbk table.

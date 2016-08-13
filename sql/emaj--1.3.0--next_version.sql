@@ -225,6 +225,59 @@ $$
 SELECT current_setting('server_version_num')::int;
 $$;
 
+CREATE OR REPLACE FUNCTION emaj._purge_hist()
+RETURNS VOID LANGUAGE plpgsql AS
+$_purge_hist$
+-- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter, but
+--   not deleting event traces neither after the oldest active mark or after the oldest not committed or aborted rollback operation.
+-- It also purges oldest rows from the emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
+-- The function is called at start group time and when oldest marks are deleted.
+  DECLARE
+    v_datetimeLimit          TIMESTAMPTZ;
+    v_nbPurgedHist           BIGINT;
+    v_maxRlbkId              BIGINT;
+    v_nbPurgedRlbk           BIGINT;
+    v_wording                TEXT = '';
+  BEGIN
+-- compute the timestamp limit
+   SELECT MIN(datetime) FROM
+     (                                           -- compute the timestamp limit from the history_retention parameter
+       (SELECT current_timestamp -
+          coalesce((SELECT param_value_interval FROM emaj.emaj_param WHERE param_key = 'history_retention'),'1 YEAR'))
+     UNION ALL                                   -- get the timestamp of the oldest non deleted mark for all groups
+       (SELECT MIN(mark_datetime) FROM emaj.emaj_mark WHERE NOT mark_is_deleted)
+     UNION ALL                                   -- get the timestamp of the oldest non committed or aborted rollback
+       (SELECT MIN(rlbk_start_datetime) FROM emaj.emaj_rlbk WHERE rlbk_status <> 'COMMITTED' AND rlbk_status <> 'ABORTED')
+     ) AS t(datetime) INTO v_datetimeLimit;
+-- delete oldest rows from emaj_hist
+    DELETE FROM emaj.emaj_hist WHERE hist_datetime < v_datetimeLimit;
+    GET DIAGNOSTICS v_nbPurgedHist = ROW_COUNT;
+    IF v_nbPurgedHist > 0 THEN
+      v_wording = v_nbPurgedHist || ' emaj_hist rows deleted';
+    END IF;
+-- get the greatest rollback identifier to purge
+    SELECT MAX(rlbk_id) INTO v_maxRlbkId
+      FROM emaj.emaj_rlbk WHERE rlbk_start_datetime < v_datetimeLimit;
+-- and purge rollback tables
+    IF v_maxRlbkId IS NOT NULL THEN
+      DELETE FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id <= v_maxRlbkId;
+      WITH deleted_rlbk AS (
+        DELETE FROM emaj.emaj_rlbk_session 
+          WHERE rlbs_rlbk_id <= v_maxRlbkId 
+          RETURNING rlbs_rlbk_id
+        )
+        SELECT COUNT (DISTINCT rlbs_rlbk_id) INTO v_nbPurgedRlbk FROM deleted_rlbk;
+      v_wording = v_wording || ' ; ' || v_nbPurgedRlbk || ' rollback events deleted';
+    END IF;
+-- record the purge into the history if there are significant data
+    IF v_wording <> '' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_wording)
+        VALUES ('PURGE_HISTORY', v_wording);
+    END IF;
+    RETURN;
+  END;
+$_purge_hist$;
+
 CREATE OR REPLACE FUNCTION emaj._check_names_array(v_names TEXT[], v_type TEXT)
 RETURNS TEXT[] LANGUAGE plpgsql AS
 $_check_names_array$

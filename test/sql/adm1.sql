@@ -80,7 +80,6 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 
 select emaj.emaj_start_group('myGroup2','M1');
 
-
 -----------------------------
 -- Step 1 : for myGroup1, update tables and set 2 marks
 -----------------------------
