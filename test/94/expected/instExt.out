@@ -306,6 +306,7 @@ Indexes:
 Referenced by:
     TABLE "emaj.emaj_rlbk_plan" CONSTRAINT "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
     TABLE "emaj.emaj_rlbk_session" CONSTRAINT "emaj_rlbk_session_rlbs_rlbk_id_fkey" FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
+    TABLE "emaj.emaj_rlbk_stat" CONSTRAINT "emaj_rlbk_stat_rlbt_rlbk_id_fkey" FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 
             Index "emaj.emaj_rlbk_idx1"
    Column    |          Type          | Definition  
@@ -392,19 +393,20 @@ Foreign-key constraints:
  rlbs_session | integer | rlbs_session
 primary key, btree, for table "emaj.emaj_rlbk_session"
 
-                Table "emaj.emaj_rlbk_stat"
-       Column       |           Type           | Modifiers 
---------------------+--------------------------+-----------
- rlbt_step          | emaj._rlbk_step_enum     | not null
- rlbt_schema        | text                     | not null
- rlbt_table         | text                     | not null
- rlbt_fkey          | text                     | not null
- rlbt_rlbk_id       | integer                  | not null
- rlbt_rlbk_datetime | timestamp with time zone | not null
- rlbt_quantity      | bigint                   | not null
- rlbt_duration      | interval                 | not null
+           Table "emaj.emaj_rlbk_stat"
+    Column     |         Type         | Modifiers 
+---------------+----------------------+-----------
+ rlbt_step     | emaj._rlbk_step_enum | not null
+ rlbt_schema   | text                 | not null
+ rlbt_table    | text                 | not null
+ rlbt_fkey     | text                 | not null
+ rlbt_rlbk_id  | integer              | not null
+ rlbt_quantity | bigint               | not null
+ rlbt_duration | interval             | not null
 Indexes:
     "emaj_rlbk_stat_pkey" PRIMARY KEY, btree (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id)
+Foreign-key constraints:
+    "emaj_rlbk_stat_rlbt_rlbk_id_fkey" FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 
           Index "emaj.emaj_rlbk_stat_pkey"
     Column    |         Type         |  Definition  

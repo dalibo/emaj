@@ -167,6 +167,44 @@ DROP TABLE emaj_seq_hole_old;
 --
 ALTER TABLE emaj.emaj_mark DROP COLUMN mark_last_seq_hole_id, ADD mark_logged_rlbk_target_mark TEXT;
 
+--
+-- process the emaj_rlbk_stat table
+--
+-- create a temporary table with the old structure and copy the source content
+CREATE TEMP TABLE emaj_rlbk_stat_old (LIKE emaj.emaj_rlbk_stat);
+
+INSERT INTO emaj_rlbk_stat_old SELECT * FROM emaj.emaj_rlbk_stat;
+
+-- drop the old table
+DROP TABLE emaj.emaj_rlbk_stat;
+
+-- create the new table, with its indexes, comment, constraints (except foreign key)...
+CREATE TABLE emaj.emaj_rlbk_stat (
+  rlbt_step                    emaj._rlbk_step_enum
+                                           NOT NULL,       -- kind of elementary step in the rollback processing
+  rlbt_schema                  TEXT        NOT NULL,       -- schema object of the step
+  rlbt_table                   TEXT        NOT NULL,       -- table name
+  rlbt_fkey                    TEXT        NOT NULL,       -- foreign key name for step on foreign key, or ''
+  rlbt_rlbk_id                 INT         NOT NULL,       -- rollback id
+  rlbt_quantity                BIGINT      NOT NULL,       -- depending on the step, either estimated quantity processed
+                                                           --   by the elementary step or number of executed steps
+  rlbt_duration                INTERVAL    NOT NULL,       -- duration or sum of durations of the elementary step(s)
+  PRIMARY KEY (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id),
+  FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id)
+  );
+COMMENT ON TABLE emaj.emaj_rlbk_stat IS
+$$Contains statistics about previous E-Maj rollback durations.$$;
+
+-- populate the new table
+-- only keep the statistics related to not deleted rows from the emaj_rlbk reference table in order to satisfy the new foreign key 
+INSERT INTO emaj.emaj_rlbk_stat 
+  SELECT rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity, rlbt_duration
+    FROM emaj_rlbk_stat_old, emaj.emaj_rlbk
+    WHERE rlbt_rlbk_id = rlbk_id;
+
+-- and drop the temporary table and sequence
+DROP TABLE emaj_rlbk_stat_old;
+
 ------------------------------------
 --                                --
 -- emaj types                     --
@@ -3241,8 +3279,8 @@ $_rlbk_planning$
           SELECT rlbt_duration INTO v_estimDuration FROM emaj.emaj_rlbk_stat
             WHERE rlbt_step = 'ADD_FK'
               AND rlbt_schema = r_fk.rlbp_schema AND rlbt_table = r_tbl.rlbp_table AND rlbt_fkey = r_fk.rlbp_fkey
-              AND rlbt_rlbk_datetime =
-               (SELECT max(rlbt_rlbk_datetime) FROM emaj.emaj_rlbk_stat WHERE rlbt_step = 'ADD_FK'
+              AND rlbt_rlbk_id =
+               (SELECT max(rlbt_rlbk_id) FROM emaj.emaj_rlbk_stat WHERE rlbt_step = 'ADD_FK'
                   AND rlbt_schema = r_fk.rlbp_schema AND rlbt_table = r_fk.rlbp_table AND rlbt_fkey = r_fk.rlbp_fkey);
           v_estimMethod = 2;
           IF v_estimDuration IS NULL THEN
@@ -3728,25 +3766,25 @@ $_rlbk_end$
         GROUP BY rlbs_session, rlbs_end_datetime ) AS t;
 -- report duration statistics into the emaj_rlbk_stat table
     v_stmt = 'INSERT INTO emaj.emaj_rlbk_stat (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey,' ||
-             '      rlbt_rlbk_id, rlbt_rlbk_datetime, rlbt_quantity, rlbt_duration)' ||
+             '      rlbt_rlbk_id, rlbt_quantity, rlbt_duration)' ||
 --   copy elementary steps for RLBK_TABLE, DELETE_LOG, ADD_FK and SET_FK_IMM step types
 --     (record the rlbp_estimated_quantity as reference for later forecast)
-             '  SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,' ||
-             '      rlbp_rlbk_id, rlbk_mark_datetime, rlbp_estimated_quantity, rlbp_duration' ||
+             '  SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_rlbk_id,' ||
+             '      rlbp_estimated_quantity, rlbp_duration' ||
              '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
              '    WHERE rlbk_id = rlbp_rlbk_id AND rlbp_rlbk_id = ' || v_rlbkId ||
              '      AND rlbp_step IN (''RLBK_TABLE'',''DELETE_LOG'',''ADD_FK'',''SET_FK_IMM'') ' ||
              '  UNION ALL ' ||
 --   for 4 other steps, aggregate other elementary steps into a global row for each step type
-             '  SELECT rlbp_step, '''', '''', '''', rlbp_rlbk_id, rlbk_mark_datetime, ' ||
+             '  SELECT rlbp_step, '''', '''', '''', rlbp_rlbk_id, ' ||
              '      count(*), sum(rlbp_duration)' ||
              '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
              '    WHERE rlbk_id = rlbp_rlbk_id AND rlbp_rlbk_id = ' || v_rlbkId ||
              '      AND rlbp_step IN (''DIS_LOG_TRG'',''DROP_FK'',''SET_FK_DEF'',''ENA_LOG_TRG'') ' ||
-             '    GROUP BY 1, 2, 3, 4, 5, 6' ||
+             '    GROUP BY 1, 2, 3, 4, 5' ||
              '  UNION ALL ' ||
 --   and the final CTRLxDBLINK pseudo step statistic
-             '  SELECT rlbp_step, '''', '''', '''', rlbp_rlbk_id, rlbk_mark_datetime, ' ||
+             '  SELECT rlbp_step, '''', '''', '''', rlbp_rlbk_id, ' ||
              '      rlbp_estimated_quantity, ' || quote_literal(v_ctrlDuration) ||
              '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
              '    WHERE rlbk_id = rlbp_rlbk_id AND rlbp_rlbk_id = ' || v_rlbkId ||

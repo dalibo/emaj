@@ -19,6 +19,7 @@ select * from pg_available_extension_versions where name = 'emaj';
 ALTER EXTENSION emaj UPDATE TO 'next_version';
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_seq_hole_pkey" for table "emaj_seq_hole"
 NOTICE:  E-Maj upgrade: internal error, the number of rows in the original emaj_seq_hole (4) doesn't math the number of rows in the new emaj_seq_hole table (0)
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_rlbk_stat_pkey" for table "emaj_rlbk_stat"
 --TODO debug
 --select * from emaj.emaj_seq_hole order by sqhl_schema, sqhl_table;
 --select mark_group, mark_name, mark_id, mark_datetime, mark_global_seq from emaj.emaj_mark order by mark_id;

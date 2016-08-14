@@ -46,6 +46,7 @@ Enhancements:
     aborted state of the rollback operation in the emaj_rlbk table.
   - in error and warning messages, all groups, marks, schemas or tables names 
     are surrounded by double quotes to improve the readability.
+  - various minor coding enhancements
   - the demonstration script is renamed emaj_demo.sql and enhanced.
   - the script supplied to prepare a parallel rollback test environment is 
     renamed emaj_prepare_parallel_rollback_test.sql and enhanced.

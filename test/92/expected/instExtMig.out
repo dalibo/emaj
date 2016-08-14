@@ -122,6 +122,7 @@ select extname, extversion from pg_extension where extname = 'emaj';
 -- process the extension migration
 ALTER EXTENSION emaj UPDATE TO 'next_version';
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_seq_hole_pkey" for table "emaj_seq_hole"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_rlbk_stat_pkey" for table "emaj_rlbk_stat"
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------

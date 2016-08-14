@@ -491,18 +491,20 @@ begin;
 -- should return 1.860700 sec
 rollback;
 -- estimate with added rollback statistics about fkey drops, recreations and checks
+--   drop the foreign key on emaj_rlbk_stat to easily temporarily insert dummy rows
+alter table emaj.emaj_rlbk_stat drop constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey;
 insert into emaj.emaj_rlbk_stat values
-  ('DROP_FK','','','',1,'2000/01/01 00:01:00',1,'0.003 SECONDS'::interval);
+  ('DROP_FK','','','',1,1,'0.003 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',1,'2000/01/01 00:01:00',300,'0.036 SECONDS'::interval);
+  ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',1,300,'0.036 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',1,'2000/01/01 00:01:00',2000,'0.030 SECONDS'::interval);
+  ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',1,2000,'0.030 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('DROP_FK','','','',2,'2000/01/01 00:02:00',1,'0.0042 SECONDS'::interval);
+  ('DROP_FK','','','',2,1,'0.0042 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',2,'2000/01/01 00:02:00',200,'0.020 SECONDS'::interval);
+  ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',2,200,'0.020 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',2,'2000/01/01 00:02:00',1200,'0.015 SECONDS'::interval);
+  ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',2,1200,'0.015 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
@@ -512,19 +514,19 @@ select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
 -- should return 1.440962 sec
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','mytbl1','',1,'2000/01/01 00:01:00',5350,'1.000 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','mytbl1','',1,5350,'1.000 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','mytbl2','',1,'2000/01/01 00:01:00',100,'0.004 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','mytbl2','',1,100,'0.004 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','mytbl2','',2,'2000/01/01 00:02:00',200,'0.010 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','mytbl2','',2,200,'0.010 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','mytbl2','',3,'2000/01/01 00:03:00',20000,'1.610 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','mytbl2','',3,20000,'1.610 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','myTbl3','',1,'2000/01/01 00:01:00',99,'0.004 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','myTbl3','',1,99,'0.004 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','myTbl3','',2,'2000/01/01 00:02:00',101,'0.008 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','myTbl3','',2,101,'0.008 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('RLBK_TABLE','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'3.600 SECONDS'::interval);
+  ('RLBK_TABLE','myschema2','mytbl4','',1,50000,'3.600 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
@@ -534,25 +536,25 @@ select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
 -- should return 2.309566 sec
 -- estimate with added statistics about log deletes and CTRLxDBLINK pseudo steps
 insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl1','',1,'2000/01/01 00:01:00',5350,'0.250 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl1','',1,5350,'0.250 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl2','',1,'2000/01/01 00:01:00',150,'0.001 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl2','',1,150,'0.001 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl2','',2,'2000/01/01 00:02:00',200,'0.003 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl2','',2,200,'0.003 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl2','',3,'2000/01/01 00:03:00',20000,'1.610 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl2','',3,20000,'1.610 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','myTbl3','',1,'2000/01/01 00:01:00',99,'0.001 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','myTbl3','',1,99,'0.001 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','myTbl3','',2,'2000/01/01 00:02:00',151,'0.002 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','myTbl3','',2,151,'0.002 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('DELETE_LOG','myschema2','mytbl4','',1,'2000/01/01 00:01:00',50000,'0.900 SECONDS'::interval);
+  ('DELETE_LOG','myschema2','mytbl4','',1,50000,'0.900 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('CTRL+DBLINK','','','',1,'2000/01/01 00:01:00',10,'0.005 SECONDS'::interval);
+  ('CTRL+DBLINK','','','',1,10,'0.005 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('CTRL-DBLINK','','','',2,'2000/01/01 00:02:00',10,'0.035 SECONDS'::interval);
+  ('CTRL-DBLINK','','','',2,10,'0.035 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
-  ('CTRL-DBLINK','','','',3,'2000/01/01 00:03:00',10,'0.025 SECONDS'::interval);
+  ('CTRL-DBLINK','','','',3,10,'0.025 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
@@ -579,9 +581,10 @@ begin;
 
 -- should return 2.728023 sec
 rollback;
--- delete all manualy inserted rollback statistics and cleanup the statistics table
+-- delete all manualy inserted rollback statistics, cleanup the statistics table and recreate its foreign key
 delete from emaj.emaj_rlbk_stat;
 vacuum emaj.emaj_rlbk_stat;
+alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id);
 -----------------------------
 -- emaj_snap_group() and  emaj_snap_log_group() test
 -----------------------------
