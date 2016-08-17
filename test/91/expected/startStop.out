@@ -7,7 +7,7 @@ SET client_min_messages TO WARNING;
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
-PL/pgSQL function "emaj_create_group" line 64 at PERFORM
+PL/pgSQL function "emaj_create_group" line 68 at PERFORM
  emaj_create_group 
 -------------------
                  6
@@ -16,10 +16,10 @@ PL/pgSQL function "emaj_create_group" line 64 at PERFORM
 select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function "emaj_create_group" line 84 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function "emaj_create_group" line 84 at PERFORM
+PL/pgSQL function "emaj_create_group" line 88 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -1221,5 +1221,6 @@ select hist_id, hist_function, hist_event, hist_object,
 
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
+alter sequence emaj.emaj_time_stamp_time_id_seq restart 300;
 alter sequence emaj.emaj_mark_mark_id_seq restart 300;
 alter sequence emaj.emaj_sequence_sequ_id_seq restart 3000;

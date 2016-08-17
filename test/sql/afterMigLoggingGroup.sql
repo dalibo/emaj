@@ -83,6 +83,7 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 -----------------------------
 -- test end: check and reset history
 -----------------------------
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
 --

@@ -253,10 +253,12 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
 -----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 200 order by time_id;
 select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;
+alter sequence emaj.emaj_time_stamp_time_id_seq restart 400;
 alter sequence emaj.emaj_mark_mark_id_seq restart 400;
 alter sequence emaj.emaj_sequence_sequ_id_seq restart 4000;
 

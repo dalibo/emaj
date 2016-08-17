@@ -103,7 +103,7 @@ CREATE SEQUENCE emaj.emaj_global_seq;
 COMMENT ON SEQUENCE emaj.emaj_global_seq IS
 $$Global sequence to identifiy all rows of emaj log tables.$$;
 
--- table containing Emaj parameters
+-- table containing E-maj parameters
 CREATE TABLE emaj.emaj_param (
   param_key                    TEXT        NOT NULL,       -- parameter key
   param_value_text             TEXT,                       -- value if type is text, otherwise NULL
@@ -151,6 +151,26 @@ CREATE TABLE emaj.emaj_group_def (
   );
 COMMENT ON TABLE emaj.emaj_group_def IS
 $$Contains E-Maj groups definition, supplied by the E-Maj administrator.$$;
+
+-- table containing the time stamps of major E-Maj events.
+-- these stamps, used as time references in other internal tables, are insensitive to system time fluctuations and transaction wrapaound.
+CREATE TABLE emaj.emaj_time_stamp (
+  time_id                      BIGSERIAL   NOT NULL,       -- internal id
+  time_clock_timestamp         TIMESTAMPTZ NOT NULL        -- insertion clock time
+                               DEFAULT clock_timestamp(),
+  time_stmt_timestamp          TIMESTAMPTZ NOT NULL        -- insertion statement start time
+                               DEFAULT statement_timestamp(),
+  time_tx_timestamp            TIMESTAMPTZ NOT NULL        -- insertion transaction start time
+                               DEFAULT transaction_timestamp(),
+  time_tx_id                   BIGINT                      -- id of the tx that has generated the time stamp
+                               DEFAULT txid_current(),
+  time_last_emaj_gid           BIGINT,                     -- last value of the E-Maj global sequence
+  time_event                   CHAR(1),                    -- event type that has generated the time stamp
+                                                           --   C(reate group), A(lter group) , M(ark setting), R(ollback)
+  PRIMARY KEY (time_id)
+  );
+COMMENT ON TABLE emaj.emaj_time_stamp IS
+$$Contains the time stamps of major E-Maj events.$$;
 
 -- table containing the defined groups
 --     rows are created at emaj_create_group time and deleted at emaj_drop_group time
@@ -474,6 +494,15 @@ RETURNS INTEGER LANGUAGE sql IMMUTABLE AS
 $$
 -- This function returns as an integer the current postgresql version
 SELECT current_setting('server_version_num')::int;
+$$;
+
+CREATE OR REPLACE FUNCTION emaj._set_time_stamp(CHAR(1))
+RETURNS BIGINT LANGUAGE SQL AS
+$$
+-- this function inserts a new time stamp in the emaj_time_stamp table and returns the identifier of the new row
+INSERT INTO emaj.emaj_time_stamp (time_last_emaj_gid, time_event)
+  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END, $1 FROM emaj.emaj_global_seq
+  RETURNING time_id;
 $$;
 
 CREATE OR REPLACE FUNCTION emaj._get_mark_name(TEXT, TEXT)
@@ -1801,6 +1830,7 @@ $emaj_create_group$
 -- Input: group name, boolean indicating wether the group is rollbackable or not (true by default)
 -- Output: number of processed tables and sequences
   DECLARE
+    v_timeId                 BIGINT;
     v_nbTbl                  INT = 0;
     v_nbSeq                  INT = 0;
     v_schemaPrefix           TEXT = 'emaj';
@@ -1818,7 +1848,7 @@ $emaj_create_group$
 -- check the group is known in emaj_group_def table
     PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
     IF NOT FOUND THEN
-       RAISE EXCEPTION 'emaj_create_group: Group "%" is unknown in emaj_group_def table.', v_groupName;
+       RAISE EXCEPTION 'emaj_create_group: group "%" is unknown in emaj_group_def table.', v_groupName;
     END IF;
 -- check that the group is not yet recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
@@ -1827,7 +1857,10 @@ $emaj_create_group$
     END IF;
 -- performs various checks on the group's content described in the emaj_group_def table
     PERFORM emaj._check_group_content(v_groupName);
--- OK, insert group row in the emaj_group table
+-- OK
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('C') INTO v_timeId;
+-- insert group row in the emaj_group table
 -- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable)
     INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable, group_is_rlbk_protected)
       VALUES (v_groupName, FALSE, v_isRollbackable, NOT v_isRollbackable);
@@ -1972,6 +2005,7 @@ $_drop_group$
 -- The function is defined as SECURITY DEFINER so that secondary schemas can be dropped
   DECLARE
     v_groupIsLogging         BOOLEAN;
+    v_timeId                 BIGINT;
     v_event_trigger_array    TEXT[];
     v_nbTb                   INT = 0;
     v_schemaPrefix           TEXT = 'emaj';
@@ -2050,6 +2084,7 @@ $emaj_alter_group$
     v_nbSeq                  INT;
     v_groupIsLogging         BOOLEAN;
     v_isRollbackable         BOOLEAN;
+    v_timeId                 BIGINT;
     v_logSchema              TEXT;
     v_logSchemasToDrop       TEXT[];
     v_logSchemasToCreate     TEXT[];
@@ -2081,9 +2116,11 @@ $emaj_alter_group$
     END IF;
 -- performs various checks on the group's content described in the emaj_group_def table
     PERFORM emaj._check_group_content(v_groupName);
+-- OK
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('A') INTO v_timeId;
 -- define the default tablespace, NULL if tspemaj tablespace doesn't exist
     SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
--- OK
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_event_trigger_array;
 -- We can now process:
@@ -2813,6 +2850,7 @@ $_set_mark_groups$
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
+    v_timeId                 BIGINT;
     v_nbTb                   INT = 0;
     v_timestamp              TIMESTAMPTZ;
     v_lastSequenceId         BIGINT;
@@ -2824,8 +2862,11 @@ $_set_mark_groups$
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','), v_mark);
     END IF;
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('M') INTO v_timeId;
 -- look at the clock to get the 'official' timestamp representing the mark
-    v_timestamp = clock_timestamp();
+    SELECT time_clock_timestamp INTO v_timestamp FROM emaj.emaj_time_stamp WHERE time_id = v_timeId;
+----    v_timestamp = clock_timestamp();
 -- process sequences as early as possible (no lock protect them from other transactions activity)
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
@@ -3538,17 +3579,18 @@ $_rlbk_init$
 -- It returns a rollback id that will be needed by next steps.
   DECLARE
     v_markName               TEXT;
+    v_timestampMark          TIMESTAMPTZ;
+    v_msg                    TEXT;
     v_nbTblInGroups          INT;
     v_nbSeqInGroups          INT;
+    v_dbLinkCnxStatus        INT;
+    v_isDblinkUsable         BOOLEAN = false;
+    v_timeId                 BIGINT;
     v_effNbTable             INT;
     v_histId                 BIGINT;
     v_startDateTime          TIMESTAMPTZ;
     v_stmt                   TEXT;
-    v_dbLinkCnxStatus        INT;
-    v_isDblinkUsable         BOOLEAN = false;
     v_rlbkId                 INT;
-    v_timestampMark          TIMESTAMPTZ;
-    v_msg                    TEXT;
   BEGIN
 -- lock the groups to rollback
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = ANY(v_groupNames) FOR UPDATE;
@@ -3579,6 +3621,8 @@ $_rlbk_init$
     IF v_nbSession > 1 AND NOT v_isDblinkUsable THEN
       RAISE EXCEPTION '_rlbk_init: cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = % - see E-Maj documentation)', v_dbLinkCnxStatus;
     END IF;
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('R') INTO v_timeId;
 -- create the row representing the rollback event in the emaj_rlbk table and get the rollback id back
     v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, ' ||
              'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
@@ -6490,6 +6534,7 @@ GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_vi
 SELECT pg_catalog.pg_extension_config_dump('emaj_param','WHERE param_key <> ''emaj_version''');
 SELECT pg_catalog.pg_extension_config_dump('emaj_hist','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_group_def','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_time_stamp','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
@@ -6503,6 +6548,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
 -- register emaj sequences values as candidate for pg_dump
 SELECT pg_catalog.pg_extension_config_dump('emaj_global_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_hist_hist_id_seq','');
+SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_time_stamp_time_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_mark_mark_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_sequence_sequ_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');

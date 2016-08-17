@@ -220,6 +220,12 @@ COPY 179
    1027
 (1 row)
 
+COPY 252
+ setval 
+--------
+   1003
+(1 row)
+
 COPY 2
  setval 
 --------

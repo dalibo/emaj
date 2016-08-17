@@ -17,6 +17,8 @@ select * from pg_available_extension_versions where name = 'emaj';
 --select * from emaj.emaj_rlbk order by rlbk_id;
 -- process the extension migration
 ALTER EXTENSION emaj UPDATE TO 'next_version';
+NOTICE:  CREATE TABLE will create implicit sequence "emaj_time_stamp_time_id_seq" for serial column "emaj_time_stamp.time_id"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_time_stamp_pkey" for table "emaj_time_stamp"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_seq_hole_pkey" for table "emaj_seq_hole"
 NOTICE:  E-Maj upgrade: internal error, the number of rows in the original emaj_seq_hole (4) doesn't math the number of rows in the new emaj_seq_hole table (0)
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_rlbk_stat_pkey" for table "emaj_rlbk_stat"

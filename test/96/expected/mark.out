@@ -985,6 +985,54 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
 -----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 200 order by time_id;
+ time_id | time_last_emaj_gid | time_event 
+---------+--------------------+------------
+     200 |                  0 | C
+     201 |                  0 | C
+     202 |                  0 | M
+     203 |                  0 | M
+     204 |                  0 | M
+     205 |                  0 | M
+     206 |                  0 | M
+     208 |                  0 | M
+     209 |                  0 | M
+     210 |                  2 | M
+     211 |                  2 | M
+     212 |                  2 | M
+     213 |                  2 | M
+     214 |                  2 | M
+     215 |                  2 | M
+     216 |                  2 | M
+     217 |                  2 | M
+     218 |                  2 | M
+     219 |                  2 | M
+     221 |                  2 | M
+     222 |                  2 | M
+     223 |                  2 | M
+     224 |                  2 | M
+     225 |                  2 | M
+     226 |                  2 | M
+     227 |                  2 | M
+     300 |                  2 | M
+     301 |                  2 | M
+     302 |                  2 | M
+     303 |                  2 | M
+     304 |                  2 | M
+     305 |                  2 | M
+     306 |                  2 | M
+     307 |                  2 | M
+     308 |                  2 | M
+     309 |                  2 | M
+     310 |                  2 | M
+     311 |                  2 | M
+     312 |                  2 | M
+     313 |                  2 | M
+     314 |                  2 | M
+     315 |                  2 | M
+     316 |                  2 | M
+(43 rows)
+
 select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id |      hist_function       | hist_event |  regexp_replace   |                 regexp_replace                  | hist_user 
@@ -1074,5 +1122,6 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
 
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;
+alter sequence emaj.emaj_time_stamp_time_id_seq restart 400;
 alter sequence emaj.emaj_mark_mark_id_seq restart 400;
 alter sequence emaj.emaj_sequence_sequ_id_seq restart 4000;

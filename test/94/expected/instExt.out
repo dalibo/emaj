@@ -499,6 +499,40 @@ primary key, btree, for table "emaj.emaj_sequence"
  is_called     | boolean | f
 Owned by: emaj.emaj_sequence.sequ_id
 
+                                               Table "emaj.emaj_time_stamp"
+        Column        |           Type           |                               Modifiers                                
+----------------------+--------------------------+------------------------------------------------------------------------
+ time_id              | bigint                   | not null default nextval('emaj.emaj_time_stamp_time_id_seq'::regclass)
+ time_clock_timestamp | timestamp with time zone | not null default clock_timestamp()
+ time_stmt_timestamp  | timestamp with time zone | not null default statement_timestamp()
+ time_tx_timestamp    | timestamp with time zone | not null default transaction_timestamp()
+ time_tx_id           | bigint                   | default txid_current()
+ time_last_emaj_gid   | bigint                   | 
+ time_event           | character(1)             | 
+Indexes:
+    "emaj_time_stamp_pkey" PRIMARY KEY, btree (time_id)
+
+Index "emaj.emaj_time_stamp_pkey"
+ Column  |  Type  | Definition 
+---------+--------+------------
+ time_id | bigint | time_id
+primary key, btree, for table "emaj.emaj_time_stamp"
+
+      Sequence "emaj.emaj_time_stamp_time_id_seq"
+    Column     |  Type   |            Value            
+---------------+---------+-----------------------------
+ sequence_name | name    | emaj_time_stamp_time_id_seq
+ last_value    | bigint  | 1
+ start_value   | bigint  | 1
+ increment_by  | bigint  | 1
+ max_value     | bigint  | 9223372036854775807
+ min_value     | bigint  | 1
+ cache_value   | bigint  | 1
+ log_cnt       | bigint  | 0
+ is_cycled     | boolean | f
+ is_called     | boolean | f
+Owned by: emaj.emaj_time_stamp.time_id
+
        View "emaj.emaj_visible_param"
         Column        |   Type   | Modifiers 
 ----------------------+----------+-----------
@@ -515,7 +549,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    93
+    94
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 

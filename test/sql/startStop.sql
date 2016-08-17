@@ -323,6 +323,7 @@ select hist_id, hist_function, hist_event, hist_object,
   hist_user from emaj.emaj_hist order by hist_id;
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
+alter sequence emaj.emaj_time_stamp_time_id_seq restart 300;
 alter sequence emaj.emaj_mark_mark_id_seq restart 300;
 alter sequence emaj.emaj_sequence_sequ_id_seq restart 3000;
 

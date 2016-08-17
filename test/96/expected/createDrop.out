@@ -52,23 +52,23 @@ select emaj.emaj_disable_protection_by_event_triggers();
 -- invalid group names
 select emaj.emaj_create_group(NULL);
 ERROR:  emaj_create_group: group name can't be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 20 at RAISE
 select emaj.emaj_create_group('',false);
 ERROR:  emaj_create_group: group name can't be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 20 at RAISE
 -- group is unknown in emaj_group_def
 select emaj.emaj_create_group('unknownGroup');
-ERROR:  emaj_create_group: Group "unknownGroup" is unknown in emaj_group_def table.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 24 at RAISE
+ERROR:  emaj_create_group: group "unknownGroup" is unknown in emaj_group_def table.
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 25 at RAISE
 select emaj.emaj_create_group('unknownGroup',false);
-ERROR:  emaj_create_group: Group "unknownGroup" is unknown in emaj_group_def table.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 24 at RAISE
+ERROR:  emaj_create_group: group "unknownGroup" is unknown in emaj_group_def table.
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 25 at RAISE
 -- unknown schema or table in emaj_group_def
 select emaj.emaj_create_group('dummyGrp1');
 ERROR:  _check_group_content: one or several tables or sequences do not exist (dummySchema.mytbl4, myschema1.dummyTable).
 CONTEXT:  PL/pgSQL function emaj._check_group_content(text) line 22 at RAISE
 SQL statement "SELECT emaj._check_group_content(v_groupName)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
 -- group with a temp table
 begin;
   CREATE TEMPORARY TABLE myTempTbl (
@@ -83,7 +83,7 @@ begin;
 ERROR:  _create_tbl: table "pg_temp_2.mytemptbl" is a temporary table.
 CONTEXT:  PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,text,boolean,text) line 35 at RAISE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 68 at PERFORM
 rollback;
 -- group with an unlogged table
 begin;
@@ -92,14 +92,14 @@ begin;
 ERROR:  _create_tbl: table "myschema5.myunloggedtbl" is an unlogged table.
 CONTEXT:  PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,text,boolean,text) line 37 at RAISE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 68 at PERFORM
 rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
 ERROR:  _create_tbl: table "phil's schema3.myTbl2\" has no PRIMARY KEY.
 CONTEXT:  PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,text,boolean,text) line 47 at RAISE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 68 at PERFORM
 -- sequence with a log schema suffix defined in the emaj_group_def table
 begin;
   update emaj.emaj_group_def set grpdef_log_schema_suffix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -108,7 +108,7 @@ WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify
 ERROR:  _create_seq: Defining a secondary log schema is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  PL/pgSQL function emaj._create_seq(emaj.emaj_group_def,text) line 12 at RAISE
 SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 77 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 81 at PERFORM
 rollback;
 -- sequence with an emaj names prefix defined in the emaj_group_def table
 begin;
@@ -118,7 +118,7 @@ WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify
 ERROR:  _create_seq: Defining an emaj names prefix is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  PL/pgSQL function emaj._create_seq(emaj.emaj_group_def,text) line 16 at RAISE
 SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 77 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 81 at PERFORM
 rollback;
 -- sequence with tablespace defined in the emaj_group_def table
 begin;
@@ -128,7 +128,7 @@ WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify
 ERROR:  _create_seq: Defining log tablespaces is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  PL/pgSQL function emaj._create_seq(emaj.emaj_group_def,text) line 20 at RAISE
 SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 77 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 81 at PERFORM
 rollback;
 -- table with invalid tablespace
 begin;
@@ -138,7 +138,7 @@ ERROR:  tablespace "dummyTablespace" does not exist
 CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log (LIKE myschema1.mytbl1) TABLESPACE "dummyTablespace""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,text,boolean,text) line 70 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 64 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 68 at PERFORM
 rollback;
 -- already existing secondary schema
 begin;
@@ -147,7 +147,7 @@ begin;
 ERROR:  _create_log_schema: schema "emajb" should not exist. Drop it manually, or modify emaj_group_def table's content.
 CONTEXT:  PL/pgSQL function emaj._create_log_schema(text) line 10 at RAISE
 SQL statement "SELECT emaj._create_log_schema(r_schema.log_schema)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 51 at PERFORM
 rollback;
 -- conflict on emaj names prefix inside the group to create
 begin;
@@ -158,7 +158,7 @@ begin;
 ERROR:  _check_group_content: one or several emaj prefix are configured for several tables in the group (myschema1_mytbl4, samePrefix).
 CONTEXT:  PL/pgSQL function emaj._check_group_content(text) line 54 at RAISE
 SQL statement "SELECT emaj._check_group_content(v_groupName)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
 rollback;
 -- conflict on emaj names prefix with already create groups
 begin;
@@ -176,7 +176,7 @@ WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify
 ERROR:  _check_group_content: one or several emaj prefix are already used (myschema1_mytbl2, samePrefix).
 CONTEXT:  PL/pgSQL function emaj._check_group_content(text) line 64 at RAISE
 SQL statement "SELECT emaj._check_group_content(v_groupName)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
 rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
@@ -228,17 +228,17 @@ select emaj.emaj_create_group('dummyGrp2',false);
 ERROR:  _check_group_content: one or several tables or sequences belong to an E-Maj schema (emajC.myschema1_myTbl3_log, emaj.emaj_param).
 CONTEXT:  PL/pgSQL function emaj._check_group_content(text) line 35 at RAISE
 SQL statement "SELECT emaj._check_group_content(v_groupName)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
 -- create a group with a table already belonging to another group
 select emaj.emaj_create_group('dummyGrp3');
 ERROR:  _check_group_content: one or several tables already belong to another group (myschema1.mytbl1 in myGroup1, myschema2.mytbl2 in myGroup2).
 CONTEXT:  PL/pgSQL function emaj._check_group_content(text) line 45 at RAISE
 SQL statement "SELECT emaj._check_group_content(v_groupName)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
 -- already created
 select emaj.emaj_create_group('myGroup2');
 ERROR:  emaj_create_group: group "myGroup2" is already created.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 29 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 30 at RAISE
 -- impact of created groups
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  nspname  
@@ -300,6 +300,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emaj       | emaj_rlbk_stat                 | postgres   | tspemaj    | t          | f        | t           | f
  emaj       | emaj_seq_hole                  | postgres   | tspemaj    | t          | f        | f           | f
  emaj       | emaj_sequence                  | postgres   | tspemaj    | t          | f        | f           | f
+ emaj       | emaj_time_stamp                | postgres   | tspemaj    | t          | f        | f           | f
  emajC      | myschema1_myTbl3_log           | postgres   | tsplog1    | t          | f        | f           | f
  emaj       | myschema1_mytbl1_log           | postgres   | tspemaj    | t          | f        | f           | f
  emaj       | myschema1_mytbl2_log           | postgres   | tsplog1    | t          | f        | f           | f
@@ -316,7 +317,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emaj       | otherPrefix4mytbl5_log         | postgres   | tspemaj    | t          | f        | f           | f
  emaj       | phil's schema3_myTbl2\_log     | postgres   | tspemaj    | t          | f        | f           | f
  emaj #'3   | phil's schema3_phil's tbl1_log | postgres   | tspemaj    | t          | f        | f           | f
-(28 rows)
+(29 rows)
 
 -----------------------------
 -- emaj_comment_group() tests
@@ -365,12 +366,12 @@ select group_name, group_comment from emaj.emaj_group where group_name = 'myGrou
 -- unknown group
 select emaj.emaj_drop_group(NULL);
 ERROR:  _drop_group: group "<NULL>" has not been created.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 select emaj.emaj_drop_group('unkownGroup');
 ERROR:  _drop_group: group "unkownGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 -- group in logging state
@@ -382,7 +383,7 @@ select emaj.emaj_start_group('myGroup1','');
 
 select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_group: The group "myGroup1" cannot be deleted because it is in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 25 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 26 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 select emaj.emaj_stop_group('myGroup1');
@@ -398,7 +399,7 @@ begin;
 ERROR:  _drop_log_schema: cannot drop schema "emajb". It probably owns unattended objects. Use the emaj_verify_all() function to get details
 CONTEXT:  PL/pgSQL function emaj._drop_log_schema(text,boolean) line 22 at RAISE
 SQL statement "SELECT emaj._drop_log_schema(r_schema.rel_log_schema, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 55 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 56 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 rollback;
@@ -418,7 +419,7 @@ select emaj.emaj_drop_group('myGroup2');
 -- already dropped
 select emaj.emaj_drop_group('myGroup2');
 ERROR:  _drop_group: group "myGroup2" has not been created.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 -----------------------------
@@ -427,18 +428,18 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 -- unknown group
 select emaj.emaj_force_drop_group(NULL);
 ERROR:  _drop_group: group "<NULL>" has not been created.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 select emaj.emaj_force_drop_group('unkownGroup');
 ERROR:  _drop_group: group "unkownGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 -- already dropped
 select emaj.emaj_force_drop_group('myGroup2');
 ERROR:  _drop_group: group "myGroup2" has not been created.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 -- should be OK
@@ -481,10 +482,10 @@ select emaj.emaj_force_drop_group('myGroup2');
 -- unknown group
 select emaj.emaj_alter_group(NULL);
 ERROR:  emaj_alter_group: group "<NULL>" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 36 at RAISE
 select emaj.emaj_alter_group('unkownGroup');
 ERROR:  emaj_alter_group: group "unkownGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 36 at RAISE
 -- group in logging state
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
@@ -501,7 +502,7 @@ select emaj.emaj_start_group('myGroup1','');
 
 select emaj.emaj_alter_group('myGroup1');
 ERROR:  emaj_alter_group: The group "myGroup1" cannot be altered because it is in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 39 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 40 at RAISE
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
@@ -523,14 +524,14 @@ WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign ke
 ERROR:  _check_group_content: one or several tables already belong to another group (myschema2.mytbl1 in myGroup2).
 CONTEXT:  PL/pgSQL function emaj._check_group_content(text) line 45 at RAISE
 SQL statement "SELECT emaj._check_group_content(v_groupName)"
-PL/pgSQL function emaj.emaj_alter_group(text) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 48 at PERFORM
 rollback;
 -- the group is now empty
 begin;
   delete from emaj.emaj_group_def where grpdef_group = 'myGroup1';
   select emaj.emaj_alter_group('myGroup1');
 ERROR:  emaj_alter_group: Group "myGroup1" is unknown in emaj_group_def table.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 44 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 45 at RAISE
 rollback;
 -- schema suffix cannot be changed for sequence
 begin;
@@ -539,7 +540,7 @@ begin;
 ERROR:  _create_seq: Defining a secondary log schema is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  PL/pgSQL function emaj._create_seq(emaj.emaj_group_def,text) line 12 at RAISE
 SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
-PL/pgSQL function emaj.emaj_alter_group(text) line 209 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
 rollback;
 -- object names prefix cannot be changed for sequence
 begin;
@@ -548,7 +549,7 @@ begin;
 ERROR:  _create_seq: Defining an emaj names prefix is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  PL/pgSQL function emaj._create_seq(emaj.emaj_group_def,text) line 16 at RAISE
 SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
-PL/pgSQL function emaj.emaj_alter_group(text) line 209 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
 rollback;
 -- log tablespace cannot be changed for sequence
 begin;
@@ -557,7 +558,7 @@ begin;
 ERROR:  _create_seq: Defining log tablespaces is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  PL/pgSQL function emaj._create_seq(emaj.emaj_group_def,text) line 20 at RAISE
 SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
-PL/pgSQL function emaj.emaj_alter_group(text) line 209 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
 rollback;
 begin;
   update emaj.emaj_group_def set grpdef_log_idx_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -565,7 +566,7 @@ begin;
 ERROR:  _create_seq: Defining log tablespaces is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  PL/pgSQL function emaj._create_seq(emaj.emaj_group_def,text) line 20 at RAISE
 SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
-PL/pgSQL function emaj.emaj_alter_group(text) line 209 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 212 at PERFORM
 rollback;
 -- should be OK
 -- nothing to change
@@ -938,7 +939,7 @@ select emaj.emaj_force_drop_group('myGroup1');
 
 select emaj.emaj_force_drop_group('myGroup2');
 ERROR:  _drop_group: group "myGroup2" has not been created.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
@@ -1092,6 +1093,53 @@ select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(his
  FORCE_DROP_GROUP   | END                     | myGroup1         | 6 tables/sequences processed                                   | postgres
 (137 rows)
 
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
+ time_id | time_last_emaj_gid | time_event 
+---------+--------------------+------------
+      10 |                  0 | C
+      11 |                  0 | C
+      13 |                  0 | C
+      14 |                  0 | C
+      15 |                  0 | M
+      16 |                  0 | M
+      17 |                  0 | C
+      18 |                  0 | M
+      19 |                  0 | C
+      20 |                  0 | C
+      21 |                  0 | M
+      22 |                  0 | M
+      28 |                  0 | A
+      29 |                  0 | A
+      30 |                  0 | A
+      31 |                  0 | A
+      32 |                  0 | A
+      33 |                  0 | A
+      34 |                  0 | A
+      35 |                  0 | A
+      36 |                  0 | A
+      37 |                  0 | A
+      38 |                  0 | A
+      39 |                  0 | A
+      40 |                  0 | A
+      41 |                  0 | A
+      42 |                  0 | A
+      43 |                  0 | A
+      44 |                  0 | A
+      45 |                  0 | A
+      46 |                  0 | A
+      47 |                  0 | A
+      48 |                  0 | A
+      49 |                  0 | A
+      50 |                  0 | A
+      51 |                  0 | A
+      52 |                  0 | A
+      53 |                  0 | A
+      54 |                  0 | A
+      55 |                  0 | A
+      56 |                  0 | A
+(41 rows)
+
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
+alter sequence emaj.emaj_time_stamp_time_id_seq restart 200;
 alter sequence emaj.emaj_mark_mark_id_seq restart 200;
 alter sequence emaj.emaj_sequence_sequ_id_seq restart 2000;
