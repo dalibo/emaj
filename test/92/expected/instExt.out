@@ -90,21 +90,24 @@ Composite type "emaj.emaj_detailed_log_stat_type"
  is_cycled     | boolean | f
  is_called     | boolean | f
 
-                                                        Table "emaj.emaj_group"
-          Column           |           Type           |                                    Modifiers                                    
----------------------------+--------------------------+---------------------------------------------------------------------------------
- group_name                | text                     | not null
- group_is_logging          | boolean                  | not null
- group_is_rlbk_protected   | boolean                  | not null
- group_nb_table            | integer                  | 
- group_nb_sequence         | integer                  | 
- group_is_rollbackable     | boolean                  | not null
- group_creation_datetime   | timestamp with time zone | not null default transaction_timestamp()
- group_last_alter_datetime | timestamp with time zone | 
- group_pg_version          | text                     | not null default "substring"(version(), 'PostgreSQL\s([.,0-9,A-Z,a-z]*)'::text)
- group_comment             | text                     | 
+                                               Table "emaj.emaj_group"
+          Column          |  Type   |                                    Modifiers                                    
+--------------------------+---------+---------------------------------------------------------------------------------
+ group_name               | text    | not null
+ group_is_logging         | boolean | not null
+ group_is_rlbk_protected  | boolean | not null
+ group_nb_table           | integer | 
+ group_nb_sequence        | integer | 
+ group_is_rollbackable    | boolean | not null
+ group_creation_time_id   | bigint  | not null
+ group_last_alter_time_id | bigint  | 
+ group_pg_version         | text    | not null default "substring"(version(), 'PostgreSQL\s([.,0-9,A-Z,a-z]*)'::text)
+ group_comment            | text    | 
 Indexes:
     "emaj_group_pkey" PRIMARY KEY, btree (group_name), tablespace "tspemaj"
+Foreign-key constraints:
+    "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Referenced by:
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
@@ -539,6 +542,9 @@ Owned by: emaj.emaj_sequence.sequ_id
  time_event           | character(1)             | 
 Indexes:
     "emaj_time_stamp_pkey" PRIMARY KEY, btree (time_id), tablespace "tspemaj"
+Referenced by:
+    TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Tablespace: "tspemaj"
 
 Index "emaj.emaj_time_stamp_pkey"

@@ -114,6 +114,58 @@ INSERT INTO emaj.emaj_time_stamp (time_clock_timestamp, time_stmt_timestamp, tim
 DROP TABLE emaj_temp_time_stamp;
 
 --
+-- process the emaj_group table
+--
+-- create a temporary table with the old structure and copy the source content
+CREATE TEMP TABLE emaj_group_old (LIKE emaj.emaj_group);
+
+INSERT INTO emaj_group_old SELECT * FROM emaj.emaj_group;
+
+-- drop the old table
+DROP TABLE emaj.emaj_group CASCADE;
+
+-- create the new table, with its indexes, comment, constraints (except foreign key)...
+CREATE TABLE emaj.emaj_group (
+  group_name                   TEXT        NOT NULL,
+  group_is_logging             BOOLEAN     NOT NULL,       -- are log triggers activated ?
+                                                           -- true between emaj_start_group(s) and emaj_stop_group(s)
+                                                           -- false in other cases
+  group_is_rlbk_protected      BOOLEAN     NOT NULL,       -- is the group currently protected against rollback ?
+                                                           -- always true for AUDIT_ONLY groups
+  group_nb_table               INT,                        -- number of tables at emaj_create_group time
+  group_nb_sequence            INT,                        -- number of sequences at emaj_create_group time
+  group_is_rollbackable        BOOLEAN     NOT NULL,       -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
+  group_creation_time_id       BIGINT NOT NULL,            -- time stamp of the group's creation
+  group_last_alter_time_id     BIGINT,                   -- time stamp of the last emaj_alter_group() call
+                                                           -- set to NULL at emaj_create_group() time
+  group_pg_version             TEXT        NOT NULL        -- postgres version at emaj_create_group() time
+                               DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
+  group_comment                TEXT,                       -- optional user comment
+  PRIMARY KEY (group_name),
+  FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp (time_id),
+  FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
+  );
+COMMENT ON TABLE emaj.emaj_group IS
+$$Contains created E-Maj groups.$$;
+
+-- populate the new table
+INSERT INTO emaj.emaj_group (
+  group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
+  group_creation_time_id, group_last_alter_time_id, group_pg_version, group_comment)
+  SELECT group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
+  ts1.time_id, ts2.time_id, group_pg_version, group_comment
+    FROM emaj_group_old
+         JOIN emaj.emaj_time_stamp ts1 ON group_creation_datetime = ts1.time_tx_timestamp AND ts1.time_event = 'C'
+         LEFT OUTER JOIN emaj.emaj_time_stamp ts2 ON group_last_alter_datetime = ts2.time_tx_timestamp AND ts1.time_event = 'A';
+
+-- recreate the foreign keys that point on this table
+ALTER TABLE emaj.emaj_relation ADD FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE;
+ALTER TABLE emaj.emaj_mark ADD FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE;
+
+-- and drop the temporary table
+DROP TABLE emaj_group_old;
+
+--
 -- process the emaj_seq_hole table
 --
 -- create a temporary table with the old structure and copy the source content
@@ -298,7 +350,7 @@ DROP FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_last
 --    replace new or changed      --
 --                                --
 ------------------------------------
-
+--<begin_functions>                                             pattern used by the tool that extracts and insert the functions definition
 ------------------------------------
 --                                --
 -- Low level Functions            --
@@ -1445,8 +1497,8 @@ $emaj_create_group$
     SELECT emaj._set_time_stamp('C') INTO v_timeId;
 -- insert group row in the emaj_group table
 -- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable)
-    INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable, group_is_rlbk_protected)
-      VALUES (v_groupName, FALSE, v_isRollbackable, NOT v_isRollbackable);
+    INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable, group_is_rlbk_protected, group_creation_time_id)
+      VALUES (v_groupName, FALSE, v_isRollbackable, NOT v_isRollbackable, v_timeId);
 -- look for new E-Maj secondary schemas to create
     FOR r_schema IN
       SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
@@ -1537,7 +1589,6 @@ $_drop_group$
 -- The function is defined as SECURITY DEFINER so that secondary schemas can be dropped
   DECLARE
     v_groupIsLogging         BOOLEAN;
-    v_timeId                 BIGINT;
     v_event_trigger_array    TEXT[];
     v_nbTb                   INT = 0;
     v_schemaPrefix           TEXT = 'emaj';
@@ -1817,8 +1868,7 @@ $emaj_alter_group$
 -- update tables and sequences counters and the last alter timestamp in the emaj_group table
     SELECT count(*) INTO v_nbTbl FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'r';
     SELECT count(*) INTO v_nbSeq FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'S';
-    UPDATE emaj.emaj_group SET group_last_alter_datetime = transaction_timestamp(),
-                               group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
+    UPDATE emaj.emaj_group SET group_last_alter_time_id = v_timeId, group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
       WHERE group_name = v_groupName;
 -- delete old marks of the tables group from emaj_mark
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
@@ -5598,6 +5648,7 @@ $_enable_event_triggers$
   END;
 $_enable_event_triggers$;
 
+--<end_functions>                                               pattern used by the tool that extracts and insert the functions definition
 
 -- Set comments for all internal functions,
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment

@@ -121,6 +121,9 @@ select extname, extversion from pg_extension where extname = 'emaj';
 
 -- process the extension migration
 ALTER EXTENSION emaj UPDATE TO 'next_version';
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to constraint emaj_relation_rel_group_fkey on table emaj_relation
+drop cascades to constraint emaj_mark_mark_group_fkey on table emaj_mark
 NOTICE:  event trigger "emaj_protection_trg" does not exist, skipping
 NOTICE:  event trigger "emaj_sql_drop_trg" does not exist, skipping
 NOTICE:  event trigger "emaj_table_rewrite_trg" does not exist, skipping

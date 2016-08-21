@@ -188,6 +188,7 @@ SET
  100640
 (1 row)
 
+COPY 252
 COPY 2
 COPY 27
 COPY 56
@@ -220,7 +221,6 @@ COPY 179
    1027
 (1 row)
 
-COPY 252
  setval 
 --------
    1003

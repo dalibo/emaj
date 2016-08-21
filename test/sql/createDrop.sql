@@ -148,8 +148,9 @@ select emaj.emaj_create_group('myGroup2');
 
 -- impact of created groups
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, group_comment 
-  from emaj.emaj_group order by group_name, group_is_logging;
+select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
+       group_creation_time_id, group_last_alter_time_id, group_comment
+ from emaj.emaj_group order by group_name;
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq;
 select * from pg_tables where schemaname like 'emaj%' order by tablename;
 
@@ -253,9 +254,13 @@ rollback;
 
 -- should be OK
 -- nothing to change
-select group_nb_table, group_nb_sequence, case when group_last_alter_datetime is null then 'NULL' else 'NOT NULL' end as is_group_last_alter_datetime_null from emaj.emaj_group where group_name = 'myGroup1';
+select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
+       group_creation_time_id, group_last_alter_time_id, group_comment
+ from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_alter_group('myGroup1');
-select group_nb_table, group_nb_sequence, case when group_last_alter_datetime is null then 'NULL' else 'NOT NULL' end as is_group_last_alter_datetime_null from emaj.emaj_group where group_name = 'myGroup1';
+select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
+       group_creation_time_id, group_last_alter_time_id, group_comment
+ from emaj.emaj_group where group_name = 'myGroup1';
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 -- only 3 tables to remove (+ log schemas emajb and emajC)
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';

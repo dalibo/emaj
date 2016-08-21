@@ -19,6 +19,10 @@ select * from pg_available_extension_versions where name = 'emaj';
 ALTER EXTENSION emaj UPDATE TO 'next_version';
 NOTICE:  CREATE TABLE will create implicit sequence "emaj_time_stamp_time_id_seq" for serial column "emaj_time_stamp.time_id"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_time_stamp_pkey" for table "emaj_time_stamp"
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to constraint emaj_relation_rel_group_fkey on table emaj_relation
+drop cascades to constraint emaj_mark_mark_group_fkey on table emaj_mark
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_group_pkey" for table "emaj_group"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_seq_hole_pkey" for table "emaj_seq_hole"
 NOTICE:  E-Maj upgrade: internal error, the number of rows in the original emaj_seq_hole (4) doesn't math the number of rows in the new emaj_seq_hole table (0)
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_rlbk_stat_pkey" for table "emaj_rlbk_stat"

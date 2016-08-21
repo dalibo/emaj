@@ -184,14 +184,15 @@ CREATE TABLE emaj.emaj_group (
   group_nb_table               INT,                        -- number of tables at emaj_create_group time
   group_nb_sequence            INT,                        -- number of sequences at emaj_create_group time
   group_is_rollbackable        BOOLEAN     NOT NULL,       -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
-  group_creation_datetime      TIMESTAMPTZ NOT NULL        -- start time of the transaction that created the group
-                               DEFAULT transaction_timestamp(),
-  group_last_alter_datetime    TIMESTAMPTZ,                -- date and time of the last emaj_alter_group() exec,
+  group_creation_time_id       BIGINT NOT NULL,            -- time stamp of the group's creation
+  group_last_alter_time_id       BIGINT,                   -- time stamp of the last emaj_alter_group() call
                                                            -- set to NULL at emaj_create_group() time
   group_pg_version             TEXT        NOT NULL        -- postgres version at emaj_create_group() time
                                DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
   group_comment                TEXT,                       -- optional user comment
-  PRIMARY KEY (group_name)
+  PRIMARY KEY (group_name),
+  FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp (time_id),
+  FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
   );
 COMMENT ON TABLE emaj.emaj_group IS
 $$Contains created E-Maj groups.$$;
@@ -677,8 +678,8 @@ $_purge_hist$
     IF v_maxRlbkId IS NOT NULL THEN
       DELETE FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id <= v_maxRlbkId;
       WITH deleted_rlbk AS (
-        DELETE FROM emaj.emaj_rlbk_session 
-          WHERE rlbs_rlbk_id <= v_maxRlbkId 
+        DELETE FROM emaj.emaj_rlbk_session
+          WHERE rlbs_rlbk_id <= v_maxRlbkId
           RETURNING rlbs_rlbk_id
         )
         SELECT COUNT (DISTINCT rlbs_rlbk_id) INTO v_nbPurgedRlbk FROM deleted_rlbk;
@@ -1862,8 +1863,8 @@ $emaj_create_group$
     SELECT emaj._set_time_stamp('C') INTO v_timeId;
 -- insert group row in the emaj_group table
 -- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable)
-    INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable, group_is_rlbk_protected)
-      VALUES (v_groupName, FALSE, v_isRollbackable, NOT v_isRollbackable);
+    INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable, group_is_rlbk_protected, group_creation_time_id)
+      VALUES (v_groupName, FALSE, v_isRollbackable, NOT v_isRollbackable, v_timeId);
 -- look for new E-Maj secondary schemas to create
     FOR r_schema IN
       SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
@@ -2005,7 +2006,6 @@ $_drop_group$
 -- The function is defined as SECURITY DEFINER so that secondary schemas can be dropped
   DECLARE
     v_groupIsLogging         BOOLEAN;
-    v_timeId                 BIGINT;
     v_event_trigger_array    TEXT[];
     v_nbTb                   INT = 0;
     v_schemaPrefix           TEXT = 'emaj';
@@ -2285,8 +2285,7 @@ $emaj_alter_group$
 -- update tables and sequences counters and the last alter timestamp in the emaj_group table
     SELECT count(*) INTO v_nbTbl FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'r';
     SELECT count(*) INTO v_nbSeq FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'S';
-    UPDATE emaj.emaj_group SET group_last_alter_datetime = transaction_timestamp(),
-                               group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
+    UPDATE emaj.emaj_group SET group_last_alter_time_id = v_timeId, group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
       WHERE group_name = v_groupName;
 -- delete old marks of the tables group from emaj_mark
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
