@@ -323,39 +323,34 @@ $$Represents the structure of rows returned by the emaj_get_consolidable_rollbac
 
 ------------------------------------
 --                                --
--- emaj functions: drop obsolete  --
---    or with modified interface  --
+-- emaj functions                 --
 --                                --
 ------------------------------------
-DROP FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT);
-DROP FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_conditions TEXT);
-DROP FUNCTION emaj.emaj_create_group(v_groupName TEXT);
-DROP FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT);
-DROP FUNCTION emaj.emaj_start_groups(v_groupNames TEXT[], v_mark TEXT);
-DROP FUNCTION emaj.emaj_stop_group(v_groupName TEXT);
-DROP FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]);
-DROP FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT);
-DROP FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT);
-DROP FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN);
-DROP FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT);
-DROP FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT);
-DROP FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]);
-DROP FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT);
-DROP FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]);
-DROP FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]);
+--<begin_functions>                              pattern used by the tool that extracts and insert the functions definition
+------------------------------------------------------------------
+-- drop obsolete functions or functions with modified interface --
+------------------------------------------------------------------
+DROP FUNCTION emaj._delete_log_tbl(R_REL EMAJ.EMAJ_RELATION,V_TIMESTAMP TIMESTAMPTZ,V_LASTGLOBALSEQ BIGINT,V_LASTSEQUENCEID BIGINT,V_LASTSEQHOLEID BIGINT);
+DROP FUNCTION emaj._log_stat_tbl(R_REL EMAJ.EMAJ_RELATION,V_TSFIRSTMARK TIMESTAMPTZ,V_TSLASTMARK TIMESTAMPTZ,V_FIRSTLASTSEQHOLEID BIGINT,V_LASTLASTSEQHOLEID BIGINT);
+DROP FUNCTION emaj._gen_sql_tbl(R_REL EMAJ.EMAJ_RELATION,V_CONDITIONS TEXT);
+DROP FUNCTION emaj.emaj_create_group(V_GROUPNAME TEXT);
+DROP FUNCTION emaj.emaj_start_group(V_GROUPNAME TEXT,V_MARK TEXT);
+DROP FUNCTION emaj.emaj_start_groups(V_GROUPNAMES TEXT[],V_MARK TEXT);
+DROP FUNCTION emaj.emaj_stop_group(V_GROUPNAME TEXT);
+DROP FUNCTION emaj.emaj_stop_groups(V_GROUPNAMES TEXT[]);
+DROP FUNCTION emaj._set_mark_groups(V_GROUPNAMES TEXT[],V_MARK TEXT,V_MULTIGROUP BOOLEAN,V_EVENTTORECORD BOOLEAN);
+DROP FUNCTION emaj.emaj_delete_mark_group(V_GROUPNAME TEXT,V_MARK TEXT);
+DROP FUNCTION emaj.emaj_delete_before_mark_group(V_GROUPNAME TEXT,V_MARK TEXT);
+DROP FUNCTION emaj._delete_before_mark_group(V_GROUPNAME TEXT,V_MARK TEXT);
+DROP FUNCTION emaj.emaj_gen_sql_group(V_GROUPNAME TEXT,V_FIRSTMARK TEXT,V_LASTMARK TEXT,V_LOCATION TEXT);
+DROP FUNCTION emaj.emaj_gen_sql_group(V_GROUPNAME TEXT,V_FIRSTMARK TEXT,V_LASTMARK TEXT,V_LOCATION TEXT,V_TBLSEQS TEXT[]);
+DROP FUNCTION emaj.emaj_gen_sql_groups(V_GROUPNAMES TEXT[],V_FIRSTMARK TEXT,V_LASTMARK TEXT,V_LOCATION TEXT);
+DROP FUNCTION emaj.emaj_gen_sql_groups(V_GROUPNAMES TEXT[],V_FIRSTMARK TEXT,V_LASTMARK TEXT,V_LOCATION TEXT,V_TBLSEQS TEXT[]);
+DROP FUNCTION emaj._gen_sql_groups(V_GROUPNAMES TEXT[],V_FIRSTMARK TEXT,V_LASTMARK TEXT,V_LOCATION TEXT,V_TBLSEQS TEXT[]);
 
-------------------------------------
---                                --
--- emaj functions: create or      --
---    replace new or changed      --
---                                --
-------------------------------------
---<begin_functions>                                             pattern used by the tool that extracts and insert the functions definition
-------------------------------------
---                                --
--- Low level Functions            --
---                                --
-------------------------------------
+------------------------------------------------------------------
+-- create new or modified functions                             --
+------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION emaj._pg_version_num()
 RETURNS INTEGER LANGUAGE sql IMMUTABLE AS
 $$
@@ -371,6 +366,94 @@ INSERT INTO emaj.emaj_time_stamp (time_last_emaj_gid, time_event)
   SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END, $1 FROM emaj.emaj_global_seq
   RETURNING time_id;
 $$;
+
+CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(v_cnxName TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$_dblink_open_cnx$
+-- This function tries to open a named dblink connection.
+-- It uses as target: the current cluster (port), the current database and a role defined in the emaj_param table.
+-- This role must be defined with a row having:
+--   - param_key = 'dblink_user_password',
+--   - param_value_text = 'user=<user> password=<password>' with the rules that apply to usual libPQ connect strings
+-- The password can be omited if the connection doesn't require it.
+-- The dblink_connect_u is used to open the connection so that emaj_adm but non superuser roles can access
+--    cluster even when no password is required to log on.
+-- Input:  connection name
+-- Output: integer status return.
+--           1 successful connection
+--           0 already opened connection
+--          -1 dblink is not installed
+--          -2 dblink functions are not visible for the session
+--          -3 dblink functions are not accessible by the role
+--          -4 the transaction isolation level is not READ COMMITTED
+--          -5 no 'dblink_user_password' parameter is defined in the emaj_param table
+--          -6 error at dblink_connect() call
+  DECLARE
+    v_UserPassword           TEXT;
+    v_connectString          TEXT;
+    v_status                 INT;
+  BEGIN
+    IF (SELECT count(*) FROM pg_catalog.pg_proc WHERE proname = 'dblink_connect_u') = 0 THEN
+      v_status = -1;                      -- dblink is not installed
+    ELSIF (SELECT count(*) FROM pg_catalog.pg_proc
+             WHERE proname = 'dblink_connect_u' AND pg_function_is_visible(oid)) = 0 THEN
+      v_status = -2;                      -- dblink is not visible in the search_path
+    ELSIF NOT has_function_privilege('dblink_connect_u(text, text)', 'execute') THEN
+      v_status = -3;                      -- current role has not the execute rights on dblink functions
+    ELSIF substring(v_cnxName FROM 1 FOR 5) = 'rlbk#' AND
+          current_setting('transaction_isolation') <> 'read committed' THEN
+      v_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
+                                          --   READ COMMITTED transaction
+    ELSIF v_cnxName = ANY (dblink_get_connections()) THEN
+-- dblink is usable, so search the requested connection name in dblink connections list
+      v_status = 0;                       -- the requested connection is already open
+    ELSE
+-- so, get the 'dblink_user_password' parameter if exists, from emaj_param
+      SELECT param_value_text INTO v_UserPassword FROM emaj.emaj_param WHERE param_key = 'dblink_user_password';
+      IF NOT FOUND THEN
+        v_status = -5;                    -- no 'dblink_user_password' parameter is defined in the emaj_param table
+      ELSE
+-- ... build the connect string
+        v_connectString = 'host=localhost port=' || current_setting('port') ||
+                          ' dbname=' || current_database() || ' ' || v_userPassword;
+-- ... and try to connect
+        BEGIN
+          PERFORM dblink_connect_u(v_cnxName,v_connectString);
+          v_status = 1;                 -- the connection is successful
+        EXCEPTION
+          WHEN OTHERS THEN
+            v_status = -6;              -- the connection attempt failed
+        END;
+      END IF;
+    END IF;
+-- for connections used for rollback operations, record the dblink connection attempt in the emaj_hist table
+    IF substring(v_cnxName FROM 1 FOR 5) = 'rlbk#' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+        VALUES ('DBLINK_OPEN_CNX',v_cnxName,'Status = ' || v_status);
+    END IF;
+    RETURN v_status;
+  END;
+$_dblink_open_cnx$;
+
+CREATE OR REPLACE FUNCTION emaj._dblink_close_cnx(v_cnxName TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_dblink_close_cnx$
+-- This function closes a named dblink connection.
+-- Input:  connection name
+  DECLARE
+  BEGIN
+    IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
+-- the emaj connection exists, so disconnect
+      PERFORM dblink_disconnect(v_cnxName);
+-- for connections used for rollback operations, record the dblink disconnection in the emaj_hist table
+      IF substring(v_cnxName FROM 1 FOR 5) = 'rlbk#' THEN
+        INSERT INTO emaj.emaj_hist (hist_function, hist_object)
+          VALUES ('DBLINK_CLOSE_CNX',v_cnxName);
+      END IF;
+    END IF;
+    RETURN;
+  END;
+$_dblink_close_cnx$;
 
 CREATE OR REPLACE FUNCTION emaj._purge_hist()
 RETURNS VOID LANGUAGE plpgsql AS
@@ -409,8 +492,8 @@ $_purge_hist$
     IF v_maxRlbkId IS NOT NULL THEN
       DELETE FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id <= v_maxRlbkId;
       WITH deleted_rlbk AS (
-        DELETE FROM emaj.emaj_rlbk_session 
-          WHERE rlbs_rlbk_id <= v_maxRlbkId 
+        DELETE FROM emaj.emaj_rlbk_session
+          WHERE rlbs_rlbk_id <= v_maxRlbkId
           RETURNING rlbs_rlbk_id
         )
         SELECT COUNT (DISTINCT rlbs_rlbk_id) INTO v_nbPurgedRlbk FROM deleted_rlbk;
@@ -573,7 +656,7 @@ $_check_new_mark$
 $_check_new_mark$;
 
 CREATE OR REPLACE FUNCTION emaj._create_log_schema(v_logSchemaName TEXT)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_log_schema$
 -- The function creates a log schema and gives the appropriate rights to emaj users
 -- Input: log schema name
@@ -594,7 +677,7 @@ $_create_log_schema$
 $_create_log_schema$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_log_schema(v_logSchemaName TEXT, v_isForced BOOLEAN)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_log_schema$
 -- The function drops a log schema
 -- Input: log schema name, boolean telling whether the schema to drop may contain residual objects
@@ -623,13 +706,8 @@ $_drop_log_schema$
   END;
 $_drop_log_schema$;
 
----------------------------------------------------
---                                               --
--- Elementary functions for tables and sequences --
---                                               --
----------------------------------------------------
 CREATE OR REPLACE FUNCTION emaj._create_tbl(r_grpdef emaj.emaj_group_def, v_groupName TEXT, v_isRollbackable BOOLEAN, v_defTsp TEXT)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table
 -- Input: the emaj_group_def row related to the application table to process, the group name, a boolean indicating whether the group is rollbackable, and the default tablespace to use if no specific tablespace is set for this application table
@@ -731,7 +809,7 @@ $_create_tbl$
 -- creation of the log fonction that will be mapped to the log trigger later
 -- The new row is logged for each INSERT, the old row is logged for each DELETE
 -- and the old and the new rows are logged for each UPDATE.
-    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS trigger AS $logfnct$'
+    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
          || 'BEGIN'
 -- The sequence associated to the log table is incremented at the beginning of the function ...
          || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
@@ -799,7 +877,7 @@ $_create_tbl$
 $_create_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_tbl$
 -- The function deletes all what has been created by _create_tbl function
 -- Required inputs: row from emaj_relation corresponding to the appplication table to proccess
@@ -830,6 +908,70 @@ $_drop_tbl$
     RETURN;
   END;
 $_drop_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._create_seq(grpdef emaj.emaj_group_def, v_groupName TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_create_seq$
+-- The function checks whether the sequence is related to a serial column of an application table.
+-- If yes, it verifies that this table also belong to the same group
+-- Required inputs: the emaj_group_def row related to the application sequence to process, the group name
+  DECLARE
+    v_tableSchema            TEXT;
+    v_tableName              TEXT;
+    v_tableGroup             TEXT;
+  BEGIN
+-- check no log schema has been set as parameter in the emaj_group_def table
+    IF grpdef.grpdef_log_schema_suffix IS NOT NULL THEN
+      RAISE EXCEPTION '_create_seq: Defining a secondary log schema is not allowed for a sequence (%.%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq;
+    END IF;
+-- check no emaj name prefix has been set as parameter in the emaj_group_def table
+    IF grpdef.grpdef_emaj_names_prefix IS NOT NULL THEN
+      RAISE EXCEPTION '_create_seq: Defining an emaj names prefix is not allowed for a sequence (%.%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq;
+    END IF;
+-- check no tablespace has been set as parameter in the emaj_group_def table
+    IF grpdef.grpdef_log_dat_tsp IS NOT NULL OR grpdef.grpdef_log_idx_tsp IS NOT NULL THEN
+      RAISE EXCEPTION '_create_seq: Defining log tablespaces is not allowed for a sequence (%.%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq;
+    END IF;
+-- get the schema and the name of the table that contains a serial column this sequence is linked to, if one exists
+    SELECT nt.nspname, ct.relname INTO v_tableSchema, v_tableName
+      FROM pg_catalog.pg_class cs, pg_catalog.pg_namespace ns, pg_depend,
+           pg_catalog.pg_class ct, pg_catalog.pg_namespace nt
+      WHERE cs.relname = grpdef.grpdef_tblseq AND ns.nspname = grpdef.grpdef_schema -- the selected sequence
+        AND cs.relnamespace = ns.oid                             -- join condition for sequence schema name
+        AND ct.relnamespace = nt.oid                             -- join condition for linked table schema name
+        AND pg_depend.objid = cs.oid                             -- join condition for the pg_depend table
+        AND pg_depend.refobjid = ct.oid                          -- join conditions for depended table schema name
+        AND pg_depend.classid = pg_depend.refclassid             -- the classid et refclassid must be 'pg_class'
+        AND pg_depend.classid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_class');
+    IF FOUND THEN
+      SELECT grpdef_group INTO v_tableGroup FROM emaj.emaj_group_def
+        WHERE grpdef_schema = v_tableSchema AND grpdef_tblseq = v_tableName;
+      IF NOT FOUND THEN
+        RAISE WARNING '_create_seq: Sequence %.% is linked to table %.% but this table does not belong to any tables group.', grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_tableSchema, v_tableName;
+      ELSE
+        IF v_tableGroup <> v_groupName THEN
+          RAISE WARNING '_create_seq: Sequence %.% is linked to table %.% but this table belong to another tables group (%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_tableSchema, v_tableName, v_tableGroup;
+        END IF;
+      END IF;
+    END IF;
+-- record the sequence in the emaj_relation table
+      INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
+          VALUES (grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_groupName, grpdef.grpdef_priority, 'S');
+    RETURN;
+  END;
+$_create_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._drop_seq(r_rel emaj.emaj_relation)
+RETURNS VOID LANGUAGE plpgsql AS
+$_drop_seq$
+-- The function deletes the rows stored into emaj_sequence for a particular sequence
+-- Required inputs: row from emaj_relation corresponding to the appplication sequence to proccess
+  BEGIN
+-- delete rows from emaj_sequence
+    EXECUTE 'DELETE FROM emaj.emaj_sequence WHERE sequ_schema = ' || quote_literal(r_rel.rel_schema) || ' AND sequ_name = ' || quote_literal(r_rel.rel_tblseq);
+    RETURN;
+  END;
+$_drop_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, v_lastGlobalSeq BIGINT, v_nbSession INT)
 RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
@@ -960,7 +1102,7 @@ $_delete_log_tbl$
 $_delete_log_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, v_timestamp TIMESTAMPTZ, v_isLoggedRlbk BOOLEAN, v_lastSequenceId BIGINT)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_seq$
 -- This function rollbacks one application sequence to a given mark
 -- The function is called by emaj.emaj._rlbk_end()
@@ -1184,12 +1326,6 @@ $_gen_sql_tbl$
   END;
 $_gen_sql_tbl$;
 
-------------------------------------------------
-----                                        ----
-----       Functions to manage groups       ----
-----                                        ----
-------------------------------------------------
-
 CREATE OR REPLACE FUNCTION emaj._verify_groups(v_groups TEXT[], v_onErrorStop BOOLEAN)
 RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
 $_verify_groups$
@@ -1352,7 +1488,7 @@ $_verify_groups$
 $_verify_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._check_fk_groups(v_groupNames TEXT[])
-RETURNS void LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_check_fk_groups$
 -- this function checks foreign key constraints for tables of a groups array.
 -- tables from audit_only groups are ignored in this check because they will never be rolled back.
@@ -1405,7 +1541,7 @@ $_check_fk_groups$
 $_check_fk_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._lock_groups(v_groupNames TEXT[], v_lockMode TEXT, v_multiGroup BOOLEAN)
-RETURNS void LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_lock_groups$
 -- This function locks all tables of a groups array.
 -- The lock mode is provided by the calling function.
@@ -1553,11 +1689,9 @@ $emaj_create_group$
     RETURN v_nbTbl + v_nbSeq;
   END;
 $emaj_create_group$;
-COMMENT ON FUNCTION emaj.emaj_create_group(TEXT, BOOLEAN) IS
-$$Creates an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT)
-RETURNS void LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql AS
 $emaj_comment_group$
 -- This function sets or modifies a comment on a group by updating the group_comment of the emaj_group table.
 -- Input: group name, comment
@@ -1937,8 +2071,6 @@ $emaj_start_groups$
     RETURN v_nbTblSeq;
   END;
 $emaj_start_groups$;
-COMMENT ON FUNCTION emaj.emaj_start_groups(TEXT[],TEXT, BOOLEAN) IS
-$$Starts several E-Maj groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
@@ -2069,8 +2201,6 @@ $emaj_stop_groups$
     RETURN v_nbTblSeq;
   END;
 $emaj_stop_groups$;
-COMMENT ON FUNCTION emaj.emaj_stop_groups(TEXT[], TEXT) IS
-$$Stops several E-Maj groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
@@ -2287,7 +2417,7 @@ COMMENT ON FUNCTION emaj.emaj_unprotect_group(TEXT) IS
 $$Unsets a protection against a rollback on an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT DEFAULT NULL)
-RETURNS int LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_set_mark_group$
 -- This function inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the group
 -- Input: group name, mark to set
@@ -2333,7 +2463,7 @@ COMMENT ON FUNCTION emaj.emaj_set_mark_group(TEXT,TEXT) IS
 $$Sets a mark on an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT DEFAULT NULL)
-RETURNS int LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_set_mark_groups$
 -- This function inserts a mark in the emaj_mark table and takes an image of the sequences definitions for several groups at a time
 -- Input: array of group names, mark to set
@@ -2394,7 +2524,7 @@ COMMENT ON FUNCTION emaj.emaj_set_mark_groups(TEXT[],TEXT) IS
 $$Sets a mark on several E-Maj groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN, v_logged_rlbk_target_mark TEXT DEFAULT NULL)
-RETURNS int LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql AS
 $_set_mark_groups$
 -- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
 -- It also updates the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into all log tables between this previous mark and the new mark.
@@ -2496,7 +2626,7 @@ $_set_mark_groups$
 $_set_mark_groups$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_comment_mark_group(v_groupName TEXT, v_mark TEXT, v_comment TEXT)
-RETURNS void LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql AS
 $emaj_comment_mark_group$
 -- This function sets or modifies a comment on a mark by updating the mark_comment of the emaj_mark table.
 -- Input: group name, mark to comment, comment
@@ -2527,7 +2657,7 @@ COMMENT ON FUNCTION emaj.emaj_comment_mark_group(TEXT,TEXT,TEXT) IS
 $$Sets a comment on a mark for an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ)
-RETURNS text LANGUAGE plpgsql AS
+RETURNS TEXT LANGUAGE plpgsql AS
 $emaj_get_previous_mark_group$
 -- This function returns the name of the mark that immediately precedes a given date and time.
 -- It may return unpredictable result in case of system date or time change.
@@ -2557,7 +2687,7 @@ COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TIMESTAMPTZ) IS
 $$Returns the latest mark name preceeding a point in time.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT)
-RETURNS text LANGUAGE plpgsql AS
+RETURNS TEXT LANGUAGE plpgsql AS
 $emaj_get_previous_mark_group$
 -- This function returns the name of the mark that immediately precedes a given mark for a group.
 -- The function can be called by both emaj_adm and emaj_viewer roles.
@@ -2594,7 +2724,7 @@ COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TEXT) IS
 $$Returns the latest mark name preceeding a given mark for a group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT)
-RETURNS integer LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_delete_mark_group$
 -- This function deletes all traces from a previous set_mark_group(s) function.
 -- Then, any rollback on the deleted mark will not be possible.
@@ -2694,7 +2824,7 @@ COMMENT ON FUNCTION emaj.emaj_delete_mark_group(TEXT,TEXT) IS
 $$Deletes a mark for an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT)
-RETURNS integer LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_delete_before_mark_group$
 -- This function deletes all marks set before a given mark.
 -- Then, any rollback on the deleted marks will not be possible.
@@ -2850,7 +2980,7 @@ $_delete_between_mark_group$
 $_delete_between_mark_group$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT)
-RETURNS void LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql AS
 $emaj_rename_mark_group$
 -- This function renames an existing mark.
 -- The group can be in LOGGING or not.
@@ -3006,6 +3136,70 @@ $emaj_unprotect_mark_group$
 $emaj_unprotect_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_unprotect_mark_group(TEXT,TEXT) IS
 $$Unsets a protection against a rollback on a mark of an E-Maj group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_rollback_group$
+-- The function rollbacks all tables and sequences of a group up to a mark in the history
+-- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
+-- Output: number of processed tables and sequences
+  BEGIN
+-- just (unlogged) rollback the group (with boolean: isLoggedRlbk = false, multiGroup = false)
+    RETURN emaj._rlbk_groups(array[v_groupName], v_mark, false, false);
+  END;
+$emaj_rollback_group$;
+COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT) IS
+$$Rollbacks an E-Maj group to a given mark.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_rollback_groups$
+-- The function rollbacks all tables and sequences of a group array up to a mark in the history
+-- Input: array of group names, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
+-- Output: number of processed tables and sequences
+  BEGIN
+-- just (unlogged) rollback the groups (with boolean: isLoggedRlbk = false, multiGroup = true)
+    RETURN emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, false, true);
+  END;
+$emaj_rollback_groups$;
+COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT) IS
+$$Rollbacks an set of E-Maj groups to a given mark.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_logged_rollback_group$
+-- The function performs a logged rollback of all tables and sequences of a group up to a mark in the history.
+-- A logged rollback is a rollback which can be later rolled back! To achieve this:
+-- - log triggers are not disabled at rollback time,
+-- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
+-- - rolled back log rows and any marks inside the rollback time frame are kept.
+-- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
+-- Output: number of processed tables and sequences
+  BEGIN
+-- just "logged-rollback" the group (with boolean: isLoggedRlbk = true, multiGroup = false)
+    RETURN emaj._rlbk_groups(array[v_groupName], v_mark, true, false);
+  END;
+$emaj_logged_rollback_group$;
+COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT) IS
+$$Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_logged_rollback_groups$
+-- The function performs a logged rollback of all tables and sequences of a groups array up to a mark in the history.
+-- A logged rollback is a rollback which can be later rolled back! To achieve this:
+-- - log triggers are not disabled at rollback time,
+-- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
+-- - rolled back log rows and any marks inside the rollback time frame are kept.
+-- Input: array of group names, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
+-- Output: number of tables and sequences effectively processed
+  BEGIN
+-- just "logged-rollback" the groups (with boolean: isLoggedRlbk = true, multiGroup = true)
+    RETURN emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, true);
+  END;
+$emaj_logged_rollback_groups$;
+COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT) IS
+$$Performs a logged (cancellable) rollbacks for a set of E-Maj groups to a given mark.$$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
@@ -3590,7 +3784,7 @@ $_rlbk_planning$
 $_rlbk_planning$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_lock(v_rlbkId INT, v_session INT)
-RETURNS void LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_session_lock$
 -- It creates the session row in the emaj_rlbk_session table and then locks all the application tables for the session.
   DECLARE
@@ -4744,7 +4938,7 @@ $emaj_gen_sql_group$
     RETURN v_cumNbSQL;
   END;
 $emaj_gen_sql_group$;
-COMMENT ON FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) IS
+COMMENT ON FUNCTION emaj.emaj_gen_sql_group(TEXT,TEXT,TEXT,TEXT,TEXT[]) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[] DEFAULT NULL)
@@ -4777,7 +4971,7 @@ $emaj_gen_sql_groups$
     RETURN v_cumNbSQL;
   END;
 $emaj_gen_sql_groups$;
-COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[]) IS
+COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(TEXT[],TEXT,TEXT,TEXT,TEXT[]) IS
 $$Generates a sql script corresponding to all updates performed on a set of tables groups between two marks and stores it into a given file.$$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
@@ -5011,12 +5205,6 @@ $_gen_sql_groups$
     RETURN v_cumNbSQL;
   END;
 $_gen_sql_groups$;
-
-------------------------------------
---                                --
--- Global purpose functions       --
---                                --
-------------------------------------
 
 CREATE OR REPLACE FUNCTION emaj._verify_all_groups()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
@@ -5315,11 +5503,12 @@ $emaj_verify_all$;
 COMMENT ON FUNCTION emaj.emaj_verify_all() IS
 $$Verifies the consistency between existing E-Maj and application objects.$$;
 
------------------------------------------
---                                     --
--- event triggers and related function --
---                                     --
------------------------------------------
+--<end_functions>                                pattern used by the tool that extracts and insert the functions definition
+------------------------------------------
+--                                      --
+-- event triggers and related functions --
+--                                      --
+------------------------------------------
 --
 -- Event triggers creation depends on postgres version:
 -- - sql_drop event trigger needs postgres 9.3+
@@ -5647,8 +5836,6 @@ $_enable_event_triggers$
     RETURN v_event_trigger_array;
   END;
 $_enable_event_triggers$;
-
---<end_functions>                                               pattern used by the tool that extracts and insert the functions definition
 
 -- Set comments for all internal functions,
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment

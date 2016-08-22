@@ -9,6 +9,10 @@
 
 use warnings; use strict;
 
+# The 2 variables below are to be customized
+  my $dir = "/home/postgres/proj/emaj";
+  my $fic_src = $dir."/sql/emaj--next_version.sql";
+
   our $fnctName;
   our @varNames;    # array of variable names for the current function
   our $procedure;   # procedural code of the current function
@@ -24,10 +28,6 @@ use warnings; use strict;
     }
 #print("=>$procedure\n");
   }
-
-# The 2 variables below are to be customized
-  my $dir = "/home/postgres/proj/emaj";
-  my $fic_src = $dir."/sql/emaj--next_version.sql";
 
   my $status = 0;   # search status : 0 = not in a function, 1 = CREATE FUNCTION found, 2 = beginning of the function definition
                     #                 3 = DECLARE found, 4 = BEGIN found
@@ -81,7 +81,7 @@ use warnings; use strict;
       $language = 'plpgsql';
       @varNames = ();
       $procedure = '';
-print("$schema . $fnctName\n");
+#print("$schema . $fnctName\n");
     }
 
     # Language definition 

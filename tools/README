@@ -3,8 +3,8 @@ tools/README
 The tool directory contains several tools that may be essential or useful in E-Maj development:
 - regress.sh is a shell script that select and execute regression tests,
 - copy2Expected.sh is a shell script that copy the result files of regression tests environment to the reference directory,
-- check_code.pl is a perl script that performs various checks on the script that creates the emaj extension.
-
+- check_code.pl is a perl script that performs various checks on the script that creates the emaj extension,
+- sync_fct_in_upgrade_script.pl is a perl script that generates the functions part of the upgrade scripts.
 
 regress.sh
 ----------
@@ -47,4 +47,11 @@ The check_code.pl is a perl script that performs various checks on the script th
 Customisation:
 Line 29 and 30, two variables set the pathname of the source script to analyze.
 
+
+sync_fct_in_upgrade_script.pl
+-----------------------------
+The sync_fct_in_upgrade_script.pl perl script generates the functions part of the upgrade scripts. It compares the installation scripts of the previous and the current E-Maj versions and deducts the functions to drop and the functions to create in the related upgrade script. In the upgrade script, it keeps the sections related to other objetcs (tables, types, grants,...), two predefined patterns delimiting the functions section.
+
+Customisation:
+Line 19 to 21, three variables set the absolute pathname of the scripts to process: the script of the current version (variable $ficCurrSrc), the script of the previous version ($ficPrevSrc) and the already existing upgrade script (variable $ficUpgrade). The script has to be adjusted at each upgrade.
 
