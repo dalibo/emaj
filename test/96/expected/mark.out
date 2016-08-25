@@ -683,17 +683,17 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
 -- group is unknown in emaj_group_def
 select emaj.emaj_delete_mark_group(NULL,NULL);
 ERROR:  emaj_delete_mark_group: group "<NULL>" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 26 at RAISE
 select emaj.emaj_delete_mark_group('unknownGroup',NULL);
 ERROR:  emaj_delete_mark_group: group "unknownGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 26 at RAISE
 -- unknown mark name
 select emaj.emaj_delete_mark_group('myGroup2',NULL);
 ERROR:  emaj_delete_mark_group: "<NULL>" is not a known mark for group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 31 at RAISE
 select emaj.emaj_delete_mark_group('myGroup2','DummyMark');
 ERROR:  emaj_delete_mark_group: "DummyMark" is not a known mark for group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 31 at RAISE
 -- next attempts should be OK
 select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_delete_mark_group 
@@ -739,21 +739,21 @@ select emaj.emaj_delete_mark_group('myGroup2','john''s mark #1');
 -- error: at least 1 mark should remain
 select emaj.emaj_delete_mark_group('myGroup1','SM3');
 ERROR:  emaj_delete_mark_group: "SM3" is the only mark of the group. It cannot be deleted.
-CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 41 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 37 at RAISE
 -----------------------------
 -- emaj_delete_before_mark_group() tests
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_delete_before_mark_group(NULL,NULL);
 ERROR:  emaj_delete_before_mark_group: group "<NULL>" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 22 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 20 at RAISE
 select emaj.emaj_delete_before_mark_group('unknownGroup',NULL);
 ERROR:  emaj_delete_before_mark_group: group "unknownGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 22 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 20 at RAISE
 -- unknown mark name
 select emaj.emaj_delete_before_mark_group('myGroup2','DummyMark');
 ERROR:  emaj_delete_before_mark_group: "DummyMark" is not a known mark for group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 31 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 29 at RAISE
 -- NULL input for mark name returns NULL
 select emaj.emaj_delete_before_mark_group('myGroup2',NULL);
  emaj_delete_before_mark_group 

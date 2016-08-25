@@ -554,7 +554,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj';
  count 
 -------
-    94
+    95
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
