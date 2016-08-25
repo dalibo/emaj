@@ -122,10 +122,16 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
        group_comment
   from emaj.emaj_group order by group_name;
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected, 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
+-- mark_time_id, 
+       mark_is_deleted, mark_is_rlbk_protected, 
        mark_comment, mark_last_seq_hole_id, mark_last_sequence_id, mark_log_rows_before_next
 --, mark_logged_rlbk_target_mark 
   from emaj.emaj_mark order by mark_id;
+
+select sequ_id, sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+
+select  sqhl_id, sqhl_schema, sqhl_table, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_id;
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;

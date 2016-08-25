@@ -689,18 +689,18 @@ ERROR:  emaj_snap_log_group: directory parameter cannot be NULL
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11851 ORDER BY emaj_gid ASC) TO 'unknown_directory/myschema2_mytbl1_log.snap' "
-PL/pgSQL function "emaj_snap_log_group" line 110 at EXECUTE statement
+PL/pgSQL function "emaj_snap_log_group" line 113 at EXECUTE statement
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema2_mytbl1_log.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11851 ORDER BY emaj_gid ASC) TO '/unknown_directory/myschema2_mytbl1_log.snap' "
-PL/pgSQL function "emaj_snap_log_group" line 110 at EXECUTE statement
+PL/pgSQL function "emaj_snap_log_group" line 113 at EXECUTE statement
 -- invalid COPY TO options
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps', 'dummy_option');
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: ...mp/emaj_test/log_snaps/myschema2_mytbl1_log.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11851 ORDER BY emaj_gid ASC) TO '/tmp/emaj_test/log_snaps/myschema2_mytbl1_log.snap' dummy_option
-CONTEXT:  PL/pgSQL function "emaj_snap_log_group" line 110 at EXECUTE statement
+CONTEXT:  PL/pgSQL function "emaj_snap_log_group" line 113 at EXECUTE statement
 -- SQL injection attempt
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_log_group: invalid COPY options parameter format
@@ -814,18 +814,32 @@ PL/pgSQL function "emaj_gen_sql_groups" line 22 at SQL statement
 -- end mark is prior start mark
 -- (mark timestamps are temporarily changed so that regression test can return a stable error message)
 begin;
+----! 4 next lines to delete
   update emaj.emaj_mark set mark_datetime = '2000-01-01 12:00:00+00' 
     where mark_group = 'myGroup2' and mark_name = 'Mark21';
   update emaj.emaj_mark set mark_datetime = '2000-01-01 13:00:00+00'
     where mark_group = 'myGroup2' and mark_name = 'Mark22';
+  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 12:00:00+00' 
+    from emaj.emaj_mark
+    where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'Mark21';
+  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 13:00:00+00'
+    from emaj.emaj_mark
+    where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'Mark22';
   select emaj.emaj_gen_sql_group('myGroup2', 'Mark22', 'Mark21', NULL);
 ERROR:  _gen_sql_groups: mark id for "Mark22" (504 = Sat Jan 01 05:00:00 2000 PST) is greater than mark id for "Mark21" (436 = Sat Jan 01 04:00:00 2000 PST).
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function "emaj_gen_sql_group" line 22 at SQL statement
 rollback;
 begin;
+----! 2 next lines to delete
   update emaj.emaj_mark set mark_datetime = '2000-01-01 12:00:00+00' where mark_name = 'Multi-2';
   update emaj.emaj_mark set mark_datetime = '2000-01-01 13:00:00+00' where mark_name = 'Multi-3';
+  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 12:00:00+00'
+    from emaj.emaj_mark
+    where time_id = mark_time_id and mark_name = 'Multi-2';
+  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 13:00:00+00'
+    from emaj.emaj_mark
+    where time_id = mark_time_id and mark_name = 'Multi-3';
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-3', 'Multi-2', NULL);
 ERROR:  _gen_sql_groups: mark id for "Multi-3" (508 = Sat Jan 01 05:00:00 2000 PST) is greater than mark id for "Multi-2" (505 = Sat Jan 01 04:00:00 2000 PST).
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
@@ -883,7 +897,7 @@ PL/pgSQL function "emaj_gen_sql_groups" line 22 at SQL statement
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script"
-PL/pgSQL function "_gen_sql_groups" line 147 at SQL statement
+PL/pgSQL function "_gen_sql_groups" line 149 at SQL statement
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function "emaj_gen_sql_group" line 22 at SQL statement
  emaj_gen_sql_group 

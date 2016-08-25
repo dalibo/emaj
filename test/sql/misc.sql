@@ -370,15 +370,31 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', NULL, 'Mark11', NULL)
 -- end mark is prior start mark
 -- (mark timestamps are temporarily changed so that regression test can return a stable error message)
 begin;
+----! 4 next lines to delete
   update emaj.emaj_mark set mark_datetime = '2000-01-01 12:00:00+00' 
     where mark_group = 'myGroup2' and mark_name = 'Mark21';
   update emaj.emaj_mark set mark_datetime = '2000-01-01 13:00:00+00'
     where mark_group = 'myGroup2' and mark_name = 'Mark22';
+
+  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 12:00:00+00' 
+    from emaj.emaj_mark
+    where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'Mark21';
+  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 13:00:00+00'
+    from emaj.emaj_mark
+    where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'Mark22';
   select emaj.emaj_gen_sql_group('myGroup2', 'Mark22', 'Mark21', NULL);
 rollback;
 begin;
+----! 2 next lines to delete
   update emaj.emaj_mark set mark_datetime = '2000-01-01 12:00:00+00' where mark_name = 'Multi-2';
   update emaj.emaj_mark set mark_datetime = '2000-01-01 13:00:00+00' where mark_name = 'Multi-3';
+
+  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 12:00:00+00'
+    from emaj.emaj_mark
+    where time_id = mark_time_id and mark_name = 'Multi-2';
+  update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 13:00:00+00'
+    from emaj.emaj_mark
+    where time_id = mark_time_id and mark_name = 'Multi-3';
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-3', 'Multi-2', NULL);
 rollback;
 

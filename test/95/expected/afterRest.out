@@ -87,22 +87,22 @@ select emaj.emaj_set_mark_group('myGroup2','After restore mark');
 -- Checking step 1
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id | mark_group |        regexp_replace        | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+------------------------------+-----------------+------------------------+----------------------+-----------------------+---------------------------+------------------------------
-     607 | myGroup2   | M3                           | t               | f                      | This mark is deleted |                  6051 |                         0 | 
-     613 | myGroup1   | M4                           | t               | f                      |                      |                  6089 |                        10 | 
-     614 | myGroup1   | M5                           | t               | f                      |                      |                  6095 |                         3 | 
-     620 | myGroup1   | Before logged rollback to M4 | t               | f                      |                      |                  6123 |                        28 | 
-     622 | myGroup1   | STOP_%                       | t               | f                      |                      |                  6143 |                         0 | 
-     623 | myGroup2   | STOP_%                       | t               | f                      |                      |                  6143 |                         0 | 
-     634 | myGroup1   | Stop after rollback          | t               | f                      |                      |                  6213 |                         0 | 
-     635 | myGroup2   | Stop after rollback          | t               | f                      |                      |                  6213 |                         0 | 
-     636 | myGroup1   | Multi-1                      | f               | f                      |                      |                  6227 |                           | 
-     637 | myGroup2   | Multi-1                      | f               | f                      |                      |                  6227 |                        80 | 
-    1001 | myGroup2   | RLBK_Multi-1_%_START         | f               | f                      |                      |                  1013 |                        32 | 
-    1003 | myGroup2   | RLBK_Multi-1_%_DONE          | f               | f                      |                      |                  1027 |                        19 | Multi-1
-    1005 | myGroup2   | After restore mark           | f               | f                      |                      |                  1035 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+------------------------------+--------------+-----------------+------------------------+----------------------+-----------------------+---------------------------+------------------------------
+     607 | myGroup2   | M3                           |          609 | t               | f                      | This mark is deleted |                  6051 |                         0 | 
+     613 | myGroup1   | M4                           |          617 | t               | f                      |                      |                  6089 |                        10 | 
+     614 | myGroup1   | M5                           |          618 | t               | f                      |                      |                  6095 |                         3 | 
+     620 | myGroup1   | Before logged rollback to M4 |          626 | t               | f                      |                      |                  6123 |                        28 | 
+     622 | myGroup1   | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
+     623 | myGroup2   | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
+     634 | myGroup1   | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
+     635 | myGroup2   | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
+     636 | myGroup1   | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                           | 
+     637 | myGroup2   | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                        80 | 
+    1001 | myGroup2   | RLBK_Multi-1_%_START         |         1001 | f               | f                      |                      |                  1013 |                        32 | 
+    1003 | myGroup2   | RLBK_Multi-1_%_DONE          |         1002 | f               | f                      |                      |                  1027 |                        19 | Multi-1
+    1005 | myGroup2   | After restore mark           |         1004 | f               | f                      |                      |                  1035 |                           | 
 (13 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -367,16 +367,16 @@ select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
      1 | ABC        | \x1c   | DEL       | OLD        |   100550
      2 | ABC        | \x1c   | DEL       | OLD        |   100551
      3 | ABC        | \x1c   | DEL       | OLD        |   100552
-     4 | ABC        | \x0c   | INS       | NEW        |   100609
-    10 | ABC        | \x0c   | INS       | NEW        |   100610
-     7 | ABC        | \x0c   | INS       | NEW        |   100611
-     9 | ABC        | \x0c   | INS       | NEW        |   100612
-     5 | ABC        | \x0c   | INS       | NEW        |   100614
-     2 | ABC        | \x1c   | INS       | NEW        |   100615
-     6 | ABC        | \x0c   | INS       | NEW        |   100616
-     3 | ABC        | \x1c   | INS       | NEW        |   100618
-     1 | ABC        | \x1c   | INS       | NEW        |   100619
-     8 | ABC        | \x0c   | INS       | NEW        |   100621
+     4 | ABC        | \x0c   | INS       | NEW        |   100581
+    10 | ABC        | \x0c   | INS       | NEW        |   100582
+     7 | ABC        | \x0c   | INS       | NEW        |   100583
+     9 | ABC        | \x0c   | INS       | NEW        |   100584
+     5 | ABC        | \x0c   | INS       | NEW        |   100585
+     2 | ABC        | \x1c   | INS       | NEW        |   100586
+     6 | ABC        | \x0c   | INS       | NEW        |   100587
+     3 | ABC        | \x1c   | INS       | NEW        |   100588
+     1 | ABC        | \x1c   | INS       | NEW        |   100590
+     8 | ABC        | \x0c   | INS       | NEW        |   100591
    101 | KLM        | \x000c | INS       | NEW        |   100641
    102 | KLM        | \x000c | INS       | NEW        |   100642
    103 | KLM        | \x000c | INS       | NEW        |   100643
@@ -408,8 +408,8 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
 -------+-------+------------+-----------+------------+----------
      1 | ABC   | 2010-01-01 | DEL       | OLD        |   100553
      2 | DEF   |            | DEL       | OLD        |   100554
-     1 | ABC   | 2010-01-01 | INS       | NEW        |   100628
-     2 | DEF   |            | INS       | NEW        |   100629
+     1 | ABC   | 2010-01-01 | INS       | NEW        |   100618
+     2 | DEF   |            | INS       | NEW        |   100619
    100 | KLM   | 2012-12-31 | INS       | NEW        |   100658
 (5 rows)
 
@@ -426,16 +426,16 @@ select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myT
     18 | 10.00 | DEL       | OLD        |   100562
     19 | 10.00 | DEL       | OLD        |   100563
     20 | 10.00 | DEL       | OLD        |   100564
-    11 | 10.00 | INS       | NEW        |   100581
-    16 | 10.00 | INS       | NEW        |   100582
-    14 | 10.00 | INS       | NEW        |   100583
-    17 | 10.00 | INS       | NEW        |   100584
-    15 | 10.00 | INS       | NEW        |   100585
-    19 | 10.00 | INS       | NEW        |   100586
-    20 | 10.00 | INS       | NEW        |   100587
-    12 | 10.00 | INS       | NEW        |   100588
-    18 | 10.00 | INS       | NEW        |   100589
-    13 | 10.00 | INS       | NEW        |   100590
+    11 | 10.00 | INS       | NEW        |   100625
+    16 | 10.00 | INS       | NEW        |   100626
+    14 | 10.00 | INS       | NEW        |   100627
+    17 | 10.00 | INS       | NEW        |   100628
+    15 | 10.00 | INS       | NEW        |   100629
+    19 | 10.00 | INS       | NEW        |   100630
+    20 | 10.00 | INS       | NEW        |   100631
+    12 | 10.00 | INS       | NEW        |   100632
+    18 | 10.00 | INS       | NEW        |   100633
+    13 | 10.00 | INS       | NEW        |   100634
 (20 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
@@ -443,8 +443,8 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -------+-------+-------+-------+------------+-----------+------------+----------
      1 | FK... |     2 |     1 | ABC        | DEL       | OLD        |   100541
      2 | FK... |     2 |     1 | ABC        | DEL       | OLD        |   100542
-     1 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100633
-     2 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100634
+     1 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100623
+     2 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100624
 (4 rows)
 
 --
@@ -485,19 +485,19 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 -- Checking step 2
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id | mark_group |        regexp_replace        | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+------------------------------+-----------------+------------------------+----------------------+-----------------------+---------------------------+------------------------------
-     607 | myGroup2   | M3                           | t               | f                      | This mark is deleted |                  6051 |                         0 | 
-     613 | myGroup1   | M4                           | t               | f                      |                      |                  6089 |                        10 | 
-     614 | myGroup1   | M5                           | t               | f                      |                      |                  6095 |                         3 | 
-     620 | myGroup1   | Before logged rollback to M4 | t               | f                      |                      |                  6123 |                        28 | 
-     622 | myGroup1   | STOP_%                       | t               | f                      |                      |                  6143 |                         0 | 
-     623 | myGroup2   | STOP_%                       | t               | f                      |                      |                  6143 |                         0 | 
-     634 | myGroup1   | Stop after rollback          | t               | f                      |                      |                  6213 |                         0 | 
-     635 | myGroup2   | Stop after rollback          | t               | f                      |                      |                  6213 |                         0 | 
-     636 | myGroup1   | Multi-1                      | f               | f                      |                      |                  6227 |                           | 
-     637 | myGroup2   | Multi-1                      | f               | f                      |                      |                  6227 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+------------------------------+--------------+-----------------+------------------------+----------------------+-----------------------+---------------------------+------------------------------
+     607 | myGroup2   | M3                           |          609 | t               | f                      | This mark is deleted |                  6051 |                         0 | 
+     613 | myGroup1   | M4                           |          617 | t               | f                      |                      |                  6089 |                        10 | 
+     614 | myGroup1   | M5                           |          618 | t               | f                      |                      |                  6095 |                         3 | 
+     620 | myGroup1   | Before logged rollback to M4 |          626 | t               | f                      |                      |                  6123 |                        28 | 
+     622 | myGroup1   | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
+     623 | myGroup2   | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
+     634 | myGroup1   | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
+     635 | myGroup2   | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
+     636 | myGroup1   | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                           | 
+     637 | myGroup2   | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                           | 
 (10 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -692,6 +692,265 @@ select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d
     6475 | emajb       | myschema1_mytbl2b_log_seq  | RLBK_MC16_%_DONE             |             1 | f
 (187 rows)
 
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
+ time_id | time_last_emaj_gid | time_event 
+---------+--------------------+------------
+      10 |                  0 | C
+      11 |                  0 | C
+      13 |                  0 | C
+      14 |                  0 | C
+      15 |                  0 | M
+      16 |                  0 | M
+      17 |                  0 | C
+      18 |                  0 | M
+      19 |                  0 | C
+      20 |                  0 | C
+      21 |                  0 | M
+      22 |                  0 | M
+      28 |                  0 | A
+      29 |                  0 | A
+      30 |                  0 | A
+      31 |                  0 | A
+      32 |                  0 | A
+      33 |                  0 | A
+      34 |                  0 | A
+      35 |                  0 | A
+      36 |                  0 | A
+      37 |                  0 | A
+      38 |                  0 | A
+      39 |                  0 | A
+      40 |                  0 | A
+      41 |                  0 | A
+      42 |                  0 | A
+      43 |                  0 | A
+      44 |                  0 | A
+      45 |                  0 | A
+      46 |                  0 | A
+      47 |                  0 | A
+      48 |                  0 | A
+      49 |                  0 | A
+      50 |                  0 | A
+      51 |                  0 | A
+      52 |                  0 | A
+      53 |                  0 | A
+      54 |                  0 | A
+      55 |                  0 | A
+      56 |                  0 | A
+     200 |                  0 | C
+     201 |                  0 | C
+     202 |                  0 | M
+     203 |                  0 | M
+     204 |                  0 | M
+     205 |                  0 | M
+     206 |                  0 | M
+     208 |                  0 | M
+     209 |                  0 | M
+     210 |                  2 | M
+     211 |                  2 | M
+     212 |                  2 | M
+     213 |                  2 | M
+     214 |                  2 | M
+     215 |                  2 | M
+     216 |                  2 | M
+     217 |                  2 | M
+     218 |                  2 | M
+     219 |                  2 | M
+     221 |                  2 | M
+     222 |                  2 | M
+     223 |                  2 | M
+     224 |                  2 | M
+     225 |                  2 | M
+     226 |                  2 | M
+     227 |                  2 | M
+     300 |                  2 | M
+     301 |                  2 | M
+     302 |                  2 | M
+     303 |                  2 | M
+     304 |                  2 | M
+     305 |                  2 | M
+     306 |                  2 | M
+     307 |                  2 | M
+     308 |                  2 | M
+     309 |                  2 | M
+     310 |                  2 | M
+     311 |                  2 | M
+     312 |                  2 | M
+     313 |                  2 | M
+     314 |                  2 | M
+     315 |                  2 | M
+     316 |                  2 | M
+     402 |                  2 | M
+     403 |                  2 | M
+     404 |                  2 | M
+     405 |                  2 | M
+     406 |                  2 | R
+     414 |                  2 | R
+     415 |                  2 | R
+     416 |                  2 | R
+     417 |                  2 | M
+     418 |                  2 | M
+     419 |                  2 | R
+     420 |                  2 | M
+     421 |                  2 | M
+     422 |                  2 | M
+     423 |                  2 | R
+     424 |                  2 | R
+     425 |                  2 | R
+     426 |                  2 | M
+     427 |                  2 | M
+     428 |                  2 | R
+     429 |                  2 | M
+     430 |                  2 | M
+     431 |                  2 | M
+     432 |                  2 | M
+     433 |                  2 | M
+     434 |                 29 | M
+     435 |                 41 | M
+     436 |                 41 | R
+     437 |                 41 | R
+     438 |                 41 | M
+     439 |                 41 | M
+     440 |                 60 | M
+     441 |                 71 | M
+     442 |                 71 | R
+     443 |                 71 | M
+     444 |                 82 | M
+     445 |                 82 | R
+     446 |                 82 | M
+     447 |                 96 | M
+     448 |                 96 | R
+     449 |                 96 | M
+     450 |                 99 | M
+     451 |                102 | R
+     452 |                102 | M
+     453 |                105 | M
+     454 |                105 | R
+     455 |                105 | M
+     456 |                105 | R
+     457 |                105 | M
+     458 |                105 | M
+     459 |                105 | M
+     460 |                120 | M
+     461 |                122 | R
+     462 |                122 | M
+     463 |                138 | M
+     464 |                140 | R
+     500 |                141 | M
+     501 |                141 | M
+     502 |                141 | M
+     503 |              11741 | M
+     504 |              11741 | M
+     505 |              11851 | M
+     506 |              11851 | M
+     600 |              99999 | M
+     601 |              99999 | M
+     602 |              99999 | C
+     603 |              99999 | C
+     604 |              99999 | M
+     605 |              99999 | M
+     606 |             100026 | M
+     607 |             100037 | M
+     608 |             100078 | M
+     609 |             100086 | M
+     610 |             100086 | R
+     611 |             100086 | M
+     612 |             100092 | M
+     613 |             100092 | R
+     614 |             100092 | M
+     615 |             100098 | M
+     616 |             100098 | R
+     617 |             100111 | M
+     618 |             100121 | M
+     619 |             100121 | M
+     620 |             100121 | R
+     621 |             100121 | M
+     622 |             100127 | M
+     623 |             100127 | R
+     624 |             100130 | R
+     625 |             100133 | R
+     626 |             100133 | M
+     627 |             100156 | M
+     628 |             100161 | M
+     629 |             100161 | M
+     630 |             100161 | M
+     631 |             100161 | R
+     632 |             100161 | M
+     633 |             100161 | M
+     634 |             100161 | R
+     635 |             100161 | R
+     636 |             100161 | M
+     637 |             100161 | M
+     638 |             100161 | M
+     639 |             100161 | R
+     640 |             100161 | C
+     641 |             100161 | A
+     642 |             100161 | M
+     643 |             100161 | M
+     644 |             100161 | A
+     645 |             100161 | C
+     646 |             100161 | M
+     647 |             100213 | M
+     648 |             100213 | M
+     649 |             100216 | M
+     650 |             100216 | R
+     651 |             100216 | M
+     652 |             100216 | M
+     653 |             100216 | R
+     654 |             100236 | R
+     658 |             100331 | M
+     659 |             100331 | A
+     660 |             100331 | M
+     661 |             100335 | M
+     662 |             100337 | R
+     663 |             100337 | M
+     664 |             100337 | M
+     665 |             100337 | M
+     666 |             100353 | M
+     667 |             100354 | R
+     668 |             100354 | M
+     669 |             100366 | M
+     670 |             100367 | M
+     671 |             100379 | M
+     672 |             100379 | M
+     673 |             100379 | R
+     674 |             100379 | M
+     675 |             100390 | M
+     676 |             100390 | M
+     677 |             100406 | M
+     678 |             100407 | M
+     679 |             100408 | R
+     680 |             100408 | M
+     681 |             100409 | M
+     682 |             100409 | M
+     683 |             100421 | R
+     684 |             100421 | M
+     685 |             100444 | M
+     686 |             100444 | M
+     687 |             100460 | R
+     688 |             100460 | M
+     689 |             100466 | M
+     690 |             100466 | M
+     691 |             100468 | R
+     692 |             100468 | M
+     693 |             100469 | M
+     694 |             100469 | M
+     695 |             100485 | M
+     696 |             100486 | R
+     697 |             100486 | M
+     698 |             100498 | M
+     699 |             100498 | M
+     700 |             100499 | R
+     701 |             100499 | M
+     702 |             100512 | M
+     703 |             100512 | R
+    1000 |             100580 | R
+    1001 |             100580 | M
+    1002 |             100640 | M
+    1003 |             100640 | R
+    1004 |             100659 | M
+    1005 |             100659 | R
+(254 rows)
+
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
  col11 |   col12    | col13 
@@ -789,23 +1048,23 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10011 | LOCK_GROUP         | END          | myGroup1,myGroup2            | Rollback session #3: 4 tables locked, 0 deadlock(s)             | postgres
    10012 | SET_MARK_GROUPS    | BEGIN        | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                            | postgres
    10013 | SET_MARK_GROUPS    | END          | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                            | postgres
-   10014 | ROLLBACK_TABLE     | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
-   10015 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 100161                             | postgres
-   10016 | ROLLBACK_TABLE     | END          | myschema2."myTbl3"           | 10 rolled back primary keys                                     | postgres
-   10017 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
-   10018 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
-   10019 | ROLLBACK_TABLE     | END          | myschema2.mytbl6             | 14 rolled back primary keys                                     | postgres
-   10020 | ROLLBACK_TABLE     | END          | myschema2.mytbl1             | 10 rolled back primary keys                                     | postgres
-   10021 | ROLLBACK_TABLE     | END          | myschema1.mytbl1             | 20 rolled back primary keys                                     | postgres
-   10022 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
-   10023 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
-   10024 | ROLLBACK_TABLE     | END          | myschema2.mytbl2             | 2 rolled back primary keys                                      | postgres
-   10025 | ROLLBACK_TABLE     | END          | myschema1.mytbl2             | 3 rolled back primary keys                                      | postgres
-   10026 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 100161                             | postgres
-   10027 | ROLLBACK_TABLE     | END          | myschema2.mytbl4             | 2 rolled back primary keys                                      | postgres
-   10028 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 100161                             | postgres
-   10029 | ROLLBACK_TABLE     | END          | myschema2.mytbl5             | 3 rolled back primary keys                                      | postgres
-   10030 | ROLLBACK_TABLE     | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
+   10014 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
+   10015 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
+   10016 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 100161                             | postgres
+   10017 | ROLLBACK_TABLE     | END          | myschema2.mytbl1             | 10 rolled back primary keys                                     | postgres
+   10018 | ROLLBACK_TABLE     | END          | myschema2.mytbl6             | 14 rolled back primary keys                                     | postgres
+   10019 | ROLLBACK_TABLE     | END          | myschema1.mytbl1             | 20 rolled back primary keys                                     | postgres
+   10020 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
+   10021 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
+   10022 | ROLLBACK_TABLE     | END          | myschema2.mytbl2             | 2 rolled back primary keys                                      | postgres
+   10023 | ROLLBACK_TABLE     | END          | myschema1.mytbl2             | 3 rolled back primary keys                                      | postgres
+   10024 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 100161                             | postgres
+   10025 | ROLLBACK_TABLE     | END          | myschema2.mytbl4             | 2 rolled back primary keys                                      | postgres
+   10026 | ROLLBACK_TABLE     | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
+   10027 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 100161                             | postgres
+   10028 | ROLLBACK_TABLE     | END          | myschema2."myTbl3"           | 10 rolled back primary keys                                     | postgres
+   10029 | ROLLBACK_TABLE     | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
+   10030 | ROLLBACK_TABLE     | END          | myschema2.mytbl5             | 3 rolled back primary keys                                      | postgres
    10031 | DBLINK_CLOSE_CNX   |              | rlbk#3                       |                                                                 | postgres
    10032 | ROLLBACK_TABLE     | END          | myschema1."myTbl3"           | 5 rolled back primary keys                                      | postgres
    10033 | DBLINK_CLOSE_CNX   |              | rlbk#2                       |                                                                 | postgres

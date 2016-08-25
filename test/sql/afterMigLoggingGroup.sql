@@ -10,6 +10,7 @@ select * from emaj.emaj_verify_all();
 -----------------------------
 -- Step 2 : for myGroup1, update tables, then unprotect and rollback then update tables again then set 3 marks
 -----------------------------
+
 set search_path=myschema1;
 --
 update "myTbl3" set col33 = col33 / 2;
@@ -53,7 +54,6 @@ insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 --
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_rollback_group('myGroup1','M5');
-
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --
 insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);

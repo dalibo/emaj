@@ -198,19 +198,19 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 -- Checking step 8
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id | mark_group |        regexp_replace        | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+------------------------------+-----------------+-----------------+------------------------+----------------------+-----------------------+---------------------------+------------------------------
-     607 | myGroup2   | M3                           |          100086 | t               | f                      | This mark is deleted |                  6051 |                         0 | 
-     613 | myGroup1   | M4                           |          100111 | t               | f                      |                      |                  6089 |                        10 | 
-     614 | myGroup1   | M5                           |          100121 | t               | f                      |                      |                  6095 |                         3 | 
-     620 | myGroup1   | Before logged rollback to M4 |          100133 | t               | f                      |                      |                  6123 |                        28 | 
-     622 | myGroup1   | STOP_%                       |          100161 | t               | f                      |                      |                  6143 |                         0 | 
-     623 | myGroup2   | STOP_%                       |          100161 | t               | f                      |                      |                  6143 |                         0 | 
-     634 | myGroup1   | Stop after rollback          |          100161 | t               | f                      |                      |                  6213 |                         0 | 
-     635 | myGroup2   | Stop after rollback          |          100161 | t               | f                      |                      |                  6213 |                         0 | 
-     636 | myGroup1   | Multi-1                      |          100161 | f               | f                      |                      |                  6227 |                           | 
-     637 | myGroup2   | Multi-1                      |          100161 | f               | f                      |                      |                  6227 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id | mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+------------------------------+--------------+-----------------+------------------------+----------------------+-----------------------+---------------------------+------------------------------
+     607 | myGroup2   | M3                           |          609 | t               | f                      | This mark is deleted |                  6051 |                         0 | 
+     613 | myGroup1   | M4                           |          617 | t               | f                      |                      |                  6089 |                        10 | 
+     614 | myGroup1   | M5                           |          618 | t               | f                      |                      |                  6095 |                         3 | 
+     620 | myGroup1   | Before logged rollback to M4 |          626 | t               | f                      |                      |                  6123 |                        28 | 
+     622 | myGroup1   | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
+     623 | myGroup2   | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
+     634 | myGroup1   | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
+     635 | myGroup2   | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
+     636 | myGroup1   | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                           | 
+     637 | myGroup2   | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                           | 
 (10 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -663,22 +663,22 @@ WARNING:  _check_fk_groups: table "phil's schema3.phil's tbl1" is referenced by 
 -- Checking step 10
 -----------------------------
 -- emaj tables
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    |        regexp_replace        | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+------------------------------+-----------------+-----------------+------------------------+----------------------+-----------------------+---------------------------+------------------------------
-     607 | myGroup2         | M3                           |          100086 | t               | f                      | This mark is deleted |                  6051 |                         0 | 
-     613 | myGroup1         | M4                           |          100111 | t               | f                      |                      |                  6089 |                        10 | 
-     614 | myGroup1         | M5                           |          100121 | t               | f                      |                      |                  6095 |                         3 | 
-     620 | myGroup1         | Before logged rollback to M4 |          100133 | t               | f                      |                      |                  6123 |                        28 | 
-     622 | myGroup1         | STOP_%                       |          100161 | t               | f                      |                      |                  6143 |                         0 | 
-     623 | myGroup2         | STOP_%                       |          100161 | t               | f                      |                      |                  6143 |                         0 | 
-     634 | myGroup1         | Stop after rollback          |          100161 | t               | f                      |                      |                  6213 |                         0 | 
-     635 | myGroup2         | Stop after rollback          |          100161 | t               | f                      |                      |                  6213 |                         0 | 
-     636 | myGroup1         | Multi-1                      |          100161 | f               | f                      |                      |                  6227 |                           | 
-     637 | myGroup2         | Multi-1                      |          100161 | f               | f                      |                      |                  6227 |                           | 
-     643 | phil's group#3", | M1_rollbackable              |          100161 | f               | f                      |                      |                  6253 |                        52 | 
-     644 | phil's group#3", | M2_rollbackable              |          100213 | f               | f                      |                      |                  6257 |                         3 | 
-     646 | phil's group#3", | phil's mark #3               |          100216 | f               | f                      | Third mark set       |                  6265 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+ mark_id |    mark_group    |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+------------------------------+--------------+-----------------+------------------------+----------------------+-----------------------+---------------------------+------------------------------
+     607 | myGroup2         | M3                           |          609 | t               | f                      | This mark is deleted |                  6051 |                         0 | 
+     613 | myGroup1         | M4                           |          617 | t               | f                      |                      |                  6089 |                        10 | 
+     614 | myGroup1         | M5                           |          618 | t               | f                      |                      |                  6095 |                         3 | 
+     620 | myGroup1         | Before logged rollback to M4 |          626 | t               | f                      |                      |                  6123 |                        28 | 
+     622 | myGroup1         | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
+     623 | myGroup2         | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
+     634 | myGroup1         | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
+     635 | myGroup2         | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
+     636 | myGroup1         | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                           | 
+     637 | myGroup2         | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                           | 
+     643 | phil's group#3", | M1_rollbackable              |          646 | f               | f                      |                      |                  6253 |                        52 | 
+     644 | phil's group#3", | M2_rollbackable              |          647 | f               | f                      |                      |                  6257 |                         3 | 
+     646 | phil's group#3", | phil's mark #3               |          649 | f               | f                      | Third mark set       |                  6265 |                           | 
 (13 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1200,7 +1200,6 @@ phil's schema3_phil's tbl1.snap
 -- reset directory for emaj_gen_sql_group tests
 \! rm -Rf /tmp/emaj_test/sql_scripts
 \! mkdir /tmp/emaj_test/sql_scripts
---select * from emaj.emaj_mark order by mark_group, mark_id;
 -- generate sql script for each active group (and check the result with detailed log statistics + number of sequences)
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
@@ -1868,28 +1867,28 @@ select * from myTbl2 order by col21;
   4000 | TC15  | 
 (5 rows)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_global_seq, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
- mark_id | mark_group |        regexp_replace        | mark_global_seq | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+------------------------------+-----------------+-----------------+------------------------+--------------+-----------------------+---------------------------+------------------------------
-     613 | myGroup1   | M4                           |          100111 | t               | f                      |              |                  6089 |                        10 | 
-     614 | myGroup1   | M5                           |          100121 | t               | f                      |              |                  6095 |                         3 | 
-     620 | myGroup1   | Before logged rollback to M4 |          100133 | t               | f                      |              |                  6123 |                        28 | 
-     622 | myGroup1   | STOP_%                       |          100161 | t               | f                      |              |                  6143 |                         0 | 
-     634 | myGroup1   | Stop after rollback          |          100161 | t               | f                      |              |                  6213 |                         0 | 
-     636 | myGroup1   | Multi-1                      |          100161 | f               | f                      |              |                  6227 |                         0 | 
-     660 | myGroup1   | MC1                          |          100337 | f               | f                      |              |                  6301 |                         0 | 
-     663 | myGroup1   | RLBK_MC1_DONE                |          100366 | f               | f                      |              |                  6319 |                         1 | MC1
-     664 | myGroup1   | MC3                          |          100367 | f               | f                      |              |                  6325 |                         0 | 
-     668 | myGroup1   | RLBK_MC3_%_DONE              |          100390 | f               | f                      |              |                  6349 |                         0 | MC3
-     669 | myGroup1   | MC6                          |          100390 | f               | f                      |              |                  6355 |                         0 | 
-     676 | myGroup1   | RLBK_MC6_%_DONE              |          100444 | f               | f                      |              |                  6397 |                         0 | MC6
-     677 | myGroup1   | MC10                         |          100444 | f               | f                      |              |                  6403 |                         0 | 
-     682 | myGroup1   | RLBK_MC10_%_DONE             |          100469 | f               | f                      |              |                  6433 |                         0 | MC10
-     683 | myGroup1   | MC15                         |          100469 | f               | f                      |              |                  6439 |                         0 | 
-     686 | myGroup1   | RLBK_MC15_DONE               |          100498 | f               | f                      |              |                  6457 |                         0 | MC15
-     687 | myGroup1   | MC17                         |          100498 | f               | f                      |              |                  6463 |                         1 | 
-     688 | myGroup1   | RLBK_MC16_%_START            |          100499 | f               | f                      |              |                  6469 |                        13 | 
-     689 | myGroup1   | RLBK_MC16_%_DONE             |          100512 | f               | f                      |              |                  6475 |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
+ mark_id | mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+------------------------------+--------------+-----------------+------------------------+--------------+-----------------------+---------------------------+------------------------------
+     613 | myGroup1   | M4                           |          617 | t               | f                      |              |                  6089 |                        10 | 
+     614 | myGroup1   | M5                           |          618 | t               | f                      |              |                  6095 |                         3 | 
+     620 | myGroup1   | Before logged rollback to M4 |          626 | t               | f                      |              |                  6123 |                        28 | 
+     622 | myGroup1   | STOP_%                       |          628 | t               | f                      |              |                  6143 |                         0 | 
+     634 | myGroup1   | Stop after rollback          |          636 | t               | f                      |              |                  6213 |                         0 | 
+     636 | myGroup1   | Multi-1                      |          637 | f               | f                      |              |                  6227 |                         0 | 
+     660 | myGroup1   | MC1                          |          665 | f               | f                      |              |                  6301 |                         0 | 
+     663 | myGroup1   | RLBK_MC1_DONE                |          669 | f               | f                      |              |                  6319 |                         1 | MC1
+     664 | myGroup1   | MC3                          |          670 | f               | f                      |              |                  6325 |                         0 | 
+     668 | myGroup1   | RLBK_MC3_%_DONE              |          675 | f               | f                      |              |                  6349 |                         0 | MC3
+     669 | myGroup1   | MC6                          |          676 | f               | f                      |              |                  6355 |                         0 | 
+     676 | myGroup1   | RLBK_MC6_%_DONE              |          685 | f               | f                      |              |                  6397 |                         0 | MC6
+     677 | myGroup1   | MC10                         |          686 | f               | f                      |              |                  6403 |                         0 | 
+     682 | myGroup1   | RLBK_MC10_%_DONE             |          693 | f               | f                      |              |                  6433 |                         0 | MC10
+     683 | myGroup1   | MC15                         |          694 | f               | f                      |              |                  6439 |                         0 | 
+     686 | myGroup1   | RLBK_MC15_DONE               |          698 | f               | f                      |              |                  6457 |                         0 | MC15
+     687 | myGroup1   | MC17                         |          699 | f               | f                      |              |                  6463 |                         1 | 
+     688 | myGroup1   | RLBK_MC16_%_START            |          701 | f               | f                      |              |                  6469 |                        13 | 
+     689 | myGroup1   | RLBK_MC16_%_DONE             |          702 | f               | f                      |              |                  6475 |                           | 
 (19 rows)
 
 select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_id;
