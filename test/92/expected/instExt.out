@@ -207,6 +207,7 @@ Indexes:
     "emaj_mark_pkey" PRIMARY KEY, btree (mark_group, mark_name), tablespace "tspemaj"
 Foreign-key constraints:
     "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
+    "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Tablespace: "tspemaj"
 
       Sequence "emaj.emaj_mark_mark_id_seq"
@@ -485,32 +486,34 @@ Tablespace: "tspemaj"
 primary key, btree, for table "emaj.emaj_seq_hole"
 Tablespace: "tspemaj"
 
-                                            Table "emaj.emaj_sequence"
-     Column     |           Type           |                              Modifiers                               
-----------------+--------------------------+----------------------------------------------------------------------
- sequ_id        | bigint                   | not null default nextval('emaj.emaj_sequence_sequ_id_seq'::regclass)
- sequ_schema    | text                     | not null
- sequ_name      | text                     | not null
- sequ_datetime  | timestamp with time zone | not null
- sequ_mark      | text                     | not null
- sequ_last_val  | bigint                   | not null
- sequ_start_val | bigint                   | not null
- sequ_increment | bigint                   | not null
- sequ_max_val   | bigint                   | not null
- sequ_min_val   | bigint                   | not null
- sequ_cache_val | bigint                   | not null
- sequ_is_cycled | boolean                  | not null
- sequ_is_called | boolean                  | not null
+                                   Table "emaj.emaj_sequence"
+     Column     |  Type   |                              Modifiers                               
+----------------+---------+----------------------------------------------------------------------
+ sequ_id        | bigint  | not null default nextval('emaj.emaj_sequence_sequ_id_seq'::regclass)
+ sequ_schema    | text    | not null
+ sequ_name      | text    | not null
+ sequ_time_id   | bigint  | not null
+ sequ_mark      | text    | not null
+ sequ_last_val  | bigint  | not null
+ sequ_start_val | bigint  | not null
+ sequ_increment | bigint  | not null
+ sequ_max_val   | bigint  | not null
+ sequ_min_val   | bigint  | not null
+ sequ_cache_val | bigint  | not null
+ sequ_is_cycled | boolean | not null
+ sequ_is_called | boolean | not null
 Indexes:
-    "emaj_sequence_pkey" PRIMARY KEY, btree (sequ_schema, sequ_name, sequ_datetime), tablespace "tspemaj"
+    "emaj_sequence_pkey" PRIMARY KEY, btree (sequ_schema, sequ_name, sequ_time_id), tablespace "tspemaj"
+Foreign-key constraints:
+    "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Tablespace: "tspemaj"
 
-             Index "emaj.emaj_sequence_pkey"
-    Column     |           Type           |  Definition   
----------------+--------------------------+---------------
- sequ_schema   | text                     | sequ_schema
- sequ_name     | text                     | sequ_name
- sequ_datetime | timestamp with time zone | sequ_datetime
+   Index "emaj.emaj_sequence_pkey"
+    Column    |  Type  |  Definition  
+--------------+--------+--------------
+ sequ_schema  | text   | sequ_schema
+ sequ_name    | text   | sequ_name
+ sequ_time_id | bigint | sequ_time_id
 primary key, btree, for table "emaj.emaj_sequence"
 Tablespace: "tspemaj"
 
@@ -544,6 +547,8 @@ Indexes:
 Referenced by:
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_sequence" CONSTRAINT "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Tablespace: "tspemaj"
 
 Index "emaj.emaj_time_stamp_pkey"

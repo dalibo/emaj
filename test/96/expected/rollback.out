@@ -714,33 +714,33 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      437 | myGroup1         | Mark12         |          434 | f               | f                      |              |                  4215 |                           | 
 (4 rows)
 
-select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
- sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
----------+----------------+------------------------------------+----------------+---------------+----------------
-    3134 | phil's schema3 | myTbl2\_col21_seq                  | Mark4          |             1 | f
-    3135 | phil's schema3 | phil's seq\1                       | Mark4          |          1000 | f
-    3136 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark4          |             1 | f
-    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark4          |             1 | f
-    4196 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-    4197 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-    4198 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-    4199 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-    4200 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-    4201 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-    4202 | myschema2      | myseq1                             | Mark21         |          1000 | f
-    4203 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-    4204 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-    4205 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-    4206 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-    4207 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4208 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
-    4209 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-    4210 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
-    4211 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-    4212 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
-    4213 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-    4214 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             6 | t
-    4215 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             6 | t
+select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | sequ_time_id | regexp_replace | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+--------------+----------------+---------------+----------------
+    3134 | phil's schema3 | myTbl2\_col21_seq                  |          314 | Mark4          |             1 | f
+    3135 | phil's schema3 | phil's seq\1                       |          314 | Mark4          |          1000 | f
+    3136 | emaj           | phil's schema3_myTbl2\_log_seq     |          314 | Mark4          |             1 | f
+    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq |          314 | Mark4          |             1 | f
+    4196 | myschema1      | myTbl3_col31_seq                   |          432 | Mark11         |             1 | f
+    4197 | emajC          | myschema1_myTbl3_log_seq           |          432 | Mark11         |             1 | f
+    4198 | emaj           | myschema1_mytbl1_log_seq           |          432 | Mark11         |             1 | f
+    4199 | emaj           | myschema1_mytbl4_log_seq           |          432 | Mark11         |             1 | f
+    4200 | emaj           | myschema1_mytbl2_log_seq           |          432 | Mark11         |             1 | f
+    4201 | emajb          | myschema1_mytbl2b_log_seq          |          432 | Mark11         |             1 | f
+    4202 | myschema2      | myseq1                             |          433 | Mark21         |          1000 | f
+    4203 | myschema2      | myTbl3_col31_seq                   |          433 | Mark21         |             1 | f
+    4204 | emaj           | myschema2_mytbl1_log_seq           |          433 | Mark21         |             1 | f
+    4205 | emaj           | myschema2_mytbl2_log_seq           |          433 | Mark21         |             1 | f
+    4206 | emajC          | myschema2_myTbl3_log_seq           |          433 | Mark21         |             1 | f
+    4207 | emaj           | myschema2_mytbl4_log_seq           |          433 | Mark21         |             1 | f
+    4208 | emaj           | otherPrefix4mytbl5_log_seq         |          433 | Mark21         |             1 | f
+    4209 | emaj           | myschema2_mytbl6_log_seq           |          433 | Mark21         |             1 | f
+    4210 | myschema1      | myTbl3_col31_seq                   |          434 | Mark12         |             1 | f
+    4211 | emajC          | myschema1_myTbl3_log_seq           |          434 | Mark12         |             1 | f
+    4212 | emaj           | myschema1_mytbl1_log_seq           |          434 | Mark12         |            15 | t
+    4213 | emaj           | myschema1_mytbl4_log_seq           |          434 | Mark12         |             1 | f
+    4214 | emaj           | myschema1_mytbl2_log_seq           |          434 | Mark12         |             6 | t
+    4215 | emajb          | myschema1_mytbl2b_log_seq          |          434 | Mark12         |             6 | t
 (24 rows)
 
 -- inserts/updates/deletes in myTbl3 and myTbl4
@@ -776,39 +776,39 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      438 | myGroup1         | Mark13         |          435 | f               | f                      |              |                  4221 |                           | 
 (5 rows)
 
-select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
- sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
----------+----------------+------------------------------------+----------------+---------------+----------------
-    3134 | phil's schema3 | myTbl2\_col21_seq                  | Mark4          |             1 | f
-    3135 | phil's schema3 | phil's seq\1                       | Mark4          |          1000 | f
-    3136 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark4          |             1 | f
-    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark4          |             1 | f
-    4196 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-    4197 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-    4198 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-    4199 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-    4200 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-    4201 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-    4202 | myschema2      | myseq1                             | Mark21         |          1000 | f
-    4203 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-    4204 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-    4205 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-    4206 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-    4207 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4208 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
-    4209 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-    4210 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
-    4211 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-    4212 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
-    4213 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-    4214 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             6 | t
-    4215 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             6 | t
-    4216 | myschema1      | myTbl3_col31_seq                   | Mark13         |            10 | t
-    4217 | emajC          | myschema1_myTbl3_log_seq           | Mark13         |            10 | t
-    4218 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
-    4219 | emaj           | myschema1_mytbl4_log_seq           | Mark13         |             2 | t
-    4220 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             6 | t
-    4221 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             6 | t
+select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | sequ_time_id | regexp_replace | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+--------------+----------------+---------------+----------------
+    3134 | phil's schema3 | myTbl2\_col21_seq                  |          314 | Mark4          |             1 | f
+    3135 | phil's schema3 | phil's seq\1                       |          314 | Mark4          |          1000 | f
+    3136 | emaj           | phil's schema3_myTbl2\_log_seq     |          314 | Mark4          |             1 | f
+    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq |          314 | Mark4          |             1 | f
+    4196 | myschema1      | myTbl3_col31_seq                   |          432 | Mark11         |             1 | f
+    4197 | emajC          | myschema1_myTbl3_log_seq           |          432 | Mark11         |             1 | f
+    4198 | emaj           | myschema1_mytbl1_log_seq           |          432 | Mark11         |             1 | f
+    4199 | emaj           | myschema1_mytbl4_log_seq           |          432 | Mark11         |             1 | f
+    4200 | emaj           | myschema1_mytbl2_log_seq           |          432 | Mark11         |             1 | f
+    4201 | emajb          | myschema1_mytbl2b_log_seq          |          432 | Mark11         |             1 | f
+    4202 | myschema2      | myseq1                             |          433 | Mark21         |          1000 | f
+    4203 | myschema2      | myTbl3_col31_seq                   |          433 | Mark21         |             1 | f
+    4204 | emaj           | myschema2_mytbl1_log_seq           |          433 | Mark21         |             1 | f
+    4205 | emaj           | myschema2_mytbl2_log_seq           |          433 | Mark21         |             1 | f
+    4206 | emajC          | myschema2_myTbl3_log_seq           |          433 | Mark21         |             1 | f
+    4207 | emaj           | myschema2_mytbl4_log_seq           |          433 | Mark21         |             1 | f
+    4208 | emaj           | otherPrefix4mytbl5_log_seq         |          433 | Mark21         |             1 | f
+    4209 | emaj           | myschema2_mytbl6_log_seq           |          433 | Mark21         |             1 | f
+    4210 | myschema1      | myTbl3_col31_seq                   |          434 | Mark12         |             1 | f
+    4211 | emajC          | myschema1_myTbl3_log_seq           |          434 | Mark12         |             1 | f
+    4212 | emaj           | myschema1_mytbl1_log_seq           |          434 | Mark12         |            15 | t
+    4213 | emaj           | myschema1_mytbl4_log_seq           |          434 | Mark12         |             1 | f
+    4214 | emaj           | myschema1_mytbl2_log_seq           |          434 | Mark12         |             6 | t
+    4215 | emajb          | myschema1_mytbl2b_log_seq          |          434 | Mark12         |             6 | t
+    4216 | myschema1      | myTbl3_col31_seq                   |          435 | Mark13         |            10 | t
+    4217 | emajC          | myschema1_myTbl3_log_seq           |          435 | Mark13         |            10 | t
+    4218 | emaj           | myschema1_mytbl1_log_seq           |          435 | Mark13         |            15 | t
+    4219 | emaj           | myschema1_mytbl4_log_seq           |          435 | Mark13         |             2 | t
+    4220 | emaj           | myschema1_mytbl2_log_seq           |          435 | Mark13         |             6 | t
+    4221 | emajb          | myschema1_mytbl2b_log_seq          |          435 | Mark13         |             6 | t
 (30 rows)
 
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl1_log order by emaj_gid, emaj_tuple desc;
@@ -900,36 +900,36 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      437 | myGroup1         | Mark12         |          434 | f               | f                      |              |                  4215 |                           | 
 (4 rows)
 
-select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
- sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
----------+----------------+------------------------------------+----------------+---------------+----------------
-    3134 | phil's schema3 | myTbl2\_col21_seq                  | Mark4          |             1 | f
-    3135 | phil's schema3 | phil's seq\1                       | Mark4          |          1000 | f
-    3136 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark4          |             1 | f
-    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark4          |             1 | f
-    4196 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-    4197 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-    4198 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-    4199 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-    4200 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-    4201 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-    4202 | myschema2      | myseq1                             | Mark21         |          1000 | f
-    4203 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-    4204 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-    4205 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-    4206 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-    4207 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4208 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
-    4209 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-    4210 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
-    4211 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-    4212 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
-    4213 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-    4214 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             6 | t
-    4215 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             6 | t
-    4218 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
-    4220 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             6 | t
-    4221 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             6 | t
+select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | sequ_time_id | regexp_replace | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+--------------+----------------+---------------+----------------
+    3134 | phil's schema3 | myTbl2\_col21_seq                  |          314 | Mark4          |             1 | f
+    3135 | phil's schema3 | phil's seq\1                       |          314 | Mark4          |          1000 | f
+    3136 | emaj           | phil's schema3_myTbl2\_log_seq     |          314 | Mark4          |             1 | f
+    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq |          314 | Mark4          |             1 | f
+    4196 | myschema1      | myTbl3_col31_seq                   |          432 | Mark11         |             1 | f
+    4197 | emajC          | myschema1_myTbl3_log_seq           |          432 | Mark11         |             1 | f
+    4198 | emaj           | myschema1_mytbl1_log_seq           |          432 | Mark11         |             1 | f
+    4199 | emaj           | myschema1_mytbl4_log_seq           |          432 | Mark11         |             1 | f
+    4200 | emaj           | myschema1_mytbl2_log_seq           |          432 | Mark11         |             1 | f
+    4201 | emajb          | myschema1_mytbl2b_log_seq          |          432 | Mark11         |             1 | f
+    4202 | myschema2      | myseq1                             |          433 | Mark21         |          1000 | f
+    4203 | myschema2      | myTbl3_col31_seq                   |          433 | Mark21         |             1 | f
+    4204 | emaj           | myschema2_mytbl1_log_seq           |          433 | Mark21         |             1 | f
+    4205 | emaj           | myschema2_mytbl2_log_seq           |          433 | Mark21         |             1 | f
+    4206 | emajC          | myschema2_myTbl3_log_seq           |          433 | Mark21         |             1 | f
+    4207 | emaj           | myschema2_mytbl4_log_seq           |          433 | Mark21         |             1 | f
+    4208 | emaj           | otherPrefix4mytbl5_log_seq         |          433 | Mark21         |             1 | f
+    4209 | emaj           | myschema2_mytbl6_log_seq           |          433 | Mark21         |             1 | f
+    4210 | myschema1      | myTbl3_col31_seq                   |          434 | Mark12         |             1 | f
+    4211 | emajC          | myschema1_myTbl3_log_seq           |          434 | Mark12         |             1 | f
+    4212 | emaj           | myschema1_mytbl1_log_seq           |          434 | Mark12         |            15 | t
+    4213 | emaj           | myschema1_mytbl4_log_seq           |          434 | Mark12         |             1 | f
+    4214 | emaj           | myschema1_mytbl2_log_seq           |          434 | Mark12         |             6 | t
+    4215 | emajb          | myschema1_mytbl2b_log_seq          |          434 | Mark12         |             6 | t
+    4218 | emaj           | myschema1_mytbl1_log_seq           |          435 | Mark13         |            15 | t
+    4220 | emaj           | myschema1_mytbl2_log_seq           |          435 | Mark13         |             6 | t
+    4221 | emajb          | myschema1_mytbl2b_log_seq          |          435 | Mark13         |             6 | t
 (27 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -984,35 +984,35 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      441 | myGroup1         | STOP_%         |          438 | t               | f                      |              |                  4227 |                         0 | 
 (4 rows)
 
-select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
- sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
----------+----------------+------------------------------------+----------------+---------------+----------------
-    3134 | phil's schema3 | myTbl2\_col21_seq                  | Mark4          |             1 | f
-    3135 | phil's schema3 | phil's seq\1                       | Mark4          |          1000 | f
-    3136 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark4          |             1 | f
-    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark4          |             1 | f
-    4196 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-    4197 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-    4198 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-    4199 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-    4200 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-    4201 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-    4202 | myschema2      | myseq1                             | Mark21         |          1000 | f
-    4203 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-    4204 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-    4205 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-    4206 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-    4207 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4208 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
-    4209 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-    4211 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-    4213 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-    4222 | myschema1      | myTbl3_col31_seq                   | STOP_%         |             1 | f
-    4223 | emajC          | myschema1_myTbl3_log_seq           | STOP_%         |            10 | t
-    4224 | emaj           | myschema1_mytbl1_log_seq           | STOP_%         |            15 | t
-    4225 | emaj           | myschema1_mytbl4_log_seq           | STOP_%         |             2 | t
-    4226 | emaj           | myschema1_mytbl2_log_seq           | STOP_%         |             6 | t
-    4227 | emajb          | myschema1_mytbl2b_log_seq          | STOP_%         |             6 | t
+select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | sequ_time_id | regexp_replace | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+--------------+----------------+---------------+----------------
+    3134 | phil's schema3 | myTbl2\_col21_seq                  |          314 | Mark4          |             1 | f
+    3135 | phil's schema3 | phil's seq\1                       |          314 | Mark4          |          1000 | f
+    3136 | emaj           | phil's schema3_myTbl2\_log_seq     |          314 | Mark4          |             1 | f
+    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq |          314 | Mark4          |             1 | f
+    4196 | myschema1      | myTbl3_col31_seq                   |          432 | Mark11         |             1 | f
+    4197 | emajC          | myschema1_myTbl3_log_seq           |          432 | Mark11         |             1 | f
+    4198 | emaj           | myschema1_mytbl1_log_seq           |          432 | Mark11         |             1 | f
+    4199 | emaj           | myschema1_mytbl4_log_seq           |          432 | Mark11         |             1 | f
+    4200 | emaj           | myschema1_mytbl2_log_seq           |          432 | Mark11         |             1 | f
+    4201 | emajb          | myschema1_mytbl2b_log_seq          |          432 | Mark11         |             1 | f
+    4202 | myschema2      | myseq1                             |          433 | Mark21         |          1000 | f
+    4203 | myschema2      | myTbl3_col31_seq                   |          433 | Mark21         |             1 | f
+    4204 | emaj           | myschema2_mytbl1_log_seq           |          433 | Mark21         |             1 | f
+    4205 | emaj           | myschema2_mytbl2_log_seq           |          433 | Mark21         |             1 | f
+    4206 | emajC          | myschema2_myTbl3_log_seq           |          433 | Mark21         |             1 | f
+    4207 | emaj           | myschema2_mytbl4_log_seq           |          433 | Mark21         |             1 | f
+    4208 | emaj           | otherPrefix4mytbl5_log_seq         |          433 | Mark21         |             1 | f
+    4209 | emaj           | myschema2_mytbl6_log_seq           |          433 | Mark21         |             1 | f
+    4211 | emajC          | myschema1_myTbl3_log_seq           |          434 | Mark12         |             1 | f
+    4213 | emaj           | myschema1_mytbl4_log_seq           |          434 | Mark12         |             1 | f
+    4222 | myschema1      | myTbl3_col31_seq                   |          438 | STOP_%         |             1 | f
+    4223 | emajC          | myschema1_myTbl3_log_seq           |          438 | STOP_%         |            10 | t
+    4224 | emaj           | myschema1_mytbl1_log_seq           |          438 | STOP_%         |            15 | t
+    4225 | emaj           | myschema1_mytbl4_log_seq           |          438 | STOP_%         |             2 | t
+    4226 | emaj           | myschema1_mytbl2_log_seq           |          438 | STOP_%         |             6 | t
+    4227 | emajb          | myschema1_mytbl2b_log_seq          |          438 | STOP_%         |             6 | t
 (26 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1153,7 +1153,7 @@ select emaj.emaj_set_mark_group('myGroup1','Mark13');
                    6
 (1 row)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),mark_time_id,  mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------------+----------------+--------------+-----------------+------------------------+--------------+-----------------------+---------------------------+------------------------------
      319 | phil's group#3", | Mark4          |          314 | f               | f                      |              |                  3137 |                           | 
@@ -1163,39 +1163,39 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      444 | myGroup1         | Mark13         |          441 | f               | f                      |              |                  4245 |                           | 
 (5 rows)
 
-select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
- sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
----------+----------------+------------------------------------+----------------+---------------+----------------
-    3134 | phil's schema3 | myTbl2\_col21_seq                  | Mark4          |             1 | f
-    3135 | phil's schema3 | phil's seq\1                       | Mark4          |          1000 | f
-    3136 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark4          |             1 | f
-    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark4          |             1 | f
-    4202 | myschema2      | myseq1                             | Mark21         |          1000 | f
-    4203 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-    4204 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-    4205 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-    4206 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-    4207 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4208 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
-    4209 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-    4228 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-    4229 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-    4230 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-    4231 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-    4232 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-    4233 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-    4234 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
-    4235 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-    4236 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
-    4237 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-    4238 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             2 | t
-    4239 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             2 | t
-    4240 | myschema1      | myTbl3_col31_seq                   | Mark13         |            10 | t
-    4241 | emajC          | myschema1_myTbl3_log_seq           | Mark13         |            10 | t
-    4242 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
-    4243 | emaj           | myschema1_mytbl4_log_seq           | Mark13         |             1 | t
-    4244 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             2 | t
-    4245 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             2 | t
+select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | sequ_time_id | regexp_replace | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+--------------+----------------+---------------+----------------
+    3134 | phil's schema3 | myTbl2\_col21_seq                  |          314 | Mark4          |             1 | f
+    3135 | phil's schema3 | phil's seq\1                       |          314 | Mark4          |          1000 | f
+    3136 | emaj           | phil's schema3_myTbl2\_log_seq     |          314 | Mark4          |             1 | f
+    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq |          314 | Mark4          |             1 | f
+    4202 | myschema2      | myseq1                             |          433 | Mark21         |          1000 | f
+    4203 | myschema2      | myTbl3_col31_seq                   |          433 | Mark21         |             1 | f
+    4204 | emaj           | myschema2_mytbl1_log_seq           |          433 | Mark21         |             1 | f
+    4205 | emaj           | myschema2_mytbl2_log_seq           |          433 | Mark21         |             1 | f
+    4206 | emajC          | myschema2_myTbl3_log_seq           |          433 | Mark21         |             1 | f
+    4207 | emaj           | myschema2_mytbl4_log_seq           |          433 | Mark21         |             1 | f
+    4208 | emaj           | otherPrefix4mytbl5_log_seq         |          433 | Mark21         |             1 | f
+    4209 | emaj           | myschema2_mytbl6_log_seq           |          433 | Mark21         |             1 | f
+    4228 | myschema1      | myTbl3_col31_seq                   |          439 | Mark11         |             1 | f
+    4229 | emajC          | myschema1_myTbl3_log_seq           |          439 | Mark11         |             1 | f
+    4230 | emaj           | myschema1_mytbl1_log_seq           |          439 | Mark11         |             1 | f
+    4231 | emaj           | myschema1_mytbl4_log_seq           |          439 | Mark11         |             1 | f
+    4232 | emaj           | myschema1_mytbl2_log_seq           |          439 | Mark11         |             1 | f
+    4233 | emajb          | myschema1_mytbl2b_log_seq          |          439 | Mark11         |             1 | f
+    4234 | myschema1      | myTbl3_col31_seq                   |          440 | Mark12         |             1 | f
+    4235 | emajC          | myschema1_myTbl3_log_seq           |          440 | Mark12         |             1 | f
+    4236 | emaj           | myschema1_mytbl1_log_seq           |          440 | Mark12         |            15 | t
+    4237 | emaj           | myschema1_mytbl4_log_seq           |          440 | Mark12         |             1 | f
+    4238 | emaj           | myschema1_mytbl2_log_seq           |          440 | Mark12         |             2 | t
+    4239 | emajb          | myschema1_mytbl2b_log_seq          |          440 | Mark12         |             2 | t
+    4240 | myschema1      | myTbl3_col31_seq                   |          441 | Mark13         |            10 | t
+    4241 | emajC          | myschema1_myTbl3_log_seq           |          441 | Mark13         |            10 | t
+    4242 | emaj           | myschema1_mytbl1_log_seq           |          441 | Mark13         |            15 | t
+    4243 | emaj           | myschema1_mytbl4_log_seq           |          441 | Mark13         |             1 | t
+    4244 | emaj           | myschema1_mytbl2_log_seq           |          441 | Mark13         |             2 | t
+    4245 | emajb          | myschema1_mytbl2b_log_seq          |          441 | Mark13         |             2 | t
 (30 rows)
 
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl1_log order by emaj_gid, emaj_tuple desc;
@@ -1278,51 +1278,51 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      446 | myGroup1         | RLBK_Mark12_%_DONE  |          444 | f               | f                      |              |                  4257 |                           | Mark12
 (7 rows)
 
-select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
- sequ_id |  sequ_schema   |             sequ_name              |   regexp_replace    | sequ_last_val | sequ_is_called 
----------+----------------+------------------------------------+---------------------+---------------+----------------
-    3134 | phil's schema3 | myTbl2\_col21_seq                  | Mark4               |             1 | f
-    3135 | phil's schema3 | phil's seq\1                       | Mark4               |          1000 | f
-    3136 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark4               |             1 | f
-    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark4               |             1 | f
-    4202 | myschema2      | myseq1                             | Mark21              |          1000 | f
-    4203 | myschema2      | myTbl3_col31_seq                   | Mark21              |             1 | f
-    4204 | emaj           | myschema2_mytbl1_log_seq           | Mark21              |             1 | f
-    4205 | emaj           | myschema2_mytbl2_log_seq           | Mark21              |             1 | f
-    4206 | emajC          | myschema2_myTbl3_log_seq           | Mark21              |             1 | f
-    4207 | emaj           | myschema2_mytbl4_log_seq           | Mark21              |             1 | f
-    4208 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21              |             1 | f
-    4209 | emaj           | myschema2_mytbl6_log_seq           | Mark21              |             1 | f
-    4228 | myschema1      | myTbl3_col31_seq                   | Mark11              |             1 | f
-    4229 | emajC          | myschema1_myTbl3_log_seq           | Mark11              |             1 | f
-    4230 | emaj           | myschema1_mytbl1_log_seq           | Mark11              |             1 | f
-    4231 | emaj           | myschema1_mytbl4_log_seq           | Mark11              |             1 | f
-    4232 | emaj           | myschema1_mytbl2_log_seq           | Mark11              |             1 | f
-    4233 | emajb          | myschema1_mytbl2b_log_seq          | Mark11              |             1 | f
-    4234 | myschema1      | myTbl3_col31_seq                   | Mark12              |             1 | f
-    4235 | emajC          | myschema1_myTbl3_log_seq           | Mark12              |             1 | f
-    4236 | emaj           | myschema1_mytbl1_log_seq           | Mark12              |            15 | t
-    4237 | emaj           | myschema1_mytbl4_log_seq           | Mark12              |             1 | f
-    4238 | emaj           | myschema1_mytbl2_log_seq           | Mark12              |             2 | t
-    4239 | emajb          | myschema1_mytbl2b_log_seq          | Mark12              |             2 | t
-    4240 | myschema1      | myTbl3_col31_seq                   | Mark13              |            10 | t
-    4241 | emajC          | myschema1_myTbl3_log_seq           | Mark13              |            10 | t
-    4242 | emaj           | myschema1_mytbl1_log_seq           | Mark13              |            15 | t
-    4243 | emaj           | myschema1_mytbl4_log_seq           | Mark13              |             1 | t
-    4244 | emaj           | myschema1_mytbl2_log_seq           | Mark13              |             2 | t
-    4245 | emajb          | myschema1_mytbl2b_log_seq          | Mark13              |             2 | t
-    4246 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_START |            10 | t
-    4247 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_START |            10 | t
-    4248 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_START |            15 | t
-    4249 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_START |             1 | t
-    4250 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_START |             2 | t
-    4251 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_START |             2 | t
-    4252 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_DONE  |             1 | f
-    4253 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_DONE  |            20 | t
-    4254 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_DONE  |            15 | t
-    4255 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
-    4256 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
-    4257 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_DONE  |             2 | t
+select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | sequ_time_id |   regexp_replace    | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+--------------+---------------------+---------------+----------------
+    3134 | phil's schema3 | myTbl2\_col21_seq                  |          314 | Mark4               |             1 | f
+    3135 | phil's schema3 | phil's seq\1                       |          314 | Mark4               |          1000 | f
+    3136 | emaj           | phil's schema3_myTbl2\_log_seq     |          314 | Mark4               |             1 | f
+    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq |          314 | Mark4               |             1 | f
+    4202 | myschema2      | myseq1                             |          433 | Mark21              |          1000 | f
+    4203 | myschema2      | myTbl3_col31_seq                   |          433 | Mark21              |             1 | f
+    4204 | emaj           | myschema2_mytbl1_log_seq           |          433 | Mark21              |             1 | f
+    4205 | emaj           | myschema2_mytbl2_log_seq           |          433 | Mark21              |             1 | f
+    4206 | emajC          | myschema2_myTbl3_log_seq           |          433 | Mark21              |             1 | f
+    4207 | emaj           | myschema2_mytbl4_log_seq           |          433 | Mark21              |             1 | f
+    4208 | emaj           | otherPrefix4mytbl5_log_seq         |          433 | Mark21              |             1 | f
+    4209 | emaj           | myschema2_mytbl6_log_seq           |          433 | Mark21              |             1 | f
+    4228 | myschema1      | myTbl3_col31_seq                   |          439 | Mark11              |             1 | f
+    4229 | emajC          | myschema1_myTbl3_log_seq           |          439 | Mark11              |             1 | f
+    4230 | emaj           | myschema1_mytbl1_log_seq           |          439 | Mark11              |             1 | f
+    4231 | emaj           | myschema1_mytbl4_log_seq           |          439 | Mark11              |             1 | f
+    4232 | emaj           | myschema1_mytbl2_log_seq           |          439 | Mark11              |             1 | f
+    4233 | emajb          | myschema1_mytbl2b_log_seq          |          439 | Mark11              |             1 | f
+    4234 | myschema1      | myTbl3_col31_seq                   |          440 | Mark12              |             1 | f
+    4235 | emajC          | myschema1_myTbl3_log_seq           |          440 | Mark12              |             1 | f
+    4236 | emaj           | myschema1_mytbl1_log_seq           |          440 | Mark12              |            15 | t
+    4237 | emaj           | myschema1_mytbl4_log_seq           |          440 | Mark12              |             1 | f
+    4238 | emaj           | myschema1_mytbl2_log_seq           |          440 | Mark12              |             2 | t
+    4239 | emajb          | myschema1_mytbl2b_log_seq          |          440 | Mark12              |             2 | t
+    4240 | myschema1      | myTbl3_col31_seq                   |          441 | Mark13              |            10 | t
+    4241 | emajC          | myschema1_myTbl3_log_seq           |          441 | Mark13              |            10 | t
+    4242 | emaj           | myschema1_mytbl1_log_seq           |          441 | Mark13              |            15 | t
+    4243 | emaj           | myschema1_mytbl4_log_seq           |          441 | Mark13              |             1 | t
+    4244 | emaj           | myschema1_mytbl2_log_seq           |          441 | Mark13              |             2 | t
+    4245 | emajb          | myschema1_mytbl2b_log_seq          |          441 | Mark13              |             2 | t
+    4246 | myschema1      | myTbl3_col31_seq                   |          443 | RLBK_Mark12_%_START |            10 | t
+    4247 | emajC          | myschema1_myTbl3_log_seq           |          443 | RLBK_Mark12_%_START |            10 | t
+    4248 | emaj           | myschema1_mytbl1_log_seq           |          443 | RLBK_Mark12_%_START |            15 | t
+    4249 | emaj           | myschema1_mytbl4_log_seq           |          443 | RLBK_Mark12_%_START |             1 | t
+    4250 | emaj           | myschema1_mytbl2_log_seq           |          443 | RLBK_Mark12_%_START |             2 | t
+    4251 | emajb          | myschema1_mytbl2b_log_seq          |          443 | RLBK_Mark12_%_START |             2 | t
+    4252 | myschema1      | myTbl3_col31_seq                   |          444 | RLBK_Mark12_%_DONE  |             1 | f
+    4253 | emajC          | myschema1_myTbl3_log_seq           |          444 | RLBK_Mark12_%_DONE  |            20 | t
+    4254 | emaj           | myschema1_mytbl1_log_seq           |          444 | RLBK_Mark12_%_DONE  |            15 | t
+    4255 | emaj           | myschema1_mytbl4_log_seq           |          444 | RLBK_Mark12_%_DONE  |             2 | t
+    4256 | emaj           | myschema1_mytbl2_log_seq           |          444 | RLBK_Mark12_%_DONE  |             2 | t
+    4257 | emajb          | myschema1_mytbl2b_log_seq          |          444 | RLBK_Mark12_%_DONE  |             2 | t
 (42 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1396,63 +1396,63 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      448 | myGroup1         | RLBK_Mark11_%_DONE  |          447 | f               | f                      |              |                  4269 |                           | Mark11
 (9 rows)
 
-select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
- sequ_id |  sequ_schema   |             sequ_name              |   regexp_replace    | sequ_last_val | sequ_is_called 
----------+----------------+------------------------------------+---------------------+---------------+----------------
-    3134 | phil's schema3 | myTbl2\_col21_seq                  | Mark4               |             1 | f
-    3135 | phil's schema3 | phil's seq\1                       | Mark4               |          1000 | f
-    3136 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark4               |             1 | f
-    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark4               |             1 | f
-    4202 | myschema2      | myseq1                             | Mark21              |          1000 | f
-    4203 | myschema2      | myTbl3_col31_seq                   | Mark21              |             1 | f
-    4204 | emaj           | myschema2_mytbl1_log_seq           | Mark21              |             1 | f
-    4205 | emaj           | myschema2_mytbl2_log_seq           | Mark21              |             1 | f
-    4206 | emajC          | myschema2_myTbl3_log_seq           | Mark21              |             1 | f
-    4207 | emaj           | myschema2_mytbl4_log_seq           | Mark21              |             1 | f
-    4208 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21              |             1 | f
-    4209 | emaj           | myschema2_mytbl6_log_seq           | Mark21              |             1 | f
-    4228 | myschema1      | myTbl3_col31_seq                   | Mark11              |             1 | f
-    4229 | emajC          | myschema1_myTbl3_log_seq           | Mark11              |             1 | f
-    4230 | emaj           | myschema1_mytbl1_log_seq           | Mark11              |             1 | f
-    4231 | emaj           | myschema1_mytbl4_log_seq           | Mark11              |             1 | f
-    4232 | emaj           | myschema1_mytbl2_log_seq           | Mark11              |             1 | f
-    4233 | emajb          | myschema1_mytbl2b_log_seq          | Mark11              |             1 | f
-    4234 | myschema1      | myTbl3_col31_seq                   | Mark12              |             1 | f
-    4235 | emajC          | myschema1_myTbl3_log_seq           | Mark12              |             1 | f
-    4236 | emaj           | myschema1_mytbl1_log_seq           | Mark12              |            15 | t
-    4237 | emaj           | myschema1_mytbl4_log_seq           | Mark12              |             1 | f
-    4238 | emaj           | myschema1_mytbl2_log_seq           | Mark12              |             2 | t
-    4239 | emajb          | myschema1_mytbl2b_log_seq          | Mark12              |             2 | t
-    4240 | myschema1      | myTbl3_col31_seq                   | Mark13              |            10 | t
-    4241 | emajC          | myschema1_myTbl3_log_seq           | Mark13              |            10 | t
-    4242 | emaj           | myschema1_mytbl1_log_seq           | Mark13              |            15 | t
-    4243 | emaj           | myschema1_mytbl4_log_seq           | Mark13              |             1 | t
-    4244 | emaj           | myschema1_mytbl2_log_seq           | Mark13              |             2 | t
-    4245 | emajb          | myschema1_mytbl2b_log_seq          | Mark13              |             2 | t
-    4246 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_START |            10 | t
-    4247 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_START |            10 | t
-    4248 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_START |            15 | t
-    4249 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_START |             1 | t
-    4250 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_START |             2 | t
-    4251 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_START |             2 | t
-    4252 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark12_%_DONE  |             1 | f
-    4253 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark12_%_DONE  |            20 | t
-    4254 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark12_%_DONE  |            15 | t
-    4255 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
-    4256 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark12_%_DONE  |             2 | t
-    4257 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark12_%_DONE  |             2 | t
-    4258 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark11_%_START |             1 | f
-    4259 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark11_%_START |            20 | t
-    4260 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark11_%_START |            15 | t
-    4261 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark11_%_START |             2 | t
-    4262 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark11_%_START |             2 | t
-    4263 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark11_%_START |             2 | t
-    4264 | myschema1      | myTbl3_col31_seq                   | RLBK_Mark11_%_DONE  |             1 | f
-    4265 | emajC          | myschema1_myTbl3_log_seq           | RLBK_Mark11_%_DONE  |            20 | t
-    4266 | emaj           | myschema1_mytbl1_log_seq           | RLBK_Mark11_%_DONE  |            25 | t
-    4267 | emaj           | myschema1_mytbl4_log_seq           | RLBK_Mark11_%_DONE  |             2 | t
-    4268 | emaj           | myschema1_mytbl2_log_seq           | RLBK_Mark11_%_DONE  |             4 | t
-    4269 | emajb          | myschema1_mytbl2b_log_seq          | RLBK_Mark11_%_DONE  |             4 | t
+select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | sequ_time_id |   regexp_replace    | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+--------------+---------------------+---------------+----------------
+    3134 | phil's schema3 | myTbl2\_col21_seq                  |          314 | Mark4               |             1 | f
+    3135 | phil's schema3 | phil's seq\1                       |          314 | Mark4               |          1000 | f
+    3136 | emaj           | phil's schema3_myTbl2\_log_seq     |          314 | Mark4               |             1 | f
+    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq |          314 | Mark4               |             1 | f
+    4202 | myschema2      | myseq1                             |          433 | Mark21              |          1000 | f
+    4203 | myschema2      | myTbl3_col31_seq                   |          433 | Mark21              |             1 | f
+    4204 | emaj           | myschema2_mytbl1_log_seq           |          433 | Mark21              |             1 | f
+    4205 | emaj           | myschema2_mytbl2_log_seq           |          433 | Mark21              |             1 | f
+    4206 | emajC          | myschema2_myTbl3_log_seq           |          433 | Mark21              |             1 | f
+    4207 | emaj           | myschema2_mytbl4_log_seq           |          433 | Mark21              |             1 | f
+    4208 | emaj           | otherPrefix4mytbl5_log_seq         |          433 | Mark21              |             1 | f
+    4209 | emaj           | myschema2_mytbl6_log_seq           |          433 | Mark21              |             1 | f
+    4228 | myschema1      | myTbl3_col31_seq                   |          439 | Mark11              |             1 | f
+    4229 | emajC          | myschema1_myTbl3_log_seq           |          439 | Mark11              |             1 | f
+    4230 | emaj           | myschema1_mytbl1_log_seq           |          439 | Mark11              |             1 | f
+    4231 | emaj           | myschema1_mytbl4_log_seq           |          439 | Mark11              |             1 | f
+    4232 | emaj           | myschema1_mytbl2_log_seq           |          439 | Mark11              |             1 | f
+    4233 | emajb          | myschema1_mytbl2b_log_seq          |          439 | Mark11              |             1 | f
+    4234 | myschema1      | myTbl3_col31_seq                   |          440 | Mark12              |             1 | f
+    4235 | emajC          | myschema1_myTbl3_log_seq           |          440 | Mark12              |             1 | f
+    4236 | emaj           | myschema1_mytbl1_log_seq           |          440 | Mark12              |            15 | t
+    4237 | emaj           | myschema1_mytbl4_log_seq           |          440 | Mark12              |             1 | f
+    4238 | emaj           | myschema1_mytbl2_log_seq           |          440 | Mark12              |             2 | t
+    4239 | emajb          | myschema1_mytbl2b_log_seq          |          440 | Mark12              |             2 | t
+    4240 | myschema1      | myTbl3_col31_seq                   |          441 | Mark13              |            10 | t
+    4241 | emajC          | myschema1_myTbl3_log_seq           |          441 | Mark13              |            10 | t
+    4242 | emaj           | myschema1_mytbl1_log_seq           |          441 | Mark13              |            15 | t
+    4243 | emaj           | myschema1_mytbl4_log_seq           |          441 | Mark13              |             1 | t
+    4244 | emaj           | myschema1_mytbl2_log_seq           |          441 | Mark13              |             2 | t
+    4245 | emajb          | myschema1_mytbl2b_log_seq          |          441 | Mark13              |             2 | t
+    4246 | myschema1      | myTbl3_col31_seq                   |          443 | RLBK_Mark12_%_START |            10 | t
+    4247 | emajC          | myschema1_myTbl3_log_seq           |          443 | RLBK_Mark12_%_START |            10 | t
+    4248 | emaj           | myschema1_mytbl1_log_seq           |          443 | RLBK_Mark12_%_START |            15 | t
+    4249 | emaj           | myschema1_mytbl4_log_seq           |          443 | RLBK_Mark12_%_START |             1 | t
+    4250 | emaj           | myschema1_mytbl2_log_seq           |          443 | RLBK_Mark12_%_START |             2 | t
+    4251 | emajb          | myschema1_mytbl2b_log_seq          |          443 | RLBK_Mark12_%_START |             2 | t
+    4252 | myschema1      | myTbl3_col31_seq                   |          444 | RLBK_Mark12_%_DONE  |             1 | f
+    4253 | emajC          | myschema1_myTbl3_log_seq           |          444 | RLBK_Mark12_%_DONE  |            20 | t
+    4254 | emaj           | myschema1_mytbl1_log_seq           |          444 | RLBK_Mark12_%_DONE  |            15 | t
+    4255 | emaj           | myschema1_mytbl4_log_seq           |          444 | RLBK_Mark12_%_DONE  |             2 | t
+    4256 | emaj           | myschema1_mytbl2_log_seq           |          444 | RLBK_Mark12_%_DONE  |             2 | t
+    4257 | emajb          | myschema1_mytbl2b_log_seq          |          444 | RLBK_Mark12_%_DONE  |             2 | t
+    4258 | myschema1      | myTbl3_col31_seq                   |          446 | RLBK_Mark11_%_START |             1 | f
+    4259 | emajC          | myschema1_myTbl3_log_seq           |          446 | RLBK_Mark11_%_START |            20 | t
+    4260 | emaj           | myschema1_mytbl1_log_seq           |          446 | RLBK_Mark11_%_START |            15 | t
+    4261 | emaj           | myschema1_mytbl4_log_seq           |          446 | RLBK_Mark11_%_START |             2 | t
+    4262 | emaj           | myschema1_mytbl2_log_seq           |          446 | RLBK_Mark11_%_START |             2 | t
+    4263 | emajb          | myschema1_mytbl2b_log_seq          |          446 | RLBK_Mark11_%_START |             2 | t
+    4264 | myschema1      | myTbl3_col31_seq                   |          447 | RLBK_Mark11_%_DONE  |             1 | f
+    4265 | emajC          | myschema1_myTbl3_log_seq           |          447 | RLBK_Mark11_%_DONE  |            20 | t
+    4266 | emaj           | myschema1_mytbl1_log_seq           |          447 | RLBK_Mark11_%_DONE  |            25 | t
+    4267 | emaj           | myschema1_mytbl4_log_seq           |          447 | RLBK_Mark11_%_DONE  |             2 | t
+    4268 | emaj           | myschema1_mytbl2_log_seq           |          447 | RLBK_Mark11_%_DONE  |             4 | t
+    4269 | emajb          | myschema1_mytbl2b_log_seq          |          447 | RLBK_Mark11_%_DONE  |             4 | t
 (54 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1548,39 +1548,39 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      444 | myGroup1         | Mark13         |          441 | f               | f                      |              |                  4245 |                           | 
 (5 rows)
 
-select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
- sequ_id |  sequ_schema   |             sequ_name              | regexp_replace | sequ_last_val | sequ_is_called 
----------+----------------+------------------------------------+----------------+---------------+----------------
-    3134 | phil's schema3 | myTbl2\_col21_seq                  | Mark4          |             1 | f
-    3135 | phil's schema3 | phil's seq\1                       | Mark4          |          1000 | f
-    3136 | emaj           | phil's schema3_myTbl2\_log_seq     | Mark4          |             1 | f
-    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq | Mark4          |             1 | f
-    4202 | myschema2      | myseq1                             | Mark21         |          1000 | f
-    4203 | myschema2      | myTbl3_col31_seq                   | Mark21         |             1 | f
-    4204 | emaj           | myschema2_mytbl1_log_seq           | Mark21         |             1 | f
-    4205 | emaj           | myschema2_mytbl2_log_seq           | Mark21         |             1 | f
-    4206 | emajC          | myschema2_myTbl3_log_seq           | Mark21         |             1 | f
-    4207 | emaj           | myschema2_mytbl4_log_seq           | Mark21         |             1 | f
-    4208 | emaj           | otherPrefix4mytbl5_log_seq         | Mark21         |             1 | f
-    4209 | emaj           | myschema2_mytbl6_log_seq           | Mark21         |             1 | f
-    4228 | myschema1      | myTbl3_col31_seq                   | Mark11         |             1 | f
-    4229 | emajC          | myschema1_myTbl3_log_seq           | Mark11         |             1 | f
-    4230 | emaj           | myschema1_mytbl1_log_seq           | Mark11         |             1 | f
-    4231 | emaj           | myschema1_mytbl4_log_seq           | Mark11         |             1 | f
-    4232 | emaj           | myschema1_mytbl2_log_seq           | Mark11         |             1 | f
-    4233 | emajb          | myschema1_mytbl2b_log_seq          | Mark11         |             1 | f
-    4234 | myschema1      | myTbl3_col31_seq                   | Mark12         |             1 | f
-    4235 | emajC          | myschema1_myTbl3_log_seq           | Mark12         |             1 | f
-    4236 | emaj           | myschema1_mytbl1_log_seq           | Mark12         |            15 | t
-    4237 | emaj           | myschema1_mytbl4_log_seq           | Mark12         |             1 | f
-    4238 | emaj           | myschema1_mytbl2_log_seq           | Mark12         |             2 | t
-    4239 | emajb          | myschema1_mytbl2b_log_seq          | Mark12         |             2 | t
-    4240 | myschema1      | myTbl3_col31_seq                   | Mark13         |            10 | t
-    4241 | emajC          | myschema1_myTbl3_log_seq           | Mark13         |            10 | t
-    4242 | emaj           | myschema1_mytbl1_log_seq           | Mark13         |            15 | t
-    4243 | emaj           | myschema1_mytbl4_log_seq           | Mark13         |             1 | t
-    4244 | emaj           | myschema1_mytbl2_log_seq           | Mark13         |             2 | t
-    4245 | emajb          | myschema1_mytbl2b_log_seq          | Mark13         |             2 | t
+select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+ sequ_id |  sequ_schema   |             sequ_name              | sequ_time_id | regexp_replace | sequ_last_val | sequ_is_called 
+---------+----------------+------------------------------------+--------------+----------------+---------------+----------------
+    3134 | phil's schema3 | myTbl2\_col21_seq                  |          314 | Mark4          |             1 | f
+    3135 | phil's schema3 | phil's seq\1                       |          314 | Mark4          |          1000 | f
+    3136 | emaj           | phil's schema3_myTbl2\_log_seq     |          314 | Mark4          |             1 | f
+    3137 | emaj #'3       | phil's schema3_phil's tbl1_log_seq |          314 | Mark4          |             1 | f
+    4202 | myschema2      | myseq1                             |          433 | Mark21         |          1000 | f
+    4203 | myschema2      | myTbl3_col31_seq                   |          433 | Mark21         |             1 | f
+    4204 | emaj           | myschema2_mytbl1_log_seq           |          433 | Mark21         |             1 | f
+    4205 | emaj           | myschema2_mytbl2_log_seq           |          433 | Mark21         |             1 | f
+    4206 | emajC          | myschema2_myTbl3_log_seq           |          433 | Mark21         |             1 | f
+    4207 | emaj           | myschema2_mytbl4_log_seq           |          433 | Mark21         |             1 | f
+    4208 | emaj           | otherPrefix4mytbl5_log_seq         |          433 | Mark21         |             1 | f
+    4209 | emaj           | myschema2_mytbl6_log_seq           |          433 | Mark21         |             1 | f
+    4228 | myschema1      | myTbl3_col31_seq                   |          439 | Mark11         |             1 | f
+    4229 | emajC          | myschema1_myTbl3_log_seq           |          439 | Mark11         |             1 | f
+    4230 | emaj           | myschema1_mytbl1_log_seq           |          439 | Mark11         |             1 | f
+    4231 | emaj           | myschema1_mytbl4_log_seq           |          439 | Mark11         |             1 | f
+    4232 | emaj           | myschema1_mytbl2_log_seq           |          439 | Mark11         |             1 | f
+    4233 | emajb          | myschema1_mytbl2b_log_seq          |          439 | Mark11         |             1 | f
+    4234 | myschema1      | myTbl3_col31_seq                   |          440 | Mark12         |             1 | f
+    4235 | emajC          | myschema1_myTbl3_log_seq           |          440 | Mark12         |             1 | f
+    4236 | emaj           | myschema1_mytbl1_log_seq           |          440 | Mark12         |            15 | t
+    4237 | emaj           | myschema1_mytbl4_log_seq           |          440 | Mark12         |             1 | f
+    4238 | emaj           | myschema1_mytbl2_log_seq           |          440 | Mark12         |             2 | t
+    4239 | emajb          | myschema1_mytbl2b_log_seq          |          440 | Mark12         |             2 | t
+    4240 | myschema1      | myTbl3_col31_seq                   |          441 | Mark13         |            10 | t
+    4241 | emajC          | myschema1_myTbl3_log_seq           |          441 | Mark13         |            10 | t
+    4242 | emaj           | myschema1_mytbl1_log_seq           |          441 | Mark13         |            15 | t
+    4243 | emaj           | myschema1_mytbl4_log_seq           |          441 | Mark13         |             1 | t
+    4244 | emaj           | myschema1_mytbl2_log_seq           |          441 | Mark13         |             2 | t
+    4245 | emajb          | myschema1_mytbl2b_log_seq          |          441 | Mark13         |             2 | t
 (30 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -2033,44 +2033,44 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      461 | myGroup1   | Renamed_last_mark    |          463 | f               | f                      |              |                  4323 |                           | Renamed_conso_M2
 (7 rows)
 
-select sequ_id,sequ_schema, sequ_name, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_id;
- sequ_id | sequ_schema |         sequ_name         |    regexp_replace    | sequ_last_val | sequ_is_called 
----------+-------------+---------------------------+----------------------+---------------+----------------
-    4229 | emajC       | myschema1_myTbl3_log_seq  | Mark11               |             1 | f
-    4230 | emaj        | myschema1_mytbl1_log_seq  | Mark11               |             1 | f
-    4231 | emaj        | myschema1_mytbl4_log_seq  | Mark11               |             1 | f
-    4232 | emaj        | myschema1_mytbl2_log_seq  | Mark11               |             1 | f
-    4233 | emajb       | myschema1_mytbl2b_log_seq | Mark11               |             1 | f
-    4235 | emajC       | myschema1_myTbl3_log_seq  | Mark12               |             1 | f
-    4236 | emaj        | myschema1_mytbl1_log_seq  | Mark12               |            15 | t
-    4237 | emaj        | myschema1_mytbl4_log_seq  | Mark12               |             1 | f
-    4238 | emaj        | myschema1_mytbl2_log_seq  | Mark12               |             2 | t
-    4239 | emajb       | myschema1_mytbl2b_log_seq | Mark12               |             2 | t
-    4241 | emajC       | myschema1_myTbl3_log_seq  | Mark13               |            10 | t
-    4242 | emaj        | myschema1_mytbl1_log_seq  | Mark13               |            15 | t
-    4243 | emaj        | myschema1_mytbl4_log_seq  | Mark13               |             1 | t
-    4244 | emaj        | myschema1_mytbl2_log_seq  | Mark13               |             2 | t
-    4245 | emajb       | myschema1_mytbl2b_log_seq | Mark13               |             2 | t
-    4283 | emajC       | myschema1_myTbl3_log_seq  | Conso_M1             |            20 | t
-    4284 | emaj        | myschema1_mytbl1_log_seq  | Conso_M1             |            25 | t
-    4285 | emaj        | myschema1_mytbl4_log_seq  | Conso_M1             |             2 | t
-    4286 | emaj        | myschema1_mytbl2_log_seq  | Conso_M1             |             4 | t
-    4287 | emajb       | myschema1_mytbl2b_log_seq | Conso_M1             |             4 | t
-    4295 | emajC       | myschema1_myTbl3_log_seq  | RLBK_Conso_M1_%_DONE |            20 | t
-    4296 | emaj        | myschema1_mytbl1_log_seq  | RLBK_Conso_M1_%_DONE |            25 | t
-    4297 | emaj        | myschema1_mytbl4_log_seq  | RLBK_Conso_M1_%_DONE |             2 | t
-    4298 | emaj        | myschema1_mytbl2_log_seq  | RLBK_Conso_M1_%_DONE |             4 | t
-    4299 | emajb       | myschema1_mytbl2b_log_seq | RLBK_Conso_M1_%_DONE |             4 | t
-    4301 | emajC       | myschema1_myTbl3_log_seq  | Renamed_conso_M2     |            20 | t
-    4302 | emaj        | myschema1_mytbl1_log_seq  | Renamed_conso_M2     |            25 | t
-    4303 | emaj        | myschema1_mytbl4_log_seq  | Renamed_conso_M2     |             2 | t
-    4304 | emaj        | myschema1_mytbl2_log_seq  | Renamed_conso_M2     |             4 | t
-    4305 | emajb       | myschema1_mytbl2b_log_seq | Renamed_conso_M2     |             4 | t
-    4319 | emajC       | myschema1_myTbl3_log_seq  | Renamed_last_mark    |            20 | t
-    4320 | emaj        | myschema1_mytbl1_log_seq  | Renamed_last_mark    |            49 | t
-    4321 | emaj        | myschema1_mytbl4_log_seq  | Renamed_last_mark    |             2 | t
-    4322 | emaj        | myschema1_mytbl2_log_seq  | Renamed_last_mark    |             7 | t
-    4323 | emajb       | myschema1_mytbl2b_log_seq | Renamed_last_mark    |            10 | t
+select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_id;
+ sequ_id | sequ_schema |         sequ_name         | sequ_time_id |    regexp_replace    | sequ_last_val | sequ_is_called 
+---------+-------------+---------------------------+--------------+----------------------+---------------+----------------
+    4229 | emajC       | myschema1_myTbl3_log_seq  |          439 | Mark11               |             1 | f
+    4230 | emaj        | myschema1_mytbl1_log_seq  |          439 | Mark11               |             1 | f
+    4231 | emaj        | myschema1_mytbl4_log_seq  |          439 | Mark11               |             1 | f
+    4232 | emaj        | myschema1_mytbl2_log_seq  |          439 | Mark11               |             1 | f
+    4233 | emajb       | myschema1_mytbl2b_log_seq |          439 | Mark11               |             1 | f
+    4235 | emajC       | myschema1_myTbl3_log_seq  |          440 | Mark12               |             1 | f
+    4236 | emaj        | myschema1_mytbl1_log_seq  |          440 | Mark12               |            15 | t
+    4237 | emaj        | myschema1_mytbl4_log_seq  |          440 | Mark12               |             1 | f
+    4238 | emaj        | myschema1_mytbl2_log_seq  |          440 | Mark12               |             2 | t
+    4239 | emajb       | myschema1_mytbl2b_log_seq |          440 | Mark12               |             2 | t
+    4241 | emajC       | myschema1_myTbl3_log_seq  |          441 | Mark13               |            10 | t
+    4242 | emaj        | myschema1_mytbl1_log_seq  |          441 | Mark13               |            15 | t
+    4243 | emaj        | myschema1_mytbl4_log_seq  |          441 | Mark13               |             1 | t
+    4244 | emaj        | myschema1_mytbl2_log_seq  |          441 | Mark13               |             2 | t
+    4245 | emajb       | myschema1_mytbl2b_log_seq |          441 | Mark13               |             2 | t
+    4283 | emajC       | myschema1_myTbl3_log_seq  |          455 | Conso_M1             |            20 | t
+    4284 | emaj        | myschema1_mytbl1_log_seq  |          455 | Conso_M1             |            25 | t
+    4285 | emaj        | myschema1_mytbl4_log_seq  |          455 | Conso_M1             |             2 | t
+    4286 | emaj        | myschema1_mytbl2_log_seq  |          455 | Conso_M1             |             4 | t
+    4287 | emajb       | myschema1_mytbl2b_log_seq |          455 | Conso_M1             |             4 | t
+    4295 | emajC       | myschema1_myTbl3_log_seq  |          458 | RLBK_Conso_M1_%_DONE |            20 | t
+    4296 | emaj        | myschema1_mytbl1_log_seq  |          458 | RLBK_Conso_M1_%_DONE |            25 | t
+    4297 | emaj        | myschema1_mytbl4_log_seq  |          458 | RLBK_Conso_M1_%_DONE |             2 | t
+    4298 | emaj        | myschema1_mytbl2_log_seq  |          458 | RLBK_Conso_M1_%_DONE |             4 | t
+    4299 | emajb       | myschema1_mytbl2b_log_seq |          458 | RLBK_Conso_M1_%_DONE |             4 | t
+    4301 | emajC       | myschema1_myTbl3_log_seq  |          459 | Renamed_conso_M2     |            20 | t
+    4302 | emaj        | myschema1_mytbl1_log_seq  |          459 | Renamed_conso_M2     |            25 | t
+    4303 | emaj        | myschema1_mytbl4_log_seq  |          459 | Renamed_conso_M2     |             2 | t
+    4304 | emaj        | myschema1_mytbl2_log_seq  |          459 | Renamed_conso_M2     |             4 | t
+    4305 | emajb       | myschema1_mytbl2b_log_seq |          459 | Renamed_conso_M2     |             4 | t
+    4319 | emajC       | myschema1_myTbl3_log_seq  |          463 | Renamed_last_mark    |            20 | t
+    4320 | emaj        | myschema1_mytbl1_log_seq  |          463 | Renamed_last_mark    |            49 | t
+    4321 | emaj        | myschema1_mytbl4_log_seq  |          463 | Renamed_last_mark    |             2 | t
+    4322 | emaj        | myschema1_mytbl2_log_seq  |          463 | Renamed_last_mark    |             7 | t
+    4323 | emajb       | myschema1_mytbl2b_log_seq |          463 | Renamed_last_mark    |            10 | t
 (35 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by sqhl_begin_mark_id, sqhl_schema, sqhl_table;

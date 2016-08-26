@@ -301,7 +301,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emaj       | emaj_rlbk_session              | postgres   |            | t          | f        | t
  emaj       | emaj_rlbk_stat                 | postgres   |            | t          | f        | t
  emaj       | emaj_seq_hole                  | postgres   |            | t          | f        | f
- emaj       | emaj_sequence                  | postgres   |            | t          | f        | f
+ emaj       | emaj_sequence                  | postgres   |            | t          | f        | t
  emaj       | emaj_time_stamp                | postgres   |            | t          | f        | t
  emajC      | myschema1_myTbl3_log           | postgres   | tsplog1    | t          | f        | f
  emaj       | myschema1_mytbl1_log           | postgres   |            | t          | f        | f
