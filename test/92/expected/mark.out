@@ -1006,6 +1006,9 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id |      hist_function       | hist_event |  regexp_replace   |                 regexp_replace                  | hist_user 
 ---------+--------------------------+------------+-------------------+-------------------------------------------------+-----------
+    3048 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | SM3                                             | postgres
+    3049 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3050 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
     3051 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | SM3                                             | postgres
     3053 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
     3054 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
@@ -1067,7 +1070,7 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     3123 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
     3124 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
     3125 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
-    3126 | PURGE_HISTORY            |            |                   | 45 emaj_hist rows deleted                       | postgres
+    3126 | PURGE_HISTORY            |            |                   | 42 emaj_hist rows deleted                       | postgres
     3127 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
     3128 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
     3129 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres
@@ -1087,7 +1090,7 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     3143 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
     3144 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
     3147 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark STOP_% ; status 0                          | postgres
-(81 rows)
+(84 rows)
 
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;

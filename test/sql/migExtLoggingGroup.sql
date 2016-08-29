@@ -48,7 +48,7 @@ select last_value, is_called from emaj.emaj_sequence_sequ_id_seq;
 
 select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_schema, sqhl_table, sqhl_begin_mark_id;
 
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used, rlbk_msg from emaj.emaj_rlbk order by rlbk_id;
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used, rlbk_msg from emaj.emaj_rlbk order by rlbk_id;
 select last_value, is_called from emaj.emaj_rlbk_rlbk_id_seq;
 
 -- log tables

@@ -124,6 +124,9 @@ ALTER EXTENSION emaj UPDATE TO 'next_version';
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to constraint emaj_relation_rel_group_fkey on table emaj_relation
 drop cascades to constraint emaj_mark_mark_group_fkey on table emaj_mark
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
 NOTICE:  event trigger "emaj_protection_trg" does not exist, skipping
 CONTEXT:  SQL statement "
 DROP EVENT TRIGGER IF EXISTS emaj_protection_trg;

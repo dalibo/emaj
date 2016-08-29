@@ -46,10 +46,11 @@ insert into emaj.emaj_param (param_key, param_value_text)
 delete from emaj.emaj_rlbk_plan where rlbp_rlbk_id > 1000;
 delete from emaj.emaj_rlbk where rlbk_id > 1000;
 -- 1st rollback, in EXECUTING state
-insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_start_datetime)
-  values (1232,array['group1232'],'mark1232','2000-01-01 01:00:00',true,1,
-           5,4,3,'EXECUTING',now()-'110.1 seconds'::interval);
+insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-1, now()-'110.1 seconds'::interval);
+insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+  values (1232,array['group1232'],'mark1232','2000-01-01 01:00:00',-1,true,1,
+           5,4,3,'EXECUTING');
 insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (1232, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null),
@@ -64,10 +65,11 @@ update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '65 seconds'::inter
                                rlbp_duration = '65 seconds'::interval
   where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
 -- 2nd rollback, in LOCKING state with RLBK_TABLE steps
-insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_start_datetime)
-  values (1233,array['group1233'],'mark1233','2000-01-01 01:00:00',true,1,
-           5,4,3,'LOCKING',now()-'2 minutes'::interval);
+insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-2, now()-'2 minutes'::interval);
+insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+  values (1233,array['group1233'],'mark1233','2000-01-01 01:00:00',-2,true,1,
+           5,4,3,'LOCKING');
 insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (1233, 'LOCK_TABLE','schema','t1','',null,null,null),
@@ -77,10 +79,11 @@ insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_tabl
          (1233, 'RLBK_TABLE','schema','t2','','0:02:00'::interval,null,null),
          (1233, 'RLBK_TABLE','schema','t3','','0:00:20'::interval,null,null);
 -- 3rd rollback, in PLANNING state
-insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_start_datetime)
-  values (1234,array['group1234'],'mark1234','2000-01-01 01:00:00',true,1,
-           5,4,3,'PLANNING',now()-'1 minute'::interval);
+insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-3, now()-'1 minute'::interval);
+insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+  values (1234,array['group1234'],'mark1234','2000-01-01 01:00:00',-3,true,1,
+           5,4,3,'PLANNING');
 --------------------------------------------
 -- call emajRollbackMonitor.php using an emaj_viewer role
 --------------------------------------------

@@ -30,6 +30,11 @@ NOTICE:  CREATE TABLE will create implicit sequence "emaj_sequence_sequ_id_seq" 
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_sequence_pkey" for table "emaj_sequence"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_seq_hole_pkey" for table "emaj_seq_hole"
 NOTICE:  E-Maj upgrade: internal error, the number of rows in the original emaj_seq_hole (4) doesn't math the number of rows in the new emaj_seq_hole table (0)
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
+NOTICE:  CREATE TABLE will create implicit sequence "emaj_rlbk_rlbk_id_seq" for serial column "emaj_rlbk.rlbk_id"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_rlbk_pkey" for table "emaj_rlbk"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_rlbk_stat_pkey" for table "emaj_rlbk_stat"
 -----------------------------
 -- check installation
@@ -195,13 +200,13 @@ select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_
 -------------+------------+--------------------+------------------+----------------
 (0 rows)
 
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used, rlbk_msg from emaj.emaj_rlbk order by rlbk_id;
- rlbk_id | rlbk_groups | rlbk_mark | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_is_dblink_used |                         rlbk_msg                          
----------+-------------+-----------+----------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+---------------------+-----------------------------------------------------------
-       1 | {myGroup1}  | M3        | f              |               1 |             5 |                1 |                 1 | COMMITTED   |                 36 | f                   | Completed: 1 tables and 1 sequences effectively processed
-       2 | {myGroup1}  | M3        | f              |               1 |             5 |                1 |                 3 | COMMITTED   |                 44 | f                   | Completed: 3 tables and 1 sequences effectively processed
-       3 | {myGroup2}  | M2        | t              |               1 |             4 |                2 |                 1 | COMMITTED   |                 66 | f                   | Completed: 1 tables and 2 sequences effectively processed
-       4 | {myGroup2}  | M3        | t              |               1 |             4 |                2 |                 1 | COMMITTED   |                 79 | f                   | Completed: 1 tables and 2 sequences effectively processed
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used, rlbk_msg from emaj.emaj_rlbk order by rlbk_id;
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_time_id | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_is_dblink_used |                         rlbk_msg                          
+---------+-------------+-----------+--------------+----------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+---------------------+-----------------------------------------------------------
+       1 | {myGroup1}  | M3        |            9 | f              |               1 |             5 |                1 |                 1 | COMMITTED   |                 36 | f                   | Completed: 1 tables and 1 sequences effectively processed
+       2 | {myGroup1}  | M3        |           10 | f              |               1 |             5 |                1 |                 3 | COMMITTED   |                 44 | f                   | Completed: 3 tables and 1 sequences effectively processed
+       3 | {myGroup2}  | M2        |           13 | t              |               1 |             4 |                2 |                 1 | COMMITTED   |                 66 | f                   | Completed: 1 tables and 2 sequences effectively processed
+       4 | {myGroup2}  | M3        |           16 | t              |               1 |             4 |                2 |                 1 | COMMITTED   |                 79 | f                   | Completed: 1 tables and 2 sequences effectively processed
 (4 rows)
 
 select last_value, is_called from emaj.emaj_rlbk_rlbk_id_seq;

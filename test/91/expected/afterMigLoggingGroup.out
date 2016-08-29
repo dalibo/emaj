@@ -22,7 +22,7 @@ alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_rollback_group('myGroup1','M2');
 ERROR:  _rlbk_check: Group "myGroup1" is currently protected against rollback.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
-PL/pgSQL function "_rlbk_init" line 25 at SQL statement
+PL/pgSQL function "_rlbk_init" line 24 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
@@ -35,7 +35,7 @@ select emaj.emaj_unprotect_group('myGroup1');
 select emaj.emaj_rollback_group('myGroup1','M2');
 ERROR:  _rlbk_check: protected marks (M3) for group "myGroup1" block the rollback to mark "M2".
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
-PL/pgSQL function "_rlbk_init" line 25 at SQL statement
+PL/pgSQL function "_rlbk_init" line 24 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
@@ -188,14 +188,12 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       21 |                119 | M
       22 |                119 | M
       23 |                119 | R
-      24 |                119 | M
-      25 |                121 | M
-      26 |                121 | R
-      27 |                124 | R
-      28 |                127 | R
-      29 |                127 | M
-      30 |                150 | M
-(30 rows)
+      24 |                121 | M
+      25 |                121 | R
+      26 |                124 | R
+      27 |                127 | R
+      28 |                150 | M
+(28 rows)
 
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;

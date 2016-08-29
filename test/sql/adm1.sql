@@ -304,7 +304,7 @@ insert into myTbl4 values (12,'',1,1,'Step 6');
 -- for an equivalent of "select emaj.emaj_logged_rollback_group('myGroup1','M4');"
 select emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false), false);
 -- and check the rollback result
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_msg
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
 

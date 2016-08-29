@@ -291,6 +291,7 @@ primary key, btree, for table "emaj.emaj_relation"
  rlbk_groups         | text[]                   | not null
  rlbk_mark           | text                     | not null
  rlbk_mark_datetime  | timestamp with time zone | 
+ rlbk_time_id        | bigint                   | 
  rlbk_is_logged      | boolean                  | not null
  rlbk_nb_session     | integer                  | not null
  rlbk_nb_table       | integer                  | 
@@ -306,6 +307,8 @@ Indexes:
     "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id)
     "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum])
     "emaj_rlbk_idx2" btree (rlbk_start_datetime)
+Foreign-key constraints:
+    "emaj_rlbk_rlbk_time_id_fkey" FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Referenced by:
     TABLE "emaj.emaj_rlbk_plan" CONSTRAINT "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
     TABLE "emaj.emaj_rlbk_session" CONSTRAINT "emaj_rlbk_session_rlbs_rlbk_id_fkey" FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
@@ -520,6 +523,7 @@ Referenced by:
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_rlbk" CONSTRAINT "emaj_rlbk_rlbk_time_id_fkey" FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_sequence" CONSTRAINT "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
 Index "emaj.emaj_time_stamp_pkey"

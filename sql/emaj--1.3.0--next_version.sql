@@ -364,6 +364,70 @@ $do$
 $do$;
 
 --
+-- process the emaj_rlbk table
+--
+-- create a temporary table with the old structure and copy the source content
+CREATE TEMP TABLE emaj_rlbk_old (LIKE emaj.emaj_rlbk);
+
+INSERT INTO emaj_rlbk_old SELECT * FROM emaj.emaj_rlbk;
+
+-- drop the old table
+ALTER EXTENSION emaj DROP SEQUENCE emaj.emaj_rlbk_rlbk_id_seq;
+DROP TABLE emaj.emaj_rlbk CASCADE;
+
+-- create the new table, with its indexes, comment, constraints (except foreign key)...
+CREATE TABLE emaj.emaj_rlbk (
+  rlbk_id                      SERIAL      NOT NULL,       -- rollback id
+  rlbk_groups                  TEXT[]      NOT NULL,       -- groups array to rollback
+  rlbk_mark                    TEXT        NOT NULL,       -- mark to rollback to
+  rlbk_mark_datetime           TIMESTAMPTZ,                -- timestamp of the mark as recorded into emaj_mark
+  rlbk_time_id                 BIGINT,                     -- time stamp id at the rollback start
+  rlbk_is_logged               BOOLEAN     NOT NULL,       -- rollback type: true = logged rollback
+  rlbk_nb_session              INT         NOT NULL,       -- number of requested rollback sessions
+  rlbk_nb_table                INT,                        -- total number of tables in groups
+  rlbk_nb_sequence             INT,                        -- number of sequences to rollback
+  rlbk_eff_nb_table            INT,                        -- number of tables with rows to rollback
+  rlbk_status                  emaj._rlbk_status_enum,     -- rollback status
+  rlbk_begin_hist_id           BIGINT,                     -- hist_id of the rollback BEGIN event in the emaj_hist
+                                                           --   used to know if the rollback has been committed or not
+  rlbk_is_dblink_used          BOOLEAN,                    -- boolean indicating whether dblink connection are used
+  rlbk_start_datetime          TIMESTAMPTZ,                -- clock timestamp of the rollback BEGIN event in emaj_hist
+  rlbk_end_datetime            TIMESTAMPTZ,                -- clock time the rollback has been completed,
+                                                           --   NULL if rollback is in progress or aborted
+  rlbk_msg                     TEXT,                       -- result message
+  PRIMARY KEY (rlbk_id),
+  FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
+  );
+COMMENT ON TABLE emaj.emaj_rlbk IS
+$$Contains description of rollback events.$$;
+
+-- populate the new table
+INSERT INTO emaj.emaj_rlbk (
+         rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_time_id, rlbk_is_logged,
+         rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, 
+         rlbk_begin_hist_id, rlbk_is_dblink_used, rlbk_start_datetime, rlbk_end_datetime, rlbk_msg)
+  SELECT rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, time_id, rlbk_is_logged,
+         rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, 
+         rlbk_begin_hist_id, rlbk_is_dblink_used, rlbk_start_datetime, rlbk_end_datetime, rlbk_msg
+    FROM emaj_rlbk_old, emaj.emaj_time_stamp
+    WHERE rlbk_start_datetime = time_clock_timestamp AND time_event = 'R';
+
+-- create indexes
+-- partial index on emaj_rlbk targeting in progress rollbacks (not yet committed or marked as aborted)
+CREATE INDEX emaj_rlbk_idx1 ON emaj.emaj_rlbk (rlbk_status)
+    WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED');
+
+-- recreate the foreign keys that point on this table
+ALTER TABLE emaj.emaj_rlbk_session ADD FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id);
+ALTER TABLE emaj.emaj_rlbk_plan ADD FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id);
+ALTER TABLE emaj.emaj_rlbk_stat ADD FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id);
+
+-- set the last value for the sequence associated to the serial column
+SELECT CASE WHEN EXISTS (SELECT 1 FROM emaj.emaj_rlbk)
+              THEN setval('emaj.emaj_rlbk_rlbk_id_seq', (SELECT max(rlbk_id) FROM emaj.emaj_rlbk))
+       END;
+
+--
 -- process the emaj_rlbk_stat table
 --
 -- create a temporary table with the old structure and copy the source content
@@ -427,6 +491,11 @@ $do$
 --    IF v_nbRowsOld <> v_nbRowsNew THEN
 --      RAISE EXCEPTION 'E-Maj upgrade: internal error, the number of rows in the original emaj_seq_hole table (%) doesn''t match the number of rows in the new emaj_seq_hole table (%)',v_nbRowsOld, v_nbRowsNew;
 --    END IF;
+    SELECT count(*) INTO v_nbRowsOld FROM emaj_rlbk_old;
+    SELECT count(*) INTO v_nbRowsNew FROM emaj.emaj_rlbk;
+    IF v_nbRowsOld <> v_nbRowsNew THEN
+      RAISE EXCEPTION 'E-Maj upgrade: internal error, the number of rows in the original emaj_rlbk table (%) doesn''t match the number of rows in the new emaj_rlbk table (%)',v_nbRowsOld, v_nbRowsNew;
+    END IF;
     SELECT count(*) INTO v_nbRowsOld FROM emaj_rlbk_stat_old;
     SELECT count(*) INTO v_nbRowsNew FROM emaj.emaj_rlbk_stat;
     IF v_nbRowsOld <> v_nbRowsNew THEN
@@ -439,6 +508,7 @@ DROP TABLE emaj_group_old;
 DROP TABLE emaj_mark_old;
 DROP TABLE emaj_sequence_old;
 DROP TABLE emaj_seq_hole_old;
+DROP TABLE emaj_rlbk_old;
 DROP TABLE emaj_rlbk_stat_old;
 
 ------------------------------------
@@ -627,11 +697,12 @@ $_purge_hist$
      (                                           -- compute the timestamp limit from the history_retention parameter
        (SELECT current_timestamp -
           coalesce((SELECT param_value_interval FROM emaj.emaj_param WHERE param_key = 'history_retention'),'1 YEAR'))
-     UNION ALL                                   -- get the timestamp of the oldest non deleted mark for all groups
-       (SELECT MIN(time_clock_timestamp) FROM emaj.emaj_time_stamp, emaj.emaj_mark
+     UNION ALL                                   -- get the transaction timestamp of the oldest non deleted mark for all groups
+       (SELECT MIN(time_tx_timestamp) FROM emaj.emaj_time_stamp, emaj.emaj_mark
           WHERE time_id = mark_time_id AND NOT mark_is_deleted)
-     UNION ALL                                   -- get the timestamp of the oldest non committed or aborted rollback
-       (SELECT MIN(rlbk_start_datetime) FROM emaj.emaj_rlbk WHERE rlbk_status <> 'COMMITTED' AND rlbk_status <> 'ABORTED')
+     UNION ALL                                   -- get the transaction timestamp of the oldest non committed or aborted rollback
+       (SELECT MIN(time_tx_timestamp) FROM emaj.emaj_time_stamp, emaj.emaj_rlbk
+          WHERE time_id = rlbk_time_id AND rlbk_status <> 'COMMITTED' AND rlbk_status <> 'ABORTED')
      ) AS t(datetime) INTO v_datetimeLimit;
 -- delete oldest rows from emaj_hist
     DELETE FROM emaj.emaj_hist WHERE hist_datetime < v_datetimeLimit;
@@ -640,9 +711,9 @@ $_purge_hist$
       v_wording = v_nbPurgedHist || ' emaj_hist rows deleted';
     END IF;
 -- get the greatest rollback identifier to purge
-    SELECT MAX(rlbk_id) INTO v_maxRlbkId
-      FROM emaj.emaj_rlbk WHERE rlbk_start_datetime < v_datetimeLimit;
--- and purge rollback tables
+    SELECT MAX(rlbk_id) INTO v_maxRlbkId FROM emaj.emaj_rlbk, emaj.emaj_time_stamp
+      WHERE time_id = rlbk_time_id AND time_tx_timestamp < v_datetimeLimit;
+-- and purge emaj_rlbk_plan and emaj_rlbk_session tables
     IF v_maxRlbkId IS NOT NULL THEN
       DELETE FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id <= v_maxRlbkId;
       WITH deleted_rlbk AS (
@@ -2675,7 +2746,7 @@ $emaj_set_mark_groups$;
 COMMENT ON FUNCTION emaj.emaj_set_mark_groups(TEXT[],TEXT) IS
 $$Sets a mark on several E-Maj groups.$$;
 
-CREATE OR REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN, v_logged_rlbk_target_mark TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN, v_loggedRlbkTargetMark TEXT DEFAULT NULL, v_timeId BIGINT DEFAULT NULL)
 RETURNS INT LANGUAGE plpgsql AS
 $_set_mark_groups$
 -- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
@@ -2685,10 +2756,10 @@ $_set_mark_groups$
 --        boolean indicating whether the function is called by a multi group function
 --        boolean indicating whether the event has to be recorded into the emaj_hist table
 --        name of the rollback target mark when this mark is created by the logged_rollback functions (NULL by default)
+--        time stamp identifier to reuse (NULL by default) (this parameter is set when the mark is a rollback start mark)
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
-    v_timeId                 BIGINT;
     v_nbTb                   INT = 0;
     v_timestamp              TIMESTAMPTZ;
     v_lastSequenceId         BIGINT;
@@ -2699,8 +2770,10 @@ $_set_mark_groups$
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','), v_mark);
     END IF;
--- get the time stamp of the operation
-    SELECT emaj._set_time_stamp('M') INTO v_timeId;
+-- get the time stamp of the operation, if not supplied as input parameter
+    IF v_timeId IS NULL THEN
+      SELECT emaj._set_time_stamp('M') INTO v_timeId;
+    END IF;
 -- look at the clock to get the 'official' timestamp representing the mark
     SELECT time_clock_timestamp INTO v_timestamp FROM emaj.emaj_time_stamp WHERE time_id = v_timeId;
 -- process sequences as early as possible (no lock protect them from other transactions activity)
@@ -2754,7 +2827,7 @@ $_set_mark_groups$
                                   mark_is_rlbk_protected, mark_last_sequence_id, mark_logged_rlbk_target_mark)
 ----! TODO: temporary - to be replaced by a VALUES () clause once time_clock_timestamp will not be needed anymore
         SELECT v_groupNames[v_i], v_mark, v_timeId, time_clock_timestamp, FALSE,
-               FALSE, v_lastSequenceId, v_logged_rlbk_target_mark
+               FALSE, v_lastSequenceId, v_loggedRlbkTargetMark
           FROM emaj.emaj_time_stamp WHERE time_id = v_timeId;
     END LOOP;
 -- before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table
@@ -3381,7 +3454,6 @@ $_rlbk_init$
     v_nbSeqInGroups          INT;
     v_dbLinkCnxStatus        INT;
     v_isDblinkUsable         BOOLEAN = false;
-    v_timeId                 BIGINT;
     v_effNbTable             INT;
     v_histId                 BIGINT;
     v_startDateTime          TIMESTAMPTZ;
@@ -3417,15 +3489,13 @@ $_rlbk_init$
     IF v_nbSession > 1 AND NOT v_isDblinkUsable THEN
       RAISE EXCEPTION '_rlbk_init: cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = % - see E-Maj documentation)', v_dbLinkCnxStatus;
     END IF;
--- get the time stamp of the operation
-    SELECT emaj._set_time_stamp('R') INTO v_timeId;
 -- create the row representing the rollback event in the emaj_rlbk table and get the rollback id back
     v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, ' ||
              'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
              'rlbk_is_dblink_used, rlbk_start_datetime ) ' ||
              'VALUES (' || quote_literal(v_groupNames) || ',' || quote_literal(v_markName) || ',' ||
-             quote_literal(v_timestampMark) || ',' || v_isLoggedRlbk || ',' || v_nbSession || ',' ||
-             v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
+             quote_literal(v_timestampMark) || ',' || v_isLoggedRlbk || ',' ||
+             v_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
              v_isDblinkUsable || ',' || quote_literal(v_startDateTime) || ') RETURNING rlbk_id';
     IF v_isDblinkUsable THEN
 -- insert a rollback event into the emaj_rlbk table ... either through dblink if possible
@@ -4054,6 +4124,7 @@ $_rlbk_start_mark$
   DECLARE
     v_stmt                   TEXT;
     v_isDblinkUsable         BOOLEAN = false;
+    v_timeId                 BIGINT;
     v_groupNames             TEXT[];
     v_mark                   TEXT;
     v_isLoggedRlbk           BOOLEAN;
@@ -4067,10 +4138,29 @@ $_rlbk_start_mark$
     IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
       v_isDblinkUsable = true;
     END IF;
+-- get a time stamp for the rollback operation
+    v_stmt = 'SELECT emaj._set_time_stamp(''R'')';
+    IF v_isDblinkUsable THEN
+-- ... either through dblink if possible
+      SELECT time_id INTO v_timeId FROM dblink('rlbk#1',v_stmt) AS (time_id BIGINT);
+    ELSE
+-- ... or directly
+      EXECUTE v_stmt INTO v_timeId;
+    END IF;
+-- update the emaj_rlbk table to record the time stamp and adjust the rollback status
+    v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_time_id = ' || v_timeId || ', rlbk_status = ''EXECUTING'', rlbk_start_datetime = time_clock_timestamp' ||
+             ' FROM emaj.emaj_time_stamp WHERE time_id = ' || v_timeId || ' AND rlbk_id = ' || v_rlbkId || ' RETURNING 1';
+    IF v_isDblinkUsable THEN
+-- ... either through dblink if possible
+      PERFORM 0 FROM dblink('rlbk#1',v_stmt) AS (dummy INT);
+    ELSE
+-- ... or directly
+      EXECUTE v_stmt;
+    END IF;
 -- get the rollack characteristics for the emaj_rlbk
-    SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_start_datetime
-      INTO v_groupNames, v_mark, v_isLoggedRlbk, v_rlbkDatetime
-      FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
+    SELECT rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, time_clock_timestamp
+      INTO v_groupNames, v_mark, v_timeId, v_isLoggedRlbk, v_rlbkDatetime
+      FROM emaj.emaj_rlbk, emaj.emaj_time_stamp WHERE rlbk_time_id = time_id AND rlbk_id = v_rlbkId;
 -- get some mark attributes from emaj_mark
     SELECT mark_id, mark_time_id INTO v_markId, v_markTimeId
       FROM emaj.emaj_mark
@@ -4096,13 +4186,7 @@ $_rlbk_start_mark$
 -- If rollback is "logged" rollback, set a mark named with the pattern:
 -- 'RLBK_<mark name to rollback to>_%_START', where % represents the rollback start time
       v_markName = 'RLBK_' || v_mark || '_' || to_char(v_rlbkDatetime, 'HH24.MI.SS.MS') || '_START';
-      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true);
-    END IF;
--- if dblink is usable, update the emaj_rlbk table to adjust the rollback status
--- (otherwise do not update a status that will be later changed and that can't be retrieve by someone else)
-    IF v_isDblinkUsable THEN
-      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''EXECUTING'' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
-      PERFORM 0 FROM dblink('rlbk#1',v_stmt) AS (dummy INT);
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true, NULL, v_timeId);
     END IF;
     RETURN;
 -- trap and record exception during the rollback operation
@@ -4299,9 +4383,9 @@ $_rlbk_end$
       v_isDblinkUsable = true;
     END IF;
 -- get the rollack characteristics for the emaj_rlbk
-    SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_eff_nb_table, rlbk_start_datetime
+    SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_eff_nb_table, time_clock_timestamp
       INTO v_groupNames, v_mark, v_isLoggedRlbk, v_effNbTbl, v_rlbkDatetime
-      FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
+      FROM emaj.emaj_rlbk, emaj.emaj_time_stamp WHERE rlbk_time_id = time_id AND  rlbk_id = v_rlbkId;
 -- if "unlogged" rollback, delete all marks later than the now rolled back mark
     IF NOT v_isLoggedRlbk THEN
 -- get the highest mark id of the mark used for rollback, for all groups
@@ -4786,6 +4870,75 @@ $emaj_detailed_log_stat_group$
 $emaj_detailed_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT,TEXT,TEXT) IS
 $$Returns detailed statistics about logged events for an E-Maj group between 2 marks.$$;
+
+CREATE OR REPLACE FUNCTION emaj._rollback_activity()
+RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
+$_rollback_activity$
+-- This function effectively builds the list of rollback operations currently in execution.
+-- It is called by the emaj_rollback_activity() function.
+-- This is a separate function to help in testing the feature (avoiding the effects of emaj_cleanup_rollback_state()).
+-- The number of parallel rollback sessions is not taken into account here,
+--   as it is difficult to estimate the benefit brought by several parallel sessions.
+-- The times and progression indicators reported are based on the transaction timestamp (allowing stable results in regression tests).
+  DECLARE
+    v_ipsDuration            INTERVAL;
+    v_nyssDuration           INTERVAL;
+    v_nbNyss                 INT;
+    v_ctrlDuration           INTERVAL;
+    v_currentTotalEstimate   INTERVAL;
+    r_rlbk                   emaj.emaj_rollback_activity_type;
+  BEGIN
+-- retrieve all not completed rollback operations (ie in 'PLANNING', 'LOCKING' or 'EXECUTING' state)
+    FOR r_rlbk IN
+      SELECT rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session,
+             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, time_tx_timestamp,
+             transaction_timestamp() - time_tx_timestamp AS "elapse", NULL, 0
+        FROM emaj.emaj_rlbk, emaj.emaj_time_stamp
+        WHERE rlbk_time_id = time_id AND rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING')
+        ORDER BY rlbk_id
+        LOOP
+-- compute the estimated remaining duration
+--   for rollback operations in 'PLANNING' state, the remaining duration is NULL
+      IF r_rlbk.rlbk_status IN ('LOCKING', 'EXECUTING') THEN
+--     estimated duration of remaining work of in progress steps
+        SELECT coalesce(
+               sum(CASE WHEN rlbp_start_datetime + rlbp_estimated_duration - transaction_timestamp() > '0'::interval
+                        THEN rlbp_start_datetime + rlbp_estimated_duration - transaction_timestamp()
+                        ELSE '0'::interval END),'0'::interval) INTO v_ipsDuration
+          FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+           AND rlbp_start_datetime IS NOT NULL AND rlbp_duration IS NULL;
+--     estimated duration and number of not yet started steps
+        SELECT coalesce(sum(rlbp_estimated_duration),'0'::interval), count(*) INTO v_nyssDuration, v_nbNyss
+          FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+           AND rlbp_start_datetime IS NULL
+           AND rlbp_step NOT IN ('CTRL-DBLINK','CTRL+DBLINK');
+--     estimated duration of inter-step duration for not yet started steps
+        SELECT coalesce(sum(rlbp_estimated_duration) * v_nbNyss / sum(rlbp_estimated_quantity),'0'::interval)
+          INTO v_ctrlDuration
+          FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+           AND rlbp_step IN ('CTRL-DBLINK','CTRL+DBLINK');
+--     update the global remaining duration estimate
+        r_rlbk.rlbk_remaining = v_ipsDuration + v_nyssDuration + v_ctrlDuration;
+      END IF;
+-- compute the completion pct
+--   for rollback operations in 'PLANNING' or 'LOCKING' state, the completion_pct = 0
+      IF r_rlbk.rlbk_status = 'EXECUTING' THEN
+--   first compute the new total duration estimate, using the estimate of the remaining work
+        SELECT transaction_timestamp() - time_tx_timestamp + r_rlbk.rlbk_remaining INTO v_currentTotalEstimate
+          FROM emaj.emaj_rlbk, emaj.emaj_time_stamp
+          WHERE rlbk_time_id = time_id AND rlbk_id = r_rlbk.rlbk_id;
+--   and then the completion pct
+        IF v_currentTotalEstimate <> '0'::interval THEN
+          SELECT 100 - (extract(epoch FROM r_rlbk.rlbk_remaining) * 100
+                      / extract(epoch FROM v_currentTotalEstimate))::smallint
+            INTO r_rlbk.rlbk_completion_pct;
+        END IF;
+      END IF;
+      RETURN NEXT r_rlbk;
+    END LOOP;
+    RETURN;
+  END;
+$_rollback_activity$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS

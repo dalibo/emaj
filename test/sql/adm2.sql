@@ -450,7 +450,7 @@ select emaj.emaj_rollback_group('myGroup1','Multi-1');
 select emaj.emaj_cleanup_rollback_state();
 
 -- check rollback related tables
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_msg
   from emaj.emaj_rlbk order by rlbk_id;

@@ -91,59 +91,59 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id | mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+------------------------------+--------------+-----------------+------------------------+----------------------+-----------------------+---------------------------+------------------------------
      607 | myGroup2   | M3                           |          609 | t               | f                      | This mark is deleted |                  6051 |                         0 | 
-     613 | myGroup1   | M4                           |          617 | t               | f                      |                      |                  6089 |                        10 | 
-     614 | myGroup1   | M5                           |          618 | t               | f                      |                      |                  6095 |                         3 | 
-     620 | myGroup1   | Before logged rollback to M4 |          626 | t               | f                      |                      |                  6123 |                        28 | 
-     622 | myGroup1   | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
-     623 | myGroup2   | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
-     634 | myGroup1   | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
-     635 | myGroup2   | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
-     636 | myGroup1   | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                           | 
-     637 | myGroup2   | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                        80 | 
-    1001 | myGroup2   | RLBK_Multi-1_%_START         |         1001 | f               | f                      |                      |                  1013 |                        32 | 
-    1003 | myGroup2   | RLBK_Multi-1_%_DONE          |         1002 | f               | f                      |                      |                  1027 |                        19 | Multi-1
-    1005 | myGroup2   | After restore mark           |         1004 | f               | f                      |                      |                  1035 |                           | 
+     613 | myGroup1   | M4                           |          615 | t               | f                      |                      |                  6089 |                        10 | 
+     614 | myGroup1   | M5                           |          616 | t               | f                      |                      |                  6095 |                         3 | 
+     620 | myGroup1   | Before logged rollback to M4 |          622 | t               | f                      |                      |                  6123 |                        28 | 
+     622 | myGroup1   | STOP_%                       |          624 | t               | f                      |                      |                  6143 |                         0 | 
+     623 | myGroup2   | STOP_%                       |          624 | t               | f                      |                      |                  6143 |                         0 | 
+     634 | myGroup1   | Stop after rollback          |          631 | t               | f                      |                      |                  6213 |                         0 | 
+     635 | myGroup2   | Stop after rollback          |          631 | t               | f                      |                      |                  6213 |                         0 | 
+     636 | myGroup1   | Multi-1                      |          632 | f               | f                      |                      |                  6227 |                           | 
+     637 | myGroup2   | Multi-1                      |          632 | f               | f                      |                      |                  6227 |                        80 | 
+    1001 | myGroup2   | RLBK_Multi-1_%_START         |         1000 | f               | f                      |                      |                  1013 |                        32 | 
+    1003 | myGroup2   | RLBK_Multi-1_%_DONE          |         1001 | f               | f                      |                      |                  1027 |                        19 | Multi-1
+    1005 | myGroup2   | After restore mark           |         1003 | f               | f                      |                      |                  1035 |                           | 
 (13 rows)
 
 select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
  sequ_id | sequ_schema |         sequ_name          | sequ_time_id |        regexp_replace        | sequ_last_val | sequ_is_called 
 ---------+-------------+----------------------------+--------------+------------------------------+---------------+----------------
-    1000 | myschema1   | myTbl3_col31_seq           |         1001 | RLBK_Multi-1_%_START         |            21 | f
-    1001 | myschema2   | myseq1                     |         1001 | RLBK_Multi-1_%_START         |          9999 | f
-    1002 | myschema2   | myTbl3_col31_seq           |         1001 | RLBK_Multi-1_%_START         |            21 | f
-    1003 | emajC       | myschema1_myTbl3_log_seq   |         1001 | RLBK_Multi-1_%_START         |            90 | t
-    1004 | emaj        | myschema1_mytbl1_log_seq   |         1001 | RLBK_Multi-1_%_START         |           184 | t
-    1005 | emaj        | myschema1_mytbl4_log_seq   |         1001 | RLBK_Multi-1_%_START         |            23 | t
-    1006 | emaj        | myschema1_mytbl2_log_seq   |         1001 | RLBK_Multi-1_%_START         |            21 | t
-    1007 | emajb       | myschema1_mytbl2b_log_seq  |         1001 | RLBK_Multi-1_%_START         |             1 | f
-    1008 | emaj        | myschema2_mytbl1_log_seq   |         1001 | RLBK_Multi-1_%_START         |            25 | t
-    1009 | emaj        | myschema2_mytbl2_log_seq   |         1001 | RLBK_Multi-1_%_START         |             4 | t
-    1010 | emajC       | myschema2_myTbl3_log_seq   |         1001 | RLBK_Multi-1_%_START         |            20 | t
-    1011 | emaj        | myschema2_mytbl4_log_seq   |         1001 | RLBK_Multi-1_%_START         |            12 | t
-    1012 | emaj        | otherPrefix4mytbl5_log_seq |         1001 | RLBK_Multi-1_%_START         |            16 | t
-    1013 | emaj        | myschema2_mytbl6_log_seq   |         1001 | RLBK_Multi-1_%_START         |            70 | t
-    1014 | myschema1   | myTbl3_col31_seq           |         1002 | RLBK_Multi-1_%_DONE          |            21 | f
-    1015 | myschema2   | myseq1                     |         1002 | RLBK_Multi-1_%_DONE          |          1004 | f
-    1016 | myschema2   | myTbl3_col31_seq           |         1002 | RLBK_Multi-1_%_DONE          |            21 | f
-    1017 | emajC       | myschema1_myTbl3_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            95 | t
-    1018 | emaj        | myschema1_mytbl1_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |           204 | t
-    1019 | emaj        | myschema1_mytbl4_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            23 | t
-    1020 | emaj        | myschema1_mytbl2_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            24 | t
-    1021 | emajb       | myschema1_mytbl2b_log_seq  |         1002 | RLBK_Multi-1_%_DONE          |             1 | f
-    1022 | emaj        | myschema2_mytbl1_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            35 | t
-    1023 | emaj        | myschema2_mytbl2_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |             6 | t
-    1024 | emajC       | myschema2_myTbl3_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            30 | t
-    1025 | emaj        | myschema2_mytbl4_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            14 | t
-    1026 | emaj        | otherPrefix4mytbl5_log_seq |         1002 | RLBK_Multi-1_%_DONE          |            17 | t
-    1027 | emaj        | myschema2_mytbl6_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            77 | t
-    1028 | myschema2   | myseq1                     |         1004 | After restore mark           |          1004 | t
-    1029 | myschema2   | myTbl3_col31_seq           |         1004 | After restore mark           |            21 | f
-    1030 | emaj        | myschema2_mytbl1_log_seq   |         1004 | After restore mark           |            53 | t
-    1031 | emaj        | myschema2_mytbl2_log_seq   |         1004 | After restore mark           |             7 | t
-    1032 | emajC       | myschema2_myTbl3_log_seq   |         1004 | After restore mark           |            30 | t
-    1033 | emaj        | myschema2_mytbl4_log_seq   |         1004 | After restore mark           |            14 | t
-    1034 | emaj        | otherPrefix4mytbl5_log_seq |         1004 | After restore mark           |            17 | t
-    1035 | emaj        | myschema2_mytbl6_log_seq   |         1004 | After restore mark           |            77 | t
+    1000 | myschema1   | myTbl3_col31_seq           |         1000 | RLBK_Multi-1_%_START         |            21 | f
+    1001 | myschema2   | myseq1                     |         1000 | RLBK_Multi-1_%_START         |          9999 | f
+    1002 | myschema2   | myTbl3_col31_seq           |         1000 | RLBK_Multi-1_%_START         |            21 | f
+    1003 | emajC       | myschema1_myTbl3_log_seq   |         1000 | RLBK_Multi-1_%_START         |            90 | t
+    1004 | emaj        | myschema1_mytbl1_log_seq   |         1000 | RLBK_Multi-1_%_START         |           184 | t
+    1005 | emaj        | myschema1_mytbl4_log_seq   |         1000 | RLBK_Multi-1_%_START         |            23 | t
+    1006 | emaj        | myschema1_mytbl2_log_seq   |         1000 | RLBK_Multi-1_%_START         |            21 | t
+    1007 | emajb       | myschema1_mytbl2b_log_seq  |         1000 | RLBK_Multi-1_%_START         |             1 | f
+    1008 | emaj        | myschema2_mytbl1_log_seq   |         1000 | RLBK_Multi-1_%_START         |            25 | t
+    1009 | emaj        | myschema2_mytbl2_log_seq   |         1000 | RLBK_Multi-1_%_START         |             4 | t
+    1010 | emajC       | myschema2_myTbl3_log_seq   |         1000 | RLBK_Multi-1_%_START         |            20 | t
+    1011 | emaj        | myschema2_mytbl4_log_seq   |         1000 | RLBK_Multi-1_%_START         |            12 | t
+    1012 | emaj        | otherPrefix4mytbl5_log_seq |         1000 | RLBK_Multi-1_%_START         |            16 | t
+    1013 | emaj        | myschema2_mytbl6_log_seq   |         1000 | RLBK_Multi-1_%_START         |            70 | t
+    1014 | myschema1   | myTbl3_col31_seq           |         1001 | RLBK_Multi-1_%_DONE          |            21 | f
+    1015 | myschema2   | myseq1                     |         1001 | RLBK_Multi-1_%_DONE          |          1004 | f
+    1016 | myschema2   | myTbl3_col31_seq           |         1001 | RLBK_Multi-1_%_DONE          |            21 | f
+    1017 | emajC       | myschema1_myTbl3_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            95 | t
+    1018 | emaj        | myschema1_mytbl1_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |           204 | t
+    1019 | emaj        | myschema1_mytbl4_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            23 | t
+    1020 | emaj        | myschema1_mytbl2_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            24 | t
+    1021 | emajb       | myschema1_mytbl2b_log_seq  |         1001 | RLBK_Multi-1_%_DONE          |             1 | f
+    1022 | emaj        | myschema2_mytbl1_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            35 | t
+    1023 | emaj        | myschema2_mytbl2_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |             6 | t
+    1024 | emajC       | myschema2_myTbl3_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            30 | t
+    1025 | emaj        | myschema2_mytbl4_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            14 | t
+    1026 | emaj        | otherPrefix4mytbl5_log_seq |         1001 | RLBK_Multi-1_%_DONE          |            17 | t
+    1027 | emaj        | myschema2_mytbl6_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            77 | t
+    1028 | myschema2   | myseq1                     |         1003 | After restore mark           |          1004 | t
+    1029 | myschema2   | myTbl3_col31_seq           |         1003 | After restore mark           |            21 | f
+    1030 | emaj        | myschema2_mytbl1_log_seq   |         1003 | After restore mark           |            53 | t
+    1031 | emaj        | myschema2_mytbl2_log_seq   |         1003 | After restore mark           |             7 | t
+    1032 | emajC       | myschema2_myTbl3_log_seq   |         1003 | After restore mark           |            30 | t
+    1033 | emaj        | myschema2_mytbl4_log_seq   |         1003 | After restore mark           |            14 | t
+    1034 | emaj        | otherPrefix4mytbl5_log_seq |         1003 | After restore mark           |            17 | t
+    1035 | emaj        | myschema2_mytbl6_log_seq   |         1003 | After restore mark           |            77 | t
     6031 | emajC       | myschema1_myTbl3_log_seq   |          607 | M3                           |            10 | t
     6034 | emaj        | myschema1_mytbl2_log_seq   |          607 | M3                           |             2 | t
     6035 | emajb       | myschema1_mytbl2b_log_seq  |          607 | M3                           |             1 | f
@@ -155,146 +155,146 @@ select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'
     6049 | emaj        | myschema2_mytbl4_log_seq   |          609 | M3                           |             4 | t
     6050 | emaj        | otherPrefix4mytbl5_log_seq |          609 | M3                           |             4 | t
     6051 | emaj        | myschema2_mytbl6_log_seq   |          609 | M3                           |            14 | t
-    6054 | emaj        | myschema2_mytbl1_log_seq   |          611 | RLBK_M2_%_START              |            15 | t
-    6055 | emaj        | myschema2_mytbl2_log_seq   |          611 | RLBK_M2_%_START              |             2 | t
-    6056 | emajC       | myschema2_myTbl3_log_seq   |          611 | RLBK_M2_%_START              |            10 | t
-    6062 | emaj        | myschema2_mytbl1_log_seq   |          612 | RLBK_M2_%_DONE               |            15 | t
-    6063 | emaj        | myschema2_mytbl2_log_seq   |          612 | RLBK_M2_%_DONE               |             2 | t
-    6064 | emajC       | myschema2_myTbl3_log_seq   |          612 | RLBK_M2_%_DONE               |            10 | t
-    6070 | emaj        | myschema2_mytbl1_log_seq   |          614 | RLBK_M3_%_START              |            15 | t
-    6071 | emaj        | myschema2_mytbl2_log_seq   |          614 | RLBK_M3_%_START              |             2 | t
-    6072 | emajC       | myschema2_myTbl3_log_seq   |          614 | RLBK_M3_%_START              |            10 | t
-    6078 | emaj        | myschema2_mytbl1_log_seq   |          615 | RLBK_M3_%_DONE               |            15 | t
-    6079 | emaj        | myschema2_mytbl2_log_seq   |          615 | RLBK_M3_%_DONE               |             2 | t
-    6080 | emajC       | myschema2_myTbl3_log_seq   |          615 | RLBK_M3_%_DONE               |            10 | t
-    6084 | myschema1   | myTbl3_col31_seq           |          617 | M4                           |            20 | t
-    6085 | emajC       | myschema1_myTbl3_log_seq   |          617 | M4                           |            10 | t
-    6086 | emaj        | myschema1_mytbl1_log_seq   |          617 | M4                           |            30 | t
-    6087 | emaj        | myschema1_mytbl4_log_seq   |          617 | M4                           |             8 | t
-    6088 | emaj        | myschema1_mytbl2_log_seq   |          617 | M4                           |             3 | t
-    6089 | emajb       | myschema1_mytbl2b_log_seq  |          617 | M4                           |             1 | f
-    6090 | myschema1   | myTbl3_col31_seq           |          618 | M5                           |            20 | t
-    6091 | emajC       | myschema1_myTbl3_log_seq   |          618 | M5                           |            20 | t
-    6092 | emaj        | myschema1_mytbl1_log_seq   |          618 | M5                           |            30 | t
-    6093 | emaj        | myschema1_mytbl4_log_seq   |          618 | M5                           |             8 | t
-    6094 | emaj        | myschema1_mytbl2_log_seq   |          618 | M5                           |             3 | t
-    6095 | emajb       | myschema1_mytbl2b_log_seq  |          618 | M5                           |             1 | f
-    6097 | emajC       | myschema1_myTbl3_log_seq   |          619 | M6                           |            20 | t
-    6100 | emaj        | myschema1_mytbl2_log_seq   |          619 | M6                           |             3 | t
-    6101 | emajb       | myschema1_mytbl2b_log_seq  |          619 | M6                           |             1 | f
-    6104 | emaj        | myschema2_mytbl1_log_seq   |          621 | RLBK_M2_%_START              |            15 | t
-    6105 | emaj        | myschema2_mytbl2_log_seq   |          621 | RLBK_M2_%_START              |             2 | t
-    6106 | emajC       | myschema2_myTbl3_log_seq   |          621 | RLBK_M2_%_START              |            10 | t
-    6112 | emaj        | myschema2_mytbl1_log_seq   |          622 | RLBK_M2_%_DONE               |            15 | t
-    6113 | emaj        | myschema2_mytbl2_log_seq   |          622 | RLBK_M2_%_DONE               |             2 | t
-    6114 | emajC       | myschema2_myTbl3_log_seq   |          622 | RLBK_M2_%_DONE               |            10 | t
-    6118 | myschema1   | myTbl3_col31_seq           |          626 | Before logged rollback to M4 |            20 | t
-    6119 | emajC       | myschema1_myTbl3_log_seq   |          626 | Before logged rollback to M4 |            20 | t
-    6120 | emaj        | myschema1_mytbl1_log_seq   |          626 | Before logged rollback to M4 |            32 | t
-    6121 | emaj        | myschema1_mytbl4_log_seq   |          626 | Before logged rollback to M4 |            12 | t
-    6122 | emaj        | myschema1_mytbl2_log_seq   |          626 | Before logged rollback to M4 |             3 | t
-    6123 | emajb       | myschema1_mytbl2b_log_seq  |          626 | Before logged rollback to M4 |             1 | f
-    6130 | myschema1   | myTbl3_col31_seq           |          628 | STOP_%                       |            20 | t
-    6131 | myschema2   | myseq1                     |          628 | STOP_%                       |          1004 | f
-    6132 | myschema2   | myTbl3_col31_seq           |          628 | STOP_%                       |            20 | t
-    6133 | emajC       | myschema1_myTbl3_log_seq   |          628 | STOP_%                       |            45 | t
-    6134 | emaj        | myschema1_mytbl1_log_seq   |          628 | STOP_%                       |            33 | t
-    6135 | emaj        | myschema1_mytbl4_log_seq   |          628 | STOP_%                       |            14 | t
-    6136 | emaj        | myschema1_mytbl2_log_seq   |          628 | STOP_%                       |             3 | t
-    6137 | emajb       | myschema1_mytbl2b_log_seq  |          628 | STOP_%                       |             1 | f
-    6138 | emaj        | myschema2_mytbl1_log_seq   |          628 | STOP_%                       |            15 | t
-    6139 | emaj        | myschema2_mytbl2_log_seq   |          628 | STOP_%                       |             2 | t
-    6140 | emajC       | myschema2_myTbl3_log_seq   |          628 | STOP_%                       |            10 | t
-    6141 | emaj        | myschema2_mytbl4_log_seq   |          628 | STOP_%                       |            10 | t
-    6142 | emaj        | otherPrefix4mytbl5_log_seq |          628 | STOP_%                       |             7 | t
-    6143 | emaj        | myschema2_mytbl6_log_seq   |          628 | STOP_%                       |            23 | t
-    6161 | emajC       | myschema1_myTbl3_log_seq   |          630 | Multi-2                      |            45 | t
-    6162 | emaj        | myschema1_mytbl1_log_seq   |          630 | Multi-2                      |            33 | t
-    6163 | emaj        | myschema1_mytbl4_log_seq   |          630 | Multi-2                      |            14 | t
-    6164 | emaj        | myschema1_mytbl2_log_seq   |          630 | Multi-2                      |             3 | t
-    6165 | emajb       | myschema1_mytbl2b_log_seq  |          630 | Multi-2                      |             1 | f
-    6166 | emaj        | myschema2_mytbl1_log_seq   |          630 | Multi-2                      |            15 | t
-    6167 | emaj        | myschema2_mytbl2_log_seq   |          630 | Multi-2                      |             2 | t
-    6168 | emajC       | myschema2_myTbl3_log_seq   |          630 | Multi-2                      |            10 | t
-    6169 | emaj        | myschema2_mytbl4_log_seq   |          630 | Multi-2                      |            10 | t
-    6170 | emaj        | otherPrefix4mytbl5_log_seq |          630 | Multi-2                      |             7 | t
-    6171 | emaj        | myschema2_mytbl6_log_seq   |          630 | Multi-2                      |            23 | t
-    6175 | emajC       | myschema1_myTbl3_log_seq   |          632 | RLBK_Multi-1_%_START         |            45 | t
-    6176 | emaj        | myschema1_mytbl1_log_seq   |          632 | RLBK_Multi-1_%_START         |            33 | t
-    6177 | emaj        | myschema1_mytbl4_log_seq   |          632 | RLBK_Multi-1_%_START         |            14 | t
-    6178 | emaj        | myschema1_mytbl2_log_seq   |          632 | RLBK_Multi-1_%_START         |             3 | t
-    6179 | emajb       | myschema1_mytbl2b_log_seq  |          632 | RLBK_Multi-1_%_START         |             1 | f
-    6180 | emaj        | myschema2_mytbl1_log_seq   |          632 | RLBK_Multi-1_%_START         |            15 | t
-    6181 | emaj        | myschema2_mytbl2_log_seq   |          632 | RLBK_Multi-1_%_START         |             2 | t
-    6182 | emajC       | myschema2_myTbl3_log_seq   |          632 | RLBK_Multi-1_%_START         |            10 | t
-    6183 | emaj        | myschema2_mytbl4_log_seq   |          632 | RLBK_Multi-1_%_START         |            10 | t
-    6184 | emaj        | otherPrefix4mytbl5_log_seq |          632 | RLBK_Multi-1_%_START         |             7 | t
-    6185 | emaj        | myschema2_mytbl6_log_seq   |          632 | RLBK_Multi-1_%_START         |            23 | t
-    6189 | emajC       | myschema1_myTbl3_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            45 | t
-    6190 | emaj        | myschema1_mytbl1_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            33 | t
-    6191 | emaj        | myschema1_mytbl4_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            14 | t
-    6192 | emaj        | myschema1_mytbl2_log_seq   |          633 | RLBK_Multi-1_%_DONE          |             3 | t
-    6193 | emajb       | myschema1_mytbl2b_log_seq  |          633 | RLBK_Multi-1_%_DONE          |             1 | f
-    6194 | emaj        | myschema2_mytbl1_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            15 | t
-    6195 | emaj        | myschema2_mytbl2_log_seq   |          633 | RLBK_Multi-1_%_DONE          |             2 | t
-    6196 | emajC       | myschema2_myTbl3_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            10 | t
-    6197 | emaj        | myschema2_mytbl4_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            10 | t
-    6198 | emaj        | otherPrefix4mytbl5_log_seq |          633 | RLBK_Multi-1_%_DONE          |             7 | t
-    6199 | emaj        | myschema2_mytbl6_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            23 | t
-    6200 | myschema1   | myTbl3_col31_seq           |          636 | Stop after rollback          |            20 | t
-    6201 | myschema2   | myseq1                     |          636 | Stop after rollback          |          1004 | f
-    6202 | myschema2   | myTbl3_col31_seq           |          636 | Stop after rollback          |            20 | t
-    6203 | emajC       | myschema1_myTbl3_log_seq   |          636 | Stop after rollback          |            45 | t
-    6204 | emaj        | myschema1_mytbl1_log_seq   |          636 | Stop after rollback          |            33 | t
-    6205 | emaj        | myschema1_mytbl4_log_seq   |          636 | Stop after rollback          |            14 | t
-    6206 | emaj        | myschema1_mytbl2_log_seq   |          636 | Stop after rollback          |             3 | t
-    6207 | emajb       | myschema1_mytbl2b_log_seq  |          636 | Stop after rollback          |             1 | f
-    6208 | emaj        | myschema2_mytbl1_log_seq   |          636 | Stop after rollback          |            15 | t
-    6209 | emaj        | myschema2_mytbl2_log_seq   |          636 | Stop after rollback          |             2 | t
-    6210 | emajC       | myschema2_myTbl3_log_seq   |          636 | Stop after rollback          |            10 | t
-    6211 | emaj        | myschema2_mytbl4_log_seq   |          636 | Stop after rollback          |            10 | t
-    6212 | emaj        | otherPrefix4mytbl5_log_seq |          636 | Stop after rollback          |             7 | t
-    6213 | emaj        | myschema2_mytbl6_log_seq   |          636 | Stop after rollback          |            23 | t
-    6214 | myschema1   | myTbl3_col31_seq           |          637 | Multi-1                      |            20 | t
-    6215 | myschema2   | myseq1                     |          637 | Multi-1                      |          1004 | f
-    6216 | myschema2   | myTbl3_col31_seq           |          637 | Multi-1                      |            20 | t
-    6217 | emajC       | myschema1_myTbl3_log_seq   |          637 | Multi-1                      |            45 | t
-    6218 | emaj        | myschema1_mytbl1_log_seq   |          637 | Multi-1                      |            33 | t
-    6219 | emaj        | myschema1_mytbl4_log_seq   |          637 | Multi-1                      |            14 | t
-    6220 | emaj        | myschema1_mytbl2_log_seq   |          637 | Multi-1                      |             3 | t
-    6221 | emajb       | myschema1_mytbl2b_log_seq  |          637 | Multi-1                      |             1 | f
-    6222 | emaj        | myschema2_mytbl1_log_seq   |          637 | Multi-1                      |            15 | t
-    6223 | emaj        | myschema2_mytbl2_log_seq   |          637 | Multi-1                      |             2 | t
-    6224 | emajC       | myschema2_myTbl3_log_seq   |          637 | Multi-1                      |            10 | t
-    6225 | emaj        | myschema2_mytbl4_log_seq   |          637 | Multi-1                      |            10 | t
-    6226 | emaj        | otherPrefix4mytbl5_log_seq |          637 | Multi-1                      |             7 | t
-    6227 | emaj        | myschema2_mytbl6_log_seq   |          637 | Multi-1                      |            23 | t
-    6299 | emaj        | myschema1_mytbl4_log_seq   |          665 | MC1                          |            14 | t
-    6301 | emajb       | myschema1_mytbl2b_log_seq  |          665 | MC1                          |             1 | f
-    6317 | emaj        | myschema1_mytbl4_log_seq   |          669 | RLBK_MC1_DONE                |            14 | t
-    6319 | emajb       | myschema1_mytbl2b_log_seq  |          669 | RLBK_MC1_DONE                |             1 | f
-    6323 | emaj        | myschema1_mytbl4_log_seq   |          670 | MC3                          |            14 | t
-    6325 | emajb       | myschema1_mytbl2b_log_seq  |          670 | MC3                          |             1 | f
-    6347 | emaj        | myschema1_mytbl4_log_seq   |          675 | RLBK_MC3_%_DONE              |            17 | t
-    6349 | emajb       | myschema1_mytbl2b_log_seq  |          675 | RLBK_MC3_%_DONE              |             1 | f
-    6353 | emaj        | myschema1_mytbl4_log_seq   |          676 | MC6                          |            17 | t
-    6355 | emajb       | myschema1_mytbl2b_log_seq  |          676 | MC6                          |             1 | f
-    6395 | emaj        | myschema1_mytbl4_log_seq   |          685 | RLBK_MC6_%_DONE              |            20 | t
-    6397 | emajb       | myschema1_mytbl2b_log_seq  |          685 | RLBK_MC6_%_DONE              |             1 | f
-    6401 | emaj        | myschema1_mytbl4_log_seq   |          686 | MC10                         |            20 | t
-    6403 | emajb       | myschema1_mytbl2b_log_seq  |          686 | MC10                         |             1 | f
-    6431 | emaj        | myschema1_mytbl4_log_seq   |          693 | RLBK_MC10_%_DONE             |            23 | t
-    6433 | emajb       | myschema1_mytbl2b_log_seq  |          693 | RLBK_MC10_%_DONE             |             1 | f
-    6437 | emaj        | myschema1_mytbl4_log_seq   |          694 | MC15                         |            23 | t
-    6439 | emajb       | myschema1_mytbl2b_log_seq  |          694 | MC15                         |             1 | f
-    6455 | emaj        | myschema1_mytbl4_log_seq   |          698 | RLBK_MC15_DONE               |            23 | t
-    6457 | emajb       | myschema1_mytbl2b_log_seq  |          698 | RLBK_MC15_DONE               |             1 | f
-    6461 | emaj        | myschema1_mytbl4_log_seq   |          699 | MC17                         |            23 | t
-    6463 | emajb       | myschema1_mytbl2b_log_seq  |          699 | MC17                         |             1 | f
-    6467 | emaj        | myschema1_mytbl4_log_seq   |          701 | RLBK_MC16_%_START            |            23 | t
-    6469 | emajb       | myschema1_mytbl2b_log_seq  |          701 | RLBK_MC16_%_START            |             1 | f
-    6473 | emaj        | myschema1_mytbl4_log_seq   |          702 | RLBK_MC16_%_DONE             |            23 | t
-    6475 | emajb       | myschema1_mytbl2b_log_seq  |          702 | RLBK_MC16_%_DONE             |             1 | f
+    6054 | emaj        | myschema2_mytbl1_log_seq   |          610 | RLBK_M2_%_START              |            15 | t
+    6055 | emaj        | myschema2_mytbl2_log_seq   |          610 | RLBK_M2_%_START              |             2 | t
+    6056 | emajC       | myschema2_myTbl3_log_seq   |          610 | RLBK_M2_%_START              |            10 | t
+    6062 | emaj        | myschema2_mytbl1_log_seq   |          611 | RLBK_M2_%_DONE               |            15 | t
+    6063 | emaj        | myschema2_mytbl2_log_seq   |          611 | RLBK_M2_%_DONE               |             2 | t
+    6064 | emajC       | myschema2_myTbl3_log_seq   |          611 | RLBK_M2_%_DONE               |            10 | t
+    6070 | emaj        | myschema2_mytbl1_log_seq   |          612 | RLBK_M3_%_START              |            15 | t
+    6071 | emaj        | myschema2_mytbl2_log_seq   |          612 | RLBK_M3_%_START              |             2 | t
+    6072 | emajC       | myschema2_myTbl3_log_seq   |          612 | RLBK_M3_%_START              |            10 | t
+    6078 | emaj        | myschema2_mytbl1_log_seq   |          613 | RLBK_M3_%_DONE               |            15 | t
+    6079 | emaj        | myschema2_mytbl2_log_seq   |          613 | RLBK_M3_%_DONE               |             2 | t
+    6080 | emajC       | myschema2_myTbl3_log_seq   |          613 | RLBK_M3_%_DONE               |            10 | t
+    6084 | myschema1   | myTbl3_col31_seq           |          615 | M4                           |            20 | t
+    6085 | emajC       | myschema1_myTbl3_log_seq   |          615 | M4                           |            10 | t
+    6086 | emaj        | myschema1_mytbl1_log_seq   |          615 | M4                           |            30 | t
+    6087 | emaj        | myschema1_mytbl4_log_seq   |          615 | M4                           |             8 | t
+    6088 | emaj        | myschema1_mytbl2_log_seq   |          615 | M4                           |             3 | t
+    6089 | emajb       | myschema1_mytbl2b_log_seq  |          615 | M4                           |             1 | f
+    6090 | myschema1   | myTbl3_col31_seq           |          616 | M5                           |            20 | t
+    6091 | emajC       | myschema1_myTbl3_log_seq   |          616 | M5                           |            20 | t
+    6092 | emaj        | myschema1_mytbl1_log_seq   |          616 | M5                           |            30 | t
+    6093 | emaj        | myschema1_mytbl4_log_seq   |          616 | M5                           |             8 | t
+    6094 | emaj        | myschema1_mytbl2_log_seq   |          616 | M5                           |             3 | t
+    6095 | emajb       | myschema1_mytbl2b_log_seq  |          616 | M5                           |             1 | f
+    6097 | emajC       | myschema1_myTbl3_log_seq   |          617 | M6                           |            20 | t
+    6100 | emaj        | myschema1_mytbl2_log_seq   |          617 | M6                           |             3 | t
+    6101 | emajb       | myschema1_mytbl2b_log_seq  |          617 | M6                           |             1 | f
+    6104 | emaj        | myschema2_mytbl1_log_seq   |          618 | RLBK_M2_%_START              |            15 | t
+    6105 | emaj        | myschema2_mytbl2_log_seq   |          618 | RLBK_M2_%_START              |             2 | t
+    6106 | emajC       | myschema2_myTbl3_log_seq   |          618 | RLBK_M2_%_START              |            10 | t
+    6112 | emaj        | myschema2_mytbl1_log_seq   |          619 | RLBK_M2_%_DONE               |            15 | t
+    6113 | emaj        | myschema2_mytbl2_log_seq   |          619 | RLBK_M2_%_DONE               |             2 | t
+    6114 | emajC       | myschema2_myTbl3_log_seq   |          619 | RLBK_M2_%_DONE               |            10 | t
+    6118 | myschema1   | myTbl3_col31_seq           |          622 | Before logged rollback to M4 |            20 | t
+    6119 | emajC       | myschema1_myTbl3_log_seq   |          622 | Before logged rollback to M4 |            20 | t
+    6120 | emaj        | myschema1_mytbl1_log_seq   |          622 | Before logged rollback to M4 |            32 | t
+    6121 | emaj        | myschema1_mytbl4_log_seq   |          622 | Before logged rollback to M4 |            12 | t
+    6122 | emaj        | myschema1_mytbl2_log_seq   |          622 | Before logged rollback to M4 |             3 | t
+    6123 | emajb       | myschema1_mytbl2b_log_seq  |          622 | Before logged rollback to M4 |             1 | f
+    6130 | myschema1   | myTbl3_col31_seq           |          624 | STOP_%                       |            20 | t
+    6131 | myschema2   | myseq1                     |          624 | STOP_%                       |          1004 | f
+    6132 | myschema2   | myTbl3_col31_seq           |          624 | STOP_%                       |            20 | t
+    6133 | emajC       | myschema1_myTbl3_log_seq   |          624 | STOP_%                       |            45 | t
+    6134 | emaj        | myschema1_mytbl1_log_seq   |          624 | STOP_%                       |            33 | t
+    6135 | emaj        | myschema1_mytbl4_log_seq   |          624 | STOP_%                       |            14 | t
+    6136 | emaj        | myschema1_mytbl2_log_seq   |          624 | STOP_%                       |             3 | t
+    6137 | emajb       | myschema1_mytbl2b_log_seq  |          624 | STOP_%                       |             1 | f
+    6138 | emaj        | myschema2_mytbl1_log_seq   |          624 | STOP_%                       |            15 | t
+    6139 | emaj        | myschema2_mytbl2_log_seq   |          624 | STOP_%                       |             2 | t
+    6140 | emajC       | myschema2_myTbl3_log_seq   |          624 | STOP_%                       |            10 | t
+    6141 | emaj        | myschema2_mytbl4_log_seq   |          624 | STOP_%                       |            10 | t
+    6142 | emaj        | otherPrefix4mytbl5_log_seq |          624 | STOP_%                       |             7 | t
+    6143 | emaj        | myschema2_mytbl6_log_seq   |          624 | STOP_%                       |            23 | t
+    6161 | emajC       | myschema1_myTbl3_log_seq   |          626 | Multi-2                      |            45 | t
+    6162 | emaj        | myschema1_mytbl1_log_seq   |          626 | Multi-2                      |            33 | t
+    6163 | emaj        | myschema1_mytbl4_log_seq   |          626 | Multi-2                      |            14 | t
+    6164 | emaj        | myschema1_mytbl2_log_seq   |          626 | Multi-2                      |             3 | t
+    6165 | emajb       | myschema1_mytbl2b_log_seq  |          626 | Multi-2                      |             1 | f
+    6166 | emaj        | myschema2_mytbl1_log_seq   |          626 | Multi-2                      |            15 | t
+    6167 | emaj        | myschema2_mytbl2_log_seq   |          626 | Multi-2                      |             2 | t
+    6168 | emajC       | myschema2_myTbl3_log_seq   |          626 | Multi-2                      |            10 | t
+    6169 | emaj        | myschema2_mytbl4_log_seq   |          626 | Multi-2                      |            10 | t
+    6170 | emaj        | otherPrefix4mytbl5_log_seq |          626 | Multi-2                      |             7 | t
+    6171 | emaj        | myschema2_mytbl6_log_seq   |          626 | Multi-2                      |            23 | t
+    6175 | emajC       | myschema1_myTbl3_log_seq   |          627 | RLBK_Multi-1_%_START         |            45 | t
+    6176 | emaj        | myschema1_mytbl1_log_seq   |          627 | RLBK_Multi-1_%_START         |            33 | t
+    6177 | emaj        | myschema1_mytbl4_log_seq   |          627 | RLBK_Multi-1_%_START         |            14 | t
+    6178 | emaj        | myschema1_mytbl2_log_seq   |          627 | RLBK_Multi-1_%_START         |             3 | t
+    6179 | emajb       | myschema1_mytbl2b_log_seq  |          627 | RLBK_Multi-1_%_START         |             1 | f
+    6180 | emaj        | myschema2_mytbl1_log_seq   |          627 | RLBK_Multi-1_%_START         |            15 | t
+    6181 | emaj        | myschema2_mytbl2_log_seq   |          627 | RLBK_Multi-1_%_START         |             2 | t
+    6182 | emajC       | myschema2_myTbl3_log_seq   |          627 | RLBK_Multi-1_%_START         |            10 | t
+    6183 | emaj        | myschema2_mytbl4_log_seq   |          627 | RLBK_Multi-1_%_START         |            10 | t
+    6184 | emaj        | otherPrefix4mytbl5_log_seq |          627 | RLBK_Multi-1_%_START         |             7 | t
+    6185 | emaj        | myschema2_mytbl6_log_seq   |          627 | RLBK_Multi-1_%_START         |            23 | t
+    6189 | emajC       | myschema1_myTbl3_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            45 | t
+    6190 | emaj        | myschema1_mytbl1_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            33 | t
+    6191 | emaj        | myschema1_mytbl4_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            14 | t
+    6192 | emaj        | myschema1_mytbl2_log_seq   |          628 | RLBK_Multi-1_%_DONE          |             3 | t
+    6193 | emajb       | myschema1_mytbl2b_log_seq  |          628 | RLBK_Multi-1_%_DONE          |             1 | f
+    6194 | emaj        | myschema2_mytbl1_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            15 | t
+    6195 | emaj        | myschema2_mytbl2_log_seq   |          628 | RLBK_Multi-1_%_DONE          |             2 | t
+    6196 | emajC       | myschema2_myTbl3_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            10 | t
+    6197 | emaj        | myschema2_mytbl4_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            10 | t
+    6198 | emaj        | otherPrefix4mytbl5_log_seq |          628 | RLBK_Multi-1_%_DONE          |             7 | t
+    6199 | emaj        | myschema2_mytbl6_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            23 | t
+    6200 | myschema1   | myTbl3_col31_seq           |          631 | Stop after rollback          |            20 | t
+    6201 | myschema2   | myseq1                     |          631 | Stop after rollback          |          1004 | f
+    6202 | myschema2   | myTbl3_col31_seq           |          631 | Stop after rollback          |            20 | t
+    6203 | emajC       | myschema1_myTbl3_log_seq   |          631 | Stop after rollback          |            45 | t
+    6204 | emaj        | myschema1_mytbl1_log_seq   |          631 | Stop after rollback          |            33 | t
+    6205 | emaj        | myschema1_mytbl4_log_seq   |          631 | Stop after rollback          |            14 | t
+    6206 | emaj        | myschema1_mytbl2_log_seq   |          631 | Stop after rollback          |             3 | t
+    6207 | emajb       | myschema1_mytbl2b_log_seq  |          631 | Stop after rollback          |             1 | f
+    6208 | emaj        | myschema2_mytbl1_log_seq   |          631 | Stop after rollback          |            15 | t
+    6209 | emaj        | myschema2_mytbl2_log_seq   |          631 | Stop after rollback          |             2 | t
+    6210 | emajC       | myschema2_myTbl3_log_seq   |          631 | Stop after rollback          |            10 | t
+    6211 | emaj        | myschema2_mytbl4_log_seq   |          631 | Stop after rollback          |            10 | t
+    6212 | emaj        | otherPrefix4mytbl5_log_seq |          631 | Stop after rollback          |             7 | t
+    6213 | emaj        | myschema2_mytbl6_log_seq   |          631 | Stop after rollback          |            23 | t
+    6214 | myschema1   | myTbl3_col31_seq           |          632 | Multi-1                      |            20 | t
+    6215 | myschema2   | myseq1                     |          632 | Multi-1                      |          1004 | f
+    6216 | myschema2   | myTbl3_col31_seq           |          632 | Multi-1                      |            20 | t
+    6217 | emajC       | myschema1_myTbl3_log_seq   |          632 | Multi-1                      |            45 | t
+    6218 | emaj        | myschema1_mytbl1_log_seq   |          632 | Multi-1                      |            33 | t
+    6219 | emaj        | myschema1_mytbl4_log_seq   |          632 | Multi-1                      |            14 | t
+    6220 | emaj        | myschema1_mytbl2_log_seq   |          632 | Multi-1                      |             3 | t
+    6221 | emajb       | myschema1_mytbl2b_log_seq  |          632 | Multi-1                      |             1 | f
+    6222 | emaj        | myschema2_mytbl1_log_seq   |          632 | Multi-1                      |            15 | t
+    6223 | emaj        | myschema2_mytbl2_log_seq   |          632 | Multi-1                      |             2 | t
+    6224 | emajC       | myschema2_myTbl3_log_seq   |          632 | Multi-1                      |            10 | t
+    6225 | emaj        | myschema2_mytbl4_log_seq   |          632 | Multi-1                      |            10 | t
+    6226 | emaj        | otherPrefix4mytbl5_log_seq |          632 | Multi-1                      |             7 | t
+    6227 | emaj        | myschema2_mytbl6_log_seq   |          632 | Multi-1                      |            23 | t
+    6299 | emaj        | myschema1_mytbl4_log_seq   |          659 | MC1                          |            14 | t
+    6301 | emajb       | myschema1_mytbl2b_log_seq  |          659 | MC1                          |             1 | f
+    6317 | emaj        | myschema1_mytbl4_log_seq   |          662 | RLBK_MC1_DONE                |            14 | t
+    6319 | emajb       | myschema1_mytbl2b_log_seq  |          662 | RLBK_MC1_DONE                |             1 | f
+    6323 | emaj        | myschema1_mytbl4_log_seq   |          663 | MC3                          |            14 | t
+    6325 | emajb       | myschema1_mytbl2b_log_seq  |          663 | MC3                          |             1 | f
+    6347 | emaj        | myschema1_mytbl4_log_seq   |          667 | RLBK_MC3_%_DONE              |            17 | t
+    6349 | emajb       | myschema1_mytbl2b_log_seq  |          667 | RLBK_MC3_%_DONE              |             1 | f
+    6353 | emaj        | myschema1_mytbl4_log_seq   |          668 | MC6                          |            17 | t
+    6355 | emajb       | myschema1_mytbl2b_log_seq  |          668 | MC6                          |             1 | f
+    6395 | emaj        | myschema1_mytbl4_log_seq   |          675 | RLBK_MC6_%_DONE              |            20 | t
+    6397 | emajb       | myschema1_mytbl2b_log_seq  |          675 | RLBK_MC6_%_DONE              |             1 | f
+    6401 | emaj        | myschema1_mytbl4_log_seq   |          676 | MC10                         |            20 | t
+    6403 | emajb       | myschema1_mytbl2b_log_seq  |          676 | MC10                         |             1 | f
+    6431 | emaj        | myschema1_mytbl4_log_seq   |          681 | RLBK_MC10_%_DONE             |            23 | t
+    6433 | emajb       | myschema1_mytbl2b_log_seq  |          681 | RLBK_MC10_%_DONE             |             1 | f
+    6437 | emaj        | myschema1_mytbl4_log_seq   |          682 | MC15                         |            23 | t
+    6439 | emajb       | myschema1_mytbl2b_log_seq  |          682 | MC15                         |             1 | f
+    6455 | emaj        | myschema1_mytbl4_log_seq   |          685 | RLBK_MC15_DONE               |            23 | t
+    6457 | emajb       | myschema1_mytbl2b_log_seq  |          685 | RLBK_MC15_DONE               |             1 | f
+    6461 | emaj        | myschema1_mytbl4_log_seq   |          686 | MC17                         |            23 | t
+    6463 | emajb       | myschema1_mytbl2b_log_seq  |          686 | MC17                         |             1 | f
+    6467 | emaj        | myschema1_mytbl4_log_seq   |          687 | RLBK_MC16_%_START            |            23 | t
+    6469 | emajb       | myschema1_mytbl2b_log_seq  |          687 | RLBK_MC16_%_START            |             1 | f
+    6473 | emaj        | myschema1_mytbl4_log_seq   |          688 | RLBK_MC16_%_DONE             |            23 | t
+    6475 | emajb       | myschema1_mytbl2b_log_seq  |          688 | RLBK_MC16_%_DONE             |             1 | f
 (187 rows)
 
 -- user tables
@@ -367,16 +367,16 @@ select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
      1 | ABC        | \x1c   | DEL       | OLD        |   100550
      2 | ABC        | \x1c   | DEL       | OLD        |   100551
      3 | ABC        | \x1c   | DEL       | OLD        |   100552
-     4 | ABC        | \x0c   | INS       | NEW        |   100592
-    10 | ABC        | \x0c   | INS       | NEW        |   100593
-     7 | ABC        | \x0c   | INS       | NEW        |   100594
-     9 | ABC        | \x0c   | INS       | NEW        |   100595
-     5 | ABC        | \x0c   | INS       | NEW        |   100597
-     2 | ABC        | \x1c   | INS       | NEW        |   100598
-     6 | ABC        | \x0c   | INS       | NEW        |   100600
-     3 | ABC        | \x1c   | INS       | NEW        |   100601
-     1 | ABC        | \x1c   | INS       | NEW        |   100603
-     8 | ABC        | \x0c   | INS       | NEW        |   100605
+     4 | ABC        | \x0c   | INS       | NEW        |   100618
+    10 | ABC        | \x0c   | INS       | NEW        |   100619
+     7 | ABC        | \x0c   | INS       | NEW        |   100620
+     9 | ABC        | \x0c   | INS       | NEW        |   100621
+     5 | ABC        | \x0c   | INS       | NEW        |   100622
+     2 | ABC        | \x1c   | INS       | NEW        |   100623
+     6 | ABC        | \x0c   | INS       | NEW        |   100624
+     3 | ABC        | \x1c   | INS       | NEW        |   100625
+     1 | ABC        | \x1c   | INS       | NEW        |   100626
+     8 | ABC        | \x0c   | INS       | NEW        |   100627
    101 | KLM        | \x000c | INS       | NEW        |   100641
    102 | KLM        | \x000c | INS       | NEW        |   100642
    103 | KLM        | \x000c | INS       | NEW        |   100643
@@ -408,8 +408,8 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
 -------+-------+------------+-----------+------------+----------
      1 | ABC   | 2010-01-01 | DEL       | OLD        |   100553
      2 | DEF   |            | DEL       | OLD        |   100554
-     1 | ABC   | 2010-01-01 | INS       | NEW        |   100628
-     2 | DEF   |            | INS       | NEW        |   100629
+     1 | ABC   | 2010-01-01 | INS       | NEW        |   100631
+     2 | DEF   |            | INS       | NEW        |   100632
    100 | KLM   | 2012-12-31 | INS       | NEW        |   100658
 (5 rows)
 
@@ -465,13 +465,13 @@ select * from emaj.emaj_log_stat_group('myGroup2','Multi-1',NULL);
 select emaj.emaj_rollback_group('myGroup2','Multi-1');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 69 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 69 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
@@ -489,56 +489,56 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
  mark_id | mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+------------------------------+--------------+-----------------+------------------------+----------------------+-----------------------+---------------------------+------------------------------
      607 | myGroup2   | M3                           |          609 | t               | f                      | This mark is deleted |                  6051 |                         0 | 
-     613 | myGroup1   | M4                           |          617 | t               | f                      |                      |                  6089 |                        10 | 
-     614 | myGroup1   | M5                           |          618 | t               | f                      |                      |                  6095 |                         3 | 
-     620 | myGroup1   | Before logged rollback to M4 |          626 | t               | f                      |                      |                  6123 |                        28 | 
-     622 | myGroup1   | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
-     623 | myGroup2   | STOP_%                       |          628 | t               | f                      |                      |                  6143 |                         0 | 
-     634 | myGroup1   | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
-     635 | myGroup2   | Stop after rollback          |          636 | t               | f                      |                      |                  6213 |                         0 | 
-     636 | myGroup1   | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                           | 
-     637 | myGroup2   | Multi-1                      |          637 | f               | f                      |                      |                  6227 |                           | 
+     613 | myGroup1   | M4                           |          615 | t               | f                      |                      |                  6089 |                        10 | 
+     614 | myGroup1   | M5                           |          616 | t               | f                      |                      |                  6095 |                         3 | 
+     620 | myGroup1   | Before logged rollback to M4 |          622 | t               | f                      |                      |                  6123 |                        28 | 
+     622 | myGroup1   | STOP_%                       |          624 | t               | f                      |                      |                  6143 |                         0 | 
+     623 | myGroup2   | STOP_%                       |          624 | t               | f                      |                      |                  6143 |                         0 | 
+     634 | myGroup1   | Stop after rollback          |          631 | t               | f                      |                      |                  6213 |                         0 | 
+     635 | myGroup2   | Stop after rollback          |          631 | t               | f                      |                      |                  6213 |                         0 | 
+     636 | myGroup1   | Multi-1                      |          632 | f               | f                      |                      |                  6227 |                           | 
+     637 | myGroup2   | Multi-1                      |          632 | f               | f                      |                      |                  6227 |                           | 
 (10 rows)
 
 select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
  sequ_id | sequ_schema |         sequ_name          | sequ_time_id |        regexp_replace        | sequ_last_val | sequ_is_called 
 ---------+-------------+----------------------------+--------------+------------------------------+---------------+----------------
-    1000 | myschema1   | myTbl3_col31_seq           |         1001 | RLBK_Multi-1_%_START         |            21 | f
-    1001 | myschema2   | myseq1                     |         1001 | RLBK_Multi-1_%_START         |          9999 | f
-    1002 | myschema2   | myTbl3_col31_seq           |         1001 | RLBK_Multi-1_%_START         |            21 | f
-    1003 | emajC       | myschema1_myTbl3_log_seq   |         1001 | RLBK_Multi-1_%_START         |            90 | t
-    1004 | emaj        | myschema1_mytbl1_log_seq   |         1001 | RLBK_Multi-1_%_START         |           184 | t
-    1005 | emaj        | myschema1_mytbl4_log_seq   |         1001 | RLBK_Multi-1_%_START         |            23 | t
-    1006 | emaj        | myschema1_mytbl2_log_seq   |         1001 | RLBK_Multi-1_%_START         |            21 | t
-    1007 | emajb       | myschema1_mytbl2b_log_seq  |         1001 | RLBK_Multi-1_%_START         |             1 | f
-    1008 | emaj        | myschema2_mytbl1_log_seq   |         1001 | RLBK_Multi-1_%_START         |            25 | t
-    1009 | emaj        | myschema2_mytbl2_log_seq   |         1001 | RLBK_Multi-1_%_START         |             4 | t
-    1010 | emajC       | myschema2_myTbl3_log_seq   |         1001 | RLBK_Multi-1_%_START         |            20 | t
-    1011 | emaj        | myschema2_mytbl4_log_seq   |         1001 | RLBK_Multi-1_%_START         |            12 | t
-    1012 | emaj        | otherPrefix4mytbl5_log_seq |         1001 | RLBK_Multi-1_%_START         |            16 | t
-    1013 | emaj        | myschema2_mytbl6_log_seq   |         1001 | RLBK_Multi-1_%_START         |            70 | t
-    1014 | myschema1   | myTbl3_col31_seq           |         1002 | RLBK_Multi-1_%_DONE          |            21 | f
-    1015 | myschema2   | myseq1                     |         1002 | RLBK_Multi-1_%_DONE          |          1004 | f
-    1016 | myschema2   | myTbl3_col31_seq           |         1002 | RLBK_Multi-1_%_DONE          |            21 | f
-    1017 | emajC       | myschema1_myTbl3_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            95 | t
-    1018 | emaj        | myschema1_mytbl1_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |           204 | t
-    1019 | emaj        | myschema1_mytbl4_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            23 | t
-    1020 | emaj        | myschema1_mytbl2_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            24 | t
-    1021 | emajb       | myschema1_mytbl2b_log_seq  |         1002 | RLBK_Multi-1_%_DONE          |             1 | f
-    1022 | emaj        | myschema2_mytbl1_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            35 | t
-    1023 | emaj        | myschema2_mytbl2_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |             6 | t
-    1024 | emajC       | myschema2_myTbl3_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            30 | t
-    1025 | emaj        | myschema2_mytbl4_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            14 | t
-    1026 | emaj        | otherPrefix4mytbl5_log_seq |         1002 | RLBK_Multi-1_%_DONE          |            17 | t
-    1027 | emaj        | myschema2_mytbl6_log_seq   |         1002 | RLBK_Multi-1_%_DONE          |            77 | t
-    1028 | myschema2   | myseq1                     |         1004 | After restore mark           |          1004 | t
-    1029 | myschema2   | myTbl3_col31_seq           |         1004 | After restore mark           |            21 | f
-    1030 | emaj        | myschema2_mytbl1_log_seq   |         1004 | After restore mark           |            53 | t
-    1031 | emaj        | myschema2_mytbl2_log_seq   |         1004 | After restore mark           |             7 | t
-    1032 | emajC       | myschema2_myTbl3_log_seq   |         1004 | After restore mark           |            30 | t
-    1033 | emaj        | myschema2_mytbl4_log_seq   |         1004 | After restore mark           |            14 | t
-    1034 | emaj        | otherPrefix4mytbl5_log_seq |         1004 | After restore mark           |            17 | t
-    1035 | emaj        | myschema2_mytbl6_log_seq   |         1004 | After restore mark           |            77 | t
+    1000 | myschema1   | myTbl3_col31_seq           |         1000 | RLBK_Multi-1_%_START         |            21 | f
+    1001 | myschema2   | myseq1                     |         1000 | RLBK_Multi-1_%_START         |          9999 | f
+    1002 | myschema2   | myTbl3_col31_seq           |         1000 | RLBK_Multi-1_%_START         |            21 | f
+    1003 | emajC       | myschema1_myTbl3_log_seq   |         1000 | RLBK_Multi-1_%_START         |            90 | t
+    1004 | emaj        | myschema1_mytbl1_log_seq   |         1000 | RLBK_Multi-1_%_START         |           184 | t
+    1005 | emaj        | myschema1_mytbl4_log_seq   |         1000 | RLBK_Multi-1_%_START         |            23 | t
+    1006 | emaj        | myschema1_mytbl2_log_seq   |         1000 | RLBK_Multi-1_%_START         |            21 | t
+    1007 | emajb       | myschema1_mytbl2b_log_seq  |         1000 | RLBK_Multi-1_%_START         |             1 | f
+    1008 | emaj        | myschema2_mytbl1_log_seq   |         1000 | RLBK_Multi-1_%_START         |            25 | t
+    1009 | emaj        | myschema2_mytbl2_log_seq   |         1000 | RLBK_Multi-1_%_START         |             4 | t
+    1010 | emajC       | myschema2_myTbl3_log_seq   |         1000 | RLBK_Multi-1_%_START         |            20 | t
+    1011 | emaj        | myschema2_mytbl4_log_seq   |         1000 | RLBK_Multi-1_%_START         |            12 | t
+    1012 | emaj        | otherPrefix4mytbl5_log_seq |         1000 | RLBK_Multi-1_%_START         |            16 | t
+    1013 | emaj        | myschema2_mytbl6_log_seq   |         1000 | RLBK_Multi-1_%_START         |            70 | t
+    1014 | myschema1   | myTbl3_col31_seq           |         1001 | RLBK_Multi-1_%_DONE          |            21 | f
+    1015 | myschema2   | myseq1                     |         1001 | RLBK_Multi-1_%_DONE          |          1004 | f
+    1016 | myschema2   | myTbl3_col31_seq           |         1001 | RLBK_Multi-1_%_DONE          |            21 | f
+    1017 | emajC       | myschema1_myTbl3_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            95 | t
+    1018 | emaj        | myschema1_mytbl1_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |           204 | t
+    1019 | emaj        | myschema1_mytbl4_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            23 | t
+    1020 | emaj        | myschema1_mytbl2_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            24 | t
+    1021 | emajb       | myschema1_mytbl2b_log_seq  |         1001 | RLBK_Multi-1_%_DONE          |             1 | f
+    1022 | emaj        | myschema2_mytbl1_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            35 | t
+    1023 | emaj        | myschema2_mytbl2_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |             6 | t
+    1024 | emajC       | myschema2_myTbl3_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            30 | t
+    1025 | emaj        | myschema2_mytbl4_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            14 | t
+    1026 | emaj        | otherPrefix4mytbl5_log_seq |         1001 | RLBK_Multi-1_%_DONE          |            17 | t
+    1027 | emaj        | myschema2_mytbl6_log_seq   |         1001 | RLBK_Multi-1_%_DONE          |            77 | t
+    1028 | myschema2   | myseq1                     |         1003 | After restore mark           |          1004 | t
+    1029 | myschema2   | myTbl3_col31_seq           |         1003 | After restore mark           |            21 | f
+    1030 | emaj        | myschema2_mytbl1_log_seq   |         1003 | After restore mark           |            53 | t
+    1031 | emaj        | myschema2_mytbl2_log_seq   |         1003 | After restore mark           |             7 | t
+    1032 | emajC       | myschema2_myTbl3_log_seq   |         1003 | After restore mark           |            30 | t
+    1033 | emaj        | myschema2_mytbl4_log_seq   |         1003 | After restore mark           |            14 | t
+    1034 | emaj        | otherPrefix4mytbl5_log_seq |         1003 | After restore mark           |            17 | t
+    1035 | emaj        | myschema2_mytbl6_log_seq   |         1003 | After restore mark           |            77 | t
     6031 | emajC       | myschema1_myTbl3_log_seq   |          607 | M3                           |            10 | t
     6034 | emaj        | myschema1_mytbl2_log_seq   |          607 | M3                           |             2 | t
     6035 | emajb       | myschema1_mytbl2b_log_seq  |          607 | M3                           |             1 | f
@@ -550,151 +550,154 @@ select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'
     6049 | emaj        | myschema2_mytbl4_log_seq   |          609 | M3                           |             4 | t
     6050 | emaj        | otherPrefix4mytbl5_log_seq |          609 | M3                           |             4 | t
     6051 | emaj        | myschema2_mytbl6_log_seq   |          609 | M3                           |            14 | t
-    6054 | emaj        | myschema2_mytbl1_log_seq   |          611 | RLBK_M2_%_START              |            15 | t
-    6055 | emaj        | myschema2_mytbl2_log_seq   |          611 | RLBK_M2_%_START              |             2 | t
-    6056 | emajC       | myschema2_myTbl3_log_seq   |          611 | RLBK_M2_%_START              |            10 | t
-    6062 | emaj        | myschema2_mytbl1_log_seq   |          612 | RLBK_M2_%_DONE               |            15 | t
-    6063 | emaj        | myschema2_mytbl2_log_seq   |          612 | RLBK_M2_%_DONE               |             2 | t
-    6064 | emajC       | myschema2_myTbl3_log_seq   |          612 | RLBK_M2_%_DONE               |            10 | t
-    6070 | emaj        | myschema2_mytbl1_log_seq   |          614 | RLBK_M3_%_START              |            15 | t
-    6071 | emaj        | myschema2_mytbl2_log_seq   |          614 | RLBK_M3_%_START              |             2 | t
-    6072 | emajC       | myschema2_myTbl3_log_seq   |          614 | RLBK_M3_%_START              |            10 | t
-    6078 | emaj        | myschema2_mytbl1_log_seq   |          615 | RLBK_M3_%_DONE               |            15 | t
-    6079 | emaj        | myschema2_mytbl2_log_seq   |          615 | RLBK_M3_%_DONE               |             2 | t
-    6080 | emajC       | myschema2_myTbl3_log_seq   |          615 | RLBK_M3_%_DONE               |            10 | t
-    6084 | myschema1   | myTbl3_col31_seq           |          617 | M4                           |            20 | t
-    6085 | emajC       | myschema1_myTbl3_log_seq   |          617 | M4                           |            10 | t
-    6086 | emaj        | myschema1_mytbl1_log_seq   |          617 | M4                           |            30 | t
-    6087 | emaj        | myschema1_mytbl4_log_seq   |          617 | M4                           |             8 | t
-    6088 | emaj        | myschema1_mytbl2_log_seq   |          617 | M4                           |             3 | t
-    6089 | emajb       | myschema1_mytbl2b_log_seq  |          617 | M4                           |             1 | f
-    6090 | myschema1   | myTbl3_col31_seq           |          618 | M5                           |            20 | t
-    6091 | emajC       | myschema1_myTbl3_log_seq   |          618 | M5                           |            20 | t
-    6092 | emaj        | myschema1_mytbl1_log_seq   |          618 | M5                           |            30 | t
-    6093 | emaj        | myschema1_mytbl4_log_seq   |          618 | M5                           |             8 | t
-    6094 | emaj        | myschema1_mytbl2_log_seq   |          618 | M5                           |             3 | t
-    6095 | emajb       | myschema1_mytbl2b_log_seq  |          618 | M5                           |             1 | f
-    6097 | emajC       | myschema1_myTbl3_log_seq   |          619 | M6                           |            20 | t
-    6100 | emaj        | myschema1_mytbl2_log_seq   |          619 | M6                           |             3 | t
-    6101 | emajb       | myschema1_mytbl2b_log_seq  |          619 | M6                           |             1 | f
-    6104 | emaj        | myschema2_mytbl1_log_seq   |          621 | RLBK_M2_%_START              |            15 | t
-    6105 | emaj        | myschema2_mytbl2_log_seq   |          621 | RLBK_M2_%_START              |             2 | t
-    6106 | emajC       | myschema2_myTbl3_log_seq   |          621 | RLBK_M2_%_START              |            10 | t
-    6112 | emaj        | myschema2_mytbl1_log_seq   |          622 | RLBK_M2_%_DONE               |            15 | t
-    6113 | emaj        | myschema2_mytbl2_log_seq   |          622 | RLBK_M2_%_DONE               |             2 | t
-    6114 | emajC       | myschema2_myTbl3_log_seq   |          622 | RLBK_M2_%_DONE               |            10 | t
-    6118 | myschema1   | myTbl3_col31_seq           |          626 | Before logged rollback to M4 |            20 | t
-    6119 | emajC       | myschema1_myTbl3_log_seq   |          626 | Before logged rollback to M4 |            20 | t
-    6120 | emaj        | myschema1_mytbl1_log_seq   |          626 | Before logged rollback to M4 |            32 | t
-    6121 | emaj        | myschema1_mytbl4_log_seq   |          626 | Before logged rollback to M4 |            12 | t
-    6122 | emaj        | myschema1_mytbl2_log_seq   |          626 | Before logged rollback to M4 |             3 | t
-    6123 | emajb       | myschema1_mytbl2b_log_seq  |          626 | Before logged rollback to M4 |             1 | f
-    6130 | myschema1   | myTbl3_col31_seq           |          628 | STOP_%                       |            20 | t
-    6131 | myschema2   | myseq1                     |          628 | STOP_%                       |          1004 | f
-    6132 | myschema2   | myTbl3_col31_seq           |          628 | STOP_%                       |            20 | t
-    6133 | emajC       | myschema1_myTbl3_log_seq   |          628 | STOP_%                       |            45 | t
-    6134 | emaj        | myschema1_mytbl1_log_seq   |          628 | STOP_%                       |            33 | t
-    6135 | emaj        | myschema1_mytbl4_log_seq   |          628 | STOP_%                       |            14 | t
-    6136 | emaj        | myschema1_mytbl2_log_seq   |          628 | STOP_%                       |             3 | t
-    6137 | emajb       | myschema1_mytbl2b_log_seq  |          628 | STOP_%                       |             1 | f
-    6138 | emaj        | myschema2_mytbl1_log_seq   |          628 | STOP_%                       |            15 | t
-    6139 | emaj        | myschema2_mytbl2_log_seq   |          628 | STOP_%                       |             2 | t
-    6140 | emajC       | myschema2_myTbl3_log_seq   |          628 | STOP_%                       |            10 | t
-    6141 | emaj        | myschema2_mytbl4_log_seq   |          628 | STOP_%                       |            10 | t
-    6142 | emaj        | otherPrefix4mytbl5_log_seq |          628 | STOP_%                       |             7 | t
-    6143 | emaj        | myschema2_mytbl6_log_seq   |          628 | STOP_%                       |            23 | t
-    6161 | emajC       | myschema1_myTbl3_log_seq   |          630 | Multi-2                      |            45 | t
-    6162 | emaj        | myschema1_mytbl1_log_seq   |          630 | Multi-2                      |            33 | t
-    6163 | emaj        | myschema1_mytbl4_log_seq   |          630 | Multi-2                      |            14 | t
-    6164 | emaj        | myschema1_mytbl2_log_seq   |          630 | Multi-2                      |             3 | t
-    6165 | emajb       | myschema1_mytbl2b_log_seq  |          630 | Multi-2                      |             1 | f
-    6166 | emaj        | myschema2_mytbl1_log_seq   |          630 | Multi-2                      |            15 | t
-    6167 | emaj        | myschema2_mytbl2_log_seq   |          630 | Multi-2                      |             2 | t
-    6168 | emajC       | myschema2_myTbl3_log_seq   |          630 | Multi-2                      |            10 | t
-    6169 | emaj        | myschema2_mytbl4_log_seq   |          630 | Multi-2                      |            10 | t
-    6170 | emaj        | otherPrefix4mytbl5_log_seq |          630 | Multi-2                      |             7 | t
-    6171 | emaj        | myschema2_mytbl6_log_seq   |          630 | Multi-2                      |            23 | t
-    6175 | emajC       | myschema1_myTbl3_log_seq   |          632 | RLBK_Multi-1_%_START         |            45 | t
-    6176 | emaj        | myschema1_mytbl1_log_seq   |          632 | RLBK_Multi-1_%_START         |            33 | t
-    6177 | emaj        | myschema1_mytbl4_log_seq   |          632 | RLBK_Multi-1_%_START         |            14 | t
-    6178 | emaj        | myschema1_mytbl2_log_seq   |          632 | RLBK_Multi-1_%_START         |             3 | t
-    6179 | emajb       | myschema1_mytbl2b_log_seq  |          632 | RLBK_Multi-1_%_START         |             1 | f
-    6180 | emaj        | myschema2_mytbl1_log_seq   |          632 | RLBK_Multi-1_%_START         |            15 | t
-    6181 | emaj        | myschema2_mytbl2_log_seq   |          632 | RLBK_Multi-1_%_START         |             2 | t
-    6182 | emajC       | myschema2_myTbl3_log_seq   |          632 | RLBK_Multi-1_%_START         |            10 | t
-    6183 | emaj        | myschema2_mytbl4_log_seq   |          632 | RLBK_Multi-1_%_START         |            10 | t
-    6184 | emaj        | otherPrefix4mytbl5_log_seq |          632 | RLBK_Multi-1_%_START         |             7 | t
-    6185 | emaj        | myschema2_mytbl6_log_seq   |          632 | RLBK_Multi-1_%_START         |            23 | t
-    6189 | emajC       | myschema1_myTbl3_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            45 | t
-    6190 | emaj        | myschema1_mytbl1_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            33 | t
-    6191 | emaj        | myschema1_mytbl4_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            14 | t
-    6192 | emaj        | myschema1_mytbl2_log_seq   |          633 | RLBK_Multi-1_%_DONE          |             3 | t
-    6193 | emajb       | myschema1_mytbl2b_log_seq  |          633 | RLBK_Multi-1_%_DONE          |             1 | f
-    6194 | emaj        | myschema2_mytbl1_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            15 | t
-    6195 | emaj        | myschema2_mytbl2_log_seq   |          633 | RLBK_Multi-1_%_DONE          |             2 | t
-    6196 | emajC       | myschema2_myTbl3_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            10 | t
-    6197 | emaj        | myschema2_mytbl4_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            10 | t
-    6198 | emaj        | otherPrefix4mytbl5_log_seq |          633 | RLBK_Multi-1_%_DONE          |             7 | t
-    6199 | emaj        | myschema2_mytbl6_log_seq   |          633 | RLBK_Multi-1_%_DONE          |            23 | t
-    6200 | myschema1   | myTbl3_col31_seq           |          636 | Stop after rollback          |            20 | t
-    6201 | myschema2   | myseq1                     |          636 | Stop after rollback          |          1004 | f
-    6202 | myschema2   | myTbl3_col31_seq           |          636 | Stop after rollback          |            20 | t
-    6203 | emajC       | myschema1_myTbl3_log_seq   |          636 | Stop after rollback          |            45 | t
-    6204 | emaj        | myschema1_mytbl1_log_seq   |          636 | Stop after rollback          |            33 | t
-    6205 | emaj        | myschema1_mytbl4_log_seq   |          636 | Stop after rollback          |            14 | t
-    6206 | emaj        | myschema1_mytbl2_log_seq   |          636 | Stop after rollback          |             3 | t
-    6207 | emajb       | myschema1_mytbl2b_log_seq  |          636 | Stop after rollback          |             1 | f
-    6208 | emaj        | myschema2_mytbl1_log_seq   |          636 | Stop after rollback          |            15 | t
-    6209 | emaj        | myschema2_mytbl2_log_seq   |          636 | Stop after rollback          |             2 | t
-    6210 | emajC       | myschema2_myTbl3_log_seq   |          636 | Stop after rollback          |            10 | t
-    6211 | emaj        | myschema2_mytbl4_log_seq   |          636 | Stop after rollback          |            10 | t
-    6212 | emaj        | otherPrefix4mytbl5_log_seq |          636 | Stop after rollback          |             7 | t
-    6213 | emaj        | myschema2_mytbl6_log_seq   |          636 | Stop after rollback          |            23 | t
-    6214 | myschema1   | myTbl3_col31_seq           |          637 | Multi-1                      |            20 | t
-    6215 | myschema2   | myseq1                     |          637 | Multi-1                      |          1004 | f
-    6216 | myschema2   | myTbl3_col31_seq           |          637 | Multi-1                      |            20 | t
-    6217 | emajC       | myschema1_myTbl3_log_seq   |          637 | Multi-1                      |            45 | t
-    6218 | emaj        | myschema1_mytbl1_log_seq   |          637 | Multi-1                      |            33 | t
-    6219 | emaj        | myschema1_mytbl4_log_seq   |          637 | Multi-1                      |            14 | t
-    6220 | emaj        | myschema1_mytbl2_log_seq   |          637 | Multi-1                      |             3 | t
-    6221 | emajb       | myschema1_mytbl2b_log_seq  |          637 | Multi-1                      |             1 | f
-    6222 | emaj        | myschema2_mytbl1_log_seq   |          637 | Multi-1                      |            15 | t
-    6223 | emaj        | myschema2_mytbl2_log_seq   |          637 | Multi-1                      |             2 | t
-    6224 | emajC       | myschema2_myTbl3_log_seq   |          637 | Multi-1                      |            10 | t
-    6225 | emaj        | myschema2_mytbl4_log_seq   |          637 | Multi-1                      |            10 | t
-    6226 | emaj        | otherPrefix4mytbl5_log_seq |          637 | Multi-1                      |             7 | t
-    6227 | emaj        | myschema2_mytbl6_log_seq   |          637 | Multi-1                      |            23 | t
-    6299 | emaj        | myschema1_mytbl4_log_seq   |          665 | MC1                          |            14 | t
-    6301 | emajb       | myschema1_mytbl2b_log_seq  |          665 | MC1                          |             1 | f
-    6317 | emaj        | myschema1_mytbl4_log_seq   |          669 | RLBK_MC1_DONE                |            14 | t
-    6319 | emajb       | myschema1_mytbl2b_log_seq  |          669 | RLBK_MC1_DONE                |             1 | f
-    6323 | emaj        | myschema1_mytbl4_log_seq   |          670 | MC3                          |            14 | t
-    6325 | emajb       | myschema1_mytbl2b_log_seq  |          670 | MC3                          |             1 | f
-    6347 | emaj        | myschema1_mytbl4_log_seq   |          675 | RLBK_MC3_%_DONE              |            17 | t
-    6349 | emajb       | myschema1_mytbl2b_log_seq  |          675 | RLBK_MC3_%_DONE              |             1 | f
-    6353 | emaj        | myschema1_mytbl4_log_seq   |          676 | MC6                          |            17 | t
-    6355 | emajb       | myschema1_mytbl2b_log_seq  |          676 | MC6                          |             1 | f
-    6395 | emaj        | myschema1_mytbl4_log_seq   |          685 | RLBK_MC6_%_DONE              |            20 | t
-    6397 | emajb       | myschema1_mytbl2b_log_seq  |          685 | RLBK_MC6_%_DONE              |             1 | f
-    6401 | emaj        | myschema1_mytbl4_log_seq   |          686 | MC10                         |            20 | t
-    6403 | emajb       | myschema1_mytbl2b_log_seq  |          686 | MC10                         |             1 | f
-    6431 | emaj        | myschema1_mytbl4_log_seq   |          693 | RLBK_MC10_%_DONE             |            23 | t
-    6433 | emajb       | myschema1_mytbl2b_log_seq  |          693 | RLBK_MC10_%_DONE             |             1 | f
-    6437 | emaj        | myschema1_mytbl4_log_seq   |          694 | MC15                         |            23 | t
-    6439 | emajb       | myschema1_mytbl2b_log_seq  |          694 | MC15                         |             1 | f
-    6455 | emaj        | myschema1_mytbl4_log_seq   |          698 | RLBK_MC15_DONE               |            23 | t
-    6457 | emajb       | myschema1_mytbl2b_log_seq  |          698 | RLBK_MC15_DONE               |             1 | f
-    6461 | emaj        | myschema1_mytbl4_log_seq   |          699 | MC17                         |            23 | t
-    6463 | emajb       | myschema1_mytbl2b_log_seq  |          699 | MC17                         |             1 | f
-    6467 | emaj        | myschema1_mytbl4_log_seq   |          701 | RLBK_MC16_%_START            |            23 | t
-    6469 | emajb       | myschema1_mytbl2b_log_seq  |          701 | RLBK_MC16_%_START            |             1 | f
-    6473 | emaj        | myschema1_mytbl4_log_seq   |          702 | RLBK_MC16_%_DONE             |            23 | t
-    6475 | emajb       | myschema1_mytbl2b_log_seq  |          702 | RLBK_MC16_%_DONE             |             1 | f
+    6054 | emaj        | myschema2_mytbl1_log_seq   |          610 | RLBK_M2_%_START              |            15 | t
+    6055 | emaj        | myschema2_mytbl2_log_seq   |          610 | RLBK_M2_%_START              |             2 | t
+    6056 | emajC       | myschema2_myTbl3_log_seq   |          610 | RLBK_M2_%_START              |            10 | t
+    6062 | emaj        | myschema2_mytbl1_log_seq   |          611 | RLBK_M2_%_DONE               |            15 | t
+    6063 | emaj        | myschema2_mytbl2_log_seq   |          611 | RLBK_M2_%_DONE               |             2 | t
+    6064 | emajC       | myschema2_myTbl3_log_seq   |          611 | RLBK_M2_%_DONE               |            10 | t
+    6070 | emaj        | myschema2_mytbl1_log_seq   |          612 | RLBK_M3_%_START              |            15 | t
+    6071 | emaj        | myschema2_mytbl2_log_seq   |          612 | RLBK_M3_%_START              |             2 | t
+    6072 | emajC       | myschema2_myTbl3_log_seq   |          612 | RLBK_M3_%_START              |            10 | t
+    6078 | emaj        | myschema2_mytbl1_log_seq   |          613 | RLBK_M3_%_DONE               |            15 | t
+    6079 | emaj        | myschema2_mytbl2_log_seq   |          613 | RLBK_M3_%_DONE               |             2 | t
+    6080 | emajC       | myschema2_myTbl3_log_seq   |          613 | RLBK_M3_%_DONE               |            10 | t
+    6084 | myschema1   | myTbl3_col31_seq           |          615 | M4                           |            20 | t
+    6085 | emajC       | myschema1_myTbl3_log_seq   |          615 | M4                           |            10 | t
+    6086 | emaj        | myschema1_mytbl1_log_seq   |          615 | M4                           |            30 | t
+    6087 | emaj        | myschema1_mytbl4_log_seq   |          615 | M4                           |             8 | t
+    6088 | emaj        | myschema1_mytbl2_log_seq   |          615 | M4                           |             3 | t
+    6089 | emajb       | myschema1_mytbl2b_log_seq  |          615 | M4                           |             1 | f
+    6090 | myschema1   | myTbl3_col31_seq           |          616 | M5                           |            20 | t
+    6091 | emajC       | myschema1_myTbl3_log_seq   |          616 | M5                           |            20 | t
+    6092 | emaj        | myschema1_mytbl1_log_seq   |          616 | M5                           |            30 | t
+    6093 | emaj        | myschema1_mytbl4_log_seq   |          616 | M5                           |             8 | t
+    6094 | emaj        | myschema1_mytbl2_log_seq   |          616 | M5                           |             3 | t
+    6095 | emajb       | myschema1_mytbl2b_log_seq  |          616 | M5                           |             1 | f
+    6097 | emajC       | myschema1_myTbl3_log_seq   |          617 | M6                           |            20 | t
+    6100 | emaj        | myschema1_mytbl2_log_seq   |          617 | M6                           |             3 | t
+    6101 | emajb       | myschema1_mytbl2b_log_seq  |          617 | M6                           |             1 | f
+    6104 | emaj        | myschema2_mytbl1_log_seq   |          618 | RLBK_M2_%_START              |            15 | t
+    6105 | emaj        | myschema2_mytbl2_log_seq   |          618 | RLBK_M2_%_START              |             2 | t
+    6106 | emajC       | myschema2_myTbl3_log_seq   |          618 | RLBK_M2_%_START              |            10 | t
+    6112 | emaj        | myschema2_mytbl1_log_seq   |          619 | RLBK_M2_%_DONE               |            15 | t
+    6113 | emaj        | myschema2_mytbl2_log_seq   |          619 | RLBK_M2_%_DONE               |             2 | t
+    6114 | emajC       | myschema2_myTbl3_log_seq   |          619 | RLBK_M2_%_DONE               |            10 | t
+    6118 | myschema1   | myTbl3_col31_seq           |          622 | Before logged rollback to M4 |            20 | t
+    6119 | emajC       | myschema1_myTbl3_log_seq   |          622 | Before logged rollback to M4 |            20 | t
+    6120 | emaj        | myschema1_mytbl1_log_seq   |          622 | Before logged rollback to M4 |            32 | t
+    6121 | emaj        | myschema1_mytbl4_log_seq   |          622 | Before logged rollback to M4 |            12 | t
+    6122 | emaj        | myschema1_mytbl2_log_seq   |          622 | Before logged rollback to M4 |             3 | t
+    6123 | emajb       | myschema1_mytbl2b_log_seq  |          622 | Before logged rollback to M4 |             1 | f
+    6130 | myschema1   | myTbl3_col31_seq           |          624 | STOP_%                       |            20 | t
+    6131 | myschema2   | myseq1                     |          624 | STOP_%                       |          1004 | f
+    6132 | myschema2   | myTbl3_col31_seq           |          624 | STOP_%                       |            20 | t
+    6133 | emajC       | myschema1_myTbl3_log_seq   |          624 | STOP_%                       |            45 | t
+    6134 | emaj        | myschema1_mytbl1_log_seq   |          624 | STOP_%                       |            33 | t
+    6135 | emaj        | myschema1_mytbl4_log_seq   |          624 | STOP_%                       |            14 | t
+    6136 | emaj        | myschema1_mytbl2_log_seq   |          624 | STOP_%                       |             3 | t
+    6137 | emajb       | myschema1_mytbl2b_log_seq  |          624 | STOP_%                       |             1 | f
+    6138 | emaj        | myschema2_mytbl1_log_seq   |          624 | STOP_%                       |            15 | t
+    6139 | emaj        | myschema2_mytbl2_log_seq   |          624 | STOP_%                       |             2 | t
+    6140 | emajC       | myschema2_myTbl3_log_seq   |          624 | STOP_%                       |            10 | t
+    6141 | emaj        | myschema2_mytbl4_log_seq   |          624 | STOP_%                       |            10 | t
+    6142 | emaj        | otherPrefix4mytbl5_log_seq |          624 | STOP_%                       |             7 | t
+    6143 | emaj        | myschema2_mytbl6_log_seq   |          624 | STOP_%                       |            23 | t
+    6161 | emajC       | myschema1_myTbl3_log_seq   |          626 | Multi-2                      |            45 | t
+    6162 | emaj        | myschema1_mytbl1_log_seq   |          626 | Multi-2                      |            33 | t
+    6163 | emaj        | myschema1_mytbl4_log_seq   |          626 | Multi-2                      |            14 | t
+    6164 | emaj        | myschema1_mytbl2_log_seq   |          626 | Multi-2                      |             3 | t
+    6165 | emajb       | myschema1_mytbl2b_log_seq  |          626 | Multi-2                      |             1 | f
+    6166 | emaj        | myschema2_mytbl1_log_seq   |          626 | Multi-2                      |            15 | t
+    6167 | emaj        | myschema2_mytbl2_log_seq   |          626 | Multi-2                      |             2 | t
+    6168 | emajC       | myschema2_myTbl3_log_seq   |          626 | Multi-2                      |            10 | t
+    6169 | emaj        | myschema2_mytbl4_log_seq   |          626 | Multi-2                      |            10 | t
+    6170 | emaj        | otherPrefix4mytbl5_log_seq |          626 | Multi-2                      |             7 | t
+    6171 | emaj        | myschema2_mytbl6_log_seq   |          626 | Multi-2                      |            23 | t
+    6175 | emajC       | myschema1_myTbl3_log_seq   |          627 | RLBK_Multi-1_%_START         |            45 | t
+    6176 | emaj        | myschema1_mytbl1_log_seq   |          627 | RLBK_Multi-1_%_START         |            33 | t
+    6177 | emaj        | myschema1_mytbl4_log_seq   |          627 | RLBK_Multi-1_%_START         |            14 | t
+    6178 | emaj        | myschema1_mytbl2_log_seq   |          627 | RLBK_Multi-1_%_START         |             3 | t
+    6179 | emajb       | myschema1_mytbl2b_log_seq  |          627 | RLBK_Multi-1_%_START         |             1 | f
+    6180 | emaj        | myschema2_mytbl1_log_seq   |          627 | RLBK_Multi-1_%_START         |            15 | t
+    6181 | emaj        | myschema2_mytbl2_log_seq   |          627 | RLBK_Multi-1_%_START         |             2 | t
+    6182 | emajC       | myschema2_myTbl3_log_seq   |          627 | RLBK_Multi-1_%_START         |            10 | t
+    6183 | emaj        | myschema2_mytbl4_log_seq   |          627 | RLBK_Multi-1_%_START         |            10 | t
+    6184 | emaj        | otherPrefix4mytbl5_log_seq |          627 | RLBK_Multi-1_%_START         |             7 | t
+    6185 | emaj        | myschema2_mytbl6_log_seq   |          627 | RLBK_Multi-1_%_START         |            23 | t
+    6189 | emajC       | myschema1_myTbl3_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            45 | t
+    6190 | emaj        | myschema1_mytbl1_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            33 | t
+    6191 | emaj        | myschema1_mytbl4_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            14 | t
+    6192 | emaj        | myschema1_mytbl2_log_seq   |          628 | RLBK_Multi-1_%_DONE          |             3 | t
+    6193 | emajb       | myschema1_mytbl2b_log_seq  |          628 | RLBK_Multi-1_%_DONE          |             1 | f
+    6194 | emaj        | myschema2_mytbl1_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            15 | t
+    6195 | emaj        | myschema2_mytbl2_log_seq   |          628 | RLBK_Multi-1_%_DONE          |             2 | t
+    6196 | emajC       | myschema2_myTbl3_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            10 | t
+    6197 | emaj        | myschema2_mytbl4_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            10 | t
+    6198 | emaj        | otherPrefix4mytbl5_log_seq |          628 | RLBK_Multi-1_%_DONE          |             7 | t
+    6199 | emaj        | myschema2_mytbl6_log_seq   |          628 | RLBK_Multi-1_%_DONE          |            23 | t
+    6200 | myschema1   | myTbl3_col31_seq           |          631 | Stop after rollback          |            20 | t
+    6201 | myschema2   | myseq1                     |          631 | Stop after rollback          |          1004 | f
+    6202 | myschema2   | myTbl3_col31_seq           |          631 | Stop after rollback          |            20 | t
+    6203 | emajC       | myschema1_myTbl3_log_seq   |          631 | Stop after rollback          |            45 | t
+    6204 | emaj        | myschema1_mytbl1_log_seq   |          631 | Stop after rollback          |            33 | t
+    6205 | emaj        | myschema1_mytbl4_log_seq   |          631 | Stop after rollback          |            14 | t
+    6206 | emaj        | myschema1_mytbl2_log_seq   |          631 | Stop after rollback          |             3 | t
+    6207 | emajb       | myschema1_mytbl2b_log_seq  |          631 | Stop after rollback          |             1 | f
+    6208 | emaj        | myschema2_mytbl1_log_seq   |          631 | Stop after rollback          |            15 | t
+    6209 | emaj        | myschema2_mytbl2_log_seq   |          631 | Stop after rollback          |             2 | t
+    6210 | emajC       | myschema2_myTbl3_log_seq   |          631 | Stop after rollback          |            10 | t
+    6211 | emaj        | myschema2_mytbl4_log_seq   |          631 | Stop after rollback          |            10 | t
+    6212 | emaj        | otherPrefix4mytbl5_log_seq |          631 | Stop after rollback          |             7 | t
+    6213 | emaj        | myschema2_mytbl6_log_seq   |          631 | Stop after rollback          |            23 | t
+    6214 | myschema1   | myTbl3_col31_seq           |          632 | Multi-1                      |            20 | t
+    6215 | myschema2   | myseq1                     |          632 | Multi-1                      |          1004 | f
+    6216 | myschema2   | myTbl3_col31_seq           |          632 | Multi-1                      |            20 | t
+    6217 | emajC       | myschema1_myTbl3_log_seq   |          632 | Multi-1                      |            45 | t
+    6218 | emaj        | myschema1_mytbl1_log_seq   |          632 | Multi-1                      |            33 | t
+    6219 | emaj        | myschema1_mytbl4_log_seq   |          632 | Multi-1                      |            14 | t
+    6220 | emaj        | myschema1_mytbl2_log_seq   |          632 | Multi-1                      |             3 | t
+    6221 | emajb       | myschema1_mytbl2b_log_seq  |          632 | Multi-1                      |             1 | f
+    6222 | emaj        | myschema2_mytbl1_log_seq   |          632 | Multi-1                      |            15 | t
+    6223 | emaj        | myschema2_mytbl2_log_seq   |          632 | Multi-1                      |             2 | t
+    6224 | emajC       | myschema2_myTbl3_log_seq   |          632 | Multi-1                      |            10 | t
+    6225 | emaj        | myschema2_mytbl4_log_seq   |          632 | Multi-1                      |            10 | t
+    6226 | emaj        | otherPrefix4mytbl5_log_seq |          632 | Multi-1                      |             7 | t
+    6227 | emaj        | myschema2_mytbl6_log_seq   |          632 | Multi-1                      |            23 | t
+    6299 | emaj        | myschema1_mytbl4_log_seq   |          659 | MC1                          |            14 | t
+    6301 | emajb       | myschema1_mytbl2b_log_seq  |          659 | MC1                          |             1 | f
+    6317 | emaj        | myschema1_mytbl4_log_seq   |          662 | RLBK_MC1_DONE                |            14 | t
+    6319 | emajb       | myschema1_mytbl2b_log_seq  |          662 | RLBK_MC1_DONE                |             1 | f
+    6323 | emaj        | myschema1_mytbl4_log_seq   |          663 | MC3                          |            14 | t
+    6325 | emajb       | myschema1_mytbl2b_log_seq  |          663 | MC3                          |             1 | f
+    6347 | emaj        | myschema1_mytbl4_log_seq   |          667 | RLBK_MC3_%_DONE              |            17 | t
+    6349 | emajb       | myschema1_mytbl2b_log_seq  |          667 | RLBK_MC3_%_DONE              |             1 | f
+    6353 | emaj        | myschema1_mytbl4_log_seq   |          668 | MC6                          |            17 | t
+    6355 | emajb       | myschema1_mytbl2b_log_seq  |          668 | MC6                          |             1 | f
+    6395 | emaj        | myschema1_mytbl4_log_seq   |          675 | RLBK_MC6_%_DONE              |            20 | t
+    6397 | emajb       | myschema1_mytbl2b_log_seq  |          675 | RLBK_MC6_%_DONE              |             1 | f
+    6401 | emaj        | myschema1_mytbl4_log_seq   |          676 | MC10                         |            20 | t
+    6403 | emajb       | myschema1_mytbl2b_log_seq  |          676 | MC10                         |             1 | f
+    6431 | emaj        | myschema1_mytbl4_log_seq   |          681 | RLBK_MC10_%_DONE             |            23 | t
+    6433 | emajb       | myschema1_mytbl2b_log_seq  |          681 | RLBK_MC10_%_DONE             |             1 | f
+    6437 | emaj        | myschema1_mytbl4_log_seq   |          682 | MC15                         |            23 | t
+    6439 | emajb       | myschema1_mytbl2b_log_seq  |          682 | MC15                         |             1 | f
+    6455 | emaj        | myschema1_mytbl4_log_seq   |          685 | RLBK_MC15_DONE               |            23 | t
+    6457 | emajb       | myschema1_mytbl2b_log_seq  |          685 | RLBK_MC15_DONE               |             1 | f
+    6461 | emaj        | myschema1_mytbl4_log_seq   |          686 | MC17                         |            23 | t
+    6463 | emajb       | myschema1_mytbl2b_log_seq  |          686 | MC17                         |             1 | f
+    6467 | emaj        | myschema1_mytbl4_log_seq   |          687 | RLBK_MC16_%_START            |            23 | t
+    6469 | emajb       | myschema1_mytbl2b_log_seq  |          687 | RLBK_MC16_%_START            |             1 | f
+    6473 | emaj        | myschema1_mytbl4_log_seq   |          688 | RLBK_MC16_%_DONE             |            23 | t
+    6475 | emajb       | myschema1_mytbl2b_log_seq  |          688 | RLBK_MC16_%_DONE             |             1 | f
 (187 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
+      -3 |                    | 
+      -2 |                    | 
+      -1 |                    | 
       10 |                  0 | C
       11 |                  0 | C
       13 |                  0 | C
@@ -788,53 +791,45 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
      415 |                  2 | R
      416 |                  2 | R
      417 |                  2 | M
-     418 |                  2 | M
-     419 |                  2 | R
+     418 |                  2 | R
+     419 |                  2 | M
      420 |                  2 | M
-     421 |                  2 | M
-     422 |                  2 | M
+     421 |                  2 | R
+     422 |                  2 | R
      423 |                  2 | R
-     424 |                  2 | R
+     424 |                  2 | M
      425 |                  2 | R
      426 |                  2 | M
      427 |                  2 | M
-     428 |                  2 | R
+     428 |                  2 | M
      429 |                  2 | M
-     430 |                  2 | M
-     431 |                  2 | M
-     432 |                  2 | M
-     433 |                  2 | M
-     434 |                 29 | M
+     430 |                 29 | M
+     431 |                 41 | M
+     432 |                 41 | R
+     433 |                 41 | R
+     434 |                 41 | M
      435 |                 41 | M
-     436 |                 41 | R
-     437 |                 41 | R
-     438 |                 41 | M
-     439 |                 41 | M
-     440 |                 60 | M
-     441 |                 71 | M
-     442 |                 71 | R
-     443 |                 71 | M
-     444 |                 82 | M
-     445 |                 82 | R
-     446 |                 82 | M
-     447 |                 96 | M
-     448 |                 96 | R
-     449 |                 96 | M
-     450 |                 99 | M
-     451 |                102 | R
-     452 |                102 | M
-     453 |                105 | M
-     454 |                105 | R
-     455 |                105 | M
-     456 |                105 | R
-     457 |                105 | M
-     458 |                105 | M
-     459 |                105 | M
-     460 |                120 | M
-     461 |                122 | R
-     462 |                122 | M
-     463 |                138 | M
-     464 |                140 | R
+     436 |                 60 | M
+     437 |                 71 | M
+     438 |                 71 | R
+     439 |                 82 | M
+     440 |                 82 | R
+     441 |                 96 | M
+     442 |                 96 | R
+     443 |                 96 | M
+     444 |                 99 | M
+     445 |                102 | R
+     446 |                105 | M
+     447 |                105 | R
+     448 |                105 | M
+     449 |                105 | R
+     450 |                105 | M
+     451 |                105 | M
+     452 |                120 | M
+     453 |                122 | R
+     454 |                138 | M
+     455 |                140 | R
+     456 |                141 | R
      500 |                141 | M
      501 |                141 | M
      502 |                141 | M
@@ -855,103 +850,91 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
      608 |             100078 | M
      609 |             100086 | M
      610 |             100086 | R
-     611 |             100086 | M
-     612 |             100092 | M
-     613 |             100092 | R
-     614 |             100092 | M
-     615 |             100098 | M
-     616 |             100098 | R
-     617 |             100111 | M
-     618 |             100121 | M
-     619 |             100121 | M
-     620 |             100121 | R
-     621 |             100121 | M
-     622 |             100127 | M
-     623 |             100127 | R
-     624 |             100130 | R
-     625 |             100133 | R
-     626 |             100133 | M
-     627 |             100156 | M
+     611 |             100092 | M
+     612 |             100092 | R
+     613 |             100098 | M
+     614 |             100098 | R
+     615 |             100111 | M
+     616 |             100121 | M
+     617 |             100121 | M
+     618 |             100121 | R
+     619 |             100127 | M
+     620 |             100127 | R
+     621 |             100130 | R
+     622 |             100133 | R
+     623 |             100156 | M
+     624 |             100161 | M
+     625 |             100161 | M
+     626 |             100161 | M
+     627 |             100161 | R
      628 |             100161 | M
-     629 |             100161 | M
-     630 |             100161 | M
-     631 |             100161 | R
+     629 |             100161 | R
+     630 |             100161 | R
+     631 |             100161 | M
      632 |             100161 | M
      633 |             100161 | M
      634 |             100161 | R
-     635 |             100161 | R
-     636 |             100161 | M
+     635 |             100161 | C
+     636 |             100161 | A
      637 |             100161 | M
      638 |             100161 | M
-     639 |             100161 | R
+     639 |             100161 | A
      640 |             100161 | C
-     641 |             100161 | A
-     642 |             100161 | M
-     643 |             100161 | M
-     644 |             100161 | A
-     645 |             100161 | C
-     646 |             100161 | M
-     647 |             100213 | M
-     648 |             100213 | M
-     649 |             100216 | M
-     650 |             100216 | R
-     651 |             100216 | M
-     652 |             100216 | M
-     653 |             100216 | R
-     654 |             100236 | R
-     658 |             100331 | M
-     659 |             100331 | A
-     660 |             100331 | M
-     661 |             100335 | M
-     662 |             100337 | R
-     663 |             100337 | M
-     664 |             100337 | M
-     665 |             100337 | M
-     666 |             100353 | M
-     667 |             100354 | R
-     668 |             100354 | M
-     669 |             100366 | M
-     670 |             100367 | M
-     671 |             100379 | M
-     672 |             100379 | M
-     673 |             100379 | R
-     674 |             100379 | M
-     675 |             100390 | M
-     676 |             100390 | M
-     677 |             100406 | M
-     678 |             100407 | M
-     679 |             100408 | R
-     680 |             100408 | M
-     681 |             100409 | M
-     682 |             100409 | M
-     683 |             100421 | R
-     684 |             100421 | M
-     685 |             100444 | M
-     686 |             100444 | M
-     687 |             100460 | R
-     688 |             100460 | M
-     689 |             100466 | M
-     690 |             100466 | M
-     691 |             100468 | R
-     692 |             100468 | M
-     693 |             100469 | M
-     694 |             100469 | M
-     695 |             100485 | M
-     696 |             100486 | R
-     697 |             100486 | M
-     698 |             100498 | M
-     699 |             100498 | M
-     700 |             100499 | R
-     701 |             100499 | M
-     702 |             100512 | M
-     703 |             100512 | R
+     641 |             100161 | M
+     642 |             100213 | M
+     643 |             100213 | M
+     644 |             100216 | M
+     645 |             100216 | R
+     646 |             100216 | M
+     647 |             100216 | R
+     648 |             100236 | R
+     649 |             100256 | R
+     650 |             100256 | R
+     651 |             100256 | R
+     652 |             100331 | M
+     653 |             100331 | A
+     654 |             100331 | M
+     655 |             100335 | M
+     656 |             100337 | R
+     657 |             100337 | M
+     658 |             100337 | M
+     659 |             100337 | M
+     660 |             100353 | M
+     661 |             100354 | R
+     662 |             100366 | M
+     663 |             100367 | M
+     664 |             100379 | M
+     665 |             100379 | M
+     666 |             100379 | R
+     667 |             100390 | M
+     668 |             100390 | M
+     669 |             100406 | M
+     670 |             100407 | M
+     671 |             100408 | R
+     672 |             100409 | M
+     673 |             100409 | M
+     674 |             100421 | R
+     675 |             100444 | M
+     676 |             100444 | M
+     677 |             100460 | R
+     678 |             100466 | M
+     679 |             100466 | M
+     680 |             100468 | R
+     681 |             100469 | M
+     682 |             100469 | M
+     683 |             100485 | M
+     684 |             100486 | R
+     685 |             100498 | M
+     686 |             100498 | M
+     687 |             100499 | R
+     688 |             100512 | M
+     689 |             100512 | R
     1000 |             100580 | R
-    1001 |             100580 | M
-    1002 |             100640 | M
-    1003 |             100640 | R
-    1004 |             100659 | M
-    1005 |             100659 | R
-(256 rows)
+    1001 |             100640 | M
+    1002 |             100640 | R
+    1003 |             100659 | M
+    1004 |             100659 | R
+(239 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
@@ -1051,23 +1034,23 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10012 | SET_MARK_GROUPS    | BEGIN        | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                            | postgres
    10013 | SET_MARK_GROUPS    | END          | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                            | postgres
    10014 | ROLLBACK_TABLE     | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
-   10015 | ROLLBACK_TABLE     | END          | myschema2."myTbl3"           | 10 rolled back primary keys                                     | postgres
-   10016 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 100161                             | postgres
+   10015 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 100161                             | postgres
+   10016 | ROLLBACK_TABLE     | END          | myschema2."myTbl3"           | 10 rolled back primary keys                                     | postgres
    10017 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
-   10018 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
-   10019 | ROLLBACK_TABLE     | END          | myschema2.mytbl1             | 10 rolled back primary keys                                     | postgres
-   10020 | ROLLBACK_TABLE     | END          | myschema2.mytbl6             | 14 rolled back primary keys                                     | postgres
-   10021 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
-   10022 | ROLLBACK_TABLE     | END          | myschema1.mytbl1             | 20 rolled back primary keys                                     | postgres
-   10023 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
-   10024 | ROLLBACK_TABLE     | END          | myschema2.mytbl2             | 2 rolled back primary keys                                      | postgres
-   10025 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 100161                             | postgres
-   10026 | ROLLBACK_TABLE     | END          | myschema1.mytbl2             | 3 rolled back primary keys                                      | postgres
-   10027 | ROLLBACK_TABLE     | END          | myschema2.mytbl4             | 2 rolled back primary keys                                      | postgres
-   10028 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 100161                             | postgres
+   10018 | ROLLBACK_TABLE     | END          | myschema2.mytbl6             | 14 rolled back primary keys                                     | postgres
+   10019 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 100161                             | postgres
+   10020 | ROLLBACK_TABLE     | END          | myschema1.mytbl1             | 20 rolled back primary keys                                     | postgres
+   10021 | ROLLBACK_TABLE     | END          | myschema2.mytbl1             | 10 rolled back primary keys                                     | postgres
+   10022 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
+   10023 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 100161                             | postgres
+   10024 | ROLLBACK_TABLE     | END          | myschema1.mytbl2             | 3 rolled back primary keys                                      | postgres
+   10025 | ROLLBACK_TABLE     | END          | myschema2.mytbl2             | 2 rolled back primary keys                                      | postgres
+   10026 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 100161                             | postgres
+   10027 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 100161                             | postgres
+   10028 | ROLLBACK_TABLE     | END          | myschema2.mytbl4             | 2 rolled back primary keys                                      | postgres
    10029 | ROLLBACK_TABLE     | END          | myschema2.mytbl5             | 3 rolled back primary keys                                      | postgres
-   10030 | ROLLBACK_TABLE     | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
-   10031 | DBLINK_CLOSE_CNX   |              | rlbk#3                       |                                                                 | postgres
+   10030 | DBLINK_CLOSE_CNX   |              | rlbk#3                       |                                                                 | postgres
+   10031 | ROLLBACK_TABLE     | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 100161                             | postgres
    10032 | ROLLBACK_TABLE     | END          | myschema1."myTbl3"           | 5 rolled back primary keys                                      | postgres
    10033 | DBLINK_CLOSE_CNX   |              | rlbk#2                       |                                                                 | postgres
    10034 | ROLLBACK_SEQUENCE  |              | myschema1."myTbl3_col31_seq" | RESTART 21                                                      | postgres
