@@ -859,21 +859,21 @@ select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected f
 -- group is unknown
 select emaj.emaj_unprotect_mark_group(NULL,NULL);
 ERROR:  emaj_unprotect_mark_group: group "<NULL>" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 17 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 16 at RAISE
 select emaj.emaj_unprotect_mark_group('unknownGroup',NULL);
 ERROR:  emaj_unprotect_mark_group: group "unknownGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 17 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 16 at RAISE
 -- group is not rollbackable
 select emaj.emaj_unprotect_mark_group('phil''s group#3",',NULL);
 ERROR:  emaj_unprotect_mark_group: A mark on the group "phil's group#3"," cannot be unprotected because it is an AUDIT_ONLY group.
-CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 21 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 20 at RAISE
 -- mark is unknown
 select emaj.emaj_unprotect_mark_group('myGroup1',NULL);
 ERROR:  emaj_unprotect_mark_group: mark "<NULL>" doesn't exist for group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 26 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 25 at RAISE
 select emaj.emaj_unprotect_mark_group('myGroup1','unknownMark');
 ERROR:  emaj_unprotect_mark_group: mark "unknownMark" doesn't exist for group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 26 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 25 at RAISE
 -- should be ok
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 

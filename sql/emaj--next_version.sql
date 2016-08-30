@@ -2704,12 +2704,11 @@ $emaj_unprotect_group$
 -- Output: 1 if successful, 0 if the group was not already in protected state
   DECLARE
     v_groupIsRollbackable    BOOLEAN;
-    v_groupIsLogging         BOOLEAN;
     v_groupIsProtected       BOOLEAN;
     v_status                 INT;
   BEGIN
 -- check that the group is recorded in emaj_group table
-    SELECT group_is_rollbackable, group_is_logging, group_is_rlbk_protected INTO v_groupIsRollbackable, v_groupIsLogging, v_groupIsProtected
+    SELECT group_is_rollbackable, group_is_rlbk_protected INTO v_groupIsRollbackable, v_groupIsProtected
       FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_unprotect_group: group "%" has not been created.', v_groupName;
@@ -3431,13 +3430,12 @@ $emaj_unprotect_mark_group$
 -- The group must be ROLLBACKABLE and in LOGGING state.
   DECLARE
     v_groupIsRollbackable    BOOLEAN;
-    v_groupIsLogging         BOOLEAN;
     v_realMark               TEXT;
     v_markIsProtected        BOOLEAN;
     v_status                 INT;
   BEGIN
 -- check that the group is recorded in emaj_group table
-    SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
+    SELECT group_is_rollbackable INTO v_groupIsRollbackable
       FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_unprotect_mark_group: group "%" has not been created.', v_groupName;
@@ -4951,7 +4949,6 @@ $emaj_log_stat_group$
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: table of log rows by table (including tables with 0 rows to rollback)
   DECLARE
-    v_groupIsLogging         BOOLEAN;
     v_realFirstMark          TEXT;
     v_realLastMark           TEXT;
     v_firstMarkId            BIGINT;
@@ -4962,8 +4959,7 @@ $emaj_log_stat_group$
     v_tsLastMark             TIMESTAMPTZ;
   BEGIN
 -- check that the group is recorded in emaj_group table
-    SELECT group_is_logging INTO v_groupIsLogging
-      FROM emaj.emaj_group WHERE group_name = v_groupName;
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_log_stat_group: group "%" has not been created.', v_groupName;
     END IF;
@@ -5020,7 +5016,6 @@ $emaj_detailed_log_stat_group$
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: table of updates by user and table
   DECLARE
-    v_groupIsLogging         BOOLEAN;
     v_realFirstMark          TEXT;
     v_realLastMark           TEXT;
     v_firstMarkId            BIGINT;
@@ -5035,8 +5030,7 @@ $emaj_detailed_log_stat_group$
     r_stat                   RECORD;
   BEGIN
 -- check that the group is recorded in emaj_group table
-    SELECT group_is_logging INTO v_groupIsLogging
-      FROM emaj.emaj_group WHERE group_name = v_groupName;
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_detailed_log_stat_group: group "%" has not been created.', v_groupName;
     END IF;
@@ -5625,7 +5619,6 @@ $_gen_sql_groups$
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
     v_aGroupName             TEXT;
-    v_groupIsLogging         BOOLEAN;
     v_tblList                TEXT;
     v_cpt                    INT;
     v_firstMarkCopy          TEXT = v_firstMark;
@@ -5665,8 +5658,7 @@ $_gen_sql_groups$
 -- check that each group ...
     FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
 -- ...is recorded into the emaj_group table
-      SELECT group_is_logging INTO v_groupIsLogging
-        FROM emaj.emaj_group WHERE group_name = v_aGroupName;
+      PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_aGroupName;
       IF NOT FOUND THEN
         RAISE EXCEPTION '_gen_sql_groups: group "%" has not been created.', v_aGroupName;
       END IF;

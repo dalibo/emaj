@@ -945,14 +945,14 @@ select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where grou
 -- group is unknown
 select emaj.emaj_unprotect_group(NULL);
 ERROR:  emaj_unprotect_group: group "<NULL>" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_group(text) line 15 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_group(text) line 14 at RAISE
 select emaj.emaj_unprotect_group('unknownGroup');
 ERROR:  emaj_unprotect_group: group "unknownGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_group(text) line 15 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_group(text) line 14 at RAISE
 -- group is not rollbackable
 select emaj.emaj_unprotect_group('phil''s group#3",');
 ERROR:  emaj_unprotect_group: The group "phil's group#3"," cannot be unprotected because it is an AUDIT_ONLY group.
-CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_group(text) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_unprotect_group(text) line 18 at RAISE
 -- group is not in logging state
 select emaj.emaj_unprotect_group('myGroup1');
  emaj_unprotect_group 
