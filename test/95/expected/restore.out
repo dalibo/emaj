@@ -200,7 +200,7 @@ COPY 56
 COPY 12
  setval 
 --------
-   1004
+   1003
 (1 row)
 
 COPY 2

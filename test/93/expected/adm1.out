@@ -168,8 +168,8 @@ select * from emaj.emaj_sequence;
 (0 rows)
 
 select * from emaj.emaj_seq_hole;
- sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_begin_mark_ts | sqhl_end_mark_id | sqhl_end_mark_ts | sqhl_hole_size 
--------------+------------+--------------------+--------------------+------------------+------------------+----------------
+ sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
+-------------+------------+--------------------+------------------+----------------
 (0 rows)
 
 select count(*) from emaj.emaj_rlbk;
@@ -1301,9 +1301,9 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      609 | myGroup2   | RLBK_M2_%_DONE  |          611 | f               | f                      |              |                  6067 |                         0 | M2
      610 | myGroup2   | RLBK_M3_%_START |          612 | f               | f                      |              |                  6075 |                         6 | 
      611 | myGroup2   | RLBK_M3_%_DONE  |          613 | f               | f                      |              |                  6083 |                           | M3
-     613 | myGroup1   | M4              |          615 | f               | f                      |              |                  6089 |                        10 | 
-     614 | myGroup1   | M5              |          616 | f               | f                      |              |                  6095 |                         0 | 
-     615 | myGroup1   | M6              |          617 | f               | f                      |              |                  6101 |                           | 
+     612 | myGroup1   | M4              |          615 | f               | f                      |              |                  6089 |                        10 | 
+     613 | myGroup1   | M5              |          616 | f               | f                      |              |                  6095 |                         0 | 
+     614 | myGroup1   | M6              |          617 | f               | f                      |              |                  6101 |                           | 
 (12 rows)
 
 select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1600,9 +1600,9 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      604 | myGroup1   | M2             |          606 | f               | f                      |              |                  6029 |                        13 | 
      606 | myGroup2   | M2             |          608 | f               | f                      |              |                  6043 |                         8 | 
      607 | myGroup2   | M3             |          609 | f               | f                      |              |                  6051 |                           | 
-     613 | myGroup1   | M4             |          615 | f               | f                      |              |                  6089 |                        10 | 
-     614 | myGroup1   | M5             |          616 | f               | f                      |              |                  6095 |                         0 | 
-     615 | myGroup1   | M6             |          617 | f               | f                      |              |                  6101 |                           | 
+     612 | myGroup1   | M4             |          615 | f               | f                      |              |                  6089 |                        10 | 
+     613 | myGroup1   | M5             |          616 | f               | f                      |              |                  6095 |                         0 | 
+     614 | myGroup1   | M6             |          617 | f               | f                      |              |                  6101 |                           | 
 (8 rows)
 
 select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -1685,14 +1685,14 @@ select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'
     6114 | emajC       | myschema2_myTbl3_log_seq   |          619 | RLBK_M2_%_DONE  |            10 | t
 (75 rows)
 
-select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
- sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_end_mark_id | sqhl_hole_size 
+select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
+ sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | mytbl1     |                604 |              612 |              3
- myschema1   | mytbl4     |                604 |              612 |              8
- myschema2   | mytbl4     |                607 |              618 |              6
- myschema2   | mytbl5     |                607 |              618 |              3
- myschema2   | mytbl6     |                607 |              618 |              9
+ myschema1   | mytbl1     |                606 |              614 |              3
+ myschema1   | mytbl4     |                606 |              614 |              8
+ myschema2   | mytbl4     |                609 |              620 |              6
+ myschema2   | mytbl5     |                609 |              620 |              3
+ myschema2   | mytbl6     |                609 |              620 |              9
 (5 rows)
 
 -- user tables
@@ -1894,10 +1894,10 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      604 | myGroup1   | M2              |          606 | f               | f                      |              |                  6029 |                        13 | 
      606 | myGroup2   | M2              |          608 | f               | f                      |              |                  6043 |                         8 | 
      607 | myGroup2   | M3              |          609 | f               | f                      |              |                  6051 |                           | 
-     613 | myGroup1   | M4              |          615 | f               | f                      |              |                  6089 |                        10 | 
-     614 | myGroup1   | M5              |          616 | f               | f                      |              |                  6095 |                         3 | 
-     620 | myGroup1   | RLBK_M4_%_START |          622 | f               | f                      |              |                  6123 |                        23 | 
-     621 | myGroup1   | RLBK_M4_%_DONE  |          623 | f               | f                      |              |                  6129 |                           | M4
+     612 | myGroup1   | M4              |          615 | f               | f                      |              |                  6089 |                        10 | 
+     613 | myGroup1   | M5              |          616 | f               | f                      |              |                  6095 |                         3 | 
+     617 | myGroup1   | RLBK_M4_%_START |          622 | f               | f                      |              |                  6123 |                        23 | 
+     618 | myGroup1   | RLBK_M4_%_DONE  |          623 | f               | f                      |              |                  6129 |                           | M4
 (9 rows)
 
 select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -2003,16 +2003,16 @@ select * from
 (0 rows)
 
 --
-select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
- sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_end_mark_id | sqhl_hole_size 
+select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
+ sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | mytbl1     |                604 |              612 |              3
- myschema1   | mytbl1     |                614 |              619 |              1
- myschema1   | mytbl4     |                604 |              612 |              8
- myschema1   | mytbl4     |                614 |              619 |              2
- myschema2   | mytbl4     |                607 |              618 |              6
- myschema2   | mytbl5     |                607 |              618 |              3
- myschema2   | mytbl6     |                607 |              618 |              9
+ myschema1   | mytbl1     |                606 |              614 |              3
+ myschema1   | mytbl1     |                616 |              621 |              1
+ myschema1   | mytbl4     |                606 |              614 |              8
+ myschema1   | mytbl4     |                616 |              621 |              2
+ myschema2   | mytbl4     |                609 |              620 |              6
+ myschema2   | mytbl5     |                609 |              620 |              3
+ myschema2   | mytbl6     |                609 |              620 |              9
 (7 rows)
 
 -- user tables
@@ -2236,9 +2236,9 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      603 | myGroup2   | M1                           |          605 | f               | f                      |              |                  6023 |                        41 | 
      606 | myGroup2   | M2                           |          608 | f               | f                      |              |                  6043 |                         8 | 
      607 | myGroup2   | M3                           |          609 | f               | f                      |              |                  6051 |                           | 
-     613 | myGroup1   | M4                           |          615 | f               | f                      |              |                  6089 |                        10 | 
-     614 | myGroup1   | M5                           |          616 | f               | f                      |              |                  6095 |                         3 | 
-     620 | myGroup1   | Before logged rollback to M4 |          622 | f               | f                      |              |                  6123 |                           | 
+     612 | myGroup1   | M4                           |          615 | f               | f                      |              |                  6089 |                        10 | 
+     613 | myGroup1   | M5                           |          616 | f               | f                      |              |                  6095 |                         3 | 
+     617 | myGroup1   | Before logged rollback to M4 |          622 | f               | f                      |              |                  6123 |                           | 
 (6 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 600 order by time_id;
@@ -2341,14 +2341,14 @@ select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'
     6123 | emajb       | myschema1_mytbl2b_log_seq  |          622 | Before logged rollback to M4 |             1 | f
 (66 rows)
 
-select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
- sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_end_mark_id | sqhl_hole_size 
+select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
+ sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | mytbl1     |                614 |              619 |              1
- myschema1   | mytbl4     |                614 |              619 |              2
- myschema2   | mytbl4     |                607 |              618 |              6
- myschema2   | mytbl5     |                607 |              618 |              3
- myschema2   | mytbl6     |                607 |              618 |              9
+ myschema1   | mytbl1     |                616 |              621 |              1
+ myschema1   | mytbl4     |                616 |              621 |              2
+ myschema2   | mytbl4     |                609 |              620 |              6
+ myschema2   | mytbl5     |                609 |              620 |              3
+ myschema2   | mytbl6     |                609 |              620 |              9
 (5 rows)
 
 -- user tables

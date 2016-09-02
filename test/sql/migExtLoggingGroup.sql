@@ -8,12 +8,6 @@
 -- check the extension is available
 select * from pg_available_extension_versions where name = 'emaj';
 
---TODO debug
---select * from emaj.emaj_seq_hole order by sqhl_schema, sqhl_table;
---select mark_group, mark_name, mark_id, mark_time_id, mark_datetime, mark_last_seq_hole_id from emaj.emaj_mark order by mark_id;
---select * from emaj.emaj_rlbk order by rlbk_id;
---select mark_group, mark_name, mark_id, mark_datetime, mark_global_seq, mark_last_sequence_id from emaj.emaj_mark order by mark_id;
-
 -- process the extension migration
 ALTER EXTENSION emaj UPDATE TO 'next_version';
 
@@ -46,7 +40,7 @@ select last_value, is_called from emaj.emaj_mark_mark_id_seq;
 select sequ_id, sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called from emaj.emaj_sequence order by sequ_id;
 select last_value, is_called from emaj.emaj_sequence_sequ_id_seq;
 
-select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_schema, sqhl_table, sqhl_begin_mark_id;
+select * from emaj.emaj_seq_hole order by sqhl_schema, sqhl_table, sqhl_begin_time_id;
 
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used, rlbk_msg from emaj.emaj_rlbk order by rlbk_id;
 select last_value, is_called from emaj.emaj_rlbk_rlbk_id_seq;

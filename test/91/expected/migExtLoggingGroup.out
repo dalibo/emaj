@@ -11,11 +11,6 @@ select * from pg_available_extension_versions where name = 'emaj';
  emaj | next_version | f         | t         | f           | emaj   | {dblink} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (1 row)
 
---TODO debug
---select * from emaj.emaj_seq_hole order by sqhl_schema, sqhl_table;
---select mark_group, mark_name, mark_id, mark_time_id, mark_datetime, mark_last_seq_hole_id from emaj.emaj_mark order by mark_id;
---select * from emaj.emaj_rlbk order by rlbk_id;
---select mark_group, mark_name, mark_id, mark_datetime, mark_global_seq, mark_last_sequence_id from emaj.emaj_mark order by mark_id;
 -- process the extension migration
 ALTER EXTENSION emaj UPDATE TO 'next_version';
 NOTICE:  CREATE TABLE will create implicit sequence "emaj_time_stamp_time_id_seq" for serial column "emaj_time_stamp.time_id"
@@ -29,7 +24,6 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_mark_pkey" 
 NOTICE:  CREATE TABLE will create implicit sequence "emaj_sequence_sequ_id_seq" for serial column "emaj_sequence.sequ_id"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_sequence_pkey" for table "emaj_sequence"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_seq_hole_pkey" for table "emaj_seq_hole"
-NOTICE:  E-Maj upgrade: internal error, the number of rows in the original emaj_seq_hole (4) doesn't math the number of rows in the new emaj_seq_hole table (0)
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
 drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
@@ -107,18 +101,18 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
        3 | phil's group#3", | M1              |            6 | f               | f                      |                |                    15 |                           | 
        4 | myGroup1         | M2              |            7 | f               | f                      |                |                    21 |                        11 | 
        5 | myGroup1         | M3              |            8 | f               | t                      | Third mark set |                    27 |                           | 
-       8 | myGroup2         | M2              |           11 | f               | f                      |                |                    33 |                         4 | 
-       9 | myGroup2         | M3              |           12 | f               | f                      |                |                    39 |                         0 | 
-      10 | myGroup2         | RLBK_M2_%_START |           14 | f               | f                      |                |                    45 |                         2 | 
-      11 | myGroup2         | RLBK_M2_%_DONE  |           15 | f               | f                      |                |                    51 |                         0 | 
-      12 | myGroup2         | RLBK_M3_%_START |           17 | f               | f                      |                |                    57 |                         2 | 
-      13 | myGroup2         | RLBK_M3_%_DONE  |           18 | f               | f                      |                |                    63 |                           | 
+       6 | myGroup2         | M2              |           11 | f               | f                      |                |                    33 |                         4 | 
+       7 | myGroup2         | M3              |           12 | f               | f                      |                |                    39 |                         0 | 
+       8 | myGroup2         | RLBK_M2_%_START |           14 | f               | f                      |                |                    45 |                         2 | 
+       9 | myGroup2         | RLBK_M2_%_DONE  |           15 | f               | f                      |                |                    51 |                         0 | 
+      10 | myGroup2         | RLBK_M3_%_START |           17 | f               | f                      |                |                    57 |                         2 | 
+      11 | myGroup2         | RLBK_M3_%_DONE  |           18 | f               | f                      |                |                    63 |                           | 
 (11 rows)
 
 select last_value, is_called from emaj.emaj_mark_mark_id_seq;
  last_value | is_called 
 ------------+-----------
-         13 | t
+         11 | t
 (1 row)
 
 select sequ_id, sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called from emaj.emaj_sequence order by sequ_id;
@@ -195,10 +189,14 @@ select last_value, is_called from emaj.emaj_sequence_sequ_id_seq;
          63 | t
 (1 row)
 
-select sqhl_schema, sqhl_table, sqhl_begin_mark_id, sqhl_end_mark_id, sqhl_hole_size from emaj.emaj_seq_hole order by sqhl_schema, sqhl_table, sqhl_begin_mark_id;
- sqhl_schema | sqhl_table | sqhl_begin_mark_id | sqhl_end_mark_id | sqhl_hole_size 
+select * from emaj.emaj_seq_hole order by sqhl_schema, sqhl_table, sqhl_begin_time_id;
+ sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
-(0 rows)
+ myschema1   | mytbl1     |                  8 |               11 |              6
+ myschema1   | mytbl2     |                  8 |               11 |              1
+ myschema1   | mytbl2b    |                  8 |               11 |              2
+ myschema1   | mytbl4     |                  8 |               11 |              1
+(4 rows)
 
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used, rlbk_msg from emaj.emaj_rlbk order by rlbk_id;
  rlbk_id | rlbk_groups | rlbk_mark | rlbk_time_id | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_is_dblink_used |                         rlbk_msg                          

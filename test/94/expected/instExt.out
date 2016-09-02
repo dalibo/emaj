@@ -442,25 +442,26 @@ primary key, btree, for table "emaj.emaj_rlbk_stat"
  rlbk_remaining      | interval                 | 
  rlbk_completion_pct | smallint                 | 
 
-                Table "emaj.emaj_seq_hole"
-       Column       |           Type           | Modifiers 
---------------------+--------------------------+-----------
- sqhl_schema        | text                     | not null
- sqhl_table         | text                     | not null
- sqhl_begin_mark_id | bigint                   | not null
- sqhl_begin_mark_ts | timestamp with time zone | 
- sqhl_end_mark_id   | bigint                   | not null
- sqhl_end_mark_ts   | timestamp with time zone | 
- sqhl_hole_size     | bigint                   | not null
+       Table "emaj.emaj_seq_hole"
+       Column       |  Type  | Modifiers 
+--------------------+--------+-----------
+ sqhl_schema        | text   | not null
+ sqhl_table         | text   | not null
+ sqhl_begin_time_id | bigint | not null
+ sqhl_end_time_id   | bigint | not null
+ sqhl_hole_size     | bigint | not null
 Indexes:
-    "emaj_seq_hole_pkey" PRIMARY KEY, btree (sqhl_schema, sqhl_table, sqhl_begin_mark_id)
+    "emaj_seq_hole_pkey" PRIMARY KEY, btree (sqhl_schema, sqhl_table, sqhl_begin_time_id)
+Foreign-key constraints:
+    "emaj_seq_hole_sqhl_begin_time_id_fkey" FOREIGN KEY (sqhl_begin_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    "emaj_seq_hole_sqhl_end_time_id_fkey" FOREIGN KEY (sqhl_end_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
          Index "emaj.emaj_seq_hole_pkey"
        Column       |  Type  |     Definition     
 --------------------+--------+--------------------
  sqhl_schema        | text   | sqhl_schema
  sqhl_table         | text   | sqhl_table
- sqhl_begin_mark_id | bigint | sqhl_begin_mark_id
+ sqhl_begin_time_id | bigint | sqhl_begin_time_id
 primary key, btree, for table "emaj.emaj_seq_hole"
 
                                    Table "emaj.emaj_sequence"
@@ -524,6 +525,8 @@ Referenced by:
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_rlbk" CONSTRAINT "emaj_rlbk_rlbk_time_id_fkey" FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_seq_hole" CONSTRAINT "emaj_seq_hole_sqhl_begin_time_id_fkey" FOREIGN KEY (sqhl_begin_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_seq_hole" CONSTRAINT "emaj_seq_hole_sqhl_end_time_id_fkey" FOREIGN KEY (sqhl_end_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_sequence" CONSTRAINT "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
 Index "emaj.emaj_time_stamp_pkey"
