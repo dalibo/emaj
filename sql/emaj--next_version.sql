@@ -291,7 +291,7 @@ CREATE TABLE emaj.emaj_rlbk (
   rlbk_id                      SERIAL      NOT NULL,       -- rollback id
   rlbk_groups                  TEXT[]      NOT NULL,       -- groups array to rollback
   rlbk_mark                    TEXT        NOT NULL,       -- mark to rollback to
-  rlbk_mark_datetime           TIMESTAMPTZ,                -- timestamp of the mark as recorded into emaj_mark
+  rlbk_mark_time_id            BIGINT      NOT NULL,       -- time stamp id of the mark to rollback to
   rlbk_time_id                 BIGINT,                     -- time stamp id at the rollback start
   rlbk_is_logged               BOOLEAN     NOT NULL,       -- rollback type: true = logged rollback
   rlbk_nb_session              INT         NOT NULL,       -- number of requested rollback sessions
@@ -307,7 +307,8 @@ CREATE TABLE emaj.emaj_rlbk (
                                                            --   NULL if rollback is in progress or aborted
   rlbk_msg                     TEXT,                       -- result message
   PRIMARY KEY (rlbk_id),
-  FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
+  FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp (time_id),
+  FOREIGN KEY (rlbk_mark_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
   );
 COMMENT ON TABLE emaj.emaj_rlbk IS
 $$Contains description of rollback events.$$;
@@ -517,18 +518,18 @@ SELECT case
        end
 $$;
 
-CREATE OR REPLACE FUNCTION emaj._get_mark_datetime(TEXT, TEXT)
-RETURNS TIMESTAMPTZ LANGUAGE sql AS
+CREATE OR REPLACE FUNCTION emaj._get_mark_time_id(TEXT, TEXT)
+RETURNS BIGINT LANGUAGE sql AS
 $$
--- This function returns the creation clock timestamp of a mark if exists for a group,
+-- This function returns the time stamp id of a mark, if exists, for a group,
 --   processing the EMAJ_LAST_MARK keyword.
 -- input: group name and mark name
--- output: mark date-time or NULL
+-- output: mark time stamp id or NULL
 SELECT CASE
          WHEN $2 = 'EMAJ_LAST_MARK' THEN
-              (SELECT time_clock_timestamp FROM emaj.emaj_mark, emaj.emaj_time_stamp
+              (SELECT time_id FROM emaj.emaj_mark, emaj.emaj_time_stamp
                  WHERE time_id = mark_time_id AND mark_group = $1 ORDER BY time_id DESC LIMIT 1)
-         ELSE (SELECT time_clock_timestamp FROM emaj.emaj_mark, emaj.emaj_time_stamp
+         ELSE (SELECT time_id FROM emaj.emaj_mark, emaj.emaj_time_stamp
                  WHERE time_id = mark_time_id AND mark_group = $1 AND mark_name = $2)
        END
 $$;
@@ -3585,7 +3586,8 @@ $_rlbk_init$
 -- It returns a rollback id that will be needed by next steps.
   DECLARE
     v_markName               TEXT;
-    v_timestampMark          TIMESTAMPTZ;
+    v_markTimeId             BIGINT;
+    v_markTimestamp          TIMESTAMPTZ;
     v_msg                    TEXT;
     v_nbTblInGroups          INT;
     v_nbSeqInGroups          INT;
@@ -3603,8 +3605,10 @@ $_rlbk_init$
     SELECT emaj._rlbk_check(v_groupNames, v_mark) INTO v_markName;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
--- get the mark timestamp for the 1st group (as we know this timestamp is the same for all groups of the array)
-    SELECT emaj._get_mark_datetime(v_groupNames[1], v_mark) INTO v_timestampMark;
+-- get the time stamp id and its clock timestamp for the 1st group (as we know this time stamp is the same for all groups of the array)
+    SELECT emaj._get_mark_time_id(v_groupNames[1], v_mark) INTO v_markTimeId;
+    SELECT time_clock_timestamp INTO v_markTimestamp
+      FROM emaj.emaj_time_stamp WHERE time_id = v_markTimeId;
 -- insert begin in the history
     IF v_isLoggedRlbk THEN
       v_msg = 'Logged';
@@ -3614,7 +3618,7 @@ $_rlbk_init$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'BEGIN',
               array_to_string(v_groupNames,','),
-              v_msg || ' rollback to mark ' || v_markName || ' [' || v_timestampMark || ']'
+              v_msg || ' rollback to mark ' || v_markName || ' [' || v_markTimestamp || ']'
              ) RETURNING hist_id, hist_datetime INTO v_histId, v_startDateTime;
 -- get the total number of tables for these groups
     SELECT sum(group_nb_table), sum(group_nb_sequence) INTO v_nbTblInGroups, v_nbSeqInGroups
@@ -3627,11 +3631,11 @@ $_rlbk_init$
       RAISE EXCEPTION '_rlbk_init: cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = % - see E-Maj documentation)', v_dbLinkCnxStatus;
     END IF;
 -- create the row representing the rollback event in the emaj_rlbk table and get the rollback id back
-    v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, ' ||
+    v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, ' ||
              'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
              'rlbk_is_dblink_used, rlbk_start_datetime ) ' ||
              'VALUES (' || quote_literal(v_groupNames) || ',' || quote_literal(v_markName) || ',' ||
-             quote_literal(v_timestampMark) || ',' || v_isLoggedRlbk || ',' ||
+             v_markTimeId || ',' || v_isLoggedRlbk || ',' ||
              v_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
              v_isDblinkUsable || ',' || quote_literal(v_startDateTime) || ') RETURNING rlbk_id';
     IF v_isDblinkUsable THEN
@@ -3725,7 +3729,7 @@ $_rlbk_check$
       END IF;
     END LOOP;
 -- get the mark timestamp and check it is the same for all groups of the array
-    SELECT count(DISTINCT emaj._get_mark_datetime(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
+    SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
       WHERE group_name = ANY (v_groupNames);
     IF v_cpt > 1 THEN
       RAISE EXCEPTION '_rlbk_check: Mark "%" does not represent the same point in time for all groups.', v_mark;
@@ -5138,8 +5142,8 @@ $_estimate_rollback_groups$
 --
     BEGIN
 -- insert a row into the emaj_rlbk table for this simulated rollback operation
-      INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session)
-        VALUES (v_rlbkId, v_groupNames, v_mark, v_isLoggedRlbk, 1);
+      INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_nb_session)
+        VALUES (v_rlbkId, v_groupNames, v_mark, emaj._get_mark_time_id(v_groupNames[1], v_markName), v_isLoggedRlbk, 1);
 -- call the _rlbk_planning function
       PERFORM emaj._rlbk_planning(v_rlbkId);
 -- compute the sum of the duration estimates of all elementary steps (except LOCK_TABLE)
@@ -5200,11 +5204,12 @@ $_rollback_activity$
   BEGIN
 -- retrieve all not completed rollback operations (ie in 'PLANNING', 'LOCKING' or 'EXECUTING' state)
     FOR r_rlbk IN
-      SELECT rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session,
-             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, time_tx_timestamp,
-             transaction_timestamp() - time_tx_timestamp AS "elapse", NULL, 0
-        FROM emaj.emaj_rlbk, emaj.emaj_time_stamp
-        WHERE rlbk_time_id = time_id AND rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING')
+      SELECT rlbk_id, rlbk_groups, rlbk_mark, t1.time_clock_timestamp, rlbk_is_logged, rlbk_nb_session,
+             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, t2.time_tx_timestamp,
+             transaction_timestamp() - t2.time_tx_timestamp AS "elapse", NULL, 0
+        FROM emaj.emaj_rlbk, emaj.emaj_time_stamp t1, emaj.emaj_time_stamp t2
+        WHERE rlbk_mark_time_id = t1.time_id AND rlbk_time_id = t2.time_id
+          AND rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING')
         ORDER BY rlbk_id
         LOOP
 -- compute the estimated remaining duration
@@ -5676,14 +5681,14 @@ $_gen_sql_groups$
       END IF;
     END LOOP;
 -- check that the first mark timestamp is the same for all groups of the array
-    SELECT count(DISTINCT emaj._get_mark_datetime(group_name,v_firstMarkCopy)) INTO v_cpt FROM emaj.emaj_group
+    SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_firstMarkCopy)) INTO v_cpt FROM emaj.emaj_group
       WHERE group_name = ANY (v_groupNames);
     IF v_cpt > 1 THEN
       RAISE EXCEPTION '_gen_sql_groups: Mark "%" does not represent the same point in time for all groups.', v_firstMarkCopy;
     END IF;
 -- check that the last mark timestamp, if supplied, is the same for all groups of the array
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
-      SELECT count(DISTINCT emaj._get_mark_datetime(group_name,v_lastMark)) INTO v_cpt FROM emaj.emaj_group
+      SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_lastMark)) INTO v_cpt FROM emaj.emaj_group
         WHERE group_name = ANY (v_groupNames);
       IF v_cpt > 1 THEN
         RAISE EXCEPTION '_gen_sql_groups: Mark "%" does not represent the same point in time for all groups.', v_lastMark;
@@ -6488,7 +6493,7 @@ REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 -- ... and execute a subset of emaj functions for which rights are explicitely granted
 GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._get_mark_time_id(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
