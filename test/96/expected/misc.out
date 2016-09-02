@@ -160,10 +160,10 @@ CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) li
 -- invalid marks
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  emaj_log_stat_group: Start mark "dummyStartMark" is unknown for group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 37 at RAISE
 select * from emaj.emaj_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  emaj_log_stat_group: End mark "dummyEndMark" is unknown for group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 44 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 47 at RAISE
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  emaj_detailed_log_stat_group: Start mark "dummyStartMark" is unknown for group "myGroup2".
 CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 34 at RAISE
@@ -843,11 +843,6 @@ PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22
 -- end mark is prior start mark
 -- (mark timestamps are temporarily changed so that regression test can return a stable error message)
 begin;
-----! 4 next lines to delete
-  update emaj.emaj_mark set mark_datetime = '2000-01-01 12:00:00+00' 
-    where mark_group = 'myGroup2' and mark_name = 'Mark21';
-  update emaj.emaj_mark set mark_datetime = '2000-01-01 13:00:00+00'
-    where mark_group = 'myGroup2' and mark_name = 'Mark22';
   update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 12:00:00+00' 
     from emaj.emaj_mark
     where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'Mark21';
@@ -861,9 +856,6 @@ SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 rollback;
 begin;
-----! 2 next lines to delete
-  update emaj.emaj_mark set mark_datetime = '2000-01-01 12:00:00+00' where mark_name = 'Multi-2';
-  update emaj.emaj_mark set mark_datetime = '2000-01-01 13:00:00+00' where mark_name = 'Multi-3';
   update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 12:00:00+00'
     from emaj.emaj_mark
     where time_id = mark_time_id and mark_name = 'Multi-2';

@@ -424,19 +424,19 @@ select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');
 ERROR:  emaj_get_previous_mark_group: "unknownMark" is not a known mark for group "myGroup2".
 CONTEXT:  PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 19 at RAISE
 -- should be OK
-select emaj.emaj_get_previous_mark_group('myGroup2',(select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM1'));
+select emaj.emaj_get_previous_mark_group('myGroup2',(select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'SM1'));
  emaj_get_previous_mark_group 
 ------------------------------
  Mark2
 (1 row)
 
-select emaj.emaj_get_previous_mark_group('myGroup2',(select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM1')+'0.000001 SECOND'::interval);
+select emaj.emaj_get_previous_mark_group('myGroup2',(select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'SM1')+'0.000001 SECOND'::interval);
  emaj_get_previous_mark_group 
 ------------------------------
  SM1
 (1 row)
 
-select emaj.emaj_get_previous_mark_group('myGroup1',(select min(mark_datetime) from emaj.emaj_mark where mark_group = 'myGroup1'));
+select emaj.emaj_get_previous_mark_group('myGroup1',(select min(time_clock_timestamp) from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup1'));
  emaj_get_previous_mark_group 
 ------------------------------
  
@@ -779,7 +779,7 @@ update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group 
 -- and delete marks including SM1
 select emaj.emaj_delete_before_mark_group('myGroup2',
       (select emaj.emaj_get_previous_mark_group('myGroup2',
-             (select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM2')+'0.000001 SECOND'::interval)));
+             (select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_group = 'myGroup2' and mark_name = 'SM2')+'0.000001 SECOND'::interval)));
  emaj_delete_before_mark_group 
 -------------------------------
                              8

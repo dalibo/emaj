@@ -183,20 +183,19 @@ Composite type "emaj.emaj_log_stat_type"
  stat_table  | text   | 
  stat_rows   | bigint | 
 
-                                                   Table "emaj.emaj_mark"
-            Column            |           Type           |                            Modifiers                             
-------------------------------+--------------------------+------------------------------------------------------------------
- mark_group                   | text                     | not null
- mark_name                    | text                     | not null
- mark_id                      | bigint                   | not null default nextval('emaj.emaj_mark_mark_id_seq'::regclass)
- mark_time_id                 | bigint                   | not null
- mark_datetime                | timestamp with time zone | not null
- mark_is_deleted              | boolean                  | not null
- mark_is_rlbk_protected       | boolean                  | not null
- mark_comment                 | text                     | 
- mark_last_sequence_id        | bigint                   | 
- mark_log_rows_before_next    | bigint                   | 
- mark_logged_rlbk_target_mark | text                     | 
+                                          Table "emaj.emaj_mark"
+            Column            |  Type   |                            Modifiers                             
+------------------------------+---------+------------------------------------------------------------------
+ mark_group                   | text    | not null
+ mark_name                    | text    | not null
+ mark_id                      | bigint  | not null default nextval('emaj.emaj_mark_mark_id_seq'::regclass)
+ mark_time_id                 | bigint  | not null
+ mark_is_deleted              | boolean | not null
+ mark_is_rlbk_protected       | boolean | not null
+ mark_comment                 | text    | 
+ mark_last_sequence_id        | bigint  | 
+ mark_log_rows_before_next    | bigint  | 
+ mark_logged_rlbk_target_mark | text    | 
 Indexes:
     "emaj_mark_pkey" PRIMARY KEY, btree (mark_group, mark_name)
 Foreign-key constraints:

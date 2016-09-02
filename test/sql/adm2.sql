@@ -57,7 +57,7 @@ select emaj.emaj_rename_mark_group('myGroup2','M2','Deleted M2');
 -- use emaj_get_previous_mark_group and delete an initial deleted mark
 select emaj.emaj_delete_before_mark_group('myGroup2',
       (select emaj.emaj_get_previous_mark_group('myGroup2',
-             (select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'M3')+'0.000001 SECOND'::interval)));
+             (select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_group = 'myGroup2' and mark_name = 'M3')+'0.000001 SECOND'::interval)));
 
 -- comment a deleted mark
 select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is deleted');

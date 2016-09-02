@@ -158,8 +158,8 @@ select * from emaj.emaj_relation;
 (0 rows)
 
 select * from emaj.emaj_mark;
- mark_group | mark_name | mark_id | mark_time_id | mark_datetime | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+-----------+---------+--------------+---------------+-----------------+------------------------+--------------+-----------------------+---------------------------+------------------------------
+ mark_group | mark_name | mark_id | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_last_sequence_id | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------+---------+--------------+-----------------+------------------------+--------------+-----------------------+---------------------------+------------------------------
 (0 rows)
 
 select * from emaj.emaj_sequence;

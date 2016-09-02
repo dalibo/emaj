@@ -186,7 +186,6 @@ CREATE TABLE emaj.emaj_mark (
                                                            -- that are not safe if system time changes)
   mark_time_id                 BIGINT      NOT NULL,       -- time stamp of the mark creation, used as a reference
                                                            --   for other tables like emaj_sequence and all log tables
-  mark_datetime                TIMESTAMPTZ NOT NULL,       -- clock timestamp of the mark creation
   mark_is_deleted              BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is deleted
   mark_is_rlbk_protected       BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is protected from rollbacks (false by default)
   mark_comment                 TEXT,                       -- optional user comment
@@ -204,9 +203,9 @@ $$Contains marks set on E-Maj tables groups.$$;
 
 -- populate the new table
 INSERT INTO emaj.emaj_mark (
-         mark_group, mark_name, mark_id, mark_time_id, mark_datetime, mark_is_deleted, mark_is_rlbk_protected,
+         mark_group, mark_name, mark_id, mark_time_id, mark_is_deleted, mark_is_rlbk_protected,
          mark_comment, mark_last_sequence_id, mark_log_rows_before_next)
-  SELECT mark_group, mark_name, mark_id, time_id, mark_datetime, mark_is_deleted, mark_is_rlbk_protected,
+  SELECT mark_group, mark_name, mark_id, time_id, mark_is_deleted, mark_is_rlbk_protected,
          mark_comment, mark_last_sequence_id, mark_log_rows_before_next
     FROM emaj_mark_old, emaj.emaj_time_stamp
     WHERE mark_datetime = time_clock_timestamp AND time_event = 'M';
@@ -2786,10 +2785,9 @@ $_set_mark_groups$
       FROM emaj.emaj_sequence_sequ_id_seq;
 -- insert the marks into the emaj_mark table
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
-      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_datetime, mark_is_deleted,
+      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted,
                                   mark_is_rlbk_protected, mark_last_sequence_id, mark_logged_rlbk_target_mark)
-----! TODO: temporary - to be replaced by a VALUES () clause once time_clock_timestamp will not be needed anymore
-        SELECT v_groupNames[v_i], v_mark, v_timeId, time_clock_timestamp, FALSE,
+        SELECT v_groupNames[v_i], v_mark, v_timeId, FALSE,
                FALSE, v_lastSequenceId, v_loggedRlbkTargetMark
           FROM emaj.emaj_time_stamp WHERE time_id = v_timeId;
     END LOOP;
@@ -4683,16 +4681,19 @@ $emaj_log_stat_group$
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
 --   if no mark exists for the group (just after emaj_create_group() or emaj_reset_group() functions call),
 --     v_realFirstMark remains NULL
-      SELECT mark_name, mark_time_id, mark_datetime INTO v_realFirstMark, v_firstMarkTimeId, v_tsFirstMark
-        FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_id LIMIT 1;
+      SELECT mark_name, mark_time_id, time_clock_timestamp INTO v_realFirstMark, v_firstMarkTimeId, v_tsFirstMark
+        FROM emaj.emaj_mark, emaj.emaj_time_stamp
+        WHERE time_id = mark_time_id AND mark_group = v_groupName
+        ORDER BY mark_id LIMIT 1;
     ELSE
 -- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied first mark for the group
       SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
       IF v_realFirstMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: Start mark "%" is unknown for group "%".', v_firstMark, v_groupName;
       END IF;
-      SELECT mark_time_id, mark_datetime INTO v_firstMarkTimeId, v_tsFirstMark
-        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realFirstMark;
+      SELECT mark_time_id, time_clock_timestamp INTO v_firstMarkTimeId, v_tsFirstMark
+        FROM emaj.emaj_mark, emaj.emaj_time_stamp
+        WHERE time_id = mark_time_id AND mark_group = v_groupName AND mark_name = v_realFirstMark;
     END IF;
 -- if a last mark name is supplied, check and retrieve the name, timestamp and last sequ_hole id of the supplied end mark for the group
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
@@ -4700,8 +4701,9 @@ $emaj_log_stat_group$
       IF v_realLastMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: End mark "%" is unknown for group "%".', v_lastMark, v_groupName;
       END IF;
-      SELECT mark_time_id, mark_datetime INTO v_lastMarkTimeId, v_tsLastMark
-        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
+      SELECT mark_time_id, time_clock_timestamp INTO v_lastMarkTimeId, v_tsLastMark
+        FROM emaj.emaj_mark, emaj.emaj_time_stamp
+        WHERE time_id = mark_time_id AND mark_group = v_groupName AND mark_name = v_realLastMark;
 -- if last mark is null or empty, v_realLastMark, v_lastMarkTimeId, v_tsLastMark and v_lastLastSeqHoleId remain NULL
     END IF;
 -- check that the first_mark < end_mark

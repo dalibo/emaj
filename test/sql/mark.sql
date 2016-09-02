@@ -97,9 +97,9 @@ select emaj.emaj_get_previous_mark_group('unknownGroup',NULL);
 select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');
 
 -- should be OK
-select emaj.emaj_get_previous_mark_group('myGroup2',(select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM1'));
-select emaj.emaj_get_previous_mark_group('myGroup2',(select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM1')+'0.000001 SECOND'::interval);
-select emaj.emaj_get_previous_mark_group('myGroup1',(select min(mark_datetime) from emaj.emaj_mark where mark_group = 'myGroup1'));
+select emaj.emaj_get_previous_mark_group('myGroup2',(select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'SM1'));
+select emaj.emaj_get_previous_mark_group('myGroup2',(select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'SM1')+'0.000001 SECOND'::interval);
+select emaj.emaj_get_previous_mark_group('myGroup1',(select min(time_clock_timestamp) from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup1'));
 
 select emaj.emaj_get_previous_mark_group('myGroup2','SM1');
 select coalesce(emaj.emaj_get_previous_mark_group('myGroup2','Mark2'),'No previous mark');
@@ -183,7 +183,7 @@ update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group 
 -- and delete marks including SM1
 select emaj.emaj_delete_before_mark_group('myGroup2',
       (select emaj.emaj_get_previous_mark_group('myGroup2',
-             (select mark_datetime from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM2')+'0.000001 SECOND'::interval)));
+             (select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_group = 'myGroup2' and mark_name = 'SM2')+'0.000001 SECOND'::interval)));
 select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM2';
 
 -- check emaj_delete_before_mark_group() also cleans up the emaj_hist table
