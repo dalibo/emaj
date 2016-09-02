@@ -297,13 +297,11 @@ primary key, btree, for table "emaj.emaj_relation"
  rlbk_status         | emaj._rlbk_status_enum   | 
  rlbk_begin_hist_id  | bigint                   | 
  rlbk_is_dblink_used | boolean                  | 
- rlbk_start_datetime | timestamp with time zone | 
  rlbk_end_datetime   | timestamp with time zone | 
  rlbk_msg            | text                     | 
 Indexes:
     "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id)
     "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum])
-    "emaj_rlbk_idx2" btree (rlbk_start_datetime)
 Foreign-key constraints:
     "emaj_rlbk_rlbk_mark_time_id_fkey" FOREIGN KEY (rlbk_mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     "emaj_rlbk_rlbk_time_id_fkey" FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
@@ -317,12 +315,6 @@ Referenced by:
 -------------+------------------------+-------------
  rlbk_status | emaj._rlbk_status_enum | rlbk_status
 btree, for table "emaj.emaj_rlbk", predicate (rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum]))
-
-                     Index "emaj.emaj_rlbk_idx2"
-       Column        |           Type           |     Definition      
----------------------+--------------------------+---------------------
- rlbk_start_datetime | timestamp with time zone | rlbk_start_datetime
-btree, for table "emaj.emaj_rlbk"
 
   Index "emaj.emaj_rlbk_pkey"
  Column  |  Type   | Definition 
