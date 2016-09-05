@@ -519,6 +519,7 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
 select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id, 
        regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_id, cons_rows 
   from emaj.emaj_get_consolidable_rollbacks();
+
 -- consolidate a rollback already consolidated
 select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
 
@@ -561,6 +562,7 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 300 order by time_id;
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
+
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 5000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 500;

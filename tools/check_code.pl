@@ -23,7 +23,7 @@ use warnings; use strict;
     foreach $var (@varNames) {
 #print("...> $var\n");
       if ($procedure !~ /$var/m) {
-        print "WARNING : on function $fnctName, the variable $var seems to be unused\n";
+        print "WARNING: on function $fnctName, the variable $var seems to be unused\n";
       }
     }
 #print("=>$procedure\n");
@@ -51,11 +51,11 @@ use warnings; use strict;
 # warning on the current line
     # detection of TAB character
     if ($line =~ /\t/) {
-      print "WARNING : the line $nbl_src contains at least a TAB character\n";
+      print "WARNING: the line $nbl_src contains at least a TAB character\n";
     }
     # detection of trailing SPACES
     if ($line =~ / $/) {
-      print "WARNING : the line $nbl_src ends with spaces\n";
+      print "WARNING: the line $nbl_src ends with spaces\n";
     }
 
 # pattern detection
@@ -63,7 +63,7 @@ use warnings; use strict;
     if ($line =~ /^CREATE OR REPLACE FUNCTION\s+(.*?)\.(.*?)\(/) {
       $schema = $1; $fnctName = $2;
       if ($status != 0) {
-        die "ERROR : the function $fnctName starts but the end of the preceeding function or DO block one has not been detected\n";
+        die "ERROR: the function $fnctName starts but the end of the preceeding function or DO block one has not been detected\n";
       }
       $status = 1;
       $language = '';
@@ -75,7 +75,7 @@ use warnings; use strict;
     if ($line =~ /^DO /) {
       $schema = //; $fnctName = 'do';
       if ($status != 0) {
-        die "ERROR : the DO block starts but the end of the preceeding function of DO block one has not been detected\n";
+        die "ERROR: the DO block starts but the end of the preceeding function of DO block one has not been detected\n";
       }
       $status = 1;
       $language = 'plpgsql';
@@ -94,11 +94,11 @@ use warnings; use strict;
       $startFnctMark = $1;
       $status = 2;
       if ($2 ne '') {
-        print "WARNING : on function $fnctName, the start function mark has extra characters\n";
+        print "WARNING: on function $fnctName, the start function mark has extra characters\n";
       }
 #print("    $startFnctMark\n");
       if ($schema eq 'emaj' && $language eq 'plpgsql' && $fnctName !~ /^_tmp_/ && $startFnctMark ne $fnctName) {
-        print "WARNING : on function $fnctName, the start function mark is different from the function name\n";
+        print "WARNING: on function $fnctName, the start function mark is different from the function name\n";
       }
       next;
     }
@@ -107,7 +107,7 @@ use warnings; use strict;
       $status = 3;
 #print("    DECLARE found\n");
       if ($1 ne '  ' || $2 ne '') {
-        print "WARNING : on function $fnctName, the DECLARE clause is not preceeding by 2 blanks or has extra characters\n";
+        print "WARNING: on function $fnctName, the DECLARE clause is not preceeding by 2 blanks or has extra characters\n";
       }
       next;
     }
@@ -116,7 +116,7 @@ use warnings; use strict;
       $status = 4;
 #print("    BEGIN found\n");
       if ($1 ne '  ' || $2 ne '') {
-        print "WARNING : on function $fnctName, the BEGIN clause is not preceeding by 2 blanks or has extra characters\n";
+        print "WARNING: on function $fnctName, the BEGIN clause is not preceeding by 2 blanks or has extra characters\n";
       }
       next;
     }
@@ -125,7 +125,7 @@ use warnings; use strict;
       $status = 0;
 #print("    function end\n");
       if ($1 ne ';') {
-        print "WARNING : on function $fnctName, the end function mark has extra characters\n";
+        print "WARNING: on function $fnctName, the end function mark has extra characters\n";
       }
       # Detect potential unused variable for the function
       if (scalar(@varNames) > 0) {

@@ -10,7 +10,6 @@ select * from emaj.emaj_verify_all();
 -----------------------------
 -- Step 2 : for myGroup1, update tables, then unprotect and rollback then update tables again then set 3 marks
 -----------------------------
-
 set search_path=myschema1;
 --
 update "myTbl3" set col33 = col33 / 2;
@@ -36,6 +35,7 @@ select emaj.emaj_set_mark_group('myGroup1','M5');
 update myTbl1 set col11 = 99 where col11 = 1;
 --
 select emaj.emaj_set_mark_group('myGroup1','M6');
+
 -----------------------------
 -- Step 3 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------

@@ -581,20 +581,3 @@ Owned by: emaj.emaj_time_stamp.time_id
  param_value_boolean  | boolean  | 
  param_value_interval | interval | 
 
------------------------------
--- count all functions in emaj schema and all function usable by users (emaj_xxx)
------------------------------
-select count(*) from pg_proc, pg_namespace 
-  where pg_namespace.oid=pronamespace and nspname = 'emaj';
- count 
--------
-    94
-(1 row)
-
-select count(*) from pg_proc, pg_namespace 
-  where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname LIKE E'emaj\\_%';
- count 
--------
-    42
-(1 row)
-

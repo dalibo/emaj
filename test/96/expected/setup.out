@@ -233,29 +233,3 @@ grant all on sequence mySchema2.mySeq1 to emaj_regression_tests_adm_user;
 grant all on sequence "phil's schema3"."myTbl2\_col21_seq" to emaj_regression_tests_adm_user;
 grant all on sequence "phil's schema3"."phil's seq\1" to emaj_regression_tests_adm_user;
 grant all on mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2 to emaj_regression_tests_adm_user;
------------------------------
--- check that no function has kept its default rights to public
------------------------------
--- should return no row
-select proname, proacl from pg_proc, pg_namespace 
-  where pg_namespace.oid=pronamespace and nspname = 'emaj' and proacl is null;
- proname | proacl 
----------+--------
-(0 rows)
-
------------------------------
--- check that no user function has the default comment
------------------------------
--- should return no row
-SELECT pg_proc.proname
-  FROM pg_proc
-    JOIN pg_namespace ON (pronamespace=pg_namespace.oid)
-    LEFT OUTER JOIN pg_description ON (pg_description.objoid = pg_proc.oid 
-                     AND classoid = (SELECT oid FROM pg_class WHERE relname = 'pg_proc')
-                     AND objsubid=0)
-  WHERE nspname = 'emaj' AND proname LIKE E'emaj\\_%' AND 
-        pg_description.description='E-Maj internal function';
- proname 
----------
-(0 rows)
-

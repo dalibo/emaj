@@ -329,6 +329,7 @@ select hist_id, hist_function, hist_event, hist_object,
   case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'14(4|6)','<144|146>')
     else regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g') end,
   hist_user from emaj.emaj_hist order by hist_id;
+
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 300;

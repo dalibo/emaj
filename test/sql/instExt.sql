@@ -42,12 +42,3 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
 -- check table list
 \d emaj.*
 
------------------------------
--- count all functions in emaj schema and all function usable by users (emaj_xxx)
------------------------------
-select count(*) from pg_proc, pg_namespace 
-  where pg_namespace.oid=pronamespace and nspname = 'emaj';
-
-select count(*) from pg_proc, pg_namespace 
-  where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname LIKE E'emaj\\_%';
-
