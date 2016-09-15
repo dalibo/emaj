@@ -5,7 +5,7 @@
 -----------------------------
 -- migrate to the target version
 -----------------------------
-\i ../../sql/emaj-1.2.0-to-1.3.0.sql
+\i ../../sql/emaj-1.3.0-to-1.3.1.sql
 
 -----------------------------
 -- check installation

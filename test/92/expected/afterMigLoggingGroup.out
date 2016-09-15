@@ -140,7 +140,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id |      hist_function       |  hist_event  |         hist_object          |                        regexp_replace                         | hist_user 
 ---------+--------------------------+--------------+------------------------------+---------------------------------------------------------------+-----------
-       1 | EMAJ_INSTALL             |              | E-Maj 1.2.0                  | Initialisation completed                                      | postgres
+       1 | EMAJ_INSTALL             |              | E-Maj 1.3.0                  | Initialisation completed                                      | postgres
        2 | CREATE_GROUP             | BEGIN        | myGroup1                     | rollbackable                                                  | postgres
        3 | CREATE_GROUP             | END          | myGroup1                     | 6 tables/sequences processed                                  | postgres
        4 | CREATE_GROUP             | BEGIN        | myGroup2                     | rollbackable                                                  | postgres
@@ -208,7 +208,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
       66 | SET_MARK_GROUP           | BEGIN        | myGroup2                     | RLBK_M3_%_DONE                                                | postgres
       67 | SET_MARK_GROUP           | END          | myGroup2                     | RLBK_M3_%_DONE                                                | postgres
       68 | ROLLBACK_GROUP           | END          | myGroup2                     | Rollback_id 2, 1 tables and 2 sequences effectively processed | postgres
-      69 | EMAJ_INSTALL             |              | E-Maj 1.3.0                  | Migration from 1.2.0 completed                                | postgres
+      69 | EMAJ_INSTALL             |              | E-Maj 1.3.1                  | Migration from 1.3.0 completed                                | postgres
       70 | ROLLBACK_GROUP           | BEGIN        | myGroup1                     | Unlogged rollback to mark M2 (timestamp)                      | postgres
       71 | DBLINK_OPEN_CNX          |              | rlbk#1                       | Status = -2                                                   | postgres
       72 | LOCK_GROUP               | BEGIN        | myGroup1                     | Rollback session #1                                           | postgres
