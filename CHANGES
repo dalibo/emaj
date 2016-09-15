@@ -1,11 +1,12 @@
 E-Maj - Release notes
 ---------------------
-<NEXT_VERSION>
+1.3.1
 ------
 Enhancements:
 
 Bug fixes:
-
+  - fix a performance issue with logged rollback operations in some rare
+    cases, involving tables with primary keys having more than 6 columns.
 
 1.3.0
 ------

@@ -92,9 +92,6 @@ begin;
   update emaj.emaj_group_def set grpdef_log_schema_suffix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 63 at PERFORM
-PL/pgSQL function "emaj_create_group" line 6 at RETURN
 ERROR:  _create_seq: Defining a secondary log schema is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 )"
 PL/pgSQL function "emaj_create_group" line 76 at PERFORM
@@ -105,9 +102,6 @@ begin;
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 63 at PERFORM
-PL/pgSQL function "emaj_create_group" line 6 at RETURN
 ERROR:  _create_seq: Defining an emaj names prefix is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 )"
 PL/pgSQL function "emaj_create_group" line 76 at PERFORM
@@ -118,9 +112,6 @@ begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 63 at PERFORM
-PL/pgSQL function "emaj_create_group" line 6 at RETURN
 ERROR:  _create_seq: Defining log tablespaces is not allowed for a sequence (myschema1.myTbl3_col31_seq).
 CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 )"
 PL/pgSQL function "emaj_create_group" line 76 at PERFORM
@@ -162,9 +153,6 @@ begin;
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 63 at PERFORM
-PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
                  6
@@ -181,9 +169,6 @@ rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 63 at PERFORM
-PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
                  6
@@ -194,11 +179,7 @@ alter table myschema2.myTbl6 add foreign key (col61) references myschema2.myTbl7
 alter table myschema2.myTbl8 add foreign key (col81) references myschema2.myTbl6 (col61) deferrable;
 select emaj.emaj_create_group('myGroup2',true);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 83 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 83 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -210,8 +191,6 @@ begin;
     where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
   select emaj.emaj_create_group('phil''s group#3",',false);
 WARNING:  _create_seq: Sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table belong to another tables group (dummyGrp3).
-CONTEXT:  SQL statement "SELECT  emaj._create_seq( $1 ,  $2 )"
-PL/pgSQL function "emaj_create_group" line 76 at PERFORM
  emaj_create_group 
 -------------------
                  3
@@ -227,9 +206,6 @@ select emaj.emaj_create_group('phil''s group#3",',false);
 
 select emaj.emaj_create_group('myGroup4');
 WARNING:  _create_tbl: table myschema4.mytblm has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 63 at PERFORM
-PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
                  3
@@ -445,8 +421,6 @@ PL/pgSQL function "emaj_force_drop_group" line 16 at SQL statement
 -- should be OK
 select emaj.emaj_create_group('myGroup1',false);
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 63 at PERFORM
  emaj_create_group 
 -------------------
                  6
@@ -466,11 +440,7 @@ select emaj.emaj_force_drop_group('myGroup1');
 
 select emaj.emaj_create_group('myGroup2',true);
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 83 at PERFORM
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 83 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -493,9 +463,6 @@ ERROR:  emaj_alter_group: group unkownGroup has not been created.
 -- group in logging state
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_create_group" line 63 at PERFORM
-PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
                  6
@@ -519,13 +486,7 @@ select emaj.emaj_stop_group('myGroup1');
 begin;
   select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 83 at PERFORM
-PL/pgSQL function "emaj_create_group" line 6 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups (array[ $1 ])"
-PL/pgSQL function "emaj_create_group" line 83 at PERFORM
-PL/pgSQL function "emaj_create_group" line 6 at RETURN
  emaj_create_group 
 -------------------
                  8
@@ -608,11 +569,7 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl4';
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 211 at PERFORM
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 211 at PERFORM
  emaj_alter_group 
 ------------------
                 4
@@ -636,11 +593,7 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table myschema1.mytbl2 is referenced by foreign key mytbl4_col43_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 211 at PERFORM
 WARNING:  _check_fk_groups: table myschema1.mytbl1 is referenced by foreign key mytbl4_col44_fkey from table myschema1.mytbl4 that is outside groups (myGroup1).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 ])"
-PL/pgSQL function "emaj_alter_group" line 211 at PERFORM
  emaj_alter_group 
 ------------------
                 3
@@ -770,8 +723,6 @@ select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.
 update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp is NULL then 'tsplog1' when grpdef_log_dat_tsp = 'tsplog1' then 'tsp log''2' else NULL end where grpdef_schema = 'myschema1' and grpdef_tblseq not like '%seq';
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
  emaj_alter_group 
 ------------------
                 6
@@ -780,8 +731,6 @@ PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
 update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp = 'tsplog1' then NULL when grpdef_log_dat_tsp = 'tsp log''2' then 'tsplog1' else 'tsp log''2' end where grpdef_schema = 'myschema1' and grpdef_tblseq not like '%seq';
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _create_tbl: table myschema1.mytbl2 has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT  emaj._create_tbl( $1 ,  $2 ,  $3 ,  $4 )"
-PL/pgSQL function "emaj_alter_group" line 183 at PERFORM
  emaj_alter_group 
 ------------------
                 6

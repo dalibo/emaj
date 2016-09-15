@@ -1,201 +1,27 @@
--- instPsqlPrev.sql: Install previous version of E-Maj as simple psql script
--- It installs the previous E-Maj version for migration test.
+-- instExtPrev.sql : install previous version of E-Maj as an extension
 --
 ------------------------------------------------------------
 -- install dblink
 ------------------------------------------------------------
--- this 8.4.22 version seems compatible with 8.2 to 9.4 pg version
-\i ~/postgresql-8.4.22/contrib/dblink/dblink.sql
-/* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.18 2009/06/09 17:41:02 tgl Exp $ */
--- Adjust this setting to control where the objects get created.
-SET search_path = public;
--- dblink_connect now restricts non-superusers to password
--- authenticated connections
-CREATE OR REPLACE FUNCTION dblink_connect (text)
-RETURNS text
-AS '$libdir/dblink','dblink_connect'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_connect (text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_connect'
-LANGUAGE C STRICT;
--- dblink_connect_u allows non-superusers to use
--- non-password authenticated connections, but initially
--- privileges are revoked from public
-CREATE OR REPLACE FUNCTION dblink_connect_u (text)
-RETURNS text
-AS '$libdir/dblink','dblink_connect'
-LANGUAGE C STRICT SECURITY DEFINER;
-CREATE OR REPLACE FUNCTION dblink_connect_u (text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_connect'
-LANGUAGE C STRICT SECURITY DEFINER;
-REVOKE ALL ON FUNCTION dblink_connect_u (text) FROM public;
-REVOKE ALL ON FUNCTION dblink_connect_u (text, text) FROM public;
-CREATE OR REPLACE FUNCTION dblink_disconnect ()
-RETURNS text
-AS '$libdir/dblink','dblink_disconnect'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_disconnect (text)
-RETURNS text
-AS '$libdir/dblink','dblink_disconnect'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_open (text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_open'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_open (text, text, boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_open'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_open (text, text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_open'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_open (text, text, text, boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_open'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_fetch (text, int)
-RETURNS setof record
-AS '$libdir/dblink','dblink_fetch'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_fetch (text, int, boolean)
-RETURNS setof record
-AS '$libdir/dblink','dblink_fetch'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_fetch (text, text, int)
-RETURNS setof record
-AS '$libdir/dblink','dblink_fetch'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_fetch (text, text, int, boolean)
-RETURNS setof record
-AS '$libdir/dblink','dblink_fetch'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_close (text)
-RETURNS text
-AS '$libdir/dblink','dblink_close'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_close (text, boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_close'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_close (text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_close'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_close (text, text, boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_close'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink (text, text)
-RETURNS setof record
-AS '$libdir/dblink','dblink_record'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink (text, text, boolean)
-RETURNS setof record
-AS '$libdir/dblink','dblink_record'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink (text)
-RETURNS setof record
-AS '$libdir/dblink','dblink_record'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink (text, boolean)
-RETURNS setof record
-AS '$libdir/dblink','dblink_record'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_exec (text, text)
-RETURNS text
-AS '$libdir/dblink','dblink_exec'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_exec (text, text, boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_exec'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_exec (text)
-RETURNS text
-AS '$libdir/dblink','dblink_exec'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_exec (text,boolean)
-RETURNS text
-AS '$libdir/dblink','dblink_exec'
-LANGUAGE C STRICT;
-CREATE TYPE dblink_pkey_results AS (position int, colname text);
-CREATE OR REPLACE FUNCTION dblink_get_pkey (text)
-RETURNS setof dblink_pkey_results
-AS '$libdir/dblink','dblink_get_pkey'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_build_sql_insert (text, int2vector, int, _text, _text)
-RETURNS text
-AS '$libdir/dblink','dblink_build_sql_insert'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_build_sql_delete (text, int2vector, int, _text)
-RETURNS text
-AS '$libdir/dblink','dblink_build_sql_delete'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_build_sql_update (text, int2vector, int, _text, _text)
-RETURNS text
-AS '$libdir/dblink','dblink_build_sql_update'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_current_query ()
-RETURNS text
-AS '$libdir/dblink','dblink_current_query'
-LANGUAGE C;
-CREATE OR REPLACE FUNCTION dblink_send_query(text, text)
-RETURNS int4
-AS '$libdir/dblink', 'dblink_send_query'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_is_busy(text)
-RETURNS int4
-AS '$libdir/dblink', 'dblink_is_busy'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_get_result(text)
-RETURNS SETOF record
-AS '$libdir/dblink', 'dblink_get_result'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_get_result(text, bool)
-RETURNS SETOF record
-AS '$libdir/dblink', 'dblink_get_result'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_get_connections()
-RETURNS text[]
-AS '$libdir/dblink', 'dblink_get_connections'
-LANGUAGE C;
-CREATE OR REPLACE FUNCTION dblink_cancel_query(text)
-RETURNS text
-AS '$libdir/dblink', 'dblink_cancel_query'
-LANGUAGE C STRICT;
-CREATE OR REPLACE FUNCTION dblink_error_message(text)
-RETURNS text
-AS '$libdir/dblink', 'dblink_error_message'
-LANGUAGE C STRICT;
+CREATE EXTENSION dblink;
 -----------------------------
--- for postgres cluster 8.3 and 9.1, temporarily rename tspemaj tablespace to test both cases
+-- for postgres cluster 9.1 and 9.4, temporarily rename tspemaj tablespace to test both cases
 -----------------------------
-CREATE or REPLACE FUNCTION public.emaj_tmp() 
-RETURNS VOID LANGUAGE plpgsql AS 
-$tmp$
+DO LANGUAGE plpgsql 
+$$
   DECLARE
   BEGIN
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('8.3', '9.1') THEN
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('9.1', '9.4') THEN
       ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
     END IF;
-    RETURN; 
   END;
-$tmp$;
-SELECT public.emaj_tmp();
- emaj_tmp 
-----------
- 
-(1 row)
-
-DROP FUNCTION public.emaj_tmp();
------------------------------
--- emaj installation with previous version
------------------------------
-\i ../../../emaj-1.2.0/sql/emaj.sql
+$$;
+------------------------------------------------------------
+-- emaj installation in 1.3.0 (with the psql script)
+------------------------------------------------------------
+\i ../../../emaj-1.3.0/sql/emaj.sql
 --
--- E-Maj : logs and rollbacks table updates : Version 1.2.0
+-- E-Maj : logs and rollbacks table updates : Version 1.3.0
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -409,9 +235,11 @@ CREATE TABLE emaj.emaj_group (
   group_is_logging           BOOLEAN     NOT NULL,       -- are log triggers activated ?
                                                          -- true between emaj_start_group(s) and emaj_stop_group(s)
                                                          -- flase in other cases
+  group_is_rlbk_protected    BOOLEAN     NOT NULL,       -- is the group currently protected against rollback ?
+                                                         -- always true for AUDIT_ONLY groups
   group_nb_table             INT,                        -- number of tables at emaj_create_group time
   group_nb_sequence          INT,                        -- number of sequences at emaj_create_group time
-  group_is_rollbackable      BOOLEAN,                    -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
+  group_is_rollbackable      BOOLEAN     NOT NULL,       -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
   group_creation_datetime    TIMESTAMPTZ NOT NULL        -- start time of the transaction that created the group
                              DEFAULT transaction_timestamp(),
   group_last_alter_datetime  TIMESTAMPTZ,                -- date and time of the last emaj_alter_group() exec,
@@ -439,8 +267,6 @@ CREATE TABLE emaj.emaj_relation (
   rel_log_sequence           TEXT,                       -- name of the log sequence
   rel_log_function           TEXT,                       -- name of the function associated to the log trigger
                                                          --   created on the application table
-  rel_log_trigger            TEXT,                       -- name of the log trigger
-  rel_trunc_trigger          TEXT,                       -- name of the truncate trigger
   PRIMARY KEY (rel_schema, rel_tblseq),
   FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
   );
@@ -460,6 +286,7 @@ CREATE TABLE emaj.emaj_mark (
                                                          --   for other tables like emaj_sequence and all log tables
   mark_global_seq            BIGINT      NOT NULL,       -- emaj_global_seq last value at mark set (used to rollback)
   mark_is_deleted            BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is deleted
+  mark_is_rlbk_protected     BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is protected from rollbacks (false by default)
   mark_comment               TEXT,                       -- optional user comment
   mark_txid                  BIGINT                      -- id of the tx that has set the mark
                              DEFAULT txid_current(),
@@ -653,7 +480,7 @@ $$Represents the structure of rows returned by the internal _verify_groups() fun
 -- Parameters                     --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','1.2.0');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','1.3.0');
 -- Other parameters are optional. They may be set by E-Maj administrators if needed.
 -- The dblink_user_password parameter defines the role and its associated password, if any, to establish a dblink
 -- connection for the monitoring of rollback operations.
@@ -685,16 +512,11 @@ CREATE VIEW emaj.emaj_visible_param AS
 -- Low level Functions            --
 --                                --
 ------------------------------------
-CREATE OR REPLACE FUNCTION emaj._pg_version()
-RETURNS TEXT LANGUAGE sql IMMUTABLE AS
-$$
--- This function returns as a string the 2 major parts of the current postgresql version (x.y)
-SELECT substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)');
-$$;
 CREATE OR REPLACE FUNCTION emaj._pg_version_num()
 RETURNS INTEGER LANGUAGE sql IMMUTABLE AS
 $$
--- This function returns as an integer the 2 major parts of the current postgresql version (x.y.z => x*100 + y)
+-- This function returns as an integer the 2 major parts of the current postgresql version
+-- x.y.z => x*100 + y. For instance, Postgres version 9.4.12 returns 904
 SELECT cast(to_number(substring (version() from E'PostgreSQL\\s(\\d+)'),'99') * 100 +
             to_number(substring (version() from E'PostgreSQL\\s\\d+\\.(\\d+)'),'99') AS INTEGER);
 $$;
@@ -1144,7 +966,7 @@ $_create_tbl$
 --    - the function that logs the tables updates, defined as a trigger
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_emajSchema             TEXT = 'emaj';
     v_schemaPrefix           TEXT = 'emaj';
     v_emajNamesPrefix        TEXT;
@@ -1157,14 +979,10 @@ $_create_tbl$
     v_baseLogTableName       TEXT;
     v_baseLogIdxName         TEXT;
     v_baseLogFnctName        TEXT;
-    v_baseLogTriggerName     TEXT;
-    v_baseTruncTriggerName   TEXT;
     v_baseSequenceName       TEXT;
     v_logTableName           TEXT;
     v_logIdxName             TEXT;
     v_logFnctName            TEXT;
-    v_logTriggerName         TEXT;
-    v_truncTriggerName       TEXT;
     v_sequenceName           TEXT;
     v_relPersistence         CHAR(1);
     v_relIsTemp              BOOLEAN;
@@ -1175,7 +993,7 @@ $_create_tbl$
     r_trigger                RECORD;
   BEGIN
 -- check the table is neither a temporary nor an unlogged table
-    IF v_pgVersion >= '9.1' THEN
+    IF v_pgVersion >= 901 THEN
       SELECT relpersistence INTO v_relPersistence FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
       IF v_relPersistence = 't' THEN
@@ -1183,7 +1001,7 @@ $_create_tbl$
       ELSIF v_relPersistence = 'u' THEN
         RAISE EXCEPTION '_create_tbl: table % is an unlogged table.', r_grpdef.grpdef_tblseq;
       END IF;
-    ELSIF v_pgVersion >= '8.4' THEN
+    ELSIF v_pgVersion >= 804 THEN
       SELECT relistemp INTO v_relIsTemp FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
       IF v_relIsTemp THEN
@@ -1209,8 +1027,6 @@ $_create_tbl$
     v_baseLogTableName     = v_emajNamesPrefix || '_log';
     v_baseLogIdxName       = v_emajNamesPrefix || '_log_idx';
     v_baseLogFnctName      = v_emajNamesPrefix || '_log_fnct';
-    v_baseLogTriggerName   = v_emajNamesPrefix || '_emaj_log_trg';
-    v_baseTruncTriggerName = v_emajNamesPrefix || '_emaj_trunc_trg';
     v_baseSequenceName     = v_emajNamesPrefix || '_log_seq';
 -- build the different name for table, trigger, functions,...
     v_logSchema        = coalesce(v_schemaPrefix || r_grpdef.grpdef_log_schema_suffix, v_emajSchema);
@@ -1218,8 +1034,6 @@ $_create_tbl$
     v_logTableName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogTableName);
     v_logIdxName       = quote_ident(v_baseLogIdxName);
     v_logFnctName      = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogFnctName);
-    v_logTriggerName   = quote_ident(v_baseLogTriggerName);
-    v_truncTriggerName = quote_ident(v_baseTruncTriggerName);
     v_sequenceName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseSequenceName);
 -- prepare TABLESPACE clauses for data and index
     v_logDatTsp = coalesce(r_grpdef.grpdef_log_dat_tsp, v_defTsp);
@@ -1288,41 +1102,41 @@ $_create_tbl$
          || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER;';
 -- creation of the log trigger on the application table, using the previously created log function
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
-    EXECUTE 'DROP TRIGGER IF EXISTS ' || v_logTriggerName || ' ON ' || v_fullTableName;
-    EXECUTE 'CREATE TRIGGER ' || v_logTriggerName
+    EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
+    EXECUTE 'CREATE TRIGGER emaj_log_trg'
          || ' AFTER INSERT OR UPDATE OR DELETE ON ' || v_fullTableName
          || '  FOR EACH ROW EXECUTE PROCEDURE ' || v_logFnctName || '()';
-    EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_logTriggerName;
+    EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
 -- creation of the trigger that manage any TRUNCATE on the application table
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
-    IF v_pgVersion >= '8.4' THEN
-      EXECUTE 'DROP TRIGGER IF EXISTS ' || v_truncTriggerName || ' ON ' || v_fullTableName;
+    IF v_pgVersion >= 804 THEN
+      EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
       IF v_isRollbackable THEN
 -- For rollbackable groups, use the common _forbid_truncate_fnct() function that blocks the operation
-        EXECUTE 'CREATE TRIGGER ' || v_truncTriggerName
+        EXECUTE 'CREATE TRIGGER emaj_trunc_trg'
              || ' BEFORE TRUNCATE ON ' || v_fullTableName
              || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._forbid_truncate_fnct()';
       ELSE
 -- For audit_only groups, use the common _log_truncate_fnct() function that records the operation into the log table
-        EXECUTE 'CREATE TRIGGER ' || v_truncTriggerName
+        EXECUTE 'CREATE TRIGGER emaj_trunc_trg'
              || ' BEFORE TRUNCATE ON ' || v_fullTableName
              || '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._log_truncate_fnct()';
       END IF;
-      EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || v_truncTriggerName;
+      EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
     END IF;
 -- register the table into emaj_relation
     INSERT INTO emaj.emaj_relation
                (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema,
                 rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
-                rel_log_index, rel_log_sequence, rel_log_function, rel_log_trigger, rel_trunc_trigger)
+                rel_log_index, rel_log_sequence, rel_log_function)
         VALUES (r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq, r_grpdef.grpdef_group, r_grpdef.grpdef_priority, v_logSchema,
                 v_logDatTsp, v_logIdxTsp, 'r', v_baseLogTableName,
-                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName, v_baseLogTriggerName, v_baseTruncTriggerName);
+                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName);
 --
 -- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
     FOR r_trigger IN
       SELECT tgname FROM pg_catalog.pg_trigger
-        WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'%emaj\\_%\\_trg'
+        WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'emaj\\_%\\_trg'
     LOOP
       IF v_triggerList = '' THEN
         v_triggerList = v_triggerList || r_trigger.tgname;
@@ -1349,7 +1163,7 @@ $_drop_tbl$
 -- Required inputs: row from emaj_relation corresponding to the appplication table to proccess
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_fullTableName          TEXT;
   BEGIN
     v_fullTableName    = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
@@ -1359,10 +1173,10 @@ $_drop_tbl$
         AND nspname = r_rel.rel_schema AND relname = r_rel.rel_tblseq AND relkind = 'r';
     IF FOUND THEN
 -- delete the log trigger on the application table
-      EXECUTE 'DROP TRIGGER IF EXISTS ' || quote_ident(r_rel.rel_log_trigger) || ' ON ' || v_fullTableName;
+      EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
 -- delete the truncate trigger on the application table
-      IF v_pgVersion >= '8.4' THEN
-        EXECUTE 'DROP TRIGGER IF EXISTS ' || quote_ident(r_rel.rel_trunc_trigger) || ' ON ' || v_fullTableName;
+      IF v_pgVersion >= 804 THEN
+        EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
       END IF;
     END IF;
 -- delete the log function
@@ -1451,7 +1265,7 @@ $_rlbk_tbl$
 -- For unlogged rollback, the log triggers have been disabled previously and will be enabled later.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_fullTableName          TEXT;
     v_logTableName           TEXT;
     v_tmpTable               TEXT;
@@ -1508,7 +1322,7 @@ $_rlbk_tbl$
     ELSE
 --   with multi session parallel rollbacks, the table cannot be a TEMP table because it would not be usable in 2PC
 --   but it may be an UNLOGGED table with pg 9.1+
-      IF v_pgVersion >= '9.1' THEN
+      IF v_pgVersion >= 901 THEN
         v_tableType = 'UNLOGGED';
       ELSE
         v_tableType = '';
@@ -1588,7 +1402,7 @@ $_rlbk_seq$
 -- Input: the emaj_group_def row related to the application sequence to process, mark timestamp, boolean indicating whether the rollback is logged, and the id of the last sequence to keep
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it is not the owner of the application sequence.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_fullSeqName            TEXT;
     v_stmt                   TEXT;
     mark_seq_rec             RECORD;
@@ -1610,7 +1424,7 @@ $_rlbk_seq$
 -- Read the current sequence's characteristics
     v_fullSeqName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
     v_stmt = 'SELECT last_value, ';
-    IF v_pgVersion <= '8.3' THEN
+    IF v_pgVersion <= 803 THEN
        v_stmt = v_stmt || '0 as start_value, ';
     ELSE
        v_stmt = v_stmt || 'start_value, ';
@@ -1829,14 +1643,14 @@ $_verify_groups$
 -- If onErrorStop boolean is false, it returns a set of _verify_groups_type records, one row per detected unconsistency, including the faulting schema and table or sequence names and a detailed message.
 -- If no error is detected, no row is returned.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_hint                   TEXT = 'You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.';
     r_object                 RECORD;
   BEGIN
 -- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
 -- Let's start with some global checks that always raise an exception if an issue is detected
 -- check the postgres version: E-Maj is not compatible with 8.2-
-    IF v_pgVersion < '8.3' THEN
+    IF v_pgVersion < 803 THEN
       RAISE EXCEPTION 'The current postgres version (%) is not compatible with E-Maj.', version();
     END IF;
 -- check the postgres version at groups creation time is compatible with the current version
@@ -1848,9 +1662,11 @@ $_verify_groups$
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groups)
-          AND ((v_pgVersion = '8.3' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion)
+          AND ((v_pgVersion = 803 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                                           to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) <> v_pgVersion)
 --   for 8.4+, both major versions must be 8.4+
-            OR (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4'))
+            OR (v_pgVersion >= 804 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                                            to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804))
         ORDER BY msg
     LOOP
       RAISE EXCEPTION '_verify_groups: %',r_object.msg;
@@ -1912,12 +1728,13 @@ $_verify_groups$
 --   start with log trigger
     FOR r_object IN
       SELECT rel_schema, rel_tblseq,
-             'In group "' || rel_group || '", the log trigger "' || rel_log_trigger || '" is not found.' AS msg
+             'In group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
           AND NOT EXISTS
               (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_log_trigger
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_log_trg'
                    AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
@@ -1925,15 +1742,16 @@ $_verify_groups$
       RETURN NEXT r_object;
     END LOOP;
 --   then truncate trigger if pg 8.4+
-    IF v_pgVersion >= '8.4' THEN
+    IF v_pgVersion >= 804 THEN
       FOR r_object IN
         SELECT rel_schema, rel_tblseq,
-               'In group "' || rel_group || '", the truncate trigger "' || rel_trunc_trigger || '" is not found.' AS msg
+               'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
           FROM emaj.emaj_relation
         WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
             AND NOT EXISTS
                 (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger
+                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_trunc_trg'
                      AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
       LOOP
@@ -2136,8 +1954,9 @@ $emaj_create_group$
 -- performs various checks on the group's content described in the emaj_group_def table
     PERFORM emaj._check_group_content(v_groupName);
 -- OK, insert group row in the emaj_group table
-    INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable)
-      VALUES (v_groupName, FALSE,v_isRollbackable);
+-- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable)
+    INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable, group_is_rlbk_protected)
+      VALUES (v_groupName, FALSE, v_isRollbackable, NOT v_isRollbackable);
 -- look for new E-Maj secondary schemas to create
     FOR r_schema IN
       SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
@@ -2687,15 +2506,15 @@ $_start_groups$
     v_nbTb = 0;
 -- for each relation of the group,
     FOR r_tblsq IN
-       SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_trigger, rel_trunc_trigger FROM emaj.emaj_relation
+       SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
          WHERE rel_group = ANY (v_groupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
        LOOP
       IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
         v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-        EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || quote_ident(r_tblsq.rel_log_trigger);
+        EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg';
         IF v_pgVersion >= 804 THEN
-          EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER ' || quote_ident(r_tblsq.rel_trunc_trigger);
+          EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_trunc_trg';
         END IF;
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, nothing to do
@@ -2881,7 +2700,7 @@ $_stop_groups$
     END IF;
 -- for each relation of the groups to process,
       FOR r_tblsq IN
-          SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_trigger, rel_trunc_trigger FROM emaj.emaj_relation
+          SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
             WHERE rel_group = ANY (v_validGroupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
           LOOP
         IF r_tblsq.rel_kind = 'r' THEN
@@ -2889,7 +2708,7 @@ $_stop_groups$
 --   errors are captured so that emaj_force_stop_group() can be silently executed
           v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
           BEGIN
-            EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || quote_ident(r_tblsq.rel_log_trigger);
+            EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
           EXCEPTION
             WHEN invalid_schema_name THEN
               IF v_isForced THEN
@@ -2905,14 +2724,14 @@ $_stop_groups$
               END IF;
             WHEN undefined_object THEN
               IF v_isForced THEN
-                RAISE WARNING '_stop_group: Trigger % on table % does not exist any more.', quote_ident(r_tblsq.rel_log_trigger), v_fullTableName;
+                RAISE WARNING '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
               ELSE
-                RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist any more.', quote_ident(r_tblsq.rel_log_trigger), v_fullTableName;
+                RAISE EXCEPTION '_stop_group: Trigger "emaj_log_trg" on table % does not exist any more.', v_fullTableName;
               END IF;
           END;
           IF v_pgVersion >= 804 THEN
             BEGIN
-              EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER ' || quote_ident(r_tblsq.rel_trunc_trigger);
+              EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
             EXCEPTION
               WHEN invalid_schema_name THEN
                 IF v_isForced THEN
@@ -2928,9 +2747,9 @@ $_stop_groups$
                 END IF;
               WHEN undefined_object THEN
                 IF v_isForced THEN
-                  RAISE WARNING '_stop_group: Trigger % on table % does not exist any more.', quote_ident(r_tblsq.rel_trunc_trigger), v_fullTableName;
+                  RAISE WARNING '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
                 ELSE
-                  RAISE EXCEPTION '_stop_group: Trigger % on table % does not exist any more.', quote_ident(r_tblsq.rel_trunc_trigger), v_fullTableName;
+                  RAISE EXCEPTION '_stop_group: Trigger "emaj_trunc_trg" on table % does not exist any more.', v_fullTableName;
                 END IF;
             END;
           END IF;
@@ -2949,15 +2768,94 @@ $_stop_groups$
                 (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
                  WHERE mark_group = ANY (v_validGroupNames) AND NOT mark_is_deleted GROUP BY mark_group);
       END IF;
--- set all marks for the groups from the emaj_mark table as 'DELETED' to avoid any further rollback
-      UPDATE emaj.emaj_mark SET mark_is_deleted = TRUE
+-- set all marks for the groups from the emaj_mark table as 'DELETED' to avoid any further rollback and remove protection if any
+      UPDATE emaj.emaj_mark SET mark_is_deleted = TRUE, mark_is_rlbk_protected = FALSE
         WHERE mark_group = ANY (v_validGroupNames) AND NOT mark_is_deleted;
--- update the state of the groups rows from the emaj_group table
-      UPDATE emaj.emaj_group SET group_is_logging = FALSE WHERE group_name = ANY (v_validGroupNames);
+-- update the state of the groups rows from the emaj_group table (the rollback protection of rollbackable groups is reset)
+      UPDATE emaj.emaj_group SET group_is_logging = FALSE, group_is_rlbk_protected = NOT group_is_rollbackable
+        WHERE group_name = ANY (v_validGroupNames);
     END IF;
     RETURN v_nbTb;
   END;
 $_stop_groups$;
+CREATE OR REPLACE FUNCTION emaj.emaj_protect_group(v_groupName TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_protect_group$
+-- This function sets a protection on a group against accidental rollback.
+-- Input: group name
+-- Output: 1 if successful, 0 if the group was already in protected state
+  DECLARE
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_groupIsProtected       BOOLEAN;
+    v_status                 INT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    SELECT group_is_rollbackable, group_is_logging, group_is_rlbk_protected INTO v_groupIsRollbackable, v_groupIsLogging, v_groupIsProtected
+      FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_protect_group: group % has not been created.', v_groupName;
+    END IF;
+-- check that the group is ROLLBACKABLE
+    IF NOT v_groupIsRollbackable THEN
+      RAISE EXCEPTION 'emaj_protect_group: The group % cannot be protected because it is an AUDIT_ONLY group.', v_groupName;
+    END IF;
+-- check that the group is not in LOGGING state
+    IF NOT v_groupIsLogging THEN
+      RAISE EXCEPTION 'emaj_protect_group: The group % cannot be protected because it is not in LOGGING state.', v_groupName;
+    END IF;
+-- OK, set the protection
+    IF v_groupIsProtected THEN
+      v_status = 0;
+    ELSE
+      UPDATE emaj.emaj_group SET group_is_rlbk_protected = TRUE WHERE group_name = v_groupName;
+      v_status = 1;
+    END IF;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('PROTECT_GROUP', v_groupName, 'Status ' || v_status);
+    RETURN v_status;
+  END;
+$emaj_protect_group$;
+COMMENT ON FUNCTION emaj.emaj_protect_group(TEXT) IS
+$$Sets a protection against a rollback on an E-Maj group.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_unprotect_group$
+-- This function unsets a protection on a group against accidental rollback.
+-- Input: group name
+-- Output: 1 if successful, 0 if the group was not already in protected state
+  DECLARE
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_groupIsProtected       BOOLEAN;
+    v_status                 INT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    SELECT group_is_rollbackable, group_is_logging, group_is_rlbk_protected INTO v_groupIsRollbackable, v_groupIsLogging, v_groupIsProtected
+      FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_unprotect_group: group % has not been created.', v_groupName;
+    END IF;
+-- check that the group is ROLLBACKABLE
+    IF NOT v_groupIsRollbackable THEN
+      RAISE EXCEPTION 'emaj_unprotect_group: The group % cannot be unprotected because it is an AUDIT_ONLY group.', v_groupName;
+    END IF;
+-- OK, unset the protection
+    IF NOT v_groupIsProtected THEN
+      v_status = 0;
+    ELSE
+      UPDATE emaj.emaj_group SET group_is_rlbk_protected = FALSE WHERE group_name = v_groupName;
+      v_status = 1;
+    END IF;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('UNPROTECT_GROUP', v_groupName, 'Status ' || v_status);
+    RETURN v_status;
+  END;
+$emaj_unprotect_group$;
+COMMENT ON FUNCTION emaj.emaj_unprotect_group(TEXT) IS
+$$Unsets a protection against a rollback on an E-Maj group.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS int LANGUAGE plpgsql AS
 $emaj_set_mark_group$
@@ -3074,7 +2972,7 @@ $_set_mark_groups$
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_nbTb                   INT = 0;
     v_timestamp              TIMESTAMPTZ;
     v_lastSequenceId         BIGINT;
@@ -3103,7 +3001,7 @@ $_set_mark_groups$
                ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
                quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) ||
                ', ' || quote_literal(v_mark) || ', last_value, ';
-      IF v_pgVersion <= '8.3' THEN
+      IF v_pgVersion <= 803 THEN
          v_stmt = v_stmt || '0, ';
       ELSE
          v_stmt = v_stmt || 'start_value, ';
@@ -3134,7 +3032,7 @@ $_set_mark_groups$
                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
                ') SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(r_tblsq.rel_log_sequence) || ', ' ||
                quote_literal(v_timestamp) || ', ' || quote_literal(v_mark) || ', ' || 'last_value, ';
-      IF v_pgVersion <= '8.3' THEN
+      IF v_pgVersion <= 803 THEN
          v_stmt = v_stmt || '0, ';
       ELSE
          v_stmt = v_stmt || 'start_value, ';
@@ -3155,8 +3053,9 @@ $_set_mark_groups$
       FROM emaj.emaj_global_seq;
 -- insert the marks into the emaj_mark table
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
-      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_global_seq, mark_is_deleted, mark_last_sequence_id, mark_last_seq_hole_id)
-        VALUES (v_groupNames[v_i], v_mark, v_timestamp, v_lastGlobalSeq, FALSE, v_lastSequenceId, v_lastSeqHoleId);
+      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_datetime, mark_global_seq, mark_is_deleted, mark_is_rlbk_protected,
+                                  mark_last_sequence_id, mark_last_seq_hole_id)
+        VALUES (v_groupNames[v_i], v_mark, v_timestamp, v_lastGlobalSeq, FALSE, FALSE, v_lastSequenceId, v_lastSeqHoleId);
     END LOOP;
 -- before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table
     IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
@@ -3523,6 +3422,102 @@ $emaj_rename_mark_group$
 $emaj_rename_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_rename_mark_group(TEXT,TEXT,TEXT) IS
 $$Renames a mark for an E-Maj group.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_protect_mark_group$
+-- This function sets a protection on a mark for a group against accidental rollback.
+-- Input: group name, mark to protect
+-- Output: 1 if successful, 0 if the mark was already in protected state
+-- The group must be ROLLBACKABLE and in LOGGING state.
+  DECLARE
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_realMark               TEXT;
+    v_markIsProtected        BOOLEAN;
+    v_status                 INT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
+      FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_protect_mark_group: group % has not been created.', v_groupName;
+    END IF;
+-- check that the group is ROLLBACKABLE
+    IF NOT v_groupIsRollbackable THEN
+      RAISE EXCEPTION 'emaj_protect_mark_group: A mark on the group % cannot be protected because it is an AUDIT_ONLY group.', v_groupName;
+    END IF;
+-- check that the group is not in LOGGING state
+    IF NOT v_groupIsLogging THEN
+      RAISE EXCEPTION 'emaj_protect_mark_group: A mark on the group % cannot be protected because it is not in LOGGING state.', v_groupName;
+    END IF;
+-- retrieve and check the mark name
+    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION 'emaj_protect_mark_group: mark % doesn''t exist for group %.', v_mark, v_groupName;
+    END IF;
+-- OK, set the protection
+    SELECT mark_is_rlbk_protected INTO v_markIsProtected FROM emaj.emaj_mark
+      WHERE mark_group = v_groupName AND mark_name = v_realMark;
+    IF v_markIsProtected THEN
+      v_status = 0;
+    ELSE
+      UPDATE emaj.emaj_mark SET mark_is_rlbk_protected = TRUE WHERE mark_group = v_groupName AND mark_name = v_realMark;
+      v_status = 1;
+    END IF;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('PROTECT_MARK_GROUP', v_groupName, 'Mark ' || v_realMark || ' ; status ' || v_status);
+    RETURN v_status;
+  END;
+$emaj_protect_mark_group$;
+COMMENT ON FUNCTION emaj.emaj_protect_mark_group(TEXT,TEXT) IS
+$$Sets a protection against a rollback on a mark of an E-Maj group.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_unprotect_mark_group$
+-- This function unsets a protection on a mark for a group against accidental rollback.
+-- Input: group name, mark to unprotect
+-- Output: 1 if successful, 0 if the mark was already in unprotected state
+-- The group must be ROLLBACKABLE and in LOGGING state.
+  DECLARE
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_realMark               TEXT;
+    v_markIsProtected        BOOLEAN;
+    v_status                 INT;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
+      FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_unprotect_mark_group: group % has not been created.', v_groupName;
+    END IF;
+-- check that the group is ROLLBACKABLE
+    IF NOT v_groupIsRollbackable THEN
+      RAISE EXCEPTION 'emaj_unprotect_mark_group: A mark on the group % cannot be unprotected because it is an AUDIT_ONLY group.', v_groupName;
+    END IF;
+-- retrieve and check the mark name
+    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
+    IF v_realMark IS NULL THEN
+      RAISE EXCEPTION 'emaj_unprotect_mark_group: mark % doesn''t exist for group %.', v_mark, v_groupName;
+    END IF;
+-- OK, set the protection
+    SELECT mark_is_rlbk_protected INTO v_markIsProtected FROM emaj.emaj_mark
+      WHERE mark_group = v_groupName AND mark_name = v_realMark;
+    IF NOT v_markIsProtected THEN
+      v_status = 0;
+    ELSE
+      UPDATE emaj.emaj_mark SET mark_is_rlbk_protected = FALSE WHERE mark_group = v_groupName AND mark_name = v_realMark;
+      v_status = 1;
+    END IF;
+-- insert event in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('UNPROTECT_MARK_GROUP', v_groupName, 'Mark ' || v_realMark || ' ; status ' || v_status);
+    RETURN v_status;
+  END;
+$emaj_unprotect_mark_group$;
+COMMENT ON FUNCTION emaj.emaj_unprotect_mark_group(TEXT,TEXT) IS
+$$Unsets a protection against a rollback on a mark of an E-Maj group.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_rollback_group$
@@ -3660,11 +3655,11 @@ $_rlbk_init$
 -- lock the groups to rollback
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = ANY(v_groupNames) FOR UPDATE;
 -- check supplied group names and mark parameters
-    SELECT emaj._rlbk_check(v_groupNames,v_mark) INTO v_markName;
+    SELECT emaj._rlbk_check(v_groupNames, v_mark) INTO v_markName;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- get the mark timestamp for the 1st group (as we know this timestamp is the same for all groups of the array)
-    SELECT emaj._get_mark_datetime(v_groupNames[1],v_mark) INTO v_timestampMark;
+    SELECT emaj._get_mark_datetime(v_groupNames[1], v_mark) INTO v_timestampMark;
 -- insert begin in the history
     IF v_isLoggedRlbk THEN
       v_msg = 'Logged';
@@ -3735,15 +3730,19 @@ $_rlbk_check$
   DECLARE
     v_i                      INT;
     v_groupIsLogging         BOOLEAN;
-    v_isRollbackable         BOOLEAN;
+    v_groupIsProtected       BOOLEAN;
+    v_groupIsRollbackable    BOOLEAN;
     v_markName               TEXT;
+    v_markId                 BIGINT;
     v_markIsDeleted          BOOLEAN;
+    v_protectedMarkList      TEXT;
     v_cpt                    INT;
+    r_mark                   RECORD;
   BEGIN
 -- check that each group ...
 -- ...is recorded in emaj_group table
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
-      SELECT group_is_logging, group_is_rollbackable INTO v_groupIsLogging, v_isRollbackable
+      SELECT group_is_logging, group_is_rollbackable, group_is_rlbk_protected INTO v_groupIsLogging, v_groupIsRollbackable, v_groupIsProtected
         FROM emaj.emaj_group WHERE group_name = v_groupNames[v_i];
       IF NOT FOUND THEN
         RAISE EXCEPTION '_rlbk_check: group % has not been created.', v_groupNames[v_i];
@@ -3753,8 +3752,12 @@ $_rlbk_check$
         RAISE EXCEPTION '_rlbk_check: Group % is not in LOGGING state.', v_groupNames[v_i];
       END IF;
 -- ... is ROLLBACKABLE
-      IF NOT v_isRollbackable THEN
+      IF NOT v_groupIsRollbackable THEN
         RAISE EXCEPTION '_rlbk_check: Group % has been created for audit only purpose.', v_groupNames[v_i];
+      END IF;
+-- ... is not protected against rollback
+      IF v_groupIsProtected THEN
+        RAISE EXCEPTION '_rlbk_check: Group % is currently protected against rollback.', v_groupNames[v_i];
       END IF;
 -- ... owns the requested mark
       SELECT emaj._get_mark_name(v_groupNames[v_i],v_mark) INTO v_markName;
@@ -3762,10 +3765,25 @@ $_rlbk_check$
         RAISE EXCEPTION '_rlbk_check: No mark % exists for group %.', v_mark, v_groupNames[v_i];
       END IF;
 -- ... and this mark is ACTIVE
-      SELECT mark_is_deleted INTO v_markIsDeleted FROM emaj.emaj_mark
+      SELECT mark_id, mark_is_deleted INTO v_markId, v_markIsDeleted FROM emaj.emaj_mark
         WHERE mark_group = v_groupNames[v_i] AND mark_name = v_markName;
       IF v_markIsDeleted THEN
         RAISE EXCEPTION '_rlbk_check: mark % for group % is not usable for rollback.', v_markName, v_groupNames[v_i];
+      END IF;
+-- ... and the rollback wouldn't delete protected marks
+--TODO : use aggregate when 8.3 will not be supported anymore
+      v_protectedMarkList = '';
+      FOR r_mark IN
+        SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = v_groupNames[v_i] AND mark_id > v_markId AND mark_is_rlbk_protected
+        LOOP
+        IF v_protectedMarkList = '' THEN
+          v_protectedMarkList = r_mark.mark_name;
+        ELSE
+          v_protectedMarkList = v_protectedMarkList || ', ' || r_mark.mark_name;
+        END IF;
+      END LOOP;
+      IF v_protectedMarkList <> '' THEN
+        RAISE EXCEPTION '_rlbk_check: protected marks (%) for group % block the rollback to mark %.', v_protectedMarkList, v_groupNames[v_i], v_markName;
       END IF;
     END LOOP;
 -- get the mark timestamp and check it is the same for all groups of the array
@@ -4420,7 +4438,6 @@ $_rlbk_session_exec$
     v_lastGlobalSeq          BIGINT;
     v_lastSequenceId         BIGINT;
     v_lastSeqHoleId          BIGINT;
-    v_logTriggerName         TEXT;
     v_nbRows                 BIGINT;
     r_step                   RECORD;
   BEGIN
@@ -4463,10 +4480,8 @@ $_rlbk_session_exec$
 -- process the step depending on its type
       IF r_step.rlbp_step = 'DIS_LOG_TRG' THEN
 -- process a log trigger disable
-        SELECT quote_ident(rel_log_trigger) INTO v_logTriggerName
-          FROM emaj.emaj_relation WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
         EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                ' DISABLE TRIGGER ' || v_logTriggerName;
+                ' DISABLE TRIGGER emaj_log_trg';
       ELSEIF r_step.rlbp_step = 'DROP_FK' THEN
 -- process a foreign key deletion
         EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
@@ -4496,10 +4511,8 @@ $_rlbk_session_exec$
                 ' ADD CONSTRAINT ' || quote_ident(r_step.rlbp_fkey) || ' ' || r_step.rlbp_fkey_def;
       ELSEIF r_step.rlbp_step = 'ENA_LOG_TRG' THEN
 -- process a log trigger enable
-        SELECT quote_ident(rel_log_trigger) INTO v_logTriggerName
-          FROM emaj.emaj_relation WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
         EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                ' ENABLE TRIGGER ' || v_logTriggerName;
+                ' ENABLE TRIGGER emaj_log_trg';
       END IF;
 -- update the emaj_rlbk_plan table to set the step duration
 -- NB: the computed duration does not include the time needed to update the emaj_rlbk_plan table
@@ -5053,7 +5066,7 @@ $_estimate_rollback_groups$
     v_nbTblseq               INT;
   BEGIN
 -- check supplied group names and mark parameters
-    SELECT emaj._rlbk_check(v_groupNames,v_mark) INTO v_markName;
+    SELECT emaj._rlbk_check(v_groupNames, v_mark) INTO v_markName;
 -- compute a random negative rollback-id (not to interfere with ids of real rollbacks)
     SELECT (random() * -2147483648)::int INTO v_rlbkId;
 --
@@ -5190,7 +5203,7 @@ $emaj_snap_group$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_nbTb                   INT = 0;
     r_tblsq                  RECORD;
     v_fullTableName          TEXT;
@@ -5264,7 +5277,7 @@ $emaj_snap_group$
                 || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
         ELSEIF r_tblsq.rel_kind = 'S' THEN
 -- if it is a sequence, the statement has no order by
-        IF v_pgVersion <= '8.3' THEN
+        IF v_pgVersion <= 803 THEN
           v_seqCol = 'sequence_name, last_value, 0, increment_by, max_value, min_value, cache_value, is_cycled, is_called';
         ELSE
           v_seqCol = 'sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called';
@@ -5314,7 +5327,7 @@ $emaj_snap_log_group$
 -- Output: number of processed tables and sequences
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_nbTb                   INT = 0;
     r_tblsq                  RECORD;
     v_realFirstMark          TEXT;
@@ -5449,7 +5462,7 @@ $emaj_snap_log_group$
                  ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
                  quote_literal(r_tblsq.rel_tblseq) || ', ' || quote_literal(v_timestamp) ||
                  ', ' || quote_literal(v_pseudoMark) || ', last_value, ';
-        IF v_pgVersion <= '8.3' THEN
+        IF v_pgVersion <= 803 THEN
            v_stmt = v_stmt || '0, ';
         ELSE
            v_stmt = v_stmt || 'start_value, ';
@@ -5630,7 +5643,7 @@ $_gen_sql_groups$
 --        - optional array of schema qualified table and sequence names to only process those tables and sequences
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_groupIsLogging         BOOLEAN;
     v_cpt                    INT;
     v_firstMarkCopy          TEXT = v_firstMark;
@@ -5800,7 +5813,7 @@ $_gen_sql_groups$
       v_fullSeqName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       IF v_tsLastMark IS NULL THEN
 -- no supplied last mark, so get current sequence characteritics
-        IF v_pgVersion <= '8.3' THEN
+        IF v_pgVersion <= 803 THEN
 -- .. in pg 8.3-
           EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
                || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
@@ -5815,7 +5828,7 @@ $_gen_sql_groups$
         END IF;
       ELSE
 -- a last mark is supplied, so get sequence characteristics from emaj_sequence table
-        IF v_pgVersion <= '8.3' THEN
+        IF v_pgVersion <= 803 THEN
 -- .. in pg 8.3-
           EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
                || ''' || '' RESTART '' || CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END || '' INCREMENT '' || sequ_increment  || '' MAXVALUE '' || sequ_max_val  || '' MINVALUE '' || sequ_min_val || '' CACHE '' || sequ_cache_val || CASE WHEN NOT sequ_is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
@@ -5879,7 +5892,7 @@ $_verify_all_groups$
 -- The function verifies the consistency of all E-Maj groups.
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
   BEGIN
 -- check the postgres version at creation time is compatible with the current version
 -- Warning: comparisons on version numbers are alphanumeric.
@@ -5889,9 +5902,11 @@ $_verify_all_groups$
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
-        WHERE ((v_pgVersion = '8.3' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') <> v_pgVersion)
+        WHERE ((v_pgVersion = 803 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                                           to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) <> v_pgVersion)
 --   for 8.4+, both major versions must be 8.4+
-            OR (v_pgVersion >= '8.4' AND substring (group_pg_version FROM E'(\\d+\\.\\d+)') < '8.4'))
+            OR (v_pgVersion >= 804 AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                                            to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804))
         ORDER BY msg;
 -- check all application schemas referenced in the emaj_relation table still exist
     RETURN QUERY
@@ -5939,12 +5954,13 @@ $_verify_all_groups$
 -- check log and truncate triggers for all tables referenced in the emaj_relation table still exist
 --   start with log trigger
     RETURN QUERY
-      SELECT 'In group "' || rel_group || '", the log trigger "' || rel_log_trigger || '" is not found.' AS msg
+      SELECT 'In group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
         FROM emaj.emaj_relation
         WHERE rel_kind = 'r'
           AND NOT EXISTS
               (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_log_trigger
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_log_trg'
                    AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
                          -- do not issue a row if the application table does not exist,
                          -- this case has been already detected
@@ -5953,14 +5969,15 @@ $_verify_all_groups$
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
 --   then truncate trigger if pg 8.4+
-    IF v_pgVersion >= '8.4' THEN
+    IF v_pgVersion >= 804 THEN
       RETURN QUERY
-        SELECT 'In group "' || rel_group || '", the truncate trigger "' || rel_trunc_trigger || '" is not found.' AS msg
+        SELECT 'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
           FROM emaj.emaj_relation
           WHERE rel_kind = 'r'
             AND NOT EXISTS
                 (SELECT NULL FROM pg_catalog.pg_trigger, pg_catalog.pg_namespace, pg_catalog.pg_class
-                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = rel_trunc_trigger
+                   WHERE nspname = rel_schema AND relname = rel_tblseq AND tgname = 'emaj_trunc_trg'
                      AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
                          -- do not issue a row if the application table does not exist,
                          -- this case has been already detected
@@ -6139,13 +6156,13 @@ $emaj_verify_all$
 -- emaj objects related to tables and sequences referenced in emaj_relation table.
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
   DECLARE
-    v_pgVersion              TEXT = emaj._pg_version();
+    v_pgVersion              INT = emaj._pg_version_num();
     v_errorFound             BOOLEAN = FALSE;
     r_object                 RECORD;
   BEGIN
 -- Global checks
 -- detect if the current postgres version is at least 8.2
-    IF v_pgVersion < '8.3' THEN
+    IF v_pgVersion < 803 THEN
       RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with E-Maj.';
       v_errorFound = TRUE;
     END IF;
@@ -6235,7 +6252,6 @@ GRANT SELECT ON SEQUENCE emaj.emaj_rlbk_rlbk_id_seq     TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_sequence_sequ_id_seq TO emaj_viewer;
 GRANT SELECT ON SEQUENCE emaj.emaj_seq_hole_sqhl_id_seq TO emaj_viewer;
 -- revoke grants on all functions from PUBLIC
-REVOKE ALL ON FUNCTION emaj._pg_version() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._pg_version_num() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._dblink_open_cnx(v_cnxName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) FROM PUBLIC;
@@ -6280,6 +6296,8 @@ REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_protect_group(v_groupName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN) FROM PUBLIC;
@@ -6290,6 +6308,8 @@ REVOKE ALL ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT
 REVOKE ALL ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) FROM PUBLIC;
@@ -6326,7 +6346,6 @@ REVOKE ALL ON FUNCTION emaj._verify_all_groups() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj._verify_all_schemas() FROM PUBLIC;
 REVOKE ALL ON FUNCTION emaj.emaj_verify_all() FROM PUBLIC;
 -- give appropriate rights on functions to emaj_adm role
-GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._dblink_open_cnx(v_cnxName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) TO emaj_adm;
@@ -6371,6 +6390,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[]) TO emaj_adm
 GRANT EXECUTE ON FUNCTION emaj.emaj_stop_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_force_stop_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_protect_group(v_groupName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_unprotect_group(v_groupName TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_set_mark_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._set_mark_groups(v_groupName TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN) TO emaj_adm;
@@ -6381,6 +6402,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark T
 GRANT EXECUTE ON FUNCTION emaj.emaj_delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rename_mark_group(v_groupName TEXT, v_mark TEXT, v_newName TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
+GRANT EXECUTE ON FUNCTION emaj.emaj_unprotect_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT) TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT) TO emaj_adm;
@@ -6417,9 +6440,7 @@ GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_adm;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_adm;
 -- give appropriate rights on functions to emaj_viewer role
-GRANT EXECUTE ON FUNCTION emaj._pg_version() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._dblink_is_cnx_opened(v_cnxName TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_mark_datetime(TEXT, TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_tsFirstMark TIMESTAMPTZ, v_tsLastMark TIMESTAMPTZ, v_firstLastSeqHoleId BIGINT, v_lastLastSeqHoleId BIGINT) TO emaj_viewer;
@@ -6444,7 +6465,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_viewer;
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_viewer;
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.2.0', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.3.0', 'Initialisation completed');
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 -- and display a message about dblink installation
 CREATE OR REPLACE FUNCTION emaj._tmp_post_install()
@@ -6490,7 +6511,7 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj._tmp_post_install();
-psql:../../../emaj-1.2.0/sql/emaj.sql:6432: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
+psql:../../../emaj-1.3.0/sql/emaj.sql:6630: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
  _tmp_post_install 
 -------------------
  
@@ -6501,21 +6522,40 @@ COMMIT;
 SET client_min_messages TO default;
 \echo '>>> E-Maj objects successfully created'
 >>> E-Maj objects successfully created
------------------------------
+------------------------------------------------------------
+-- transform emaj 1.3.0 into extension
+------------------------------------------------------------
+-- check the extension is available
+select * from pg_available_extension_versions where name = 'emaj';
+ name |   version    | installed | superuser | relocatable | schema | requires |                                            comment                                             
+------+--------------+-----------+-----------+-------------+--------+----------+------------------------------------------------------------------------------------------------
+ emaj | next_version | f         | t         | f           | emaj   | {dblink} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+(1 row)
+
+CREATE EXTENSION emaj VERSION "1.3.0" FROM "unpackaged";
+------------------------------------------------------------
 -- check installation
------------------------------
+------------------------------------------------------------
+-- check impact in catalog
+select extname, extversion from pg_extension where extname = 'emaj';
+ extname | extversion 
+---------+------------
+ emaj    | 1.3.0
+(1 row)
+
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- 1.2.0
+ 1.3.0
 (1 row)
 
 -- check history
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
- hist_id | hist_function | hist_event | hist_object |      regexp_replace      | hist_user 
----------+---------------+------------+-------------+--------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 1.2.0 | Initialisation completed | postgres
-(1 row)
+ hist_id | hist_function | hist_event | hist_object |           regexp_replace            | hist_user 
+---------+---------------+------------+-------------+-------------------------------------+-----------
+       1 | EMAJ_INSTALL  |            | E-Maj 1.3.0 | Initialisation completed            | postgres
+       2 | EMAJ_INSTALL  |            | E-Maj 1.3.0 | E-Maj transformed into an EXTENSION | postgres
+(2 rows)
 

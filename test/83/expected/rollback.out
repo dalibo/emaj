@@ -22,7 +22,6 @@ PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 10 at RETURN
 select emaj.emaj_rollback_groups(NULL,NULL);
 WARNING:  _check_names_array: No group name to process.
-CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 6 at RETURN
  emaj_rollback_groups 
 ----------------------
                     0
@@ -30,7 +29,6 @@ CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 6 at RETURN
 
 select emaj.emaj_logged_rollback_groups(NULL,NULL);
 WARNING:  _check_names_array: No group name to process.
-CONTEXT:  PL/pgSQL function "emaj_logged_rollback_groups" line 10 at RETURN
  emaj_logged_rollback_groups 
 -----------------------------
                            0
@@ -140,17 +138,7 @@ select emaj.emaj_start_group('myGroup1','Mark11');
 
 select emaj.emaj_start_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
-SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
-PL/pgSQL function "emaj_start_group" line 16 at SQL statement
-PL/pgSQL function "emaj_start_group" line 5 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
-SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
-PL/pgSQL function "emaj_start_group" line 16 at SQL statement
-PL/pgSQL function "emaj_start_group" line 5 at RETURN
  emaj_start_group 
 ------------------
                 8
@@ -299,7 +287,6 @@ PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_group" line 10 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",""}',NULL);
 WARNING:  _check_names_array: a group name is NULL or empty.
-CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 6 at RETURN
 ERROR:  _rlbk_check: No mark <NULL> exists for group myGroup1.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check( $1 ,  $2 )"
 PL/pgSQL function "_rlbk_init" line 23 at SQL statement
@@ -308,7 +295,6 @@ PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 6 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",NULL}',NULL);
 WARNING:  _check_names_array: a group name is NULL or empty.
-CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 6 at RETURN
 ERROR:  _rlbk_check: No mark <NULL> exists for group myGroup1.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check( $1 ,  $2 )"
 PL/pgSQL function "_rlbk_init" line 23 at SQL statement
@@ -324,7 +310,6 @@ PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 6 at RETURN
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2","myGroup2"}',NULL);
 WARNING:  _check_names_array: duplicate group name myGroup2.
-CONTEXT:  PL/pgSQL function "emaj_logged_rollback_groups" line 10 at RETURN
 ERROR:  _rlbk_check: No mark <NULL> exists for group myGroup1.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check( $1 ,  $2 )"
 PL/pgSQL function "_rlbk_init" line 23 at SQL statement
@@ -515,17 +500,7 @@ select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
 select emaj.emaj_rollback_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_rollback_group" line 6 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_rollback_group" line 6 at RETURN
  emaj_rollback_group 
 ---------------------
                    2
@@ -543,17 +518,7 @@ select emaj.emaj_logged_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
 select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_logged_rollback_group" line 10 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_logged_rollback_group" line 10 at RETURN
  emaj_logged_rollback_group 
 ----------------------------
                           2
@@ -569,17 +534,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mark1B');
 -- no user/password defined in emaj_param
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_rollback_groups" line 6 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_rollback_groups" line 6 at RETURN
  emaj_rollback_groups 
 ----------------------
                     3
@@ -590,17 +545,7 @@ insert into emaj.emaj_param (param_key, param_value_text)
   values ('dblink_user_password','user=<user> password=<password>');
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_rollback_groups" line 6 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_rollback_groups" line 6 at RETURN
  emaj_rollback_groups 
 ----------------------
                     3
@@ -611,17 +556,7 @@ begin;
   set transaction isolation level repeatable read;
   select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_logged_rollback_groups" line 10 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_logged_rollback_groups" line 10 at RETURN
  emaj_logged_rollback_groups 
 -----------------------------
                            3
@@ -633,17 +568,7 @@ update emaj.emaj_param set param_value_text = 'user=postgres password=postgres'
   where param_key = 'dblink_user_password';
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_logged_rollback_groups" line 10 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups( $1 )"
-PL/pgSQL function "_rlbk_init" line 65 at PERFORM
-SQL statement "SELECT emaj._rlbk_init( $1 ,  $2 ,  $3 , 1,  $4 )"
-PL/pgSQL function "_rlbk_groups" line 19 at SQL statement
-PL/pgSQL function "emaj_logged_rollback_groups" line 10 at RETURN
  emaj_logged_rollback_groups 
 -----------------------------
                            3
@@ -685,17 +610,7 @@ select emaj.emaj_start_group('myGroup1','Mark11');
 
 select emaj.emaj_start_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: Foreign key mytbl6_col61_fkey, from table myschema2.mytbl6, references myschema2.mytbl7 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
-SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
-PL/pgSQL function "emaj_start_group" line 16 at SQL statement
-PL/pgSQL function "emaj_start_group" line 5 at RETURN
 WARNING:  _check_fk_groups: table myschema2.mytbl6 is referenced by foreign key mytbl8_col81_fkey from table myschema2.mytbl8 that is outside groups (myGroup2).
-CONTEXT:  SQL statement "SELECT  emaj._check_fk_groups(array[ $1 [ $2 ]])"
-PL/pgSQL function "_start_groups" line 42 at PERFORM
-SQL statement "SELECT emaj._start_groups(array[ $1 ],  $2 , false,  $3 )"
-PL/pgSQL function "emaj_start_group" line 16 at SQL statement
-PL/pgSQL function "emaj_start_group" line 5 at RETURN
  emaj_start_group 
 ------------------
                 8
