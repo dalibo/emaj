@@ -1216,12 +1216,16 @@ $_rlbk_tbl$
     v_colList                TEXT;
     v_pkColList              TEXT;
     v_pkCondList             TEXT;
+    v_maxGlobalSeq           BIGINT;   --TODO passer la valeur à la fonction - changer le nom ?
   BEGIN
     v_fullTableName  = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
     v_logTableName   = quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
 -- insert begin event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_lastGlobalSeq);
+--TODO passer la valeur à la fonction
+-- set the v_maxGlobalSeq variable using the emaj_global_seq last value
+    SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END INTO v_maxGlobalSeq FROM emaj.emaj_global_seq;
 -- Build some pieces of SQL statements
 --   build the tables's columns list
     SELECT string_agg(col_name, ',') INTO v_colList FROM (
@@ -1263,11 +1267,18 @@ $_rlbk_tbl$
 --   this deletes rows inserted or updated during the rolled back period
     EXECUTE 'DELETE FROM ONLY ' || v_fullTableName || ' tbl USING ' || v_tmpTable || ' keys '
          || '  WHERE ' || v_pkCondList;
--- inserted into the application table rows that were deleted or updated during the rolled back period
+-- if the number of pkey to process is greater than 1.000, analyze the log table to take into account
+--   the impact of just inserted rows, avoiding a potentialy bad plan for the next INSERT statement
+--TODO conditionner par rollback tracé
+    IF v_nbPk > 1000 THEN
+      EXECUTE 'ANALYZE ' || v_logTableName;
+    END IF;
+-- insert into the application table rows that were deleted or updated during the rolled back period
     EXECUTE 'INSERT INTO ' || v_fullTableName
          || '  SELECT ' || v_colList
          || '    FROM ' || v_logTableName || ' tbl, ' || v_tmpTable || ' keys '
-         || '    WHERE ' || v_pkCondList || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD''';
+         || '    WHERE ' || v_pkCondList || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD'''
+         || '      AND tbl.emaj_gid > ' || v_lastGlobalSeq || 'AND tbl.emaj_gid <= ' || v_maxGlobalSeq;
 -- drop the now useless temporary table
     EXECUTE 'DROP TABLE ' || v_tmpTable;
 -- insert end event in history
