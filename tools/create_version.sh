@@ -45,10 +45,10 @@
 	find -name "*~" -type f -exec rm '{}' \;
 	cd ..
 
-# tag the new version
-	cd emaj
-	git tag 'v$NEW'
-	cd ..
+# tag the new version (do it manually, once the changes are committed)
+#	cd emaj
+#	git tag 'v$NEW'
+#	cd ..
 
 # Create the new version environment
 # ----------------------------------

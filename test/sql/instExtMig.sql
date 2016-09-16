@@ -31,16 +31,16 @@ select * from pg_available_extension_versions where name = 'emaj';
 select * from pg_extension_update_paths('emaj');
 
 -----------------------------------------------------------
--- test that a 1.3.0 version moved as an extension can be dropped
+-- test that a 1.3.1 version moved as an extension can be dropped
 -----------------------------------------------------------
 
--- emaj 1.3.0 installation using the psql script
+-- emaj 1.3.1 installation using the psql script
 \unset ECHO
-\i ../../../emaj-1.3.0/sql/emaj.sql
+\i ../../../emaj-1.3.1/sql/emaj.sql
 \set ECHO all
 
 -- transform emaj object as extension
-CREATE EXTENSION emaj VERSION '1.3.0' FROM unpackaged;
+CREATE EXTENSION emaj VERSION '1.3.1' FROM unpackaged;
 
 -- check impact in catalog
 select extname, extversion from pg_extension;
@@ -58,13 +58,13 @@ select proname from pg_proc,pg_namespace where pronamespace = pg_namespace.oid a
 -- emaj update to next_version
 -----------------------------------------------------------
 
--- emaj 1.3.0 installation using the psql script
+-- emaj 1.3.1 installation using the psql script
 \unset ECHO
-\i ../../../emaj-1.3.0/sql/emaj.sql
+\i ../../../emaj-1.3.1/sql/emaj.sql
 \set ECHO all
 
 -- transform emaj object as extension
-CREATE EXTENSION emaj VERSION '1.3.0' FROM unpackaged;
+CREATE EXTENSION emaj VERSION '1.3.1' FROM unpackaged;
 
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';

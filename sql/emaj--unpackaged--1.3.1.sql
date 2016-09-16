@@ -1,6 +1,6 @@
--- emaj--unpackaged--1.3.0.sql
+-- emaj--unpackaged--1.3.1.sql
 --
--- This script registers as an EXTENSION an already installed version of E-Maj 1.3.0 
+-- This script registers as an EXTENSION an already installed version of E-Maj 1.3.1 
 
 -- link emaj enum types
 

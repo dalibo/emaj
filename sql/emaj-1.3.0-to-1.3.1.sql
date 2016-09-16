@@ -1,10 +1,3 @@
--- migPsqlLoggingGroup.sql: Migrate from previous E-Maj version while groups are in logging state. 
--- Install E-Maj as simple psql script
---
------------------------------
--- migrate to the target version
------------------------------
-\i ../../sql/emaj-1.3.0-to-1.3.1.sql
 --
 -- E-Maj: migration from 1.3.0 to 1.3.1
 --
@@ -13,14 +6,13 @@
 -- This script migrates an existing installation of E-Maj extension.
 -- If E-Maj is not yet installed, use the emaj.sql script. 
 --
+
 \set ON_ERROR_STOP ON
 \set QUIET ON
 SET client_min_messages TO WARNING;
 --SET client_min_messages TO NOTICE;
 \echo 'E-maj upgrade from version 1.3.0 to version 1.3.1'
-E-maj upgrade from version 1.3.0 to version 1.3.1
 \echo 'Checking...'
-Checking...
 ------------------------------------
 --                                --
 -- checks                         --
@@ -54,25 +46,24 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj.tmp();
- tmp 
------
- 
-(1 row)
-
 DROP FUNCTION emaj.tmp();
+
 -- OK, upgrade...
 \echo '... OK, Migration start...'
-... OK, Migration start...
+
 BEGIN TRANSACTION;
+
 -- lock emaj_group table to avoid any concurrent E-Maj activity
 LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
+
 \echo 'Updating E-Maj internal objects ...'
-Updating E-Maj internal objects ...
+
 ------------------------------------
 --                                --
 -- emaj functions: recreate all   --
 --                                --
 ------------------------------------
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, v_lastGlobalSeq BIGINT, v_nbSession INT)
 RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_tbl$
@@ -180,6 +171,7 @@ $_rlbk_tbl$
     RETURN v_nbPk;
   END;
 $_rlbk_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_lock(v_rlbkId INT, v_session INT)
 RETURNS void LANGUAGE plpgsql AS
 $_rlbk_session_lock$
@@ -276,6 +268,7 @@ $_rlbk_session_lock$
 --      RAISE;
   END;
 $_rlbk_session_lock$;
+
 -- Set comments for all internal functions,
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
 INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
@@ -292,14 +285,18 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
           WHERE nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
             AND pg_description.description IS NULL
        );
+
 ------------------------------------
 --                                --
 -- commit migration               --
 --                                --
 ------------------------------------
+
 UPDATE emaj.emaj_param SET param_value_text = '1.3.1' WHERE param_key = 'emaj_version';
+
 -- insert the migration record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.3.1', 'Migration from 1.3.0 completed');
+
 -- post installation checks
 CREATE OR REPLACE FUNCTION emaj._tmp_post_install()
 RETURNS VOID LANGUAGE plpgsql AS
@@ -344,24 +341,10 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj._tmp_post_install();
-psql:../../sql/emaj-1.3.0-to-1.3.1.sql:343: WARNING:  E-Maj migration: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
- _tmp_post_install 
--------------------
- 
-(1 row)
-
 DROP FUNCTION emaj._tmp_post_install();
+
 COMMIT;
+
 SET client_min_messages TO default;
 \echo '>>> E-Maj successfully migrated to 1.3.1'
->>> E-Maj successfully migrated to 1.3.1
------------------------------
--- check installation
------------------------------
--- check the emaj_param content
-SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
- param_value_text 
-------------------
- 1.3.1
-(1 row)
 

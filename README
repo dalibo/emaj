@@ -41,15 +41,16 @@ In both environments, being able to examine the history of updates performed on 
 - sql/emaj.sql                      psql installation script 
 - sql/check-0.10.1-to-0.11.0-conditions.sql   psql script to check that all conditions allowing a 
                                     direct migration from 0.10.1 to 0.11.0 are met
-- sql/emaj-0.10.0-to-0.10.1.sql     psql migration script from 0.10.0 to 0.10.1
-- sql/emaj-0.10.1-to-0.11.0.sql     psql migration script from 0.10.1 to 0.11.0
-- sql/emaj-0.11.0-to-0.11.1.sql     psql migration script from 0.11.0 to 0.11.1
-- sql/emaj-0.11.1-to-1.0.0.sql      psql migration script from 0.11.1 to 1.0.0
-- sql/emaj-1.0.0-to-1.0.1.sql       psql migration script from 1.0.0 to 1.0.1
-- sql/emaj-1.0.1-to-1.0.2.sql       psql migration script from 1.0.1 to 1.0.2
-- sql/emaj-1.0.2-to-1.1.0.sql       psql migration script from 1.0.2 to 1.1.0
-- sql/emaj-1.1.0-to-1.2.0.sql       psql migration script from 1.1.0 to 1.2.0
-- sql/emaj-1.2.0-to-1.3.0.sql       psql migration script from 1.2.0 to 1.3.0
+- sql/emaj-0.10.0-to-0.10.1.sql     psql upgrade script from 0.10.0 to 0.10.1
+- sql/emaj-0.10.1-to-0.11.0.sql     psql upgrade script from 0.10.1 to 0.11.0
+- sql/emaj-0.11.0-to-0.11.1.sql     psql upgrade script from 0.11.0 to 0.11.1
+- sql/emaj-0.11.1-to-1.0.0.sql      psql upgrade script from 0.11.1 to 1.0.0
+- sql/emaj-1.0.0-to-1.0.1.sql       psql upgrade script from 1.0.0 to 1.0.1
+- sql/emaj-1.0.1-to-1.0.2.sql       psql upgrade script from 1.0.1 to 1.0.2
+- sql/emaj-1.0.2-to-1.1.0.sql       psql upgrade script from 1.0.2 to 1.1.0
+- sql/emaj-1.1.0-to-1.2.0.sql       psql upgrade script from 1.1.0 to 1.2.0
+- sql/emaj-1.2.0-to-1.3.0.sql       psql upgrade script from 1.2.0 to 1.3.0
+- sql/emaj-1.3.0-to-1.3.1.sql       psql upgrade script from 1.3.0 to 1.3.1
 - sql/uninstall.sql                 uninstallation script
 - sql/demo.sql                      demonstration psql script
 - sql/prep-pr.sql                   psql script to prepare parallel rollback demonstration

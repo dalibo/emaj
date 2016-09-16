@@ -199,7 +199,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id |      hist_function       |  hist_event  |         hist_object          |                        regexp_replace                         | hist_user 
 ---------+--------------------------+--------------+------------------------------+---------------------------------------------------------------+-----------
-       1 | EMAJ_INSTALL             |              | E-Maj 1.3.0                  | Initialisation completed                                      | postgres
+       1 | EMAJ_INSTALL             |              | E-Maj 1.3.1                  | Initialisation completed                                      | postgres
        2 | EMAJ_INSTALL             |              | E-Maj 1.3.0                  | E-Maj transformed into an EXTENSION                           | postgres
        3 | CREATE_GROUP             | BEGIN        | myGroup1                     | rollbackable                                                  | postgres
        4 | CREATE_GROUP             | END          | myGroup1                     | 6 tables/sequences processed                                  | postgres

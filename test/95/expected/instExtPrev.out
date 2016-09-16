@@ -17,11 +17,11 @@ $$
   END;
 $$;
 ------------------------------------------------------------
--- emaj installation in 1.3.0 (with the psql script)
+-- emaj installation in 1.3.1 (with the psql script)
 ------------------------------------------------------------
-\i ../../../emaj-1.3.0/sql/emaj.sql
+\i ../../../emaj-1.3.1/sql/emaj.sql
 --
--- E-Maj : logs and rollbacks table updates : Version 1.3.0
+-- E-Maj : logs and rollbacks table updates : Version 1.3.1
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -480,7 +480,7 @@ $$Represents the structure of rows returned by the internal _verify_groups() fun
 -- Parameters                     --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','1.3.0');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','1.3.1');
 -- Other parameters are optional. They may be set by E-Maj administrators if needed.
 -- The dblink_user_password parameter defines the role and its associated password, if any, to establish a dblink
 -- connection for the monitoring of rollback operations.
@@ -1277,6 +1277,7 @@ $_rlbk_tbl$
     v_colList                TEXT;
     v_pkColList              TEXT;
     v_pkCondList             TEXT;
+    v_maxGlobalSeq           BIGINT;
     r_col                    RECORD;
   BEGIN
     v_fullTableName  = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
@@ -1284,6 +1285,8 @@ $_rlbk_tbl$
 -- insert begin event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_lastGlobalSeq);
+-- set the v_maxGlobalSeq variable using the emaj_global_seq last value
+    SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END INTO v_maxGlobalSeq FROM emaj.emaj_global_seq;
 -- Build some pieces of SQL statements
 --   build the tables's columns list
     FOR r_col IN
@@ -1339,11 +1342,17 @@ $_rlbk_tbl$
 --   this deletes rows inserted or updated during the rolled back period
     EXECUTE 'DELETE FROM ONLY ' || v_fullTableName || ' tbl USING ' || v_tmpTable || ' keys '
          || '  WHERE ' || v_pkCondList;
--- inserted into the application table rows that were deleted or updated during the rolled back period
+-- if the number of pkey to process is greater than 1.000, analyze the log table to take into account
+--   the impact of just inserted rows, avoiding a potentialy bad plan for the next INSERT statement
+    IF v_nbPk > 1000 THEN
+      EXECUTE 'ANALYZE ' || v_logTableName;
+    END IF; 
+-- insert into the application table rows that were deleted or updated during the rolled back period
     EXECUTE 'INSERT INTO ' || v_fullTableName
          || '  SELECT ' || v_colList
          || '    FROM ' || v_logTableName || ' tbl, ' || v_tmpTable || ' keys '
-         || '    WHERE ' || v_pkCondList || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD''';
+         || '    WHERE ' || v_pkCondList || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD'''
+         || '      AND tbl.emaj_gid > ' || v_lastGlobalSeq || 'AND tbl.emaj_gid <= ' || v_maxGlobalSeq;
 -- drop the now useless temporary table
     EXECUTE 'DROP TABLE ' || v_tmpTable;
 -- insert end event in history
@@ -6465,7 +6474,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_viewer;
 GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_viewer;
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.3.0', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.3.1', 'Initialisation completed');
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 -- and display a message about dblink installation
 CREATE OR REPLACE FUNCTION emaj._tmp_post_install()
@@ -6511,7 +6520,7 @@ $tmp$
   END;
 $tmp$;
 SELECT emaj._tmp_post_install();
-psql:../../../emaj-1.3.0/sql/emaj.sql:6630: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
+psql:../../../emaj-1.3.1/sql/emaj.sql:6639: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
  _tmp_post_install 
 -------------------
  
@@ -6523,7 +6532,7 @@ SET client_min_messages TO default;
 \echo '>>> E-Maj objects successfully created'
 >>> E-Maj objects successfully created
 ------------------------------------------------------------
--- transform emaj 1.3.0 into extension
+-- transform emaj 1.3.1 into extension
 ------------------------------------------------------------
 -- check the extension is available
 select * from pg_available_extension_versions where name = 'emaj';
@@ -6532,7 +6541,7 @@ select * from pg_available_extension_versions where name = 'emaj';
  emaj | next_version | f         | t         | f           | emaj   | {dblink} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (1 row)
 
-CREATE EXTENSION emaj VERSION "1.3.0" FROM "unpackaged";
+CREATE EXTENSION emaj VERSION "1.3.1" FROM "unpackaged";
 ------------------------------------------------------------
 -- check installation
 ------------------------------------------------------------
@@ -6540,14 +6549,14 @@ CREATE EXTENSION emaj VERSION "1.3.0" FROM "unpackaged";
 select extname, extversion from pg_extension where extname = 'emaj';
  extname | extversion 
 ---------+------------
- emaj    | 1.3.0
+ emaj    | 1.3.1
 (1 row)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- 1.3.0
+ 1.3.1
 (1 row)
 
 -- check history
@@ -6555,7 +6564,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id | hist_function | hist_event | hist_object |           regexp_replace            | hist_user 
 ---------+---------------+------------+-------------+-------------------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 1.3.0 | Initialisation completed            | postgres
+       1 | EMAJ_INSTALL  |            | E-Maj 1.3.1 | Initialisation completed            | postgres
        2 | EMAJ_INSTALL  |            | E-Maj 1.3.0 | E-Maj transformed into an EXTENSION | postgres
 (2 rows)
 

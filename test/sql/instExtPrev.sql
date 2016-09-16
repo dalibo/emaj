@@ -19,18 +19,18 @@ $$
 $$;
 
 ------------------------------------------------------------
--- emaj installation in 1.3.0 (with the psql script)
+-- emaj installation in 1.3.1 (with the psql script)
 ------------------------------------------------------------
-\i ../../../emaj-1.3.0/sql/emaj.sql
+\i ../../../emaj-1.3.1/sql/emaj.sql
 
 ------------------------------------------------------------
--- transform emaj 1.3.0 into extension
+-- transform emaj 1.3.1 into extension
 ------------------------------------------------------------
 
 -- check the extension is available
 select * from pg_available_extension_versions where name = 'emaj';
 
-CREATE EXTENSION emaj VERSION "1.3.0" FROM "unpackaged";
+CREATE EXTENSION emaj VERSION "1.3.1" FROM "unpackaged";
 
 ------------------------------------------------------------
 -- check installation

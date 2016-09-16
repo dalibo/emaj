@@ -1,5 +1,5 @@
 --
--- E-Maj extension: upgrade from 1.3.0 to 2.0.0
+-- E-Maj extension: upgrade from 1.3.1 to 2.0.0
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -29,10 +29,10 @@ $do$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current user (%) is not a superuser.', current_user;
     END IF;
--- the emaj version registered in emaj_param must be '1.3.0'
+-- the emaj version registered in emaj_param must be '1.3.1'
     SELECT param_value_text INTO v_emajVersion FROM emaj.emaj_param WHERE param_key = 'emaj_version';
-    IF v_emajVersion <> '1.3.0' THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not 1.3.0',v_emajVersion;
+    IF v_emajVersion <> '1.3.1' THEN
+      RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not 1.3.1',v_emajVersion;
     END IF;
 -- the installed postgres version must be at least 9.1
     IF current_setting('server_version_num')::int < 90100 THEN

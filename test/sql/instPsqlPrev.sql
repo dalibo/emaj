@@ -22,7 +22,7 @@ $$;
 -----------------------------
 -- emaj installation with previous version
 -----------------------------
-\i ../../../emaj-1.3.0/sql/emaj.sql
+\i ../../../emaj-1.3.1/sql/emaj.sql
 
 -----------------------------
 -- check installation

@@ -31,18 +31,18 @@ select * from pg_available_extension_versions where name = 'emaj';
 select * from pg_extension_update_paths('emaj');
     source    |    target    |              path               
 --------------+--------------+---------------------------------
+ 1.3.1        | next_version | 1.3.1--next_version
+ 1.3.1        | unpackaged   | 
+ next_version | 1.3.1        | 
  next_version | unpackaged   | 
- next_version | 1.3.0        | 
- unpackaged   | next_version | unpackaged--1.3.0--next_version
- unpackaged   | 1.3.0        | unpackaged--1.3.0
- 1.3.0        | next_version | 1.3.0--next_version
- 1.3.0        | unpackaged   | 
+ unpackaged   | 1.3.1        | unpackaged--1.3.1
+ unpackaged   | next_version | unpackaged--1.3.1--next_version
 (6 rows)
 
 -----------------------------------------------------------
--- test that a 1.3.0 version moved as an extension can be dropped
+-- test that a 1.3.1 version moved as an extension can be dropped
 -----------------------------------------------------------
--- emaj 1.3.0 installation using the psql script
+-- emaj 1.3.1 installation using the psql script
 \unset ECHO
 E-Maj objects creation...
  emaj_tmp_pre_install 
@@ -55,7 +55,7 @@ E-Maj objects creation...
  
 (1 row)
 
-psql:../../../emaj-1.3.0/sql/emaj.sql:6630: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
+psql:../../../emaj-1.3.1/sql/emaj.sql:6639: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
  _tmp_post_install 
 -------------------
  
@@ -63,14 +63,14 @@ psql:../../../emaj-1.3.0/sql/emaj.sql:6630: WARNING:  E-Maj installation: the db
 
 >>> E-Maj objects successfully created
 -- transform emaj object as extension
-CREATE EXTENSION emaj VERSION '1.3.0' FROM unpackaged;
+CREATE EXTENSION emaj VERSION '1.3.1' FROM unpackaged;
 -- check impact in catalog
 select extname, extversion from pg_extension;
  extname | extversion 
 ---------+------------
  plpgsql | 1.0
  dblink  | 1.1
- emaj    | 1.3.0
+ emaj    | 1.3.1
 (3 rows)
 
 -- drop the extension
@@ -90,7 +90,7 @@ select proname from pg_proc,pg_namespace where pronamespace = pg_namespace.oid a
 -----------------------------------------------------------
 -- emaj update to next_version
 -----------------------------------------------------------
--- emaj 1.3.0 installation using the psql script
+-- emaj 1.3.1 installation using the psql script
 \unset ECHO
 E-Maj objects creation...
  emaj_tmp_pre_install 
@@ -103,7 +103,7 @@ E-Maj objects creation...
  
 (1 row)
 
-psql:../../../emaj-1.3.0/sql/emaj.sql:6630: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
+psql:../../../emaj-1.3.1/sql/emaj.sql:6639: WARNING:  E-Maj installation: the dblink functions exist in schema(s): public. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.
  _tmp_post_install 
 -------------------
  
@@ -111,12 +111,12 @@ psql:../../../emaj-1.3.0/sql/emaj.sql:6630: WARNING:  E-Maj installation: the db
 
 >>> E-Maj objects successfully created
 -- transform emaj object as extension
-CREATE EXTENSION emaj VERSION '1.3.0' FROM unpackaged;
+CREATE EXTENSION emaj VERSION '1.3.1' FROM unpackaged;
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
  extname | extversion 
 ---------+------------
- emaj    | 1.3.0
+ emaj    | 1.3.1
 (1 row)
 
 -- process the extension migration
@@ -175,7 +175,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id | hist_function | hist_event | hist_object |           regexp_replace            | hist_user 
 ---------+---------------+------------+-------------+-------------------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 1.3.0 | Initialisation completed            | postgres
+       1 | EMAJ_INSTALL  |            | E-Maj 1.3.1 | Initialisation completed            | postgres
        2 | EMAJ_INSTALL  |            | E-Maj 1.3.0 | E-Maj transformed into an EXTENSION | postgres
        3 | EMAJ_INSTALL  |            | E-Maj 2.0.0 | Upgrade from 1.3.0 completed        | postgres
 (3 rows)

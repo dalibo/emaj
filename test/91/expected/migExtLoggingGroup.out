@@ -213,38 +213,6 @@ select last_value, is_called from emaj.emaj_rlbk_rlbk_id_seq;
           4 | t
 (1 row)
 
--- check that the sequences linked to SERIAL columns have their last value equal to the max(column)
--- should only return 0
-select (select last_value from emaj.emaj_hist_hist_id_seq) - (select max(hist_id) from emaj.emaj_hist);
- ?column? 
-----------
-        0
-(1 row)
-
-select (select last_value from emaj.emaj_time_stamp_time_id_seq) - (select max(time_id) from emaj.emaj_time_stamp);
- ?column? 
-----------
-        0
-(1 row)
-
-select (select last_value from emaj.emaj_mark_mark_id_seq) - (select max(mark_id) from emaj.emaj_mark);
- ?column? 
-----------
-        0
-(1 row)
-
-select (select last_value from emaj.emaj_sequence_sequ_id_seq) - (select max(sequ_id) from emaj.emaj_sequence);
- ?column? 
-----------
-        0
-(1 row)
-
-select (select last_value from emaj.emaj_rlbk_rlbk_id_seq) - (select max(rlbk_id) from emaj.emaj_rlbk);
- ?column? 
-----------
-        0
-(1 row)
-
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
