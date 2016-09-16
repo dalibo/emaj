@@ -1,10 +1,17 @@
 -- ppa.sql: Create and setup all application objects that will be needed for the ppa plugin tests
 --
 SET client_min_messages TO WARNING;
+\set ON_ERROR_STOP
+
+------------------------------------------------------------
+-- drop any remaining tables groups
+------------------------------------------------------------
+SELECT emaj.emaj_force_drop_group(group_name) FROM emaj.emaj_group;
 
 ------------------------------------------------------------
 -- setup emaj parameters
 ------------------------------------------------------------
+DELETE FROM emaj.emaj_param WHERE param_key = 'dblink_user_password';
 INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES 
   ('dblink_user_password','user=postgres password=postgres');
 
@@ -157,9 +164,11 @@ CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
 -----------------------------
 -- create roles and give rigths on application objects
 -----------------------------
+\unset ON_ERROR_STOP
 create role emaj_regression_tests_adm_user login password '';
 create role emaj_regression_tests_viewer_user login password '';
 create role emaj_regression_tests_anonym_user login password '';
+\set ON_ERROR_STOP
 --
 grant all on schema mySchema1, mySchema2, "phil's schema3" to emaj_regression_tests_adm_user, emaj_regression_tests_viewer_user;
 --
