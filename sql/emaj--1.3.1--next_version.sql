@@ -17,8 +17,7 @@ SET client_min_messages TO NOTICE;
 -- checks                         --
 --                                --
 ------------------------------------
--- Creation of a specific function to check the upgrade conditions are met.
--- The function generates an exception if at least one condition is not met.
+-- Check that the upgrade conditions are met.
 DO
 $do$
   DECLARE
