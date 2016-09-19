@@ -503,6 +503,7 @@ $$Represents the structure of rows returned by the emaj_get_consolidable_rollbac
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
 DROP FUNCTION emaj._get_mark_datetime(TEXT,TEXT);
+DROP FUNCTION emaj._rlbk_tbl(R_REL EMAJ.EMAJ_RELATION,V_LASTGLOBALSEQ BIGINT,V_NBSESSION INT);
 DROP FUNCTION emaj._delete_log_tbl(R_REL EMAJ.EMAJ_RELATION,V_TIMESTAMP TIMESTAMPTZ,V_LASTGLOBALSEQ BIGINT,V_LASTSEQUENCEID BIGINT,V_LASTSEQHOLEID BIGINT);
 DROP FUNCTION emaj._rlbk_seq(R_REL EMAJ.EMAJ_RELATION,V_TIMESTAMP TIMESTAMPTZ,V_ISLOGGEDRLBK BOOLEAN,V_LASTSEQUENCEID BIGINT);
 DROP FUNCTION emaj._log_stat_tbl(R_REL EMAJ.EMAJ_RELATION,V_TSFIRSTMARK TIMESTAMPTZ,V_TSLASTMARK TIMESTAMPTZ,V_FIRSTLASTSEQHOLEID BIGINT,V_LASTLASTSEQHOLEID BIGINT);
@@ -1165,13 +1166,13 @@ $_drop_seq$
   END;
 $_drop_seq$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, v_lastGlobalSeq BIGINT, v_nbSession INT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, v_minGlobalSeq BIGINT, v_maxGlobalSeq BIGINT, v_nbSession INT, v_isLoggedRlbk BOOLEAN)
 RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_tbl$
 -- This function rollbacks one table to a given point in time represented by the value of the global sequence
 -- The function is called by emaj._rlbk_session_exec()
 -- Input: row from emaj_relation corresponding to the appplication table to proccess
---        global sequence value limit for rollback
+--        global sequence (non inclusive) lower and (inclusive) upper limits covering the rollback time frame
 -- Output: number of rolled back primary keys
 -- For unlogged rollback, the log triggers have been disabled previously and will be enabled later.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
@@ -1184,16 +1185,12 @@ $_rlbk_tbl$
     v_colList                TEXT;
     v_pkColList              TEXT;
     v_pkCondList             TEXT;
-    v_maxGlobalSeq           BIGINT;   --TODO passer la valeur à la fonction - changer le nom ?
   BEGIN
     v_fullTableName  = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
     v_logTableName   = quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
 -- insert begin event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_lastGlobalSeq);
---TODO passer la valeur à la fonction
--- set the v_maxGlobalSeq variable using the emaj_global_seq last value
-    SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END INTO v_maxGlobalSeq FROM emaj.emaj_global_seq;
+      VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_minGlobalSeq || ' and <= ' || v_maxGlobalSeq);
 -- Build some pieces of SQL statements
 --   build the tables's columns list
     SELECT string_agg(col_name, ',') INTO v_colList FROM (
@@ -1228,17 +1225,17 @@ $_rlbk_tbl$
     EXECUTE 'CREATE ' || v_tableType || ' TABLE ' || v_tmpTable || ' AS '
          || '  SELECT ' || v_pkColList || ', min(emaj_gid) as emaj_gid'
          || '    FROM ' || v_logTableName
-         || '    WHERE emaj_gid > ' || v_lastGlobalSeq
+--         || '    WHERE emaj_gid > ' || v_minGlobalSeq
+         || '    WHERE emaj_gid > ' || v_minGlobalSeq || 'AND emaj_gid <= ' || v_maxGlobalSeq
          || '    GROUP BY ' || v_pkColList;
     GET DIAGNOSTICS v_nbPk = ROW_COUNT;
 -- delete all rows from the application table corresponding to each touched primary key
 --   this deletes rows inserted or updated during the rolled back period
     EXECUTE 'DELETE FROM ONLY ' || v_fullTableName || ' tbl USING ' || v_tmpTable || ' keys '
          || '  WHERE ' || v_pkCondList;
--- if the number of pkey to process is greater than 1.000, analyze the log table to take into account
+-- for logged rollbacks, if the number of pkey to process is greater than 1.000, ANALYZE the log table to take into account
 --   the impact of just inserted rows, avoiding a potentialy bad plan for the next INSERT statement
---TODO conditionner par rollback tracé
-    IF v_nbPk > 1000 THEN
+    IF v_isLoggedRlbk AND v_nbPk > 1000 THEN
       EXECUTE 'ANALYZE ' || v_logTableName;
     END IF;
 -- insert into the application table rows that were deleted or updated during the rolled back period
@@ -1246,7 +1243,7 @@ $_rlbk_tbl$
          || '  SELECT ' || v_colList
          || '    FROM ' || v_logTableName || ' tbl, ' || v_tmpTable || ' keys '
          || '    WHERE ' || v_pkCondList || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD'''
-         || '      AND tbl.emaj_gid > ' || v_lastGlobalSeq || 'AND tbl.emaj_gid <= ' || v_maxGlobalSeq;
+         || '      AND tbl.emaj_gid > ' || v_minGlobalSeq || 'AND tbl.emaj_gid <= ' || v_maxGlobalSeq;
 -- drop the now useless temporary table
     EXECUTE 'DROP TABLE ' || v_tmpTable;
 -- insert end event in history
@@ -4188,6 +4185,7 @@ $_rlbk_session_exec$
     v_rlbkTimeId             BIGINT;
     v_isLoggedRlbk           BOOLEAN;
     v_nbSession              INT;
+    v_maxGlobalSeq           BIGINT;
     v_rlbkMarkId             BIGINT;
     v_lastGlobalSeq          BIGINT;
     v_lastSequenceId         BIGINT;
@@ -4198,10 +4196,10 @@ $_rlbk_session_exec$
     IF emaj._dblink_is_cnx_opened('rlbk#'||v_session) THEN
       v_isDblinkUsable = true;
     END IF;
--- get the rollack characteristics from the emaj_rlbk table
-    SELECT rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session
-      INTO v_groupNames, v_mark, v_rlbkTimeId, v_isLoggedRlbk, v_nbSession
-      FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
+-- get the rollback characteristics from the emaj_rlbk table
+    SELECT rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, time_last_emaj_gid
+      INTO v_groupNames, v_mark, v_rlbkTimeId, v_isLoggedRlbk, v_nbSession, v_maxGlobalSeq
+      FROM emaj.emaj_rlbk, emaj.emaj_time_stamp WHERE rlbk_id = v_rlbkId AND rlbk_time_id = time_id;
 -- fetch the mark_id, the last global sequence and the last id values of the emaj_sequence table at set_mark time for the first group of the groups array (they all share the same values - except for the mark_id)
     SELECT mark_id, mark_time_id, time_last_emaj_gid, mark_last_sequence_id
       INTO v_rlbkMarkId, v_rlbkMarkTimeId, v_lastGlobalSeq, v_lastSequenceId
@@ -4247,7 +4245,7 @@ $_rlbk_session_exec$
                   ' DEFERRED';
         WHEN 'RLBK_TABLE' THEN
 -- process a table rollback
-          SELECT emaj._rlbk_tbl(emaj_relation.*, v_lastGlobalSeq, v_nbSession) INTO v_nbRows
+          SELECT emaj._rlbk_tbl(emaj_relation.*, v_lastGlobalSeq, v_maxGlobalSeq, v_nbSession, v_isLoggedRlbk) INTO v_nbRows
             FROM emaj.emaj_relation
             WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
           v_effNbTable = v_effNbTable + 1;

@@ -297,11 +297,11 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
       96 | DBLINK_OPEN_CNX          |              | rlbk#1                       | Status = -2                                                   | postgres
       97 | LOCK_GROUP               | BEGIN        | myGroup1                     | Rollback session #1                                           | postgres
       98 | LOCK_GROUP               | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)           | postgres
-      99 | ROLLBACK_TABLE           | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 29                               | postgres
+      99 | ROLLBACK_TABLE           | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 29 and <= 95                     | postgres
      100 | ROLLBACK_TABLE           | END          | myschema1."myTbl3"           | 10 rolled back primary keys                                   | postgres
-     101 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 29                               | postgres
+     101 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 29 and <= 95                     | postgres
      102 | ROLLBACK_TABLE           | END          | myschema1.mytbl1             | 5 rolled back primary keys                                    | postgres
-     103 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 29                               | postgres
+     103 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 29 and <= 95                     | postgres
      104 | ROLLBACK_TABLE           | END          | myschema1.mytbl4             | 3 rolled back primary keys                                    | postgres
      105 | ROLLBACK_GROUP           | MARK DELETED | myGroup1                     | mark M3 is deleted                                            | postgres
      106 | ROLLBACK_SEQUENCE        |              | myschema1."myTbl3_col31_seq" |                                                               | postgres
@@ -324,7 +324,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      123 | LOCK_GROUP               | END          | myGroup2                     | Rollback session #1: 4 tables locked, 0 deadlock(s)           | postgres
      124 | SET_MARK_GROUP           | BEGIN        | myGroup2                     | RLBK_M2_%_START                                               | postgres
      125 | SET_MARK_GROUP           | END          | myGroup2                     | RLBK_M2_%_START                                               | postgres
-     126 | ROLLBACK_TABLE           | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 77                               | postgres
+     126 | ROLLBACK_TABLE           | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 77 and <= 119                    | postgres
      127 | ROLLBACK_TABLE           | END          | myschema2.mytbl4             | 2 rolled back primary keys                                    | postgres
      128 | ROLLBACK_SEQUENCE        |              | myschema2.myseq1             | RESTART 1001 MAXVALUE 2000 CYCLE                              | postgres
      129 | ROLLBACK_SEQUENCE        |              | myschema2."myTbl3_col31_seq" |                                                               | postgres
@@ -335,7 +335,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      134 | DBLINK_OPEN_CNX          |              | rlbk#1                       | Status = -2                                                   | postgres
      135 | LOCK_GROUP               | BEGIN        | myGroup2                     | Rollback session #1                                           | postgres
      136 | LOCK_GROUP               | END          | myGroup2                     | Rollback session #1: 4 tables locked, 0 deadlock(s)           | postgres
-     137 | ROLLBACK_TABLE           | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 81                               | postgres
+     137 | ROLLBACK_TABLE           | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 81 and <= 121                    | postgres
      138 | ROLLBACK_TABLE           | END          | myschema2.mytbl4             | 2 rolled back primary keys                                    | postgres
      139 | ROLLBACK_GROUP           | MARK DELETED | myGroup2                     | mark RLBK_M2_%_START is deleted                               | postgres
      140 | ROLLBACK_GROUP           | MARK DELETED | myGroup2                     | mark RLBK_M2_%_DONE is deleted                                | postgres
@@ -350,9 +350,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      149 | DBLINK_OPEN_CNX          |              | rlbk#1                       | Status = -2                                                   | postgres
      150 | LOCK_GROUP               | BEGIN        | myGroup1                     | Rollback session #1                                           | postgres
      151 | LOCK_GROUP               | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)           | postgres
-     152 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 119                              | postgres
+     152 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 119 and <= 124                   | postgres
      153 | ROLLBACK_TABLE           | END          | myschema1.mytbl1             | 1 rolled back primary keys                                    | postgres
-     154 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 119                              | postgres
+     154 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 119 and <= 124                   | postgres
      155 | ROLLBACK_TABLE           | END          | myschema1.mytbl4             | 2 rolled back primary keys                                    | postgres
      156 | ROLLBACK_GROUP           | MARK DELETED | myGroup1                     | mark M6 is deleted                                            | postgres
      157 | ROLLBACK_SEQUENCE        |              | myschema1."myTbl3_col31_seq" |                                                               | postgres
@@ -363,11 +363,11 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      162 | LOCK_GROUP               | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)           | postgres
      163 | SET_MARK_GROUP           | BEGIN        | myGroup1                     | RLBK_M4_%_START                                               | postgres
      164 | SET_MARK_GROUP           | END          | myGroup1                     | RLBK_M4_%_START                                               | postgres
-     165 | ROLLBACK_TABLE           | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 109                              | postgres
+     165 | ROLLBACK_TABLE           | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 109 and <= 127                   | postgres
      166 | ROLLBACK_TABLE           | END          | myschema1."myTbl3"           | 10 rolled back primary keys                                   | postgres
-     167 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 109                              | postgres
+     167 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 109 and <= 127                   | postgres
      168 | ROLLBACK_TABLE           | END          | myschema1.mytbl1             | 1 rolled back primary keys                                    | postgres
-     169 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 109                              | postgres
+     169 | ROLLBACK_TABLE           | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 109 and <= 127                   | postgres
      170 | ROLLBACK_TABLE           | END          | myschema1.mytbl4             | 2 rolled back primary keys                                    | postgres
      171 | ROLLBACK_SEQUENCE        |              | myschema1."myTbl3_col31_seq" |                                                               | postgres
      172 | SET_MARK_GROUP           | BEGIN        | myGroup1                     | RLBK_M4_%_DONE                                                | postgres
