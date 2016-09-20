@@ -129,7 +129,6 @@ drop cascades to constraint emaj_mark_mark_group_fkey on table emaj_mark
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_group_pkey" for table "emaj_group"
 NOTICE:  CREATE TABLE will create implicit sequence "emaj_mark_mark_id_seq" for serial column "emaj_mark.mark_id"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_mark_pkey" for table "emaj_mark"
-NOTICE:  CREATE TABLE will create implicit sequence "emaj_sequence_sequ_id_seq" for serial column "emaj_sequence.sequ_id"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_sequence_pkey" for table "emaj_sequence"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_seq_hole_pkey" for table "emaj_seq_hole"
 NOTICE:  drop cascades to 2 other objects

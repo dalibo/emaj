@@ -188,7 +188,6 @@ CREATE TABLE emaj.emaj_mark (
   mark_is_deleted              BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is deleted
   mark_is_rlbk_protected       BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is protected from rollbacks (false by default)
   mark_comment                 TEXT,                       -- optional user comment
-  mark_last_sequence_id        BIGINT,                     -- last sequ_id for the group at the end of the _set_mark_groups operation
   mark_log_rows_before_next    BIGINT,                     -- number of log rows recorded for the group between the mark
                                                            -- and the next one (NULL if last mark)
                                                            -- used to speedup marks list display in phpPgAdmin plugin
@@ -203,13 +202,14 @@ $$Contains marks set on E-Maj tables groups.$$;
 -- populate the new table
 INSERT INTO emaj.emaj_mark (
          mark_group, mark_name, mark_id, mark_time_id, mark_is_deleted, mark_is_rlbk_protected,
-         mark_comment, mark_last_sequence_id, mark_log_rows_before_next)
+         mark_comment, mark_log_rows_before_next)
   SELECT mark_group, mark_name, mark_id, time_id, mark_is_deleted, mark_is_rlbk_protected,
-         mark_comment, mark_last_sequence_id, mark_log_rows_before_next
+         mark_comment, mark_log_rows_before_next
     FROM emaj_mark_old, emaj.emaj_time_stamp
     WHERE mark_datetime = time_clock_timestamp AND time_event = 'M';
 
 -- recreate the foreign keys that point on this table
+-- na
 
 -- set the last value for the sequence associated to the serial column
 SELECT CASE WHEN EXISTS (SELECT 1 FROM emaj.emaj_mark) 
@@ -230,8 +230,6 @@ DROP TABLE emaj.emaj_sequence CASCADE;
 
 -- create the new table, with its indexes, comment, constraints (except foreign key)...
 CREATE TABLE emaj.emaj_sequence (
-  sequ_id                      BIGSERIAL   NOT NULL,       -- serial id used to delete oldest or newest rows (not to rely
-                                                           -- on timestamps that are not safe if system time changes)
   sequ_schema                  TEXT        NOT NULL,       -- application or 'emaj' schema that owns the sequence
   sequ_name                    TEXT        NOT NULL,       -- application or emaj sequence name
   sequ_time_id                 BIGINT      NOT NULL,       -- time stamp when the sequence characteristics have been recorded
@@ -253,19 +251,18 @@ $$Contains values of sequences at E-Maj set_mark times.$$;
 
 -- populate the new table
 INSERT INTO emaj.emaj_sequence (
-         sequ_id, sequ_schema, sequ_name, sequ_time_id, sequ_mark, sequ_last_val, sequ_start_val, 
+         sequ_schema, sequ_name, sequ_time_id, sequ_mark, sequ_last_val, sequ_start_val, 
          sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-  SELECT sequ_id, sequ_schema, sequ_name, time_id, sequ_mark, sequ_last_val, sequ_start_val,
+  SELECT sequ_schema, sequ_name, time_id, sequ_mark, sequ_last_val, sequ_start_val,
          sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called
     FROM emaj_sequence_old, emaj.emaj_time_stamp
     WHERE sequ_datetime = time_clock_timestamp AND time_event = 'M';
 
 -- recreate the foreign keys that point on this table
+-- na
 
 -- set the last value for the sequence associated to the serial column
-SELECT CASE WHEN EXISTS (SELECT 1 FROM emaj.emaj_sequence) 
-              THEN setval('emaj.emaj_sequence_sequ_id_seq', (SELECT max(sequ_id) FROM emaj.emaj_sequence))
-       END;
+-- na
 
 --
 -- process the emaj_seq_hole table
@@ -1252,7 +1249,7 @@ $_rlbk_tbl$
   END;
 $_rlbk_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._delete_log_tbl(r_rel emaj.emaj_relation, v_beginTimeId BIGINT, v_endTimeId BIGINT, v_lastGlobalSeq BIGINT, v_lastSequenceId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._delete_log_tbl(r_rel emaj.emaj_relation, v_beginTimeId BIGINT, v_endTimeId BIGINT, v_lastGlobalSeq BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_delete_log_tbl$
 -- This function deletes the part of a log table corresponding to updates that have been rolled back.
@@ -1262,8 +1259,7 @@ $_delete_log_tbl$
 -- Input: row from emaj_relation corresponding to the appplication table to proccess,
 --        begin and end time stamp ids to define the time range identifying the hole to create in the log sequence
 --        global sequence value limit for rollback, mark timestamp,
---        flag to specify if the rollback is logged,
---        last sequence identifiers to keep (greater ones being to be deleted)
+--        flag to specify if the rollback is logged
 -- Output: deleted rows
   DECLARE
     v_nbRows                 BIGINT;
@@ -1271,10 +1267,10 @@ $_delete_log_tbl$
 -- delete obsolete log rows
     EXECUTE 'DELETE FROM ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' WHERE emaj_gid > ' || v_lastGlobalSeq;
     GET DIAGNOSTICS v_nbRows = ROW_COUNT;
--- suppress from emaj_sequence table the rows regarding the emaj log sequence for this application table
---     corresponding to potential later intermediate marks that disappear with the rollback operation
+-- suppress from the emaj_sequence table the rows regarding the emaj log sequence for this application table
+--     corresponding to all marks that disappear with the rollback operation
     DELETE FROM emaj.emaj_sequence
-      WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence AND sequ_id > v_lastSequenceId;
+      WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence AND sequ_time_id > v_beginTimeId;
 -- record the sequence holes generated by the delete operation
 -- this is due to the fact that log sequences are not rolled back, this information will be used by the emaj_log_stat_group
 --   function (and indirectly by emaj_estimate_rollback_duration())
@@ -1297,12 +1293,12 @@ $_delete_log_tbl$
   END;
 $_delete_log_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, v_timeId BIGINT, v_isLoggedRlbk BOOLEAN, v_lastSequenceId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, v_timeId BIGINT, v_isLoggedRlbk BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_seq$
 -- This function rollbacks one application sequence to a given mark
 -- The function is called by emaj.emaj._rlbk_end()
--- Input: the emaj_group_def row related to the application sequence to process, time id, boolean indicating whether the rollback is logged, and the id of the last sequence to keep
+-- Input: the emaj_group_def row related to the application sequence to process, time id of the mark to rollback to, boolean indicating whether the rollback is logged
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it is not the owner of the application sequence.
   DECLARE
     v_fullSeqName            TEXT;
@@ -1365,7 +1361,7 @@ $_rlbk_seq$
 -- if the caller requires it, delete the rolled back intermediate sequences from the sequence table
     IF NOT v_isLoggedRlbk THEN
       DELETE FROM emaj.emaj_sequence
-        WHERE sequ_schema = r_rel.rel_schema AND sequ_name = r_rel.rel_tblseq AND sequ_id > v_lastSequenceId;
+        WHERE sequ_schema = r_rel.rel_schema AND sequ_name = r_rel.rel_tblseq AND sequ_time_id > v_timeId;
     END IF;
 -- insert event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
@@ -2733,7 +2729,6 @@ $_set_mark_groups$
   DECLARE
     v_nbTb                   INT = 0;
     v_timestamp              TIMESTAMPTZ;
-    v_lastSequenceId         BIGINT;
     r_tblsq                  RECORD;
   BEGIN
 -- if requested, record the set mark begin in emaj_hist
@@ -2788,16 +2783,10 @@ $_set_mark_groups$
                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence);
       v_nbTb = v_nbTb + 1;
     END LOOP;
--- record the marks
--- get the last id for emaj_sequence table
-    SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END INTO v_lastSequenceId
-      FROM emaj.emaj_sequence_sequ_id_seq;
--- insert the marks into the emaj_mark table
+-- record the marks into the emaj_mark table
     FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
-      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted,
-                                  mark_is_rlbk_protected, mark_last_sequence_id, mark_logged_rlbk_target_mark)
-        SELECT v_groupNames[v_i], v_mark, v_timeId, FALSE,
-               FALSE, v_lastSequenceId, v_loggedRlbkTargetMark
+      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
+        SELECT v_groupNames[v_i], v_mark, v_timeId, FALSE, FALSE, v_loggedRlbkTargetMark
           FROM emaj.emaj_time_stamp WHERE time_id = v_timeId;
     END LOOP;
 -- before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table
@@ -4187,7 +4176,6 @@ $_rlbk_session_exec$
     v_maxGlobalSeq           BIGINT;
     v_rlbkMarkId             BIGINT;
     v_lastGlobalSeq          BIGINT;
-    v_lastSequenceId         BIGINT;
     v_nbRows                 BIGINT;
     r_step                   RECORD;
   BEGIN
@@ -4199,9 +4187,9 @@ $_rlbk_session_exec$
     SELECT rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, time_last_emaj_gid
       INTO v_groupNames, v_mark, v_rlbkTimeId, v_isLoggedRlbk, v_nbSession, v_maxGlobalSeq
       FROM emaj.emaj_rlbk, emaj.emaj_time_stamp WHERE rlbk_id = v_rlbkId AND rlbk_time_id = time_id;
--- fetch the mark_id, the last global sequence and the last id values of the emaj_sequence table at set_mark time for the first group of the groups array (they all share the same values - except for the mark_id)
-    SELECT mark_id, mark_time_id, time_last_emaj_gid, mark_last_sequence_id
-      INTO v_rlbkMarkId, v_rlbkMarkTimeId, v_lastGlobalSeq, v_lastSequenceId
+-- fetch the mark_id, the last global sequence at set_mark time for the first group of the groups array (they all share the same values - except for the mark_id)
+    SELECT mark_id, mark_time_id, time_last_emaj_gid
+      INTO v_rlbkMarkId, v_rlbkMarkTimeId, v_lastGlobalSeq
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupNames[1] AND mark_name = v_mark;
 -- scan emaj_rlbp_plan to get all steps to process that have been affected to this session, in batch_number and step order
@@ -4250,7 +4238,7 @@ $_rlbk_session_exec$
           v_effNbTable = v_effNbTable + 1;
         WHEN 'DELETE_LOG' THEN
 -- process the deletion of log rows
-          SELECT emaj._delete_log_tbl(emaj_relation.*, v_rlbkMarkTimeId, v_rlbkTimeId, v_lastGlobalSeq, v_lastSequenceId)
+          SELECT emaj._delete_log_tbl(emaj_relation.*, v_rlbkMarkTimeId, v_rlbkTimeId, v_lastGlobalSeq)
             INTO v_nbRows
             FROM emaj.emaj_relation
             WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
@@ -4334,7 +4322,6 @@ $_rlbk_end$
     v_ctrlDuration           INTERVAL;
     v_markId                 BIGINT;
     v_markTimeId             BIGINT;
-    v_lastSequenceId         BIGINT;
     v_nbSeq                  INT;
     v_markName               TEXT;
     v_histDateTime           TIMESTAMPTZ;
@@ -4418,11 +4405,11 @@ $_rlbk_end$
     END IF;
 -- rollback the application sequences belonging to the groups
 -- warning, this operation is not transaction safe (that's why it is placed at the end of the operation)!
---   get the mark timestamp and last sequence id for the 1st group
-    SELECT mark_time_id, mark_last_sequence_id INTO v_markTimeId, v_lastSequenceId FROM emaj.emaj_mark
+--   get the mark timestamp for the 1st group
+    SELECT mark_time_id INTO v_markTimeId FROM emaj.emaj_mark
       WHERE mark_group = v_groupNames[1] AND mark_name = v_mark;
 --   and rollback
-    PERFORM emaj._rlbk_seq(t.*, v_markTimeId, v_isLoggedRlbk, v_lastSequenceId)
+    PERFORM emaj._rlbk_seq(t.*, v_markTimeId, v_isLoggedRlbk)
       FROM (SELECT * FROM emaj.emaj_relation
               WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t;

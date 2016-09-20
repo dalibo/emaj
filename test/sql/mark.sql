@@ -64,9 +64,9 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}');
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
 
 -- impact of mark set
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 300 order by time_id;
-select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+select sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 
 -----------------------------
 -- emaj_comment_mark_group() tests
@@ -129,8 +129,8 @@ update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'Mark1' where mark_name
 select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
 
 -- impact of mark rename
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
-select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+select sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 
 -----------------------------
 -- emaj_delete_mark_group() tests
@@ -248,8 +248,8 @@ select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 
 -- check marks state
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
-select sequ_id,sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+select sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 
 -----------------------------
 -- test end: check, reset history and force sequences id
@@ -262,5 +262,4 @@ truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 400;
 alter sequence emaj.emaj_mark_mark_id_seq restart 400;
-alter sequence emaj.emaj_sequence_sequ_id_seq restart 4000;
 

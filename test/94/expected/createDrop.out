@@ -1150,4 +1150,3 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 200;
 alter sequence emaj.emaj_mark_mark_id_seq restart 200;
-alter sequence emaj.emaj_sequence_sequ_id_seq restart 2000;

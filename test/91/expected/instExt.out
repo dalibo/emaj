@@ -192,7 +192,6 @@ Composite type "emaj.emaj_log_stat_type"
  mark_is_deleted              | boolean | not null
  mark_is_rlbk_protected       | boolean | not null
  mark_comment                 | text    | 
- mark_last_sequence_id        | bigint  | 
  mark_log_rows_before_next    | bigint  | 
  mark_logged_rlbk_target_mark | text    | 
 Indexes:
@@ -453,10 +452,9 @@ Foreign-key constraints:
  sqhl_begin_time_id | bigint | sqhl_begin_time_id
 primary key, btree, for table "emaj.emaj_seq_hole"
 
-                                   Table "emaj.emaj_sequence"
-     Column     |  Type   |                              Modifiers                               
-----------------+---------+----------------------------------------------------------------------
- sequ_id        | bigint  | not null default nextval('emaj.emaj_sequence_sequ_id_seq'::regclass)
+      Table "emaj.emaj_sequence"
+     Column     |  Type   | Modifiers 
+----------------+---------+-----------
  sequ_schema    | text    | not null
  sequ_name      | text    | not null
  sequ_time_id   | bigint  | not null
@@ -481,20 +479,6 @@ Foreign-key constraints:
  sequ_name    | text   | sequ_name
  sequ_time_id | bigint | sequ_time_id
 primary key, btree, for table "emaj.emaj_sequence"
-
-      Sequence "emaj.emaj_sequence_sequ_id_seq"
-    Column     |  Type   |           Value           
----------------+---------+---------------------------
- sequence_name | name    | emaj_sequence_sequ_id_seq
- last_value    | bigint  | 1
- start_value   | bigint  | 1
- increment_by  | bigint  | 1
- max_value     | bigint  | 9223372036854775807
- min_value     | bigint  | 1
- cache_value   | bigint  | 1
- log_cnt       | bigint  | 0
- is_cycled     | boolean | f
- is_called     | boolean | f
 
                                                Table "emaj.emaj_time_stamp"
         Column        |           Type           |                               Modifiers                                

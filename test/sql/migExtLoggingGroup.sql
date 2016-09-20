@@ -33,12 +33,11 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
        mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, 
-       mark_last_sequence_id, mark_log_rows_before_next, mark_logged_rlbk_target_mark 
+       mark_log_rows_before_next, mark_logged_rlbk_target_mark 
   from emaj.emaj_mark order by mark_id;
 select last_value, is_called from emaj.emaj_mark_mark_id_seq;
 
-select sequ_id, sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called from emaj.emaj_sequence order by sequ_id;
-select last_value, is_called from emaj.emaj_sequence_sequ_id_seq;
+select sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 
 select * from emaj.emaj_seq_hole order by sqhl_schema, sqhl_table, sqhl_begin_time_id;
 

@@ -47,7 +47,8 @@ Enhancements:
   - in error and warning messages, all groups, marks, schemas or tables names 
     are surrounded by double quotes to improve the readability.
   - a new emaj_time_stamp table records the timestamps of main E-Maj events 
-    like groups creation, marks setting and rollbacks.
+    like groups creation, marks setting and rollbacks, leading to significant 
+    changes in some existing internal tables structure.
   - various minor coding enhancements.
   - the demonstration script is renamed emaj_demo.sql and enhanced.
   - the script supplied to prepare a parallel rollback test environment is 
