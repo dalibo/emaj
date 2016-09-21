@@ -4618,38 +4618,37 @@ $_reset_group$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences saves
 -- It is called by both emaj_reset_group and emaj_start_group functions
 -- Input: group name
--- Output: number of processed tables
+-- Output: number of processed tables and sequences
 -- There is no check of the group state
 -- The function is defined as SECURITY DEFINER so that an emaj_adm role can truncate log tables
   DECLARE
-    v_nbTb                   INT  = 0;
-    r_rel                    emaj.emaj_relation%ROWTYPE;
+    v_nbTb                   INT;
+    r_rel                    RECORD;
   BEGIN
 -- delete all marks for the group from the emaj_mark table
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
+-- delete emaj_sequence rows related to the tables of the group
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'r' AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence;
 -- delete all sequence holes for the tables of the group
     DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table;
--- then, truncate log tables
+-- initialize the return value with the number of sequences
+    SELECT count(*) INTO v_nbTb FROM emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'S';
+-- delete emaj_sequence rows related to the sequences of the group
+    PERFORM emaj._drop_seq(emaj_relation.*) FROM emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'S';
+-- then, truncate log tables for application tables
     FOR r_rel IN
-        SELECT * FROM emaj.emaj_relation
-          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq
+        SELECT rel_log_schema, rel_log_table, rel_log_sequence FROM emaj.emaj_relation
+          WHERE rel_group = v_groupName AND rel_kind = 'r'
+          ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
-      CASE r_rel.rel_kind
-        WHEN 'r' THEN
--- if it is a table,
---   truncate the related log table
-          EXECUTE 'TRUNCATE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
---   delete rows from emaj_sequence related to the associated log sequence
-          DELETE FROM emaj.emaj_sequence
-            WHERE sequ_schema = r_rel.rel_log_schema
-              AND sequ_name = r_rel.rel_log_sequence;
+--   truncate the log table
+      EXECUTE 'TRUNCATE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
 --   and reset the log sequence
-          PERFORM setval(quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence), 1, false);
-        WHEN 'S' THEN
--- if it is a sequence, delete all related data from emaj_sequence table
-          PERFORM emaj._drop_seq (r_rel);
-      END CASE;
+      PERFORM setval(quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence), 1, false);
       v_nbTb = v_nbTb + 1;
     END LOOP;
     RETURN v_nbTb;
