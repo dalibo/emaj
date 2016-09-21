@@ -973,10 +973,7 @@ select sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.
  emajb          | myschema1_mytbl2b_log_seq          |          430 | Mark12         |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |          430 | Mark12         |             1 | f
  myschema1      | myTbl3_col31_seq                   |          430 | Mark12         |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |          431 | Mark13         |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |          431 | Mark13         |             6 | t
- emajb          | myschema1_mytbl2b_log_seq          |          431 | Mark13         |             6 | t
-(27 rows)
+(24 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
@@ -1051,15 +1048,13 @@ select sequ_schema, sequ_name, sequ_time_id, regexp_replace(sequ_mark,E'\\d\\d\.
  emajC          | myschema2_myTbl3_log_seq           |          429 | Mark21         |             1 | f
  myschema2      | myseq1                             |          429 | Mark21         |          1000 | f
  myschema2      | myTbl3_col31_seq                   |          429 | Mark21         |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          430 | Mark12         |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          430 | Mark12         |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |          434 | STOP_%         |            15 | t
  emaj           | myschema1_mytbl2_log_seq           |          434 | STOP_%         |             6 | t
  emaj           | myschema1_mytbl4_log_seq           |          434 | STOP_%         |             2 | t
  emajb          | myschema1_mytbl2b_log_seq          |          434 | STOP_%         |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |          434 | STOP_%         |            10 | t
  myschema1      | myTbl3_col31_seq                   |          434 | STOP_%         |             1 | f
-(26 rows)
+(24 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
