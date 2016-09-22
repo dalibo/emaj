@@ -461,7 +461,6 @@ primary key, btree, for table "emaj.emaj_seq_hole"
  sequ_schema    | text    | not null
  sequ_name      | text    | not null
  sequ_time_id   | bigint  | not null
- sequ_mark      | text    | not null
  sequ_last_val  | bigint  | not null
  sequ_start_val | bigint  | not null
  sequ_increment | bigint  | not null

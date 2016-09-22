@@ -297,11 +297,16 @@ select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','CSV HEADER DELIMI
 select emaj.emaj_snap_log_group(NULL,NULL,NULL,NULL,NULL);
 select emaj.emaj_snap_log_group('unknownGroup',NULL,NULL,NULL,NULL);
 
+-- invalid directory
+select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',NULL,NULL);
+select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','unknown_directory',NULL);
+select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
+
 -- invalid start mark
-select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK',NULL,NULL);
+select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps',NULL);
 
 -- invalid end mark
-select emaj.emaj_snap_log_group('myGroup2','','unknownMark',NULL,NULL);
+select emaj.emaj_snap_log_group('myGroup2','','unknownMark','/tmp/emaj_test/log_snaps',NULL);
 
 -- start mark > end mark
 -- just check the error is trapped, because the error message contents timestamps
@@ -320,11 +325,6 @@ $$;
 select test_snap_log('myGroup2','Mark23','Mark21');
 select test_snap_log('myGroup2','EMAJ_LAST_MARK','Mark22');
 drop function test_snap_log(text,text,text);
-
--- invalid directory
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',NULL,NULL);
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','unknown_directory',NULL);
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
 
 -- invalid COPY TO options
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps', 'dummy_option');

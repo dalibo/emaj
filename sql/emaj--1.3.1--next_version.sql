@@ -234,7 +234,6 @@ CREATE TABLE emaj.emaj_sequence (
   sequ_name                    TEXT        NOT NULL,       -- application or emaj sequence name
   sequ_time_id                 BIGINT      NOT NULL,       -- time stamp when the sequence characteristics have been recorded
                                                            --   the same time stamp id as referenced in emaj_mark table
-  sequ_mark                    TEXT        NOT NULL,       -- name of the mark associated to the insertion timestamp
   sequ_last_val                BIGINT      NOT NULL,       -- sequence last value
   sequ_start_val               BIGINT      NOT NULL,       -- sequence start value
   sequ_increment               BIGINT      NOT NULL,       -- sequence increment
@@ -251,9 +250,9 @@ $$Contains values of sequences at E-Maj set_mark times.$$;
 
 -- populate the new table
 INSERT INTO emaj.emaj_sequence (
-         sequ_schema, sequ_name, sequ_time_id, sequ_mark, sequ_last_val, sequ_start_val, 
+         sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, 
          sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-  SELECT sequ_schema, sequ_name, time_id, sequ_mark, sequ_last_val, sequ_start_val,
+  SELECT sequ_schema, sequ_name, time_id, sequ_last_val, sequ_start_val,
          sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called
     FROM emaj_sequence_old, emaj.emaj_time_stamp
     WHERE sequ_datetime = time_clock_timestamp AND time_event = 'M';
@@ -1304,7 +1303,7 @@ $_rlbk_seq$
   BEGIN
 -- Read sequence's characteristics at mark time
     BEGIN
-      SELECT sequ_schema, sequ_name, sequ_mark, sequ_last_val, sequ_start_val, sequ_increment,
+      SELECT sequ_schema, sequ_name, sequ_last_val, sequ_start_val, sequ_increment,
              sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called
         INTO STRICT mark_seq_rec
         FROM emaj.emaj_sequence
@@ -2741,12 +2740,11 @@ $_set_mark_groups$
       LOOP
 -- for each sequence of the groups, record the sequence parameters into the emaj_sequence table
       EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
-               'sequ_schema, sequ_name, sequ_time_id, sequ_mark, sequ_last_val, sequ_start_val, ' ||
+               'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
                ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
                quote_literal(r_tblsq.rel_tblseq) || ', ' || v_timeId ||
-               ', ' || quote_literal(v_mark) || ', last_value, start_value, ' ||
-               'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+               ', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
                'FROM ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       v_nbTb = v_nbTb + 1;
     END LOOP;
@@ -2766,10 +2764,10 @@ $_set_mark_groups$
         LOOP
 -- ... record the associated sequence parameters in the emaj sequence table
       EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
-               'sequ_schema, sequ_name, sequ_time_id, sequ_mark, sequ_last_val, sequ_start_val, ' ||
+               'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
                ') SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(r_tblsq.rel_log_sequence) || ', ' ||
-               v_timeId || ', ' || quote_literal(v_mark) || ', ' || 'last_value, start_value, ' ||
+               v_timeId || ', last_value, start_value, ' ||
                'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence);
       v_nbTb = v_nbTb + 1;
@@ -3023,7 +3021,7 @@ $_delete_between_marks_group$
     v_nbUpd                  BIGINT;
     r_rel                    RECORD;
   BEGIN
--- retrieve the id, the timestamp and the emaj_gid value of the first mark, if supplied
+-- retrieve the id, the timestamp and the emaj_gid value and the time stamp id of the first mark, if supplied
     IF v_firstMark IS NOT NULL THEN
       SELECT mark_id, time_last_emaj_gid, mark_time_id INTO v_firstMarkId, v_firstMarkGlobalSeq, v_firstMarkTimeId
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
@@ -3031,7 +3029,7 @@ $_delete_between_marks_group$
       ELSE
         v_firstMarkId = 0; v_firstMarkTimeId = 0; v_firstMarkGlobalSeq = 0;
     END IF;
--- retrieve the id, the timestamp and the emaj_gid value of the last mark
+-- retrieve the id, the timestamp and the emaj_gid value and the time stamp id of the last mark
     SELECT mark_id, time_last_emaj_gid, mark_time_id INTO v_lastMarkId, v_lastMarkGlobalSeq, v_lastMarkTimeId
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_lastMark;
@@ -3082,16 +3080,12 @@ $_delete_between_marks_group$
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'S'
         AND sequ_schema = rel_schema AND sequ_name = rel_tblseq
-        AND (sequ_mark, sequ_time_id) IN
-            (SELECT mark_name, mark_time_id FROM emaj.emaj_mark
-               WHERE mark_group = v_groupName AND mark_id > v_firstMarkId AND mark_id < v_lastMarkId);
+        AND sequ_time_id > v_firstMarkTimeId AND sequ_time_id < v_lastMarkTimeId;
 --   delete then emaj sequences related data for the group
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r'
         AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence
-        AND (sequ_mark, sequ_time_id) IN
-            (SELECT mark_name, mark_time_id FROM emaj.emaj_mark
-               WHERE mark_group = v_groupName AND mark_id > v_firstMarkId AND mark_id < v_lastMarkId);
+        AND sequ_time_id > v_firstMarkTimeId AND sequ_time_id < v_lastMarkTimeId;
 -- in emaj_mark, reset the mark_logged_rlbk_target_mark column to null for marks of the group that will remain
 --    and that may have one of the deleted marks as target mark from a previous logged rollback operation
     UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = NULL
@@ -3129,12 +3123,12 @@ $_delete_intermediate_mark_group$
 -- delete the sequences related to the mark to delete
 --   delete first application sequences related data for the group
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
-      WHERE sequ_mark = v_markName AND sequ_time_id = v_markTimeId
+      WHERE sequ_time_id = v_markTimeId
         AND rel_group = v_groupName AND rel_kind = 'S'
         AND sequ_schema = rel_schema AND sequ_name = rel_tblseq;
 --   delete then emaj sequences related data for the group
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
-      WHERE sequ_mark = v_markName AND sequ_time_id = v_markTimeId
+      WHERE sequ_time_id = v_markTimeId
         AND rel_group = v_groupName AND rel_kind = 'r'
         AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence;
 -- physically delete the mark from emaj_mark
@@ -3198,18 +3192,7 @@ $emaj_rename_mark_group$
     IF FOUND THEN
        RAISE EXCEPTION 'emaj_rename_mark_group: a mark "%" already exists for group "%".', v_newName, v_groupName;
     END IF;
--- OK, update the sequences table
-    UPDATE emaj.emaj_sequence SET sequ_mark = v_newName
-      WHERE sequ_time_id =                                          -- the right mark date and time
-            (SELECT mark_time_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark)
-        AND (sequ_schema, sequ_name) IN
-            (SELECT rel_schema, rel_tblseq FROM emaj.emaj_relation  -- filter only application sequences of the group
-               WHERE rel_group = v_groupName AND rel_kind = 'S'
-             UNION ALL                                              -- filter only log sequences of the group
-             SELECT rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
-               WHERE rel_group = v_groupName AND rel_kind = 'r'
-            );
--- and then update the emaj_mark table
+-- OK, update the emaj_mark table
     UPDATE emaj.emaj_mark SET mark_name = v_newName
       WHERE mark_group = v_groupName AND mark_name = v_realMark;
 -- also rename mark names recorded in the mark_logged_rlbk_target_mark column if needed
@@ -4673,8 +4656,8 @@ $emaj_log_stat_group$
     v_realLastMark           TEXT;
     v_firstMarkTimeId        BIGINT;
     v_lastMarkTimeId         BIGINT;
-    v_tsFirstMark            TIMESTAMPTZ;
-    v_tsLastMark             TIMESTAMPTZ;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
   BEGIN
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
@@ -4685,7 +4668,7 @@ $emaj_log_stat_group$
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
 --   if no mark exists for the group (just after emaj_create_group() or emaj_reset_group() functions call),
 --     v_realFirstMark remains NULL
-      SELECT mark_name, mark_time_id, time_clock_timestamp INTO v_realFirstMark, v_firstMarkTimeId, v_tsFirstMark
+      SELECT mark_name, mark_time_id, time_clock_timestamp INTO v_realFirstMark, v_firstMarkTimeId, v_firstMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE time_id = mark_time_id AND mark_group = v_groupName
         ORDER BY mark_id LIMIT 1;
@@ -4695,7 +4678,7 @@ $emaj_log_stat_group$
       IF v_realFirstMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: Start mark "%" is unknown for group "%".', v_firstMark, v_groupName;
       END IF;
-      SELECT mark_time_id, time_clock_timestamp INTO v_firstMarkTimeId, v_tsFirstMark
+      SELECT mark_time_id, time_clock_timestamp INTO v_firstMarkTimeId, v_firstMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE time_id = mark_time_id AND mark_group = v_groupName AND mark_name = v_realFirstMark;
     END IF;
@@ -4705,14 +4688,14 @@ $emaj_log_stat_group$
       IF v_realLastMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: End mark "%" is unknown for group "%".', v_lastMark, v_groupName;
       END IF;
-      SELECT mark_time_id, time_clock_timestamp INTO v_lastMarkTimeId, v_tsLastMark
+      SELECT mark_time_id, time_clock_timestamp INTO v_lastMarkTimeId, v_lastMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE time_id = mark_time_id AND mark_group = v_groupName AND mark_name = v_realLastMark;
--- if last mark is null or empty, v_realLastMark, v_lastMarkTimeId, v_tsLastMark and v_lastLastSeqHoleId remain NULL
+-- if last mark is null or empty, v_realLastMark, v_lastMarkTimeId, v_lastMarkTs and v_lastLastSeqHoleId remain NULL
     END IF;
 -- check that the first_mark < end_mark
     IF v_lastMarkTimeId IS NOT NULL AND v_firstMarkTimeId > v_lastMarkTimeId THEN
-      RAISE EXCEPTION 'emaj_log_stat_group: mark id for "%" (%) is greater than mark id for "%" (%).', v_firstMark, v_tsFirstMark, v_lastMark, v_tsLastMark;
+      RAISE EXCEPTION 'emaj_log_stat_group: mark id for "%" (%) is greater than mark id for "%" (%).', v_firstMark, v_firstMarkTs, v_lastMark, v_lastMarkTs;
     END IF;
 -- for each table of the emaj_relation table, get the number of log rows and return the statistic
     RETURN QUERY
@@ -4742,8 +4725,8 @@ $emaj_detailed_log_stat_group$
     v_realLastMark           TEXT;
     v_firstMarkId            BIGINT;
     v_lastMarkId             BIGINT;
-    v_tsFirstMark            TIMESTAMPTZ;
-    v_tsLastMark             TIMESTAMPTZ;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
     v_firstEmajGid           BIGINT;
     v_lastEmajGid            BIGINT;
     v_logTableName           TEXT;
@@ -4763,7 +4746,7 @@ $emaj_detailed_log_stat_group$
       IF v_realFirstMark IS NULL THEN
           RAISE EXCEPTION 'emaj_detailed_log_stat_group: Start mark "%" is unknown for group "%".', v_firstMark, v_groupName;
       END IF;
-      SELECT mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_firstMarkId, v_firstEmajGid, v_tsFirstMark
+      SELECT mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_firstMarkId, v_firstEmajGid, v_firstMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_realFirstMark;
     END IF;
@@ -4774,13 +4757,13 @@ $emaj_detailed_log_stat_group$
       IF v_realLastMark IS NULL THEN
         RAISE EXCEPTION 'emaj_detailed_log_stat_group: End mark "%" is unknown for group "%".', v_lastMark, v_groupName;
       END IF;
-      SELECT mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkId, v_lastEmajGid, v_tsLastMark
+      SELECT mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkId, v_lastEmajGid, v_lastMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_realLastMark;
     END IF;
 -- check that the first_mark < end_mark
     IF v_realFirstMark IS NOT NULL AND v_realLastMark IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
-      RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).', v_realFirstMark, v_firstMarkId, v_tsFirstMark, v_realLastMark, v_lastMarkId, v_tsLastMark;
+      RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).', v_realFirstMark, v_firstMarkId, v_firstMarkTs, v_realLastMark, v_lastMarkId, v_lastMarkTs;
     END IF;
 -- for each table of the emaj_relation table
     FOR r_tblsq IN
@@ -5075,10 +5058,13 @@ $emaj_snap_log_group$
     v_lastMarkId             BIGINT;
     v_firstEmajGid           BIGINT;
     v_lastEmajGid            BIGINT;
-    v_tsFirstMark            TIMESTAMPTZ;
-    v_tsLastMark             TIMESTAMPTZ;
+    v_firstMarkTsId          BIGINT;
+    v_lastMarkTsId           BIGINT;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
     v_logTableName           TEXT;
     v_fileName               TEXT;
+    v_conditions             TEXT;
     v_stmt                   TEXT;
   BEGIN
 -- insert begin in the history
@@ -5092,6 +5078,10 @@ $emaj_snap_log_group$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'emaj_snap_log_group: group "%" has not been created.', v_groupName;
     END IF;
+-- check the supplied directory is not null
+    IF v_dir IS NULL THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: directory parameter cannot be NULL';
+    END IF;
 -- check the copy options parameter doesn't contain unquoted ; that could be used for sql injection
     IF regexp_replace(v_copyOptions,'''.*''','') LIKE '%;%'  THEN
       RAISE EXCEPTION 'emaj_snap_log_group: invalid COPY options parameter format';
@@ -5103,36 +5093,43 @@ $emaj_snap_log_group$
       IF v_realFirstMark IS NULL THEN
           RAISE EXCEPTION 'emaj_snap_log_group: Start mark "%" is unknown for group "%".', v_firstMark, v_groupName;
       END IF;
-      SELECT mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_firstMarkId, v_firstEmajGid, v_tsFirstMark
+      SELECT mark_id, time_id, time_last_emaj_gid, time_clock_timestamp
+        INTO v_firstMarkId, v_firstMarkTsId, v_firstEmajGid, v_firstMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_realFirstMark;
     ELSE
-      SELECT mark_name, mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_realFirstMark, v_firstMarkId, v_firstEmajGid, v_tsFirstMark
+      SELECT mark_name, mark_id, time_id, time_last_emaj_gid, time_clock_timestamp
+        INTO v_realFirstMark, v_firstMarkId, v_firstMarkTsId, v_firstEmajGid, v_firstMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE mark_time_id = time_id AND mark_group = v_groupName ORDER BY mark_id LIMIT 1;
     END IF;
--- catch the global sequence value and timestamp of the last mark
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
--- else, check and retrieve the global sequence value and the timestamp of the end mark for the group
+-- the end mark is supplied
       SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
       IF v_realLastMark IS NULL THEN
         RAISE EXCEPTION 'emaj_snap_log_group: End mark "%" is unknown for group "%".', v_lastMark, v_groupName;
       END IF;
-      SELECT mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkId, v_lastEmajGid, v_tsLastMark
-        FROM emaj.emaj_mark, emaj.emaj_time_stamp
-        WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_realLastMark;
     ELSE
-      v_lastMarkId = NULL;
-      v_lastEmajGid = NULL;
-      v_tsLastMark = NULL;
+-- the end mark is not supplied (look for the current state)
+-- temporarily create a mark, without locking tables
+      SELECT emaj._check_new_mark('TEMP_%', ARRAY[v_groupName]) INTO v_realLastMark;
+      PERFORM emaj._set_mark_groups(ARRAY[v_groupName], v_realLastMark, false, false);
     END IF;
+-- catch the global sequence value and timestamp of the last mark
+    SELECT mark_id, time_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkId, v_lastMarkTsId, v_lastEmajGid, v_lastMarkTs
+      FROM emaj.emaj_mark, emaj.emaj_time_stamp
+      WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_realLastMark;
 -- check that the first_mark < end_mark
-    IF v_lastMarkId IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
-      RAISE EXCEPTION 'emaj_snap_log_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).', v_realFirstMark, v_firstMarkId, v_tsFirstMark, v_realLastMark, v_lastMarkId, v_tsLastMark;
+    IF v_firstMarkId > v_lastMarkId THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).', v_realFirstMark, v_firstMarkId, v_firstMarkTs, v_realLastMark, v_lastMarkId, v_lastMarkTs;
     END IF;
--- check the supplied directory is not null
-    IF v_dir IS NULL THEN
-      RAISE EXCEPTION 'emaj_snap_log_group: directory parameter cannot be NULL';
+-- build the conditions on emaj_gid corresponding to this marks frame, used for the COPY statements dumping the tables
+    v_conditions = 'TRUE';
+    IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
+      v_conditions = v_conditions || ' AND emaj_gid > '|| v_firstEmajGid;
+    END IF;
+    IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
+      v_conditions = v_conditions || ' AND emaj_gid <= '|| v_lastEmajGid;
     END IF;
 -- process all log tables of the emaj_relation table
     FOR r_tblsq IN
@@ -5142,19 +5139,12 @@ $emaj_snap_log_group$
       IF r_tblsq.rel_kind = 'r' THEN
 -- process tables
 --   build names
-        v_fileName     = v_dir || '/' || r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log.snap';
+        v_fileName = v_dir || '/' || r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log.snap';
         v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
---   prepare the COPY statement
-        v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE TRUE';
-        IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
-          v_stmt = v_stmt || ' AND emaj_gid > '|| v_firstEmajGid;
-        END IF;
-        IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
-          v_stmt = v_stmt || ' AND emaj_gid <= '|| v_lastEmajGid;
-        END IF;
-        v_stmt = v_stmt || ' ORDER BY emaj_gid ASC) TO ' || quote_literal(v_fileName) || ' '
-                        || coalesce (v_copyOptions, '');
--- and finaly perform the COPY
+--   prepare the execute the COPY statement
+        v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions
+             || ' ORDER BY emaj_gid ASC) TO ' || quote_literal(v_fileName)
+             || ' ' || coalesce (v_copyOptions, '');
         EXECUTE v_stmt;
       END IF;
 -- for sequences, just adjust the counter
@@ -5162,34 +5152,29 @@ $emaj_snap_log_group$
     END LOOP;
 -- generate the file for sequences state at start mark
     v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_realFirstMark;
+-- execute the COPY statement
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
-            ' WHERE sequ_mark = ' || quote_literal(v_realFirstMark) || ' AND ' ||
+            ' WHERE sequ_time_id = ' || quote_literal(v_firstMarkTsId) || ' AND ' ||
             ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
             coalesce (v_copyOptions, '');
     EXECUTE v_stmt;
--- generate the file for sequences state at end mark
+-- generate the full file name for sequences state at end mark
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
--- the end mark is supplied
       v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_realLastMark;
     ELSE
--- the end mark is not supplied (look for the sequences current state)
--- temporarily create a mark, without locking tables
-      SELECT emaj._check_new_mark('TEMP_%', ARRAY[v_groupName]) INTO v_realLastMark;
-      PERFORM emaj._set_mark_groups(ARRAY[v_groupName], v_realLastMark, false, false);
-      v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || to_char(clock_timestamp(),'HH24.MI.SS.MS');
+      v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_lastMarkTs,'HH24.MI.SS.MS');
     END IF;
--- prepare the COPY statement
+-- execute the COPY statement
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
-            ' WHERE sequ_mark = ' || quote_literal(v_realLastMark) || ' AND ' ||
+            ' WHERE sequ_time_id = ' || quote_literal(v_lastMarkTsId) || ' AND ' ||
             ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
             coalesce (v_copyOptions, '');
--- and finaly perform the COPY
     EXECUTE v_stmt;
     IF v_lastMark IS NULL OR v_lastMark = '' THEN
 -- no last mark has been supplied, suppress the just created mark
@@ -5200,7 +5185,7 @@ $emaj_snap_log_group$
     EXECUTE 'COPY (SELECT ' ||
             quote_literal('E-Maj log tables snap of group ' || v_groupName ||
             ' between marks ' || v_realFirstMark || ' and ' ||
-            coalesce(v_realLastMark,'current state') || ' at ' || transaction_timestamp()) ||
+            coalesce(v_realLastMark,'current state') || ' at ' || statement_timestamp()) ||
             ') TO ' || quote_literal(v_dir || '/_INFO') || ' ' || coalesce (v_copyOptions, '');
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -5304,8 +5289,8 @@ $_gen_sql_groups$
     v_firstMarkTimeId        BIGINT;
     v_firstEmajGid           BIGINT;
     v_lastEmajGid            BIGINT;
-    v_tsFirstMark            TIMESTAMPTZ;
-    v_tsLastMark             TIMESTAMPTZ;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
     v_lastMarkTimeId         BIGINT;
     v_tblseqErr              TEXT;
     v_nbSQL                  BIGINT;
@@ -5385,23 +5370,23 @@ $_gen_sql_groups$
     END IF;
 -- retrieve the name, the global sequence value and the timestamp of the supplied first mark for the 1st group
 --   (the global sequence value and the timestamp are the same for all groups of the array)
-    SELECT mark_time_id, time_last_emaj_gid, time_clock_timestamp INTO v_firstMarkTimeId, v_firstEmajGid, v_tsFirstMark
+    SELECT mark_time_id, time_last_emaj_gid, time_clock_timestamp INTO v_firstMarkTimeId, v_firstEmajGid, v_firstMarkTs
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupNames[1] AND mark_name = v_realFirstMark;
 -- if last mark is NULL or empty, there is no timestamp to register
     IF v_lastMark IS NULL OR v_lastMark = '' THEN
       v_lastEmajGid = NULL;
-      v_tsLastMark = NULL;
+      v_lastMarkTs = NULL;
       v_lastMarkTimeId = NULL;
     ELSE
 -- else, retrieve the name, timestamp and last global sequence id of the supplied end mark for the 1st group
-      SELECT mark_time_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkTimeId, v_lastEmajGid, v_tsLastMark
+      SELECT mark_time_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkTimeId, v_lastEmajGid, v_lastMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE mark_time_id = time_id AND mark_group = v_groupNames[1] AND mark_name = v_realLastMark;
     END IF;
 -- check that the first_mark < end_mark
     IF v_lastMarkTimeId IS NOT NULL AND v_firstMarkTimeId > v_lastMarkTimeId THEN
-      RAISE EXCEPTION '_gen_sql_groups: time stamp for "%" (%) is greater than for "%" (%).', v_firstMarkCopy, v_tsFirstMark, v_lastMark, v_tsLastMark;
+      RAISE EXCEPTION '_gen_sql_groups: time stamp for "%" (%) is greater than for "%" (%).', v_firstMarkCopy, v_firstMarkTs, v_lastMark, v_lastMarkTs;
     END IF;
 -- check the array of tables and sequences to filter, if supplied.
 -- each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups

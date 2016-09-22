@@ -95,7 +95,7 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | _event_trigger_sql_drop_fnct              |    59
  emaj       | _gen_sql_groups                           |    17
  emaj       | _gen_sql_tbl                              |    38
- emaj       | _get_mark_name                            |   534
+ emaj       | _get_mark_name                            |   533
  emaj       | _get_mark_time_id                         |   192
  emaj       | _lock_groups                              |   144
  emaj       | _log_stat_tbl                             |  1844
