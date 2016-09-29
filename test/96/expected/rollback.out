@@ -503,7 +503,7 @@ rollback;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_rollback_group('myGroup2','Mark21');
-ERROR:  _verify_group: In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (2): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 46 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 26 at PERFORM
@@ -514,7 +514,7 @@ rollback;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
-ERROR:  _verify_group: In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (2): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 46 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 26 at PERFORM
@@ -612,7 +612,7 @@ WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign ke
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
-ERROR:  _verify_group: In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (2): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 46 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 26 at PERFORM
@@ -623,7 +623,7 @@ rollback;
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
-ERROR:  _verify_group: In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (2): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 46 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 26 at PERFORM

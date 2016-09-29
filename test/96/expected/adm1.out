@@ -2258,10 +2258,10 @@ CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 19 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 select emaj.emaj_get_previous_mark_group('dummyGroup', '2010-01-01');
-ERROR:  emaj_get_previous_mark_group: group "dummyGroup" has not been created.
+ERROR:  emaj_get_previous_mark_group (2): group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 14 at RAISE
 select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
-ERROR:  emaj_get_previous_mark_group: group "dummyGroup" has not been created.
+ERROR:  emaj_get_previous_mark_group (2): group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 14 at RAISE
 select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL); 
 ERROR:  emaj_log_stat_group: group "dummyGroup" has not been created.

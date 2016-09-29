@@ -1535,7 +1535,7 @@ $_verify_groups$
                    to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 901
         ORDER BY msg
     LOOP
-      RAISE EXCEPTION '_verify_groups: %',r_object.msg;
+      RAISE EXCEPTION '_verify_groups (1): %',r_object.msg;
     END LOOP;
 -- OK, now look for groups unconsistency
 -- Unlike emaj_verify_all(), there is no direct check that application schemas exist
@@ -1554,7 +1554,7 @@ $_verify_groups$
         WHERE t.rel_schema = r.rel_schema AND t.rel_tblseq = r.rel_tblseq
         ORDER BY 1,2,3
     LOOP
-      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (2): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check the log table for all tables referenced in the emaj_relation table still exist
@@ -1571,7 +1571,7 @@ $_verify_groups$
                    AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
-      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (3): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check the log function for each table referenced in the emaj_relation table still exists
@@ -1587,7 +1587,7 @@ $_verify_groups$
                    AND pronamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
-      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (4): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check log and truncate triggers for all tables referenced in the emaj_relation table still exist
@@ -1604,7 +1604,7 @@ $_verify_groups$
                    AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
-      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (5): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 --   then truncate trigger
@@ -1620,7 +1620,7 @@ $_verify_groups$
                    AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
       ORDER BY 1,2,3
     LOOP
-      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (6): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check all log tables have a structure consistent with the application tables they reference
@@ -1661,7 +1661,7 @@ $_verify_groups$
           )) AS t
         ORDER BY 1,2,3
     LOOP
-      if v_onErrorStop THEN RAISE EXCEPTION '_verify_group: % %',r_object.msg,v_hint; END IF;
+      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
     RETURN;
@@ -2397,6 +2397,7 @@ $_stop_groups$
     v_nbTb                   INT = 0;
     v_markName               TEXT;
     v_fullTableName          TEXT;
+    r_schema                 RECORD;
     r_tblsq                  RECORD;
   BEGIN
 -- if the group names array is null, immediately return 0
@@ -2432,66 +2433,66 @@ $_stop_groups$
 -- lock all tables to get a stable point
 --   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
 --   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
-    IF emaj._pg_version_num() >= 90500 THEN
-      PERFORM emaj._lock_groups(v_validGroupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
-    ELSE
-      PERFORM emaj._lock_groups(v_validGroupNames,'ACCESS EXCLUSIVE',v_multiGroup);
-    END IF;
+      IF emaj._pg_version_num() >= 90500 THEN
+        PERFORM emaj._lock_groups(v_validGroupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
+      ELSE
+        PERFORM emaj._lock_groups(v_validGroupNames,'ACCESS EXCLUSIVE',v_multiGroup);
+      END IF;
+-- verify that all application schemas for the groups still exists
+      FOR r_schema IN
+          SELECT DISTINCT rel_schema FROM emaj.emaj_relation
+            WHERE rel_group = ANY (v_validGroupNames)
+              AND NOT EXISTS (SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname = rel_schema)
+            ORDER BY rel_schema
+        LOOP
+        IF v_isForced THEN
+          RAISE WARNING '_stop_groups: Schema "%" does not exist any more.', r_schema.rel_schema;
+        ELSE
+          RAISE EXCEPTION '_stop_groups: Schema "%" does not exist any more.', r_schema.rel_schema;
+        END IF;
+      END LOOP;
 -- for each relation of the groups to process,
       FOR r_tblsq IN
           SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
             WHERE rel_group = ANY (v_validGroupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
-          LOOP
-          CASE r_tblsq.rel_kind
-            WHEN 'r' THEN
--- if it is a table, disable the emaj log and truncate triggers
+        LOOP
+        CASE r_tblsq.rel_kind
+          WHEN 'r' THEN
+-- if it is a table, check the table still exists
+            PERFORM 1 FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+              WHERE  relnamespace = pg_namespace.oid AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
+            IF NOT FOUND THEN
+              IF v_isForced THEN
+                RAISE WARNING '_stop_groups: Table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+              ELSE
+                RAISE EXCEPTION '_stop_groups: Table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+              END IF;
+            ELSE
+-- and disable the emaj log and truncate triggers
 --   errors are captured so that emaj_force_stop_group() can be silently executed
               v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
               BEGIN
                 EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
               EXCEPTION
-                WHEN invalid_schema_name THEN
-                  IF v_isForced THEN
-                    RAISE WARNING '_stop_groups: Schema "%" does not exist any more.', r_tblsq.rel_schema;
-                  ELSE
-                    RAISE EXCEPTION '_stop_groups: Schema "%" does not exist any more.', r_tblsq.rel_schema;
-                  END IF;
-                WHEN undefined_table THEN
-                  IF v_isForced THEN
-                    RAISE WARNING '_stop_groups: Table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
-                  ELSE
-                    RAISE EXCEPTION '_stop_groups: Table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
-                  END IF;
                 WHEN undefined_object THEN
                   IF v_isForced THEN
-                    RAISE WARNING '_stop_groups: Trigger "emaj_log_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                    RAISE WARNING '_stop_groups: Log trigger "emaj_log_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                   ELSE
-                    RAISE EXCEPTION '_stop_groups: Trigger "emaj_log_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                    RAISE EXCEPTION '_stop_groups: Log trigger "emaj_log_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                   END IF;
               END;
               BEGIN
                 EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
               EXCEPTION
-                WHEN invalid_schema_name THEN
-                  IF v_isForced THEN
-                    RAISE WARNING '_stop_groups: Schema "%" does not exist any more.', r_tblsq.rel_schema;
-                  ELSE
-                    RAISE EXCEPTION '_stop_groups: Schema "%" does not exist any more.', r_tblsq.rel_schema;
-                  END IF;
-                WHEN undefined_table THEN
-                  IF v_isForced THEN
-                    RAISE WARNING '_stop_groups: Table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
-                  ELSE
-                    RAISE EXCEPTION '_stop_groups: Table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
-                  END IF;
                 WHEN undefined_object THEN
                   IF v_isForced THEN
-                    RAISE WARNING '_stop_groups: Trigger "emaj_trunc_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                    RAISE WARNING '_stop_groups: Truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                   ELSE
-                    RAISE EXCEPTION '_stop_groups: Trigger "emaj_trunc_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                    RAISE EXCEPTION '_stop_groups: Truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                   END IF;
               END;
-            WHEN 'S' THEN
+            END IF;
+          WHEN 'S' THEN
 -- if it is a sequence, nothing to do
         END CASE;
         v_nbTb = v_nbTb + 1;
@@ -2842,7 +2843,7 @@ $emaj_get_previous_mark_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_get_previous_mark_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_get_previous_mark_group (1): group "%" has not been created.', v_groupName;
     END IF;
 -- find the requested mark
     SELECT mark_name INTO v_markName FROM emaj.emaj_mark, emaj.emaj_time_stamp
@@ -2873,7 +2874,7 @@ $emaj_get_previous_mark_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_get_previous_mark_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_get_previous_mark_group (2): group "%" has not been created.', v_groupName;
     END IF;
 -- retrieve and check the given mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
@@ -5344,13 +5345,13 @@ $_gen_sql_groups$
 -- ... owns the requested first mark
       SELECT emaj._get_mark_name(v_aGroupName,v_firstMarkCopy) INTO v_realFirstMark;
       IF v_realFirstMark IS NULL THEN
-        RAISE EXCEPTION '_gen_sql_groups: No mark "%" exists for group "%".', v_firstMarkCopy, v_aGroupName;
+        RAISE EXCEPTION '_gen_sql_groups: Begin mark "%" does not exist for group "%".', v_firstMarkCopy, v_aGroupName;
       END IF;
 -- ... and owns the requested last mark, if supplied
       IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
         SELECT emaj._get_mark_name(v_aGroupName,v_lastMark) INTO v_realLastMark;
         IF v_realLastMark IS NULL THEN
-          RAISE EXCEPTION '_gen_sql_groups: No mark "%" exists for group "%".', v_lastMark, v_aGroupName;
+          RAISE EXCEPTION '_gen_sql_groups: End mark "%" does not exist for group "%".', v_lastMark, v_aGroupName;
         END IF;
       END IF;
     END LOOP;
@@ -5358,14 +5359,14 @@ $_gen_sql_groups$
     SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_firstMarkCopy)) INTO v_cpt FROM emaj.emaj_group
       WHERE group_name = ANY (v_groupNames);
     IF v_cpt > 1 THEN
-      RAISE EXCEPTION '_gen_sql_groups: Mark "%" does not represent the same point in time for all groups.', v_firstMarkCopy;
+      RAISE EXCEPTION '_gen_sql_groups: Begin mark "%" does not represent the same point in time for all groups.', v_firstMarkCopy;
     END IF;
 -- check that the last mark timestamp, if supplied, is the same for all groups of the array
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
       SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_lastMark)) INTO v_cpt FROM emaj.emaj_group
         WHERE group_name = ANY (v_groupNames);
       IF v_cpt > 1 THEN
-        RAISE EXCEPTION '_gen_sql_groups: Mark "%" does not represent the same point in time for all groups.', v_lastMark;
+        RAISE EXCEPTION '_gen_sql_groups: End mark "%" does not represent the same point in time for all groups.', v_lastMark;
       END IF;
     END IF;
 -- retrieve the name, the global sequence value and the timestamp of the supplied first mark for the 1st group
@@ -5410,7 +5411,6 @@ $_gen_sql_groups$
         RAISE EXCEPTION '_gen_sql_groups: file "%" cannot be used as script output file.', v_location;
     END;
 -- create temporary table
-    DROP TABLE IF EXISTS emaj_temp_script;
     CREATE TEMP TABLE emaj_temp_script (
       scr_emaj_gid           BIGINT,              -- the emaj_gid of the corresponding log row,
                                                   --   0 for initial technical statements,
@@ -5486,8 +5486,8 @@ $_gen_sql_groups$
 -- write the SQL script on the external file
     EXECUTE 'COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid ) TO '
           || quote_literal(v_location);
--- drop temporary table ?
---    DROP TABLE IF EXISTS emaj_temp_script;
+-- drop temporary table
+    DROP TABLE IF EXISTS emaj_temp_script;
 -- return the number of sql verbs generated into the output file
     v_cumNbSQL = v_cumNbSQL + v_nbSeq;
     RETURN v_cumNbSQL;

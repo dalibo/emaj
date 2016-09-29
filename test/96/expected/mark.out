@@ -414,10 +414,10 @@ select emaj.emaj_comment_mark_group('myGroup2','phil''s mark #1','a good phil''s
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_get_previous_mark_group(NULL,NULL);
-ERROR:  emaj_get_previous_mark_group: group "<NULL>" has not been created.
+ERROR:  emaj_get_previous_mark_group (2): group "<NULL>" has not been created.
 CONTEXT:  PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 14 at RAISE
 select emaj.emaj_get_previous_mark_group('unknownGroup',NULL);
-ERROR:  emaj_get_previous_mark_group: group "unknownGroup" has not been created.
+ERROR:  emaj_get_previous_mark_group (2): group "unknownGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 14 at RAISE
 -- mark is unknown in emaj_mark
 select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');

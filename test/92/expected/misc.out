@@ -795,20 +795,20 @@ CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, 
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- invalid start mark
 select emaj.emaj_gen_sql_group('myGroup2', 'unknownMark', NULL, NULL);
-ERROR:  _gen_sql_groups: No mark "unknownMark" exists for group "myGroup2".
+ERROR:  _gen_sql_groups: Begin mark "unknownMark" does not exist for group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Mark11', NULL, NULL, NULL);
-ERROR:  _gen_sql_groups: No mark "Mark11" exists for group "myGroup1".
+ERROR:  _gen_sql_groups: Begin mark "Mark11" does not exist for group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- invalid end mark
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'unknownMark', NULL);
-ERROR:  _gen_sql_groups: No mark "unknownMark" exists for group "myGroup2".
+ERROR:  _gen_sql_groups: End mark "unknownMark" does not exist for group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', NULL, 'Mark11', NULL);
-ERROR:  _gen_sql_groups: No mark "Mark11" exists for group "myGroup1".
+ERROR:  _gen_sql_groups: End mark "Mark11" does not exist for group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- end mark is prior start mark
@@ -839,16 +839,16 @@ PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22
 rollback;
 -- start mark with the same name but that doesn't correspond to the same point in time
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Mark21', 'Multi-2', NULL);
-ERROR:  _gen_sql_groups: Mark "Mark21" does not represent the same point in time for all groups.
+ERROR:  _gen_sql_groups: Begin mark "Mark21" does not represent the same point in time for all groups.
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, 'Multi-2', NULL, NULL);
-ERROR:  _gen_sql_groups: Mark "Mark21" does not represent the same point in time for all groups.
+ERROR:  _gen_sql_groups: Begin mark "Mark21" does not represent the same point in time for all groups.
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- end mark with the same name but that doesn't correspond to the same point in time
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Mark21', NULL);
-ERROR:  _gen_sql_groups: Mark "Mark21" does not represent the same point in time for all groups.
+ERROR:  _gen_sql_groups: End mark "Mark21" does not represent the same point in time for all groups.
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- empty table/sequence names array
@@ -887,11 +887,6 @@ PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22
 -- should be ok (generated files content is checked later in adm2.sql scenario)
 -- (getting counters from detailed log statistics + the number of sequences included in the group allows a comparison with the result of emaj_gen_sql_group function)
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
-NOTICE:  table "emaj_temp_script" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script"
-PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 146 at SQL statement
-SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
  emaj_gen_sql_group 
 --------------------
               11712
@@ -1310,12 +1305,12 @@ begin;
 -- setting a mark or rollbacking fails
   savepoint sp1;
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
-ERROR:  _verify_group: In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (7): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(array[v_groupName], true)"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 27 at PERFORM
   rollback to savepoint sp1;
     select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
-ERROR:  _verify_group: In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (7): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
@@ -1379,9 +1374,6 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
 WARNING:  _stop_groups: Table "myschema2.mytbl4" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
  emaj_force_stop_group 
 -----------------------
                      8
@@ -1419,14 +1411,14 @@ begin;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
-ERROR:  _stop_groups: Trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
+ERROR:  _stop_groups: Log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
   rollback to savepoint sp1;
 -- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: Trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
+WARNING:  _stop_groups: Log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
  emaj_force_stop_group 
@@ -1507,37 +1499,22 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
 WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
+WARNING:  _stop_groups: Table "myschema2.mytbl1" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
+WARNING:  _stop_groups: Table "myschema2.mytbl2" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
+WARNING:  _stop_groups: Table "myschema2.myTbl3" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
+WARNING:  _stop_groups: Table "myschema2.mytbl4" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
+WARNING:  _stop_groups: Table "myschema2.mytbl5" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
-WARNING:  _stop_groups: Schema "myschema2" does not exist any more.
+WARNING:  _stop_groups: Table "myschema2.mytbl6" does not exist any more.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
  emaj_force_stop_group 
