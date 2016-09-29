@@ -22,6 +22,7 @@ DO
 $do$
   DECLARE
     v_emajVersion            TEXT;
+    v_groupList              TEXT;
   BEGIN
 -- check the current role is a superuser
     PERFORM 0 FROM pg_roles WHERE rolname = current_user AND rolsuper;
@@ -36,6 +37,13 @@ $do$
 -- the installed postgres version must be at least 9.1
     IF current_setting('server_version_num')::int < 90100 THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with E-Maj 2.0.0 (9.1 minimum)', current_setting('server_version_num');
+    END IF;
+-- no existing group must have been created with a postgres version prior 8.4
+    SELECT string_agg(group_name, ', ') INTO v_groupList FROM emaj.emaj_group
+      WHERE cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
+                 to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804;
+    IF v_groupList IS NOT NULL THEN
+      RAISE EXCEPTION 'E-Maj upgrade: groups "%" have been created with a too old postgres version (< 8.4). Drop these groups before upgrading. ',v_groupList;
     END IF;
   END;
 $do$;
@@ -1521,22 +1529,10 @@ $_verify_groups$
   BEGIN
 -- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
 -- Let's start with some global checks that always raise an exception if an issue is detected
--- check the postgres version: E-Maj is not compatible with 9.0-
+-- check the postgres version: E-Maj needs postgres 9.1+
     IF emaj._pg_version_num() < 90100 THEN
       RAISE EXCEPTION 'The current postgres version (%) is not compatible with E-Maj.', version();
     END IF;
--- check the postgres version at groups creation time is compatible (i.e. >= 9.1)
-    FOR r_object IN
-      SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
-               group_pg_version || '). It must be dropped and recreated.' AS msg
-        FROM emaj.emaj_group
-        WHERE group_name = ANY (v_groups)
-          AND cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
-                   to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 901
-        ORDER BY msg
-    LOOP
-      RAISE EXCEPTION '_verify_groups (1): %',r_object.msg;
-    END LOOP;
 -- OK, now look for groups unconsistency
 -- Unlike emaj_verify_all(), there is no direct check that application schemas exist
 -- check all application relations referenced in the emaj_relation table still exist
@@ -1554,7 +1550,7 @@ $_verify_groups$
         WHERE t.rel_schema = r.rel_schema AND t.rel_tblseq = r.rel_tblseq
         ORDER BY 1,2,3
     LOOP
-      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (2): % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (1): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check the log table for all tables referenced in the emaj_relation table still exist
@@ -1571,7 +1567,7 @@ $_verify_groups$
                    AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
-      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (3): % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (2): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check the log function for each table referenced in the emaj_relation table still exists
@@ -1587,7 +1583,7 @@ $_verify_groups$
                    AND pronamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
-      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (4): % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (3): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check log and truncate triggers for all tables referenced in the emaj_relation table still exist
@@ -1604,7 +1600,7 @@ $_verify_groups$
                    AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
     LOOP
-      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (5): % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (4): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 --   then truncate trigger
@@ -1620,7 +1616,7 @@ $_verify_groups$
                    AND tgrelid = pg_class.oid AND relnamespace = pg_namespace.oid)
       ORDER BY 1,2,3
     LOOP
-      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (6): % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (5): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check all log tables have a structure consistent with the application tables they reference
@@ -1661,7 +1657,7 @@ $_verify_groups$
           )) AS t
         ORDER BY 1,2,3
     LOOP
-      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %',r_object.msg,v_hint; END IF;
+      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (6): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
     RETURN;

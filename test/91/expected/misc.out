@@ -1305,12 +1305,12 @@ begin;
 -- setting a mark or rollbacking fails
   savepoint sp1;
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
-ERROR:  _verify_groups (7): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(array[v_groupName], true)"
 PL/pgSQL function "emaj_set_mark_group" line 27 at PERFORM
   rollback to savepoint sp1;
     select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
-ERROR:  _verify_groups (7): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_rlbk_init" line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"

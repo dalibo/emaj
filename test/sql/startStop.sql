@@ -18,11 +18,6 @@ select emaj.emaj_start_group(NULL,NULL);
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
 -- reserved mark name
 select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
--- detection of too old group
-begin;
-  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
-  select emaj.emaj_start_group('myGroup1','M1');
-rollback;
 -- detection of a missing application schema
 begin;
   drop schema myschema1 cascade;
