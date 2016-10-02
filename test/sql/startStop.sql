@@ -48,7 +48,7 @@ begin;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
--- detection of a missing truncate trigger (pg 8.4+)
+-- detection of a missing truncate trigger
 begin;
   drop trigger emaj_trunc_trg on myschema1.mytbl1;
   select emaj.emaj_start_group('myGroup1','M1');
@@ -261,6 +261,11 @@ rollback;
 -- missing log trigger
 begin;
   drop trigger emaj_log_trg on myschema2.mytbl4;
+  select emaj.emaj_force_stop_group('myGroup2');
+rollback;
+-- missing truncate trigger
+begin;
+  drop trigger emaj_trunc_trg on myschema2.mytbl4;
   select emaj.emaj_force_stop_group('myGroup2');
 rollback;
 -- sane group

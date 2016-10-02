@@ -211,6 +211,20 @@ PL/pgSQL function "emaj_create_group" line 81 at PERFORM
 (1 row)
 
 rollback;
+-- should be OK, but with a warning for linked table not belonging to any group
+begin;
+  delete from emaj.emaj_group_def
+    where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+  select emaj.emaj_create_group('phil''s group#3",',false);
+WARNING:  _create_seq: Sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table does not belong to any tables group.
+CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_groupName)"
+PL/pgSQL function "emaj_create_group" line 81 at PERFORM
+ emaj_create_group 
+-------------------
+                 3
+(1 row)
+
+rollback;
 -- should be OK
 select emaj.emaj_create_group('phil''s group#3",',false);
  emaj_create_group 
@@ -257,8 +271,8 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
 ------------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
  myGroup1         | f                | f                       |              5 |                 1 | t                     |                     10 |                          | 
  myGroup2         | f                | f                       |              6 |                 2 | t                     |                     11 |                          | 
- myGroup4         | f                | f                       |              3 |                 0 | t                     |                     14 |                          | 
- phil's group#3", | f                | t                       |              2 |                 2 | f                     |                     13 |                          | 
+ myGroup4         | f                | f                       |              3 |                 0 | t                     |                     15 |                          | 
+ phil's group#3", | f                | t                       |              2 |                 2 | f                     |                     14 |                          | 
 (4 rows)
 
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq;
@@ -570,7 +584,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  from emaj.emaj_group where group_name = 'myGroup1';
  group_name | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
 ------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
- myGroup1   | f                | f                       |              5 |                 1 | t                     |                     20 |                          | 
+ myGroup1   | f                | f                       |              5 |                 1 | t                     |                     21 |                          | 
 (1 row)
 
 select emaj.emaj_alter_group('myGroup1');
@@ -584,7 +598,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  from emaj.emaj_group where group_name = 'myGroup1';
  group_name | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
 ------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
- myGroup1   | f                | f                       |              5 |                 1 | t                     |                     20 |                       28 | 
+ myGroup1   | f                | f                       |              5 |                 1 | t                     |                     21 |                       29 | 
 (1 row)
 
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
@@ -1106,17 +1120,16 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
 ---------+--------------------+------------
       10 |                  0 | C
       11 |                  0 | C
-      13 |                  0 | C
       14 |                  0 | C
-      15 |                  0 | M
+      15 |                  0 | C
       16 |                  0 | M
-      17 |                  0 | C
-      18 |                  0 | M
-      19 |                  0 | C
+      17 |                  0 | M
+      18 |                  0 | C
+      19 |                  0 | M
       20 |                  0 | C
-      21 |                  0 | M
+      21 |                  0 | C
       22 |                  0 | M
-      28 |                  0 | A
+      23 |                  0 | M
       29 |                  0 | A
       30 |                  0 | A
       31 |                  0 | A
@@ -1145,6 +1158,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       54 |                  0 | A
       55 |                  0 | A
       56 |                  0 | A
+      57 |                  0 | A
 (41 rows)
 
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;

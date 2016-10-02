@@ -31,6 +31,10 @@ select count(*) from emajb.myschema1_mytbl2b_log;
 select count(*) from "emajC"."myschema1_myTbl3_log";
 select count(*) from emaj.myschema1_mytbl4_log;
 
+-- test the "no initial mark" error message for the emaj_gen_sql_group()
+--   this test has been moved here because, the emaj_reset_group() function cannot be used into a transaction
+select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
+
 -- start myGroup1
 select emaj.emaj_start_group('myGroup1','Mark21');
 -----------------------------
@@ -625,6 +629,21 @@ rollback;
 -- cases when a log trigger on an application table is dropped
 begin;
   drop trigger emaj_log_trg on myschema2.mytbl4;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+  rollback to savepoint sp1;
+-- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
+  select emaj.emaj_force_stop_group('myGroup2');
+  select emaj.emaj_alter_group('myGroup2');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+rollback;
+
+-- cases when a truncate trigger on an application table is dropped
+begin;
+  drop trigger emaj_trunc_trg on myschema2.mytbl4;
 -- stopping group fails
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');

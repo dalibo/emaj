@@ -270,16 +270,16 @@ select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
      1 | ABC        | \x1c   | DEL       | OLD        |   100550
      2 | ABC        | \x1c   | DEL       | OLD        |   100551
      3 | ABC        | \x1c   | DEL       | OLD        |   100552
-    10 | ABC        | \x0c   | INS       | NEW        |   100618
-     3 | ABC        | \x1c   | INS       | NEW        |   100619
-     4 | ABC        | \x0c   | INS       | NEW        |   100620
-     1 | ABC        | \x1c   | INS       | NEW        |   100621
-     5 | ABC        | \x0c   | INS       | NEW        |   100622
-     7 | ABC        | \x0c   | INS       | NEW        |   100623
-     8 | ABC        | \x0c   | INS       | NEW        |   100624
-     6 | ABC        | \x0c   | INS       | NEW        |   100625
-     9 | ABC        | \x0c   | INS       | NEW        |   100626
-     2 | ABC        | \x1c   | INS       | NEW        |   100627
+    10 | ABC        | \x0c   | INS       | NEW        |   100611
+     3 | ABC        | \x1c   | INS       | NEW        |   100612
+     4 | ABC        | \x0c   | INS       | NEW        |   100613
+     1 | ABC        | \x1c   | INS       | NEW        |   100614
+     5 | ABC        | \x0c   | INS       | NEW        |   100615
+     7 | ABC        | \x0c   | INS       | NEW        |   100616
+     8 | ABC        | \x0c   | INS       | NEW        |   100617
+     6 | ABC        | \x0c   | INS       | NEW        |   100618
+     9 | ABC        | \x0c   | INS       | NEW        |   100619
+     2 | ABC        | \x1c   | INS       | NEW        |   100620
    101 | KLM        | \x000c | INS       | NEW        |   100641
    102 | KLM        | \x000c | INS       | NEW        |   100642
    103 | KLM        | \x000c | INS       | NEW        |   100643
@@ -311,8 +311,8 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
 -------+-------+------------+-----------+------------+----------
      1 | ABC   | 2010-01-01 | DEL       | OLD        |   100553
      2 | DEF   |            | DEL       | OLD        |   100554
-     1 | ABC   | 2010-01-01 | INS       | NEW        |   100631
-     2 | DEF   |            | INS       | NEW        |   100632
+     1 | ABC   | 2010-01-01 | INS       | NEW        |   100621
+     2 | DEF   |            | INS       | NEW        |   100622
    100 | KLM   | 2012-12-31 | INS       | NEW        |   100658
 (5 rows)
 
@@ -329,16 +329,16 @@ select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myT
     18 | 10.00 | DEL       | OLD        |   100562
     19 | 10.00 | DEL       | OLD        |   100563
     20 | 10.00 | DEL       | OLD        |   100564
-    14 | 10.00 | INS       | NEW        |   100588
-    18 | 10.00 | INS       | NEW        |   100589
-    20 | 10.00 | INS       | NEW        |   100590
-    12 | 10.00 | INS       | NEW        |   100591
-    13 | 10.00 | INS       | NEW        |   100592
-    17 | 10.00 | INS       | NEW        |   100593
-    19 | 10.00 | INS       | NEW        |   100594
-    15 | 10.00 | INS       | NEW        |   100595
-    16 | 10.00 | INS       | NEW        |   100596
-    11 | 10.00 | INS       | NEW        |   100597
+    14 | 10.00 | INS       | NEW        |   100623
+    18 | 10.00 | INS       | NEW        |   100624
+    20 | 10.00 | INS       | NEW        |   100625
+    12 | 10.00 | INS       | NEW        |   100626
+    13 | 10.00 | INS       | NEW        |   100627
+    17 | 10.00 | INS       | NEW        |   100628
+    19 | 10.00 | INS       | NEW        |   100629
+    15 | 10.00 | INS       | NEW        |   100630
+    16 | 10.00 | INS       | NEW        |   100631
+    11 | 10.00 | INS       | NEW        |   100632
 (20 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
@@ -485,17 +485,16 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       -1 |                    | 
       10 |                  0 | C
       11 |                  0 | C
-      13 |                  0 | C
       14 |                  0 | C
-      15 |                  0 | M
+      15 |                  0 | C
       16 |                  0 | M
-      17 |                  0 | C
-      18 |                  0 | M
-      19 |                  0 | C
+      17 |                  0 | M
+      18 |                  0 | C
+      19 |                  0 | M
       20 |                  0 | C
-      21 |                  0 | M
+      21 |                  0 | C
       22 |                  0 | M
-      28 |                  0 | A
+      23 |                  0 | M
       29 |                  0 | A
       30 |                  0 | A
       31 |                  0 | A
@@ -524,6 +523,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       54 |                  0 | A
       55 |                  0 | A
       56 |                  0 | A
+      57 |                  0 | A
      200 |                  0 | C
      201 |                  0 | C
      202 |                  0 | M
@@ -572,49 +572,49 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
      404 |                  2 | M
      405 |                  2 | M
      406 |                  2 | R
-     414 |                  2 | R
      415 |                  2 | R
      416 |                  2 | R
-     417 |                  2 | M
-     418 |                  2 | R
-     419 |                  2 | M
+     417 |                  2 | R
+     418 |                  2 | M
+     419 |                  2 | R
      420 |                  2 | M
-     421 |                  2 | R
+     421 |                  2 | M
      422 |                  2 | R
      423 |                  2 | R
-     424 |                  2 | M
-     425 |                  2 | R
-     426 |                  2 | M
+     424 |                  2 | R
+     425 |                  2 | M
+     426 |                  2 | R
      427 |                  2 | M
      428 |                  2 | M
      429 |                  2 | M
-     430 |                 29 | M
-     431 |                 41 | M
-     432 |                 41 | R
+     430 |                  2 | M
+     431 |                 29 | M
+     432 |                 41 | M
      433 |                 41 | R
-     434 |                 41 | M
+     434 |                 41 | R
      435 |                 41 | M
-     436 |                 60 | M
-     437 |                 71 | M
-     438 |                 71 | R
-     439 |                 82 | M
-     440 |                 82 | R
-     441 |                 96 | M
-     442 |                 96 | R
-     443 |                 96 | M
-     444 |                 99 | M
-     445 |                102 | R
-     446 |                105 | M
-     447 |                105 | R
-     448 |                105 | M
-     449 |                105 | R
-     450 |                105 | M
+     436 |                 41 | M
+     437 |                 60 | M
+     438 |                 71 | M
+     439 |                 71 | R
+     440 |                 82 | M
+     441 |                 82 | R
+     442 |                 96 | M
+     443 |                 96 | R
+     444 |                 96 | M
+     445 |                 99 | M
+     446 |                102 | R
+     447 |                105 | M
+     448 |                105 | R
+     449 |                105 | M
+     450 |                105 | R
      451 |                105 | M
-     452 |                120 | M
-     453 |                122 | R
-     454 |                137 | M
-     455 |                139 | R
-     456 |                140 | R
+     452 |                105 | M
+     453 |                120 | M
+     454 |                122 | R
+     455 |                137 | M
+     456 |                139 | R
+     457 |                140 | R
      500 |                140 | M
      501 |                140 | M
      502 |                140 | M
@@ -818,26 +818,26 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10011 | LOCK_GROUP         | END          | myGroup1,myGroup2            | Rollback session #3: 4 tables locked, 0 deadlock(s)             | postgres
    10012 | SET_MARK_GROUPS    | BEGIN        | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                            | postgres
    10013 | SET_MARK_GROUPS    | END          | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                            | postgres
-   10014 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
-   10015 | ROLLBACK_TABLE     | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 100161 and <= 100580               | postgres
-   10016 | ROLLBACK_TABLE     | END          | myschema2.mytbl6             | 14 rolled back primary keys                                     | postgres
-   10017 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
-   10018 | ROLLBACK_TABLE     | END          | myschema2."myTbl3"           | 10 rolled back primary keys                                     | postgres
-   10019 | ROLLBACK_TABLE     | END          | myschema1.mytbl1             | 20 rolled back primary keys                                     | postgres
-   10020 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
-   10021 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
-   10022 | ROLLBACK_TABLE     | END          | myschema2.mytbl1             | 10 rolled back primary keys                                     | postgres
-   10023 | ROLLBACK_TABLE     | END          | myschema1.mytbl2             | 3 rolled back primary keys                                      | postgres
-   10024 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
-   10025 | ROLLBACK_TABLE     | END          | myschema2.mytbl2             | 2 rolled back primary keys                                      | postgres
+   10014 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl1             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
+   10015 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
+   10016 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl6             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
+   10017 | ROLLBACK_TABLE     | END          | myschema1.mytbl1             | 20 rolled back primary keys                                     | postgres
+   10018 | ROLLBACK_TABLE     | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
+   10019 | ROLLBACK_TABLE     | END          | myschema1.mytbl2             | 3 rolled back primary keys                                      | postgres
+   10020 | ROLLBACK_TABLE     | END          | myschema2.mytbl6             | 14 rolled back primary keys                                     | postgres
+   10021 | ROLLBACK_TABLE     | END          | myschema2.mytbl1             | 10 rolled back primary keys                                     | postgres
+   10022 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl2             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
+   10023 | ROLLBACK_TABLE     | BEGIN        | myschema2."myTbl3"           | All log rows with emaj_gid > 100161 and <= 100580               | postgres
+   10024 | ROLLBACK_TABLE     | END          | myschema2.mytbl2             | 2 rolled back primary keys                                      | postgres
+   10025 | ROLLBACK_TABLE     | END          | myschema2."myTbl3"           | 10 rolled back primary keys                                     | postgres
    10026 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl4             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
-   10027 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
+   10027 | ROLLBACK_TABLE     | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 100161 and <= 100580               | postgres
    10028 | ROLLBACK_TABLE     | END          | myschema2.mytbl4             | 2 rolled back primary keys                                      | postgres
-   10029 | ROLLBACK_TABLE     | END          | myschema2.mytbl5             | 3 rolled back primary keys                                      | postgres
-   10030 | DBLINK_CLOSE_CNX   |              | rlbk#3                       |                                                                 | postgres
-   10031 | ROLLBACK_TABLE     | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 100161 and <= 100580               | postgres
-   10032 | ROLLBACK_TABLE     | END          | myschema1."myTbl3"           | 5 rolled back primary keys                                      | postgres
-   10033 | DBLINK_CLOSE_CNX   |              | rlbk#2                       |                                                                 | postgres
+   10029 | ROLLBACK_TABLE     | END          | myschema1."myTbl3"           | 5 rolled back primary keys                                      | postgres
+   10030 | DBLINK_CLOSE_CNX   |              | rlbk#2                       |                                                                 | postgres
+   10031 | ROLLBACK_TABLE     | BEGIN        | myschema2.mytbl5             | All log rows with emaj_gid > 100161 and <= 100580               | postgres
+   10032 | ROLLBACK_TABLE     | END          | myschema2.mytbl5             | 3 rolled back primary keys                                      | postgres
+   10033 | DBLINK_CLOSE_CNX   |              | rlbk#3                       |                                                                 | postgres
    10034 | ROLLBACK_SEQUENCE  |              | myschema1."myTbl3_col31_seq" | RESTART 21                                                      | postgres
    10035 | ROLLBACK_SEQUENCE  |              | myschema2.myseq1             | RESTART 1004                                                    | postgres
    10036 | ROLLBACK_SEQUENCE  |              | myschema2."myTbl3_col31_seq" | RESTART 21                                                      | postgres

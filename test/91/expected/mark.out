@@ -417,10 +417,14 @@ select emaj.emaj_comment_mark_group('myGroup2','phil''s mark #1','a good phil''s
 -----------------------------
 -- emaj_get_previous_mark_group()
 -----------------------------
--- group is unknown in emaj_group_def
-select emaj.emaj_get_previous_mark_group(NULL,NULL);
+-- group is unknown in both emaj_group_def version
+select emaj.emaj_get_previous_mark_group(NULL,NULL::timestamptz);
+ERROR:  emaj_get_previous_mark_group (1): group "<NULL>" has not been created.
+select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::timestamptz);
+ERROR:  emaj_get_previous_mark_group (1): group "unknownGroup" has not been created.
+select emaj.emaj_get_previous_mark_group(NULL,NULL::text);
 ERROR:  emaj_get_previous_mark_group (2): group "<NULL>" has not been created.
-select emaj.emaj_get_previous_mark_group('unknownGroup',NULL);
+select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::text);
 ERROR:  emaj_get_previous_mark_group (2): group "unknownGroup" has not been created.
 -- mark is unknown in emaj_mark
 select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');
@@ -472,12 +476,15 @@ select emaj.emaj_rename_mark_group('unknownGroup',NULL,NULL);
 ERROR:  emaj_rename_mark_group: group "unknownGroup" has not been created.
 -- unknown mark name
 select emaj.emaj_rename_mark_group('myGroup1','DummyMark','new mark');
-ERROR:  emaj_rename_mark_group: mark "DummyMark" doesn't exist for group "myGroup1".
+ERROR:  emaj_rename_mark_group: mark "DummyMark" does not exist for group "myGroup1".
 -- invalid new mark name
 select emaj.emaj_rename_mark_group('myGroup1','Mark1','EMAJ_LAST_MARK');
 ERROR:  emaj_rename_mark_group: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 select emaj.emaj_rename_mark_group('myGroup1','Mark1',NULL);
 ERROR:  emaj_rename_mark_group: "<NULL>" is not an allowed name for a new mark.
+-- new mark name already exists
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM1');
+ERROR:  emaj_rename_mark_group: a mark "SM1" already exists for group "myGroup1".
 -- should be OK
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM2');
  emaj_rename_mark_group 
@@ -808,9 +815,9 @@ select emaj.emaj_protect_mark_group('phil''s group#3",',NULL);
 ERROR:  emaj_protect_mark_group: A mark on the group "phil's group#3"," cannot be protected because it is an AUDIT_ONLY group.
 -- mark is unknown
 select emaj.emaj_protect_mark_group('myGroup1',NULL);
-ERROR:  emaj_protect_mark_group: mark "<NULL>" doesn't exist for group "myGroup1".
+ERROR:  emaj_protect_mark_group: mark "<NULL>" does not exist for group "myGroup1".
 select emaj.emaj_protect_mark_group('myGroup1','unknownMark');
-ERROR:  emaj_protect_mark_group: mark "unknownMark" doesn't exist for group "myGroup1".
+ERROR:  emaj_protect_mark_group: mark "unknownMark" does not exist for group "myGroup1".
 -- should be ok
 select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_protect_mark_group 
@@ -850,9 +857,9 @@ select emaj.emaj_unprotect_mark_group('phil''s group#3",',NULL);
 ERROR:  emaj_unprotect_mark_group: A mark on the group "phil's group#3"," cannot be unprotected because it is an AUDIT_ONLY group.
 -- mark is unknown
 select emaj.emaj_unprotect_mark_group('myGroup1',NULL);
-ERROR:  emaj_unprotect_mark_group: mark "<NULL>" doesn't exist for group "myGroup1".
+ERROR:  emaj_unprotect_mark_group: mark "<NULL>" does not exist for group "myGroup1".
 select emaj.emaj_unprotect_mark_group('myGroup1','unknownMark');
-ERROR:  emaj_unprotect_mark_group: mark "unknownMark" doesn't exist for group "myGroup1".
+ERROR:  emaj_unprotect_mark_group: mark "unknownMark" does not exist for group "myGroup1".
 -- should be ok
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 
@@ -1032,64 +1039,64 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     3072 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
     3073 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark Bar%Foo                                    | postgres
     3074 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark phil's mark #1                             | postgres
-    3080 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    3081 | RENAME_MARK_GROUP        | END        | myGroup1          | Bar%Foo renamed SM2                             | postgres
-    3082 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                  | postgres
-    3083 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                             | postgres
-    3084 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | phil's mark #1                                  | postgres
-    3085 | RENAME_MARK_GROUP        | END        | myGroup2          | phil's mark #1 renamed john's mark #1           | postgres
-    3086 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                           | postgres
-    3087 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                        | postgres
-    3092 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    3093 | DELETE_MARK_GROUP        | END        | myGroup1          | SM2                                             | postgres
-    3094 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM1                                             | postgres
-    3095 | DELETE_MARK_GROUP        | END        | myGroup1          | SM1                                             | postgres
-    3096 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                      | postgres
-    3097 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                      | postgres
-    3098 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    3099 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    3100 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                         | postgres
-    3101 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                         | postgres
-    3102 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    3103 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    3104 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    3105 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    3106 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    3107 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    3108 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                  | postgres
-    3109 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                  | postgres
-    3114 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                                 | postgres
-    3115 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM3                                             | postgres
-    3116 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
-    3117 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    3118 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
-    3119 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
-    3120 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
-    3121 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
-    3122 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
-    3123 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
-    3124 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
-    3125 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
-    3126 | PURGE_HISTORY            |            |                   | 42 emaj_hist rows deleted                       | postgres
-    3127 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
-    3128 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    3129 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres
-    3130 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    3131 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 0                             | postgres
-    3132 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    3133 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    3134 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    3135 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    3136 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
-    3137 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
-    3138 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                    | postgres
-    3139 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3140 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3141 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    3142 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
-    3143 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
-    3144 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
-    3147 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark STOP_% ; status 0                          | postgres
+    3081 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3082 | RENAME_MARK_GROUP        | END        | myGroup1          | Bar%Foo renamed SM2                             | postgres
+    3083 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                  | postgres
+    3084 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                             | postgres
+    3085 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | phil's mark #1                                  | postgres
+    3086 | RENAME_MARK_GROUP        | END        | myGroup2          | phil's mark #1 renamed john's mark #1           | postgres
+    3087 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                           | postgres
+    3088 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                        | postgres
+    3093 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3094 | DELETE_MARK_GROUP        | END        | myGroup1          | SM2                                             | postgres
+    3095 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM1                                             | postgres
+    3096 | DELETE_MARK_GROUP        | END        | myGroup1          | SM1                                             | postgres
+    3097 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                      | postgres
+    3098 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                      | postgres
+    3099 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3100 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3101 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                         | postgres
+    3102 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                         | postgres
+    3103 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3104 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3105 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3106 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3107 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3108 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3109 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                  | postgres
+    3110 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                  | postgres
+    3115 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                                 | postgres
+    3116 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM3                                             | postgres
+    3117 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
+    3118 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3119 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
+    3120 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
+    3121 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
+    3122 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
+    3123 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
+    3124 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
+    3125 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
+    3126 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
+    3127 | PURGE_HISTORY            |            |                   | 42 emaj_hist rows deleted                       | postgres
+    3128 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
+    3129 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    3130 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres
+    3131 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    3132 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 0                             | postgres
+    3133 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    3134 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3135 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3136 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    3137 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
+    3138 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
+    3139 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                    | postgres
+    3140 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3141 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3142 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3143 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
+    3144 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
+    3145 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
+    3148 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark STOP_% ; status 0                          | postgres
 (84 rows)
 
 truncate emaj.emaj_hist;

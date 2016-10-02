@@ -901,7 +901,7 @@ $_drop_log_schema$
 -- check that the schema exists
     PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = v_logSchemaName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION '_drop_log_schema: schema "%" doesn''t exist.',v_logSchemaName;
+      RAISE EXCEPTION '_drop_log_schema: internal error (schema "%" does not exist).',v_logSchemaName;
     END IF;
     IF v_isForced THEN
 -- drop cascade when called by emaj_force_xxx_group()
@@ -1237,7 +1237,7 @@ $_rlbk_tbl$
         ORDER BY attnum) AS t;
 -- internal check that lists are not NULL (they should not be)
     IF v_colList IS NULL OR v_pkColList IS NULL OR v_pkCondList IS NULL THEN
-      RAISE EXCEPTION 'Internal error: at least one list is NULL (columns list = %, pk columns list = %, conditions list = %)',v_colList, v_pkColList, v_pkCondList;
+      RAISE EXCEPTION '_rlbk_tbl: internal error (at least one list is NULL (columns list = %, pk columns list = %, conditions list = %).',v_colList, v_pkColList, v_pkCondList;
     END IF;
 -- create the temporary table containing all primary key values with their earliest emaj_gid
     IF v_nbSession = 1 THEN
@@ -3290,7 +3290,7 @@ $emaj_rename_mark_group$
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_rename_mark_group: mark "%" doesn''t exist for group "%".', v_mark, v_groupName;
+      RAISE EXCEPTION 'emaj_rename_mark_group: mark "%" does not exist for group "%".', v_mark, v_groupName;
     END IF;
 -- check the new mark name is not 'EMAJ_LAST_MARK' or NULL
     IF v_newName = 'EMAJ_LAST_MARK' OR v_newName IS NULL THEN
@@ -3348,7 +3348,7 @@ $emaj_protect_mark_group$
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_protect_mark_group: mark "%" doesn''t exist for group "%".', v_mark, v_groupName;
+      RAISE EXCEPTION 'emaj_protect_mark_group: mark "%" does not exist for group "%".', v_mark, v_groupName;
     END IF;
 -- OK, set the protection
     SELECT mark_is_rlbk_protected INTO v_markIsProtected FROM emaj.emaj_mark
@@ -3394,7 +3394,7 @@ $emaj_unprotect_mark_group$
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_unprotect_mark_group: mark "%" doesn''t exist for group "%".', v_mark, v_groupName;
+      RAISE EXCEPTION 'emaj_unprotect_mark_group: mark "%" does not exist for group "%".', v_mark, v_groupName;
     END IF;
 -- OK, set the protection
     SELECT mark_is_rlbk_protected INTO v_markIsProtected FROM emaj.emaj_mark
@@ -4735,7 +4735,7 @@ $emaj_consolidate_rollback_group$
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_endRlbkMark) INTO v_lastMark;
     IF v_lastMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_consolidate_rollback_group: mark "%" doesn''t exist for group "%".', v_endRlbkMark, v_groupName;
+      RAISE EXCEPTION 'emaj_consolidate_rollback_group: mark "%" does not exist for group "%".', v_endRlbkMark, v_groupName;
     END IF;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(ARRAY[v_groupName], true);
@@ -4834,7 +4834,7 @@ $emaj_reset_group$
 -- perform the reset operation
     SELECT emaj._reset_group(v_groupName) INTO v_nbTb;
     IF v_nbTb = 0 THEN
-       RAISE EXCEPTION 'emaj_reset_group: Internal error (group "%" is empty).', v_groupName;
+       RAISE EXCEPTION 'emaj_reset_group: internal error (group "%" is empty).', v_groupName;
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -4904,6 +4904,8 @@ $emaj_log_stat_group$
   DECLARE
     v_realFirstMark          TEXT;
     v_realLastMark           TEXT;
+    v_firstMarkId            BIGINT;
+    v_lastMarkId             BIGINT;
     v_firstMarkTimeId        BIGINT;
     v_lastMarkTimeId         BIGINT;
     v_firstMarkTs            TIMESTAMPTZ;
@@ -4918,7 +4920,7 @@ $emaj_log_stat_group$
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
 --   if no mark exists for the group (just after emaj_create_group() or emaj_reset_group() functions call),
 --     v_realFirstMark remains NULL
-      SELECT mark_name, mark_time_id, time_clock_timestamp INTO v_realFirstMark, v_firstMarkTimeId, v_firstMarkTs
+      SELECT mark_name, mark_id, mark_time_id, time_clock_timestamp INTO v_realFirstMark, v_firstMarkId, v_firstMarkTimeId, v_firstMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE time_id = mark_time_id AND mark_group = v_groupName
         ORDER BY mark_id LIMIT 1;
@@ -4928,7 +4930,7 @@ $emaj_log_stat_group$
       IF v_realFirstMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: Start mark "%" is unknown for group "%".', v_firstMark, v_groupName;
       END IF;
-      SELECT mark_time_id, time_clock_timestamp INTO v_firstMarkTimeId, v_firstMarkTs
+      SELECT mark_id, mark_time_id, time_clock_timestamp INTO v_firstMarkId, v_firstMarkTimeId, v_firstMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE time_id = mark_time_id AND mark_group = v_groupName AND mark_name = v_realFirstMark;
     END IF;
@@ -4938,14 +4940,14 @@ $emaj_log_stat_group$
       IF v_realLastMark IS NULL THEN
         RAISE EXCEPTION 'emaj_log_stat_group: End mark "%" is unknown for group "%".', v_lastMark, v_groupName;
       END IF;
-      SELECT mark_time_id, time_clock_timestamp INTO v_lastMarkTimeId, v_lastMarkTs
+      SELECT mark_id, mark_time_id, time_clock_timestamp INTO v_lastMarkId, v_lastMarkTimeId, v_lastMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
         WHERE time_id = mark_time_id AND mark_group = v_groupName AND mark_name = v_realLastMark;
 -- if last mark is null or empty, v_realLastMark, v_lastMarkTimeId, v_lastMarkTs and v_lastLastSeqHoleId remain NULL
     END IF;
 -- check that the first_mark < end_mark
     IF v_lastMarkTimeId IS NOT NULL AND v_firstMarkTimeId > v_lastMarkTimeId THEN
-      RAISE EXCEPTION 'emaj_log_stat_group: mark id for "%" (%) is greater than mark id for "%" (%).', v_firstMark, v_firstMarkTs, v_lastMark, v_lastMarkTs;
+      RAISE EXCEPTION 'emaj_log_stat_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).', v_firstMark, v_firstMarkId, v_firstMarkTs, v_lastMark,  v_lastMarkId, v_lastMarkTs;
     END IF;
 -- for each table of the emaj_relation table, get the number of log rows and return the statistic
     RETURN QUERY

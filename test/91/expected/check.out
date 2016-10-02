@@ -72,61 +72,61 @@ select schemaname, funcname, calls from pg_stat_user_functions
   order by 1,2;
  schemaname |                 funcname                  | calls 
 ------------+-------------------------------------------+-------
- emaj       | _check_fk_groups                          |   143
- emaj       | _check_group_content                      |    65
- emaj       | _check_names_array                        |   113
- emaj       | _check_new_mark                           |   139
- emaj       | _create_log_schema                        |    31
- emaj       | _create_seq                               |    29
- emaj       | _create_tbl                               |   132
+ emaj       | _check_fk_groups                          |   146
+ emaj       | _check_group_content                      |    67
+ emaj       | _check_names_array                        |   114
+ emaj       | _check_new_mark                           |   140
+ emaj       | _create_log_schema                        |    32
+ emaj       | _create_seq                               |    31
+ emaj       | _create_tbl                               |   133
  emaj       | _dblink_close_cnx                         |    41
- emaj       | _dblink_is_cnx_opened                     |   424
- emaj       | _dblink_open_cnx                          |    53
+ emaj       | _dblink_is_cnx_opened                     |   428
+ emaj       | _dblink_open_cnx                          |    54
  emaj       | _delete_between_marks_group               |    19
  emaj       | _delete_intermediate_mark_group           |    15
  emaj       | _delete_log_tbl                           |    33
- emaj       | _disable_event_triggers                   |    59
+ emaj       | _disable_event_triggers                   |    60
  emaj       | _drop_group                               |    15
  emaj       | _drop_log_schema                          |    16
- emaj       | _drop_seq                                 |   121
- emaj       | _drop_tbl                                 |   116
- emaj       | _enable_event_triggers                    |    50
+ emaj       | _drop_seq                                 |   123
+ emaj       | _drop_tbl                                 |   117
+ emaj       | _enable_event_triggers                    |    51
  emaj       | _estimate_rollback_groups                 |     9
  emaj       | _gen_sql_groups                           |    17
  emaj       | _gen_sql_tbl                              |    38
- emaj       | _get_mark_name                            |   533
- emaj       | _get_mark_time_id                         |   192
- emaj       | _lock_groups                              |   144
- emaj       | _log_stat_tbl                             |  1844
+ emaj       | _get_mark_name                            |   535
+ emaj       | _get_mark_time_id                         |   194
+ emaj       | _lock_groups                              |   147
+ emaj       | _log_stat_tbl                             |  1856
  emaj       | _log_truncate_fnct                        |     2
  emaj       | _purge_hist                               |    78
- emaj       | _reset_group                              |    79
+ emaj       | _reset_group                              |    80
  emaj       | _rlbk_async                               |     2
- emaj       | _rlbk_check                               |    65
+ emaj       | _rlbk_check                               |    66
  emaj       | _rlbk_end                                 |    50
  emaj       | _rlbk_groups                              |    48
- emaj       | _rlbk_init                                |    50
- emaj       | _rlbk_planning                            |    59
+ emaj       | _rlbk_init                                |    51
+ emaj       | _rlbk_planning                            |    60
  emaj       | _rlbk_seq                                 |    75
- emaj       | _rlbk_session_exec                        |    52
- emaj       | _rlbk_session_lock                        |    52
+ emaj       | _rlbk_session_exec                        |    53
+ emaj       | _rlbk_session_lock                        |    53
  emaj       | _rlbk_set_batch_number                    |   150
- emaj       | _rlbk_start_mark                          |    50
+ emaj       | _rlbk_start_mark                          |    51
  emaj       | _rlbk_tbl                                 |    83
  emaj       | _rollback_activity                        |    15
  emaj       | _set_mark_groups                          |   179
- emaj       | _set_time_stamp                           |   270
+ emaj       | _set_time_stamp                           |   273
  emaj       | _start_groups                             |    39
- emaj       | _stop_groups                              |    47
- emaj       | _verify_all_groups                        |    28
- emaj       | _verify_all_schemas                       |    28
- emaj       | _verify_groups                            |   206
- emaj       | emaj_alter_group                          |    35
+ emaj       | _stop_groups                              |    49
+ emaj       | _verify_all_groups                        |    29
+ emaj       | _verify_all_schemas                       |    29
+ emaj       | _verify_groups                            |   208
+ emaj       | emaj_alter_group                          |    36
  emaj       | emaj_cleanup_rollback_state               |   188
  emaj       | emaj_comment_group                        |     4
  emaj       | emaj_comment_mark_group                   |     9
  emaj       | emaj_consolidate_rollback_group           |     9
- emaj       | emaj_create_group                         |    18
+ emaj       | emaj_create_group                         |    19
  emaj       | emaj_delete_before_mark_group             |     7
  emaj       | emaj_delete_mark_group                    |    17
  emaj       | emaj_detailed_log_stat_group              |    25
@@ -136,7 +136,7 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | emaj_estimate_rollback_group              |     6
  emaj       | emaj_estimate_rollback_groups             |     3
  emaj       | emaj_force_drop_group                     |     5
- emaj       | emaj_force_stop_group                     |    11
+ emaj       | emaj_force_stop_group                     |    13
  emaj       | emaj_gen_sql_group                        |    13
  emaj       | emaj_gen_sql_groups                       |     4
  emaj       | emaj_get_consolidable_rollbacks           |     6
@@ -162,7 +162,7 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | emaj_stop_groups                          |     8
  emaj       | emaj_unprotect_group                      |     6
  emaj       | emaj_unprotect_mark_group                 |     4
- emaj       | emaj_verify_all                           |    28
+ emaj       | emaj_verify_all                           |    29
 (91 rows)
 
 -----------------------------

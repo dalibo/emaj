@@ -133,6 +133,12 @@ begin;
   select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
 rollback;
 
+-- internal error when the row corresponding to an application sequence to rollback is missing in emaj_sequence
+begin;
+  delete from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq1';
+  select emaj.emaj_rollback_group('myGroup2','Mark21');
+rollback;
+
 -- should be OK, with different cases of dblink status
 -- hide dblink_connect functions
 alter function public.dblink_connect_u(text,text) rename to renamed_dblink_connect_u;

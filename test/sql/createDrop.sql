@@ -133,6 +133,13 @@ begin;
   select emaj.emaj_create_group('phil''s group#3",',false);
 rollback;
 
+-- should be OK, but with a warning for linked table not belonging to any group
+begin;
+  delete from emaj.emaj_group_def
+    where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+  select emaj.emaj_create_group('phil''s group#3",',false);
+rollback;
+
 -- should be OK
 select emaj.emaj_create_group('phil''s group#3",',false);
 select emaj.emaj_create_group('myGroup4');

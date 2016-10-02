@@ -89,9 +89,11 @@ select emaj.emaj_comment_mark_group('myGroup2','phil''s mark #1','a good phil''s
 -----------------------------
 -- emaj_get_previous_mark_group()
 -----------------------------
--- group is unknown in emaj_group_def
-select emaj.emaj_get_previous_mark_group(NULL,NULL);
-select emaj.emaj_get_previous_mark_group('unknownGroup',NULL);
+-- group is unknown in both emaj_group_def version
+select emaj.emaj_get_previous_mark_group(NULL,NULL::timestamptz);
+select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::timestamptz);
+select emaj.emaj_get_previous_mark_group(NULL,NULL::text);
+select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::text);
 
 -- mark is unknown in emaj_mark
 select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');
@@ -118,6 +120,9 @@ select emaj.emaj_rename_mark_group('myGroup1','DummyMark','new mark');
 -- invalid new mark name
 select emaj.emaj_rename_mark_group('myGroup1','Mark1','EMAJ_LAST_MARK');
 select emaj.emaj_rename_mark_group('myGroup1','Mark1',NULL);
+
+-- new mark name already exists
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM1');
 
 -- should be OK
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM2');
