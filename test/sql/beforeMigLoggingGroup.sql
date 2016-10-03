@@ -114,7 +114,12 @@ select emaj.emaj_logged_rollback_group('myGroup2','M2');
 select emaj.emaj_logged_rollback_group('myGroup2','M3');
 
 -----------------------------
--- Checking steps 1 to 3
+-- Step 4 : for both myGroup1 and myGroup2, set a common mark
+-----------------------------
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Common');
+
+-----------------------------
+-- Checking steps 1 to 4
 -----------------------------
 -- emaj tables
 select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 

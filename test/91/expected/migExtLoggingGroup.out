@@ -71,12 +71,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       16 |                    | R
       17 |                 83 | M
       18 |                 85 | M
-(18 rows)
+      19 |                 85 | M
+(19 rows)
 
 select last_value, is_called from emaj.emaj_time_stamp_time_id_seq;
  last_value | is_called 
 ------------+-----------
-         18 | t
+         19 | t
 (1 row)
 
 select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
@@ -99,19 +100,21 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
        2 | myGroup2         | M1              |            5 | f               | f                      |                |                        27 | 
        3 | phil's group#3", | M1              |            6 | f               | f                      |                |                           | 
        4 | myGroup1         | M2              |            7 | f               | f                      |                |                        11 | 
-       5 | myGroup1         | M3              |            8 | f               | t                      | Third mark set |                           | 
+       5 | myGroup1         | M3              |            8 | f               | t                      | Third mark set |                         0 | 
        6 | myGroup2         | M2              |           11 | f               | f                      |                |                         4 | 
        7 | myGroup2         | M3              |           12 | f               | f                      |                |                         0 | 
        8 | myGroup2         | RLBK_M2_%_START |           14 | f               | f                      |                |                         2 | 
        9 | myGroup2         | RLBK_M2_%_DONE  |           15 | f               | f                      |                |                         0 | 
       10 | myGroup2         | RLBK_M3_%_START |           17 | f               | f                      |                |                         2 | 
-      11 | myGroup2         | RLBK_M3_%_DONE  |           18 | f               | f                      |                |                           | 
-(11 rows)
+      11 | myGroup2         | RLBK_M3_%_DONE  |           18 | f               | f                      |                |                         0 | 
+      12 | myGroup1         | Common          |           19 | f               | f                      |                |                           | 
+      13 | myGroup2         | Common          |           19 | f               | f                      |                |                           | 
+(13 rows)
 
 select last_value, is_called from emaj.emaj_mark_mark_id_seq;
  last_value | is_called 
 ------------+-----------
-         11 | t
+         13 | t
 (1 row)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -180,7 +183,19 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, sequ
  emaj           | myschema2_mytbl4_log_seq           |           18 |             8 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
  myschema2      | myseq1                             |           18 |          1004 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | f
  myschema2      | myTbl3_col31_seq                   |           18 |            10 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
-(63 rows)
+ emaj           | myschema1_mytbl1_log_seq           |           19 |            24 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+ emaj           | myschema1_mytbl2b_log_seq          |           19 |             4 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+ emaj           | myschema1_mytbl2_log_seq           |           19 |             3 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+ emaj           | myschema1_myTbl3_log_seq           |           19 |            10 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+ emaj           | myschema1_mytbl4_log_seq           |           19 |             9 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+ emaj           | myschema2_mytbl1_log_seq           |           19 |            15 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+ emaj           | myschema2_mytbl2_log_seq           |           19 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+ emaj           | myschema2_myTbl3_log_seq           |           19 |            10 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+ emaj           | myschema2_mytbl4_log_seq           |           19 |             8 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+ myschema1      | myTbl3_col31_seq                   |           19 |            10 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+ myschema2      | myseq1                             |           19 |          1004 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | f
+ myschema2      | myTbl3_col31_seq                   |           19 |            10 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+(75 rows)
 
 select * from emaj.emaj_seq_hole order by sqhl_schema, sqhl_table, sqhl_begin_time_id;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 

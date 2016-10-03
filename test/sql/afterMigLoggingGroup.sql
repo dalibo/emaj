@@ -8,7 +8,14 @@
 select * from emaj.emaj_verify_all();
 
 -----------------------------
--- Step 2 : for myGroup1, update tables, then unprotect and rollback then update tables again then set 3 marks
+-- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group
+-----------------------------
+select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common');
+select emaj.emaj_unprotect_group('myGroup1');
+select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common');
+
+-----------------------------
+-- Step 3 : for myGroup1, update tables, then unprotect, logged_rollback, rename the end rollback mark and consolidate the rollback
 -----------------------------
 set search_path=myschema1;
 --
@@ -16,12 +23,16 @@ update "myTbl3" set col33 = col33 / 2;
 --
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_rollback_group('myGroup1','M2');
-select emaj.emaj_unprotect_group('myGroup1');
-select emaj.emaj_rollback_group('myGroup1','M2');
 select emaj.emaj_unprotect_mark_group('myGroup1','M3');
-select emaj.emaj_rollback_group('myGroup1','M2');
+select emaj.emaj_logged_rollback_group('myGroup1','M2');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','End_rollback_to_M2');
+select emaj.emaj_consolidate_rollback_group('myGroup1','End_rollback_to_M2');
+
+-----------------------------
+-- Step 4 : for myGroup1, update tables again then set 3 marks
+-----------------------------
 insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,110) as i;
 insert into myTbl2 values (3,'GHI','2010-01-02');
 delete from myTbl1 where col11 = 1;
@@ -37,14 +48,14 @@ update myTbl1 set col11 = 99 where col11 = 1;
 select emaj.emaj_set_mark_group('myGroup1','M6');
 
 -----------------------------
--- Step 3 : for myGroup2, logged rollback again then unlogged rollback 
+-- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------
 select emaj.emaj_logged_rollback_group('myGroup2','M2');
 --
 select emaj.emaj_rollback_group('myGroup2','M3');
 
 -----------------------------
--- Step 4 : for myGroup1, update tables, rollback, other updates, then logged rollback
+-- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
 -----------------------------
 set search_path=myschema1;
 --
@@ -67,7 +78,7 @@ select emaj.emaj_logged_rollback_group('myGroup1','M4');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 
 -----------------------------
--- Step 5 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
+-- Step 7 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
 set search_path=myschema1;
 --
