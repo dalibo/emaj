@@ -4,6 +4,7 @@ The tool directory contains several tools that may be essential or useful in E-M
 - regress.sh is a shell script that select and execute regression tests,
 - copy2Expected.sh is a shell script that copy the result files of regression tests environment to the reference directory,
 - check_code.pl is a perl script that performs various checks on the script that creates the emaj extension,
+- check_error_messages.pl is a perl script that analyzes how the non regression tests cover the error or warning messages coded in the E-Maj source file.
 - sync_fct_in_upgrade_script.pl is a perl script that generates the functions part of the upgrade scripts.
 
 regress.sh
@@ -32,7 +33,7 @@ At the end of the script, a menu is displayed to propose all available tests. Yo
 
 copy2Expected.sh
 ----------------
-The copy2Expected.sh is a shell script that copy the result files of regression tests environment to the reference directory. Once result regression test files are considered as representing a new reference, you can simply execute the script by typing:
+The copy2Expected.sh shell script copies the result files of regression tests environment to the reference directory. Once result regression test files are considered as representing a new reference, you can simply execute the script by typing:
     sh copy2Expected.sh
 
 Customisation:
@@ -42,10 +43,18 @@ Then for each available major postgres version on the environment, 2 commands co
 
 check_code.pl
 -------------
-The check_code.pl is a perl script that performs various checks on the script that creates the emaj extension. It detects unused variables in plpgsql functions. It checks the format of lines and reports tab characters or trailing spaces.
+The check_code.pl perl script performs various checks on the script that creates the emaj extension. It detects unused variables in plpgsql functions. It checks the format of lines and reports tab characters or trailing spaces.
 
 Customisation:
 Line 29 and 30, two variables set the pathname of the source script to analyze.
+
+
+check_error_messages.pl
+-----------------------
+The check_error_messages.pl perl script analyzes how the non regression tests cover the error or warning messages coded in the E-Maj source file. It first reads and extracts error or warning messeges from the source file. It then reads and extracts error or warning messages from the regression tests output files and finaly displays the messages from the source file that have not been found in the test files. Some messages are excluded from the list as they are known as not been covered by tests.
+
+Customisation:
+Line 12 to 14, three variables set the pathname of the source script to analyze and the regression tests output results files.
 
 
 sync_fct_in_upgrade_script.pl
