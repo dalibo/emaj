@@ -1750,6 +1750,17 @@ begin;
   drop table myschema1.mytbl1 cascade;
   drop sequence myschema2.mySeq1;
 rollback;
+-- missing event triggers
+begin;
+  drop event trigger emaj_protection_trg;
+  select emaj.emaj_verify_all();
+                                                                      emaj_verify_all                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.
+ No error detected
+(2 rows)
+
+rollback;
 -- finaly leave the event triggers enabled
 -----------------------------
 -- test a table reclustering (it will use the pkey index as clustered index) and a vacuum full

@@ -42,7 +42,7 @@ CONTEXT:  SQL statement "
 DROP EVENT TRIGGER IF EXISTS emaj_table_rewrite_trg;
 CREATE EVENT TRIGGER emaj_table_rewrite_trg
   ON table_rewrite
-  EXECUTE PROCEDURE public._emaj_event_trigger_table_rewrite_fnct();
+  EXECUTE PROCEDURE emaj._emaj_event_trigger_table_rewrite_fnct();
 "
 PL/pgSQL function inline_code_block line 209 at EXECUTE
 -----------------------------

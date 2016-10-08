@@ -1727,12 +1727,12 @@ rollback;
 begin;
   alter table myschema1.mytbl1 add column newcol int default 1;
 ERROR:  E-Maj event trigger: attempting to change the application table "myschema1.mytbl1" structure. But the table belongs to the active tables group "myGroup1".
-CONTEXT:  PL/pgSQL function _emaj_event_trigger_table_rewrite_fnct() line 20 at RAISE
+CONTEXT:  PL/pgSQL function emaj._emaj_event_trigger_table_rewrite_fnct() line 20 at RAISE
 rollback;
 begin;
   alter table emaj.myschema1_mytbl1_log add column newcol int default 1;
 ERROR:  E-Maj event trigger: attempting to change the log table "emaj.myschema1_mytbl1_log" structure. But the table belongs to the tables group "myGroup1".
-CONTEXT:  PL/pgSQL function _emaj_event_trigger_table_rewrite_fnct() line 28 at RAISE
+CONTEXT:  PL/pgSQL function emaj._emaj_event_trigger_table_rewrite_fnct() line 28 at RAISE
 rollback;
 -- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
 begin;
@@ -1755,6 +1755,17 @@ begin;
   alter table myschema1.mytbl1 add column newcol int default 1;
   drop table myschema1.mytbl1 cascade;
   drop sequence myschema2.mySeq1;
+rollback;
+-- missing event triggers
+begin;
+  drop event trigger emaj_protection_trg;
+  select emaj.emaj_verify_all();
+                                                                      emaj_verify_all                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.
+ No error detected
+(2 rows)
+
 rollback;
 -- finaly leave the event triggers enabled
 -----------------------------

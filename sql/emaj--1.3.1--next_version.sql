@@ -5750,6 +5750,7 @@ $emaj_verify_all$
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
   DECLARE
     v_errorFound             BOOLEAN = FALSE;
+    v_nbMissingEventTrigger  INT;
     r_object                 RECORD;
   BEGIN
 -- Global checks
@@ -5758,8 +5759,15 @@ $emaj_verify_all$
       RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with E-Maj.';
       v_errorFound = TRUE;
     END IF;
--- With postgres 9.3+, report a warning if some E-Maj event triggers exist but are not enabled
     IF emaj._pg_version_num() >= 90300 THEN
+-- With postgres 9.3+, report a warning if some E-Maj event triggers are missing
+      SELECT (CASE WHEN emaj._pg_version_num() >= 90500 THEN 3 WHEN emaj._pg_version_num() >= 90300 THEN 2 END) - count(*)
+        INTO v_nbMissingEventTrigger FROM pg_catalog.pg_event_trigger
+        WHERE evtname IN ('emaj_protection_trg','emaj_sql_drop_trg','emaj_table_rewrite_trg');
+      IF v_nbMissingEventTrigger > 0 THEN
+        RETURN NEXT 'Warning: some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.';
+      END IF;
+-- With postgres 9.3+, report a warning if some E-Maj event triggers exist but are not enabled
       PERFORM 1 FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
       IF FOUND THEN
         RETURN NEXT 'Warning: some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.';
@@ -5811,7 +5819,7 @@ IF emaj._pg_version_num() >= 90300 THEN
 -- sql_drop event trigger are only possible with postgres 9.3+
 
 CREATE OR REPLACE FUNCTION public._emaj_protection_event_trigger_fnct()
- RETURNS event_trigger LANGUAGE plpgsql AS
+ RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
 $_emaj_protection_event_trigger_fnct$
 -- This function is called by the emaj_protection_trg event trigger
 -- The function only blocks any attempt to drop the emaj schema or the emaj extension
@@ -5860,7 +5868,7 @@ ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
 ';
 
 CREATE OR REPLACE FUNCTION emaj._event_trigger_sql_drop_fnct()
- RETURNS event_trigger LANGUAGE plpgsql AS
+ RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
 $_event_trigger_sql_drop_fnct$
 -- This function is called by the emaj_sql_drop_trg event trigger
 -- The function blocks any ddl operation that leads to a drop of
@@ -5973,8 +5981,8 @@ END IF;
 IF emaj._pg_version_num() >= 90500 THEN
 -- table_rewrite event trigger are only possible with postgres 9.5+
 
-CREATE OR REPLACE FUNCTION public._emaj_event_trigger_table_rewrite_fnct()
- RETURNS event_trigger LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION emaj._emaj_event_trigger_table_rewrite_fnct()
+ RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
 $_emaj_event_trigger_table_rewrite_fnct$
 -- This function is called by the emaj_table_rewrite_trg event trigger
 -- The function blocks any ddl operation that leads to a table rewrite for:
@@ -6008,14 +6016,14 @@ $_emaj_event_trigger_table_rewrite_fnct$
   END;
 $_emaj_event_trigger_table_rewrite_fnct$;
 
-COMMENT ON FUNCTION public._emaj_event_trigger_table_rewrite_fnct() IS
+COMMENT ON FUNCTION emaj._emaj_event_trigger_table_rewrite_fnct() IS
 $$E-Maj extension: support of the emaj_table_rewrite_trg event trigger.$$;
 
 EXECUTE '
 DROP EVENT TRIGGER IF EXISTS emaj_table_rewrite_trg;
 CREATE EVENT TRIGGER emaj_table_rewrite_trg
   ON table_rewrite
-  EXECUTE PROCEDURE public._emaj_event_trigger_table_rewrite_fnct();
+  EXECUTE PROCEDURE emaj._emaj_event_trigger_table_rewrite_fnct();
 ';
 EXECUTE '
 COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
@@ -6123,23 +6131,6 @@ $_enable_event_triggers$
   END;
 $_enable_event_triggers$;
 
--- Set comments for all internal functions,
--- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
-INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
-  SELECT pg_proc.oid, pg_class.oid, 0 , 'E-Maj internal function'
-    FROM pg_catalog.pg_proc, pg_catalog.pg_class
-    WHERE pg_class.relname = 'pg_proc'
-      AND pg_proc.oid IN               -- list all emaj functions that do not have yet a comment in pg_description
-       (SELECT pg_proc.oid
-          FROM pg_catalog.pg_proc
-               JOIN pg_catalog.pg_namespace ON (pronamespace=pg_namespace.oid)
-               LEFT OUTER JOIN pg_catalog.pg_description ON (pg_description.objoid = pg_proc.oid
-                                     AND classoid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_proc')
-                                     AND objsubid = 0)
-          WHERE nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
-            AND pg_description.description IS NULL
-       );
-
 ------------------------------------
 --                                --
 -- emaj roles and rights          --
@@ -6164,6 +6155,24 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_get_consolidable_rollbacks() TO emaj_viewer;
 --                                --
 ------------------------------------
 
+-- Set comments for all internal functions,
+-- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
+INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
+  SELECT pg_proc.oid, pg_class.oid, 0 , 'E-Maj internal function'
+    FROM pg_catalog.pg_proc, pg_catalog.pg_class
+    WHERE pg_class.relname = 'pg_proc'
+      AND pg_proc.oid IN               -- list all emaj functions that do not have yet a comment in pg_description
+       (SELECT pg_proc.oid
+          FROM pg_catalog.pg_proc
+               JOIN pg_catalog.pg_namespace ON (pronamespace=pg_namespace.oid)
+               LEFT OUTER JOIN pg_catalog.pg_description ON (pg_description.objoid = pg_proc.oid
+                                     AND classoid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_proc')
+                                     AND objsubid = 0)
+          WHERE nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
+            AND pg_description.description IS NULL
+       );
+
+-- update the version id in the emaj_param table
 UPDATE emaj.emaj_param SET param_value_text = '2.0.0' WHERE param_key = 'emaj_version';
 
 -- insert the upgrade record in the operation history

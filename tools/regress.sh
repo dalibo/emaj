@@ -88,7 +88,7 @@ migrat_test()
 #			 $3 pgdata subdirectory in PG_HOME of the target cluster
 pg_upgrade_test()
 {
-	echo "pg_upgrade cluster from $1 version to the cluster regression database from $2 dump"
+	echo "pg_upgrade the $1 version cluster to a second $2 version cluster"
 	eval RTVBIN1=\${PGDIR$1}/bin
 	eval RTVPORT=\${PGPORT$1}
 	eval RTVBIN2=\${PGDIR$2}/bin
@@ -96,6 +96,13 @@ pg_upgrade_test()
 	echo "--> initializing the new cluster..."
 	cd $DB_HOME
 	rm -Rf $3
+# remove tablespace structures that remain because the tablespaces are located inside the $PGDATA structure of the source cluster
+	C1=`echo $2|cut -c 1`
+	C2=`echo $2|cut -c 2`
+	TSPDIRPREFIX="PG_$C1.$C2"                # ex: PG_9.6 if $2=96
+	rm -Rf $DB_HOME/db$1/tsplog1/$TSPDIRPREFIX*
+	rm -Rf $DB_HOME/db$1/tsplog2/$TSPDIRPREFIX*
+	rm -Rf $DB_HOME/db$1/emaj_tblsp/$TSPDIRPREFIX*
 	mkdir $3
 	$RTVBIN2/initdb -D $3
 	sed -i "s/#port = 5432/port = 154$2/" $3/postgresql.conf
@@ -106,15 +113,19 @@ pg_upgrade_test()
 	echo "--> starting the new cluster..."
 	$RTVBIN2/pg_ctl -D $DB_HOME/$3 start
 	sleep 2
-	echo "--> running regression test..."
-#	$RTVREG/pg_regress --schedule=../emaj_sched_$4
-
+	echo "upgrading and checking the E-Maj environment"
+	$RTVBIN2/psql -p 154$2 regression <<END_PSQL >$EMAJ_HOME/test/$2/results/pgUpgrade.out 2>&1
+		select emaj.emaj_verify_all();
+		\i $EMAJ_HOME/sql/emaj_upgrade_after_postgres_upgrade.sql
+		select emaj.emaj_verify_all();
+END_PSQL
 	echo "--> stopping the new cluster..."
 	$RTVBIN2/pg_ctl -D $DB_HOME/$3 stop
 	sleep 2
 	echo "--> restarting the old cluster..."
 	$RTVBIN1/pg_ctl -D $DB_HOME/db$1 start
-	sleep 2
+	echo "--> compare the emaj_upgrade_after_postgres_upgrade.sql output with expected results (should not return anything)"
+	diff $EMAJ_HOME/test/$2/expected/pgUpgrade.out $EMAJ_HOME/test/$2/results/pgUpgrade.out
 	return
 }
 
@@ -149,7 +160,7 @@ echo "	e- pg 9.5 (port $PGPORT95) standart test"
 echo "	f- pg 9.6 (port $PGPORT96) standart test"
 echo "	m- pg 9.1 dump and 9.5 restore"
 echo "	t- all tests, from a to h + M"
-echo "	u- pg 9.1 upgraded to pg 9.5"
+echo "	u- pg 9.1 upgraded to pg 9.6"
 echo "	x- pg 9.1 (port $PGPORT91) created with psql script"
 echo "	A- pg 9.1 (port $PGPORT91) starting with E-Maj migration"
 echo "	B- pg 9.2 (port $PGPORT92) starting with E-Maj migration"
@@ -183,7 +194,7 @@ case $ANSWER in
 		reg_test_version "96" "ext"
 		migrat_test "95" "91"
 		;;
-	u) pg_upgrade_test "91" "95" "db95b";;
+	u) pg_upgrade_test "91" "96" "db96b";;
 	A) reg_test_version "91" "ext_mig";;
 	B) reg_test_version "92" "ext_mig";;
 	C) reg_test_version "93" "ext_mig";;

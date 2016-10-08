@@ -770,6 +770,12 @@ begin;
   drop sequence myschema2.mySeq1;
 rollback;
 
+-- missing event triggers
+begin;
+  drop event trigger emaj_protection_trg;
+  select emaj.emaj_verify_all();
+rollback;
+
 -- finaly leave the event triggers enabled
 
 -----------------------------

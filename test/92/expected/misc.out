@@ -1715,6 +1715,15 @@ begin;
   drop table myschema1.mytbl1 cascade;
   drop sequence myschema2.mySeq1;
 rollback;
+-- missing event triggers
+begin;
+  drop event trigger emaj_protection_trg;
+ERROR:  syntax error at or near "event"
+LINE 1: drop event trigger emaj_protection_trg;
+             ^
+  select emaj.emaj_verify_all();
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+rollback;
 -- finaly leave the event triggers enabled
 -----------------------------
 -- test a table reclustering (it will use the pkey index as clustered index) and a vacuum full
