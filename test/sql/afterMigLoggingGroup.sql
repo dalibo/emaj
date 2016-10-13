@@ -1,6 +1,6 @@
 -- afterMigLoggingGroup.sql : complex scenario executed by an emaj_adm role
 -- The E-Maj version is changed while groups are in logging state
--- This script is the part of operations performed after the migration
+-- This script is the part of operations performed after the upgrade
 --
 -----------------------------
 -- Step 1 : check the E-Maj installation

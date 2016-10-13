@@ -1,4 +1,4 @@
--- migExtLoggingGroup.sql : Migrate from E-Maj 1.3. to next_version while groups are in logging state.
+-- migExtLoggingGroup.sql : Upgrade from E-Maj 1.3. to next_version while groups are in logging state.
 --
 -----------------------------
 -- emaj update to next_version
@@ -8,7 +8,7 @@
 -- check the extension is available
 select * from pg_available_extension_versions where name = 'emaj';
 
--- process the extension migration
+-- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
 
 -----------------------------

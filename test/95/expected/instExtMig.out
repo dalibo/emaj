@@ -1,4 +1,4 @@
--- instExtMig.sql : Migrate from E-Maj 1.3.0 to next_version while groups are not yet created.
+-- instExtMig.sql : Upgrade from E-Maj 1.3.0 to next_version while groups are not yet created.
 -- install E-Maj as an extension 
 --
 ------------------------------------------------------------
@@ -119,7 +119,7 @@ select extname, extversion from pg_extension where extname = 'emaj';
  emaj    | 1.3.1
 (1 row)
 
--- process the extension migration
+-- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to constraint emaj_relation_rel_group_fkey on table emaj_relation

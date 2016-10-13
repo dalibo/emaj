@@ -1,6 +1,6 @@
 -- beforeMigLoggingGroup.sql : complex scenario executed by an emaj_adm role
 -- The E-Maj version is changed while groups are in logging state
--- This script is the part of operations performed before the migration
+-- This script is the part of operations performed before the upgrade
 --
 SET datestyle TO ymd;
 -----------------------------

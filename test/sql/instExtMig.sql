@@ -1,4 +1,4 @@
--- instExtMig.sql : Migrate from E-Maj 1.3.0 to next_version while groups are not yet created.
+-- instExtMig.sql : Upgrade from E-Maj 1.3.0 to next_version while groups are not yet created.
 -- install E-Maj as an extension 
 --
 
@@ -69,7 +69,7 @@ CREATE EXTENSION emaj VERSION '1.3.1' FROM unpackaged;
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
 
--- process the extension migration
+-- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
 
 -----------------------------------------------------------

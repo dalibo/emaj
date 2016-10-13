@@ -1,9 +1,9 @@
 --
--- E-Maj: migration from 0.11.1 to 1.0.0
+-- E-Maj: upgrade from 0.11.1 to 1.0.0
 -- 
 -- This software is distributed under the GNU General Public License.
 --
--- This script migrates an existing installation of E-Maj extension.
+-- This script upgrades an existing installation of E-Maj extension.
 -- If version 0.11.1 version has not been yet installed, use emaj.sql script. 
 --
 
@@ -18,7 +18,7 @@ SET client_min_messages TO WARNING;
 -- checks                         --
 --                                --
 ------------------------------------
--- Creation of a specific function to check the migration conditions are met.
+-- Creation of a specific function to check the upgrade conditions are met.
 -- The function generates an exception if at least one condition is not met.
 DROP FUNCTION IF EXISTS emaj.tmp();
 CREATE FUNCTION emaj.tmp() 
@@ -45,7 +45,7 @@ SELECT emaj.tmp();
 DROP FUNCTION emaj.tmp();
 
 -- OK, upgrade...
-\echo '... OK, Migration start...'
+\echo '... OK, upgrade start...'
 
 BEGIN TRANSACTION;
 
@@ -4682,17 +4682,17 @@ DROP FUNCTION emaj.tmp();
 
 ------------------------------------
 --                                --
--- commit migration               --
+-- commit upgrade                 --
 --                                --
 ------------------------------------
 
 UPDATE emaj.emaj_param SET param_value_text = '1.0.0' WHERE param_key = 'emaj_version';
 
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.0.0', 'Migration from 0.11.1 completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.0.0', 'Upgrade from 0.11.1 completed');
 
 COMMIT;
 
 SET client_min_messages TO default;
-\echo '>>> E-Maj successfully migrated to 1.0.0'
+\echo '>>> E-Maj successfully upgraded to 1.0.0'
 

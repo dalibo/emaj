@@ -1,9 +1,9 @@
 --
--- E-Maj: migration from 1.1.0 to 1.2.0
+-- E-Maj: upgrade from 1.1.0 to 1.2.0
 --
 -- This software is distributed under the GNU General Public License.
 --
--- This script migrates an existing installation of E-Maj extension.
+-- This script upgrades an existing installation of E-Maj extension.
 -- If E-Maj is not yet installed, use the emaj.sql script. 
 --
 
@@ -18,7 +18,7 @@ SET client_min_messages TO WARNING;
 -- checks                         --
 --                                --
 ------------------------------------
--- Creation of a specific function to check the migration conditions are met.
+-- Creation of a specific function to check the upgrade conditions are met.
 -- The function generates an exception if at least one condition is not met.
 DROP FUNCTION IF EXISTS emaj.tmp();
 CREATE FUNCTION emaj.tmp() 
@@ -49,7 +49,7 @@ SELECT emaj.tmp();
 DROP FUNCTION emaj.tmp();
 
 -- OK, upgrade...
-\echo '... OK, Migration start...'
+\echo '... OK, upgrade start...'
 
 BEGIN TRANSACTION;
 
@@ -4198,14 +4198,14 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_tsFirst
 
 ------------------------------------
 --                                --
--- commit migration               --
+-- commit upgrade                 --
 --                                --
 ------------------------------------
 
 UPDATE emaj.emaj_param SET param_value_text = '1.2.0' WHERE param_key = 'emaj_version';
 
--- insert the migration record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.2.0', 'Migration from 1.1.0 completed');
+-- insert the upgrade record in the operation history
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.2.0', 'Upgrade from 1.1.0 completed');
 
 -- post installation checks
 CREATE OR REPLACE FUNCTION emaj._tmp_post_install()
@@ -4219,7 +4219,7 @@ $tmp$
 -- check the max_prepared_transactions GUC value
     SELECT setting INTO v_mpt FROM pg_catalog.pg_settings WHERE name = 'max_prepared_transactions';
     IF v_mpt <= 1 THEN
-      RAISE WARNING 'E-Maj migration: as the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
+      RAISE WARNING 'E-Maj upgrade: as the max_prepared_transactions parameter is set to % on this cluster, no parallel rollback is possible.',v_mpt;
     END IF;
 -- check the dblink contrib or extension is already installed and give EXECUTE right to emaj_adm on dblink_connect_u functions
 --   Scan all schemas where dblink is installed
@@ -4243,9 +4243,9 @@ $tmp$
     END LOOP;
 -- return the output message depending whether dblink is installed or not 
     IF v_schemaList = '' THEN
-      RAISE WARNING 'E-Maj migration: the dblink contrib/extension is not installed. It is advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring and E-Maj parallel rollback capabilities. (You will need to "GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO emaj_adm" once dblink is installed)';
+      RAISE WARNING 'E-Maj upgrade: the dblink contrib/extension is not installed. It is advisable to have the dblink contrib/extension installed in order to take benefit of the E-Maj rollback monitoring and E-Maj parallel rollback capabilities. (You will need to "GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO emaj_adm" once dblink is installed)';
     ELSE
-      RAISE WARNING 'E-Maj migration: the dblink functions exist in schema(s): %. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.',v_schemaList;
+      RAISE WARNING 'E-Maj upgrade: the dblink functions exist in schema(s): %. Be sure these functions will be accessible by emaj_adm roles through their schemas search_path.',v_schemaList;
     END IF;
     RETURN;
   END;
@@ -4256,5 +4256,5 @@ DROP FUNCTION emaj._tmp_post_install();
 COMMIT;
 
 SET client_min_messages TO default;
-\echo '>>> E-Maj successfully migrated to 1.2.0'
+\echo '>>> E-Maj successfully upgraded to 1.2.0'
 

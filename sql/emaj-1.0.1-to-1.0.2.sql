@@ -1,9 +1,9 @@
 --
--- E-Maj: migration from 1.0.1 to 1.0.2
+-- E-Maj: upgrade from 1.0.1 to 1.0.2
 --
 -- This software is distributed under the GNU General Public License.
 --
--- This script migrates an existing installation of E-Maj extension.
+-- This script upgrades an existing installation of E-Maj extension.
 -- If version 1.0.1 has not been yet installed, simply use emaj.sql script. 
 --
 
@@ -18,7 +18,7 @@ SET client_min_messages TO WARNING;
 -- checks                         --
 --                                --
 ------------------------------------
--- Creation of a specific function to check the migration conditions are met.
+-- Creation of a specific function to check the upgrade conditions are met.
 -- The function generates an exception if at least one condition is not met.
 CREATE or REPLACE FUNCTION emaj.tmp() 
 RETURNS VOID LANGUAGE plpgsql AS
@@ -44,7 +44,7 @@ SELECT emaj.tmp();
 DROP FUNCTION emaj.tmp();
 
 -- OK, upgrade...
-\echo '... OK, Migration start...'
+\echo '... OK, upgrade start...'
 
 BEGIN TRANSACTION;
 
@@ -120,17 +120,17 @@ GRANT EXECUTE ON FUNCTION emaj._rlbk_groups_step3(v_groupNames TEXT[], v_mark TE
 
 ------------------------------------
 --                                --
--- commit migration               --
+-- commit upgrade               --
 --                                --
 ------------------------------------
 
 UPDATE emaj.emaj_param SET param_value_text = '1.0.2' WHERE param_key = 'emaj_version';
 
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.0.2', 'Migration from 1.0.1 completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 1.0.2', 'Upgrade from 1.0.1 completed');
 
 COMMIT;
 
 SET client_min_messages TO default;
-\echo '>>> E-Maj successfully migrated to 1.0.2'
+\echo '>>> E-Maj successfully upgraded to 1.0.2'
 
