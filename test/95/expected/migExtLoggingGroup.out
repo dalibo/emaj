@@ -59,7 +59,7 @@ select extname, extversion from pg_extension where extname = 'emaj';
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- 2.0.0
+ NEXT_VERSION
 (1 row)
 
 -----------------------------

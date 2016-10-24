@@ -28,7 +28,7 @@ $$;
 select * from pg_available_extension_versions where name = 'emaj';
 
 -- look at all available update paths
-select * from pg_extension_update_paths('emaj');
+select * from pg_extension_update_paths('emaj') order by 1,2;;
 
 -----------------------------------------------------------
 -- test that a 1.3.1 version moved as an extension can be dropped

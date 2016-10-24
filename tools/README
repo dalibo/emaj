@@ -1,11 +1,12 @@
 tools/README
 
 The tool directory contains several tools that may be essential or useful in E-Maj development:
-- regress.sh is a shell script that select and execute regression tests,
-- copy2Expected.sh is a shell script that copy the result files of regression tests environment to the reference directory,
+- regress.sh is a shell script that selects and executes regression tests,
+- copy2Expected.sh is a shell script that copys the result files of regression tests environment to the reference directory,
 - check_code.pl is a perl script that performs various checks on the script that creates the emaj extension,
-- check_error_messages.pl is a perl script that analyzes how the non regression tests cover the error or warning messages coded in the E-Maj source file.
-- sync_fct_in_upgrade_script.pl is a perl script that generates the functions part of the upgrade scripts.
+- check_error_messages.pl is a perl script that analyzes how the non regression tests cover the error or warning messages coded in the E-Maj source file,
+- sync_fct_in_upgrade_script.pl is a perl script that generates the functions part of the upgrade scripts,
+- create_cluster.sh is a shell script that ... creates a postgres cluster
 
 regress.sh
 ----------
@@ -63,4 +64,12 @@ The sync_fct_in_upgrade_script.pl perl script generates the functions part of th
 
 Customisation:
 Line 19 to 21, three variables set the absolute pathname of the scripts to process: the script of the current version (variable $ficCurrSrc), the script of the previous version ($ficPrevSrc) and the already existing upgrade script (variable $ficUpgrade). The script has to be adjusted at each upgrade.
+
+create_cluster.sh
+-----------------
+The create_cluster.sh shell script ... creates a postgres cluster. It drops a previous installation if it exists. Then, it performs the initdb, customizes the parameters, starts the cluster and executes a psql session to setup the needed objects - tablespaces, roles, extensions.
+
+Customization:
+Line 5 to 10, five variables set the major and minor postgres version, the PGDATA directory, the directory containing the postgres binary files and the directory containting the current E-Maj components.
+Some SQL commands or postgresql.conf parameters may need to be adjusted.
 

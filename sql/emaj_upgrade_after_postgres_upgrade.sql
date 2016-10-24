@@ -30,14 +30,14 @@ $do$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current user (%) is not a superuser.', current_user;
     END IF;
--- the emaj version registered in emaj_param must be '2.0.0'
+-- the emaj version registered in emaj_param must be '<NEXT_VERSION>'
     SELECT param_value_text INTO v_emajVersion FROM emaj.emaj_param WHERE param_key = 'emaj_version';
     IF v_emajVersion <> '<NEXT_VERSION>' THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not <NEXT_VERSION>.',v_emajVersion;
     END IF;
 -- the installed postgres version must be at least 9.1
     IF current_setting('server_version_num')::int < 90100 THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with E-Maj 2.0.0 (9.1 minimum)', current_setting('server_version_num');
+      RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with E-Maj <NEXT_VERSION>. The PostgreSQL version should be at least 9.1.', current_setting('server_version');
     END IF;
   END;
 $do$;

@@ -7,30 +7,31 @@
 #---------------------------------------------#
 EMAJ_HOME="/home/postgres/proj/emaj"
 DB_HOME="/home/postgres"
+PG_HOME="/home/postgres/pg"
 
 PGPORT91="5491"
-PGDIR91="/usr/local/pg9121"
-PGREG91="/home/postgres/postgresql-9.1.21/src/test/regress"
+PGDIR91="$PG_HOME/pg91"
+PGREG91="$PG_HOME/postgresql-9.1/src/test/regress"
 
 PGPORT92="5492"
-PGDIR92="/usr/local/pg9216"
-PGREG92="/home/postgres/postgresql-9.2.16/src/test/regress"
+PGDIR92="$PG_HOME/pg92"
+PGREG92="$PG_HOME/postgresql-9.2/src/test/regress"
 
 PGPORT93="5493"
-PGDIR93="/usr/local/pg9312"
-PGREG93="/home/postgres/postgresql-9.3.12/src/test/regress"
+PGDIR93="$PG_HOME/pg93"
+PGREG93="$PG_HOME/postgresql-9.3/src/test/regress"
 
 PGPORT94="5494"
-PGDIR94="/usr/local/pg947"
-PGREG94="/home/postgres/postgresql-9.4.7/src/test/regress"
+PGDIR94="$PG_HOME/pg94"
+PGREG94="$PG_HOME/postgresql-9.4/src/test/regress"
 
 PGPORT95="5495"
-PGDIR95="/usr/local/pg952"
-PGREG95="/home/postgres/postgresql-9.5.2/src/test/regress"
+PGDIR95="$PG_HOME/pg95"
+PGREG95="$PG_HOME/postgresql-9.5/src/test/regress"
 
 PGPORT96="5496"
-PGDIR96="/usr/local/pg96beta3"
-PGREG96="/home/postgres/postgresql-9.6beta3/src/test/regress"
+PGDIR96="$PG_HOME/pg96"
+PGREG96="$PG_HOME/postgresql-9.6/src/test/regress"
 
 #---------------------------------------------#
 #            Functions definition             #
@@ -89,11 +90,14 @@ migrat_test()
 pg_upgrade_test()
 {
 	echo "pg_upgrade the $1 version cluster to a second $2 version cluster"
+    echo "----------------------------------------------------------------"
 	eval RTVBIN1=\${PGDIR$1}/bin
 	eval RTVPORT=\${PGPORT$1}
 	eval RTVBIN2=\${PGDIR$2}/bin
 	eval RTVREG=\${PGREG$2}
+    echo " "
 	echo "--> initializing the new cluster..."
+    echo " "
 	cd $DB_HOME
 	rm -Rf $3
 # remove tablespace structures that remain because the tablespaces are located inside the $PGDATA structure of the source cluster
@@ -106,25 +110,39 @@ pg_upgrade_test()
 	mkdir $3
 	$RTVBIN2/initdb -D $3
 	sed -i "s/#port = 5432/port = 154$2/" $3/postgresql.conf
+    echo " "
 	echo "--> stopping the old cluster..."
+    echo " "
 	$RTVBIN1/pg_ctl -D $DB_HOME/db$1 stop
+    echo " "
 	echo "--> upgrading the cluster..."
+    echo " "
 	$RTVBIN2/pg_upgrade -b $RTVBIN1 -B $RTVBIN2 -d $DB_HOME/db$1 -D $DB_HOME/$3 -p $RTVPORT -P 154$2
+    echo " "
 	echo "--> starting the new cluster..."
+    echo " "
 	$RTVBIN2/pg_ctl -D $DB_HOME/$3 start
 	sleep 2
-	echo "upgrading and checking the E-Maj environment"
+    echo " "
+	echo "--> upgrading and checking the E-Maj environment"
+    echo " "
 	$RTVBIN2/psql -p 154$2 regression <<END_PSQL >$EMAJ_HOME/test/$2/results/pgUpgrade.out 2>&1
-		select emaj.emaj_verify_all();
-		\i $EMAJ_HOME/sql/emaj_upgrade_after_postgres_upgrade.sql
-		select emaj.emaj_verify_all();
+select emaj.emaj_verify_all();
+\i $EMAJ_HOME/sql/emaj_upgrade_after_postgres_upgrade.sql
+select emaj.emaj_verify_all();
 END_PSQL
+    echo " "
 	echo "--> stopping the new cluster..."
+    echo " "
 	$RTVBIN2/pg_ctl -D $DB_HOME/$3 stop
 	sleep 2
+    echo " "
 	echo "--> restarting the old cluster..."
+    echo " "
 	$RTVBIN1/pg_ctl -D $DB_HOME/db$1 start
+    echo " "
 	echo "--> compare the emaj_upgrade_after_postgres_upgrade.sql output with expected results (should not return anything)"
+    echo " "
 	diff $EMAJ_HOME/test/$2/expected/pgUpgrade.out $EMAJ_HOME/test/$2/results/pgUpgrade.out
 	return
 }
