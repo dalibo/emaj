@@ -57,14 +57,15 @@ Composite type "emaj._verify_groups_type"
  ver_msg    | text | 
 
 Composite type "emaj.emaj_consolidable_rollback_type"
-           Column           |  Type  | Modifiers 
-----------------------------+--------+-----------
- cons_group                 | text   | 
- cons_target_rlbk_mark_name | text   | 
- cons_target_rlbk_mark_id   | bigint | 
- cons_end_rlbk_mark_name    | text   | 
- cons_end_rlbk_mark_id      | bigint | 
- cons_rows                  | bigint | 
+           Column           |  Type   | Modifiers 
+----------------------------+---------+-----------
+ cons_group                 | text    | 
+ cons_target_rlbk_mark_name | text    | 
+ cons_target_rlbk_mark_id   | bigint  | 
+ cons_end_rlbk_mark_name    | text    | 
+ cons_end_rlbk_mark_id      | bigint  | 
+ cons_rows                  | bigint  | 
+ cons_marks                 | integer | 
 
 Composite type "emaj.emaj_detailed_log_stat_type"
    Column    |         Type          | Modifiers 

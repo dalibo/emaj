@@ -20,7 +20,7 @@ Enhancements:
     logged rollback operations that may be consolidated. Two of the returned 
     columns can directly feed the emaj_consolidate_rollback_group() function. 
     It also gives information about the amount of log updates that may be 
-    deleted.
+    deleted and the number of marks what would be deleted by a consolidation.
   - when postgres version allows it, add event triggers to protect 
     application or E-Maj components against drop or some table structure 
     changes. The new functions emaj_disable_protection_by_event_triggers() 

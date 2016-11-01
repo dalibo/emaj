@@ -518,12 +518,12 @@ insert into myTbl2 values (1000,'TC3',NULL);
 select emaj.emaj_rename_mark_group('myGroup1','Conso_M2','Renamed_conso_M2');
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Renamed_last_mark');
 select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id, 
-       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_id, cons_rows 
+       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_id, cons_rows, cons_marks 
   from emaj.emaj_get_consolidable_rollbacks();
 
 select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
 select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id, 
-       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_id, cons_rows 
+       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_id, cons_rows, cons_marks
   from emaj.emaj_get_consolidable_rollbacks();
 
 -- consolidate a rollback already consolidated

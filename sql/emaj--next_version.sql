@@ -426,7 +426,8 @@ CREATE TYPE emaj.emaj_consolidable_rollback_type AS (
   cons_target_rlbk_mark_id     BIGINT,                     -- id of the mark used as target of the logged rollback operation
   cons_end_rlbk_mark_name      TEXT,                       -- name of the mark set at the end of the logged rollback operation
   cons_end_rlbk_mark_id        BIGINT,                     -- id of the mark set at the end of the logged rollback operation
-  cons_rows                    BIGINT                      -- estimated number of update events that can be consolidated for the rollback
+  cons_rows                    BIGINT,                     -- estimated number of update events that can be consolidated for the rollback
+  cons_marks                   INT                         -- number of marks that would be deleted by a consolidation
   );
 COMMENT ON TYPE emaj.emaj_consolidable_rollback_type IS
 $$Represents the structure of rows returned by the emaj_get_consolidable_rollbacks() function.$$;
@@ -4779,7 +4780,7 @@ $emaj_get_consolidable_rollbacks$
       SELECT m1.mark_group AS cons_group,
              m2.mark_name AS cons_target_rlbk_mark_name, m2.mark_id AS cons_target_rlbk_mark_id,
              m1.mark_name AS cons_end_rlbk_mark_name, m1.mark_id AS cons_end_rlbk_mark_id,
-             cast(0 AS BIGINT) AS cons_rows
+             cast(0 AS BIGINT) AS cons_rows, cast(0 AS INT) as cons_marks
         FROM emaj.emaj_mark m1
           JOIN emaj.emaj_mark m2 ON (m2.mark_name = m1.mark_logged_rlbk_target_mark AND m2.mark_group = m1.mark_group)
           WHERE m1.mark_logged_rlbk_target_mark IS NOT NULL
@@ -4788,13 +4789,18 @@ $emaj_get_consolidable_rollbacks$
 -- compute the number of updates for this mark range
       SELECT cast(sum(stat_rows) AS BIGINT) INTO r_mark.cons_rows
         FROM emaj.emaj_log_stat_group(r_mark.cons_group, r_mark.cons_target_rlbk_mark_name, r_mark.cons_end_rlbk_mark_name);
+-- compute the number of intermediate marks for this mark range
+      SELECT count(*) INTO r_mark.cons_marks FROM emaj.emaj_mark
+        WHERE mark_group = r_mark.cons_group AND mark_id > r_mark.cons_target_rlbk_mark_id AND mark_id < r_mark.cons_end_rlbk_mark_id;
 -- and return a row
       RETURN NEXT r_mark;
     END LOOP;
 -- TODO: When postgres 9.2- will not be supported anymore, the following statement with a LATERAL clause will be usable to replace the loop
 --    RETURN QUERY
 --      SELECT m1.mark_group AS cons_group, m2.mark_name AS cons_target_rlbk_mark_name, m2.mark_id AS cons_target_rlbk_mark_id,
---             m1.mark_name AS cons_end_rlbk_mark_name, m1.mark_id AS cons_end_rlbk_mark_id, cast(sum(stat_rows) AS BIGINT) AS cons_rows
+--             m1.mark_name AS cons_end_rlbk_mark_name, m1.mark_id AS cons_end_rlbk_mark_id, cast(sum(stat_rows) AS BIGINT) AS cons_rows,
+--             cast((SELECT count(*) FROM emaj.emaj_mark m3
+--                   WHERE m3.mark_group = m1.mark_group AND m3.mark_id > m2.mark_id AND m3.mark_id < m1.mark_id) AS INT) AS cons_marks
 --        FROM emaj.emaj_mark m1
 --          JOIN emaj.emaj_mark m2 ON (m2.mark_name = m1.mark_logged_rlbk_target_mark AND m2.mark_group = m1.mark_group)
 --          LEFT OUTER JOIN LATERAL emaj.emaj_log_stat_group(m1.mark_group, m1.mark_logged_rlbk_target_mark, m1.mark_name) ON TRUE

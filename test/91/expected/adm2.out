@@ -1713,17 +1713,17 @@ select emaj.emaj_logged_rollback_group('myGroup1','MC3');
 (1 row)
 
 select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
-       cons_target_rlbk_mark_name, cons_end_rlbk_mark_id, cons_target_rlbk_mark_id, cons_rows 
+       cons_target_rlbk_mark_name, cons_end_rlbk_mark_id, cons_target_rlbk_mark_id, cons_rows, cons_marks, cons_marks
   from emaj.emaj_get_consolidable_rollbacks();
- cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_id | cons_target_rlbk_mark_id | cons_rows 
-------------+-----------------+----------------------------+-----------------------+--------------------------+-----------
- myGroup1   | RLBK_MC1_DONE   | MC1                        |                   651 |                      648 |        29
- myGroup1   | RLBK_MC3_%_DONE | MC3                        |                   656 |                      652 |        23
+ cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_id | cons_target_rlbk_mark_id | cons_rows | cons_marks | cons_marks 
+------------+-----------------+----------------------------+-----------------------+--------------------------+-----------+------------+------------
+ myGroup1   | RLBK_MC1_DONE   | MC1                        |                   651 |                      648 |        29 |          2 |          2
+ myGroup1   | RLBK_MC3_%_DONE | MC3                        |                   656 |                      652 |        23 |          3 |          3
 (2 rows)
 
 -- consolidate both logged rollback at once
 select cons_target_rlbk_mark_name, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
-       emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark_name) 
+       emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark_name)
   from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1';
  cons_target_rlbk_mark_name | regexp_replace  | emaj_consolidate_rollback_group 
 ----------------------------+-----------------+---------------------------------
@@ -1732,12 +1732,12 @@ select cons_target_rlbk_mark_name, regexp_replace(cons_end_rlbk_mark_name,E'\\d\
 (2 rows)
 
 select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
-       cons_target_rlbk_mark_name, cons_end_rlbk_mark_id, cons_target_rlbk_mark_id, cons_rows 
+       cons_target_rlbk_mark_name, cons_end_rlbk_mark_id, cons_target_rlbk_mark_id, cons_rows, cons_marks
   from emaj.emaj_get_consolidable_rollbacks();
- cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_id | cons_target_rlbk_mark_id | cons_rows 
-------------+-----------------+----------------------------+-----------------------+--------------------------+-----------
- myGroup1   | RLBK_MC1_DONE   | MC1                        |                   651 |                      648 |         0
- myGroup1   | RLBK_MC3_%_DONE | MC3                        |                   656 |                      652 |         0
+ cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_id | cons_target_rlbk_mark_id | cons_rows | cons_marks 
+------------+-----------------+----------------------------+-----------------------+--------------------------+-----------+------------
+ myGroup1   | RLBK_MC1_DONE   | MC1                        |                   651 |                      648 |         0 |          0
+ myGroup1   | RLBK_MC3_%_DONE | MC3                        |                   656 |                      652 |         0 |          0
 (2 rows)
 
 select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
