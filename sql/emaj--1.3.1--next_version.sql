@@ -4872,9 +4872,9 @@ $_rollback_activity$
 --   as it is difficult to estimate the benefit brought by several parallel sessions.
 -- The times and progression indicators reported are based on the transaction timestamp (allowing stable results in regression tests).
   DECLARE
-    v_ipsDuration            INTERVAL;
-    v_nyssDuration           INTERVAL;
-    v_nbNyss                 INT;
+    v_ipsDuration            INTERVAL;           -- In Progress Steps Duration
+    v_nyssDuration           INTERVAL;           -- Not Yes Started Steps Duration
+    v_nbNyss                 INT;                -- Number of Net Yes Started Steps
     v_ctrlDuration           INTERVAL;
     v_currentTotalEstimate   INTERVAL;
     r_rlbk                   emaj.emaj_rollback_activity_type;
@@ -4884,9 +4884,10 @@ $_rollback_activity$
       SELECT rlbk_id, rlbk_groups, rlbk_mark, t1.time_clock_timestamp, rlbk_is_logged, rlbk_nb_session,
              rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, t2.time_tx_timestamp,
              transaction_timestamp() - t2.time_tx_timestamp AS "elapse", NULL, 0
-        FROM emaj.emaj_rlbk, emaj.emaj_time_stamp t1, emaj.emaj_time_stamp t2
-        WHERE rlbk_mark_time_id = t1.time_id AND rlbk_time_id = t2.time_id
-          AND rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING')
+        FROM emaj.emaj_rlbk
+             JOIN emaj.emaj_time_stamp t1 ON (rlbk_mark_time_id = t1.time_id)
+             LEFT OUTER JOIN emaj.emaj_time_stamp t2 ON (rlbk_time_id = t2.time_id)
+        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING')
         ORDER BY rlbk_id
         LOOP
 -- compute the estimated remaining duration
