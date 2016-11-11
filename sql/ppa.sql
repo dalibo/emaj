@@ -283,3 +283,8 @@ select emaj.emaj_set_mark_group('myGroup2','tmp_mark');
 select emaj.emaj_logged_rollback_group('myGroup2','MARK1');
 select emaj.emaj_rollback_group('myGroup2','tmp_mark');
 select emaj.emaj_delete_mark_group('myGroup2','tmp_mark');
+
+select emaj.emaj_logged_rollback_group('myGroup2','MARK3');
+
+RESET search_path;
+
