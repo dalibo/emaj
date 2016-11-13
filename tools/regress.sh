@@ -54,7 +54,7 @@ reg_test_version()
 
 # regression test by itself
 	echo "Run regression test"
-	$RTVREG/pg_regress --schedule=../emaj_sched_$2
+	$RTVREG/pg_regress --schedule=../emaj_$2_schedule
 
 # end of the regression test
 	rm RTVBIN.lnk
@@ -78,8 +78,8 @@ migrat_test()
 	$RTVBIN/psql -p $RTVPORT regression <../$2/results/regression.dump >results/restore.out 2>&1
 	diff expected/restore.out results/restore.out
 	echo "  --> checking use of the restored db..." 
-	$RTVBIN/psql -p $RTVPORT -a regression <../sql/afterRest.sql >results/afterRest.out 2>&1
-	diff expected/afterRest.out results/afterRest.out
+	$RTVBIN/psql -p $RTVPORT -a regression <../sql/after_restore.sql >results/after_restore.out 2>&1
+	diff expected/after_restore.out results/after_restore.out
 	cd ../..
 	return
 }
@@ -196,40 +196,40 @@ read ANSWER
 
 # execute the test
 case $ANSWER in
-	a) reg_test_version "91" "ext";;
-	b) reg_test_version "92" "ext";;
-	c) reg_test_version "93" "ext";;
-	d) reg_test_version "94" "ext";;
-	e) reg_test_version "95" "ext";;
-	f) reg_test_version "96" "ext";;
+	a) reg_test_version "91" "standart";;
+	b) reg_test_version "92" "standart";;
+	c) reg_test_version "93" "standart";;
+	d) reg_test_version "94" "standart";;
+	e) reg_test_version "95" "standart";;
+	f) reg_test_version "96" "standart";;
 	m) migrat_test "95" "91";;
 	t)
-		reg_test_version "91" "ext"
-		reg_test_version "92" "ext"
-		reg_test_version "93" "ext"
-		reg_test_version "94" "ext"
-		reg_test_version "95" "ext"
-		reg_test_version "96" "ext"
+		reg_test_version "91" "standart"
+		reg_test_version "92" "standart"
+		reg_test_version "93" "standart"
+		reg_test_version "94" "standart"
+		reg_test_version "95" "standart"
+		reg_test_version "96" "standart"
 		migrat_test "95" "91"
 		;;
 	u) pg_upgrade_test "91" "96" "db96b";;
-	A) reg_test_version "91" "ext_mig";;
-	B) reg_test_version "92" "ext_mig";;
-	C) reg_test_version "93" "ext_mig";;
-	D) reg_test_version "94" "ext_mig";;
-	E) reg_test_version "95" "ext_mig";;
-	F) reg_test_version "96" "ext_mig";;
+	A) reg_test_version "91" "initial_upgrade";;
+	B) reg_test_version "92" "initial_upgrade";;
+	C) reg_test_version "93" "initial_upgrade";;
+	D) reg_test_version "94" "initial_upgrade";;
+	E) reg_test_version "95" "initial_upgrade";;
+	F) reg_test_version "96" "initial_upgrade";;
 	T)
-		reg_test_version "91" "ext_mig"
-		reg_test_version "92" "ext_mig"
-		reg_test_version "93" "ext_mig"
-		reg_test_version "94" "ext_mig"
-		reg_test_version "95" "ext_mig"
-		reg_test_version "96" "ext_mig"
+		reg_test_version "91" "initial_upgrade"
+		reg_test_version "92" "initial_upgrade"
+		reg_test_version "93" "initial_upgrade"
+		reg_test_version "94" "initial_upgrade"
+		reg_test_version "95" "initial_upgrade"
+		reg_test_version "96" "initial_upgrade"
 		;;
-	V|v) reg_test_version "91" "ext_mx_mig";;
-	W|w) reg_test_version "93" "ext_mx_mig";;
-	X|x) reg_test_version "95" "ext_mx_mig";;
+	V|v) reg_test_version "91" "upgrade_while_loging";;
+	W|w) reg_test_version "93" "upgrade_while_loging";;
+	X|x) reg_test_version "95" "upgrade_while_loging";;
 	*) echo "Bad answer..." && exit 2 ;;
 esac
 

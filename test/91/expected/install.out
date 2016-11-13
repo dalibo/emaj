@@ -1,0 +1,533 @@
+-- install.sql : install E-Maj as an extension (for postgres version 9.1+)
+--               First install with psql script and then transform emaj objects as extension
+--               Then directly install as extension
+--
+-----------------------------
+-- install dblink
+-----------------------------
+CREATE EXTENSION IF NOT EXISTS dblink;
+-----------------------------
+-- for postgres cluster 9.1 and 9.4, temporarily rename tspemaj tablespace to test both cases
+-----------------------------
+DO LANGUAGE plpgsql 
+$$
+  DECLARE
+  BEGIN
+    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('9.1', '9.4') THEN
+      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
+    END IF;
+  END;
+$$;
+-----------------------------
+-- emaj installation as extension
+-----------------------------
+CREATE EXTENSION emaj VERSION 'next_version';
+-----------------------------
+-- check installation
+-----------------------------
+-- check impact in catalog
+select extname, extversion from pg_extension where extname = 'emaj';
+ extname |  extversion  
+---------+--------------
+ emaj    | next_version
+(1 row)
+
+-- check the emaj_param content
+SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
+ param_value_text 
+------------------
+ <NEXT_VERSION>
+(1 row)
+
+-- check history
+select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
+  (select * from emaj.emaj_hist order by hist_id) as t;
+ hist_id | hist_function | hist_event |     hist_object      |      regexp_replace      | hist_user 
+---------+---------------+------------+----------------------+--------------------------+-----------
+       1 | EMAJ_INSTALL  |            | E-Maj <NEXT_VERSION> | Initialisation completed | postgres
+(1 row)
+
+-- check table list
+\d emaj.*
+Composite type "emaj._verify_groups_type"
+   Column   | Type | Modifiers 
+------------+------+-----------
+ ver_schema | text | 
+ ver_tblseq | text | 
+ ver_msg    | text | 
+
+Composite type "emaj.emaj_consolidable_rollback_type"
+           Column           |  Type   | Modifiers 
+----------------------------+---------+-----------
+ cons_group                 | text    | 
+ cons_target_rlbk_mark_name | text    | 
+ cons_target_rlbk_mark_id   | bigint  | 
+ cons_end_rlbk_mark_name    | text    | 
+ cons_end_rlbk_mark_id      | bigint  | 
+ cons_rows                  | bigint  | 
+ cons_marks                 | integer | 
+
+Composite type "emaj.emaj_detailed_log_stat_type"
+   Column    |         Type          | Modifiers 
+-------------+-----------------------+-----------
+ stat_group  | text                  | 
+ stat_schema | text                  | 
+ stat_table  | text                  | 
+ stat_role   | character varying(32) | 
+ stat_verb   | character varying(6)  | 
+ stat_rows   | bigint                | 
+
+        Sequence "emaj.emaj_global_seq"
+    Column     |  Type   |        Value        
+---------------+---------+---------------------
+ sequence_name | name    | emaj_global_seq
+ last_value    | bigint  | 1
+ start_value   | bigint  | 1
+ increment_by  | bigint  | 1
+ max_value     | bigint  | 9223372036854775807
+ min_value     | bigint  | 1
+ cache_value   | bigint  | 1
+ log_cnt       | bigint  | 0
+ is_cycled     | boolean | f
+ is_called     | boolean | f
+
+                                               Table "emaj.emaj_group"
+          Column          |  Type   |                                    Modifiers                                    
+--------------------------+---------+---------------------------------------------------------------------------------
+ group_name               | text    | not null
+ group_is_logging         | boolean | not null
+ group_is_rlbk_protected  | boolean | not null
+ group_nb_table           | integer | 
+ group_nb_sequence        | integer | 
+ group_is_rollbackable    | boolean | not null
+ group_creation_time_id   | bigint  | not null
+ group_last_alter_time_id | bigint  | 
+ group_pg_version         | text    | not null default "substring"(version(), 'PostgreSQL\s([.,0-9,A-Z,a-z]*)'::text)
+ group_comment            | text    | 
+Indexes:
+    "emaj_group_pkey" PRIMARY KEY, btree (group_name)
+Foreign-key constraints:
+    "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+Referenced by:
+    TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
+    TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
+
+          Table "emaj.emaj_group_def"
+          Column          |  Type   | Modifiers 
+--------------------------+---------+-----------
+ grpdef_group             | text    | not null
+ grpdef_schema            | text    | not null
+ grpdef_tblseq            | text    | not null
+ grpdef_priority          | integer | 
+ grpdef_log_schema_suffix | text    | 
+ grpdef_emaj_names_prefix | text    | 
+ grpdef_log_dat_tsp       | text    | 
+ grpdef_log_idx_tsp       | text    | 
+Indexes:
+    "emaj_group_def_pkey" PRIMARY KEY, btree (grpdef_group, grpdef_schema, grpdef_tblseq)
+
+   Index "emaj.emaj_group_def_pkey"
+    Column     | Type |  Definition   
+---------------+------+---------------
+ grpdef_group  | text | grpdef_group
+ grpdef_schema | text | grpdef_schema
+ grpdef_tblseq | text | grpdef_tblseq
+primary key, btree, for table "emaj.emaj_group_def"
+
+  Index "emaj.emaj_group_pkey"
+   Column   | Type | Definition 
+------------+------+------------
+ group_name | text | group_name
+primary key, btree, for table "emaj.emaj_group"
+
+                                           Table "emaj.emaj_hist"
+    Column     |           Type           |                            Modifiers                             
+---------------+--------------------------+------------------------------------------------------------------
+ hist_id       | bigint                   | not null default nextval('emaj.emaj_hist_hist_id_seq'::regclass)
+ hist_datetime | timestamp with time zone | not null default clock_timestamp()
+ hist_function | text                     | not null
+ hist_event    | text                     | 
+ hist_object   | text                     | 
+ hist_wording  | text                     | 
+ hist_user     | text                     | default "session_user"()
+ hist_txid     | bigint                   | default txid_current()
+Indexes:
+    "emaj_hist_pkey" PRIMARY KEY, btree (hist_id)
+
+      Sequence "emaj.emaj_hist_hist_id_seq"
+    Column     |  Type   |         Value         
+---------------+---------+-----------------------
+ sequence_name | name    | emaj_hist_hist_id_seq
+ last_value    | bigint  | 1
+ start_value   | bigint  | 1
+ increment_by  | bigint  | 1
+ max_value     | bigint  | 9223372036854775807
+ min_value     | bigint  | 1
+ cache_value   | bigint  | 1
+ log_cnt       | bigint  | 32
+ is_cycled     | boolean | f
+ is_called     | boolean | t
+
+  Index "emaj.emaj_hist_pkey"
+ Column  |  Type  | Definition 
+---------+--------+------------
+ hist_id | bigint | hist_id
+primary key, btree, for table "emaj.emaj_hist"
+
+Composite type "emaj.emaj_log_stat_type"
+   Column    |  Type  | Modifiers 
+-------------+--------+-----------
+ stat_group  | text   | 
+ stat_schema | text   | 
+ stat_table  | text   | 
+ stat_rows   | bigint | 
+
+                                          Table "emaj.emaj_mark"
+            Column            |  Type   |                            Modifiers                             
+------------------------------+---------+------------------------------------------------------------------
+ mark_group                   | text    | not null
+ mark_name                    | text    | not null
+ mark_id                      | bigint  | not null default nextval('emaj.emaj_mark_mark_id_seq'::regclass)
+ mark_time_id                 | bigint  | not null
+ mark_is_deleted              | boolean | not null
+ mark_is_rlbk_protected       | boolean | not null
+ mark_comment                 | text    | 
+ mark_log_rows_before_next    | bigint  | 
+ mark_logged_rlbk_target_mark | text    | 
+Indexes:
+    "emaj_mark_pkey" PRIMARY KEY, btree (mark_group, mark_name)
+Foreign-key constraints:
+    "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
+    "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+
+      Sequence "emaj.emaj_mark_mark_id_seq"
+    Column     |  Type   |         Value         
+---------------+---------+-----------------------
+ sequence_name | name    | emaj_mark_mark_id_seq
+ last_value    | bigint  | 1
+ start_value   | bigint  | 1
+ increment_by  | bigint  | 1
+ max_value     | bigint  | 9223372036854775807
+ min_value     | bigint  | 1
+ cache_value   | bigint  | 1
+ log_cnt       | bigint  | 0
+ is_cycled     | boolean | f
+ is_called     | boolean | f
+
+  Index "emaj.emaj_mark_pkey"
+   Column   | Type | Definition 
+------------+------+------------
+ mark_group | text | mark_group
+ mark_name  | text | mark_name
+primary key, btree, for table "emaj.emaj_mark"
+
+           Table "emaj.emaj_param"
+        Column        |   Type   | Modifiers 
+----------------------+----------+-----------
+ param_key            | text     | not null
+ param_value_text     | text     | 
+ param_value_int      | bigint   | 
+ param_value_boolean  | boolean  | 
+ param_value_interval | interval | 
+Indexes:
+    "emaj_param_pkey" PRIMARY KEY, btree (param_key)
+
+ Index "emaj.emaj_param_pkey"
+  Column   | Type | Definition 
+-----------+------+------------
+ param_key | text | param_key
+primary key, btree, for table "emaj.emaj_param"
+
+       Table "emaj.emaj_relation"
+      Column      |  Type   | Modifiers 
+------------------+---------+-----------
+ rel_schema       | text    | not null
+ rel_tblseq       | text    | not null
+ rel_group        | text    | not null
+ rel_kind         | text    | 
+ rel_priority     | integer | 
+ rel_log_schema   | text    | 
+ rel_log_table    | text    | 
+ rel_log_dat_tsp  | text    | 
+ rel_log_index    | text    | 
+ rel_log_idx_tsp  | text    | 
+ rel_log_sequence | text    | 
+ rel_log_function | text    | 
+Indexes:
+    "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq)
+    "emaj_relation_idx1" btree (rel_group, rel_kind)
+    "emaj_relation_idx2" btree (rel_log_schema)
+Foreign-key constraints:
+    "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
+
+Index "emaj.emaj_relation_idx1"
+  Column   | Type | Definition 
+-----------+------+------------
+ rel_group | text | rel_group
+ rel_kind  | text | rel_kind
+btree, for table "emaj.emaj_relation"
+
+    Index "emaj.emaj_relation_idx2"
+     Column     | Type |   Definition   
+----------------+------+----------------
+ rel_log_schema | text | rel_log_schema
+btree, for table "emaj.emaj_relation"
+
+Index "emaj.emaj_relation_pkey"
+   Column   | Type | Definition 
+------------+------+------------
+ rel_schema | text | rel_schema
+ rel_tblseq | text | rel_tblseq
+primary key, btree, for table "emaj.emaj_relation"
+
+                                              Table "emaj.emaj_rlbk"
+       Column        |           Type           |                            Modifiers                             
+---------------------+--------------------------+------------------------------------------------------------------
+ rlbk_id             | integer                  | not null default nextval('emaj.emaj_rlbk_rlbk_id_seq'::regclass)
+ rlbk_groups         | text[]                   | not null
+ rlbk_mark           | text                     | not null
+ rlbk_mark_time_id   | bigint                   | not null
+ rlbk_time_id        | bigint                   | 
+ rlbk_is_logged      | boolean                  | not null
+ rlbk_nb_session     | integer                  | not null
+ rlbk_nb_table       | integer                  | 
+ rlbk_nb_sequence    | integer                  | 
+ rlbk_eff_nb_table   | integer                  | 
+ rlbk_status         | emaj._rlbk_status_enum   | 
+ rlbk_begin_hist_id  | bigint                   | 
+ rlbk_is_dblink_used | boolean                  | 
+ rlbk_end_datetime   | timestamp with time zone | 
+ rlbk_msg            | text                     | 
+Indexes:
+    "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id)
+    "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum])
+Foreign-key constraints:
+    "emaj_rlbk_rlbk_mark_time_id_fkey" FOREIGN KEY (rlbk_mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    "emaj_rlbk_rlbk_time_id_fkey" FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+Referenced by:
+    TABLE "emaj.emaj_rlbk_plan" CONSTRAINT "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
+    TABLE "emaj.emaj_rlbk_session" CONSTRAINT "emaj_rlbk_session_rlbs_rlbk_id_fkey" FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
+    TABLE "emaj.emaj_rlbk_stat" CONSTRAINT "emaj_rlbk_stat_rlbt_rlbk_id_fkey" FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
+
+            Index "emaj.emaj_rlbk_idx1"
+   Column    |          Type          | Definition  
+-------------+------------------------+-------------
+ rlbk_status | emaj._rlbk_status_enum | rlbk_status
+btree, for table "emaj.emaj_rlbk", predicate (rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum]))
+
+  Index "emaj.emaj_rlbk_pkey"
+ Column  |  Type   | Definition 
+---------+---------+------------
+ rlbk_id | integer | rlbk_id
+primary key, btree, for table "emaj.emaj_rlbk"
+
+                  Table "emaj.emaj_rlbk_plan"
+         Column          |           Type           | Modifiers 
+-------------------------+--------------------------+-----------
+ rlbp_rlbk_id            | integer                  | not null
+ rlbp_step               | emaj._rlbk_step_enum     | not null
+ rlbp_schema             | text                     | not null
+ rlbp_table              | text                     | not null
+ rlbp_fkey               | text                     | not null
+ rlbp_batch_number       | integer                  | 
+ rlbp_session            | integer                  | 
+ rlbp_fkey_def           | text                     | 
+ rlbp_estimated_quantity | bigint                   | 
+ rlbp_estimated_duration | interval                 | 
+ rlbp_estimate_method    | integer                  | 
+ rlbp_start_datetime     | timestamp with time zone | 
+ rlbp_quantity           | bigint                   | 
+ rlbp_duration           | interval                 | 
+Indexes:
+    "emaj_rlbk_plan_pkey" PRIMARY KEY, btree (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey)
+Foreign-key constraints:
+    "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
+
+          Index "emaj.emaj_rlbk_plan_pkey"
+    Column    |         Type         |  Definition  
+--------------+----------------------+--------------
+ rlbp_rlbk_id | integer              | rlbp_rlbk_id
+ rlbp_step    | emaj._rlbk_step_enum | rlbp_step
+ rlbp_schema  | text                 | rlbp_schema
+ rlbp_table   | text                 | rlbp_table
+ rlbp_fkey    | text                 | rlbp_fkey
+primary key, btree, for table "emaj.emaj_rlbk_plan"
+
+      Sequence "emaj.emaj_rlbk_rlbk_id_seq"
+    Column     |  Type   |         Value         
+---------------+---------+-----------------------
+ sequence_name | name    | emaj_rlbk_rlbk_id_seq
+ last_value    | bigint  | 1
+ start_value   | bigint  | 1
+ increment_by  | bigint  | 1
+ max_value     | bigint  | 9223372036854775807
+ min_value     | bigint  | 1
+ cache_value   | bigint  | 1
+ log_cnt       | bigint  | 0
+ is_cycled     | boolean | f
+ is_called     | boolean | f
+
+               Table "emaj.emaj_rlbk_session"
+       Column        |           Type           | Modifiers 
+---------------------+--------------------------+-----------
+ rlbs_rlbk_id        | integer                  | not null
+ rlbs_session        | integer                  | not null
+ rlbs_txid           | bigint                   | not null
+ rlbs_start_datetime | timestamp with time zone | not null
+ rlbs_end_datetime   | timestamp with time zone | 
+Indexes:
+    "emaj_rlbk_session_pkey" PRIMARY KEY, btree (rlbs_rlbk_id, rlbs_session)
+Foreign-key constraints:
+    "emaj_rlbk_session_rlbs_rlbk_id_fkey" FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
+
+  Index "emaj.emaj_rlbk_session_pkey"
+    Column    |  Type   |  Definition  
+--------------+---------+--------------
+ rlbs_rlbk_id | integer | rlbs_rlbk_id
+ rlbs_session | integer | rlbs_session
+primary key, btree, for table "emaj.emaj_rlbk_session"
+
+           Table "emaj.emaj_rlbk_stat"
+    Column     |         Type         | Modifiers 
+---------------+----------------------+-----------
+ rlbt_step     | emaj._rlbk_step_enum | not null
+ rlbt_schema   | text                 | not null
+ rlbt_table    | text                 | not null
+ rlbt_fkey     | text                 | not null
+ rlbt_rlbk_id  | integer              | not null
+ rlbt_quantity | bigint               | not null
+ rlbt_duration | interval             | not null
+Indexes:
+    "emaj_rlbk_stat_pkey" PRIMARY KEY, btree (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id)
+Foreign-key constraints:
+    "emaj_rlbk_stat_rlbt_rlbk_id_fkey" FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
+
+          Index "emaj.emaj_rlbk_stat_pkey"
+    Column    |         Type         |  Definition  
+--------------+----------------------+--------------
+ rlbt_step    | emaj._rlbk_step_enum | rlbt_step
+ rlbt_schema  | text                 | rlbt_schema
+ rlbt_table   | text                 | rlbt_table
+ rlbt_fkey    | text                 | rlbt_fkey
+ rlbt_rlbk_id | integer              | rlbt_rlbk_id
+primary key, btree, for table "emaj.emaj_rlbk_stat"
+
+     Composite type "emaj.emaj_rollback_activity_type"
+       Column        |           Type           | Modifiers 
+---------------------+--------------------------+-----------
+ rlbk_id             | integer                  | 
+ rlbk_groups         | text[]                   | 
+ rlbk_mark           | text                     | 
+ rlbk_mark_datetime  | timestamp with time zone | 
+ rlbk_is_logged      | boolean                  | 
+ rlbk_nb_session     | integer                  | 
+ rlbk_nb_table       | integer                  | 
+ rlbk_nb_sequence    | integer                  | 
+ rlbk_eff_nb_table   | integer                  | 
+ rlbk_status         | emaj._rlbk_status_enum   | 
+ rlbk_start_datetime | timestamp with time zone | 
+ rlbk_elapse         | interval                 | 
+ rlbk_remaining      | interval                 | 
+ rlbk_completion_pct | smallint                 | 
+
+       Table "emaj.emaj_seq_hole"
+       Column       |  Type  | Modifiers 
+--------------------+--------+-----------
+ sqhl_schema        | text   | not null
+ sqhl_table         | text   | not null
+ sqhl_begin_time_id | bigint | not null
+ sqhl_end_time_id   | bigint | not null
+ sqhl_hole_size     | bigint | not null
+Indexes:
+    "emaj_seq_hole_pkey" PRIMARY KEY, btree (sqhl_schema, sqhl_table, sqhl_begin_time_id)
+Foreign-key constraints:
+    "emaj_seq_hole_sqhl_begin_time_id_fkey" FOREIGN KEY (sqhl_begin_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    "emaj_seq_hole_sqhl_end_time_id_fkey" FOREIGN KEY (sqhl_end_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+
+         Index "emaj.emaj_seq_hole_pkey"
+       Column       |  Type  |     Definition     
+--------------------+--------+--------------------
+ sqhl_schema        | text   | sqhl_schema
+ sqhl_table         | text   | sqhl_table
+ sqhl_begin_time_id | bigint | sqhl_begin_time_id
+primary key, btree, for table "emaj.emaj_seq_hole"
+
+      Table "emaj.emaj_sequence"
+     Column     |  Type   | Modifiers 
+----------------+---------+-----------
+ sequ_schema    | text    | not null
+ sequ_name      | text    | not null
+ sequ_time_id   | bigint  | not null
+ sequ_last_val  | bigint  | not null
+ sequ_start_val | bigint  | not null
+ sequ_increment | bigint  | not null
+ sequ_max_val   | bigint  | not null
+ sequ_min_val   | bigint  | not null
+ sequ_cache_val | bigint  | not null
+ sequ_is_cycled | boolean | not null
+ sequ_is_called | boolean | not null
+Indexes:
+    "emaj_sequence_pkey" PRIMARY KEY, btree (sequ_schema, sequ_name, sequ_time_id)
+Foreign-key constraints:
+    "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+
+   Index "emaj.emaj_sequence_pkey"
+    Column    |  Type  |  Definition  
+--------------+--------+--------------
+ sequ_schema  | text   | sequ_schema
+ sequ_name    | text   | sequ_name
+ sequ_time_id | bigint | sequ_time_id
+primary key, btree, for table "emaj.emaj_sequence"
+
+                                               Table "emaj.emaj_time_stamp"
+        Column        |           Type           |                               Modifiers                                
+----------------------+--------------------------+------------------------------------------------------------------------
+ time_id              | bigint                   | not null default nextval('emaj.emaj_time_stamp_time_id_seq'::regclass)
+ time_clock_timestamp | timestamp with time zone | not null default clock_timestamp()
+ time_stmt_timestamp  | timestamp with time zone | not null default statement_timestamp()
+ time_tx_timestamp    | timestamp with time zone | not null default transaction_timestamp()
+ time_tx_id           | bigint                   | default txid_current()
+ time_last_emaj_gid   | bigint                   | 
+ time_event           | character(1)             | 
+Indexes:
+    "emaj_time_stamp_pkey" PRIMARY KEY, btree (time_id)
+Referenced by:
+    TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_rlbk" CONSTRAINT "emaj_rlbk_rlbk_mark_time_id_fkey" FOREIGN KEY (rlbk_mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_rlbk" CONSTRAINT "emaj_rlbk_rlbk_time_id_fkey" FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_seq_hole" CONSTRAINT "emaj_seq_hole_sqhl_begin_time_id_fkey" FOREIGN KEY (sqhl_begin_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_seq_hole" CONSTRAINT "emaj_seq_hole_sqhl_end_time_id_fkey" FOREIGN KEY (sqhl_end_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_sequence" CONSTRAINT "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+
+Index "emaj.emaj_time_stamp_pkey"
+ Column  |  Type  | Definition 
+---------+--------+------------
+ time_id | bigint | time_id
+primary key, btree, for table "emaj.emaj_time_stamp"
+
+      Sequence "emaj.emaj_time_stamp_time_id_seq"
+    Column     |  Type   |            Value            
+---------------+---------+-----------------------------
+ sequence_name | name    | emaj_time_stamp_time_id_seq
+ last_value    | bigint  | 1
+ start_value   | bigint  | 1
+ increment_by  | bigint  | 1
+ max_value     | bigint  | 9223372036854775807
+ min_value     | bigint  | 1
+ cache_value   | bigint  | 1
+ log_cnt       | bigint  | 0
+ is_cycled     | boolean | f
+ is_called     | boolean | f
+
+       View "emaj.emaj_visible_param"
+        Column        |   Type   | Modifiers 
+----------------------+----------+-----------
+ param_key            | text     | 
+ param_value_text     | text     | 
+ param_value_int      | bigint   | 
+ param_value_boolean  | boolean  | 
+ param_value_interval | interval | 
+

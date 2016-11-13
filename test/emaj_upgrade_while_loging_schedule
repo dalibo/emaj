@@ -1,0 +1,22 @@
+# E-Maj
+# Schedule file for regression tests, with E-Maj installed as an extension.
+# E-Maj migration is performed while groups are in logging state.
+
+# Previous E-Maj installation
+test: install_previous
+
+# Regression tests setup
+test: setup
+
+# create and use groups in previous version
+test: before_upg_while_logging
+
+# update E-Maj version while groups are in logging state
+test: upgrade_while_logging
+
+# test to go on with groups in the new E-Maj version
+test: after_upg_while_logging
+
+# cleanup regression tests environment
+test: cleanup
+
