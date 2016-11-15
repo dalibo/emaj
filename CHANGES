@@ -3,6 +3,12 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+
+Bug fixes:
+
+2.0.0
+------
+Enhancements:
   - E-Maj is now installed as a standard extension using the CREATE
     EXTENSION SQL command.
   - the uninstallation script is renamed emaj_uninstall.sql and includes the 

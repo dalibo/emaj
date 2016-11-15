@@ -160,10 +160,6 @@ for dir in $PGDIR91 $PGDIR92 $PGDIR93 $PGDIR94 $PGDIR95 $PGDIR96 ; do
 	sudo sed -ri "s/^#directory\s+= .*$/directory = '\/home\/postgres\/proj\/emaj\/sql\/'/" $dir/share/postgresql/extension/emaj.control
 done
 
-# refresh both installation scripts before running tests
-#echo " "
-#perl ${EMAJ_HOME}/tools/gen_emaj.pl
-
 # choose a test
 echo " "
 echo "--- E-Maj regression tests ---"

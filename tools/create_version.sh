@@ -36,9 +36,9 @@
 	sed -i "s/<NEXT_VERSION>/${NEW}/" CHANGES
 
 # Adapt and rename the migration script
-	sed -i "s/<NEXT_VERSION>/${NEW}/g" sql/emaj-*-to-next.sql
-	for file in sql/emaj-*-to-next.sql; do
-		git mv $file $(echo $file | sed -r "s/next/${NEW}/")
+	sed -i "s/<NEXT_VERSION>/${NEW}/g" sql/emaj--*--next_version.sql
+	for file in sql/emaj--*-next_version.sql; do
+		git mv $file $(echo $file | sed -r "s/next_version/${NEW}/")
 	done
 
 # Delete potential remaining temp files
@@ -73,6 +73,7 @@
 	for file in sql/*; do
 		if [[ ! $file =~ "(--|-to-)" ]]; then
 			sed -i "s/<NEXT_VERSION>/${NEW}/g" $file
+			sed -i "s/next_version/${NEW}/g" $file
 		fi
 	done
 	git mv sql/emaj--next_version.sql sql/emaj--${NEW}.sql
@@ -84,10 +85,17 @@
 	find test/sql -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
 	find test/sql -type f -exec sed -i "s/-to-next.sql/-to-${NEW}.sql/g" '{}' \;
 
-# Change environment directory into tools
+# Change environment directories and files into tools
 	sed -i "s/\/emaj/\/emaj-${NEW}/" tools/copy2Expected.sh
 	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/regress.sh
-	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/gen_emaj.pl
+### next lines must be checked during the next version creation
+	sed -i "s/\\\/proj\\\/emaj/\\\/proj\\\/emaj-${NEW}/" tools/regress.sh
+	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/check_code.pl
+	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/check_error_messages.pl
+
+### 2 next lines must be checked during the next version creation
+	sed -i "s/emaj--next_version.sql/emaj--${NEW}.sql/g" tools/check_code.pl
+	sed -i "s/emaj--next_version.sql/emaj--${NEW}.sql/g" tools/check_error_messages.pl
 
 	cd ..
 
@@ -98,10 +106,10 @@
 	sed -i "3i<NEXT_VERSION>\n------\nEnhancements:\n\nBug fixes:\n" CHANGES
 
 # create a new empty migration script
-	echo "--" >sql/emaj-$NEW-to-next.sql
-	echo "-- E-Maj: migration from $NEW to <NEXT_VERSION>" >>sql/emaj-$NEW-to-next.sql
-	echo "--" >>sql/emaj-$NEW-to-next.sql
-	git add sql/emaj-$NEW-to-next.sql
+	echo "--" >sql/emaj--$NEW--next_version.sql
+	echo "-- E-Maj: migration from $NEW to <NEXT_VERSION>" >>sql/emaj--$NEW--next_version.sql
+	echo "--" >>sql/emaj--$NEW--next_version.sql
+	git add sql/emaj--$NEW--next_version.sql
 
 	cd ..
 
