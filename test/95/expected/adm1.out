@@ -2449,12 +2449,12 @@ select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL)
 ERROR:  emaj_detailed_log_stat_group: group "dummyGroup" has not been created.
 select emaj.emaj_estimate_rollback_group('dummyGroup', 'dummyMark', TRUE);
 ERROR:  _rlbk_check: group "dummyGroup" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
 ERROR:  _rlbk_check: group "dummyGroup" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 8 at RETURN
 select * from emaj.emaj_rollback_activity();

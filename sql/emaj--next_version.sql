@@ -2632,6 +2632,7 @@ CREATE OR REPLACE FUNCTION emaj.emaj_protect_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_protect_group$
 -- This function sets a protection on a group against accidental rollback.
+-- However this doesn't block rollback simulations performed with the emaj_estimate_rollback_group() function.
 -- Input: group name
 -- Output: 1 if successful, 0 if the group was already in protected state
   DECLARE
@@ -3322,6 +3323,7 @@ CREATE OR REPLACE FUNCTION emaj.emaj_protect_mark_group(v_groupName TEXT, v_mark
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_protect_mark_group$
 -- This function sets a protection on a mark for a group against accidental rollback.
+-- However this doesn't block rollback simulations performed with the emaj_estimate_rollback_group() function.
 -- Input: group name, mark to protect
 -- Output: 1 if successful, 0 if the mark was already in protected state
 -- The group must be ROLLBACKABLE and in LOGGING state.
@@ -3627,7 +3629,7 @@ $_rlbk_init$
   END;
 $_rlbk_init$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, isRollbackSimulation BOOLEAN DEFAULT FALSE)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_rlbk_check$
 -- This functions performs checks on group names and mark names supplied as parameter for the emaj_rollback_groups()
@@ -3660,8 +3662,8 @@ $_rlbk_check$
       IF NOT v_groupIsRollbackable THEN
         RAISE EXCEPTION '_rlbk_check: Group "%" has been created for audit only purpose.', v_aGroupName;
       END IF;
--- ... is not protected against rollback
-      IF v_groupIsProtected THEN
+-- ... is not protected against rollback (check disabled for rollback simulation)
+      IF v_groupIsProtected AND NOT isRollbackSimulation THEN
         RAISE EXCEPTION '_rlbk_check: Group "%" is currently protected against rollback.', v_aGroupName;
       END IF;
 -- ... owns the requested mark
@@ -3675,13 +3677,15 @@ $_rlbk_check$
       IF v_markIsDeleted THEN
         RAISE EXCEPTION '_rlbk_check: mark "%" for group "%" is not usable for rollback.', v_markName, v_aGroupName;
       END IF;
--- ... and the rollback wouldn't delete protected marks
-      SELECT string_agg(mark_name,', ') INTO v_protectedMarkList FROM (
-        SELECT mark_name FROM emaj.emaj_mark
-          WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
-          ORDER BY mark_id) AS t;
-      IF v_protectedMarkList IS NOT NULL THEN
-        RAISE EXCEPTION '_rlbk_check: protected marks (%) for group "%" block the rollback to mark "%".', v_protectedMarkList, v_aGroupName, v_markName;
+-- ... and the rollback wouldn't delete protected marks (check disabled for rollback simulation)
+      IF NOT isRollbackSimulation THEN
+        SELECT string_agg(mark_name,', ') INTO v_protectedMarkList FROM (
+          SELECT mark_name FROM emaj.emaj_mark
+            WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
+            ORDER BY mark_id) AS t;
+        IF v_protectedMarkList IS NOT NULL THEN
+          RAISE EXCEPTION '_rlbk_check: protected marks (%) for group "%" block the rollback to mark "%".', v_protectedMarkList, v_aGroupName, v_markName;
+        END IF;
       END IF;
     END LOOP;
 -- get the mark timestamp and check it is the same for all groups of the array
@@ -5109,8 +5113,8 @@ $_estimate_rollback_groups$
     v_estimDuration          INTERVAL;
     v_nbTblseq               INT;
   BEGIN
--- check supplied group names and mark parameters
-    SELECT emaj._rlbk_check(v_groupNames, v_mark) INTO v_markName;
+-- check supplied group names and mark parameters with the isRollbackSimulation flag set to true
+    SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE) INTO v_markName;
 -- compute a random negative rollback-id (not to interfere with ids of real rollbacks)
     SELECT (random() * -2147483648)::int INTO v_rlbkId;
 --
@@ -6484,7 +6488,7 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_firstMa
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, isRollbackSimulation BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_viewer;

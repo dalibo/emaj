@@ -244,7 +244,7 @@ select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is deleted');
 -- try to get a rollback duration estimate on a deleted mark
 select emaj.emaj_estimate_rollback_group('myGroup2','M3',TRUE);
 ERROR:  _rlbk_check: mark "M3" for group "myGroup2" is not usable for rollback.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 -- try to rollback on a deleted mark

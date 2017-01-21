@@ -181,14 +181,14 @@ select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is deleted');
 -- try to get a rollback duration estimate on a deleted mark
 select emaj.emaj_estimate_rollback_group('myGroup2','M3',TRUE);
 ERROR:  _rlbk_check: mark "M3" for group "myGroup2" is not usable for rollback.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text) line 45 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 45 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 -- try to rollback on a deleted mark
 select emaj.emaj_rollback_group('myGroup2','M3');
 ERROR:  _rlbk_check: mark "M3" for group "myGroup2" is not usable for rollback.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 45 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 24 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
@@ -1384,7 +1384,7 @@ select emaj.emaj_protect_group('myGroup2');
 
 select emaj.emaj_rollback_group('myGroup2','M3');
 ERROR:  _rlbk_check: Group "myGroup2" is currently protected against rollback.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text) line 34 at RAISE
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 34 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 24 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
@@ -1411,7 +1411,7 @@ select emaj.emaj_protect_mark_group('myGroup1','Mark_to_protect');
 
 select emaj.emaj_rollback_group('myGroup1','Multi-1');
 ERROR:  _rlbk_check: protected marks (Mark_to_protect) for group "myGroup1" block the rollback to mark "Multi-1".
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text) line 53 at RAISE
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 54 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 24 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"

@@ -876,18 +876,18 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 -- group is unknown
 select emaj.emaj_protect_group(NULL);
 ERROR:  emaj_protect_group: group <NULL> has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_protect_group(text) line 15 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_protect_group(text) line 16 at RAISE
 select emaj.emaj_protect_group('unknownGroup');
 ERROR:  emaj_protect_group: group unknownGroup has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_protect_group(text) line 15 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_protect_group(text) line 16 at RAISE
 -- group is not rollbackable
 select emaj.emaj_protect_group('phil''s group#3",');
 ERROR:  emaj_protect_group: The group "phil's group#3"," cannot be protected because it is an AUDIT_ONLY group.
-CONTEXT:  PL/pgSQL function emaj.emaj_protect_group(text) line 19 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_protect_group(text) line 20 at RAISE
 -- group is not in logging state
 select emaj.emaj_protect_group('myGroup1');
 ERROR:  emaj_protect_group: The group "myGroup1" cannot be protected because it is not in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj.emaj_protect_group(text) line 23 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_protect_group(text) line 24 at RAISE
 -- should be ok
 select emaj.emaj_start_group('myGroup1','M1');
  emaj_start_group 

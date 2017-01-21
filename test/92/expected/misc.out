@@ -413,28 +413,28 @@ rollback;
 -- group is unknown in emaj_group_def
 select emaj.emaj_estimate_rollback_group(NULL,NULL,FALSE);
 ERROR:  _rlbk_check: group "<NULL>" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_group('unknownGroup',NULL,TRUE);
 ERROR:  _rlbk_check: group "unknownGroup" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups('{"myGroup2","unknownGroup"}',NULL,TRUE);
 ERROR:  _rlbk_check: No mark "<NULL>" exists for group "myGroup2".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 8 at RETURN
 -- invalid marks
 select emaj.emaj_estimate_rollback_group('myGroup2','dummyMark',TRUE);
 ERROR:  _rlbk_check: No mark "dummyMark" exists for group "myGroup2".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups(array['myGroup1','myGroup2'],'Mark21',TRUE);
 ERROR:  _rlbk_check: Mark "Mark21" does not represent the same point in time for all groups.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 8 at RETURN
 -- group not in logging state
@@ -447,7 +447,7 @@ begin;
 
   select emaj.emaj_estimate_rollback_group('myGroup1','Mark11',FALSE);
 ERROR:  _rlbk_check: Group "myGroup1" is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 rollback;
@@ -464,7 +464,20 @@ select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid
 -- estimate with empty rollback statistics and default parameters
 delete from emaj.emaj_rlbk_stat;
 -- estimates with empty rollback statistics but 1 temporarily modified parameter ; no table to rollback
+-- check in passing that the simulation is not blocked by protections set on groups or marks
 begin;
+  select emaj.emaj_protect_group('myGroup2');
+ emaj_protect_group 
+--------------------
+                  1
+(1 row)
+
+  select emaj.emaj_protect_mark_group('myGroup2','EMAJ_LAST_MARK');
+ emaj_protect_mark_group 
+-------------------------
+                       1
+(1 row)
+
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1.4 millisecond'::interval);
   select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
  emaj_estimate_rollback_group 
@@ -473,6 +486,18 @@ begin;
 (1 row)
 
 -- should return 0.011200 sec
+  select emaj.emaj_unprotect_mark_group('myGroup2','EMAJ_LAST_MARK');
+ emaj_unprotect_mark_group 
+---------------------------
+                         1
+(1 row)
+
+  select emaj.emaj_unprotect_group('myGroup2');
+ emaj_unprotect_group 
+----------------------
+                    1
+(1 row)
+
 rollback;
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
@@ -1771,51 +1796,51 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     5035 | LOCK_GROUPS        | BEGIN                   | myGroup1,myGroup2 |                                                                                                                    | postgres
     5036 | LOCK_GROUPS        | END                     | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                                                                                    | postgres
     5037 | SET_MARK_GROUPS    | END                     | myGroup1,myGroup2 | Multi-3                                                                                                            | postgres
-    5059 | SNAP_GROUP         | BEGIN                   | myGroup1          | /tmp/emaj_test/snaps                                                                                               | postgres
-    5060 | SNAP_GROUP         | END                     | myGroup1          | 6 tables/sequences processed                                                                                       | postgres
-    5061 | SNAP_GROUP         | BEGIN                   | myGroup1          | /tmp/emaj_test/snaps                                                                                               | postgres
-    5062 | SNAP_GROUP         | END                     | myGroup1          | 6 tables/sequences processed                                                                                       | postgres
-    5074 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/log_snaps                                          | postgres
-    5075 | SNAP_LOG_GROUP     | END                     | myGroup2          | 8 tables/sequences processed                                                                                       | postgres
-    5076 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From initial mark to current situation towards /tmp/emaj_test/log_snaps                                            | postgres
-    5077 | SNAP_LOG_GROUP     | END                     | myGroup2          | 8 tables/sequences processed                                                                                       | postgres
-    5078 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From mark Mark21 to current situation towards /tmp/emaj_test/log_snaps                                             | postgres
+    5063 | SNAP_GROUP         | BEGIN                   | myGroup1          | /tmp/emaj_test/snaps                                                                                               | postgres
+    5064 | SNAP_GROUP         | END                     | myGroup1          | 6 tables/sequences processed                                                                                       | postgres
+    5065 | SNAP_GROUP         | BEGIN                   | myGroup1          | /tmp/emaj_test/snaps                                                                                               | postgres
+    5066 | SNAP_GROUP         | END                     | myGroup1          | 6 tables/sequences processed                                                                                       | postgres
+    5078 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/log_snaps                                          | postgres
     5079 | SNAP_LOG_GROUP     | END                     | myGroup2          | 8 tables/sequences processed                                                                                       | postgres
-    5080 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From mark Mark21 to mark Mark21 towards /tmp/emaj_test/log_snaps                                                   | postgres
+    5080 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From initial mark to current situation towards /tmp/emaj_test/log_snaps                                            | postgres
     5081 | SNAP_LOG_GROUP     | END                     | myGroup2          | 8 tables/sequences processed                                                                                       | postgres
-    5082 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From mark Mark21 to mark Mark23 towards /tmp/emaj_test/log_snaps                                                   | postgres
+    5082 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From mark Mark21 to current situation towards /tmp/emaj_test/log_snaps                                             | postgres
     5083 | SNAP_LOG_GROUP     | END                     | myGroup2          | 8 tables/sequences processed                                                                                       | postgres
-    5084 | GEN_SQL_GROUP      | BEGIN                   |                   |                                                                                                                    | postgres
-    5085 | GEN_SQL_GROUP      | END                     |                   | 0 generated statements                                                                                             | postgres
-    5087 | GEN_SQL_GROUPS     | BEGIN                   |                   |                                                                                                                    | postgres
-    5088 | GEN_SQL_GROUPS     | END                     |                   | 0 generated statements                                                                                             | postgres
-    5108 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
-    5109 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5110 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From mark Mark21 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                    | postgres
-    5111 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5112 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark Mark22 towards /tmp/emaj_test/sql_scripts/myFile                                         | postgres
-    5113 | GEN_SQL_GROUP      | END                     | myGroup2          | 11602 generated statements                                                                                         | postgres
-    5114 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
-    5115 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 11713 generated statements                                                                                         | postgres
-    5116 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-2 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile                                        | postgres
-    5117 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 113 generated statements                                                                                           | postgres
-    5118 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile                                 | postgres
-    5119 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5120 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5121 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5122 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5123 | GEN_SQL_GROUP      | END                     | myGroup2          | 11711 generated statements                                                                                         | postgres
+    5084 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From mark Mark21 to mark Mark21 towards /tmp/emaj_test/log_snaps                                                   | postgres
+    5085 | SNAP_LOG_GROUP     | END                     | myGroup2          | 8 tables/sequences processed                                                                                       | postgres
+    5086 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From mark Mark21 to mark Mark23 towards /tmp/emaj_test/log_snaps                                                   | postgres
+    5087 | SNAP_LOG_GROUP     | END                     | myGroup2          | 8 tables/sequences processed                                                                                       | postgres
+    5088 | GEN_SQL_GROUP      | BEGIN                   |                   |                                                                                                                    | postgres
+    5089 | GEN_SQL_GROUP      | END                     |                   | 0 generated statements                                                                                             | postgres
+    5091 | GEN_SQL_GROUPS     | BEGIN                   |                   |                                                                                                                    | postgres
+    5092 | GEN_SQL_GROUPS     | END                     |                   | 0 generated statements                                                                                             | postgres
+    5112 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
+    5113 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
+    5114 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From mark Mark21 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                    | postgres
+    5115 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
+    5116 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark Mark22 towards /tmp/emaj_test/sql_scripts/myFile                                         | postgres
+    5117 | GEN_SQL_GROUP      | END                     | myGroup2          | 11602 generated statements                                                                                         | postgres
+    5118 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
+    5119 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 11713 generated statements                                                                                         | postgres
+    5120 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-2 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile                                        | postgres
+    5121 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 113 generated statements                                                                                           | postgres
+    5122 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile                                 | postgres
+    5123 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
     5124 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5125 | GEN_SQL_GROUP      | END                     | myGroup2          | 11611 generated statements                                                                                         | postgres
+    5125 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
     5126 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5127 | GEN_SQL_GROUP      | END                     | myGroup2          | 1 generated statements                                                                                             | postgres
+    5127 | GEN_SQL_GROUP      | END                     | myGroup2          | 11711 generated statements                                                                                         | postgres
     5128 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5129 | GEN_SQL_GROUP      | END                     | myGroup2          | 100 generated statements                                                                                           | postgres
-    5130 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering        | postgres
-    5131 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 100 generated statements                                                                                           | postgres
-    5199 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |                   | <none>                                                                                                             | postgres
-    5200 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
-    5201 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
+    5129 | GEN_SQL_GROUP      | END                     | myGroup2          | 11611 generated statements                                                                                         | postgres
+    5130 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5131 | GEN_SQL_GROUP      | END                     | myGroup2          | 1 generated statements                                                                                             | postgres
+    5132 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5133 | GEN_SQL_GROUP      | END                     | myGroup2          | 100 generated statements                                                                                           | postgres
+    5134 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering        | postgres
+    5135 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 100 generated statements                                                                                           | postgres
+    5203 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |                   | <none>                                                                                                             | postgres
+    5204 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
+    5205 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
 (79 rows)
 
 truncate emaj.emaj_hist;

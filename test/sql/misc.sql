@@ -169,10 +169,15 @@ select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid
 delete from emaj.emaj_rlbk_stat;
 
 -- estimates with empty rollback statistics but 1 temporarily modified parameter ; no table to rollback
+-- check in passing that the simulation is not blocked by protections set on groups or marks
 begin;
+  select emaj.emaj_protect_group('myGroup2');
+  select emaj.emaj_protect_mark_group('myGroup2','EMAJ_LAST_MARK');
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1.4 millisecond'::interval);
   select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
 -- should return 0.011200 sec
+  select emaj.emaj_unprotect_mark_group('myGroup2','EMAJ_LAST_MARK');
+  select emaj.emaj_unprotect_group('myGroup2');
 rollback;
 
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
