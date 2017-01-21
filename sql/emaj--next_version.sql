@@ -6380,7 +6380,7 @@ $emaj_enable_protection_by_event_triggers$
     IF emaj._pg_version_num() >= 90300 THEN
 -- build the event trigger names array from the pg_event_trigger table
 -- (pg_event_trigger table doesn't exists in 9.2- postgres versions)
-      SELECT coalesce(array_agg(evtname),ARRAY[]::TEXT[]) INTO v_event_trigger_array
+      SELECT coalesce(array_agg(evtname  ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_event_trigger_array
         FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
 -- call the _enable_event_triggers() function
       PERFORM emaj._enable_event_triggers(v_event_trigger_array);
@@ -6411,7 +6411,7 @@ $_disable_event_triggers$
     IF emaj._pg_version_num() >= 90300 THEN
 -- build the event trigger names array from the pg_event_trigger table
 -- (pg_event_trigger table doesn't exists in 9.2- postgres versions)
-      SELECT coalesce(array_agg(evtname),ARRAY[]::TEXT[]) INTO v_event_trigger_array
+      SELECT coalesce(array_agg(evtname ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_event_trigger_array
         FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled <> 'D';
 -- disable each event trigger
       FOREACH v_event_trigger IN ARRAY v_event_trigger_array
