@@ -17,8 +17,8 @@ use warnings; use strict;
 
 # The 3 variables below are to be customized
   my $ficCurrSrc = "/home/postgres/proj/emaj/sql/emaj--next_version.sql";
-  my $ficPrevSrc = "/home/postgres/proj/emaj-1.3.1/sql/emaj.sql";
-  my $ficUpgrade = "/home/postgres/proj/emaj/sql/emaj--1.3.1--next_version.sql";
+  my $ficPrevSrc = "/home/postgres/proj/emaj-2.0.0/sql/emaj--2.0.0.sql";
+  my $ficUpgrade = "/home/postgres/proj/emaj/sql/emaj--2.0.0--next_version.sql";
 
   my $upgradeScriptHeader = '';  # existing code from the upgrade script before the functions definition
   my $upgradeScriptFooter = '';  # existing code from the upgrade script after the functions definition
@@ -150,9 +150,9 @@ use warnings; use strict;
 
     # Do not process 3 temporary functions specific to old installation scripts (they are directly dropped in the installation script)
     # TODO: these 3 lines can be suppressed when 1.3.0 will not be the previous version anymore
-    if ($line =~ /^CREATE OR REPLACE FUNCTION (public\.emaj_tmp_pre_install|emaj\._tmp_create_some_components|emaj\._tmp_post_install)/) {
-      next;
-    }
+#    if ($line =~ /^CREATE OR REPLACE FUNCTION (public\.emaj_tmp_pre_install|emaj\._tmp_create_some_components|emaj\._tmp_post_install)/) {
+#      next;
+#    }
   
     # Beginning of a CREATE FUNCTION sql verb
     if ($line =~ /^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/) {
@@ -197,7 +197,7 @@ use warnings; use strict;
     # Stop the analysis of the source at event trigger creation
     # (As the few functions created in this section depends on the postgres version, the processing would be too complex)
     # TODO: remove the next line once event triggers will be supported by all postgres version compatible with E-Maj
-    last if ($line =~ /^-- event triggers and related functions --/);
+#    last if ($line =~ /^-- event triggers and related functions --/);
 
     # Beginning of a CREATE FUNCTION sql verb
     if ($line =~ /^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/) {

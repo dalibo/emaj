@@ -288,13 +288,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 
 -- check old events are deleted
 select hist_function, hist_event, hist_object, 
-  case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'14(4|6)','<144|146>')
+  case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'14(4|5)','<144|145>')
     else regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g') end,
   hist_user from emaj.emaj_hist order by hist_id;
  hist_function  | hist_event |   hist_object    |          regexp_replace          | hist_user 
 ----------------+------------+------------------+----------------------------------+-----------
  START_GROUP    | BEGIN      | myGroup1         | With log reset                   | postgres
- PURGE_HISTORY  |            |                  | <144|146> emaj_hist rows deleted | postgres
+ PURGE_HISTORY  |            |                  | <144|145> emaj_hist rows deleted | postgres
  LOCK_GROUP     | BEGIN      | myGroup1         |                                  | postgres
  LOCK_GROUP     | END        | myGroup1         | 5 tables locked, 0 deadlock(s)   | postgres
  SET_MARK_GROUP | BEGIN      | myGroup1         | Mark1                            | postgres
@@ -1006,13 +1006,13 @@ select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where grou
 
 -- test end: (groups are stopped) reset history and force sequences id
 select hist_id, hist_function, hist_event, hist_object, 
-  case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'14(4|6)','<144|146>')
+  case when hist_function = 'PURGE_HISTORY' then regexp_replace(hist_wording,'14(4|5)','<144|145>')
     else regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g') end,
   hist_user from emaj.emaj_hist order by hist_id;
  hist_id |  hist_function   | hist_event |                  hist_object                  |          regexp_replace          | hist_user 
 ---------+------------------+------------+-----------------------------------------------+----------------------------------+-----------
     2032 | START_GROUP      | BEGIN      | myGroup1                                      | With log reset                   | postgres
-    2033 | PURGE_HISTORY    |            |                                               | <144|146> emaj_hist rows deleted | postgres
+    2033 | PURGE_HISTORY    |            |                                               | <144|145> emaj_hist rows deleted | postgres
     2034 | LOCK_GROUP       | BEGIN      | myGroup1                                      |                                  | postgres
     2035 | LOCK_GROUP       | END        | myGroup1                                      | 5 tables locked, 0 deadlock(s)   | postgres
     2036 | SET_MARK_GROUP   | BEGIN      | myGroup1                                      | Mark1                            | postgres

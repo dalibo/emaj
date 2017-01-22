@@ -42,3 +42,10 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
 -- check table list
 \d emaj.*
 
+-- reset function calls statistics (so the check.sql output is stable with all installation paths)
+-- wait during half a second to let the statistics collector aggregate the latest stats
+select pg_sleep(0.5);
+select count(*) from 
+  (select pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
+    where (funcname like E'emaj\\_%' or funcname like E'\\_%')) as t;
+

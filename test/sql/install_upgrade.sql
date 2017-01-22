@@ -1,4 +1,4 @@
--- install_upgrade.sql : Upgrade from E-Maj 1.3.0 to next_version while groups are not yet created.
+-- install_upgrade.sql : Upgrade from E-Maj 2.0.0 to next_version while groups are not yet created.
 -- install E-Maj as an extension 
 --
 
@@ -31,40 +31,9 @@ select * from pg_available_extension_versions where name = 'emaj';
 select * from pg_extension_update_paths('emaj') order by 1,2;;
 
 -----------------------------------------------------------
--- test that a 1.3.1 version moved as an extension can be dropped
------------------------------------------------------------
-
--- emaj 1.3.1 installation using the psql script
-\unset ECHO
-\i ../../../emaj-1.3.1/sql/emaj.sql
-\set ECHO all
-
--- transform emaj object as extension
-CREATE EXTENSION emaj VERSION '1.3.1' FROM unpackaged;
-
--- check impact in catalog
-select extname, extversion from pg_extension;
-
--- drop the extension
-DROP EXTENSION emaj;
-
--- verify that all emaj tables, views, types and functions have been included in the extension and then deleted 
--- both tables and functions list should be empty 
-
-select relname from pg_class,pg_namespace where relnamespace = pg_namespace.oid and nspname = 'emaj';
-select proname from pg_proc,pg_namespace where pronamespace = pg_namespace.oid and nspname = 'emaj';
-
------------------------------------------------------------
 -- emaj update to next_version
 -----------------------------------------------------------
-
--- emaj 1.3.1 installation using the psql script
-\unset ECHO
-\i ../../../emaj-1.3.1/sql/emaj.sql
-\set ECHO all
-
--- transform emaj object as extension
-CREATE EXTENSION emaj VERSION '1.3.1' FROM unpackaged;
+CREATE EXTENSION emaj VERSION '2.0.0';
 
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
@@ -81,7 +50,17 @@ select extname, extversion from pg_extension where extname = 'emaj';
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 
+-- check the emaj environment, just after creation
+select emaj.emaj_verify_all();
+
 -- check history
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
+
+-- reset function calls statistics (so the check.sql output is stable with all installation paths)
+-- wait during half a second to let the statistics collector aggregate the latest stats
+select pg_sleep(0.5);
+select count(*) from 
+  (select pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
+    where (funcname like E'emaj\\_%' or funcname like E'\\_%')) as t;
 

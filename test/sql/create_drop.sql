@@ -70,6 +70,7 @@ begin;
 -- should be ko with pg 8.4+
   select emaj.emaj_create_group('myGroup5');
 rollback;
+
 -- group with an unlogged table
 begin;
   insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
@@ -186,6 +187,9 @@ select emaj.emaj_drop_group(NULL);
 select emaj.emaj_drop_group('unkownGroup');
 -- group in logging state
 select emaj.emaj_start_group('myGroup1','');
+
+
+
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_stop_group('myGroup1');
 -- secondary schema with an object blocking the schema drop
