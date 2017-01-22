@@ -963,7 +963,7 @@ $_create_tbl$
     SELECT relpersistence INTO v_relPersistence FROM pg_catalog.pg_class, pg_catalog.pg_namespace
       WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
     IF v_relPersistence = 't' THEN
-      RAISE EXCEPTION '_create_tbl: table "%.%" is a temporary table.', r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq;
+      RAISE EXCEPTION '_create_tbl: table "%" is a temporary table.', r_grpdef.grpdef_tblseq;
     ELSIF v_relPersistence = 'u' THEN
       RAISE EXCEPTION '_create_tbl: table "%.%" is an unlogged table.', r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq;
     END IF;
