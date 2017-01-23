@@ -470,6 +470,102 @@ $_rlbk_check$
   END;
 $_rlbk_check$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
+RETURNS SETOF emaj.emaj_detailed_log_stat_type LANGUAGE plpgsql AS
+$emaj_detailed_log_stat_group$
+-- This function returns statistics on row updates executed between 2 marks as viewed through the log tables
+-- It provides more information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
+-- So the response time may be much longer.
+-- Input: group name, the 2 marks names defining a range
+--   a NULL value or an empty string as first_mark indicates the first recorded mark
+--   a NULL value or an empty string as last_mark indicates the current situation
+--   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
+-- Output: table of updates by user and table
+  DECLARE
+    v_realFirstMark          TEXT;
+    v_realLastMark           TEXT;
+    v_firstMarkId            BIGINT;
+    v_lastMarkId             BIGINT;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
+    v_firstEmajGid           BIGINT;
+    v_lastEmajGid            BIGINT;
+    v_logTableName           TEXT;
+    v_stmt                   TEXT;
+    r_tblsq                  RECORD;
+    r_stat                   RECORD;
+  BEGIN
+-- check that the group is recorded in emaj_group table
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_detailed_log_stat_group: group "%" has not been created.', v_groupName;
+    END IF;
+-- catch the timestamp of the first mark
+    IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
+-- check and retrieve the global sequence value and the timestamp of the start mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
+      IF v_realFirstMark IS NULL THEN
+          RAISE EXCEPTION 'emaj_detailed_log_stat_group: Start mark "%" is unknown for group "%".', v_firstMark, v_groupName;
+      END IF;
+      SELECT mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_firstMarkId, v_firstEmajGid, v_firstMarkTs
+        FROM emaj.emaj_mark, emaj.emaj_time_stamp
+        WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_realFirstMark;
+    END IF;
+-- catch the timestamp of the last mark
+    IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
+-- else, check and retrieve the global sequence value and the timestamp of the end mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
+      IF v_realLastMark IS NULL THEN
+        RAISE EXCEPTION 'emaj_detailed_log_stat_group: End mark "%" is unknown for group "%".', v_lastMark, v_groupName;
+      END IF;
+      SELECT mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkId, v_lastEmajGid, v_lastMarkTs
+        FROM emaj.emaj_mark, emaj.emaj_time_stamp
+        WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_realLastMark;
+    END IF;
+-- check that the first_mark < end_mark
+    IF v_realFirstMark IS NOT NULL AND v_realLastMark IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
+      RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).', v_realFirstMark, v_firstMarkId, v_firstMarkTs, v_realLastMark, v_lastMarkId, v_lastMarkTs;
+    END IF;
+-- for each table of the emaj_relation table
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_kind, rel_log_table FROM emaj.emaj_relation
+          WHERE rel_group = v_groupName AND rel_kind = 'r'
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+-- count the number of operations per type (INSERT, UPDATE and DELETE) and role
+-- compute the log table name and its sequence name for this table
+      v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
+-- prepare and execute the statement
+      v_stmt= 'SELECT ' || quote_literal(v_groupName) || '::TEXT as emaj_group,'
+           || ' ' || quote_literal(r_tblsq.rel_schema) || '::TEXT as emaj_schema,'
+           || ' ' || quote_literal(r_tblsq.rel_tblseq) || '::TEXT as emaj_table,'
+           || ' emaj_user,'
+           || ' CASE emaj_verb WHEN ''INS'' THEN ''INSERT'''
+           ||                ' WHEN ''UPD'' THEN ''UPDATE'''
+           ||                ' WHEN ''DEL'' THEN ''DELETE'''
+           ||                             ' ELSE ''?'' END::VARCHAR(6) as emaj_verb,'
+           || ' count(*) as emaj_rows'
+           || ' FROM ' || v_logTableName
+           || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'')';
+      IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN v_stmt = v_stmt
+           || ' AND emaj_gid > '|| v_firstEmajGid ;
+      END IF;
+      IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN v_stmt = v_stmt
+           || ' AND emaj_gid <= '|| v_lastEmajGid ;
+      END IF;
+      v_stmt = v_stmt
+           || ' GROUP BY emaj_group, emaj_schema, emaj_table, emaj_user, emaj_verb'
+           || ' ORDER BY emaj_user, emaj_verb';
+      FOR r_stat IN EXECUTE v_stmt LOOP
+        RETURN NEXT r_stat;
+      END LOOP;
+    END LOOP;
+    RETURN;
+  END;
+$emaj_detailed_log_stat_group$;
+COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT,TEXT,TEXT) IS
+$$Returns detailed statistics about logged events for an E-Maj group between 2 marks.$$;
+
 CREATE OR REPLACE FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN)
 RETURNS INTERVAL LANGUAGE plpgsql SECURITY DEFINER AS
 $_estimate_rollback_groups$

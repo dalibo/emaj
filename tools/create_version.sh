@@ -71,7 +71,7 @@
 
 # Process sql directory: change version identifiers inside the right files (excluding migration scripts)
 	for file in sql/*; do
-		if [[ ! $file =~ "(--|-to-)" ]]; then
+		if [[ ! $file =~ "(--|-to-|control)" ]]; then
 			sed -i "s/<NEXT_VERSION>/${NEW}/g" $file
 			sed -i "s/next_version/${NEW}/g" $file
 		fi

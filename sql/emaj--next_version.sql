@@ -5041,10 +5041,10 @@ $emaj_detailed_log_stat_group$
            || ' ' || quote_literal(r_tblsq.rel_schema) || '::TEXT as emaj_schema,'
            || ' ' || quote_literal(r_tblsq.rel_tblseq) || '::TEXT as emaj_table,'
            || ' emaj_user,'
-           || ' CASE WHEN emaj_verb = ''INS'' THEN ''INSERT'''
-           ||      ' WHEN emaj_verb = ''UPD'' THEN ''UPDATE'''
-           ||      ' WHEN emaj_verb = ''DEL'' THEN ''DELETE'''
-           ||      ' ELSE ''?'' END::VARCHAR(6) as emaj_verb,'
+           || ' CASE emaj_verb WHEN ''INS'' THEN ''INSERT'''
+           ||                ' WHEN ''UPD'' THEN ''UPDATE'''
+           ||                ' WHEN ''DEL'' THEN ''DELETE'''
+           ||                             ' ELSE ''?'' END::VARCHAR(6) as emaj_verb,'
            || ' count(*) as emaj_rows'
            || ' FROM ' || v_logTableName
            || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'')';
