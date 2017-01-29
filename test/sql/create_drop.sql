@@ -187,9 +187,6 @@ select emaj.emaj_drop_group(NULL);
 select emaj.emaj_drop_group('unkownGroup');
 -- group in logging state
 select emaj.emaj_start_group('myGroup1','');
-
-
-
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_stop_group('myGroup1');
 -- secondary schema with an object blocking the schema drop

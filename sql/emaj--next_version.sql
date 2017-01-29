@@ -205,14 +205,18 @@ CREATE TABLE emaj.emaj_relation (
   rel_kind                     TEXT,                       -- similar to the relkind column of pg_class table
                                                            --   ('r' = table, 'S' = sequence)
   rel_priority                 INTEGER,                    -- priority level of processing inside the group
+-- next columns are specific for tables and remain NULL for sequences
   rel_log_schema               TEXT,                       -- schema for the log table, functions and sequence
-  rel_log_table                TEXT,                       -- name of the log table associated (NULL for sequence)
-  rel_log_dat_tsp              TEXT,                       -- tablespace for the log table (NULL for sequences)
+  rel_log_table                TEXT,                       -- name of the log table associated
+  rel_log_dat_tsp              TEXT,                       -- tablespace for the log table
   rel_log_index                TEXT,                       -- name of the index of the log table
-  rel_log_idx_tsp              TEXT,                       -- tablespace for the log index (NULL for sequences)
+  rel_log_idx_tsp              TEXT,                       -- tablespace for the log index
   rel_log_sequence             TEXT,                       -- name of the log sequence
   rel_log_function             TEXT,                       -- name of the function associated to the log trigger
-                                                         --   created on the application table
+                                                           -- created on the application table
+  rel_sql_columns              TEXT,                       -- piece of sql used to rollback: list of the columns
+  rel_sql_pk_columns           TEXT,                       -- piece of sql used to rollback: list of the pk columns
+  rel_sql_pk_eq_conditions     TEXT,                       -- piece of sql used to rollback: equality conditions on the pk columns
   PRIMARY KEY (rel_schema, rel_tblseq),
   FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
   );
@@ -939,23 +943,26 @@ $_create_tbl$
   DECLARE
     v_emajSchema             TEXT = 'emaj';
     v_schemaPrefix           TEXT = 'emaj';
+    v_relPersistence         CHAR(1);
+    v_relhaspkey             BOOLEAN;
     v_emajNamesPrefix        TEXT;
-    v_logSchema              TEXT;
-    v_fullTableName          TEXT;
-    v_logDatTsp              TEXT;
-    v_logIdxTsp              TEXT;
-    v_dataTblSpace           TEXT;
-    v_idxTblSpace            TEXT;
     v_baseLogTableName       TEXT;
     v_baseLogIdxName         TEXT;
     v_baseLogFnctName        TEXT;
     v_baseSequenceName       TEXT;
+    v_logSchema              TEXT;
+    v_fullTableName          TEXT;
     v_logTableName           TEXT;
     v_logIdxName             TEXT;
     v_logFnctName            TEXT;
     v_sequenceName           TEXT;
-    v_relPersistence         CHAR(1);
-    v_relhaspkey             BOOLEAN;
+    v_logDatTsp              TEXT;
+    v_logIdxTsp              TEXT;
+    v_dataTblSpace           TEXT;
+    v_idxTblSpace            TEXT;
+    v_colList                TEXT;
+    v_pkColList              TEXT;
+    v_pkCondList             TEXT;
     v_stmt                   TEXT;
     v_triggerList            TEXT;
   BEGIN
@@ -996,7 +1003,24 @@ $_create_tbl$
     v_logIdxTsp = coalesce(r_grpdef.grpdef_log_idx_tsp, v_defTsp);
     v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logDatTsp),'');
     v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logIdxTsp),'');
--- creation of the log table: the log table looks like the application table, with some additional technical columns
+-- Build some pieces of SQL statements that will be needed at table rollback time
+--   build the tables's columns list
+    SELECT string_agg(col_name, ',') INTO v_colList FROM (
+      SELECT 'tbl.' || quote_ident(attname) AS col_name FROM pg_catalog.pg_attribute
+        WHERE attrelid = v_fullTableName::regclass
+          AND attnum > 0 AND NOT attisdropped
+        ORDER BY attnum) AS t;
+--   build the pkey columns list and the "equality on the primary key" conditions
+    SELECT string_agg(col_pk_name, ','), string_agg(col_pk_cond, ' AND ') INTO v_pkColList, v_pkCondList FROM (
+      SELECT quote_ident(attname) AS col_pk_name,
+             'tbl.' || quote_ident(attname) || ' = keys.' || quote_ident(attname) AS col_pk_cond
+        FROM pg_catalog.pg_attribute, pg_catalog.pg_index
+        WHERE pg_attribute.attrelid = pg_index.indrelid
+          AND attnum = ANY (indkey)
+          AND indrelid = v_fullTableName::regclass AND indisprimary
+          AND attnum > 0 AND attisdropped = false
+        ORDER BY attnum) AS t;
+-- create the log table: it looks like the application table, with some additional technical columns
     EXECUTE 'DROP TABLE IF EXISTS ' || v_logTableName;
     EXECUTE 'CREATE TABLE ' || v_logTableName
          || ' (LIKE ' || v_fullTableName || ') ' || v_dataTblSpace;
@@ -1075,10 +1099,12 @@ $_create_tbl$
     INSERT INTO emaj.emaj_relation
                (rel_schema, rel_tblseq, rel_group, rel_priority, rel_log_schema,
                 rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
-                rel_log_index, rel_log_sequence, rel_log_function)
+                rel_log_index, rel_log_sequence, rel_log_function,
+                rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions)
         VALUES (r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq, r_grpdef.grpdef_group, r_grpdef.grpdef_priority, v_logSchema,
                 v_logDatTsp, v_logIdxTsp, 'r', v_baseLogTableName,
-                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName);
+                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName,
+                v_colList, v_pkColList, v_pkCondList);
 --
 -- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
     SELECT string_agg(tgname, ', ') INTO v_triggerList FROM (
@@ -1210,36 +1236,12 @@ $_rlbk_tbl$
     v_tmpTable               TEXT;
     v_tableType              TEXT;
     v_nbPk                   BIGINT;
-    v_colList                TEXT;
-    v_pkColList              TEXT;
-    v_pkCondList             TEXT;
   BEGIN
     v_fullTableName  = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
     v_logTableName   = quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
 -- insert begin event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_minGlobalSeq || ' and <= ' || v_maxGlobalSeq);
--- Build some pieces of SQL statements
---   build the tables's columns list
-    SELECT string_agg(col_name, ',') INTO v_colList FROM (
-      SELECT 'tbl.' || quote_ident(attname) AS col_name FROM pg_catalog.pg_attribute
-        WHERE attrelid = v_fullTableName::regclass
-          AND attnum > 0 AND NOT attisdropped
-        ORDER BY attnum) AS t;
---   build the pkey columns list and the "equality on the primary key" conditions
-    SELECT string_agg(col_pk_name, ','), string_agg(col_pk_cond, ' AND ') INTO v_pkColList, v_pkCondList FROM (
-      SELECT quote_ident(attname) AS col_pk_name,
-             'tbl.' || quote_ident(attname) || ' = keys.' || quote_ident(attname) AS col_pk_cond
-        FROM pg_catalog.pg_attribute, pg_catalog.pg_index
-        WHERE pg_attribute.attrelid = pg_index.indrelid
-          AND attnum = ANY (indkey)
-          AND indrelid = v_fullTableName::regclass AND indisprimary
-          AND attnum > 0 AND attisdropped = false
-        ORDER BY attnum) AS t;
--- internal check that lists are not NULL (they should not be)
-    IF v_colList IS NULL OR v_pkColList IS NULL OR v_pkCondList IS NULL THEN
-      RAISE EXCEPTION '_rlbk_tbl: internal error (at least one list is NULL (columns list = %, pk columns list = %, conditions list = %).',v_colList, v_pkColList, v_pkCondList;
-    END IF;
 -- create the temporary table containing all primary key values with their earliest emaj_gid
     IF v_nbSession = 1 THEN
       v_tableType = 'TEMP';
@@ -1251,16 +1253,15 @@ $_rlbk_tbl$
       v_tmpTable = 'emaj.emaj_tmp_' || pg_backend_pid();
     END IF;
     EXECUTE 'CREATE ' || v_tableType || ' TABLE ' || v_tmpTable || ' AS '
-         || '  SELECT ' || v_pkColList || ', min(emaj_gid) as emaj_gid'
+         || '  SELECT ' || r_rel.rel_sql_pk_columns || ', min(emaj_gid) as emaj_gid'
          || '    FROM ' || v_logTableName
---         || '    WHERE emaj_gid > ' || v_minGlobalSeq
          || '    WHERE emaj_gid > ' || v_minGlobalSeq || 'AND emaj_gid <= ' || v_maxGlobalSeq
-         || '    GROUP BY ' || v_pkColList;
+         || '    GROUP BY ' || r_rel.rel_sql_pk_columns;
     GET DIAGNOSTICS v_nbPk = ROW_COUNT;
 -- delete all rows from the application table corresponding to each touched primary key
 --   this deletes rows inserted or updated during the rolled back period
     EXECUTE 'DELETE FROM ONLY ' || v_fullTableName || ' tbl USING ' || v_tmpTable || ' keys '
-         || '  WHERE ' || v_pkCondList;
+         || '  WHERE ' || r_rel.rel_sql_pk_eq_conditions;
 -- for logged rollbacks, if the number of pkey to process is greater than 1.000, ANALYZE the log table to take into account
 --   the impact of just inserted rows, avoiding a potentialy bad plan for the next INSERT statement
     IF v_isLoggedRlbk AND v_nbPk > 1000 THEN
@@ -1268,9 +1269,9 @@ $_rlbk_tbl$
     END IF;
 -- insert into the application table rows that were deleted or updated during the rolled back period
     EXECUTE 'INSERT INTO ' || v_fullTableName
-         || '  SELECT ' || v_colList
+         || '  SELECT ' || r_rel.rel_sql_columns
          || '    FROM ' || v_logTableName || ' tbl, ' || v_tmpTable || ' keys '
-         || '    WHERE ' || v_pkCondList || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD'''
+         || '    WHERE ' || r_rel.rel_sql_pk_eq_conditions || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD'''
          || '      AND tbl.emaj_gid > ' || v_minGlobalSeq || 'AND tbl.emaj_gid <= ' || v_maxGlobalSeq;
 -- drop the now useless temporary table
     EXECUTE 'DROP TABLE ' || v_tmpTable;

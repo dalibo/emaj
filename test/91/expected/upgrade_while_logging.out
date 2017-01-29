@@ -14,6 +14,7 @@ select * from pg_available_extension_versions where name = 'emaj';
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_relation_pkey" for table "emaj_relation"
 -----------------------------
 -- check installation
 -----------------------------

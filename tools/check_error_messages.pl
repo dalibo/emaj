@@ -141,7 +141,7 @@ use warnings; use strict;
                             # internal errors (errors that should never appear and that would due to coding error)
        && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schema: internal error (schema "%" does not exist).'
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: internal error (group "%" is empty).'
-       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_tbl: internal error (at least one list is NULL (columns list = %, pk columns list = %, conditions list = %).'
+#       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_tbl: internal error (at least one list is NULL (columns list = %, pk columns list = %, conditions list = %).'
                             # execution conditions that cannot be reproduced without parallelism
        && $msgs{$fnctId} ne 'EXCEPTION:_lock_groups: too many (5) deadlocks encountered while locking tables of group "%".'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: too many (5) deadlocks encountered while locking tables for groups "%".'
