@@ -31,6 +31,10 @@ CREATE EXTENSION emaj VERSION 'next_version';
 -----------------------------
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
+select relname from pg_catalog.pg_class, 
+                    (select unnest(extconfig) as oid from pg_catalog.pg_extension where extname = 'emaj') as t 
+  where t.oid = pg_class.oid
+  order by 1;
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';

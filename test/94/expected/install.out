@@ -32,6 +32,32 @@ select extname, extversion from pg_extension where extname = 'emaj';
  emaj    | next_version
 (1 row)
 
+select relname from pg_catalog.pg_class, 
+                    (select unnest(extconfig) as oid from pg_catalog.pg_extension where extname = 'emaj') as t 
+  where t.oid = pg_class.oid
+  order by 1;
+           relname           
+-----------------------------
+ emaj_global_seq
+ emaj_group
+ emaj_group_def
+ emaj_hist
+ emaj_hist_hist_id_seq
+ emaj_mark
+ emaj_mark_mark_id_seq
+ emaj_param
+ emaj_relation
+ emaj_rlbk
+ emaj_rlbk_plan
+ emaj_rlbk_rlbk_id_seq
+ emaj_rlbk_session
+ emaj_rlbk_stat
+ emaj_seq_hole
+ emaj_sequence
+ emaj_time_stamp
+ emaj_time_stamp_time_id_seq
+(18 rows)
+
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
