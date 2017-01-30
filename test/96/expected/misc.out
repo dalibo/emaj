@@ -1642,8 +1642,8 @@ begin;
     select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schema: cannot drop schema "emajb". It probably owns unattended objects. Use the emaj_verify_all() function to get details
 CONTEXT:  PL/pgSQL function emaj._drop_log_schema(text,boolean) line 22 at RAISE
-SQL statement "SELECT emaj._drop_log_schema(r_schema.rel_log_schema, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 55 at PERFORM
+SQL statement "SELECT emaj._drop_log_schema(v_logSchema, v_isForced)"
+PL/pgSQL function emaj._drop_group(text,boolean) line 59 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
   rollback to savepoint sp1;

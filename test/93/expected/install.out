@@ -137,7 +137,7 @@ Foreign-key constraints:
     "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Referenced by:
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
-    TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
+    TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
 Tablespace: "tspemaj"
 
           Table "emaj.emaj_group_def"
@@ -300,7 +300,7 @@ Indexes:
     "emaj_relation_idx1" btree (rel_group, rel_kind), tablespace "tspemaj"
     "emaj_relation_idx2" btree (rel_log_schema), tablespace "tspemaj"
 Foreign-key constraints:
-    "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
+    "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
 Tablespace: "tspemaj"
 
 Index "emaj.emaj_relation_idx1"

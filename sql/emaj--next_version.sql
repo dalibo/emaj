@@ -218,7 +218,7 @@ CREATE TABLE emaj.emaj_relation (
   rel_sql_pk_columns           TEXT,                       -- piece of sql used to rollback: list of the pk columns
   rel_sql_pk_eq_conditions     TEXT,                       -- piece of sql used to rollback: equality conditions on the pk columns
   PRIMARY KEY (rel_schema, rel_tblseq),
-  FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name) ON DELETE CASCADE
+  FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name)
   );
 COMMENT ON TABLE emaj.emaj_relation IS
 $$Contains the content (tables and sequences) of created E-Maj groups.$$;
@@ -1152,6 +1152,8 @@ $_drop_tbl$
     DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
 -- delete rows related to the table from emaj_seq_hole table
     DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = quote_ident(r_rel.rel_schema) AND sqhl_table = quote_ident(r_rel.rel_tblseq);
+-- and finaly delete the table reference from the emaj_relation table
+    DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
     RETURN;
   END;
 $_drop_tbl$;
@@ -1216,6 +1218,8 @@ $_drop_seq$
   BEGIN
 -- delete rows from emaj_sequence
     EXECUTE 'DELETE FROM emaj.emaj_sequence WHERE sequ_schema = ' || quote_literal(r_rel.rel_schema) || ' AND sequ_name = ' || quote_literal(r_rel.rel_tblseq);
+-- and finaly delete the sequence reference from the emaj_relation table
+    DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
     RETURN;
   END;
 $_drop_seq$;
@@ -1985,11 +1989,12 @@ $_drop_group$
 -- The function is defined as SECURITY DEFINER so that secondary schemas can be dropped
   DECLARE
     v_groupIsLogging         BOOLEAN;
-    v_event_trigger_array    TEXT[];
+    v_eventTriggers          TEXT[];
+    v_schemasToDrop          TEXT[];
     v_nbTb                   INT = 0;
     v_schemaPrefix           TEXT = 'emaj';
+    v_logSchema              TEXT;
     r_rel                    emaj.emaj_relation%ROWTYPE;
-    r_schema                 RECORD;
   BEGIN
 -- check that the group is recorded in emaj_group table
     SELECT group_is_logging INTO v_groupIsLogging
@@ -2006,7 +2011,16 @@ $_drop_group$
     END IF;
 -- OK
 -- disable event triggers that protect emaj components and keep in memory these triggers name
-    SELECT emaj._disable_event_triggers() INTO v_event_trigger_array;
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- build the list of secondary schemas to drop later
+    SELECT coalesce(array_agg(rel_log_schema),'{}') INTO v_schemasToDrop FROM (
+      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND rel_log_schema <>  v_schemaPrefix
+      EXCEPT
+      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
+        WHERE rel_group <> v_groupName AND rel_log_schema <>  v_schemaPrefix
+      ORDER BY 1
+    ) AS t;
 -- delete the emaj objets for each table of the group
     FOR r_rel IN
         SELECT * FROM emaj.emaj_relation
@@ -2021,26 +2035,20 @@ $_drop_group$
       END IF;
       v_nbTb = v_nbTb + 1;
     END LOOP;
--- look for E-Maj secondary schemas to drop (i.e. not used by any other created group)
-    FOR r_schema IN
-      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
-        WHERE rel_group = v_groupName AND rel_log_schema <>  v_schemaPrefix
-      EXCEPT
-      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
-        WHERE rel_group <> v_groupName AND rel_log_schema <>  v_schemaPrefix
-      ORDER BY 1
+-- drop the E-Maj secondary schemas previously identified as useless (i.e. not used by any other created group)
+    FOREACH v_logSchema IN ARRAY v_schemasToDrop
       LOOP
 -- drop the schema
-      PERFORM emaj._drop_log_schema(r_schema.rel_log_schema, v_isForced);
+      PERFORM emaj._drop_log_schema(v_logSchema, v_isForced);
 -- and record the schema suppression in emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-        VALUES (CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END,'SCHEMA DROPPED',quote_ident(r_schema.rel_log_schema));
+        VALUES (CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END,'SCHEMA DROPPED',quote_ident(v_logSchema));
     END LOOP;
 -- delete group row from the emaj_group table.
---   By cascade, it also deletes rows from emaj_relation and emaj_mark
+--   By cascade, it also deletes rows from emaj_mark
     DELETE FROM emaj.emaj_group WHERE group_name = v_groupName;
 -- enable previously disabled event triggers
-    PERFORM emaj._enable_event_triggers(v_event_trigger_array);
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
     RETURN v_nbTb;
   END;
 $_drop_group$;
@@ -2069,7 +2077,7 @@ $emaj_alter_group$
     v_logSchemasToCreate     TEXT[];
     v_aLogSchema             TEXT;
     v_defTsp                 TEXT;
-    v_event_trigger_array    TEXT[];
+    v_eventTriggers          TEXT[];
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
     r_rel                    emaj.emaj_relation%ROWTYPE;
     r_tblsq                  RECORD;
@@ -2101,7 +2109,7 @@ $emaj_alter_group$
 -- define the default tablespace, NULL if tspemaj tablespace doesn't exist
     SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
 -- disable event triggers that protect emaj components and keep in memory these triggers name
-    SELECT emaj._disable_event_triggers() INTO v_event_trigger_array;
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- We can now process:
 --   - relations that do not belong to the tables group any more, by dropping their emaj components
 --   - relations that continue to belong to the tables group but with different characteristics,
@@ -2154,8 +2162,6 @@ $emaj_alter_group$
 -- if it is a sequence, delete all related data from emaj_sequence table
           PERFORM emaj._drop_seq(r_rel);
       END CASE;
--- delete the related row in emaj_relation
-      DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
       v_nbDrop = v_nbDrop + 1;
     END LOOP;
 --
@@ -2193,8 +2199,6 @@ $emaj_alter_group$
 -- if it is a sequence, delete all related data from emaj_sequence table
           PERFORM emaj._drop_seq (r_rel);
         END IF;
--- delete the related row in emaj_relation
-        DELETE FROM emaj.emaj_relation WHERE rel_schema = r_tblsq.grpdef_schema AND rel_tblseq = r_tblsq.grpdef_tblseq;
         v_nbDrop = v_nbDrop + 1;
 -- other case ?
 -- has the priority changed in emaj_group_def ? If yes, just report the change into emaj_relation
@@ -2269,7 +2273,7 @@ $emaj_alter_group$
 -- delete old marks of the tables group from emaj_mark
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
 -- enable previously disabled event triggers
-    PERFORM emaj._enable_event_triggers(v_event_trigger_array);
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
 -- check foreign keys with tables outside the group
     PERFORM emaj._check_fk_groups(array[v_groupName]);
 -- insert end in the history
@@ -4881,8 +4885,9 @@ $_reset_group$
     SELECT count(*) INTO v_nbTb FROM emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'S';
 -- delete emaj_sequence rows related to the sequences of the group
-    PERFORM emaj._drop_seq(emaj_relation.*) FROM emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'S';
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE rel_schema = sequ_schema AND rel_tblseq = sequ_name AND
+            rel_group = v_groupName AND rel_kind = 'S';
 -- then, truncate log tables for application tables
     FOR r_rel IN
         SELECT rel_log_schema, rel_log_table, rel_log_sequence FROM emaj.emaj_relation
@@ -6357,16 +6362,16 @@ $emaj_disable_protection_by_event_triggers$
 -- It may be used by an emaj_adm role.
 -- Output: number of effectively disabled event triggers
   DECLARE
-    v_event_trigger_array TEXT[];
+    v_eventTriggers          TEXT[];
   BEGIN
 -- call the _disable_event_triggers() function and get the disabled event trigger names array
-    SELECT emaj._disable_event_triggers() INTO v_event_trigger_array;
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- insert a row into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
       VALUES ('DISABLE_PROTECTION', 'EVENT TRIGGERS DISABLED',
-              CASE WHEN v_event_trigger_array <> ARRAY[]::TEXT[] THEN array_to_string(v_event_trigger_array, ', ') ELSE '<none>' END);
+              CASE WHEN v_eventTriggers <> ARRAY[]::TEXT[] THEN array_to_string(v_eventTriggers, ', ') ELSE '<none>' END);
 -- return the number of disabled event triggers
-    RETURN coalesce(array_length(v_event_trigger_array,1),0);
+    RETURN coalesce(array_length(v_eventTriggers,1),0);
   END;
 $emaj_disable_protection_by_event_triggers$;
 
@@ -6380,22 +6385,22 @@ $emaj_enable_protection_by_event_triggers$
 -- It may be used by an emaj_adm role.
 -- Output: number of effectively enabled event triggers
   DECLARE
-    v_event_trigger_array    TEXT[];
+    v_eventTriggers          TEXT[];
   BEGIN
     IF emaj._pg_version_num() >= 90300 THEN
 -- build the event trigger names array from the pg_event_trigger table
 -- (pg_event_trigger table doesn't exists in 9.2- postgres versions)
-      SELECT coalesce(array_agg(evtname  ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_event_trigger_array
+      SELECT coalesce(array_agg(evtname  ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
         FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
 -- call the _enable_event_triggers() function
-      PERFORM emaj._enable_event_triggers(v_event_trigger_array);
+      PERFORM emaj._enable_event_triggers(v_eventTriggers);
     END IF;
 -- insert a row into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
       VALUES ('ENABLE_PROTECTION', 'EVENT TRIGGERS ENABLED',
-              CASE WHEN v_event_trigger_array <> ARRAY[]::TEXT[] THEN array_to_string(v_event_trigger_array, ', ') ELSE '<none>' END);
+              CASE WHEN v_eventTriggers <> ARRAY[]::TEXT[] THEN array_to_string(v_eventTriggers, ', ') ELSE '<none>' END);
 -- return the number of disabled event triggers
-    RETURN coalesce(array_length(v_event_trigger_array,1),0);
+    RETURN coalesce(array_length(v_eventTriggers,1),0);
   END;
 $emaj_enable_protection_by_event_triggers$;
 
@@ -6410,25 +6415,25 @@ $_disable_event_triggers$
 -- It is also called by the user emaj_disable_event_triggers_protection() function.
 -- Output: array of effectively disabled event trigger names. It can be reused as input when calling _enable_event_triggers()
   DECLARE
-    v_event_trigger          TEXT;
-    v_event_trigger_array    TEXT[] = ARRAY[]::TEXT[];
+    v_eventTrigger           TEXT;
+    v_eventTriggers          TEXT[] = ARRAY[]::TEXT[];
   BEGIN
     IF emaj._pg_version_num() >= 90300 THEN
 -- build the event trigger names array from the pg_event_trigger table
 -- (pg_event_trigger table doesn't exists in 9.2- postgres versions)
-      SELECT coalesce(array_agg(evtname ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_event_trigger_array
+      SELECT coalesce(array_agg(evtname ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
         FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled <> 'D';
 -- disable each event trigger
-      FOREACH v_event_trigger IN ARRAY v_event_trigger_array
+      FOREACH v_eventTrigger IN ARRAY v_eventTriggers
       LOOP
-        EXECUTE 'ALTER EVENT TRIGGER ' || v_event_trigger || ' DISABLE';
+        EXECUTE 'ALTER EVENT TRIGGER ' || v_eventTrigger || ' DISABLE';
       END LOOP;
     END IF;
-    RETURN v_event_trigger_array;
+    RETURN v_eventTriggers;
   END;
 $_disable_event_triggers$;
 
-CREATE OR REPLACE FUNCTION emaj._enable_event_triggers(v_event_trigger_array TEXT[])
+CREATE OR REPLACE FUNCTION emaj._enable_event_triggers(v_eventTriggers TEXT[])
  RETURNS TEXT[] LANGUAGE plpgsql SECURITY DEFINER AS
 $_enable_event_triggers$
 -- This function enables all event triggers supplied as parameter
@@ -6437,13 +6442,13 @@ $_enable_event_triggers$
 -- Input: array of event trigger names to enable
 -- Output: same array
   DECLARE
-    v_event_trigger          TEXT;
+    v_eventTrigger           TEXT;
   BEGIN
-    FOREACH v_event_trigger IN ARRAY v_event_trigger_array
+    FOREACH v_eventTrigger IN ARRAY v_eventTriggers
     LOOP
-      EXECUTE 'ALTER EVENT TRIGGER ' || v_event_trigger || ' ENABLE';
+      EXECUTE 'ALTER EVENT TRIGGER ' || v_eventTrigger || ' ENABLE';
     END LOOP;
-    RETURN v_event_trigger_array;
+    RETURN v_eventTriggers;
   END;
 $_enable_event_triggers$;
 

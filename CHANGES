@@ -5,6 +5,7 @@ E-Maj - Release notes
 Enhancements:
   - rollback simulations using the emaj_estimate_rollback_group() function is 
     now able to process protected groups or marks.
+  - some minor code improvements.
 
 Bug fixes:
 

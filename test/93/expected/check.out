@@ -95,7 +95,7 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | _disable_event_triggers                   |    60
  emaj       | _drop_group                               |    15
  emaj       | _drop_log_schema                          |    16
- emaj       | _drop_seq                                 |   123
+ emaj       | _drop_seq                                 |    31
  emaj       | _drop_tbl                                 |   117
  emaj       | _enable_event_triggers                    |    54
  emaj       | _estimate_rollback_groups                 |     9
