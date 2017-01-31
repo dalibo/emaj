@@ -174,7 +174,25 @@ DROP TABLE tmp_relation_old;
 ALTER TABLE emaj.emaj_relation ADD FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name);
 
 -- register created or recreated tables and sequences as "dumpable" by pg_dump
+-- in this upgrade script, fix the missing statements in the unpackaged to 1.3.1 and the 1.3.1 to 2.0.0 upgrade scripts
+SELECT pg_catalog.pg_extension_config_dump('emaj_param','WHERE param_key <> ''emaj_version''');
+SELECT pg_catalog.pg_extension_config_dump('emaj_hist','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_group_def','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_time_stamp','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_seq_hole','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_session','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_plan','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_global_seq','');
+SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_hist_hist_id_seq','');
+SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_time_stamp_time_id_seq','');
+SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_mark_mark_id_seq','');
+SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
 ------------------------------------
 --                                --
