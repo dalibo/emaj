@@ -5,6 +5,8 @@ E-Maj - Release notes
 Enhancements:
   - rollback simulations using the emaj_estimate_rollback_group() function is 
     now able to process protected groups or marks.
+  - In internal checks and in the emaj_verify_all() function, verify that 
+    tables of rollbackable groups have their primary key.
   - some minor code improvements.
 
 Bug fixes:

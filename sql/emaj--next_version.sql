@@ -184,8 +184,8 @@ CREATE TABLE emaj.emaj_group (
   group_nb_table               INT,                        -- number of tables at emaj_create_group time
   group_nb_sequence            INT,                        -- number of sequences at emaj_create_group time
   group_is_rollbackable        BOOLEAN     NOT NULL,       -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
-  group_creation_time_id       BIGINT NOT NULL,            -- time stamp of the group's creation
-  group_last_alter_time_id       BIGINT,                   -- time stamp of the last emaj_alter_group() call
+  group_creation_time_id       BIGINT      NOT NULL,       -- time stamp of the group's creation
+  group_last_alter_time_id     BIGINT,                     -- time stamp of the last emaj_alter_group() call
                                                            -- set to NULL at emaj_create_group() time
   group_pg_version             TEXT        NOT NULL        -- postgres version at emaj_create_group() time
                                DEFAULT substring (version() from E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
@@ -1696,6 +1696,24 @@ $_verify_groups$
       if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (6): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
+-- check all tables have their primary key if they belong to a rollbackable group
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq,
+             'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has no primary key any more.' AS msg
+        FROM emaj.emaj_relation, emaj.emaj_group
+        WHERE rel_group = ANY (v_groups) AND rel_kind = 'r' AND rel_group = group_name AND group_is_rollbackable
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+                 WHERE nspname = rel_schema AND relname = rel_tblseq
+                   AND relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
+                   AND contype = 'p')
+        ORDER BY 1,2,3
+    LOOP
+      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+--
     RETURN;
   END;
 $_verify_groups$;
@@ -5952,6 +5970,23 @@ $_verify_all_groups$
                  WHERE relnamespace = pg_namespace.oid)
         ORDER BY 1,2,3
         ) AS t;
+-- check all tables of rollbackable groups have their primary key
+    RETURN QUERY
+      SELECT 'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has no primary key any more.' AS msg
+        FROM emaj.emaj_relation, emaj.emaj_group
+        WHERE rel_kind = 'r' AND rel_group = group_name AND group_is_rollbackable
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+                 WHERE nspname = rel_schema AND relname = rel_tblseq
+                   AND relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
+                   AND contype = 'p')
+                       -- do not issue a row if the application table does not exist,
+                       -- this case has been already detected
+          AND EXISTS
+              (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+                 WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
+        ORDER BY rel_schema, rel_tblseq, 1;
     RETURN;
   END;
 $_verify_all_groups$;

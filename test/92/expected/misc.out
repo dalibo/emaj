@@ -1301,6 +1301,18 @@ begin;
 (1 row)
 
 rollback;
+-- detection of missing primary key on tables belonging to a rollbackable group
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;                   -- table from a rollbackable group
+  alter table "phil's schema3".mytbl4 drop constraint mytbl4_pkey cascade;    -- table from an audit_only group
+NOTICE:  drop cascades to constraint mytbl2_col21_fkey on table "phil's schema3"."myTbl2\"
+  select * from emaj.emaj_verify_all();
+                                        emaj_verify_all                                        
+-----------------------------------------------------------------------------------------------
+ In rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
+(1 row)
+
+rollback;
 -- all in 1
 begin;
   create table emaj.dummy_log (col1 int);
@@ -1312,6 +1324,7 @@ begin;
   drop table emaj.myschema1_mytbl1_log;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1';
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   select * from emaj.emaj_verify_all();
                                                       emaj_verify_all                                                      
 ---------------------------------------------------------------------------------------------------------------------------
@@ -1323,7 +1336,8 @@ begin;
  In group "myGroup1", the log table "emaj"."myschema1_mytbl1_log" is not found.
  In group "myGroup1", the log function "emaj"."myschema1_mytbl1_log_fnct" is not found.
  In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
-(8 rows)
+ In rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
+(9 rows)
 
 rollback;
 --------------------------------

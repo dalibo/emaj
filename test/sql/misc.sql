@@ -576,6 +576,12 @@ begin;
   alter table myschema1.mytbl4 alter column col45 type varchar(15);
   select * from emaj.emaj_verify_all();
 rollback;
+-- detection of missing primary key on tables belonging to a rollbackable group
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;                   -- table from a rollbackable group
+  alter table "phil's schema3".mytbl4 drop constraint mytbl4_pkey cascade;    -- table from an audit_only group
+  select * from emaj.emaj_verify_all();
+rollback;
 
 -- all in 1
 begin;
@@ -588,6 +594,7 @@ begin;
   drop table emaj.myschema1_mytbl1_log;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1';
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   select * from emaj.emaj_verify_all();
 rollback;
 
