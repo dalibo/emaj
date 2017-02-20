@@ -32,7 +32,9 @@ On dispose maintenant d'un répertoire emaj-<version> comprenant l'arborescence 
 +---------------------------------------------+---------------------------------------------------------------------+
 | Fichiers                                    | Usage                                                               |
 +=============================================+=====================================================================+
-| sql/emaj--2.0.0.sql                         | script d’installation de l’extension (vers. 2.0.0)                  |
+| sql/emaj--2.0.1.sql                         | script d’installation de l’extension (vers. 2.0.1)                  |
++---------------------------------------------+---------------------------------------------------------------------+
+| sql/emaj--2.0.0--2.0.1.sql                  | script d’upgrade de l’extension de 2.0.0 vers 2.0.1                 |
 +---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj--1.3.1--2.0.0.sql                  | script d’upgrade de l’extension de 1.3.1 vers 2.0.0                 |
 +---------------------------------------------+---------------------------------------------------------------------+
@@ -85,8 +87,8 @@ On dispose maintenant d'un répertoire emaj-<version> comprenant l'arborescence 
 | php/emajRollbackMonitor.php                 | client php pour le suivi des rollbacks                              |
 +---------------------------------------------+---------------------------------------------------------------------+
 
-3.1.3 Préparation du fichier emaj.control
-*****************************************
+Préparation du fichier emaj.control
+***********************************
 
 A partir de la version 2.0.0, l’installation d’E-Maj dans les databases PostgreSQL s’effectue sous la forme d’une *EXTENSION*. 
 

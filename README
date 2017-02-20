@@ -30,7 +30,12 @@ It brings a good alternative to the management of several database disk images.
 In both environments, being able to examine the history of updates performed on tables can be very helpful in debugging work or for any other purposes.
 
 
-3- Supplied files 
+3- Documentation
+
+A detailed documentation can be found at http://emaj.readthedocs.io (in English and in French).
+
+
+4- Supplied files 
 
 - README                            this readme file
 - CHANGES                           release notes
@@ -38,8 +43,9 @@ In both environments, being able to examine the history of updates performed on 
 - AUTHORS                           who is behind E-Maj
 - META.json                         meta file for PGXN
 
-- sql/emaj--2.0.0.sql               extension installation script
+- sql/emaj--2.0.1.sql               extension installation script
 - sql/emaj.control                  extension control file
+- sql/emaj--2.0.0--2.0.1.sql        extension upgrade script from 2.0.0 to 2.0.1
 - sql/emaj--1.3.1--2.0.0.sql        extension upgrade script from 1.3.1 to 2.0.0
 - sql/emaj--unpackaged--1.3.1.sql   script to register 1.3.1 as an extension
 - sql/emaj-1.3.0-to-1.3.1.sql       psql upgrade script from 1.3.0 to 1.3.1
@@ -64,29 +70,27 @@ In both environments, being able to examine the history of updates performed on 
 - php/emajRollbackMonitor.php       external php client to monitor in progress rollback operations
 
 
-4- How to install and use E-Maj
+5- How to install and use E-Maj
 
 E-Maj can be installed using the usual method for postgres extensions (ie. CREATE EXTENSION emaj;).
 
-All the information details needed to install and use E-Maj are provided in the user's guide that is included in the supplied .tar file.
-
-To reach this user's guide, just untar the supplied file by :
-tar -xvzf emaj-<version>.tar.gz
+The documentation contains all the detailled information needed to install and use E-Maj.
 
 
-5- E-Maj plugin for phpPgAdmin
+6- E-Maj plugin for phpPgAdmin
 
-As presented into the E-Maj user's guide, a plugin for phpPgAdmin provides a user friendly E-Maj administration tool.
-This plugin takes benefit from the plugin architecture brought by phpPgAdmin 5.1+.
-The plugin is available on github (https://github.com/beaud76/emaj_ppa_plugin)
+A plug-in for phpPgAdmin provides a user friendly E-Maj administration tool. This plugin takes benefit from the plugin architecture brought by phpPgAdmin 5.1+.
+
+The plugin is available on github (https://github.com/beaud76/emaj_ppa_plugin).
+
+It's installation and usage is also described on the documentation.
 
 
-6- Support
+7- Support
 
 For additional support or bug report, please contact Philippe BEAUDOIN (phb <dot> emaj <at> free <dot> fr).
 
 Any feedback is welcome, even to just notice you use E-Maj ;-)
 
 E-Maj is also available on github (https://github.com/beaud76/emaj)
-The source files of the documentation are also available on github (https://github.com/beaud76/emaj_doc)
 
