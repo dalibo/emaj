@@ -4,10 +4,10 @@
    "version": "<NEXT_VERSION>",
    "maintainer": "Philippe Beaudoin - phb<dot>emaj<at>free<dot>fr",
    "license": "gpl_2",
-   "tags": [ "emaj", "table log", "log trigger", "archive before journal", "logical rollback", "flashback" ],
+   "tags": [ "emaj", "table log", "audit log", "log trigger", "archive before journal", "logical rollback", "flashback" ],
    "provides": {
      "emaj": {
-       "file": "sql/emaj.sql",
+       "file": "sql/emaj-<NEXT_VERSION>.sql",
        "docfile": "doc/emaj.<NEXT_VERSION>_doc_en.pdf",
        "version": "<NEXT_VERSION>",
        "abstract": "Tables updates log and rollback"

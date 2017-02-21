@@ -1,0 +1,3 @@
+--
+-- E-Maj: migration from 2.0.1 to <NEXT_VERSION>
+--

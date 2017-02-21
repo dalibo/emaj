@@ -1,5 +1,5 @@
 --
--- E-Maj: migration from 2.0.0 to <NEXT_VERSION>
+-- E-Maj: migration from 2.0.0 to 2.0.1
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -36,7 +36,7 @@ $do$
     END IF;
 -- the installed postgres version must be at least 9.1
     IF current_setting('server_version_num')::int < 90100 THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with E-Maj <NEXT_VERSION>. The PostgreSQL version should be at least 9.1.', current_setting('server_version');
+      RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with E-Maj 2.0.1. The PostgreSQL version should be at least 9.1.', current_setting('server_version');
     END IF;
 -- no existing group must have been created with a postgres version prior 8.4
     SELECT string_agg(group_name, ', ') INTO v_groupList FROM emaj.emaj_group
@@ -1967,10 +1967,10 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
        );
 
 -- update the version id in the emaj_param table
-UPDATE emaj.emaj_param SET param_value_text = '<NEXT_VERSION>' WHERE param_key = 'emaj_version';
+UPDATE emaj.emaj_param SET param_value_text = '2.0.1' WHERE param_key = 'emaj_version';
 
 -- insert the upgrade record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSION>', 'Upgrade from 2.0.0 completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 2.0.1', 'Upgrade from 2.0.0 completed');
 
 -- post installation checks
 DO
