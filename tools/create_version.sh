@@ -78,8 +78,8 @@
 	done
 	git mv sql/emaj--next_version.sql sql/emaj--${NEW}.sql
 
-# Change version identifiers inside files from /php + /tools + INFOS, META.json README
-	find php tools INFOS META.json README -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
+# Change version identifiers inside files from /php + /tools + META.json README
+	find php tools META.json README -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
 
 # Change version identifiers inside files from /test/sql
 	find test/sql -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
