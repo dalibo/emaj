@@ -164,6 +164,15 @@ PL/pgSQL function "_start_groups" line 34 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function "emaj_start_group" line 17 at SQL statement
 rollback;
+-- detection of a table altered as UNLOGGED
+begin;
+  alter table myschema1."myTbl3" set unlogged;                        -- needs 9.5+
+ERROR:  syntax error at or near "unlogged"
+LINE 1: alter table myschema1."myTbl3" set unlogged;
+                                           ^
+  select emaj.emaj_start_group('myGroup1','M1');
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+rollback;
 -- should be OK
 select emaj.emaj_start_group('myGroup1','Mark1');
  emaj_start_group 

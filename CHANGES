@@ -3,6 +3,8 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+  - improve the checks performed on tables groups: verify that application 
+    tables have not been altered as UNLOGGED after their tables group creation.
 
 Bug fixes:
 

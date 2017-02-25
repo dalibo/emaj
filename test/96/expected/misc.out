@@ -1368,6 +1368,17 @@ NOTICE:  drop cascades to constraint mytbl2_col21_fkey on table "phil's schema3"
 (2 rows)
 
 rollback;
+-- detection of tables altered as UNLOGGED
+begin;
+  alter table "phil's schema3"."myTbl2\" set unlogged;                        -- needs 9.5+
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ In rollbackable group "phil's group#3",", the table "phil's schema3"."myTbl2\" is UNLOGGED or TEMP.
+(2 rows)
+
+rollback;
 -- all in 1
 begin;
   create table emaj.dummy_log (col1 int);

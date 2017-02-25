@@ -1713,6 +1713,20 @@ $_verify_groups$
       if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
+-- check all tables are persistent tables (i.e. have not been altered as UNLOGGED after their tables group creation)
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq,
+             'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
+          AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+          AND relpersistence <> 'p'
+        ORDER BY 1,2,3
+    LOOP
+      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
 --
     RETURN;
   END;
@@ -5986,6 +6000,15 @@ $_verify_all_groups$
           AND EXISTS
               (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- check all tables are persistent tables (i.e. have not been altered as UNLOGGED after their tables group creation)
+    RETURN QUERY
+      SELECT 'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE rel_kind = 'r'
+          AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+          AND relpersistence <> 'p'
         ORDER BY rel_schema, rel_tblseq, 1;
     RETURN;
   END;

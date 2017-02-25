@@ -582,6 +582,11 @@ begin;
   alter table "phil's schema3".mytbl4 drop constraint mytbl4_pkey cascade;    -- table from an audit_only group
   select * from emaj.emaj_verify_all();
 rollback;
+-- detection of tables altered as UNLOGGED
+begin;
+  alter table "phil's schema3"."myTbl2\" set unlogged;                        -- needs 9.5+
+  select * from emaj.emaj_verify_all();
+rollback;
 
 -- all in 1
 begin;

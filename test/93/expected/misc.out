@@ -1332,6 +1332,15 @@ NOTICE:  drop cascades to constraint mytbl2_col21_fkey on table "phil's schema3"
 (2 rows)
 
 rollback;
+-- detection of tables altered as UNLOGGED
+begin;
+  alter table "phil's schema3"."myTbl2\" set unlogged;                        -- needs 9.5+
+ERROR:  syntax error at or near "unlogged"
+LINE 1: alter table "phil's schema3"."myTbl2\" set unlogged;
+                                                   ^
+  select * from emaj.emaj_verify_all();
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+rollback;
 -- all in 1
 begin;
   create table emaj.dummy_log (col1 int);

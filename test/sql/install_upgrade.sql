@@ -1,4 +1,4 @@
--- install_upgrade.sql : Upgrade from E-Maj 2.0.0 to next_version while groups are not yet created.
+-- install_upgrade.sql : Upgrade from E-Maj 2.0.1 to next_version while groups are not yet created.
 -- install E-Maj as an extension 
 --
 
@@ -33,7 +33,7 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
 -----------------------------------------------------------
 -- emaj update to next_version
 -----------------------------------------------------------
-CREATE EXTENSION emaj VERSION '2.0.0';
+CREATE EXTENSION emaj VERSION '2.0.1';
 
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
