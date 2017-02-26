@@ -241,11 +241,16 @@ SET search_path=mySchema5;
 -- myTempTbl will be created in the test script that needs is
 
 DROP TABLE IF EXISTS myUnloggedTbl;
--- fails with pg9.0-
 CREATE UNLOGGED TABLE myUnloggedTbl (
   col1       INT     NOT NULL,
   PRIMARY KEY (col1)
 );
+
+DROP TABLE IF EXISTS myOidsTbl;
+CREATE TABLE myOidsTbl (
+  col1       INT     NOT NULL,
+  PRIMARY KEY (col1)
+) WITH OIDS;
 
 -----------------------------
 -- create roles and give rigths on application objects

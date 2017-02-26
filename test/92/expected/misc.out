@@ -1322,6 +1322,16 @@ LINE 1: alter table "phil's schema3"."myTbl2\" set unlogged;
   select * from emaj.emaj_verify_all();
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 rollback;
+-- detection of tables altered as WITH OIDS
+begin;
+  alter table "phil's schema3"."myTbl2\" set with oids;
+  select * from emaj.emaj_verify_all();
+                                       emaj_verify_all                                        
+----------------------------------------------------------------------------------------------
+ In rollbackable group "phil's group#3",", the table "phil's schema3"."myTbl2\" is WITH OIDS.
+(1 row)
+
+rollback;
 -- all in 1
 begin;
   create table emaj.dummy_log (col1 int);
@@ -1334,6 +1344,7 @@ begin;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1';
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  alter table "phil's schema3"."myTbl2\" set with oids;
   select * from emaj.emaj_verify_all();
                                                       emaj_verify_all                                                      
 ---------------------------------------------------------------------------------------------------------------------------
@@ -1346,7 +1357,8 @@ begin;
  In group "myGroup1", the log function "emaj"."myschema1_mytbl1_log_fnct" is not found.
  In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
  In rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
-(9 rows)
+ In rollbackable group "phil's group#3",", the table "phil's schema3"."myTbl2\" is WITH OIDS.
+(10 rows)
 
 rollback;
 --------------------------------

@@ -70,10 +70,14 @@ begin;
 -- should be ko with pg 8.4+
   select emaj.emaj_create_group('myGroup5');
 rollback;
-
 -- group with an unlogged table
 begin;
   insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
+  select emaj.emaj_create_group('myGroup5');
+rollback;
+-- group with a WITH OIDS table
+begin;
+  insert into emaj.emaj_group_def values ('myGroup5','myschema5','myoidstbl');
   select emaj.emaj_create_group('myGroup5');
 rollback;
 -- table without pkey for a rollbackable group

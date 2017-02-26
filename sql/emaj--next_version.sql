@@ -944,6 +944,7 @@ $_create_tbl$
     v_emajSchema             TEXT = 'emaj';
     v_schemaPrefix           TEXT = 'emaj';
     v_relPersistence         CHAR(1);
+    v_relhasoids             BOOLEAN;
     v_relhaspkey             BOOLEAN;
     v_emajNamesPrefix        TEXT;
     v_baseLogTableName       TEXT;
@@ -967,12 +968,15 @@ $_create_tbl$
     v_triggerList            TEXT;
   BEGIN
 -- check the table is neither a temporary nor an unlogged table
-    SELECT relpersistence INTO v_relPersistence FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+    SELECT relpersistence, relhasoids INTO v_relPersistence, v_relhasoids FROM pg_catalog.pg_class, pg_catalog.pg_namespace
       WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
     IF v_relPersistence = 't' THEN
       RAISE EXCEPTION '_create_tbl: table "%" is a temporary table.', r_grpdef.grpdef_tblseq;
     ELSIF v_relPersistence = 'u' THEN
       RAISE EXCEPTION '_create_tbl: table "%.%" is an unlogged table.', r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq;
+    END IF;
+    IF v_relhasoids THEN
+      RAISE EXCEPTION '_create_tbl: table "%.%" is declared WITH OIDS.', r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq;
     END IF;
 -- check the table has a primary key
     SELECT true INTO v_relhaspkey FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
@@ -1725,6 +1729,20 @@ $_verify_groups$
         ORDER BY 1,2,3
     LOOP
       if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- check no table has been altered as WITH OIDS after tables groups creation
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq,
+             'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is declared WITH OIDS.' AS msg
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
+          AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+          AND relhasoids
+        ORDER BY 1,2,3
+    LOOP
+      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 --
@@ -6009,6 +6027,15 @@ $_verify_all_groups$
         WHERE rel_kind = 'r'
           AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
           AND relpersistence <> 'p'
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- check all tables are WITHOUT OIDS (i.e. have not been altered as WITH OIDS after their tables group creation)
+    RETURN QUERY
+      SELECT 'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is WITH OIDS.' AS msg
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE rel_kind = 'r'
+          AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+          AND relhasoids
         ORDER BY rel_schema, rel_tblseq, 1;
     RETURN;
   END;

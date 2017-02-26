@@ -58,7 +58,7 @@ A table or a sequence of a given schema (**grpdef_schema** and **grpdef_tblseq**
 
 All tables assigned to a group not created in *AUDIT_ONLY* mode must have an explicit *primary key* (*PRIMARY KEY* clause in *CREATE TABLE* or *ALTER TABLE*).
 
-By their nature, neither *TEMPORARY TABLE* nor *UNLOGGED TABLE* are supported by E-Maj.
+By their nature, neither *TEMPORARY TABLE* nor *UNLOGGED TABLE* are supported by E-Maj. Tables must also be implicitely or explicitely defined as *WITHOUT OIDS*.
 
 If a sequence is associated to an application table, it must be explicitly declared as member of the same group as its table, so that, in case of rollback, the sequence can be reset to its state at the set mark time.
 

@@ -5,6 +5,7 @@ E-Maj - Release notes
 Enhancements:
   - improve the checks performed on tables groups: verify that application 
     tables have not been altered as UNLOGGED after their tables group creation.
+  - forbid tables declared as WITH OIDS into tables groups.
 
 Bug fixes:
 

@@ -587,6 +587,11 @@ begin;
   alter table "phil's schema3"."myTbl2\" set unlogged;                        -- needs 9.5+
   select * from emaj.emaj_verify_all();
 rollback;
+-- detection of tables altered as WITH OIDS
+begin;
+  alter table "phil's schema3"."myTbl2\" set with oids;
+  select * from emaj.emaj_verify_all();
+rollback;
 
 -- all in 1
 begin;
@@ -600,6 +605,7 @@ begin;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1';
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  alter table "phil's schema3"."myTbl2\" set with oids;
   select * from emaj.emaj_verify_all();
 rollback;
 

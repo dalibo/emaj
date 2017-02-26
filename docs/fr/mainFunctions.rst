@@ -58,7 +58,7 @@ Une table ou une séquence d'un schéma donné (colonnes **grpdef_schema** et **
 
 Toute table appartenant à un groupe de tables non créé en mode *AUDIT_ONLY* doit posséder une clé primaire explicite (clause *PRIMARY KEY* des *CREATE TABLE* ou *ALTER TABLE*). 
 
-De par leur nature, ni les tables temporaires (*TEMPORARY TABLE*), ni les tables non tracées (*UNLOGGED TABLE*) ne peuvent être supportées par E-Maj.
+De par leur nature, ni les tables temporaires (*TEMPORARY TABLE*), ni les tables non tracées (*UNLOGGED TABLE*) ne peuvent être supportées par E-Maj. Les tables doivent aussi être implicitement ou explicitement définies *WITHOUT OIDS*.
 
 Si une séquence est associée à une table applicative, il faut explicitement la déclarer dans le même groupe que sa table. Ainsi, lors d'une opération de rollback, elle sera remise dans l'état où elle se trouvait lors de la pose de la marque servant de référence au rollback.
 

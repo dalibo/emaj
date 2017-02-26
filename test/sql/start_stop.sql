@@ -81,6 +81,11 @@ begin;
   alter table myschema1."myTbl3" set unlogged;                        -- needs 9.5+
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
+-- detection of a table altered as WITH OIDS
+begin;
+  alter table myschema1."myTbl3" set with oids;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
 
 -- should be OK
 select emaj.emaj_start_group('myGroup1','Mark1');
