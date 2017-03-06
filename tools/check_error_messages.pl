@@ -11,7 +11,7 @@ use warnings; use strict;
 # The 3 variables below are to be customized
   my $dir = "/home/postgres/proj/emaj";
   my $ficSrc = $dir."/sql/emaj--next_version.sql";
-  my $dirOut = $dir."/test/95/results";
+  my $dirOut = $dir."/test/96/results";
 
 # Variables used to process the source code
   my $line;
@@ -95,7 +95,7 @@ use warnings; use strict;
       $script = $1.'.sql';
       $msgType = $2;
       $line = $3;
-      if ($1 ne 'beforeMigLoggingGroup' && $1 ne 'instExtPrev' && $1 ne 'instExtMig' && $1 !~ /psql/i) {
+      if ($1 ne 'beforeMigLoggingGroup' && $1 ne 'install_previous' && $1 ne 'install_upgrade' && $1 !~ /psql/i) {
 # ignore lines from the scripts that process code from the previous E-Maj version
         if ($msgType eq 'ERROR' || $msgType eq 'WARNING') {
           $msg = $line;

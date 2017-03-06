@@ -17,9 +17,9 @@ $$
   END;
 $$;
 ------------------------------------------------------------
--- emaj installation in 2.0.0 as extension
+-- emaj installation in 2.0.1 as extension
 ------------------------------------------------------------
-CREATE EXTENSION emaj VERSION '2.0.0';
+CREATE EXTENSION emaj VERSION '2.0.1';
 ------------------------------------------------------------
 -- check installation
 ------------------------------------------------------------
@@ -27,14 +27,14 @@ CREATE EXTENSION emaj VERSION '2.0.0';
 select extname, extversion from pg_extension where extname = 'emaj';
  extname | extversion 
 ---------+------------
- emaj    | 2.0.0
+ emaj    | 2.0.1
 (1 row)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- 2.0.0
+ 2.0.1
 (1 row)
 
 -- check history
@@ -42,6 +42,6 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id | hist_function | hist_event | hist_object |      regexp_replace      | hist_user 
 ---------+---------------+------------+-------------+--------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 2.0.0 | Initialisation completed | postgres
+       1 | EMAJ_INSTALL  |            | E-Maj 2.0.1 | Initialisation completed | postgres
 (1 row)
 

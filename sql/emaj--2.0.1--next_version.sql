@@ -94,10 +94,188 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION emaj._check_group_content(V_GROUPNAME TEXT);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._check_groups_content(v_groupNames TEXT[], v_isRollbackable BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql AS
+$_check_groups_content$
+-- This function verifies that the content of tables group as defined into the emaj_group_def table is correct.
+-- Any issue is reported as a warning message. If at least one issue is detected, an exception is raised before exiting the function.
+-- It is called by emaj_create_group() and emaj_alter_group() functions.
+-- This function checks that the referenced application tables and sequences:
+--  - exist,
+--  - is not located into an E-Maj schema (to protect against an E-Maj recursive use),
+--  - do not already belong to another tables group,
+--  - will not generate conflicts on emaj objects to create (when emaj names prefix is not the default one)
+-- It also checks that:
+--  - tables are not TEMPORARY, UNLOGGED or WITH OIDS
+--  - for rollbackable groups all tables have a PRIMARY KEY
+--  - for sequences, the tablespaces, emaj log schema and emaj object name prefix are all set to NULL
+-- Input: name array of the tables group to check, flag indicating whether the group is rollbackable or not
+  DECLARE
+    v_nbError                INT = 0 ;
+    r                        RECORD;
+  BEGIN
+-- check that all application tables and sequences listed for the group really exist
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq FROM (
+        SELECT grpdef_schema, grpdef_tblseq
+          FROM emaj.emaj_group_def WHERE grpdef_group = ANY(v_groupNames)
+        EXCEPT
+        SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S')
+        ORDER BY 1,2) AS t
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table or sequence %.% does not exist.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check no application schema listed for the group in the emaj_group_def table is an E-Maj schema
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def
+        WHERE grpdef_group = ANY (v_groupNames)
+          AND grpdef_schema IN (
+                SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
+                UNION
+                SELECT 'emaj')
+        ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table or sequence %.% belongs to an E-Maj schema.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check that no table or sequence of the checked groups already belongs to other created groups
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq, rel_group
+        FROM emaj.emaj_group_def, emaj.emaj_relation
+        WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
+          AND grpdef_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames)
+        ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table or sequence %.% belongs to another group (%).', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq), r.rel_group;
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check that several tables of the group have not the same emaj names prefix
+    FOR r IN
+      SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix, count(*)
+        FROM emaj.emaj_group_def
+        WHERE grpdef_group = ANY (v_groupNames)
+        GROUP BY 1 HAVING count(*) > 1
+        ORDER BY 1
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the emaj prefix "%" is configured for several tables in the groups.', r.prefix;
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check that emaj names prefix that will be generared will not generate conflict with objects from existing groups
+    FOR r IN
+      SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix
+        FROM emaj.emaj_group_def, emaj.emaj_relation
+        WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log' = rel_log_table
+          AND grpdef_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames)
+      ORDER BY 1
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the emaj prefix "%" is already used.', r.prefix;
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check no table is a TEMP table
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 't'
+        ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table %.% is a TEMPORARY table.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check no table is an unlogged table
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 'u'
+        ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table %.% is an UNLOGGED table.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check no table is a WITH OIDS table
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relhasoids
+        ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table %.% is declared WITH OIDS.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- if the table group is rollbackable, check every table has a primary key
+    IF v_isRollbackable THEN
+      FOR r IN
+        SELECT grpdef_schema, grpdef_tblseq
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+            AND grpdef_group = ANY (v_groupNames) AND relkind = 'r'
+            AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+                              WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
+                              AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq)
+        ORDER BY grpdef_schema, grpdef_tblseq
+      LOOP
+      RAISE WARNING '_check_groups_content: Error, the table %.% has no PRIMARY KEY.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+        v_nbError = v_nbError + 1;
+      END LOOP;
+    END IF;
+-- all sequences described in emaj_group_def have their log schema suffix attribute set to NULL
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_schema_suffix IS NOT NULL
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the secondary log schema suffix is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- all sequences described in emaj_group_def have their emaj names prefix attribute set to NULL
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_emaj_names_prefix IS NOT NULL
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the emaj names prefix is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- all sequences described in emaj_group_def have their data log tablespaces attributes set to NULL
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_dat_tsp IS NOT NULL
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the data log tablespace is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- all sequences described in emaj_group_def have their index log tablespaces attributes set to NULL
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_idx_tsp IS NOT NULL
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the index log tablespace is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+    IF v_nbError > 0 THEN
+      RAISE EXCEPTION '_check_groups_content: one or several errors have been detected in the emaj_group_def table content.';
+    END IF;
+--
+    RETURN;
+  END;
+$_check_groups_content$;
+
 CREATE OR REPLACE FUNCTION emaj._create_tbl(r_grpdef emaj.emaj_group_def, v_groupName TEXT, v_isRollbackable BOOLEAN, v_defTsp TEXT)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_tbl$
@@ -110,9 +288,6 @@ $_create_tbl$
   DECLARE
     v_emajSchema             TEXT = 'emaj';
     v_schemaPrefix           TEXT = 'emaj';
-    v_relPersistence         CHAR(1);
-    v_relhasoids             BOOLEAN;
-    v_relhaspkey             BOOLEAN;
     v_emajNamesPrefix        TEXT;
     v_baseLogTableName       TEXT;
     v_baseLogIdxName         TEXT;
@@ -134,27 +309,7 @@ $_create_tbl$
     v_stmt                   TEXT;
     v_triggerList            TEXT;
   BEGIN
--- check the table is neither a temporary nor an unlogged table
-    SELECT relpersistence, relhasoids INTO v_relPersistence, v_relhasoids FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-      WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
-    IF v_relPersistence = 't' THEN
-      RAISE EXCEPTION '_create_tbl: table "%" is a temporary table.', r_grpdef.grpdef_tblseq;
-    ELSIF v_relPersistence = 'u' THEN
-      RAISE EXCEPTION '_create_tbl: table "%.%" is an unlogged table.', r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq;
-    END IF;
-    IF v_relhasoids THEN
-      RAISE EXCEPTION '_create_tbl: table "%.%" is declared WITH OIDS.', r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq;
-    END IF;
--- check the table has a primary key
-    SELECT true INTO v_relhaspkey FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
-      WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
-        AND contype = 'p' AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
-    IF NOT FOUND THEN
-      v_relhaspkey = false;
-    END IF;
-    IF v_isRollbackable AND v_relhaspkey = FALSE THEN
-      RAISE EXCEPTION '_create_tbl: table "%.%" has no PRIMARY KEY.', r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq;
-    END IF;
+-- the checks on the table properties are performed by the calling functions
 -- build the prefix of all emaj object to create, by default <schema>_<table>
     v_emajNamesPrefix = coalesce(r_grpdef.grpdef_emaj_names_prefix, r_grpdef.grpdef_schema || '_' || r_grpdef.grpdef_tblseq);
 -- build the name of emaj components associated to the application table (non schema qualified and not quoted)
@@ -293,6 +448,47 @@ $_create_tbl$
     RETURN;
   END;
 $_create_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._create_seq(grpdef emaj.emaj_group_def, v_groupName TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_create_seq$
+-- The function checks whether the sequence is related to a serial column of an application table.
+-- If yes, it verifies that this table also belong to the same group
+-- Required inputs: the emaj_group_def row related to the application sequence to process, the group name
+  DECLARE
+    v_tableSchema            TEXT;
+    v_tableName              TEXT;
+    v_tableGroup             TEXT;
+  BEGIN
+-- the checks on the sequence properties are performed by the calling functions
+-- get the schema and the name of the table that contains a serial column this sequence is linked to, if one exists
+    SELECT nt.nspname, ct.relname INTO v_tableSchema, v_tableName
+      FROM pg_catalog.pg_class cs, pg_catalog.pg_namespace ns, pg_depend,
+           pg_catalog.pg_class ct, pg_catalog.pg_namespace nt
+      WHERE cs.relname = grpdef.grpdef_tblseq AND ns.nspname = grpdef.grpdef_schema -- the selected sequence
+        AND cs.relnamespace = ns.oid                             -- join condition for sequence schema name
+        AND ct.relnamespace = nt.oid                             -- join condition for linked table schema name
+        AND pg_depend.objid = cs.oid                             -- join condition for the pg_depend table
+        AND pg_depend.refobjid = ct.oid                          -- join conditions for depended table schema name
+        AND pg_depend.classid = pg_depend.refclassid             -- the classid et refclassid must be 'pg_class'
+        AND pg_depend.classid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_class');
+    IF FOUND THEN
+      SELECT grpdef_group INTO v_tableGroup FROM emaj.emaj_group_def
+        WHERE grpdef_schema = v_tableSchema AND grpdef_tblseq = v_tableName;
+      IF NOT FOUND THEN
+        RAISE WARNING '_create_seq: Sequence %.% is linked to table %.% but this table does not belong to any tables group.', grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_tableSchema, v_tableName;
+      ELSE
+        IF v_tableGroup <> v_groupName THEN
+          RAISE WARNING '_create_seq: Sequence %.% is linked to table %.% but this table belong to another tables group (%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_tableSchema, v_tableName, v_tableGroup;
+        END IF;
+      END IF;
+    END IF;
+-- record the sequence in the emaj_relation table
+      INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
+          VALUES (grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_groupName, grpdef.grpdef_priority, 'S');
+    RETURN;
+  END;
+$_create_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._verify_groups(v_groups TEXT[], v_onErrorStop BOOLEAN)
 RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
@@ -488,6 +684,335 @@ $_verify_groups$
     RETURN;
   END;
 $_verify_groups$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN DEFAULT true)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_create_group$
+-- This function creates emaj objects for all tables of a group
+-- It also creates the secondary E-Maj schemas when needed
+-- Input: group name, boolean indicating wether the group is rollbackable or not (true by default)
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_timeId                 BIGINT;
+    v_nbTbl                  INT = 0;
+    v_nbSeq                  INT = 0;
+    v_schemaPrefix           TEXT = 'emaj';
+    v_defTsp                 TEXT;
+    r_grpdef                 emaj.emaj_group_def%ROWTYPE;
+    r_schema                 RECORD;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('CREATE_GROUP', 'BEGIN', v_groupName, CASE WHEN v_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
+-- check that the group name is valid
+    IF v_groupName IS NULL OR v_groupName = ''THEN
+      RAISE EXCEPTION 'emaj_create_group: group name can''t be NULL or empty.';
+    END IF;
+-- check the group is known in emaj_group_def table
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
+    IF NOT FOUND THEN
+       RAISE EXCEPTION 'emaj_create_group: group "%" is unknown in emaj_group_def table.', v_groupName;
+    END IF;
+-- check that the group is not yet recorded in emaj_group table
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF FOUND THEN
+      RAISE EXCEPTION 'emaj_create_group: group "%" is already created.', v_groupName;
+    END IF;
+-- performs various checks on the group's content described in the emaj_group_def table
+    PERFORM emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable);
+-- OK
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('C') INTO v_timeId;
+-- insert the row describing the group into the emaj_group table
+-- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable)
+    INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable, group_is_rlbk_protected, group_creation_time_id)
+      VALUES (v_groupName, FALSE, v_isRollbackable, NOT v_isRollbackable, v_timeId);
+-- look for new E-Maj secondary schemas to create
+    FOR r_schema IN
+      SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
+        WHERE grpdef_group = v_groupName
+          AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''
+      EXCEPT
+      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
+      ORDER BY 1
+      LOOP
+-- create the schema
+      PERFORM emaj._create_log_schema(r_schema.log_schema);
+-- and record the schema creation in emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES ('CREATE_GROUP','SCHEMA CREATED',quote_ident(r_schema.log_schema));
+    END LOOP;
+-- define the default tablespace, NULL if tspemaj tablespace doesn't exist
+    SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
+-- get and process all tables of the group (in priority order, NULLS being processed last)
+    FOR r_grpdef IN
+        SELECT emaj.emaj_group_def.*
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE grpdef_group = v_groupName
+            AND relnamespace = pg_namespace.oid
+            AND nspname = grpdef_schema AND relname = grpdef_tblseq
+            AND relkind = 'r'
+          ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+        LOOP
+      PERFORM emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp);
+      v_nbTbl = v_nbTbl + 1;
+    END LOOP;
+-- get and process all sequences of the group (in priority order, NULLS being processed last)
+    FOR r_grpdef IN
+        SELECT emaj.emaj_group_def.*
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE grpdef_group = v_groupName
+            AND relnamespace = pg_namespace.oid
+            AND nspname = grpdef_schema AND relname = grpdef_tblseq
+            AND relkind = 'S'
+          ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+        LOOP
+      PERFORM emaj._create_seq(r_grpdef, v_groupName);
+      v_nbSeq = v_nbSeq + 1;
+    END LOOP;
+-- update tables and sequences counters in the emaj_group table
+    UPDATE emaj.emaj_group SET group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
+      WHERE group_name = v_groupName;
+-- check foreign keys with tables outside the group
+    PERFORM emaj._check_fk_groups (array[v_groupName]);
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('CREATE_GROUP', 'END', v_groupName, v_nbTbl + v_nbSeq || ' tables/sequences processed');
+    RETURN v_nbTbl + v_nbSeq;
+  END;
+$emaj_create_group$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_alter_group(v_groupName TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_alter_group$
+-- This function alters a tables group.
+-- It takes into account the changes recorded in the emaj_group_def table since the group has been created.
+-- Executing emaj_alter_group() is equivalent to chaining emaj_drop_group() and emaj_create_group().
+-- But only emaj objects that need to be dropped or created are processed.
+-- Input: group name
+-- Output: number of tables and sequences belonging to the group after the operation
+  DECLARE
+    v_emajSchema             TEXT = 'emaj';
+    v_schemaPrefix           TEXT = 'emaj';
+    v_nbCreate               INT = 0;
+    v_nbDrop                 INT = 0;
+    v_nbTbl                  INT;
+    v_nbSeq                  INT;
+    v_groupIsLogging         BOOLEAN;
+    v_isRollbackable         BOOLEAN;
+    v_timeId                 BIGINT;
+    v_logSchema              TEXT;
+    v_logSchemasToDrop       TEXT[];
+    v_logSchemasToCreate     TEXT[];
+    v_aLogSchema             TEXT;
+    v_defTsp                 TEXT;
+    v_eventTriggers          TEXT[];
+    r_grpdef                 emaj.emaj_group_def%ROWTYPE;
+    r_rel                    emaj.emaj_relation%ROWTYPE;
+    r_tblsq                  RECORD;
+    r_schema                 RECORD;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES ('ALTER_GROUP', 'BEGIN', v_groupName);
+-- check that the group is recorded in emaj_group table
+    SELECT group_is_logging, group_is_rollbackable INTO v_groupIsLogging, v_isRollbackable
+      FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_alter_group: group "%" has not been created.', v_groupName;
+    END IF;
+-- check that the group is not in LOGGING state
+    IF v_groupIsLogging THEN
+      RAISE EXCEPTION 'emaj_alter_group: The group "%" cannot be altered because it is in LOGGING state.', v_groupName;
+    END IF;
+-- check there are remaining rows for the group in emaj_group_def table
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
+    IF NOT FOUND THEN
+       RAISE EXCEPTION 'emaj_alter_group: Group "%" is unknown in emaj_group_def table.', v_groupName;
+    END IF;
+-- performs various checks on the group's content described in the emaj_group_def table
+    PERFORM emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable);
+-- OK
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- define the default tablespace, NULL if tspemaj tablespace doesn't exist
+    SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- We can now process:
+--   - relations that do not belong to the tables group any more, by dropping their emaj components
+--   - relations that continue to belong to the tables group but with different characteristics,
+--     by first dropping their emaj components and letting the last step recreate them
+--   - new relations in the tables group, by (re)creating their emaj components
+--
+-- build the list of secondary log schemas that will need to be dropped once obsolete log tables will be dropped
+    SELECT array_agg(rel_log_schema) INTO v_logSchemasToDrop FROM (
+      SELECT rel_log_schema FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND rel_log_schema <> v_emajSchema                -- secondary log schemas that currently exist for the group
+      EXCEPT
+      SELECT rel_log_schema FROM emaj.emaj_relation
+        WHERE rel_group <> v_groupName                                                  -- minus those that exist for other groups
+      EXCEPT
+      SELECT v_schemaPrefix || grpdef_log_schema_suffix FROM emaj.emaj_group_def
+        WHERE grpdef_group = v_groupName
+          AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- minus those that will remain for the group
+    ) AS t;
+-- build the list of secondary log schemas that will need to be created before new log tables will be created
+    SELECT array_agg(log_schema) INTO v_logSchemasToCreate FROM (
+      SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
+        WHERE grpdef_group = v_groupName
+          AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- secondary log schemas needed for the group
+      EXCEPT
+      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                            -- minus those already created
+      ORDER BY 1
+    ) AS t;
+-- list all relations that do not belong to the tables group any more
+    FOR r_rel IN
+      SELECT * FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName
+          AND NOT EXISTS (
+              SELECT NULL FROM emaj.emaj_group_def
+                WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
+                  AND grpdef_group = v_groupName)
+      UNION
+-- ... and all relations that are damaged or whose log table is not synchronised with them any more
+      SELECT emaj.emaj_relation.*
+        FROM (                                   -- all damaged or out of sync tables
+          SELECT DISTINCT ver_schema, ver_tblseq FROM emaj._verify_groups(ARRAY[v_groupName], false)
+             ) AS t, emaj.emaj_relation
+        WHERE rel_schema = ver_schema AND rel_tblseq = ver_tblseq
+      ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+      CASE r_rel.rel_kind
+        WHEN 'r' THEN
+-- if it is a table, delete the related emaj objects
+          PERFORM emaj._drop_tbl(r_rel);
+        WHEN 'S' THEN
+-- if it is a sequence, delete all related data from emaj_sequence table
+          PERFORM emaj._drop_seq(r_rel);
+      END CASE;
+      v_nbDrop = v_nbDrop + 1;
+    END LOOP;
+--
+-- list relations that still belong to the tables group
+    FOR r_tblsq IN
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_table, rel_log_dat_tsp, rel_log_idx_tsp,
+             grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_emaj_names_prefix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+        FROM emaj.emaj_relation, emaj.emaj_group_def
+        WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+          AND rel_group = v_groupName
+          AND grpdef_group = v_groupName
+      ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+-- now detect other changes that justify to drop and recreate the relation
+-- detect if the log data tablespace in emaj_group_def has changed
+      IF   (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_dat_tsp,'') <> coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp,''))
+        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_dat_tsp IS NOT NULL)
+-- or if the log index tablespace in emaj_group_def has changed
+        OR (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_idx_tsp,'') <> coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp,''))
+        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_idx_tsp IS NOT NULL)
+-- or if the log schema in emaj_group_def has changed
+        OR (r_tblsq.rel_kind = 'r' AND r_tblsq.rel_log_schema <> (v_schemaPrefix || coalesce(r_tblsq.grpdef_log_schema_suffix, '')))
+        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_schema_suffix IS NOT NULL)
+-- or if the emaj names prefix in emaj_group_def has changed (detected with the log table name)
+        OR (r_tblsq.rel_kind = 'r' AND
+            r_tblsq.rel_log_table <> (coalesce(r_tblsq.grpdef_emaj_names_prefix, r_tblsq.grpdef_schema || '_' || r_tblsq.grpdef_tblseq) || '_log'))
+        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_emaj_names_prefix IS NOT NULL) THEN
+-- then drop the relation (it will be recreated later)
+-- get the related row in emaj_relation
+        SELECT * FROM emaj.emaj_relation WHERE rel_schema = r_tblsq.rel_schema AND rel_tblseq = r_tblsq.rel_tblseq INTO r_rel;
+        IF r_tblsq.rel_kind = 'r' THEN
+-- if it is a table, delete the related emaj objects
+          PERFORM emaj._drop_tbl (r_rel);
+        ELSEIF r_tblsq.rel_kind = 'S' THEN
+-- if it is a sequence, delete all related data from emaj_sequence table
+          PERFORM emaj._drop_seq (r_rel);
+        END IF;
+        v_nbDrop = v_nbDrop + 1;
+-- other case ?
+-- has the priority changed in emaj_group_def ? If yes, just report the change into emaj_relation
+      ELSEIF (r_tblsq.rel_priority IS NULL AND r_tblsq.grpdef_priority IS NOT NULL) OR
+             (r_tblsq.rel_priority IS NOT NULL AND r_tblsq.grpdef_priority IS NULL) OR
+             (r_tblsq.rel_priority <> r_tblsq.grpdef_priority) THEN
+        UPDATE emaj.emaj_relation SET rel_priority = r_tblsq.grpdef_priority
+          WHERE rel_schema = r_tblsq.grpdef_schema AND rel_tblseq = r_tblsq.grpdef_tblseq;
+      END IF;
+    END LOOP;
+--
+-- cleanup all remaining log tables
+    PERFORM emaj._reset_group(v_groupName);
+-- drop useless log schemas, using the list of schemas to drop built previously
+    IF v_logSchemasToDrop IS NOT NULL THEN
+      FOREACH v_aLogSchema IN ARRAY v_logSchemasToDrop LOOP
+--   drop the log schema
+        PERFORM emaj._drop_log_schema(v_aLogSchema, false);
+--   and record the schema drop in emaj_hist table
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+          VALUES ('ALTER_GROUP','SCHEMA DROPPED',quote_ident(v_aLogSchema));
+      END LOOP;
+    END IF;
+-- create new log schemas, using the list of potential schemas to create built previously
+    IF v_logSchemasToCreate IS NOT NULL THEN
+      FOREACH v_aLogSchema IN ARRAY v_logSchemasToCreate LOOP
+--   create the schema
+        PERFORM emaj._create_log_schema(v_aLogSchema);
+--   and record the schema creation in emaj_hist table
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+          VALUES ('ALTER_GROUP','SCHEMA CREATED',quote_ident(v_aLogSchema));
+      END LOOP;
+    END IF;
+--
+-- get and process new tables in the tables group (really new or intentionaly dropped in the preceeding steps)
+    FOR r_grpdef IN
+      SELECT emaj.emaj_group_def.*
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_group = v_groupName
+          AND NOT EXISTS (
+              SELECT NULL FROM emaj.emaj_relation
+                WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+                  AND rel_group = v_groupName)
+          AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
+          AND relkind = 'r'
+      ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+      LOOP
+      PERFORM emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp);
+      v_nbCreate = v_nbCreate + 1;
+    END LOOP;
+-- get and process new sequences in the tables group (really new or intentionaly dropped in the preceeding steps)
+    FOR r_grpdef IN
+      SELECT emaj.emaj_group_def.*
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_group = v_groupName
+          AND NOT EXISTS (
+              SELECT NULL FROM emaj.emaj_relation
+                WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+                  AND rel_group = v_groupName)
+          AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
+          AND relkind = 'S'
+      ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+      LOOP
+      PERFORM emaj._create_seq(r_grpdef, v_groupName);
+      v_nbCreate = v_nbCreate + 1;
+    END LOOP;
+-- update tables and sequences counters and the last alter timestamp in the emaj_group table
+    SELECT count(*) INTO v_nbTbl FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'r';
+    SELECT count(*) INTO v_nbSeq FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'S';
+    UPDATE emaj.emaj_group SET group_last_alter_time_id = v_timeId, group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
+      WHERE group_name = v_groupName;
+-- delete old marks of the tables group from emaj_mark
+    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
+-- enable previously disabled event triggers
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- check foreign keys with tables outside the group
+    PERFORM emaj._check_fk_groups(array[v_groupName]);
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'END', v_groupName, v_nbDrop || ' dropped relations and ' || v_nbCreate || ' (re)created relations');
+    RETURN v_nbTbl + v_nbSeq;
+  END;
+$emaj_alter_group$;
+COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT) IS
+$$Alter an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._verify_all_groups()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS

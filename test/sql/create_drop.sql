@@ -67,7 +67,6 @@ begin;
   insert into emaj.emaj_group_def 
     select 'myGroup5',nspname,'mytemptbl' from pg_class, pg_namespace
       where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
--- should be ko with pg 8.4+
   select emaj.emaj_create_group('myGroup5');
 rollback;
 -- group with an unlogged table
@@ -92,9 +91,9 @@ begin;
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
 rollback;
--- sequence with tablespace defined in the emaj_group_def table
+-- sequence with tablespaces defined in the emaj_group_def table
 begin;
-  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something', grpdef_log_idx_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
 rollback;
 -- table with invalid tablespace
@@ -121,6 +120,14 @@ begin;
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl1';
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'myschema1_mytbl2' where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl2';
   select emaj.emaj_create_group('myGroup2');
+rollback;
+-- mix a lot of errors
+begin;
+  update emaj.emaj_group_def set grpdef_log_schema_suffix = 'something', grpdef_emaj_names_prefix = 'something', grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2';
+  alter table myschema1.mytbl1 set with oids;
+  select emaj.emaj_create_group('myGroup1');
 rollback;
 
 -- should be OK

@@ -19,9 +19,9 @@ $$
 $$;
 
 ------------------------------------------------------------
--- emaj installation in 2.0.0 as extension
+-- emaj installation in 2.0.1 as extension
 ------------------------------------------------------------
-CREATE EXTENSION emaj VERSION '2.0.0';
+CREATE EXTENSION emaj VERSION '2.0.1';
 
 ------------------------------------------------------------
 -- check installation
