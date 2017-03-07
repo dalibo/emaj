@@ -2258,7 +2258,7 @@ $emaj_alter_group$
       SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                            -- minus those already created
       ORDER BY 1
     ) AS t;
--- list all relations that do not belong to the tables group any more
+-- drop all relations that do not belong to the tables group any more
     FOR r_rel IN
       SELECT * FROM emaj.emaj_relation
         WHERE rel_group = v_groupName
@@ -2286,53 +2286,44 @@ $emaj_alter_group$
       v_nbDrop = v_nbDrop + 1;
     END LOOP;
 --
--- list relations that still belong to the tables group
+-- cleanup all remaining log tables
+    PERFORM emaj._reset_group(v_groupName);
+--
+-- list tables that still belong to the tables group but have their attributes changed in the emaj_group_def table
     FOR r_tblsq IN
-      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_table, rel_log_dat_tsp, rel_log_idx_tsp,
-             grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_emaj_names_prefix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+      SELECT rel_schema, rel_tblseq
         FROM emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
           AND rel_group = v_groupName
           AND grpdef_group = v_groupName
-      ORDER BY rel_priority, rel_schema, rel_tblseq
-      LOOP
--- now detect other changes that justify to drop and recreate the relation
+          AND rel_kind = 'r'
+          AND (
 -- detect if the log data tablespace in emaj_group_def has changed
-      IF   (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_dat_tsp,'') <> coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp,''))
-        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_dat_tsp IS NOT NULL)
+               coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp, v_defTsp,'')
 -- or if the log index tablespace in emaj_group_def has changed
-        OR (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_idx_tsp,'') <> coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp,''))
-        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_idx_tsp IS NOT NULL)
+            OR coalesce(rel_log_idx_tsp,'') <> coalesce(grpdef_log_idx_tsp, v_defTsp,'')
 -- or if the log schema in emaj_group_def has changed
-        OR (r_tblsq.rel_kind = 'r' AND r_tblsq.rel_log_schema <> (v_schemaPrefix || coalesce(r_tblsq.grpdef_log_schema_suffix, '')))
-        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_schema_suffix IS NOT NULL)
+            OR rel_log_schema <> (v_schemaPrefix || coalesce(grpdef_log_schema_suffix, ''))
 -- or if the emaj names prefix in emaj_group_def has changed (detected with the log table name)
-        OR (r_tblsq.rel_kind = 'r' AND
-            r_tblsq.rel_log_table <> (coalesce(r_tblsq.grpdef_emaj_names_prefix, r_tblsq.grpdef_schema || '_' || r_tblsq.grpdef_tblseq) || '_log'))
-        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_emaj_names_prefix IS NOT NULL) THEN
--- then drop the relation (it will be recreated later)
+            OR rel_log_table <> (coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log'))
+        ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
 -- get the related row in emaj_relation
-        SELECT * FROM emaj.emaj_relation WHERE rel_schema = r_tblsq.rel_schema AND rel_tblseq = r_tblsq.rel_tblseq INTO r_rel;
-        IF r_tblsq.rel_kind = 'r' THEN
--- if it is a table, delete the related emaj objects
-          PERFORM emaj._drop_tbl (r_rel);
-        ELSEIF r_tblsq.rel_kind = 'S' THEN
--- if it is a sequence, delete all related data from emaj_sequence table
-          PERFORM emaj._drop_seq (r_rel);
-        END IF;
-        v_nbDrop = v_nbDrop + 1;
--- other case ?
--- has the priority changed in emaj_group_def ? If yes, just report the change into emaj_relation
-      ELSEIF (r_tblsq.rel_priority IS NULL AND r_tblsq.grpdef_priority IS NOT NULL) OR
-             (r_tblsq.rel_priority IS NOT NULL AND r_tblsq.grpdef_priority IS NULL) OR
-             (r_tblsq.rel_priority <> r_tblsq.grpdef_priority) THEN
-        UPDATE emaj.emaj_relation SET rel_priority = r_tblsq.grpdef_priority
-          WHERE rel_schema = r_tblsq.grpdef_schema AND rel_tblseq = r_tblsq.grpdef_tblseq;
-      END IF;
+      SELECT * FROM emaj.emaj_relation WHERE rel_schema = r_tblsq.rel_schema AND rel_tblseq = r_tblsq.rel_tblseq INTO r_rel;
+-- then drop the relation (it will be recreated later)
+      PERFORM emaj._drop_tbl (r_rel);
+      v_nbDrop = v_nbDrop + 1;
     END LOOP;
+-- update the emaj_relation table to report the priorities that have ben changed in the emaj_group_def table
+    UPDATE emaj.emaj_relation SET rel_priority = grpdef_priority
+      FROM emaj.emaj_group_def
+      WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+        AND rel_group = v_groupName
+        AND grpdef_group = v_groupName
+        AND ( (rel_priority IS NULL AND grpdef_priority IS NOT NULL) OR
+              (rel_priority IS NOT NULL AND grpdef_priority IS NULL) OR
+              (rel_priority <> grpdef_priority) );
 --
--- cleanup all remaining log tables
-    PERFORM emaj._reset_group(v_groupName);
 -- drop useless log schemas, using the list of schemas to drop built previously
     IF v_logSchemasToDrop IS NOT NULL THEN
       FOREACH v_aLogSchema IN ARRAY v_logSchemasToDrop LOOP
