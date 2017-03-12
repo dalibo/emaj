@@ -34,7 +34,7 @@ Utiliser des tablespaces
 
 Positionner des tables sur des tablespaces permet de mieux maîtriser leur implantation sur les disques et ainsi de mieux répartir la charge d'accès à ces tables, pour peu que ces tablespaces soient physiquement implantés sur des disques ou systèmes de fichiers dédiés. Pour minimiser les perturbations que les accès aux tables de log peuvent causer aux accès aux tables applicatives, l'administrateur E-Maj dispose de deux moyens d'utiliser des tablespaces pour stocker les tables et index de log.
 
-En créant un tablespace nommé *tspemaj* avant la création des groupes de tables, les tables de log seront créées par défaut dans ce tablespace, sans autre paramétrage.
+En positionnant un tablespace par défaut pour sa session courante avant la création des groupes de tables, les tables de log seront créées par défaut dans ce tablespace, sans autre paramétrage.
 
 Mais, au travers de paramètres positionnés dans la table :ref:`emaj_group_def <emaj_group_def>`, il est également possible de spécifier, pour chaque table et index de log, un tablespace à utiliser.
 

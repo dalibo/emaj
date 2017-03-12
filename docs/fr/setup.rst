@@ -20,13 +20,10 @@ L’extension **dblink**, fournie avec PostgreSQL, est utilisée lors des opéra
 Tablespace
 ^^^^^^^^^^
 
-Optionnellement, on peut créer un tablespace nommé **tspemaj**. S'il existe, les tables et index créés par E-Maj seront implantés dans ce tablespace, sauf :ref:`paramétrage spécifique des groupes de tables <emaj_group_def>`. Une fois créé, ce tablespace est partagé par toutes les bases de données du cluster PostgreSQL. 
+Optionnellement, si l’administrateur E-Maj veut stocker les tables techniques dans un **tablespace dédié**, il peut le créer si besoin et le définir comme tablespace par défaut pour la session ::
 
-Pour créer un tablespace *tspemaj*, il faut d'abord créer l'espace de stockage qui sera associé, un répertoire pour Unix/Linux ou un dossier pour Windows, en le laissant vide de tout fichier. Puis il faut exécuter la commande SQL suivante ::
+   SET default_tablespace = <nom.tablespace>;
 
-   CREATE TABLESPACE tspemaj LOCATION '<localisation.du.tablespace>';
-
-Pour des questions de performance, il est recommandé dans un environnement de production d'implanter le tablespace *tspemaj* sur un espace disque distinct de celui qui supporte les tables applicatives.
 
 Installation des composants E-Maj
 ---------------------------------

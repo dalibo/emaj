@@ -31,7 +31,7 @@ Saving and restoring the database
 File level saves and restores
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When saving or restoring clusters at file level, it is essential to save or restore **ALL** cluster files. This includes of course all files from the *tspemaj* tablespace, if it exists.
+When saving or restoring clusters at file level, it is essential to save or restore **ALL** cluster files, including those stored on dedicated tablespaces.
 
 After a file level restore, tables groups are in the very same state as at the save time, and the database activity can be restarted without any particular E-Maj operation.
 

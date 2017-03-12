@@ -6,9 +6,8 @@
 -- This script is automatically called by a "CREATE EXTENSION emaj;" statement in postgres 9.1+.
 --
 -- This script must be executed by a role having SUPERUSER privileges.
--- The current cluster may already contain a tablespace named "tspemaj" to hold E-Maj files,
---   for instance previously created by a statement like:
---   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
+-- The E-Maj technical tables will be installed into the default tablespace.
+-- The user executing the installation may set it to a particular value using a "set default_tablespace to <name>;" statement.
 -- The emaj extension also installs the dblink extension into the database if it is not already installed.
 
 -- complain if this script is executed in psql, rather than via a CREATE EXTENSION statement
@@ -17,8 +16,7 @@
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 
--- create emaj roles
--- and set tspemaj as current_tablespace if exists
+-- perform some checks and create emaj roles
 DO LANGUAGE plpgsql
 $do$
   DECLARE
@@ -48,14 +46,6 @@ $do$
       CREATE ROLE emaj_viewer;
       COMMENT ON ROLE emaj_viewer IS
         $$This role may be granted to other roles allowed to view E-Maj objects content.$$;
-    END IF;
--- if tspemaj tablespace exists,
---   use it as default_tablespace for emaj tables creation
---   and grant the create rights on it to emaj_adm
-    PERFORM 0 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
-    IF FOUND THEN
-      SET LOCAL default_tablespace TO tspemaj;
-      GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
     END IF;
 --
     RETURN;
@@ -1036,11 +1026,11 @@ $_drop_log_schema$;
 --                                               --
 ---------------------------------------------------
 
-CREATE OR REPLACE FUNCTION emaj._create_tbl(r_grpdef emaj.emaj_group_def, v_groupName TEXT, v_isRollbackable BOOLEAN, v_defTsp TEXT)
+CREATE OR REPLACE FUNCTION emaj._create_tbl(r_grpdef emaj.emaj_group_def, v_groupName TEXT, v_isRollbackable BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table
--- Input: the emaj_group_def row related to the application table to process, the group name, a boolean indicating whether the group is rollbackable, and the default tablespace to use if no specific tablespace is set for this application table
+-- Input: the emaj_group_def row related to the application table to process, the group name, a boolean indicating whether the group is rollbackable
 -- Are created in the log schema:
 --    - the associated log table, with its own sequence
 --    - the function that logs the tables updates, defined as a trigger
@@ -1059,8 +1049,6 @@ $_create_tbl$
     v_logIdxName             TEXT;
     v_logFnctName            TEXT;
     v_sequenceName           TEXT;
-    v_logDatTsp              TEXT;
-    v_logIdxTsp              TEXT;
     v_dataTblSpace           TEXT;
     v_idxTblSpace            TEXT;
     v_colList                TEXT;
@@ -1085,10 +1073,8 @@ $_create_tbl$
     v_logFnctName      = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogFnctName);
     v_sequenceName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseSequenceName);
 -- prepare TABLESPACE clauses for data and index
-    v_logDatTsp = coalesce(r_grpdef.grpdef_log_dat_tsp, v_defTsp);
-    v_logIdxTsp = coalesce(r_grpdef.grpdef_log_idx_tsp, v_defTsp);
-    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logDatTsp),'');
-    v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logIdxTsp),'');
+    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(r_grpdef.grpdef_log_dat_tsp),'');
+    v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(r_grpdef.grpdef_log_idx_tsp),'');
 -- Build some pieces of SQL statements that will be needed at table rollback time
 --   build the tables's columns list
     SELECT string_agg(col_name, ',') INTO v_colList FROM (
@@ -1188,7 +1174,7 @@ $_create_tbl$
                 rel_log_index, rel_log_sequence, rel_log_function,
                 rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions)
         VALUES (r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq, r_grpdef.grpdef_group, r_grpdef.grpdef_priority, v_logSchema,
-                v_logDatTsp, v_logIdxTsp, 'r', v_baseLogTableName,
+                r_grpdef.grpdef_log_dat_tsp, r_grpdef.grpdef_log_idx_tsp, 'r', v_baseLogTableName,
                 v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName,
                 v_colList, v_pkColList, v_pkCondList);
 --
@@ -1939,7 +1925,6 @@ $emaj_create_group$
     v_nbTbl                  INT = 0;
     v_nbSeq                  INT = 0;
     v_schemaPrefix           TEXT = 'emaj';
-    v_defTsp                 TEXT;
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
     r_schema                 RECORD;
   BEGIN
@@ -1984,8 +1969,6 @@ $emaj_create_group$
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
         VALUES ('CREATE_GROUP','SCHEMA CREATED',quote_ident(r_schema.log_schema));
     END LOOP;
--- define the default tablespace, NULL if tspemaj tablespace doesn't exist
-    SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
 -- get and process all tables of the group (in priority order, NULLS being processed last)
     FOR r_grpdef IN
         SELECT emaj.emaj_group_def.*
@@ -1996,7 +1979,7 @@ $emaj_create_group$
             AND relkind = 'r'
           ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
         LOOP
-      PERFORM emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp);
+      PERFORM emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable);
       v_nbTbl = v_nbTbl + 1;
     END LOOP;
 -- get and process all sequences of the group (in priority order, NULLS being processed last)
@@ -2197,7 +2180,6 @@ $emaj_alter_group$
     v_logSchemasToDrop       TEXT[];
     v_logSchemasToCreate     TEXT[];
     v_aLogSchema             TEXT;
-    v_defTsp                 TEXT;
     v_eventTriggers          TEXT[];
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
     r_rel                    emaj.emaj_relation%ROWTYPE;
@@ -2227,8 +2209,6 @@ $emaj_alter_group$
 -- OK
 -- get the time stamp of the operation
     SELECT emaj._set_time_stamp('A') INTO v_timeId;
--- define the default tablespace, NULL if tspemaj tablespace doesn't exist
-    SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- We can now process:
@@ -2299,9 +2279,9 @@ $emaj_alter_group$
           AND rel_kind = 'r'
           AND (
 -- detect if the log data tablespace in emaj_group_def has changed
-               coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp, v_defTsp,'')
+               coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp,'')
 -- or if the log index tablespace in emaj_group_def has changed
-            OR coalesce(rel_log_idx_tsp,'') <> coalesce(grpdef_log_idx_tsp, v_defTsp,'')
+            OR coalesce(rel_log_idx_tsp,'') <> coalesce(grpdef_log_idx_tsp,'')
 -- or if the log schema in emaj_group_def has changed
             OR rel_log_schema <> (v_schemaPrefix || coalesce(grpdef_log_schema_suffix, ''))
 -- or if the emaj names prefix in emaj_group_def has changed (detected with the log table name)
@@ -2358,7 +2338,7 @@ $emaj_alter_group$
           AND relkind = 'r'
       ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
       LOOP
-      PERFORM emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp);
+      PERFORM emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable);
       v_nbCreate = v_nbCreate + 1;
     END LOOP;
 -- get and process new sequences in the tables group (really new or intentionaly dropped in the preceeding steps)

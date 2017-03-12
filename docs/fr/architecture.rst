@@ -109,11 +109,7 @@ Par défaut, tous les objets liés aux groupes de tables sont créés dans le sc
 Les tablespaces utilisés
 ************************
 
-E-Maj propose trois façons d'utiliser des **tablespaces**.
+Lors de l'installation de l'extension, les tables techniques E-Maj sont stockées dans le tablespace par défaut, positionné au niveau de l’instance ou de la database ou explicitement défini pour la session courante.
 
-Lors de l'installation de l'extension et lors de la création des tables de log, E-Maj peut utiliser le tablespace par défaut.
-
-Mais il est également possible de créer un tablespace dédié nommé *tspemaj*. S'il existe lors de l'installation ou de la création des tables de log, il sera utilisé comme support des tables créées.
-
-Au travers du :ref:`paramétrage des groupes de tables <emaj_group_def>`, il est aussi possible de créer les tables de log et leur index dans des tablespaces spécifiques.
+Il en est de même pour les tables de log et leur index. Mais au travers du :ref:`paramétrage des groupes de tables <emaj_group_def>`, il est aussi possible de créer les tables de log et leur index dans des tablespaces spécifiques.
 

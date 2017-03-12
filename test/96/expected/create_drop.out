@@ -52,17 +52,17 @@ select emaj.emaj_disable_protection_by_event_triggers();
 -- invalid group names
 select emaj.emaj_create_group(NULL);
 ERROR:  emaj_create_group: group name can't be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 20 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 19 at RAISE
 select emaj.emaj_create_group('',false);
 ERROR:  emaj_create_group: group name can't be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 20 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 19 at RAISE
 -- group is unknown in emaj_group_def
 select emaj.emaj_create_group('unknownGroup');
 ERROR:  emaj_create_group: group "unknownGroup" is unknown in emaj_group_def table.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 25 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 24 at RAISE
 select emaj.emaj_create_group('unknownGroup',false);
 ERROR:  emaj_create_group: group "unknownGroup" is unknown in emaj_group_def table.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 25 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 24 at RAISE
 -- unknown schema or table in emaj_group_def
 select emaj.emaj_create_group('dummyGrp1');
 WARNING:  _check_groups_content: Error, the table or sequence "dummySchema".mytbl4 does not exist.
@@ -70,7 +70,7 @@ WARNING:  _check_groups_content: Error, the table or sequence myschema1."dummyTa
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 -- group with a temp table
 begin;
   CREATE TEMPORARY TABLE myTempTbl (
@@ -85,7 +85,7 @@ WARNING:  _check_groups_content: Error, the table pg_temp_2.mytemptbl is a TEMPO
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 rollback;
 -- group with an unlogged table
 begin;
@@ -95,7 +95,7 @@ WARNING:  _check_groups_content: Error, the table myschema5.myunloggedtbl is an 
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 rollback;
 -- group with a WITH OIDS table
 begin;
@@ -105,7 +105,7 @@ WARNING:  _check_groups_content: Error, the table myschema5.myoidstbl is declare
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
@@ -113,7 +113,7 @@ WARNING:  _check_groups_content: Error, the table "phil's schema3"."myTbl2\" has
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 -- sequence with a log schema suffix defined in the emaj_group_def table
 begin;
   update emaj.emaj_group_def set grpdef_log_schema_suffix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -122,7 +122,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 rollback;
 -- sequence with an emaj names prefix defined in the emaj_group_def table
 begin;
@@ -132,7 +132,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 rollback;
 -- sequence with tablespaces defined in the emaj_group_def table
 begin;
@@ -143,7 +143,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 rollback;
 -- table with invalid tablespace
 begin;
@@ -151,9 +151,9 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 ERROR:  tablespace "dummyTablespace" does not exist
 CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log (LIKE myschema1.mytbl1) TABLESPACE "dummyTablespace""
-PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,text,boolean,text) line 71 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,text,boolean) line 67 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 65 at PERFORM
 rollback;
 -- already existing secondary schema
 begin;
@@ -162,7 +162,7 @@ begin;
 ERROR:  _create_log_schema: schema "emajb" should not exist. Drop it manually, or modify emaj_group_def table's content.
 CONTEXT:  PL/pgSQL function emaj._create_log_schema(text) line 10 at RAISE
 SQL statement "SELECT emaj._create_log_schema(r_schema.log_schema)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 51 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 50 at PERFORM
 rollback;
 -- conflict on emaj names prefix inside the group to create
 begin;
@@ -175,7 +175,7 @@ WARNING:  _check_groups_content: Error, the emaj prefix "samePrefix" is configur
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 rollback;
 -- conflict on emaj names prefix with already create groups
 begin;
@@ -195,7 +195,7 @@ WARNING:  _check_groups_content: Error, the emaj prefix "samePrefix" is already 
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 rollback;
 -- mix a lot of errors
 begin;
@@ -212,7 +212,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
@@ -278,7 +278,7 @@ WARNING:  _check_groups_content: Error, the table or sequence "emajC"."myschema1
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 -- create a group with a table already belonging to another group
 select emaj.emaj_create_group('dummyGrp3');
 WARNING:  _check_groups_content: Error, the table or sequence myschema1.mytbl1 belongs to another group (myGroup1).
@@ -288,11 +288,11 @@ WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl2" is al
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
 -- already created
 select emaj.emaj_create_group('myGroup2');
 ERROR:  emaj_create_group: group "myGroup2" is already created.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 29 at RAISE
 -- impact of created groups
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  nspname  
@@ -318,60 +318,60 @@ select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, r
    rel_schema   |    rel_tblseq     |    rel_group     | rel_kind | rel_priority | rel_log_schema |         rel_log_table          | rel_log_dat_tsp |           rel_log_index            | rel_log_idx_tsp |          rel_log_sequence          |          rel_log_function           |                       rel_sql_columns                       |      rel_sql_pk_columns       |                               rel_sql_pk_eq_conditions                                
 ----------------+-------------------+------------------+----------+--------------+----------------+--------------------------------+-----------------+------------------------------------+-----------------+------------------------------------+-------------------------------------+-------------------------------------------------------------+-------------------------------+---------------------------------------------------------------------------------------
  myschema1      | myTbl3_col31_seq  | myGroup1         | S        |            1 |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
- myschema1      | myTbl3            | myGroup1         | r        |           10 | emajC          | myschema1_myTbl3_log           | tsplog1         | myschema1_myTbl3_log_idx           | tspemaj         | myschema1_myTbl3_log_seq           | myschema1_myTbl3_log_fnct           | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31
- myschema1      | mytbl1            | myGroup1         | r        |           20 | emaj           | myschema1_mytbl1_log           | tspemaj         | myschema1_mytbl1_log_idx           | tspemaj         | myschema1_mytbl1_log_seq           | myschema1_mytbl1_log_fnct           | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12
+ myschema1      | myTbl3            | myGroup1         | r        |           10 | emajC          | myschema1_myTbl3_log           | tsplog1         | myschema1_myTbl3_log_idx           |                 | myschema1_myTbl3_log_seq           | myschema1_myTbl3_log_fnct           | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31
+ myschema1      | mytbl1            | myGroup1         | r        |           20 | emaj           | myschema1_mytbl1_log           |                 | myschema1_mytbl1_log_idx           |                 | myschema1_mytbl1_log_seq           | myschema1_mytbl1_log_fnct           | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12
  myschema1      | mytbl4            | myGroup1         | r        |           20 | emaj           | myschema1_mytbl4_log           | tsplog1         | myschema1_mytbl4_log_idx           | tsp log'2       | myschema1_mytbl4_log_seq           | myschema1_mytbl4_log_fnct           | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45           | col41                         | tbl.col41 = keys.col41
  myschema1      | mytbl2            | myGroup1         | r        |              | emaj           | myschema1_mytbl2_log           | tsplog1         | myschema1_mytbl2_log_idx           | tsplog1         | myschema1_mytbl2_log_seq           | myschema1_mytbl2_log_fnct           | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21
  myschema1      | mytbl2b           | myGroup1         | r        |              | emajb          | myschema1_mytbl2b_log          | tsp log'2       | myschema1_mytbl2b_log_idx          | tsp log'2       | myschema1_mytbl2b_log_seq          | myschema1_mytbl2b_log_fnct          | tbl.col20,tbl.col21                                         | col20                         | tbl.col20 = keys.col20
  myschema2      | myseq1            | myGroup2         | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
- myschema2      | mytbl1            | myGroup2         | r        |              | emaj           | myschema2_mytbl1_log           | tspemaj         | myschema2_mytbl1_log_idx           | tspemaj         | myschema2_mytbl1_log_seq           | myschema2_mytbl1_log_fnct           | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12
- myschema2      | mytbl2            | myGroup2         | r        |              | emaj           | myschema2_mytbl2_log           | tspemaj         | myschema2_mytbl2_log_idx           | tspemaj         | myschema2_mytbl2_log_seq           | myschema2_mytbl2_log_fnct           | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21
- myschema2      | myTbl3            | myGroup2         | r        |              | emajC          | myschema2_myTbl3_log           | tspemaj         | myschema2_myTbl3_log_idx           | tspemaj         | myschema2_myTbl3_log_seq           | myschema2_myTbl3_log_fnct           | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31
+ myschema2      | mytbl1            | myGroup2         | r        |              | emaj           | myschema2_mytbl1_log           |                 | myschema2_mytbl1_log_idx           |                 | myschema2_mytbl1_log_seq           | myschema2_mytbl1_log_fnct           | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12
+ myschema2      | mytbl2            | myGroup2         | r        |              | emaj           | myschema2_mytbl2_log           |                 | myschema2_mytbl2_log_idx           |                 | myschema2_mytbl2_log_seq           | myschema2_mytbl2_log_fnct           | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21
+ myschema2      | myTbl3            | myGroup2         | r        |              | emajC          | myschema2_myTbl3_log           |                 | myschema2_myTbl3_log_idx           |                 | myschema2_myTbl3_log_seq           | myschema2_myTbl3_log_fnct           | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31
  myschema2      | myTbl3_col31_seq  | myGroup2         | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
- myschema2      | mytbl4            | myGroup2         | r        |              | emaj           | myschema2_mytbl4_log           | tspemaj         | myschema2_mytbl4_log_idx           | tspemaj         | myschema2_mytbl4_log_seq           | myschema2_mytbl4_log_fnct           | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45           | col41                         | tbl.col41 = keys.col41
- myschema2      | mytbl5            | myGroup2         | r        |              | emaj           | otherPrefix4mytbl5_log         | tspemaj         | otherPrefix4mytbl5_log_idx         | tspemaj         | otherPrefix4mytbl5_log_seq         | otherPrefix4mytbl5_log_fnct         | tbl.col51,tbl.col52,tbl.col53,tbl.col54                     | col51                         | tbl.col51 = keys.col51
- myschema2      | mytbl6            | myGroup2         | r        |              | emaj           | myschema2_mytbl6_log           | tspemaj         | myschema2_mytbl6_log_idx           | tspemaj         | myschema2_mytbl6_log_seq           | myschema2_mytbl6_log_fnct           | tbl.col61,tbl.col62,tbl.col63,tbl.col64,tbl.col65,tbl.col66 | col61                         | tbl.col61 = keys.col61
- myschema4      | mytblc1           | myGroup4         | r        |              | emaj           | myschema4_mytblc1_log          | tspemaj         | myschema4_mytblc1_log_idx          | tspemaj         | myschema4_mytblc1_log_seq          | myschema4_mytblc1_log_fnct          | tbl.col1,tbl.col2,tbl.col3                                  | col1,col2                     | tbl.col1 = keys.col1 AND tbl.col2 = keys.col2
- myschema4      | mytblc2           | myGroup4         | r        |              | emaj           | myschema4_mytblc2_log          | tspemaj         | myschema4_mytblc2_log_idx          | tspemaj         | myschema4_mytblc2_log_seq          | myschema4_mytblc2_log_fnct          | tbl.col1,tbl.col2,tbl.col3                                  | col1,col2                     | tbl.col1 = keys.col1 AND tbl.col2 = keys.col2
- myschema4      | mytblm            | myGroup4         | r        |              | emaj           | myschema4_mytblm_log           | tspemaj         | myschema4_mytblm_log_idx           | tspemaj         | myschema4_mytblm_log_seq           | myschema4_mytblm_log_fnct           | tbl.col1,tbl.col2,tbl.col3                                  | col1                          | tbl.col1 = keys.col1
- phil's schema3 | myTbl2\           | phil's group#3", | r        |              | emaj           | phil's schema3_myTbl2\_log     | tspemaj         | phil's schema3_myTbl2\_log_idx     | tspemaj         | phil's schema3_myTbl2\_log_seq     | phil's schema3_myTbl2\_log_fnct     | tbl.col21,tbl.col22,tbl.col23                               |                               | 
+ myschema2      | mytbl4            | myGroup2         | r        |              | emaj           | myschema2_mytbl4_log           |                 | myschema2_mytbl4_log_idx           |                 | myschema2_mytbl4_log_seq           | myschema2_mytbl4_log_fnct           | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45           | col41                         | tbl.col41 = keys.col41
+ myschema2      | mytbl5            | myGroup2         | r        |              | emaj           | otherPrefix4mytbl5_log         |                 | otherPrefix4mytbl5_log_idx         |                 | otherPrefix4mytbl5_log_seq         | otherPrefix4mytbl5_log_fnct         | tbl.col51,tbl.col52,tbl.col53,tbl.col54                     | col51                         | tbl.col51 = keys.col51
+ myschema2      | mytbl6            | myGroup2         | r        |              | emaj           | myschema2_mytbl6_log           |                 | myschema2_mytbl6_log_idx           |                 | myschema2_mytbl6_log_seq           | myschema2_mytbl6_log_fnct           | tbl.col61,tbl.col62,tbl.col63,tbl.col64,tbl.col65,tbl.col66 | col61                         | tbl.col61 = keys.col61
+ myschema4      | mytblc1           | myGroup4         | r        |              | emaj           | myschema4_mytblc1_log          |                 | myschema4_mytblc1_log_idx          |                 | myschema4_mytblc1_log_seq          | myschema4_mytblc1_log_fnct          | tbl.col1,tbl.col2,tbl.col3                                  | col1,col2                     | tbl.col1 = keys.col1 AND tbl.col2 = keys.col2
+ myschema4      | mytblc2           | myGroup4         | r        |              | emaj           | myschema4_mytblc2_log          |                 | myschema4_mytblc2_log_idx          |                 | myschema4_mytblc2_log_seq          | myschema4_mytblc2_log_fnct          | tbl.col1,tbl.col2,tbl.col3                                  | col1,col2                     | tbl.col1 = keys.col1 AND tbl.col2 = keys.col2
+ myschema4      | mytblm            | myGroup4         | r        |              | emaj           | myschema4_mytblm_log           |                 | myschema4_mytblm_log_idx           |                 | myschema4_mytblm_log_seq           | myschema4_mytblm_log_fnct           | tbl.col1,tbl.col2,tbl.col3                                  | col1                          | tbl.col1 = keys.col1
+ phil's schema3 | myTbl2\           | phil's group#3", | r        |              | emaj           | phil's schema3_myTbl2\_log     |                 | phil's schema3_myTbl2\_log_idx     |                 | phil's schema3_myTbl2\_log_seq     | phil's schema3_myTbl2\_log_fnct     | tbl.col21,tbl.col22,tbl.col23                               |                               | 
  phil's schema3 | myTbl2\_col21_seq | phil's group#3", | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
  phil's schema3 | phil's seq\1      | phil's group#3", | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
- phil's schema3 | phil's tbl1       | phil's group#3", | r        |              | emaj #'3       | phil's schema3_phil's tbl1_log | tspemaj         | phil's schema3_phil's tbl1_log_idx | tspemaj         | phil's schema3_phil's tbl1_log_seq | phil's schema3_phil's tbl1_log_fnct | tbl."phil's col11",tbl."phil's col12",tbl."phil\s col13"    | "phil's col11","phil's col12" | tbl."phil's col11" = keys."phil's col11" AND tbl."phil's col12" = keys."phil's col12"
+ phil's schema3 | phil's tbl1       | phil's group#3", | r        |              | emaj #'3       | phil's schema3_phil's tbl1_log |                 | phil's schema3_phil's tbl1_log_idx |                 | phil's schema3_phil's tbl1_log_seq | phil's schema3_phil's tbl1_log_fnct | tbl."phil's col11",tbl."phil's col12",tbl."phil\s col13"    | "phil's col11","phil's col12" | tbl."phil's col11" = keys."phil's col11" AND tbl."phil's col12" = keys."phil's col12"
 (21 rows)
 
 select * from pg_tables where schemaname like 'emaj%' order by tablename;
  schemaname |           tablename            | tableowner | tablespace | hasindexes | hasrules | hastriggers | rowsecurity 
 ------------+--------------------------------+------------+------------+------------+----------+-------------+-------------
- emaj       | emaj_group                     | postgres   | tspemaj    | t          | f        | t           | f
- emaj       | emaj_group_def                 | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | emaj_hist                      | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | emaj_mark                      | postgres   | tspemaj    | t          | f        | t           | f
- emaj       | emaj_param                     | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | emaj_relation                  | postgres   | tspemaj    | t          | f        | t           | f
- emaj       | emaj_rlbk                      | postgres   | tspemaj    | t          | f        | t           | f
- emaj       | emaj_rlbk_plan                 | postgres   | tspemaj    | t          | f        | t           | f
- emaj       | emaj_rlbk_session              | postgres   | tspemaj    | t          | f        | t           | f
- emaj       | emaj_rlbk_stat                 | postgres   | tspemaj    | t          | f        | t           | f
- emaj       | emaj_seq_hole                  | postgres   | tspemaj    | t          | f        | t           | f
- emaj       | emaj_sequence                  | postgres   | tspemaj    | t          | f        | t           | f
- emaj       | emaj_time_stamp                | postgres   | tspemaj    | t          | f        | t           | f
+ emaj       | emaj_group                     | postgres   |            | t          | f        | t           | f
+ emaj       | emaj_group_def                 | postgres   |            | t          | f        | f           | f
+ emaj       | emaj_hist                      | postgres   |            | t          | f        | f           | f
+ emaj       | emaj_mark                      | postgres   |            | t          | f        | t           | f
+ emaj       | emaj_param                     | postgres   |            | t          | f        | f           | f
+ emaj       | emaj_relation                  | postgres   |            | t          | f        | t           | f
+ emaj       | emaj_rlbk                      | postgres   |            | t          | f        | t           | f
+ emaj       | emaj_rlbk_plan                 | postgres   |            | t          | f        | t           | f
+ emaj       | emaj_rlbk_session              | postgres   |            | t          | f        | t           | f
+ emaj       | emaj_rlbk_stat                 | postgres   |            | t          | f        | t           | f
+ emaj       | emaj_seq_hole                  | postgres   |            | t          | f        | t           | f
+ emaj       | emaj_sequence                  | postgres   |            | t          | f        | t           | f
+ emaj       | emaj_time_stamp                | postgres   |            | t          | f        | t           | f
  emajC      | myschema1_myTbl3_log           | postgres   | tsplog1    | t          | f        | f           | f
- emaj       | myschema1_mytbl1_log           | postgres   | tspemaj    | t          | f        | f           | f
+ emaj       | myschema1_mytbl1_log           | postgres   |            | t          | f        | f           | f
  emaj       | myschema1_mytbl2_log           | postgres   | tsplog1    | t          | f        | f           | f
  emajb      | myschema1_mytbl2b_log          | postgres   | tsp log'2  | t          | f        | f           | f
  emaj       | myschema1_mytbl4_log           | postgres   | tsplog1    | t          | f        | f           | f
- emajC      | myschema2_myTbl3_log           | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | myschema2_mytbl1_log           | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | myschema2_mytbl2_log           | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | myschema2_mytbl4_log           | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | myschema2_mytbl6_log           | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | myschema4_mytblc1_log          | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | myschema4_mytblc2_log          | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | myschema4_mytblm_log           | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | otherPrefix4mytbl5_log         | postgres   | tspemaj    | t          | f        | f           | f
- emaj       | phil's schema3_myTbl2\_log     | postgres   | tspemaj    | t          | f        | f           | f
- emaj #'3   | phil's schema3_phil's tbl1_log | postgres   | tspemaj    | t          | f        | f           | f
+ emajC      | myschema2_myTbl3_log           | postgres   |            | t          | f        | f           | f
+ emaj       | myschema2_mytbl1_log           | postgres   |            | t          | f        | f           | f
+ emaj       | myschema2_mytbl2_log           | postgres   |            | t          | f        | f           | f
+ emaj       | myschema2_mytbl4_log           | postgres   |            | t          | f        | f           | f
+ emaj       | myschema2_mytbl6_log           | postgres   |            | t          | f        | f           | f
+ emaj       | myschema4_mytblc1_log          | postgres   |            | t          | f        | f           | f
+ emaj       | myschema4_mytblc2_log          | postgres   |            | t          | f        | f           | f
+ emaj       | myschema4_mytblm_log           | postgres   |            | t          | f        | f           | f
+ emaj       | otherPrefix4mytbl5_log         | postgres   |            | t          | f        | f           | f
+ emaj       | phil's schema3_myTbl2\_log     | postgres   |            | t          | f        | f           | f
+ emaj #'3   | phil's schema3_phil's tbl1_log | postgres   |            | t          | f        | f           | f
 (29 rows)
 
 -----------------------------
@@ -537,10 +537,10 @@ select emaj.emaj_force_drop_group('myGroup2');
 -- unknown group
 select emaj.emaj_alter_group(NULL);
 ERROR:  emaj_alter_group: group "<NULL>" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 36 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 35 at RAISE
 select emaj.emaj_alter_group('unkownGroup');
 ERROR:  emaj_alter_group: group "unkownGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 36 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 35 at RAISE
 -- group in logging state
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
@@ -557,7 +557,7 @@ select emaj.emaj_start_group('myGroup1','');
 
 select emaj.emaj_alter_group('myGroup1');
 ERROR:  emaj_alter_group: The group "myGroup1" cannot be altered because it is in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 40 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 39 at RAISE
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
@@ -581,14 +581,14 @@ WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl1" is al
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_alter_group(text) line 48 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 47 at PERFORM
 rollback;
 -- the group is now empty
 begin;
   delete from emaj.emaj_group_def where grpdef_group = 'myGroup1';
   select emaj.emaj_alter_group('myGroup1');
 ERROR:  emaj_alter_group: Group "myGroup1" is unknown in emaj_group_def table.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 44 at RAISE
 rollback;
 -- schema suffix cannot be changed for sequence
 begin;
@@ -598,7 +598,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_alter_group(text) line 48 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 47 at PERFORM
 rollback;
 -- object names prefix cannot be changed for sequence
 begin;
@@ -608,7 +608,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_alter_group(text) line 48 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 47 at PERFORM
 rollback;
 -- log tablespace cannot be changed for sequence
 begin;
@@ -618,7 +618,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_alter_group(text) line 48 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 47 at PERFORM
 rollback;
 begin;
   update emaj.emaj_group_def set grpdef_log_idx_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -627,7 +627,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 169 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_alter_group(text) line 48 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text) line 47 at PERFORM
 rollback;
 -- should be OK
 -- nothing to change
@@ -805,8 +805,7 @@ select emaj.emaj_alter_group('myGroup1');
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
  spcname 
 ---------
- tspemaj
-(1 row)
+(0 rows)
 
 update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 select emaj.emaj_alter_group('myGroup1');
@@ -849,8 +848,7 @@ select emaj.emaj_alter_group('myGroup1');
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log_idx';
  spcname 
 ---------
- tspemaj
-(1 row)
+(0 rows)
 
 update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 select emaj.emaj_alter_group('myGroup1');

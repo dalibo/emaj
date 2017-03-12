@@ -36,9 +36,17 @@ drop role emaj_regression_tests_viewer_user;
 -----------------------------
 drop role emaj_regression_tests_anonym_user;
 -----------------------------
--- reset tspemaj tablespace to its right name if it has been changed by installation script  
+-- rename the tspemaj tablespace if it exists
 -----------------------------
-alter tablespace tspemaj_renamed rename to tspemaj;
+DO LANGUAGE plpgsql
+$$
+  BEGIN
+    PERFORM 0 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
+    IF FOUND THEN
+      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
+    END IF;
+  END;
+$$;
 --------------------------------------------
 -- Dump the regression database (once the test roles have been dropped)
 --------------------------------------------

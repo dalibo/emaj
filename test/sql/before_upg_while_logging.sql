@@ -36,6 +36,11 @@ insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
 
 -----------------------------
+-- set the default_tablespace parameter to tspemaj to log tables and indexes into this tablespace
+-----------------------------
+SET default_tablespace TO tspemaj;
+
+-----------------------------
 -- create and start groups
 -----------------------------
 select emaj.emaj_create_group('myGroup1');

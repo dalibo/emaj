@@ -6,17 +6,10 @@
 CREATE EXTENSION dblink;
 
 -----------------------------
--- for postgres cluster 9.1 and 9.4, temporarily rename tspemaj tablespace to test both cases
+-- set the default_tablespace parameter to tspemaj to store new technical tables into this tablespace
 -----------------------------
-DO LANGUAGE plpgsql 
-$$
-  DECLARE
-  BEGIN
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('9.1', '9.4') THEN
-      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
-    END IF;
-  END;
-$$;
+ALTER TABLESPACE tspemaj_renamed RENAME TO tspemaj;
+SET default_tablespace TO tspemaj;
 
 ------------------------------------------------------------
 -- emaj installation in 2.0.1 as extension

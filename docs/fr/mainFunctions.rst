@@ -86,11 +86,9 @@ Deux tables différentes ne peuvent pas, explicitement ou implicitement, partage
 
 Pour les séquences, la colonne *grpdef_emaj_names_prefix* doit rester *NULL*.
 
-Pour optimiser les performances des installations E-Maj comportant un très grand nombre de tables, il peut s'avérer intéressant de répartir les tables de log et leur index dans plusieurs tablespaces  La colonne **grpdef_log_dat_tsp** sert à spécifier le nom du tablespace à utiliser pour la table de log d'une table applicative. De la même manière, la colonne **grpdef_log_idx_tsp** sert à spécifier le nom du tablespace à utiliser pour l'index de la table de log. 
+Pour optimiser les performances des installations E-Maj comportant un très grand nombre de tables, il peut s'avérer intéressant de répartir les tables de log et leur index dans plusieurs tablespaces. La colonne **grpdef_log_dat_tsp** sert à spécifier le nom du tablespace à utiliser pour la table de log d'une table applicative. De la même manière, la colonne **grpdef_log_idx_tsp** sert à spécifier le nom du tablespace à utiliser pour l'index de la table de log. 
 
-Si une colonne *grpdef_log_dat_tsp* ou *grpdef_log_idx_tsp* contient une valeur *NULL* (valeur par défaut), le tablespace utilisé lors de la création du groupe sera *tspemaj*, s'il existe, ou le tablespace par défaut de la session courante.
-
-Si une colonne *grpdef_log_dat_tsp* ou *grpdef_log_idx_tsp* contient une valeur non nulle, le tablespace ainsi cité devra pré-exister au moment de la création du groupe.
+Si une colonne *grpdef_log_dat_tsp* ou *grpdef_log_idx_tsp* contient une valeur *NULL* (valeur par défaut), le tablespace par défaut de la session courante au moment de la création du groupe est utilisé.
 
 Pour les séquences, les colonnes *grpdef_log_dat_tsp* et *grpdef_log_idx_tsp* doivent rester NULL.
 

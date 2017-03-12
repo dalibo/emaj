@@ -87,10 +87,8 @@ For sequences, the *grpdef_emaj_names_prefix* column must be *NULL*.
 
 To optimize performances of E-Maj installations having a large number of tables, it may be useful to spread log tables and their index on several tablespaces. The **grpdef_log_dat_tsp** column specifies the name of the tablespace to use for the log table of an application table. Similarly, the **grpdef_log_idx_tsp** column specifies the name of the tablespace to use for the index of the log table.
 
-If a column *grpdef_log_dat_tsp* or *grpdef_log_idx_tsp* is *NULL* (default value), the tablespace that is used at tables group creation is either *tspemaj* if it exists or the default tablespace of the current session.
+If a column *grpdef_log_dat_tsp* or *grpdef_log_idx_tsp* is *NULL* (default value), the default tablespace of the current session at tables group creation is used.
 
-If a column *grpdef_log_dat_tsp* or *grpdef_log_idx_tsp* is not *NULL*, its value is used to define the tablespace to use at tables group creation.
- 
 For sequences, both *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns must be *NULL*.
 
 .. _emaj_create_group:

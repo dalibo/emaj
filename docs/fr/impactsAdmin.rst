@@ -32,7 +32,7 @@ Sauvegarde et restauration
 Sauvegarde et restauration au niveau fichier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Lors des sauvegardes ou des restauration des clusters au niveau fichier, il est essentiel de sauver ou restaurer **TOUS** les fichiers du cluster. Ceci inclut bien sûr les fichiers correspondant au tablespace *tspemaj*, s'il existe. 
+Lors des sauvegardes ou des restauration des clusters au niveau fichier, il est essentiel de sauver ou restaurer **TOUS** les fichiers du cluster, y compris ceux stockés sur des tablespaces dédiés.
 
 Après restauration des fichiers, les groupes de tables se retrouveront dans l'état dans lequel ils se trouvaient lors de la sauvegarde, et l'activité de la base de données peut reprendre sans opération E-Maj particulière.
 

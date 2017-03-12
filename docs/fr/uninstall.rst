@@ -25,14 +25,11 @@ Ce script effectue les actions suivantes :
 * il supprime l'extension et le schéma principal *emaj*,
 * il supprime les rôles *emaj_adm* et *emaj_viewer* s'ils ne sont pas associés à d'autres rôles ou à d'autres bases de données du cluster et ne possèdent pas de droits sur d'autres tables. 
 
-En revanche, s'ils existent, le tablespace *tspemaj* et les éventuels autres tablespaces créés pour supporter les tables de log ne sont PAS supprimés par le script.
-
 L'exécution du script de désinstallation affiche ceci ::
 
    $ psql ... -f sql/emaj_uninstall.sql 
    >>> Starting E-Maj uninstallation procedure...
    SET
-   psql:sql/emaj_uninstall.sql:203: WARNING:  emaj_uninstall: The tablespace tspemaj is not dropped by this script. If it is not used with other databases, you can drop it using a "DROP TABLESPACE tspemaj" statement.
    psql:sql/emaj_uninstall.sql:203: WARNING:  emaj_uninstall: emaj_adm and emaj_viewer roles have been dropped.
    DO
    SET

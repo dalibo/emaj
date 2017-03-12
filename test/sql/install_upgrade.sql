@@ -8,19 +8,6 @@
 CREATE EXTENSION IF NOT EXISTS dblink;
 
 -----------------------------
--- for postgres cluster 9.1 and 9.4, temporarily rename tspemaj tablespace to test both cases
------------------------------
-DO LANGUAGE plpgsql 
-$$
-  DECLARE
-  BEGIN
-    IF substring (version() from E'PostgreSQL\\s(\\d+\\.\\d+)') IN ('9.1', '9.4') THEN
-      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
-    END IF;
-  END;
-$$;
-
------------------------------
 -- check the extension's availability
 -----------------------------
 

@@ -131,4 +131,7 @@ The operation is very quick et does not alter tables groups. They may remain in 
 * updates on application tables can continue to be recorded during and after this version change,
 * a *rollback* on a mark set before the version change can also be performed after the migration.
 
+Version specific details:
+
+* when upgrading from version 2.0.1, the :ref:`emaj_group_def <emaj_group_def>` table may be modified to reflect the fact that the *tspemaj* tablespace is not automaticaly considered as a default tablespace anymore. If *tspemaj* was effectively used as default tablespace for created tables groups, the related *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns content of the *emaj_group_def* table is adjusted so that a future drop and recreate operation would store the log tables and indexes in the same tablespace. The administrator may review these changes to be sure they correspond to his expectations.
 

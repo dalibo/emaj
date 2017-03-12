@@ -30,7 +30,6 @@ $emaj_uninstall$
     v_dbList                TEXT;
     v_granteeRoleList       TEXT;
     v_granteeClassList      TEXT;
-    v_existTspemaj          BOOLEAN;
   BEGIN
 --
 -- Check the current role is superuser
@@ -105,12 +104,6 @@ $emaj_uninstall$
     REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_viewer;
     REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_adm;
     REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_adm;
---
--- Does tablespace tspemaj exist ? If yes, return a hint about its drop
-    SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj') INTO v_existTspemaj;
-    IF v_existTspemaj THEN
-      RAISE WARNING 'emaj_uninstall: The tablespace tspemaj is not dropped by this script. If it is not used with other databases, you can drop it using a "DROP TABLESPACE tspemaj" statement.';
-    END IF;
 --
 -- Check if emaj roles can be dropped
     v_roleToDrop = true;

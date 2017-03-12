@@ -33,7 +33,7 @@ Use tablespaces
 
 Creating tables into tablespaces located in dedicated disks or file systems is a way to more efficiently spread the access to these tables. To minimize the disturbance of application tables access by log tables access, the E-Maj administrator has two ways to use tablespaces for log tables and indexes location.
 
-By creating a tablespace named *tspemaj* before the tables groups creation, log tables are created by default into this tablespace, without any additional action.
+By setting a specific default tablespace for the session before the tables groups creation, log tables and indexes are created by default into this tablespace, without any additional action.
 
 But through parameters set into the :ref:`emaj_group_def <emaj_group_def>` table, it is also possible to specify a tablespace to use for any log table or log index.
 

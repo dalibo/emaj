@@ -1,6 +1,11 @@
 -- upgrade_while_logging.sql : Upgrade from E-Maj 1.3. to next_version while groups are in logging state.
 --
 -----------------------------
+-- set the default_tablespace parameter to tspemaj to store new technical tables into this tablespace
+-----------------------------
+SET default_tablespace TO tspemaj;
+
+-----------------------------
 -- emaj update to next_version
 -----------------------------
 --\! cp /usr/local/pg912/share/postgresql/extension/emaj.control.0.12.0 /usr/local/pg912/share/postgresql/extension/emaj.control
@@ -28,10 +33,16 @@ select relname from pg_catalog.pg_class,
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 
+-- check tables list
+\d emaj.*
+
 -----------------------------
 -- Check the tables and sequences after upgrade
 -----------------------------
 -- emaj tables and sequences
+
+-- technical tables
+select * from emaj.emaj_group_def;
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;

@@ -111,11 +111,7 @@ Only one technical object is not located into the emaj schema: the event trigger
 Tablespaces
 ***********
 
-E-Maj provides three potential ways to handle **tablespaces**.
+When the extension is installed, the E-Maj technical tables are stored into the default tablespace set at instance or database level or explicitely set for the current session.
 
-When the extension is installed and when log tables are created, E-Maj can use the default tablespace.
-
-But it is also possible to create a dedicated tablespace named *tspemaj*. If it exists when the extension is installed or when a tables group is created, it will be used to hold new tables.
-
-Using :ref:`tables group parameters <emaj_group_def>`, it is also possible to store log tables and/or their index into specific tablespaces.
+The same rule applies for log tables and index. But using :ref:`tables group parameters <emaj_group_def>`, it is also possible to store log tables and/or their index into specific tablespaces.
 

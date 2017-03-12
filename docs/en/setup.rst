@@ -22,13 +22,10 @@ To do it, just issue the following command::
 Tablespace
 ^^^^^^^^^^
 
-Optionally, a tablespace named **tspemaj** can be created. If it exists, and except if specific parameters are set at :ref:`tables groups definition <emaj_group_def>` level, tables and indexes created by E-Maj will be stored in it. Once created, this tablespace is shared among all databases of the PostgreSQL cluster.
+Optionally, if the E-Maj administrator wants to store E-Maj technical tables into a **dedicated tablespace**, he can create it if needed and define it as the default tablespace for the session::
 
-To create a *tspemaj* tablespace, the associated storage space (a directory for Unix/Linux, or a folder for Windows) must first be created, this storage space being left empty. Then the following SQL command must be executed ::
+   SET default_tablespace = <tablespace.name>;
 
-   CREATE TABLESPACE tspemaj LOCATION '<tablespace.directory/folder>';
-
-For performance reasons, it is recommended, on a production environment, to put the *tspemaj* tablespace and the application tables on separate disk spaces.
 
 E-Maj components installation
 -----------------------------

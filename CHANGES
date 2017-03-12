@@ -3,6 +3,11 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+  - the tspemaj tablespace has no specific processing anymore. If it exists, 
+    it will be used to hold E-Maj tables/indexes as any other tablespace, 
+    either by being set as default tablespace at installation or group 
+    creation time or being specified as log data tablespace or log index 
+    tablespace into the emaj_group_def table.
   - improve the checks performed on tables groups: verify that application 
     tables have not been altered as UNLOGGED after their tables group creation.
   - forbid tables declared as WITH OIDS into tables groups.
