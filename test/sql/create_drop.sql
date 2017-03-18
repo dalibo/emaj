@@ -329,9 +329,11 @@ update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp
 select emaj.emaj_alter_group('myGroup1');
 update emaj.emaj_group_def set grpdef_log_dat_tsp = case when grpdef_log_dat_tsp = 'tsplog1' then NULL when grpdef_log_dat_tsp = 'tsp log''2' then 'tsplog1' else 'tsp log''2' end where grpdef_schema = 'myschema1' and grpdef_tblseq not like '%seq';
 select emaj.emaj_alter_group('myGroup1');
--- only change the log index tablespace
+-- only change the log index tablespace, using a session default tablespace
 update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+set default_tablespace = tspemaj_renamed;
 select emaj.emaj_alter_group('myGroup1');
+reset default_tablespace;
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log_idx';
 update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 select emaj.emaj_alter_group('myGroup1');

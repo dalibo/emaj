@@ -130,6 +130,8 @@ The *hist_event* column can take the following values:
 +-------------------------+--------------------------+
 | SCHEMA DROPPED          | secondary schema dropped |
 +-------------------------+--------------------------+
+| TABLE ALTERED           |                          |
++-------------------------+--------------------------+
 
 The *emaj_hist* content can be viewed by anyone who has the proper access rights on this table (*superuser*, *emaj_adm* or *emaj_viewer* roles).
 

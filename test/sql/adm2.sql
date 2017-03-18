@@ -100,7 +100,8 @@ reset role;
 alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(11);
 
 set role emaj_regression_tests_adm_user;
-update emaj.emaj_group_def set grpdef_priority = 1 where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+update emaj.emaj_group_def set grpdef_priority = 1, grpdef_log_schema_suffix = '3', grpdef_emaj_names_prefix = 'phil_mytbl2'
+  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
 select emaj.emaj_alter_group('phil''s group#3",');
 select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
 select emaj.emaj_stop_group('phil''s group#3",');
@@ -109,7 +110,8 @@ reset role;
 alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(10);
 
 set role emaj_regression_tests_adm_user;
-update emaj.emaj_group_def set grpdef_priority = NULL where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
+update emaj.emaj_group_def set grpdef_priority = NULL, grpdef_log_schema_suffix = NULL, grpdef_emaj_names_prefix = NULL
+  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
 select emaj.emaj_alter_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
 

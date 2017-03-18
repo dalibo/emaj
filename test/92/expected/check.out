@@ -8,7 +8,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
  count 
 -------
-    94
+    96
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
@@ -79,13 +79,14 @@ select schemaname, funcname, calls from pg_stat_user_functions
   order by 1,2;
  schemaname |                 funcname                  | calls 
 ------------+-------------------------------------------+-------
+ emaj       | _alter_tbl                                |    20
  emaj       | _check_fk_groups                          |   146
  emaj       | _check_groups_content                     |    57
  emaj       | _check_names_array                        |   114
  emaj       | _check_new_mark                           |   140
- emaj       | _create_log_schema                        |    23
+ emaj       | _create_log_schema                        |    24
  emaj       | _create_seq                               |    31
- emaj       | _create_tbl                               |   118
+ emaj       | _create_tbl                               |   100
  emaj       | _dblink_close_cnx                         |    41
  emaj       | _dblink_is_cnx_opened                     |   428
  emaj       | _dblink_open_cnx                          |    54
@@ -94,13 +95,14 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | _delete_log_tbl                           |    33
  emaj       | _disable_event_triggers                   |    56
  emaj       | _drop_group                               |    15
- emaj       | _drop_log_schema                          |    16
+ emaj       | _drop_log_schema                          |    17
  emaj       | _drop_seq                                 |    27
- emaj       | _drop_tbl                                 |   117
+ emaj       | _drop_tbl                                 |    99
  emaj       | _enable_event_triggers                    |    51
  emaj       | _estimate_rollback_groups                 |     9
  emaj       | _gen_sql_groups                           |    17
  emaj       | _gen_sql_tbl                              |    38
+ emaj       | _get_default_tablespace                   |     4
  emaj       | _get_mark_name                            |   537
  emaj       | _get_mark_time_id                         |   194
  emaj       | _lock_groups                              |   147
@@ -170,7 +172,7 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | emaj_unprotect_group                      |     7
  emaj       | emaj_unprotect_mark_group                 |     5
  emaj       | emaj_verify_all                           |    31
-(91 rows)
+(93 rows)
 
 -----------------------------
 -- execute the perl script that checks the code

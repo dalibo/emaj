@@ -130,6 +130,8 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 +-------------------------+------------------------------------+
 | SCHEMA DROPPED          | schéma secondaire supprimé         |
 +-------------------------+------------------------------------+
+| TABLE ALTERED           | table modifiée                     |
++-------------------------+------------------------------------+
 
 Le contenu de la table *emaj_hist* peut être visualisé par quiconque dispose des autorisations suffisantes (rôles super-utilisateur, *emaj_adm* ou *emaj_viewer*)
 

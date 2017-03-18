@@ -630,6 +630,27 @@ $_dblink_close_cnx$
   END;
 $_dblink_close_cnx$;
 
+CREATE OR REPLACE FUNCTION emaj._get_default_tablespace()
+RETURNS TEXT LANGUAGE plpgsql AS
+$_get_default_tablespace$
+-- This function returns the name of a default tablespace to use when moving an existing log table or index.
+-- Output: tablespace name
+-- The function is called at alter group time.
+  DECLARE
+    v_tablespace             TEXT;
+  BEGIN
+-- get the default tablespace set for the current session or set for the entire instance by GUC
+    SELECT setting INTO v_tablespace FROM pg_settings
+      WHERE name = 'default_tablespace';
+    IF v_tablespace = '' THEN
+-- get the default tablespace for the current database (pg_default if no specific tablespace name has been set for the database)
+      SELECT spcname INTO v_tablespace FROM pg_database, pg_tablespace
+        WHERE dattablespace = pg_tablespace.oid AND datname = current_database();
+    END IF;
+    RETURN v_tablespace;
+  END;
+$_get_default_tablespace$;
+
 CREATE OR REPLACE FUNCTION emaj._purge_hist()
 RETURNS VOID LANGUAGE plpgsql AS
 $_purge_hist$
@@ -1194,6 +1215,80 @@ $_create_tbl$
     RETURN;
   END;
 $_create_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._alter_tbl(r_rel emaj.emaj_relation, v_newLogSchemaSuffix TEXT, v_newNamesPrefix TEXT, v_newLogDatTsp TEXT, v_newLogIdxTsp TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_alter_tbl$
+-- This function processes the changes registered in the emaj_group_def table for an application table
+-- Input: the existing emaj_relation row for the table, and the parameters from emaj_group_def that may by changed
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
+  DECLARE
+    v_emajSchema             TEXT = 'emaj';
+    v_schemaPrefix           TEXT = 'emaj';
+    v_changeMsg              TEXT = '';
+    v_newLogSchema           TEXT;
+    v_newEmajNamesPrefix     TEXT;
+    v_newLogTableName        TEXT;
+    v_newLogFunctionName     TEXT;
+    v_newLogSequenceName     TEXT;
+    v_newLogIndexName        TEXT;
+    v_newTsp                 TEXT;
+  BEGIN
+-- build the name of new emaj components associated to the application table (non schema qualified and not quoted)
+    v_newLogSchema = coalesce(v_schemaPrefix || v_newLogSchemaSuffix, v_emajSchema);
+    v_newEmajNamesPrefix = coalesce(v_newNamesPrefix, r_rel.rel_schema || '_' || r_rel.rel_tblseq);
+    v_newLogTableName    = v_newEmajNamesPrefix || '_log';
+    v_newLogIndexName    = v_newEmajNamesPrefix || '_log_idx';
+    v_newLogFunctionName = v_newEmajNamesPrefix || '_log_fnct';
+    v_newLogSequenceName = v_newEmajNamesPrefix || '_log_seq';
+-- if the log schema in emaj_group_def has changed, process the change
+    IF r_rel.rel_log_schema <> v_newLogSchema THEN
+      EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
+      EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
+      EXECUTE 'ALTER FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() SET SCHEMA ' || quote_ident(v_newLogSchema);
+      v_changeMsg = v_changeMsg || ', log schema';
+    END IF;
+-- if the emaj names prefix in emaj_group_def has changed, process the change
+    IF r_rel.rel_log_table <> v_newLogTableName THEN
+      EXECUTE 'ALTER TABLE ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table)|| ' RENAME TO ' || quote_ident(v_newLogTableName);
+      EXECUTE 'ALTER INDEX ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_index)|| ' RENAME TO ' || quote_ident(v_newLogIndexName);
+      EXECUTE 'ALTER SEQUENCE ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' RENAME TO ' || quote_ident(v_newLogSequenceName);
+      EXECUTE 'ALTER FUNCTION ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function) || '() RENAME TO ' || quote_ident(v_newLogFunctionName);
+      v_changeMsg = v_changeMsg || ', emaj names prefix';
+    END IF;
+-- detect if the log data tablespace in emaj_group_def has changed
+    IF coalesce(r_rel.rel_log_dat_tsp,'') <> coalesce(v_newLogDatTsp,'') THEN
+-- build the new data tablespace name. Get if needed the name of the current default tablespace.
+      v_newTsp = v_newLogDatTsp;
+      IF v_newTsp IS NULL OR v_newTsp = '' THEN
+        v_newTsp = emaj._get_default_tablespace();
+      END IF;
+      EXECUTE 'ALTER TABLE ' || quote_ident(v_newLogSchema) || '.' || quote_ident(v_newLogTableName) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
+      v_changeMsg = v_changeMsg || ', log data tablespace';
+    END IF;
+-- detect if the log index tablespace in emaj_group_def has changed
+    IF coalesce(r_rel.rel_log_idx_tsp,'') <> coalesce(v_newLogIdxTsp,'') THEN
+-- build the new index tablespace name. Get if needed the name of the current default tablespace.
+      v_newTsp = v_newLogIdxTsp;
+      IF v_newTsp IS NULL OR v_newTsp = '' THEN
+        v_newTsp = emaj._get_default_tablespace();
+      END IF;
+      EXECUTE 'ALTER TABLE ' || quote_ident(v_newLogSchema) || '.' || quote_ident(v_newLogIndexName) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
+      v_changeMsg = v_changeMsg || ', log index tablespace';
+    END IF;
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation
+      SET rel_log_schema = v_newLogSchema, rel_log_table = v_newLogTableName, rel_log_dat_tsp = v_newLogDatTsp,
+          rel_log_index = v_newLogIndexName, rel_log_idx_tsp = v_newLogIdxTsp, rel_log_sequence = v_newLogSequenceName,
+          rel_log_function = v_newLogFunctionName
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'TABLE ALTERED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq), 'Applied changes: ' || substr(v_changeMsg, 3));
+--
+    RETURN;
+  END;
+$_alter_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
@@ -2171,14 +2266,13 @@ $emaj_alter_group$
     v_schemaPrefix           TEXT = 'emaj';
     v_nbCreate               INT = 0;
     v_nbDrop                 INT = 0;
+    v_nbAlter                INT = 0;
     v_nbTbl                  INT;
     v_nbSeq                  INT;
     v_groupIsLogging         BOOLEAN;
     v_isRollbackable         BOOLEAN;
     v_timeId                 BIGINT;
-    v_logSchema              TEXT;
     v_logSchemasToDrop       TEXT[];
-    v_logSchemasToCreate     TEXT[];
     v_aLogSchema             TEXT;
     v_eventTriggers          TEXT[];
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
@@ -2229,15 +2323,22 @@ $emaj_alter_group$
         WHERE grpdef_group = v_groupName
           AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- minus those that will remain for the group
     ) AS t;
--- build the list of secondary log schemas that will need to be created before new log tables will be created
-    SELECT array_agg(log_schema) INTO v_logSchemasToCreate FROM (
+-- create the log schemas that need to be created before new log tables
+    FOR r_schema IN
       SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
         WHERE grpdef_group = v_groupName
           AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- secondary log schemas needed for the group
       EXCEPT
       SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                            -- minus those already created
       ORDER BY 1
-    ) AS t;
+      LOOP
+--   create the log schema
+        PERFORM emaj._create_log_schema(r_schema.log_schema);
+--   and record the schema creation in emaj_hist table
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+          VALUES ('ALTER_GROUP','SCHEMA CREATED',quote_ident(r_schema.log_schema));
+    END LOOP;
+--
 -- drop all relations that do not belong to the tables group any more
     FOR r_rel IN
       SELECT * FROM emaj.emaj_relation
@@ -2271,7 +2372,7 @@ $emaj_alter_group$
 --
 -- list tables that still belong to the tables group but have their attributes changed in the emaj_group_def table
     FOR r_tblsq IN
-      SELECT rel_schema, rel_tblseq
+      SELECT rel_schema, rel_tblseq, grpdef_log_schema_suffix, grpdef_emaj_names_prefix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
         FROM emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
           AND rel_group = v_groupName
@@ -2290,9 +2391,10 @@ $emaj_alter_group$
       LOOP
 -- get the related row in emaj_relation
       SELECT * FROM emaj.emaj_relation WHERE rel_schema = r_tblsq.rel_schema AND rel_tblseq = r_tblsq.rel_tblseq INTO r_rel;
--- then drop the relation (it will be recreated later)
-      PERFORM emaj._drop_tbl (r_rel);
-      v_nbDrop = v_nbDrop + 1;
+-- then alter the relation
+      PERFORM emaj._alter_tbl(r_rel, r_tblsq.grpdef_log_schema_suffix, r_tblsq.grpdef_emaj_names_prefix,
+                                     r_tblsq.grpdef_log_dat_tsp, r_tblsq.grpdef_log_idx_tsp);
+      v_nbAlter = v_nbAlter + 1;
     END LOOP;
 -- update the emaj_relation table to report the priorities that have ben changed in the emaj_group_def table
     UPDATE emaj.emaj_relation SET rel_priority = grpdef_priority
@@ -2312,16 +2414,6 @@ $emaj_alter_group$
 --   and record the schema drop in emaj_hist table
         INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
           VALUES ('ALTER_GROUP','SCHEMA DROPPED',quote_ident(v_aLogSchema));
-      END LOOP;
-    END IF;
--- create new log schemas, using the list of potential schemas to create built previously
-    IF v_logSchemasToCreate IS NOT NULL THEN
-      FOREACH v_aLogSchema IN ARRAY v_logSchemasToCreate LOOP
---   create the schema
-        PERFORM emaj._create_log_schema(v_aLogSchema);
---   and record the schema creation in emaj_hist table
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-          VALUES ('ALTER_GROUP','SCHEMA CREATED',quote_ident(v_aLogSchema));
       END LOOP;
     END IF;
 --
@@ -2370,7 +2462,8 @@ $emaj_alter_group$
     PERFORM emaj._check_fk_groups(array[v_groupName]);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUP', 'END', v_groupName, v_nbDrop || ' dropped relations and ' || v_nbCreate || ' (re)created relations');
+      VALUES ('ALTER_GROUP', 'END', v_groupName,
+              v_nbDrop || ' dropped, ' || v_nbAlter || ' altered and ' || v_nbCreate || ' (re)created relations');
     RETURN v_nbTbl + v_nbSeq;
   END;
 $emaj_alter_group$;
