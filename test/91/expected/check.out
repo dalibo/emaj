@@ -8,7 +8,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
  count 
 -------
-    96
+    97
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
@@ -79,6 +79,7 @@ select schemaname, funcname, calls from pg_stat_user_functions
   order by 1,2;
  schemaname |                 funcname                  | calls 
 ------------+-------------------------------------------+-------
+ emaj       | _alter_groups                             |    36
  emaj       | _alter_tbl                                |    20
  emaj       | _check_fk_groups                          |   146
  emaj       | _check_groups_content                     |    57
@@ -172,7 +173,7 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | emaj_unprotect_group                      |     7
  emaj       | emaj_unprotect_mark_group                 |     5
  emaj       | emaj_verify_all                           |    31
-(93 rows)
+(94 rows)
 
 -----------------------------
 -- execute the perl script that checks the code

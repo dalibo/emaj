@@ -577,9 +577,11 @@ select emaj.emaj_force_drop_group('myGroup2');
 -----------------------------
 -- unknown group
 select emaj.emaj_alter_group(NULL);
-ERROR:  emaj_alter_group: group "<NULL>" has not been created.
+ERROR:  _alter_groups: group "<NULL>" has not been created.
+CONTEXT:  PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 select emaj.emaj_alter_group('unkownGroup');
-ERROR:  emaj_alter_group: group "unkownGroup" has not been created.
+ERROR:  _alter_groups: group "unkownGroup" has not been created.
+CONTEXT:  PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 -- group in logging state
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
@@ -597,7 +599,8 @@ select emaj.emaj_start_group('myGroup1','');
 (1 row)
 
 select emaj.emaj_alter_group('myGroup1');
-ERROR:  emaj_alter_group: The group "myGroup1" cannot be altered because it is in LOGGING state.
+ERROR:  _alter_groups: The group "myGroup1" cannot be altered because it is in LOGGING state.
+CONTEXT:  PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
@@ -621,63 +624,75 @@ PL/pgSQL function "emaj_create_group" line 85 at PERFORM
   insert into emaj.emaj_group_def values ('myGroup1','myschema2','mytbl1');
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_groups_content: Error, the table or sequence myschema2.mytbl1 belongs to another group (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl1" is already used.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 rollback;
 -- the group is now empty
 begin;
   delete from emaj.emaj_group_def where grpdef_group = 'myGroup1';
   select emaj.emaj_alter_group('myGroup1');
-ERROR:  emaj_alter_group: Group "myGroup1" is unknown in emaj_group_def table.
+ERROR:  _alter_groups: Group "myGroup1" is unknown in emaj_group_def table.
+CONTEXT:  PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 rollback;
 -- schema suffix cannot be changed for sequence
 begin;
   update emaj.emaj_group_def set grpdef_log_schema_suffix = 'dummy' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the secondary log schema suffix is not NULL.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 rollback;
 -- object names prefix cannot be changed for sequence
 begin;
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'dummy' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the emaj names prefix is not NULL.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 rollback;
 -- log tablespace cannot be changed for sequence
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 rollback;
 begin;
   update emaj.emaj_group_def set grpdef_log_idx_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the index log tablespace is not NULL.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function "emaj_alter_group" line 46 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames,v_isRollbackable)"
+PL/pgSQL function "_alter_groups" line 47 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 rollback;
 -- should be OK
 -- nothing to change
@@ -718,11 +733,13 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl4';
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table "myschema1.mytbl2" is referenced by foreign key "mytbl4_col43_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function "emaj_alter_group" line 206 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_alter_groups" line 207 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema1.mytbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function "emaj_alter_group" line 206 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_alter_groups" line 207 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
  emaj_alter_group 
 ------------------
                 3
@@ -745,11 +762,13 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table "myschema1.mytbl2" is referenced by foreign key "mytbl4_col43_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function "emaj_alter_group" line 206 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_alter_groups" line 207 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema1.mytbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function "emaj_alter_group" line 206 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
+PL/pgSQL function "_alter_groups" line 207 at PERFORM
+PL/pgSQL function "emaj_alter_group" line 6 at RETURN
  emaj_alter_group 
 ------------------
                 2
