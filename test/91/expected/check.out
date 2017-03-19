@@ -110,7 +110,7 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | _log_stat_tbl                             |  1856
  emaj       | _log_truncate_fnct                        |     2
  emaj       | _purge_hist                               |    80
- emaj       | _reset_group                              |    76
+ emaj       | _reset_groups                             |    73
  emaj       | _rlbk_async                               |     2
  emaj       | _rlbk_check                               |    66
  emaj       | _rlbk_end                                 |    50

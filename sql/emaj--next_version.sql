@@ -2382,7 +2382,7 @@ $_alter_groups$
     END LOOP;
 --
 -- cleanup all remaining log tables
-    PERFORM emaj._reset_group(unnest(v_groupNames));
+    PERFORM emaj._reset_groups(v_groupNames);
 --
 -- list tables that still belong to the tables groups but have their attributes changed in the emaj_group_def table
     FOR r_tblsq IN
@@ -2575,9 +2575,9 @@ $_start_groups$
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- check foreign keys with tables outside the group
     PERFORM emaj._check_fk_groups(v_groupNames);
--- if requested by the user, call the emaj_reset_group() function to erase remaining traces from previous logs
+-- if requested by the user, call the emaj_reset_groups() function to erase remaining traces from previous logs
     if v_resetLog THEN
-      PERFORM emaj._reset_group(unnest(v_groupNames));
+      PERFORM emaj._reset_groups(v_groupNames);
     END IF;
 -- check and process the supplied mark name
     IF v_mark IS NULL OR v_mark = '' THEN
@@ -5044,7 +5044,7 @@ $emaj_reset_group$
       RAISE EXCEPTION 'emaj_reset_group: Group "%" cannot be reset because it is in LOGGING state. An emaj_stop_group function must be previously executed.', v_groupName;
     END IF;
 -- perform the reset operation
-    SELECT emaj._reset_group(v_groupName) INTO v_nbTb;
+    SELECT emaj._reset_groups(ARRAY[v_groupName]) INTO v_nbTb;
     IF v_nbTb = 0 THEN
        RAISE EXCEPTION 'emaj_reset_group: internal error (group "%" is empty).', v_groupName;
     END IF;
@@ -5057,38 +5057,38 @@ $emaj_reset_group$;
 COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS
 $$Resets all log tables content of a stopped E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj._reset_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj._reset_groups(v_groupNames TEXT[])
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
-$_reset_group$
+$_reset_groups$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences saves
--- It is called by both emaj_reset_group and emaj_start_group functions
--- Input: group name
+-- It is called by emaj_reset_group(), emaj_start_group() and emaj_alter_group() functions
+-- Input: group names array
 -- Output: number of processed tables and sequences
--- There is no check of the group state
+-- There is no check of the groups state (this is done by callers)
 -- The function is defined as SECURITY DEFINER so that an emaj_adm role can truncate log tables
   DECLARE
     v_nbTb                   INT;
     r_rel                    RECORD;
   BEGIN
--- delete all marks for the group from the emaj_mark table
-    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
--- delete emaj_sequence rows related to the tables of the group
+-- delete all marks for the groups from the emaj_mark table
+    DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames);
+-- delete emaj_sequence rows related to the tables of the groups
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'r' AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence;
--- delete all sequence holes for the tables of the group
+      WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence;
+-- delete all sequence holes for the tables of the groups
     DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table;
+      WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table;
 -- initialize the return value with the number of sequences
     SELECT count(*) INTO v_nbTb FROM emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'S';
--- delete emaj_sequence rows related to the sequences of the group
+      WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S';
+-- delete emaj_sequence rows related to the sequences of the groups
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE rel_schema = sequ_schema AND rel_tblseq = sequ_name AND
-            rel_group = v_groupName AND rel_kind = 'S';
+            rel_group = ANY (v_groupNames) AND rel_kind = 'S';
 -- then, truncate log tables for application tables
     FOR r_rel IN
         SELECT rel_log_schema, rel_log_table, rel_log_sequence FROM emaj.emaj_relation
-          WHERE rel_group = v_groupName AND rel_kind = 'r'
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 --   truncate the log table
@@ -5099,7 +5099,7 @@ $_reset_group$
     END LOOP;
     RETURN v_nbTb;
   END;
-$_reset_group$;
+$_reset_groups$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
