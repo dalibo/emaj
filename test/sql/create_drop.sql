@@ -487,9 +487,10 @@ select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup
 select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
-select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist order by hist_id) as t
-  where hist_function <> 'EMAJ_INSTALL';
+select hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 
+       hist_user 
+  from emaj.emaj_hist order by hist_id;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
 
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;

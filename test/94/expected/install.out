@@ -54,13 +54,13 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 (1 row)
 
 -- check history
-select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist order by hist_id) as t;
- hist_id | hist_function | hist_event |     hist_object      |      regexp_replace      | hist_user 
+select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
+ hist_id | hist_function | hist_event |     hist_object      |       hist_wording       | hist_user 
 ---------+---------------+------------+----------------------+--------------------------+-----------
        1 | EMAJ_INSTALL  |            | E-Maj <NEXT_VERSION> | Initialisation completed | postgres
 (1 row)
 
+delete from emaj.emaj_hist;
 -- check table list
 \d emaj.*
 Composite type "emaj._verify_groups_type"

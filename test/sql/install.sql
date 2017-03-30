@@ -27,8 +27,8 @@ select relname from pg_catalog.pg_class,
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 
 -- check history
-select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist order by hist_id) as t;
+select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
+delete from emaj.emaj_hist;
 
 -- check table list
 \d emaj.*
