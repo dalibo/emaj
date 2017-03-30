@@ -6,7 +6,7 @@ SET client_min_messages TO WARNING;
 -- prepare groups
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable)"
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 65 at PERFORM
  emaj_create_group 
 -------------------

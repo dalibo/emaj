@@ -96,6 +96,7 @@ UPDATE emaj.emaj_group_def SET grpdef_log_idx_tsp = rel_log_idx_tsp
 ------------------------------------------------------------------
 DROP FUNCTION emaj._check_group_content(V_GROUPNAME TEXT);
 DROP FUNCTION emaj._create_tbl(R_GRPDEF EMAJ.EMAJ_GROUP_DEF,V_GROUPNAME TEXT,V_ISROLLBACKABLE BOOLEAN,V_DEFTSP TEXT);
+DROP FUNCTION emaj._create_seq(GRPDEF EMAJ.EMAJ_GROUP_DEF,V_GROUPNAME TEXT);
 DROP FUNCTION emaj._reset_group(V_GROUPNAME TEXT);
 
 ------------------------------------------------------------------
@@ -309,7 +310,7 @@ $_check_groups_content$
   END;
 $_check_groups_content$;
 
-CREATE OR REPLACE FUNCTION emaj._create_tbl(r_grpdef emaj.emaj_group_def, v_groupName TEXT, v_isRollbackable BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._create_tbl(r_grpdef emaj.emaj_group_def, v_isRollbackable BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table
@@ -552,7 +553,7 @@ $_alter_tbl$
   END;
 $_alter_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._create_seq(grpdef emaj.emaj_group_def, v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj._create_seq(grpdef emaj.emaj_group_def)
 RETURNS VOID LANGUAGE plpgsql AS
 $_create_seq$
 -- The function checks whether the sequence is related to a serial column of an application table.
@@ -581,14 +582,14 @@ $_create_seq$
       IF NOT FOUND THEN
         RAISE WARNING '_create_seq: Sequence %.% is linked to table %.% but this table does not belong to any tables group.', grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_tableSchema, v_tableName;
       ELSE
-        IF v_tableGroup <> v_groupName THEN
+        IF v_tableGroup <> grpdef.grpdef_group THEN
           RAISE WARNING '_create_seq: Sequence %.% is linked to table %.% but this table belong to another tables group (%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_tableSchema, v_tableName, v_tableGroup;
         END IF;
       END IF;
     END IF;
 -- record the sequence in the emaj_relation table
       INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
-          VALUES (grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_groupName, grpdef.grpdef_priority, 'S');
+          VALUES (grpdef.grpdef_schema, grpdef.grpdef_tblseq, grpdef.grpdef_group, grpdef.grpdef_priority, 'S');
     RETURN;
   END;
 $_create_seq$;
@@ -854,7 +855,7 @@ $emaj_create_group$
             AND relkind = 'r'
           ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
         LOOP
-      PERFORM emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable);
+      PERFORM emaj._create_tbl(r_grpdef, v_isRollbackable);
       v_nbTbl = v_nbTbl + 1;
     END LOOP;
 -- get and process all sequences of the group (in priority order, NULLS being processed last)
@@ -867,7 +868,7 @@ $emaj_create_group$
             AND relkind = 'S'
           ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
         LOOP
-      PERFORM emaj._create_seq(r_grpdef, v_groupName);
+      PERFORM emaj._create_seq(r_grpdef);
       v_nbSeq = v_nbSeq + 1;
     END LOOP;
 -- update tables and sequences counters in the emaj_group table
@@ -1096,7 +1097,7 @@ $_alter_groups$
       SELECT group_is_rollbackable INTO v_isRollbackable
         FROM emaj.emaj_group WHERE group_name = r_grpdef.grpdef_group;
 -- and create the table
-      PERFORM emaj._create_tbl(r_grpdef, r_grpdef.grpdef_group, v_isRollbackable);
+      PERFORM emaj._create_tbl(r_grpdef, v_isRollbackable);
       v_nbCreate = v_nbCreate + 1;
     END LOOP;
 -- get and process new sequences in the tables groups (really new or intentionaly dropped in the preceeding steps)
@@ -1112,7 +1113,7 @@ $_alter_groups$
           AND relkind = 'S'
       ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
       LOOP
-      PERFORM emaj._create_seq(r_grpdef, r_grpdef.grpdef_group);
+      PERFORM emaj._create_seq(r_grpdef);
       v_nbCreate = v_nbCreate + 1;
     END LOOP;
 -- update tables and sequences counters and the last alter timestamp in the emaj_group table
