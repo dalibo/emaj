@@ -133,3 +133,5 @@ The precision of the result cannot be high. The first reason is that, *INSERT*, 
 
 If no statistics on previous rollbacks are available and if the results quality is poor, it is possible to adjust the generic :doc:`parameters <parameters>`. It is also possible to manually change the *emaj.emaj_rlbk_stat* table's content that keep a trace of the previous rollback durations, for instance by deleting rows corresponding to rollback operations performed in unusual load conditions.
 
+Using the :ref:`emaj_estimate_rollback_groups() <multi_groups_functions_list>` function, it is possible to estimate the duration of a rollback operation on several groups.
+

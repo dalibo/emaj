@@ -3,6 +3,8 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+  - add a new emaj_alter_groups() function that can alter several groups at 
+    once.
   - the tspemaj tablespace has no specific processing anymore. If it exists, 
     it will be used to hold E-Maj tables/indexes as any other tablespace, 
     either by being set as default tablespace at installation or group 

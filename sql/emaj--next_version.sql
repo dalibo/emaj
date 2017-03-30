@@ -755,9 +755,10 @@ $_check_groups_content$
 --  - will not generate conflicts on emaj objects to create (when emaj names prefix is not the default one)
 -- It also checks that:
 --  - tables are not TEMPORARY, UNLOGGED or WITH OIDS
---  - for rollbackable groups all tables have a PRIMARY KEY
+--  - for rollbackable groups, all tables have a PRIMARY KEY
 --  - for sequences, the tablespaces, emaj log schema and emaj object name prefix are all set to NULL
--- Input: name array of the tables group to check, flag indicating whether the group is rollbackable or not
+-- Input: name array of the tables group to check,
+--        flag indicating whether the group is rollbackable or not (NULL when called by _alter_groups(), the groups state will be read from emaj_group)
   DECLARE
     v_nbError                INT = 0 ;
     r                        RECORD;
@@ -855,22 +856,31 @@ $_check_groups_content$
       RAISE WARNING '_check_groups_content: Error, the table %.% is declared WITH OIDS.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
       v_nbError = v_nbError + 1;
     END LOOP;
--- if the table group is rollbackable, check every table has a primary key
-    IF v_isRollbackable THEN
-      FOR r IN
-        SELECT grpdef_schema, grpdef_tblseq
-          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-          WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-            AND grpdef_group = ANY (v_groupNames) AND relkind = 'r'
-            AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
-                              WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
-                              AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq)
-        ORDER BY grpdef_schema, grpdef_tblseq
-      LOOP
-      RAISE WARNING '_check_groups_content: Error, the table %.% has no PRIMARY KEY.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-        v_nbError = v_nbError + 1;
-      END LOOP;
-    END IF;
+    FOR r IN
+-- only 0 or 1 SELECT is really executed, depending on the v_isRollbackable value
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE v_isRollbackable                                                 -- true (or false) for tables groups creation
+          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r'
+          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+                            WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
+                            AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq)
+        UNION ALL
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
+        WHERE v_isRollbackable IS NULL                                         -- NULL for alter groups function call
+          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r'
+          AND group_name = grpdef_group AND group_is_rollbackable              -- the is_rollbackable attribute is read from the emaj_group table
+          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+                            WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
+                            AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq)
+      ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+    RAISE WARNING '_check_groups_content: Error, the table %.% has no PRIMARY KEY.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
 -- all sequences described in emaj_group_def have their log schema suffix attribute set to NULL
     FOR r IN
       SELECT grpdef_schema, grpdef_tblseq
@@ -2259,11 +2269,24 @@ $emaj_alter_group$
 -- Input: group name
 -- Output: number of tables and sequences belonging to the group after the operation
   BEGIN
-    RETURN emaj._alter_groups(ARRAY[v_groupName],false);
+    RETURN emaj._alter_groups(ARRAY[v_groupName], false);
   END;
 $emaj_alter_group$;
 COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT) IS
 $$Alter an E-Maj group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_alter_groups(v_groupNames TEXT[])
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_alter_groups$
+-- This function alters several tables groups.
+-- Input: group names array
+-- Output: number of tables and sequences belonging to the groups after the operation
+  BEGIN
+    RETURN emaj._alter_groups(v_groupNames, true);
+  END;
+$emaj_alter_groups$;
+COMMENT ON FUNCTION emaj.emaj_alter_groups(TEXT[]) IS
+$$Alter several E-Maj groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._alter_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
@@ -2279,8 +2302,6 @@ $_alter_groups$
     v_nbCreate               INT = 0;
     v_nbDrop                 INT = 0;
     v_nbAlter                INT = 0;
-    v_nbTbl                  INT;
-    v_nbSeq                  INT;
     v_groupIsLogging         BOOLEAN;
     v_isRollbackable         BOOLEAN;
     v_timeId                 BIGINT;
@@ -2297,23 +2318,23 @@ $_alter_groups$
       VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','));
 -- check that each group is recorded in emaj_group table
     FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
-      SELECT group_is_logging, group_is_rollbackable INTO v_groupIsLogging, v_isRollbackable
+      SELECT group_is_logging INTO v_groupIsLogging
         FROM emaj.emaj_group WHERE group_name = v_aGroupName FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_alter_groups: group "%" has not been created.', v_aGroupName;
+        RAISE EXCEPTION '_alter_groups: the group "%" has not been created.', v_aGroupName;
       END IF;
 -- ... and is not in LOGGING state
       IF v_groupIsLogging THEN
-        RAISE EXCEPTION '_alter_groups: The group "%" cannot be altered because it is in LOGGING state.', v_aGroupName;
+        RAISE EXCEPTION '_alter_groups: the group "%" cannot be altered because it is in LOGGING state.', v_aGroupName;
       END IF;
 -- check there are remaining rows for the group in emaj_group_def table
       PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_aGroupName LIMIT 1;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_alter_groups: Group "%" is unknown in emaj_group_def table.', v_aGroupName;
+        RAISE EXCEPTION '_alter_groups: the group "%" is unknown in the emaj_group_def table.', v_aGroupName;
       END IF;
     END LOOP;
 -- performs various checks on the groups content described in the emaj_group_def table
-    PERFORM emaj._check_groups_content(v_groupNames,v_isRollbackable);
+    PERFORM emaj._check_groups_content(v_groupNames, NULL);
 -- OK
 -- get the time stamp of the operation
     SELECT emaj._set_time_stamp('A') INTO v_timeId;
@@ -2331,7 +2352,7 @@ $_alter_groups$
         WHERE rel_group = ANY (v_groupNames) AND rel_log_schema <> v_emajSchema         -- secondary log schemas that currently exist for the groups
       EXCEPT
       SELECT rel_log_schema FROM emaj.emaj_relation
-        WHERE rel_group <> ANY (v_groupNames)                                           -- minus those that exist for other groups
+        WHERE rel_group <> ALL (v_groupNames)                                           -- minus those that exist for other groups
       EXCEPT
       SELECT v_schemaPrefix || grpdef_log_schema_suffix FROM emaj.emaj_group_def
         WHERE grpdef_group = ANY (v_groupNames)
@@ -2410,6 +2431,13 @@ $_alter_groups$
                                      r_tblsq.grpdef_log_dat_tsp, r_tblsq.grpdef_log_idx_tsp);
       v_nbAlter = v_nbAlter + 1;
     END LOOP;
+-- update the emaj_relation table to report the group names that have ben changed in the emaj_group_def table
+    UPDATE emaj.emaj_relation SET rel_group = grpdef_group
+      FROM emaj.emaj_group_def
+      WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+        AND rel_group = ANY (v_groupNames)
+        AND grpdef_group = ANY (v_groupNames)
+        AND rel_group <> grpdef_group;
 -- update the emaj_relation table to report the priorities that have ben changed in the emaj_group_def table
     UPDATE emaj.emaj_relation SET rel_priority = grpdef_priority
       FROM emaj.emaj_group_def
@@ -2444,6 +2472,10 @@ $_alter_groups$
           AND relkind = 'r'
       ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
       LOOP
+-- get the is_rollbackable status of the related group
+      SELECT group_is_rollbackable INTO v_isRollbackable
+        FROM emaj.emaj_group WHERE group_name = r_grpdef.grpdef_group;
+-- and create the table
       PERFORM emaj._create_tbl(r_grpdef, r_grpdef.grpdef_group, v_isRollbackable);
       v_nbCreate = v_nbCreate + 1;
     END LOOP;
@@ -2464,21 +2496,21 @@ $_alter_groups$
       v_nbCreate = v_nbCreate + 1;
     END LOOP;
 -- update tables and sequences counters and the last alter timestamp in the emaj_group table
-    SELECT count(*) INTO v_nbTbl FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r';
-    SELECT count(*) INTO v_nbSeq FROM emaj.emaj_relation WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S';
-    UPDATE emaj.emaj_group SET group_last_alter_time_id = v_timeId, group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
+    UPDATE emaj.emaj_group
+      SET group_last_alter_time_id = v_timeId,
+          group_nb_table = (SELECT count(*) FROM emaj.emaj_relation WHERE rel_group = group_name AND rel_kind = 'r'),
+          group_nb_sequence = (SELECT count(*) FROM emaj.emaj_relation WHERE rel_group = group_name AND rel_kind = 'S')
       WHERE group_name = ANY (v_groupNames);
--- delete old marks of the tables groups from emaj_mark
-    DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames);
 -- enable previously disabled event triggers
     PERFORM emaj._enable_event_triggers(v_eventTriggers);
--- check foreign keys with tables outside the group
+-- check foreign keys with tables outside the groups
     PERFORM emaj._check_fk_groups(v_groupNames);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'END', array_to_string(v_groupNames,','),
               v_nbDrop || ' dropped, ' || v_nbAlter || ' altered and ' || v_nbCreate || ' (re)created relations');
-    RETURN v_nbTbl + v_nbSeq;
+-- and return
+    RETURN sum(group_nb_table) + sum(group_nb_sequence) FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames);
   END;
 $_alter_groups$;
 

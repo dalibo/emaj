@@ -11,6 +11,8 @@ The resulting advantages are:
 * to process all tables group in a single transaction,
 * to lock tables belonging to all groups at the beginning of the operation to minimize the risk of deadlock.
 
+.. _multi_groups_functions_list:
+
 Functions list
 --------------
 
@@ -19,6 +21,8 @@ The following table lists the multi-groups functions, with their relative mono-g
 +------------------------------------------+---------------------------------------------------------------------------+
 | Multi-groups functions                   | Relative mono-group function                                              |
 +==========================================+===========================================================================+
+| **emaj.emaj_alter_groups()**             | :ref:`emaj.emaj_alter_group() <emaj_alter_group>`                         |
++------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_start_groups()**             | :ref:`emaj.emaj_start_group() <emaj_start_group>`                         |
 +------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_stop_groups()**              | :ref:`emaj.emaj_stop_group() <emaj_stop_group>`                           |

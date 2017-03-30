@@ -6,8 +6,11 @@ E-Maj functions that are available to users are listed in alphabetic order below
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | Functions                                        | Input parameters              | Output data                           |
 +==================================================+===============================+=======================================+
-| :ref:`emaj_alter_gr                              | | group TEXT                  | #.tables.and.seq INT                  |
+| :ref:`emaj_alter_group                           | | group TEXT                  | #.tables.and.seq INT                  |
 | <emaj_alter_group>`                              |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :doc:`emaj_alter_groups                          | | groups.array TEXT[]         | #.tables.and.seq INT                  |
+| <multiGroupsFunctions>`                          |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_cleanup_rollback_state                |                               | #.rollback INT                        |
 | <emaj_cleanup_rollback_state>`                   |                               |                                       |

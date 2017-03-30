@@ -152,6 +152,9 @@ La fonction procède également à la purge des événements les plus anciens de
 
 A l'issue du démarrage d'un groupe, celui-ci devient actif ("*LOGGING*").
 
+Plusieurs groupes de tables peuvent être démarrés en même temps, en utilisant la fonction :ref:`emaj_start_groups() <multi_groups_functions_list>`.
+
+
 .. _emaj_set_mark_group:
 
 Pose d'une marque intermédiaire
@@ -176,6 +179,8 @@ La fonction *emaj_set_mark_group()* enregistre l'identité de la nouvelle marque
 Il est possible d'enregistrer deux marques consécutives sans que des mises à jour de tables aient été enregistrées entre ces deux marques.
 
 La fonction *emaj_set_mark_group()* pose des verrous de type « *ROW EXCLUSIVE* » sur chaque table du groupe. Ceci permet de s'assurer qu'aucune transaction ayant déjà fait des mises à jour sur une table du groupe n'est en cours. Néanmoins, ceci ne garantit pas qu'une transaction ayant lu une ou plusieurs tables avant la pose de la marque, fasse des mises à jours après la pose de la marque. Dans ce cas, ces mises à jours effectuées après la pose de la marque seraient candidates à un éventuel rollback sur cette marque.
+
+Une marque peut être posée sur plusieurs groupes de tables même temps, en utilisant la fonction :ref:`emaj_set_mark_groups() <multi_groups_functions_list>`.
 
 .. _emaj_rollback_group:
 
@@ -213,6 +218,9 @@ Il est alors possible de poursuivre les traitements de mises à jour, de poser e
 .. caution::
 
    Par nature, le repositionnement des séquences n'est pas « annulable » en cas de rollback de la transaction incluant l'exécution de la fonction *emaj_rollback_group()*. Pour cette raison, le traitement des séquences applicatives est toujours effectué après celui des tables. Néanmoins, même si le temps de traitement des séquences est très court, il n'est pas impossible qu'un problème surgisse lors de cette dernière phase. La relance de la fonction *emaj_rollback_group()* mènera à bien l'opération de manière fiable. Mais si cette fonction n'était pas ré-exécutée immédiatement, il y aurait risque que certaines séquences aient été repositionnées, contrairement aux tables et à d'autres séquences.
+
+Plusieurs groupes de tables peuvent être « rollbackés » en même temps, en utilisant la fonction :ref:`emaj_rollback_groups() <multi_groups_functions_list>`.
+
 
 .. _emaj_logged_rollback_group:
 
@@ -267,6 +275,8 @@ oDes rollbacks de différents types (*logged* / *unlogged*) peuvent être exécu
 
 Une :ref:`fonction de « consolidation »<emaj_consolidate_rollback_group>` de « *rollback tracé* » permet de transformer un rollback annulable en rollback simple.
 
+Plusieurs groupes de tables peuvent être « rollbackés » en même temps, en utilisant la fonction :ref:`emaj_rollback_groups() <multi_groups_functions_list>`.
+
 .. _emaj_stop_group:
 
 Arrêt d'un groupe de tables
@@ -291,6 +301,8 @@ A l'issue de l'arrêt d'un groupe, celui-ci redevient inactif.
 
 Exécuter la fonction *emaj_stop_group()* sur un groupe de tables déjà arrêté ne génère pas d'erreur. Seul un message d'avertissement est retourné.
 
+Plusieurs groupes de tables peuvent être arrêtés en même temps, en utilisant la fonction :ref:`emaj_stop_groups() <multi_groups_functions_list>`.
+
 .. _emaj_alter_group:
 
 Modification d'un groupe de tables
@@ -298,7 +310,7 @@ Modification d'un groupe de tables
 
 Deux types d'événements peuvent rendre nécessaire la modification d'un groupe de tables : 
 
-* la composition du groupe de tables change, avec l'ajout ou la suppression de tables ou de séquence dans le groupe, ou avec le changement d'un des paramètres liés à une table (priorité, schéma de log ou tablespace),
+* la composition du groupe de tables change, avec l'ajout ou la suppression de tables ou de séquence dans le groupe, ou avec le changement d'un des paramètres liés à une table (priorité, schéma de log, tablespace,...),
 * une ou plusieurs tables applicatives appartenant au groupe de tables voient leur structure évoluer (ajout ou suppression de colonnes, changement de type de colonne), ceci ayant un impact sur la structure des tables de log associées.
 
 Dans les deux cas, la démarche à suivre est la suivante :
@@ -328,6 +340,8 @@ Dans la plupart des cas, l'exécution de la fonction *emaj_alter_group()* est ne
 Il est possible d'anticiper la mise à jour de la table *emaj_group_def*, alors que le groupe de tables est encore actif. Cette mise à jour ne prendra bien sûr effet qu'à l'issue de l'exécution de la fonction *emaj_alter_group()*. 
 
 En cas de déphasage entre la structure des tables applicatives et celle des tables de log, E-Maj génère une erreur lors du démarrage du groupe, de la pose d'une marque ou d'une demande de rollback.
+
+Plusieurs groupes de tables peuvent être modifiés en même temps, en utilisant la fonction :ref:`emaj_alter_groups() <multi_groups_functions_list>`.
 
 .. _emaj_drop_group:
 

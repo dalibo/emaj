@@ -34,6 +34,8 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +========================+=======================================================================================+
 | ALTER_GROUP            | modification d'un groupe de tables                                                    |
 +------------------------+---------------------------------------------------------------------------------------+
+| ALTER_GROUPS           | modification de plusieurs groupes de tables                                           |
++------------------------+---------------------------------------------------------------------------------------+
 | CLEANUP_RLBK_STATE     | nettoyage du code état des opérations de rollback récemment terminées                 |
 +------------------------+---------------------------------------------------------------------------------------+
 | COMMENT_GROUP          | positionnement d'un commentaire sur un groupe                                         |

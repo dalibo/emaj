@@ -12,6 +12,8 @@ Les avantages qui en résultent sont :
 * d'assurer un verrouillage de toutes les tables à traiter en début d'opération, et ainsi minimiser les risques d'étreintes fatales.
 
 
+.. _multi_groups_functions_list:
+
 Liste des fonctions multi-groupes
 ---------------------------------
 
@@ -20,6 +22,8 @@ Le tableau suivant liste les fonctions multi-groupes existantes et leur fonction
 +------------------------------------------+---------------------------------------------------------------------------+
 | Fonctions multi-groups                   | Fonctions mono-groupe jumelles                                            |
 +==========================================+===========================================================================+
+| **emaj.emaj_alter_groups()**             | :ref:`emaj.emaj_alter_group() <emaj_alter_group>`                         |
++------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_start_groups()**             | :ref:`emaj.emaj_start_group() <emaj_start_group>`                         |
 +------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_stop_groups()**              | :ref:`emaj.emaj_stop_group() <emaj_stop_group>`                           |

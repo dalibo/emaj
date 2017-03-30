@@ -45,6 +45,8 @@ use warnings; use strict;
 # scan and process input file
   while (<FICSRC>){
     $line = $_; $lineNumber++; $lineNumberInFnct++;
+# delete the comment part of the line, if any (this does not properly process -- pattern inside literal of object names, but this is enough for now)
+    $line =~ s/--.*//;
 # detection of function or do block start
     if ($line =~ /^CREATE OR REPLACE FUNCTION\s+(.*?)\.(.*?)\(/) {
       $schema = $1; $fnctName = $2; $lineNumberInFnct = 1;

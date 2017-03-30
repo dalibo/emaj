@@ -145,7 +145,7 @@ The function returns a set of rows with the following columns:
 +----------------------------+-------------+--------------------------------------+
 | Column                     | Type        | Description                          |
 +============================+=============+======================================+
-| cons_group                 | TEXT        | rollbacked tables group              |
+| cons_group                 | TEXT        | rolled back tables group             |
 +----------------------------+-------------+--------------------------------------+
 | cons_target_rlbk_mark_name | TEXT        | rollback target mark name            |
 +----------------------------+-------------+--------------------------------------+

@@ -89,7 +89,7 @@ select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj."ot
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -----------------------------
--- Step 9 : test the emaj_alter_group function with non rollbackable phil's group#3, group
+-- Step 9 : test the emaj_alter_group() and emaj_alter_groups() functions with the audit-only phil's group#3, group and a mix of rollbackable and audit-only groups
 -----------------------------
 select emaj.emaj_create_group('phil''s group#3",',false);
 
@@ -110,10 +110,18 @@ reset role;
 alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(10);
 
 set role emaj_regression_tests_adm_user;
+
+select emaj.emaj_create_group('myGroup4');
+
 update emaj.emaj_group_def set grpdef_priority = NULL, grpdef_log_schema_suffix = NULL, grpdef_emaj_names_prefix = NULL
   where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
-select emaj.emaj_alter_group('phil''s group#3",');
+update emaj.emaj_group_def set grpdef_priority = 999
+  where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblm';
+
+select emaj.emaj_alter_groups('{"phil''s group#3\",","myGroup4"}');
+
 select emaj.emaj_drop_group('phil''s group#3",');
+select emaj.emaj_drop_group('myGroup4');
 
 select emaj.emaj_enable_protection_by_event_triggers();
 

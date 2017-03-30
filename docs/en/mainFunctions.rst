@@ -91,6 +91,7 @@ If a column *grpdef_log_dat_tsp* or *grpdef_log_idx_tsp* is *NULL* (default valu
 
 For sequences, both *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns must be *NULL*.
 
+
 .. _emaj_create_group:
 
 Create a tables group
@@ -124,6 +125,7 @@ By registering the group composition in the *emaj_relation* internal table, the 
 
 A tables group can be altered by the :ref:`emaj_alter_group() <emaj_alter_group>` function or suppressed by the :ref:`emaj_drop_group() <emaj_drop_group>` function.
 
+
 .. _emaj_start_group:
 
 Start a tables group
@@ -151,6 +153,9 @@ The function also performs a purge of the oldest events in the :ref:`emaj_hist <
 
 When a group is started, its state becomes "*LOGGING*".
 
+Using the :ref:`emaj_start_groups() <multi_groups_functions_list>` function, several groups can be started at once.
+
+
 .. _emaj_set_mark_group:
 
 Set an intermediate mark
@@ -175,6 +180,9 @@ The *emaj_set_mark_group()* function records the identity of the new mark, with 
 It is possible to set two consecutive marks without any update on any table between these marks.
 
 The *emaj_set_mark_group()* function sets *ROW EXCLUSIVE* locks on each table of the group in order to be sure that no transaction having already performed updates on any table of the group is running. However, this does not guarantee that a transaction having already read one or several tables before the mark set, updates tables after the mark set. In such a case, these updates would be candidate for a potential rollback to this mark.
+
+Using the :ref:`emaj_set_mark_groups() <multi_groups_functions_list>` function, a mark can be set on several groups at once.
+
 
 .. _emaj_rollback_group:
 
@@ -211,6 +219,9 @@ Then, it is possible to continue updating processes, to set other marks, and if 
 .. caution::
 
    By their nature, the reset of sequences is not “cancellable” in case of abort and rollback of the transaction that executes the *emaj_rollback_group()* function. That is the reason why the processing of application sequences is always performed after the processing of application tables. However, even-though the time needed to rollback a sequence is very short, a problem may occur during this last phase. Rerunning immediately the *emaj_rollback_group()* function would not break database integrity. But any other database access before the second execution may lead to wrong values for some sequences.
+
+Using the :ref:`emaj_rollback_groups() <multi_groups_functions_list>` function, several groups can be rolled back at once.
+
 
 .. _emaj_logged_rollback_group:
 
@@ -265,6 +276,9 @@ Rollback from different types (logged/unlogged) may be executed in sequence. For
 
 A :ref:`"consolidation" function <emaj_consolidate_rollback_group>` for “logged rollback“ allows to transform a logged rollback into a simple unlogged rollback.
 
+Using the :ref:`emaj_rollback_groups() <multi_groups_functions_list>` function, several groups can be rolled back at once.
+
+
 .. _emaj_stop_group:
 
 Stop a tables group
@@ -288,6 +302,9 @@ When a group is stopped, its state becomes "*IDLE*" again.
 
 Executing the *emaj_stop_group()* function for a tables group already stopped does not generate an error. Only a warning message is returned.
 
+Using the :ref:`emaj_stop_groups() <multi_groups_functions_list>` function, several groups can be stopped at once.
+
+
 .. _emaj_alter_group:
 
 Alter a tables group
@@ -295,7 +312,7 @@ Alter a tables group
 
 Two types of events may lead to alter a tables group:
 
-* the tables group definition may change, some tables or sequences may have been added or suppressed, or one of the parameters linked to a table (priority, schema, or tablespaces) may have been modified,
+* the tables group definition may change, some tables or sequences may have been added or suppressed, or one of the parameters linked to a table (priority, schema, tablespaces,...) may have been modified,
 * the structure of one or several application tables of the tables group may have changed, such as an added or dropped column or a change in a column type having an impact in the log table structure.
 
 In both cases, the following steps must be performed:
@@ -325,6 +342,9 @@ In most cases, executing the *emaj_alter_group()* function is much more efficien
 It is possible to update the *emaj_group_def* table, when the tables group is in *LOGGING* state, however it will not have an effect until the group is altered (or dropped and re-created).
 
 In case of discrepancy between the structure of both application and related log tables, E-Maj generates an error at start group time, or set mark time or rollback time.
+
+Using the :ref:`emaj_alter_groups() <multi_groups_functions_list>` function, several groups can be modified at once.
+
 
 .. _emaj_drop_group:
 

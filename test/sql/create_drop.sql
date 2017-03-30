@@ -1,5 +1,5 @@
 -- create_drop.sql : prepare groups content and test emaj_create_group(), emaj_comment_group() 
--- emaj_drop_group(), emaj_force_drop_group() and emaj_alter_group() functions
+-- emaj_drop_group(), emaj_force_drop_group(), emaj_alter_group() and emaj_alter_groups() functions
 --
 SET client_min_messages TO WARNING;
 -----------------------------
@@ -195,7 +195,7 @@ select group_name, group_comment from emaj.emaj_group where group_name = 'myGrou
 
 -- unknown group
 select emaj.emaj_drop_group(NULL);
-select emaj.emaj_drop_group('unkownGroup');
+select emaj.emaj_drop_group('unknownGroup');
 -- group in logging state
 select emaj.emaj_start_group('myGroup1','');
 select emaj.emaj_drop_group('myGroup1');
@@ -232,17 +232,18 @@ select emaj.emaj_force_drop_group('myGroup2');
 -----------------------------
 -- emaj_alter_group() tests
 -----------------------------
+select emaj.emaj_create_group('myGroup1');
+select emaj.emaj_create_group('myGroup2');
+
 -- unknown group
 select emaj.emaj_alter_group(NULL);
-select emaj.emaj_alter_group('unkownGroup');
+select emaj.emaj_alter_group('unknownGroup');
 -- group in logging state
-select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_start_group('myGroup1','');
 select emaj.emaj_alter_group('myGroup1');
 select emaj.emaj_stop_group('myGroup1');
 -- alter a group with a table now already belonging to another group
 begin;
-  select emaj.emaj_create_group('myGroup2');
   insert into emaj.emaj_group_def values ('myGroup1','myschema2','mytbl1');
   select emaj.emaj_alter_group('myGroup1');
 rollback;
@@ -273,11 +274,11 @@ rollback;
 
 -- should be OK
 -- nothing to change
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
+select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable,
        group_creation_time_id, group_last_alter_time_id, group_comment
  from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_alter_group('myGroup1');
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
+select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable,
        group_creation_time_id, group_last_alter_time_id, group_comment
  from emaj.emaj_group where group_name = 'myGroup1';
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
@@ -384,6 +385,101 @@ drop function emaj.myschema1_mytbl1_log_fnct() cascade;
 select emaj.emaj_alter_group('myGroup1');
 drop table emaj.myschema1_mytbl1_log;
 select emaj.emaj_alter_group('myGroup1');
+
+-----------------------------
+-- emaj_alter_groups() tests
+-----------------------------
+
+-- unknown groups
+select emaj.emaj_alter_groups('{NULL,"unknownGroup"}');
+select emaj.emaj_alter_groups('{"myGroup1","unknownGroup"}');
+-- groups in logging state
+select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','');
+select emaj.emaj_alter_groups('{"myGroup2","myGroup1"}');
+select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
+-- alter groups with a table now already belonging to another group
+begin;
+  insert into emaj.emaj_group_def values ('myGroup1','myschema2','mytbl1');
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+rollback;
+-- groups are now empty
+begin;
+  delete from emaj.emaj_group_def where grpdef_group = 'myGroup2';
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+rollback;
+-- schema suffix cannot be changed for sequence (this covers other cases of forbidden changes for sequences)
+begin;
+  update emaj.emaj_group_def set grpdef_log_schema_suffix = 'dummy' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+rollback;
+-- a PRIMARY KEY is missing
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+rollback;
+
+-- should be OK
+-- 3 tables and 1 sequence to remove (+ log schemas emajb)
+select group_name, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1' or group_name = 'myGroup2';
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+select group_name, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1' or group_name = 'myGroup2';
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+
+-- 3 tables and 1 sequence to add (+ log schemas emajb)
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b',NULL,'tsp log''2','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4',NULL,NULL,'myschema2_mytbl4');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+select group_name, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1' or group_name = 'myGroup2';
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+
+-- change a log schema and the emaj_names_prefix for 2 tables
+update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema2_myTbl3_log';
+select count(*) from "emajC".s1t3_log;
+--
+update emaj.emaj_group_def set grpdef_log_schema_suffix = 'C' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema2_myTbl3_log';
+select count(*) from "emajC"."myschema1_myTbl3_log";
+
+-- only change the log data tablespace for 1 table, the log index tablespace for another table and the priority for a third one
+update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsplog1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
+update emaj.emaj_group_def set grpdef_priority = 30 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+set default_tablespace = tspemaj_renamed;
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+reset default_tablespace;
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema2_mytbl6_log_idx';
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+--
+update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
+update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema2_mytbl6_log_idx';
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+
+-- move 1 table and 1 sequence from a group to another
+update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
+select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' group by 1 order by 1;
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' group by 1 order by 1;
+update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' group by 1 order by 1;
 
 -----------------------------
 -- test end: check and force sequences id
