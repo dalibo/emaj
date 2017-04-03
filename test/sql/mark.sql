@@ -4,6 +4,7 @@
 --
 select emaj.emaj_start_group('myGroup1','Mark1');
 select emaj.emaj_start_group('myGroup2','Mark2');
+select emaj.emaj_start_group('emptyGroup','MarkInit');
 -----------------------------
 -- emaj_set_mark_group() tests
 -----------------------------
@@ -18,6 +19,7 @@ select emaj.emaj_set_mark_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_set_mark_group('myGroup1','SM1');
 select emaj.emaj_set_mark_group('myGroup2','SM1');
 select emaj.emaj_set_mark_group('myGroup2','phil''s mark #1');
+select emaj.emaj_set_mark_group('emptyGroup','SM1');
 
 -- duplicate mark name
 select emaj.emaj_set_mark_group('myGroup1','SM1');
@@ -51,7 +53,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
 
 -- duplicate mark name and warning on group names array content
-select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1'],'SM3');
+select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','emptyGroup','myGroup2','myGroup1'],'SM3');
 
 -- generated mark name
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','');
@@ -85,6 +87,7 @@ select emaj.emaj_comment_mark_group('myGroup2','SM1','a first comment for group 
 select emaj.emaj_comment_mark_group('myGroup2','SM1',NULL);
 select emaj.emaj_comment_mark_group('myGroup2','EMAJ_LAST_MARK','a comment for group #2');
 select emaj.emaj_comment_mark_group('myGroup2','phil''s mark #1','a good phil''s comment!');
+select emaj.emaj_comment_mark_group('emptyGroup','SM1','a comment on a mark for an empty group');
 
 -----------------------------
 -- emaj_get_previous_mark_group()
@@ -128,6 +131,7 @@ select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM1');
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM2');
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','SM2');
 select emaj.emaj_rename_mark_group('myGroup2','phil''s mark #1','john''s mark #1');
+select emaj.emaj_rename_mark_group('emptyGroup','EMAJ_LAST_MARK','SM2');
 
 -- simulate SM2 is the end mark of a logged rollback operations on both myGroup1 and myGroup2 groups
 update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'Mark1' where mark_name = 'SM2';
@@ -155,6 +159,8 @@ select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
 update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group = 'myGroup1' and mark_name = 'SM3';
 select emaj.emaj_delete_mark_group('myGroup1','SM1');
 select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'SM3';
+
+select emaj.emaj_delete_mark_group('emptyGroup','EMAJ_LAST_MARK');
 
 select emaj.emaj_delete_mark_group('myGroup1','First Mark');
 select sum(emaj.emaj_delete_mark_group('myGroup1',mark_name)) from 

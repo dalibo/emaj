@@ -37,6 +37,9 @@ select emaj.emaj_stop_group('phil''s group#3",','Simple stop mark');
 select emaj.emaj_drop_group('phil''s group#3",');
 select emaj.emaj_force_stop_group('myGroup4');
 select emaj.emaj_drop_group('myGroup4');
+select emaj.emaj_force_stop_group('emptyGroup');
+select emaj.emaj_drop_group('emptyGroup');
+
 -- emaj tables
 select * from emaj.emaj_group;
 select * from emaj.emaj_relation;

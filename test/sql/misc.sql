@@ -24,6 +24,10 @@ select count(*) from emaj.myschema1_mytbl4_log;
 
 -- should be OK
 select emaj.emaj_reset_group('myGroup1');
+begin;
+  select emaj.emaj_stop_group('emptyGroup');
+  select emaj.emaj_reset_group('emptyGroup');
+rollback;
 
 select count(*) from emaj.myschema1_mytbl1_log;
 select count(*) from emaj.myschema1_mytbl2_log;
@@ -130,6 +134,10 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark23')
   order by stat_group, stat_schema, stat_table;
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
   order by stat_group, stat_schema, stat_table;
+
+-- empty group
+select * from emaj.emaj_log_stat_group('emptyGroup',NULL,NULL);
+select * from emaj.emaj_detailed_log_stat_group('emptyGroup',NULL,NULL);
 
 -- groups without any mark
 begin;
@@ -420,6 +428,7 @@ select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '
 
 -- should be ok (generated files content is checked later in adm2.sql scenario)
 -- (getting counters from detailed log statistics + the number of sequences included in the group allows a comparison with the result of emaj_gen_sql_group function)
+select emaj.emaj_gen_sql_group('emptyGroup', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL);
 select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, '/tmp/emaj_test/sql_scripts/myFile');

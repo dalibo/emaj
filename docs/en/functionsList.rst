@@ -27,6 +27,7 @@ E-Maj functions that are available to users are listed in alphabetic order below
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_create_group                          | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_create_group>`                             | | [is.rollbackable BOOLEAN]   |                                       |
+|                                                  | | [is.empty BOOLEAN]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_delete_before_mark_group              | | group TEXT,                 | #.deleted.marks INT                   |
 | <emaj_delete_before_mark_group>`                 | | mark TEXT                   |                                       |

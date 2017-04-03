@@ -356,6 +356,11 @@ select col21, col22 from myschema1.myTbl2 order by col21;
 select col20, col21 from myschema1.myTbl2b order by col20;
 
 -----------------------------
+-- rollback an empty group
+-----------------------------
+select emaj.emaj_rollback_group('emptyGroup','MarkInit');
+
+-----------------------------
 -- test use of partitionned tables
 -----------------------------
 select emaj.emaj_start_group('myGroup4','myGroup4_start');

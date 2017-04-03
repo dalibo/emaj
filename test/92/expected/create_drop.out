@@ -56,20 +56,23 @@ select emaj.emaj_create_group('',false);
 ERROR:  emaj_create_group: group name can't be NULL or empty.
 -- group is unknown in emaj_group_def
 select emaj.emaj_create_group('unknownGroup');
-ERROR:  emaj_create_group: group "unknownGroup" is unknown in emaj_group_def table.
+ERROR:  emaj_create_group: group "unknownGroup" is unknown in the emaj_group_def table. To create an empty group, explicitely set the third parameter to true.
 select emaj.emaj_create_group('unknownGroup',false);
-ERROR:  emaj_create_group: group "unknownGroup" is unknown in emaj_group_def table.
+ERROR:  emaj_create_group: group "unknownGroup" is unknown in the emaj_group_def table. To create an empty group, explicitely set the third parameter to true.
+-- an emtpy group to create is known in emaj_group_def
+select emaj.emaj_create_group('myGroup1',true,true);
+ERROR:  emaj_create_group: group "myGroup1" is referenced into the emaj_group_def table. This is not consistent with the <is_empty> parameter set to true.
 -- unknown schema or table in emaj_group_def
 select emaj.emaj_create_group('dummyGrp1');
 WARNING:  _check_groups_content: Error, the table or sequence "dummySchema".mytbl4 does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, the table or sequence myschema1."dummyTable" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 -- group with a temp table
 begin;
   CREATE TEMPORARY TABLE myTempTbl (
@@ -82,10 +85,10 @@ begin;
   select emaj.emaj_create_group('myGroup5');
 WARNING:  _check_groups_content: Error, the table pg_temp_2.mytemptbl is a TEMPORARY table.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 rollback;
 -- group with an unlogged table
 begin;
@@ -93,10 +96,10 @@ begin;
   select emaj.emaj_create_group('myGroup5');
 WARNING:  _check_groups_content: Error, the table myschema5.myunloggedtbl is an UNLOGGED table.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 rollback;
 -- group with a WITH OIDS table
 begin;
@@ -104,29 +107,29 @@ begin;
   select emaj.emaj_create_group('myGroup5');
 WARNING:  _check_groups_content: Error, the table myschema5.myoidstbl is declared WITH OIDS.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
 WARNING:  _check_groups_content: Error, the table "phil's schema3"."myTbl2\" has no PRIMARY KEY.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 -- sequence with a log schema suffix defined in the emaj_group_def table
 begin;
   update emaj.emaj_group_def set grpdef_log_schema_suffix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the secondary log schema suffix is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 rollback;
 -- sequence with an emaj names prefix defined in the emaj_group_def table
 begin;
@@ -134,10 +137,10 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the emaj names prefix is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 rollback;
 -- sequence with tablespaces defined in the emaj_group_def table
 begin;
@@ -145,13 +148,13 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the index log tablespace is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 rollback;
 -- table with invalid tablespace
 begin;
@@ -161,7 +164,7 @@ ERROR:  tablespace "dummyTablespace" does not exist
 CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log (LIKE myschema1.mytbl1) TABLESPACE "dummyTablespace""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 67 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 65 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
 rollback;
 -- already existing secondary schema
 begin;
@@ -169,7 +172,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 ERROR:  _create_log_schema: schema "emajb" should not exist. Drop it manually, or modify emaj_group_def table's content.
 CONTEXT:  SQL statement "SELECT emaj._create_log_schema(r_schema.log_schema)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 50 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
 rollback;
 -- conflict on emaj names prefix inside the group to create
 begin;
@@ -179,13 +182,13 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema1_mytbl4" is configured for several tables in the groups.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, the emaj prefix "samePrefix" is configured for several tables in the groups.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 rollback;
 -- conflict on emaj names prefix with already create groups
 begin;
@@ -193,7 +196,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 65 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
  emaj_create_group 
 -------------------
                  6
@@ -204,13 +207,13 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean) line 65 at PERFORM
   select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema1_mytbl2" is already used.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, the emaj prefix "samePrefix" is already used.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 rollback;
 -- mix a lot of errors
 begin;
@@ -221,31 +224,38 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _check_groups_content: Error, the emaj prefix "samePrefix" is configured for several tables in the groups.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, the table myschema1.mytbl1 is declared WITH OIDS.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the secondary log schema suffix is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the emaj names prefix is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 65 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
  emaj_create_group 
 -------------------
                  6
+(1 row)
+
+-- explicitely create an empty group (here audit_only)
+select emaj.emaj_create_group('emptyGroup',false,true);
+ emaj_create_group 
+-------------------
+                 0
 (1 row)
 
 -- should be OK, but with a warning for linked table not protected by E-Maj
@@ -254,10 +264,10 @@ alter table myschema2.myTbl8 add foreign key (col81) references myschema2.myTbl6
 select emaj.emaj_create_group('myGroup2',true);
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 85 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 90 at PERFORM
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 85 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 90 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -270,7 +280,7 @@ begin;
   select emaj.emaj_create_group('phil''s group#3",',false);
 WARNING:  _create_seq: Sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table belong to another tables group (dummyGrp3).
 CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 78 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 83 at PERFORM
  emaj_create_group 
 -------------------
                  3
@@ -284,7 +294,7 @@ begin;
   select emaj.emaj_create_group('phil''s group#3",',false);
 WARNING:  _create_seq: Sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table does not belong to any tables group.
 CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 78 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 83 at PERFORM
  emaj_create_group 
 -------------------
                  3
@@ -301,7 +311,7 @@ select emaj.emaj_create_group('phil''s group#3",',false);
 select emaj.emaj_create_group('myGroup4');
 WARNING:  _create_tbl: table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 65 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
  emaj_create_group 
 -------------------
                  3
@@ -311,30 +321,30 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean) line 65 at PERFORM
 select emaj.emaj_create_group('dummyGrp2',false);
 WARNING:  _check_groups_content: Error, the table or sequence emaj.emaj_param belongs to an E-Maj schema.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, the table or sequence "emajC"."myschema1_myTbl3_log" belongs to an E-Maj schema.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 -- create a group with a table already belonging to another group
 select emaj.emaj_create_group('dummyGrp3');
 WARNING:  _check_groups_content: Error, the table or sequence myschema1.mytbl1 belongs to another group (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, the table or sequence myschema2.mytbl2 belongs to another group (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema1_mytbl1" is already used.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl2" is already used.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 32 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 37 at PERFORM
 -- already created
 select emaj.emaj_create_group('myGroup2');
 ERROR:  emaj_create_group: group "myGroup2" is already created.
@@ -353,11 +363,12 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  from emaj.emaj_group order by group_name;
     group_name    | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
 ------------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
+ emptyGroup       | f                | t                       |              0 |                 0 | f                     |                      5 |                          | 
  myGroup1         | f                | f                       |              5 |                 1 | t                     |                      4 |                          | 
- myGroup2         | f                | f                       |              6 |                 2 | t                     |                      5 |                          | 
- myGroup4         | f                | f                       |              3 |                 0 | t                     |                      9 |                          | 
- phil's group#3", | f                | t                       |              2 |                 2 | f                     |                      8 |                          | 
-(4 rows)
+ myGroup2         | f                | f                       |              6 |                 2 | t                     |                      6 |                          | 
+ myGroup4         | f                | f                       |              3 |                 0 | t                     |                     10 |                          | 
+ phil's group#3", | f                | t                       |              2 |                 2 | f                     |                      9 |                          | 
+(5 rows)
 
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq;
    rel_schema   |    rel_tblseq     |    rel_group     | rel_kind | rel_priority | rel_log_schema |         rel_log_table          | rel_log_dat_tsp |           rel_log_index            | rel_log_idx_tsp |          rel_log_sequence          |          rel_log_function           |                       rel_sql_columns                       |      rel_sql_pk_columns       |                               rel_sql_pk_eq_conditions                                
@@ -440,6 +451,12 @@ select emaj.emaj_comment_group('myGroup1','a better comment for group #1');
  
 (1 row)
 
+select emaj.emaj_comment_group('emptyGroup','an empty group');
+ emaj_comment_group 
+--------------------
+ 
+(1 row)
+
 select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
  group_name |         group_comment         
 ------------+-------------------------------
@@ -510,6 +527,12 @@ select emaj.emaj_drop_group('myGroup2');
                8
 (1 row)
 
+select emaj.emaj_drop_group('emptyGroup');
+ emaj_drop_group 
+-----------------
+               0
+(1 row)
+
 -- already dropped
 select emaj.emaj_drop_group('myGroup2');
 ERROR:  _drop_group: group "myGroup2" has not been created.
@@ -536,7 +559,7 @@ PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 select emaj.emaj_create_group('myGroup1',false);
 WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 65 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
  emaj_create_group 
 -------------------
                  6
@@ -557,10 +580,10 @@ select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_create_group('myGroup2',true);
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 85 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 90 at PERFORM
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 85 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 90 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -578,7 +601,7 @@ select emaj.emaj_force_drop_group('myGroup2');
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 65 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
  emaj_create_group 
 -------------------
                  6
@@ -587,13 +610,19 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean) line 65 at PERFORM
 select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 85 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 90 at PERFORM
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean) line 85 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 90 at PERFORM
  emaj_create_group 
 -------------------
                  8
+(1 row)
+
+select emaj.emaj_create_group('emptyGroup',true,true);
+ emaj_create_group 
+-------------------
+                 0
 (1 row)
 
 -- unknown group
@@ -625,23 +654,16 @@ begin;
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_groups_content: Error, the table or sequence myschema2.mytbl1 belongs to another group (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl1" is already used.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
-rollback;
--- the group is now empty
-begin;
-  delete from emaj.emaj_group_def where grpdef_group = 'myGroup1';
-  select emaj.emaj_alter_group('myGroup1');
-ERROR:  _alter_groups: the group "myGroup1" is unknown in the emaj_group_def table.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 rollback;
 -- schema suffix cannot be changed for sequence
 begin;
@@ -649,11 +671,11 @@ begin;
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the secondary log schema suffix is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 rollback;
 -- object names prefix cannot be changed for sequence
@@ -662,11 +684,11 @@ begin;
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the emaj names prefix is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 rollback;
 -- log tablespace cannot be changed for sequence
@@ -675,11 +697,11 @@ begin;
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 rollback;
 begin;
@@ -687,11 +709,11 @@ begin;
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the index log tablespace is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 rollback;
 -- should be OK
@@ -701,7 +723,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  from emaj.emaj_group where group_name = 'myGroup1';
  group_name | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
 ------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
- myGroup1   | f                | f                       |              5 |                 1 | t                     |                     15 |                          | 
+ myGroup1   | f                | f                       |              5 |                 1 | t                     |                     16 |                          | 
 (1 row)
 
 select emaj.emaj_alter_group('myGroup1');
@@ -715,7 +737,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  from emaj.emaj_group where group_name = 'myGroup1';
  group_name | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
 ------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
- myGroup1   | f                | f                       |              5 |                 1 | t                     |                     15 |                       19 | 
+ myGroup1   | f                | f                       |              5 |                 1 | t                     |                     16 |                       21 | 
 (1 row)
 
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
@@ -734,11 +756,11 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table "myschema1.mytbl2" is referenced by foreign key "mytbl4_col43_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema1.mytbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -764,11 +786,11 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup1');
 WARNING:  _check_fk_groups: table "myschema1.mytbl2" is referenced by foreign key "mytbl4_col43_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema1.mytbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1070,6 +1092,16 @@ select emaj.emaj_alter_group('myGroup1');
                 6
 (1 row)
 
+-- the group is now empty
+begin;
+  delete from emaj.emaj_group_def where grpdef_group = 'myGroup1';
+  select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                0
+(1 row)
+
+rollback;
 -----------------------------
 -- emaj_alter_groups() tests
 -----------------------------
@@ -1112,19 +1144,12 @@ begin;
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl1" is configured for several tables in the groups.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
-rollback;
--- groups are now empty
-begin;
-  delete from emaj.emaj_group_def where grpdef_group = 'myGroup2';
-  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-ERROR:  _alter_groups: the group "myGroup2" is unknown in the emaj_group_def table.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 rollback;
 -- schema suffix cannot be changed for sequence (this covers other cases of forbidden changes for sequences)
 begin;
@@ -1132,11 +1157,11 @@ begin;
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the secondary log schema suffix is not NULL.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 rollback;
 -- a PRIMARY KEY is missing
@@ -1145,11 +1170,11 @@ begin;
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_groups_content: Error, the table myschema1.mytbl4 has no PRIMARY KEY.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 rollback;
 -- should be OK
@@ -1168,19 +1193,19 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl2" is referenced by foreign key "mytbl4_col43_fkey" from table "myschema2.mytbl4" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "myschema2.mytbl4" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -1210,11 +1235,11 @@ insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -1243,11 +1268,11 @@ update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_sc
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -1272,11 +1297,11 @@ update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_sche
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -1303,11 +1328,11 @@ set default_tablespace = tspemaj_renamed;
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -1340,11 +1365,11 @@ update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'mysch
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -1382,11 +1407,11 @@ select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -1406,11 +1431,11 @@ update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = '
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 215 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -1425,6 +1450,16 @@ select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup
  myGroup4  |     3
 (3 rows)
 
+-- groups are now empty
+begin;
+  delete from emaj.emaj_group_def where grpdef_group = 'myGroup2';
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+ emaj_alter_groups 
+-------------------
+                 6
+(1 row)
+
+rollback;
 -----------------------------
 -- test end: check and force sequences id
 -----------------------------
@@ -1458,6 +1493,8 @@ select hist_function, hist_event, hist_object,
  CREATE_GROUP       | SCHEMA CREATED          | emajb              |                                                  | postgres
  CREATE_GROUP       | SCHEMA CREATED          | "emajC"            |                                                  | postgres
  CREATE_GROUP       | END                     | myGroup1           | 6 tables/sequences processed                     | postgres
+ CREATE_GROUP       | BEGIN                   | emptyGroup         | audit_only                                       | postgres
+ CREATE_GROUP       | END                     | emptyGroup         | 0 tables/sequences processed                     | postgres
  CREATE_GROUP       | BEGIN                   | myGroup2           | rollbackable                                     | postgres
  CREATE_GROUP       | END                     | myGroup2           | 8 tables/sequences processed                     | postgres
  CREATE_GROUP       | BEGIN                   | phil's group#3",   | audit_only                                       | postgres
@@ -1467,6 +1504,7 @@ select hist_function, hist_event, hist_object,
  CREATE_GROUP       | END                     | myGroup4           | 3 tables/sequences processed                     | postgres
  COMMENT_GROUP      |                         | myGroup1           |                                                  | postgres
  COMMENT_GROUP      |                         | myGroup1           |                                                  | postgres
+ COMMENT_GROUP      |                         | emptyGroup         |                                                  | postgres
  COMMENT_GROUP      |                         | myGroup1           |                                                  | postgres
  START_GROUP        | BEGIN                   | myGroup1           | With log reset                                   | postgres
  LOCK_GROUP         | BEGIN                   | myGroup1           |                                                  | postgres
@@ -1486,6 +1524,8 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP         | BEGIN                   | myGroup2           |                                                  | postgres
  DROP_GROUP         | SCHEMA DROPPED          | "emajC"            |                                                  | postgres
  DROP_GROUP         | END                     | myGroup2           | 8 tables/sequences processed                     | postgres
+ DROP_GROUP         | BEGIN                   | emptyGroup         |                                                  | postgres
+ DROP_GROUP         | END                     | emptyGroup         | 0 tables/sequences processed                     | postgres
  CREATE_GROUP       | BEGIN                   | myGroup1           | audit_only                                       | postgres
  CREATE_GROUP       | SCHEMA CREATED          | emajb              |                                                  | postgres
  CREATE_GROUP       | SCHEMA CREATED          | "emajC"            |                                                  | postgres
@@ -1512,6 +1552,8 @@ select hist_function, hist_event, hist_object,
  CREATE_GROUP       | END                     | myGroup1           | 6 tables/sequences processed                     | postgres
  CREATE_GROUP       | BEGIN                   | myGroup2           | rollbackable                                     | postgres
  CREATE_GROUP       | END                     | myGroup2           | 8 tables/sequences processed                     | postgres
+ CREATE_GROUP       | BEGIN                   | emptyGroup         | rollbackable                                     | postgres
+ CREATE_GROUP       | END                     | emptyGroup         | 0 tables/sequences processed                     | postgres
  START_GROUP        | BEGIN                   | myGroup1           | With log reset                                   | postgres
  LOCK_GROUP         | BEGIN                   | myGroup1           |                                                  | postgres
  LOCK_GROUP         | END                     | myGroup1           | 5 tables locked, 0 deadlock(s)                   | postgres
@@ -1646,26 +1688,26 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP   | BEGIN                   | myGroup2           |                                                  | postgres
  FORCE_DROP_GROUP   | SCHEMA DROPPED          | "emajC"            |                                                  | postgres
  FORCE_DROP_GROUP   | END                     | myGroup2           | 8 tables/sequences processed                     | postgres
-(193 rows)
+(200 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
        4 |                  0 | C
        5 |                  0 | C
-       8 |                  0 | C
+       6 |                  0 | C
        9 |                  0 | C
-      10 |                  0 | M
+      10 |                  0 | C
       11 |                  0 | M
-      12 |                  0 | C
-      13 |                  0 | M
-      14 |                  0 | C
+      12 |                  0 | M
+      13 |                  0 | C
+      14 |                  0 | M
       15 |                  0 | C
       16 |                  0 | C
-      17 |                  0 | M
-      18 |                  0 | M
-      19 |                  0 | A
-      20 |                  0 | A
+      17 |                  0 | C
+      18 |                  0 | C
+      19 |                  0 | M
+      20 |                  0 | M
       21 |                  0 | A
       22 |                  0 | A
       23 |                  0 | A
@@ -1693,17 +1735,19 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       45 |                  0 | A
       46 |                  0 | A
       47 |                  0 | A
-      48 |                  0 | M
-      49 |                  0 | M
-      50 |                  0 | A
-      51 |                  0 | A
-      52 |                  0 | A
+      48 |                  0 | A
+      49 |                  0 | A
+      51 |                  0 | M
+      52 |                  0 | M
       53 |                  0 | A
       54 |                  0 | A
       55 |                  0 | A
       56 |                  0 | A
       57 |                  0 | A
-(52 rows)
+      58 |                  0 | A
+      59 |                  0 | A
+      60 |                  0 | A
+(54 rows)
 
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 200;

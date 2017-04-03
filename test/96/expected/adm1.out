@@ -38,7 +38,7 @@ select count(*) from emaj.emaj_group_def;
 select count(*) from emaj.emaj_group;
  count 
 -------
-     4
+     5
 (1 row)
 
 select count(*) from emaj.emaj_relation;
@@ -50,7 +50,7 @@ select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_mark;
  count 
 -------
-    12
+    13
 (1 row)
 
 select count(*) from emaj.emaj_sequence;
@@ -68,13 +68,13 @@ select count(*) from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    20
+    21
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    20
+    21
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
@@ -146,6 +146,18 @@ select emaj.emaj_drop_group('myGroup4');
                3
 (1 row)
 
+select emaj.emaj_force_stop_group('emptyGroup');
+ emaj_force_stop_group 
+-----------------------
+                     0
+(1 row)
+
+select emaj.emaj_drop_group('emptyGroup');
+ emaj_drop_group 
+-----------------
+               0
+(1 row)
+
 -- emaj tables
 select * from emaj.emaj_group;
  group_name | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_pg_version | group_comment 
@@ -175,13 +187,13 @@ select * from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    20
+    21
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    20
+    21
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
@@ -2245,8 +2257,8 @@ select * from emaj.emaj_verify_all();
 (1 row)
 
 select emaj.emaj_create_group('dummyGroup');
-ERROR:  emaj_create_group: group "dummyGroup" is unknown in emaj_group_def table.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 24 at RAISE
+ERROR:  emaj_create_group: group "dummyGroup" is unknown in the emaj_group_def table. To create an empty group, explicitely set the third parameter to true.
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 31 at RAISE
 select emaj.emaj_drop_group('dummyGroup');
 ERROR:  _drop_group: group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE

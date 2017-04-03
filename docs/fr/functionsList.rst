@@ -27,6 +27,7 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_create_group                          | | groupe TEXT,                | nb.tables.et.seq INT                  |
 | <emaj_create_group>`                             | | [est.rollbackable BOOLEAN]  |                                       |
+|                                                  | | [est.vide BOOLEAN]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_delete_before_mark_group              | | groupe TEXT,                | nb.marques.supprimées INT             |
 | <emaj_delete_before_mark_group>`                 | | marque TEXT                 |                                       |

@@ -97,6 +97,7 @@ UPDATE emaj.emaj_group_def SET grpdef_log_idx_tsp = rel_log_idx_tsp
 DROP FUNCTION emaj._check_group_content(V_GROUPNAME TEXT);
 DROP FUNCTION emaj._create_tbl(R_GRPDEF EMAJ.EMAJ_GROUP_DEF,V_GROUPNAME TEXT,V_ISROLLBACKABLE BOOLEAN,V_DEFTSP TEXT);
 DROP FUNCTION emaj._create_seq(GRPDEF EMAJ.EMAJ_GROUP_DEF,V_GROUPNAME TEXT);
+DROP FUNCTION emaj.emaj_create_group(V_GROUPNAME TEXT,V_ISROLLBACKABLE BOOLEAN);
 DROP FUNCTION emaj._reset_group(V_GROUPNAME TEXT);
 
 ------------------------------------------------------------------
@@ -789,12 +790,14 @@ $_verify_groups$
   END;
 $_verify_groups$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN DEFAULT true)
+CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN DEFAULT true, v_is_empty BOOLEAN DEFAULT false)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_create_group$
 -- This function creates emaj objects for all tables of a group
 -- It also creates the secondary E-Maj schemas when needed
--- Input: group name, boolean indicating wether the group is rollbackable or not (true by default)
+-- Input: group name,
+--        boolean indicating wether the group is rollbackable or not (true by default),
+--        boolean explicitely indicating wether the group is empty or not
 -- Output: number of processed tables and sequences
   DECLARE
     v_timeId                 BIGINT;
@@ -811,15 +814,18 @@ $emaj_create_group$
     IF v_groupName IS NULL OR v_groupName = ''THEN
       RAISE EXCEPTION 'emaj_create_group: group name can''t be NULL or empty.';
     END IF;
--- check the group is known in emaj_group_def table
-    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
-    IF NOT FOUND THEN
-       RAISE EXCEPTION 'emaj_create_group: group "%" is unknown in emaj_group_def table.', v_groupName;
-    END IF;
 -- check that the group is not yet recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF FOUND THEN
       RAISE EXCEPTION 'emaj_create_group: group "%" is already created.', v_groupName;
+    END IF;
+-- check the consistency between the emaj_group_def table content and the v_is_empty input parameter
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
+    IF NOT v_is_empty AND NOT FOUND THEN
+       RAISE EXCEPTION 'emaj_create_group: group "%" is unknown in the emaj_group_def table. To create an empty group, explicitely set the third parameter to true.', v_groupName;
+    END IF;
+    IF v_is_empty AND FOUND THEN
+       RAISE EXCEPTION 'emaj_create_group: group "%" is referenced into the emaj_group_def table. This is not consistent with the <is_empty> parameter set to true.', v_groupName;
     END IF;
 -- performs various checks on the group's content described in the emaj_group_def table
     PERFORM emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable);
@@ -882,6 +888,8 @@ $emaj_create_group$
     RETURN v_nbTbl + v_nbSeq;
   END;
 $emaj_create_group$;
+COMMENT ON FUNCTION emaj.emaj_create_group(TEXT,BOOLEAN,BOOLEAN) IS
+$$Creates an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_alter_group(v_groupName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -947,11 +955,6 @@ $_alter_groups$
 -- ... and is not in LOGGING state
       IF v_groupIsLogging THEN
         RAISE EXCEPTION '_alter_groups: the group "%" cannot be altered because it is in LOGGING state.', v_aGroupName;
-      END IF;
--- check there are remaining rows for the group in emaj_group_def table
-      PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_aGroupName LIMIT 1;
-      IF NOT FOUND THEN
-        RAISE EXCEPTION '_alter_groups: the group "%" is unknown in the emaj_group_def table.', v_aGroupName;
       END IF;
     END LOOP;
 -- performs various checks on the groups content described in the emaj_group_def table
@@ -1243,9 +1246,6 @@ $emaj_reset_group$
     END IF;
 -- perform the reset operation
     SELECT emaj._reset_groups(ARRAY[v_groupName]) INTO v_nbTb;
-    IF v_nbTb = 0 THEN
-       RAISE EXCEPTION 'emaj_reset_group: internal error (group "%" is empty).', v_groupName;
-    END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('RESET_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');

@@ -56,6 +56,8 @@ select emaj.emaj_create_group('',false);
 -- group is unknown in emaj_group_def
 select emaj.emaj_create_group('unknownGroup');
 select emaj.emaj_create_group('unknownGroup',false);
+-- an emtpy group to create is known in emaj_group_def
+select emaj.emaj_create_group('myGroup1',true,true);
 -- unknown schema or table in emaj_group_def
 select emaj.emaj_create_group('dummyGrp1');
 -- group with a temp table
@@ -133,6 +135,9 @@ rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
 
+-- explicitely create an empty group (here audit_only)
+select emaj.emaj_create_group('emptyGroup',false,true);
+
 -- should be OK, but with a warning for linked table not protected by E-Maj
 alter table myschema2.myTbl6 add foreign key (col61) references myschema2.myTbl7 (col71) deferrable initially immediate;
 alter table myschema2.myTbl8 add foreign key (col81) references myschema2.myTbl6 (col61) deferrable;
@@ -184,6 +189,7 @@ select emaj.emaj_comment_group('unkownGroup',NULL);
 -- should be OK
 select emaj.emaj_comment_group('myGroup1','a first comment for group #1');
 select emaj.emaj_comment_group('myGroup1','a better comment for group #1');
+select emaj.emaj_comment_group('emptyGroup','an empty group');
 
 select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_comment_group('myGroup1',NULL);
@@ -208,6 +214,7 @@ rollback;
 -- should be OK
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_drop_group('myGroup2');
+select emaj.emaj_drop_group('emptyGroup');
 
 -- already dropped
 select emaj.emaj_drop_group('myGroup2');
@@ -234,6 +241,7 @@ select emaj.emaj_force_drop_group('myGroup2');
 -----------------------------
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2');
+select emaj.emaj_create_group('emptyGroup',true,true);
 
 -- unknown group
 select emaj.emaj_alter_group(NULL);
@@ -245,11 +253,6 @@ select emaj.emaj_stop_group('myGroup1');
 -- alter a group with a table now already belonging to another group
 begin;
   insert into emaj.emaj_group_def values ('myGroup1','myschema2','mytbl1');
-  select emaj.emaj_alter_group('myGroup1');
-rollback;
--- the group is now empty
-begin;
-  delete from emaj.emaj_group_def where grpdef_group = 'myGroup1';
   select emaj.emaj_alter_group('myGroup1');
 rollback;
 -- schema suffix cannot be changed for sequence
@@ -386,6 +389,12 @@ select emaj.emaj_alter_group('myGroup1');
 drop table emaj.myschema1_mytbl1_log;
 select emaj.emaj_alter_group('myGroup1');
 
+-- the group is now empty
+begin;
+  delete from emaj.emaj_group_def where grpdef_group = 'myGroup1';
+  select emaj.emaj_alter_group('myGroup1');
+rollback;
+
 -----------------------------
 -- emaj_alter_groups() tests
 -----------------------------
@@ -400,11 +409,6 @@ select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
 -- alter groups with a table now already belonging to another group
 begin;
   insert into emaj.emaj_group_def values ('myGroup1','myschema2','mytbl1');
-  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-rollback;
--- groups are now empty
-begin;
-  delete from emaj.emaj_group_def where grpdef_group = 'myGroup2';
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 rollback;
 -- schema suffix cannot be changed for sequence (this covers other cases of forbidden changes for sequences)
@@ -480,6 +484,12 @@ update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = '
 update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' group by 1 order by 1;
+
+-- groups are now empty
+begin;
+  delete from emaj.emaj_group_def where grpdef_group = 'myGroup2';
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+rollback;
 
 -----------------------------
 -- test end: check and force sequences id

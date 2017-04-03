@@ -243,7 +243,9 @@ use warnings; use strict;
     # Pattern $$; that ends the comment
     if ($status == 3 && $line =~ /\$\$;\s*$/) {
       $status = 0;
-      $shortSignature = $fnctSignature; $shortSignature =~ s/(V|R)_\S*\s//g;
+      $shortSignature = $fnctSignature;
+      $shortSignature =~ s/(V|R)_\S*\s//g;       # Suppression des noms de variable
+      $shortSignature =~ s/ //g;                 # Suppression des espaces
       $currComments{$shortSignature} = $comment;
     }
   }

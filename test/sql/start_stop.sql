@@ -91,6 +91,7 @@ rollback;
 select emaj.emaj_start_group('myGroup1','Mark1');
 select emaj.emaj_start_group('myGroup2','Mark2',true);
 select emaj.emaj_start_group('phil''s group#3",','Mark3',false);
+select emaj.emaj_start_group('emptyGroup','Mark1');
 
 select emaj.emaj_stop_group('myGroup1');
 select emaj.emaj_stop_group('myGroup2');
@@ -157,6 +158,7 @@ rollback;
 
 -- should be OK
 select emaj.emaj_stop_group('myGroup1');
+select emaj.emaj_stop_group('emptyGroup');
 
 -- impact of stopped group
 select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
@@ -308,9 +310,10 @@ select emaj.emaj_protect_group('phil''s group#3",');
 -- group is not in logging state
 select emaj.emaj_protect_group('myGroup1');
 -- should be ok
-select emaj.emaj_start_group('myGroup1','M1');
+select emaj.emaj_start_groups(array['myGroup1','emptyGroup'],'M1');
 select emaj.emaj_protect_group('myGroup1');
-select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
+select emaj.emaj_protect_group('emptyGroup');
+select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name in ('myGroup1','emptyGroup');
 -- protect an already protected group
 select emaj.emaj_protect_group('myGroup1');
 select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
@@ -332,11 +335,12 @@ select emaj.emaj_unprotect_group('myGroup1');
 select emaj.emaj_start_group('myGroup1','M1');
 select emaj.emaj_protect_group('myGroup1');
 select emaj.emaj_unprotect_group('myGroup1');
-select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
+select emaj.emaj_unprotect_group('emptyGroup');
+select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name in ('myGroup1','emptyGroup');
 -- unprotect an already unprotected group
 select emaj.emaj_unprotect_group('myGroup1');
 select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
-select emaj.emaj_stop_group('myGroup1');
+select emaj.emaj_stop_groups(array['myGroup1','emptyGroup']);
 select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
 
 -- test end: (groups are stopped) reset history and force sequences id

@@ -16,6 +16,12 @@ WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign ke
                 8
 (1 row)
 
+select emaj.emaj_start_group('emptyGroup','MarkInit');
+ emaj_start_group 
+------------------
+                0
+(1 row)
+
 -----------------------------
 -- emaj_set_mark_group() tests
 -----------------------------
@@ -49,6 +55,12 @@ select emaj.emaj_set_mark_group('myGroup2','phil''s mark #1');
  emaj_set_mark_group 
 ---------------------
                    8
+(1 row)
+
+select emaj.emaj_set_mark_group('emptyGroup','SM1');
+ emaj_set_mark_group 
+---------------------
+                   0
 (1 row)
 
 -- duplicate mark name
@@ -122,7 +134,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
 (1 row)
 
 -- duplicate mark name and warning on group names array content
-select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1'],'SM3');
+select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','emptyGroup','myGroup2','myGroup1'],'SM3');
 WARNING:  _check_names_array: a group name is NULL or empty.
 WARNING:  _check_names_array: a group name is NULL or empty.
 WARNING:  _check_names_array: duplicate group name "myGroup2".
@@ -177,24 +189,26 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
      202 | phil's group#3", | Mark3          |          204 | f               | f                      |              |                           | 
      300 | myGroup1         | Mark1          |          300 | f               | f                      |              |                         0 | 
      301 | myGroup2         | Mark2          |          301 | f               | f                      |              |                         0 | 
-     302 | myGroup1         | SM1            |          302 | f               | f                      |              |                         0 | 
-     303 | myGroup2         | SM1            |          303 | f               | f                      |              |                         0 | 
-     304 | myGroup2         | phil's mark #1 |          304 | f               | f                      |              |                         0 | 
-     305 | myGroup1         | MARK_%         |          305 | f               | f                      |              |                         0 | 
-     306 | myGroup2         | MARK_%         |          306 | f               | f                      |              |                         0 | 
-     307 | myGroup2         | MARK_%         |          307 | f               | f                      |              |                         0 | 
-     308 | myGroup1         | Foo%Bar        |          308 | f               | f                      |              |                         0 | 
-     309 | myGroup1         | SM3            |          309 | f               | f                      |              |                         0 | 
-     310 | myGroup2         | SM3            |          309 | f               | f                      |              |                         0 | 
-     311 | myGroup1         | MARK_%         |          310 | f               | f                      |              |                         0 | 
-     312 | myGroup2         | MARK_%         |          310 | f               | f                      |              |                         0 | 
-     313 | myGroup1         | MARK_%         |          311 | f               | f                      |              |                         0 | 
-     314 | myGroup2         | MARK_%         |          311 | f               | f                      |              |                         0 | 
-     315 | myGroup1         | MARK_%         |          312 | f               | f                      |              |                         0 | 
-     316 | myGroup2         | MARK_%         |          312 | f               | f                      |              |                         0 | 
-     317 | myGroup1         | Bar%Foo        |          313 | f               | f                      |              |                           | 
-     318 | myGroup2         | Bar%Foo        |          313 | f               | f                      |              |                           | 
-(20 rows)
+     302 | emptyGroup       | MarkInit       |          302 | f               | f                      |              |                         0 | 
+     303 | myGroup1         | SM1            |          303 | f               | f                      |              |                         0 | 
+     304 | myGroup2         | SM1            |          304 | f               | f                      |              |                         0 | 
+     305 | myGroup2         | phil's mark #1 |          305 | f               | f                      |              |                         0 | 
+     306 | emptyGroup       | SM1            |          306 | f               | f                      |              |                           | 
+     307 | myGroup1         | MARK_%         |          307 | f               | f                      |              |                         0 | 
+     308 | myGroup2         | MARK_%         |          308 | f               | f                      |              |                         0 | 
+     309 | myGroup2         | MARK_%         |          309 | f               | f                      |              |                         0 | 
+     310 | myGroup1         | Foo%Bar        |          310 | f               | f                      |              |                         0 | 
+     311 | myGroup1         | SM3            |          311 | f               | f                      |              |                         0 | 
+     312 | myGroup2         | SM3            |          311 | f               | f                      |              |                         0 | 
+     313 | myGroup1         | MARK_%         |          312 | f               | f                      |              |                         0 | 
+     314 | myGroup2         | MARK_%         |          312 | f               | f                      |              |                         0 | 
+     315 | myGroup1         | MARK_%         |          313 | f               | f                      |              |                         0 | 
+     316 | myGroup2         | MARK_%         |          313 | f               | f                      |              |                         0 | 
+     317 | myGroup1         | MARK_%         |          314 | f               | f                      |              |                         0 | 
+     318 | myGroup2         | MARK_%         |          314 | f               | f                      |              |                         0 | 
+     319 | myGroup1         | Bar%Foo        |          315 | f               | f                      |              |                           | 
+     320 | myGroup2         | Bar%Foo        |          315 | f               | f                      |              |                           | 
+(22 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 300 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -213,7 +227,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
      311 |                  2 | M
      312 |                  2 | M
      313 |                  2 | M
-(14 rows)
+     314 |                  2 | M
+     315 |                  2 | M
+(16 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
@@ -236,20 +252,12 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC          | myschema2_myTbl3_log_seq           |          301 |             1 | f
  myschema2      | myseq1                             |          301 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |          301 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |          302 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |          302 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          302 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |          302 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          302 |             1 | f
- myschema1      | myTbl3_col31_seq                   |          302 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |          303 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |          303 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |          303 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |          303 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |          303 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |          303 |             1 | f
- myschema2      | myseq1                             |          303 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |          303 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |          303 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |          303 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |          303 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |          303 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |          303 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |          303 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |          304 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |          304 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |          304 |             1 | f
@@ -258,62 +266,42 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC          | myschema2_myTbl3_log_seq           |          304 |             1 | f
  myschema2      | myseq1                             |          304 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |          304 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |          305 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |          305 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          305 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |          305 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          305 |             1 | f
- myschema1      | myTbl3_col31_seq                   |          305 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |          306 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |          306 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |          306 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |          306 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |          306 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |          306 |             1 | f
- myschema2      | myseq1                             |          306 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |          306 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |          307 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |          307 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |          307 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |          307 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |          307 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |          307 |             1 | f
- myschema2      | myseq1                             |          307 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |          307 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |          308 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |          308 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          308 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |          308 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          308 |             1 | f
- myschema1      | myTbl3_col31_seq                   |          308 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |          309 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |          309 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          309 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |          305 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |          305 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |          305 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |          305 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |          305 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |          305 |             1 | f
+ myschema2      | myseq1                             |          305 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |          305 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |          307 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |          307 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |          307 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |          307 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |          307 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |          307 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |          308 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |          308 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |          308 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |          308 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |          308 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |          308 |             1 | f
+ myschema2      | myseq1                             |          308 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |          308 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |          309 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |          309 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |          309 |             1 | f
  emaj           | myschema2_mytbl6_log_seq           |          309 |             1 | f
  emaj           | otherPrefix4mytbl5_log_seq         |          309 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |          309 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          309 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |          309 |             1 | f
- myschema1      | myTbl3_col31_seq                   |          309 |             1 | f
  myschema2      | myseq1                             |          309 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |          309 |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |          310 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |          310 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |          310 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |          310 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |          310 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |          310 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |          310 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |          310 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |          310 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |          310 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |          310 |             1 | f
  myschema1      | myTbl3_col31_seq                   |          310 |             1 | f
- myschema2      | myseq1                             |          310 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |          310 |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |          311 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |          311 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |          311 |             1 | f
@@ -356,6 +344,34 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1      | myTbl3_col31_seq                   |          313 |             1 | f
  myschema2      | myseq1                             |          313 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |          313 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |          314 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |          314 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |          314 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |          314 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |          314 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |          314 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |          314 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |          314 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |          314 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |          314 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |          314 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |          314 |             1 | f
+ myschema2      | myseq1                             |          314 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |          314 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |          315 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |          315 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |          315 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |          315 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |          315 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |          315 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |          315 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |          315 |             1 | f
+ myschema2      | myseq1                             |          315 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |          315 |             1 | f
 (138 rows)
 
 -----------------------------
@@ -404,6 +420,12 @@ select emaj.emaj_comment_mark_group('myGroup2','EMAJ_LAST_MARK','a comment for g
 (1 row)
 
 select emaj.emaj_comment_mark_group('myGroup2','phil''s mark #1','a good phil''s comment!');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('emptyGroup','SM1','a comment on a mark for an empty group');
  emaj_comment_mark_group 
 -------------------------
  
@@ -510,6 +532,12 @@ select emaj.emaj_rename_mark_group('myGroup2','phil''s mark #1','john''s mark #1
  
 (1 row)
 
+select emaj.emaj_rename_mark_group('emptyGroup','EMAJ_LAST_MARK','SM2');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
 -- simulate SM2 is the end mark of a logged rollback operations on both myGroup1 and myGroup2 groups
 update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'Mark1' where mark_name = 'SM2';
 select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
@@ -520,29 +548,31 @@ select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
 
 -- impact of mark rename
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |         mark_comment          | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+-------------------------------+---------------------------+------------------------------
-     202 | phil's group#3", | Mark3          |          204 | f               | f                      |                               |                           | 
-     300 | myGroup1         | First Mark     |          300 | f               | f                      |                               |                         0 | 
-     301 | myGroup2         | Mark2          |          301 | f               | f                      |                               |                         0 | 
-     302 | myGroup1         | SM1            |          302 | f               | f                      | a better comment for group #1 |                         0 | 
-     303 | myGroup2         | SM1            |          303 | f               | f                      |                               |                         0 | 
-     304 | myGroup2         | john's mark #1 |          304 | f               | f                      | a good phil's comment!        |                         0 | 
-     305 | myGroup1         | MARK_%         |          305 | f               | f                      |                               |                         0 | 
-     306 | myGroup2         | MARK_%         |          306 | f               | f                      |                               |                         0 | 
-     307 | myGroup2         | MARK_%         |          307 | f               | f                      |                               |                         0 | 
-     308 | myGroup1         | Foo%Bar        |          308 | f               | f                      |                               |                         0 | 
-     309 | myGroup1         | SM3            |          309 | f               | f                      |                               |                         0 | 
-     310 | myGroup2         | SM3            |          309 | f               | f                      |                               |                         0 | 
-     311 | myGroup1         | MARK_%         |          310 | f               | f                      |                               |                         0 | 
-     312 | myGroup2         | MARK_%         |          310 | f               | f                      |                               |                         0 | 
-     313 | myGroup1         | MARK_%         |          311 | f               | f                      |                               |                         0 | 
-     314 | myGroup2         | MARK_%         |          311 | f               | f                      |                               |                         0 | 
-     315 | myGroup1         | MARK_%         |          312 | f               | f                      |                               |                         0 | 
-     316 | myGroup2         | MARK_%         |          312 | f               | f                      |                               |                         0 | 
-     317 | myGroup1         | SM2            |          313 | f               | f                      |                               |                           | First Mark
-     318 | myGroup2         | SM2            |          313 | f               | f                      | a comment for group #2        |                           | Mark1
-(20 rows)
+ mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+     202 | phil's group#3", | Mark3          |          204 | f               | f                      |                                        |                           | 
+     300 | myGroup1         | First Mark     |          300 | f               | f                      |                                        |                         0 | 
+     301 | myGroup2         | Mark2          |          301 | f               | f                      |                                        |                         0 | 
+     302 | emptyGroup       | MarkInit       |          302 | f               | f                      |                                        |                         0 | 
+     303 | myGroup1         | SM1            |          303 | f               | f                      | a better comment for group #1          |                         0 | 
+     304 | myGroup2         | SM1            |          304 | f               | f                      |                                        |                         0 | 
+     305 | myGroup2         | john's mark #1 |          305 | f               | f                      | a good phil's comment!                 |                         0 | 
+     306 | emptyGroup       | SM2            |          306 | f               | f                      | a comment on a mark for an empty group |                           | Mark1
+     307 | myGroup1         | MARK_%         |          307 | f               | f                      |                                        |                         0 | 
+     308 | myGroup2         | MARK_%         |          308 | f               | f                      |                                        |                         0 | 
+     309 | myGroup2         | MARK_%         |          309 | f               | f                      |                                        |                         0 | 
+     310 | myGroup1         | Foo%Bar        |          310 | f               | f                      |                                        |                         0 | 
+     311 | myGroup1         | SM3            |          311 | f               | f                      |                                        |                         0 | 
+     312 | myGroup2         | SM3            |          311 | f               | f                      |                                        |                         0 | 
+     313 | myGroup1         | MARK_%         |          312 | f               | f                      |                                        |                         0 | 
+     314 | myGroup2         | MARK_%         |          312 | f               | f                      |                                        |                         0 | 
+     315 | myGroup1         | MARK_%         |          313 | f               | f                      |                                        |                         0 | 
+     316 | myGroup2         | MARK_%         |          313 | f               | f                      |                                        |                         0 | 
+     317 | myGroup1         | MARK_%         |          314 | f               | f                      |                                        |                         0 | 
+     318 | myGroup2         | MARK_%         |          314 | f               | f                      |                                        |                         0 | 
+     319 | myGroup1         | SM2            |          315 | f               | f                      |                                        |                           | First Mark
+     320 | myGroup2         | SM2            |          315 | f               | f                      | a comment for group #2                 |                           | Mark1
+(22 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
@@ -565,20 +595,12 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC          | myschema2_myTbl3_log_seq           |          301 |             1 | f
  myschema2      | myseq1                             |          301 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |          301 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |          302 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |          302 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          302 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |          302 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          302 |             1 | f
- myschema1      | myTbl3_col31_seq                   |          302 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |          303 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |          303 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |          303 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |          303 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |          303 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |          303 |             1 | f
- myschema2      | myseq1                             |          303 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |          303 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |          303 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |          303 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |          303 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |          303 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |          303 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |          303 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |          304 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |          304 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |          304 |             1 | f
@@ -587,62 +609,42 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC          | myschema2_myTbl3_log_seq           |          304 |             1 | f
  myschema2      | myseq1                             |          304 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |          304 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |          305 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |          305 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          305 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |          305 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          305 |             1 | f
- myschema1      | myTbl3_col31_seq                   |          305 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |          306 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |          306 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |          306 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |          306 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |          306 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |          306 |             1 | f
- myschema2      | myseq1                             |          306 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |          306 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |          307 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |          307 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |          307 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |          307 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |          307 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |          307 |             1 | f
- myschema2      | myseq1                             |          307 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |          307 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |          308 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |          308 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          308 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |          308 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          308 |             1 | f
- myschema1      | myTbl3_col31_seq                   |          308 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |          309 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |          309 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          309 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |          305 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |          305 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |          305 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |          305 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |          305 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |          305 |             1 | f
+ myschema2      | myseq1                             |          305 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |          305 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |          307 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |          307 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |          307 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |          307 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |          307 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |          307 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |          308 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |          308 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |          308 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |          308 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |          308 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |          308 |             1 | f
+ myschema2      | myseq1                             |          308 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |          308 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |          309 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |          309 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |          309 |             1 | f
  emaj           | myschema2_mytbl6_log_seq           |          309 |             1 | f
  emaj           | otherPrefix4mytbl5_log_seq         |          309 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |          309 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          309 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |          309 |             1 | f
- myschema1      | myTbl3_col31_seq                   |          309 |             1 | f
  myschema2      | myseq1                             |          309 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |          309 |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |          310 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |          310 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |          310 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |          310 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |          310 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |          310 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |          310 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |          310 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |          310 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |          310 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |          310 |             1 | f
  myschema1      | myTbl3_col31_seq                   |          310 |             1 | f
- myschema2      | myseq1                             |          310 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |          310 |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |          311 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |          311 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |          311 |             1 | f
@@ -685,6 +687,34 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1      | myTbl3_col31_seq                   |          313 |             1 | f
  myschema2      | myseq1                             |          313 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |          313 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |          314 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |          314 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |          314 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |          314 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |          314 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |          314 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |          314 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |          314 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |          314 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |          314 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |          314 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |          314 |             1 | f
+ myschema2      | myseq1                             |          314 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |          314 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |          315 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |          315 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |          315 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |          315 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |          315 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |          315 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |          315 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |          315 |             1 | f
+ myschema2      | myseq1                             |          315 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |          315 |             1 | f
 (138 rows)
 
 -----------------------------
@@ -723,6 +753,12 @@ select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark w
  mark_group | mark_name | mark_logged_rlbk_target_mark 
 ------------+-----------+------------------------------
  myGroup1   | SM3       | 
+(1 row)
+
+select emaj.emaj_delete_mark_group('emptyGroup','EMAJ_LAST_MARK');
+ emaj_delete_mark_group 
+------------------------
+                      1
 (1 row)
 
 select emaj.emaj_delete_mark_group('myGroup1','First Mark');
@@ -847,7 +883,7 @@ select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
  mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
 ---------+-----------+------------+-----------------+------------------------
-     309 | SM3       | myGroup1   | f               | t
+     311 | SM3       | myGroup1   | f               | t
 (1 row)
 
 -- protect an already protected group
@@ -860,7 +896,7 @@ select emaj.emaj_protect_mark_group('myGroup1','SM3');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
  mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
 ---------+-----------+------------+-----------------+------------------------
-     309 | SM3       | myGroup1   | f               | t
+     311 | SM3       | myGroup1   | f               | t
 (1 row)
 
 -----------------------------
@@ -894,7 +930,7 @@ select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
  mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
 ---------+-----------+------------+-----------------+------------------------
-     309 | SM3       | myGroup1   | f               | f
+     311 | SM3       | myGroup1   | f               | f
 (1 row)
 
 -- protect an already protected group
@@ -907,7 +943,7 @@ select emaj.emaj_unprotect_mark_group('myGroup1','SM3');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
  mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
 ---------+-----------+------------+-----------------+------------------------
-     309 | SM3       | myGroup1   | f               | f
+     311 | SM3       | myGroup1   | f               | f
 (1 row)
 
 -- check mark protections is removed by stop_group functions
@@ -967,48 +1003,49 @@ select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
  mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |      mark_comment      | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------------+----------------+--------------+-----------------+------------------------+------------------------+---------------------------+------------------------------
-     309 | myGroup1         | SM3            |          309 | t               | f                      |                        |                         0 | 
-     318 | myGroup2         | SM2            |          313 | t               | f                      | a comment for group #2 |                         0 | 
-     319 | phil's group#3", | Mark4          |          314 | f               | f                      |                        |                           | 
-     320 | myGroup1         | STOP_%         |          315 | t               | f                      |                        |                         0 | 
-     321 | myGroup2         | STOP_%         |          316 | t               | f                      |                        |                         0 | 
-(5 rows)
+     302 | emptyGroup       | MarkInit       |          302 | f               | f                      |                        |                           | 
+     311 | myGroup1         | SM3            |          311 | t               | f                      |                        |                         0 | 
+     320 | myGroup2         | SM2            |          315 | t               | f                      | a comment for group #2 |                         0 | 
+     321 | phil's group#3", | Mark4          |          316 | f               | f                      |                        |                           | 
+     322 | myGroup1         | STOP_%         |          317 | t               | f                      |                        |                         0 | 
+     323 | myGroup2         | STOP_%         |          318 | t               | f                      |                        |                         0 | 
+(6 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+------------------------------------+--------------+---------------+----------------
- emaj           | myschema1_mytbl1_log_seq           |          309 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |          309 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          309 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |          309 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          309 |             1 | f
- myschema1      | myTbl3_col31_seq                   |          309 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |          313 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |          313 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |          313 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |          313 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |          313 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |          313 |             1 | f
- myschema2      | myseq1                             |          313 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |          313 |             1 | f
- emaj           | phil's schema3_myTbl2\_log_seq     |          314 |             1 | f
- emaj #'3       | phil's schema3_phil's tbl1_log_seq |          314 |             1 | f
- phil's schema3 | myTbl2\_col21_seq                  |          314 |             1 | f
- phil's schema3 | phil's seq\1                       |          314 |          1000 | f
- emaj           | myschema1_mytbl1_log_seq           |          315 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |          315 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |          315 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |          315 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |          315 |             1 | f
- myschema1      | myTbl3_col31_seq                   |          315 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |          316 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |          316 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |          316 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |          316 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |          316 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |          316 |             1 | f
- myschema2      | myseq1                             |          316 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |          316 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |          311 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |          311 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |          311 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |          311 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |          311 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |          311 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |          315 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |          315 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |          315 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |          315 |             1 | f
+ myschema2      | myseq1                             |          315 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |          315 |             1 | f
+ emaj           | phil's schema3_myTbl2\_log_seq     |          316 |             1 | f
+ emaj #'3       | phil's schema3_phil's tbl1_log_seq |          316 |             1 | f
+ phil's schema3 | myTbl2\_col21_seq                  |          316 |             1 | f
+ phil's schema3 | phil's seq\1                       |          316 |          1000 | f
+ emaj           | myschema1_mytbl1_log_seq           |          317 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |          317 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |          317 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |          317 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |          317 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |          317 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |          318 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |          318 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |          318 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |          318 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |          318 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |          318 |             1 | f
+ myschema2      | myseq1                             |          318 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |          318 |             1 | f
 (32 rows)
 
 -----------------------------
@@ -1034,97 +1071,144 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
      314 |                  2 | M
      315 |                  2 | M
      316 |                  2 | M
-(17 rows)
+     317 |                  2 | M
+     318 |                  2 | M
+(19 rows)
 
 select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id |      hist_function       | hist_event |  regexp_replace   |                 regexp_replace                  | hist_user 
 ---------+--------------------------+------------+-------------------+-------------------------------------------------+-----------
-    3048 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | SM3                                             | postgres
-    3049 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    3050 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
-    3051 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | SM3                                             | postgres
-    3053 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    3054 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    3055 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
-    3056 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
-    3057 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    3058 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    3059 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
-    3060 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
-    3061 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    3062 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    3063 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
-    3064 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
-    3065 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | Bar%Foo                                         | postgres
-    3066 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    3067 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
-    3068 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | Bar%Foo                                         | postgres
-    3069 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                        | postgres
-    3070 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                        | postgres
-    3071 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
-    3072 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
-    3073 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark Bar%Foo                                    | postgres
-    3074 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark phil's mark #1                             | postgres
-    3081 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    3082 | RENAME_MARK_GROUP        | END        | myGroup1          | Bar%Foo renamed SM2                             | postgres
-    3083 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                  | postgres
-    3084 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                             | postgres
-    3085 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | phil's mark #1                                  | postgres
-    3086 | RENAME_MARK_GROUP        | END        | myGroup2          | phil's mark #1 renamed john's mark #1           | postgres
-    3087 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                           | postgres
-    3088 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                        | postgres
-    3093 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    3094 | DELETE_MARK_GROUP        | END        | myGroup1          | SM2                                             | postgres
-    3095 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM1                                             | postgres
-    3096 | DELETE_MARK_GROUP        | END        | myGroup1          | SM1                                             | postgres
-    3097 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                      | postgres
-    3098 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                      | postgres
-    3099 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    3100 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    3101 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                         | postgres
-    3102 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                         | postgres
-    3103 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    3104 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    3105 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    3106 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    3107 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    3108 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    3109 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                  | postgres
-    3110 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                  | postgres
-    3115 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                                 | postgres
-    3116 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM3                                             | postgres
-    3117 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
-    3118 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    3119 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
-    3120 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
-    3121 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
-    3122 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
-    3123 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
-    3124 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
-    3125 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
-    3126 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
-    3127 | PURGE_HISTORY            |            |                   | 42 emaj_hist rows deleted                       | postgres
-    3128 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
-    3129 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    3130 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres
-    3131 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    3132 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 0                             | postgres
-    3133 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    3134 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    3135 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    3136 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    3137 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
-    3138 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
-    3139 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                    | postgres
-    3140 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3141 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    3142 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    3143 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
-    3144 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
-    3145 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
-    3148 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark STOP_% ; status 0                          | postgres
-(84 rows)
+    3012 | START_GROUP              | BEGIN      | emptyGroup        | With log reset                                  | postgres
+    3013 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
+    3014 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
+    3015 | SET_MARK_GROUP           | BEGIN      | emptyGroup        | MarkInit                                        | postgres
+    3016 | SET_MARK_GROUP           | END        | emptyGroup        | MarkInit                                        | postgres
+    3017 | START_GROUP              | END        | emptyGroup        | 0 tables/sequences processed                    | postgres
+    3021 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
+    3022 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3023 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    3024 | SET_MARK_GROUP           | END        | myGroup1          | SM1                                             | postgres
+    3025 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
+    3026 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3027 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3028 | SET_MARK_GROUP           | END        | myGroup2          | SM1                                             | postgres
+    3029 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
+    3030 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3031 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3032 | SET_MARK_GROUP           | END        | myGroup2          | phil's mark #1                                  | postgres
+    3033 | SET_MARK_GROUP           | BEGIN      | emptyGroup        |                                                 | postgres
+    3034 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
+    3035 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
+    3036 | SET_MARK_GROUP           | END        | emptyGroup        | SM1                                             | postgres
+    3038 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
+    3039 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3040 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    3041 | SET_MARK_GROUP           | END        | myGroup1          | MARK_%                                          | postgres
+    3042 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
+    3043 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3044 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3045 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                          | postgres
+    3046 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
+    3047 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3048 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3049 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                          | postgres
+    3050 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
+    3051 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3052 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    3053 | SET_MARK_GROUP           | END        | myGroup1          | Foo%Bar                                         | postgres
+    3054 | SET_MARK_GROUPS          | BEGIN      |                   |                                                 | postgres
+    3055 | SET_MARK_GROUPS          | END        |                   |                                                 | postgres
+    3058 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | SM3                                             | postgres
+    3059 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3060 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    3061 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | SM3                                             | postgres
+    3063 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3064 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3065 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    3066 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
+    3067 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3068 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3069 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    3070 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
+    3071 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3072 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3073 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    3074 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
+    3075 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | Bar%Foo                                         | postgres
+    3076 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    3077 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    3078 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | Bar%Foo                                         | postgres
+    3079 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                        | postgres
+    3080 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                        | postgres
+    3081 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
+    3082 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
+    3083 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark Bar%Foo                                    | postgres
+    3084 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark phil's mark #1                             | postgres
+    3085 | COMMENT_MARK_GROUP       |            | emptyGroup        | Mark SM1                                        | postgres
+    3092 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3093 | RENAME_MARK_GROUP        | END        | myGroup1          | Bar%Foo renamed SM2                             | postgres
+    3094 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                  | postgres
+    3095 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                             | postgres
+    3096 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | phil's mark #1                                  | postgres
+    3097 | RENAME_MARK_GROUP        | END        | myGroup2          | phil's mark #1 renamed john's mark #1           | postgres
+    3098 | RENAME_MARK_GROUP        | BEGIN      | emptyGroup        | EMAJ_LAST_MARK                                  | postgres
+    3099 | RENAME_MARK_GROUP        | END        | emptyGroup        | SM1 renamed SM2                                 | postgres
+    3100 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                           | postgres
+    3101 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                        | postgres
+    3106 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3107 | DELETE_MARK_GROUP        | END        | myGroup1          | SM2                                             | postgres
+    3108 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM1                                             | postgres
+    3109 | DELETE_MARK_GROUP        | END        | myGroup1          | SM1                                             | postgres
+    3110 | DELETE_MARK_GROUP        | BEGIN      | emptyGroup        | EMAJ_LAST_MARK                                  | postgres
+    3111 | DELETE_MARK_GROUP        | END        | emptyGroup        | SM2                                             | postgres
+    3112 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                      | postgres
+    3113 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                      | postgres
+    3114 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3115 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3116 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                         | postgres
+    3117 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                         | postgres
+    3118 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3119 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3120 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3121 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3122 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    3123 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    3124 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                  | postgres
+    3125 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                  | postgres
+    3130 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                                 | postgres
+    3131 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM3                                             | postgres
+    3132 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
+    3133 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    3134 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
+    3135 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
+    3136 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
+    3137 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
+    3138 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
+    3139 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
+    3140 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
+    3141 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
+    3142 | PURGE_HISTORY            |            |                   | 12 emaj_hist rows deleted                       | postgres
+    3143 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
+    3144 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    3145 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres
+    3146 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    3147 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 0                             | postgres
+    3148 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    3149 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3150 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    3151 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    3152 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
+    3153 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
+    3154 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                    | postgres
+    3155 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3156 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    3157 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    3158 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
+    3159 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
+    3160 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
+    3163 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark STOP_% ; status 0                          | postgres
+(129 rows)
 
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 4000;

@@ -31,7 +31,7 @@ select count(*) from emaj.emaj_group_def;
 select count(*) from emaj.emaj_group;
  count 
 -------
-     4
+     5
 (1 row)
 
 select count(*) from emaj.emaj_relation;
@@ -43,7 +43,7 @@ select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_mark;
  count 
 -------
-    12
+    13
 (1 row)
 
 select count(*) from emaj.emaj_sequence;
@@ -61,13 +61,13 @@ select count(*) from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    20
+    21
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    20
+    21
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;

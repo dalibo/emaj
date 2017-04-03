@@ -99,7 +99,7 @@ Create a tables group
 
 Once the content of a tables group is defined, E-Maj can create the group. To do this, there is only one SQL statement to execute::
 
-   SELECT emaj.emaj_create_group('<group.name>',<is_rollbackable>);
+   SELECT emaj.emaj_create_group('<group.name>', <is_rollbackable>);
 
 or in an abbreviated form::
 
@@ -119,6 +119,12 @@ The *emaj_create_group()* function also checks the existence of application trig
 
 If a sequence of the group is associated to a *SERIAL* or *BIGSERIAL* column and the table that owns this column does not belong to the same tables group, the function also issues a *WARNING* message.
 
+A specific version of the function allows to create an empty tables group, i.e. without any table or sequence at creation time::
+
+   SELECT emaj.emaj_create_group('<group.name>', <is_rollbackable>, <is_empty>);
+
+The third parameter is *false* by default. If it is set to *true*, the group must not be referenced in the *emaj_group_def* table. Once created, an empty group can be then populated using the :ref:`emaj_alter_group() <emaj_alter_group>` function.
+
 All actions that are chained by the *emaj_create_group()* function are executed on behalf of a unique transaction. As a consequence, if an error occurs during the operation, all tables, functions and triggers already created by the function are cancelled.
 
 By registering the group composition in the *emaj_relation* internal table, the *emaj_create_group()* function freezes its definition for the other E-Maj functions, even if the content of the *emaj_group_def* table is modified later.
@@ -133,7 +139,7 @@ Start a tables group
 
 Starting a tables group consists in activating the recording of updates for all tables of the group. To achieve this, the following command must be executed::
 
-   SELECT emaj.emaj_start_group('<group.name>'[, '<mark.name>'[,<delete.old.logs?>]]);
+   SELECT emaj.emaj_start_group('<group.name>'[, '<mark.name>'[, <delete.old.logs?>]]);
 
 The group must be first in *IDLE* state.
 
