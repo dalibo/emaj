@@ -247,9 +247,11 @@ select emaj.emaj_create_group('emptyGroup',true,true);
 select emaj.emaj_alter_group(NULL);
 select emaj.emaj_alter_group('unknownGroup');
 -- group in logging state
-select emaj.emaj_start_group('myGroup1','');
-select emaj.emaj_alter_group('myGroup1');
-select emaj.emaj_stop_group('myGroup1');
+begin;
+  select emaj.emaj_start_group('myGroup1','');
+  drop table emaj.myschema1_mytbl1_log;
+  select emaj.emaj_alter_group('myGroup1');
+rollback;
 -- alter a group with a table now already belonging to another group
 begin;
   insert into emaj.emaj_group_def values ('myGroup1','myschema2','mytbl1');
@@ -274,6 +276,11 @@ begin;
   update emaj.emaj_group_def set grpdef_log_idx_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_alter_group('myGroup1');
 rollback;
+-- dropped application table
+begin;
+  drop table myschema1.mytbl2b;
+  select emaj.emaj_alter_group('myGroup1');
+rollback;
 
 -- should be OK
 -- nothing to change
@@ -285,7 +292,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
        group_creation_time_id, group_last_alter_time_id, group_comment
  from emaj.emaj_group where group_name = 'myGroup1';
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
--- only 3 tables to remove (+ log schemas emajb and emajC)
+-- only 3 tables to remove (+ log schemas emajb)
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl4';
@@ -296,7 +303,7 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
 select emaj.emaj_alter_group('myGroup1');
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
--- 3 tables to add (+ log schemas emajb and emajC)
+-- 3 tables to add (+ log schemas emajb)
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b',NULL,'tsp log''2','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,NULL,'tsplog1','tsp log''2');
@@ -403,9 +410,12 @@ rollback;
 select emaj.emaj_alter_groups('{NULL,"unknownGroup"}');
 select emaj.emaj_alter_groups('{"myGroup1","unknownGroup"}');
 -- groups in logging state
-select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','');
-select emaj.emaj_alter_groups('{"myGroup2","myGroup1"}');
-select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
+begin;
+  select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','');
+  drop table emaj.myschema1_mytbl1_log;
+  drop table emaj.myschema2_mytbl1_log;
+  select emaj.emaj_alter_groups('{"myGroup2","myGroup1"}');
+rollback;
 -- alter groups with a table now already belonging to another group
 begin;
   insert into emaj.emaj_group_def values ('myGroup1','myschema2','mytbl1');
@@ -502,6 +512,7 @@ select hist_function, hist_event, hist_object,
        hist_user 
   from emaj.emaj_hist order by hist_id;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
+select * from emaj.emaj_alter_plan order by 1,2,3,4;
 
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 200;

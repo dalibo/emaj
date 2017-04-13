@@ -115,27 +115,32 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 
 La colonne *hist_event* peut prendre les valeurs suivantes.
 
-+-------------------------+------------------------------------+
-| Valeur                  | Signification                      |
-+=========================+====================================+
-| BEGIN                   | début                              |
-+-------------------------+------------------------------------+
-| END                     | fin                                |
-+-------------------------+------------------------------------+
-| EVENT TRIGGERS DISABLED | triggers sur événements désactivés |
-+-------------------------+------------------------------------+
-| EVENT TRIGGERS ENABLED  | triggers sur événements activés    |
-+-------------------------+------------------------------------+
-| MARK DELETED            | marque supprimée                   |
-+-------------------------+------------------------------------+
-| SCHEMA CREATED          | schéma secondaire créé             |
-+-------------------------+------------------------------------+
-| SCHEMA DROPPED          | schéma secondaire supprimé         |
-+-------------------------+------------------------------------+
-| TABLE ALTERED           | table modifiée                     |
-+-------------------------+------------------------------------+
++-------------------------+----------------------------------------+
+| Valeur                  | Signification                          |
++=========================+========================================+
+| BEGIN                   | début                                  |
++-------------------------+----------------------------------------+
+| END                     | fin                                    |
++-------------------------+----------------------------------------+
+| EVENT TRIGGERS DISABLED | triggers sur événements désactivés     |
++-------------------------+----------------------------------------+
+| EVENT TRIGGERS ENABLED  | triggers sur événements activés        |
++-------------------------+----------------------------------------+
+| MARK DELETED            | marque supprimée                       |
++-------------------------+----------------------------------------+
+| SCHEMA CREATED          | schéma secondaire créé                 |
++-------------------------+----------------------------------------+
+| SCHEMA DROPPED          | schéma secondaire supprimé             |
++-------------------------+----------------------------------------+
+| TABLE ATTR CHANGED      | attributs E-Maj pour la table modifiés |
++-------------------------+----------------------------------------+
 
 Le contenu de la table *emaj_hist* peut être visualisé par quiconque dispose des autorisations suffisantes (rôles super-utilisateur, *emaj_adm* ou *emaj_viewer*)
 
-A chaque démarrage de groupe (fonction :ref:`emaj_start_group() <emaj_start_group>`) et suppression des marques les plus anciennes (fonction :ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>`), les événements les plus anciens de la table *emaj_hist* sont supprimés. Les événements conservés sont ceux à la fois postérieurs à un délai de rétention paramétrable, postérieurs à la pose de la plus ancienne marque active et postérieurs à la plus ancienne opération de rollback non terminée. Par défaut, la durée de rétention des événements est de 1 an. Mais cette valeur peut être modifiée à tout moment en insérant par une requête SQL le paramètre *history_retention* dans la table :ref:`emaj_param <emaj_param>`. 
+Deux autres tables internes conservent également des traces des opérations effectuées :
+
+* *emaj_alter_plan* liste les actions élémentaires réalisées lors de l’exécution d’opérations de :ref:`modification de groupes de tables <emaj_alter_group>`,
+* *emaj_rlbk_plan* liste les actions élémentaires réalisées lors de l’exécution d’opérations de :ref:`rollback E-Maj <emaj_rollback_group>`.
+
+A chaque démarrage de groupe (fonction :ref:`emaj_start_group() <emaj_start_group>`) et suppression des marques les plus anciennes (fonction :ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>`), les événements les plus anciens de la table *emaj_hist* sont supprimés. Les événements conservés sont ceux à la fois postérieurs à un délai de rétention paramétrable, postérieurs à la pose de la plus ancienne marque active et postérieurs à la plus ancienne opération de rollback non terminée. Par défaut, la durée de rétention des événements est de 1 an. Mais cette valeur peut être modifiée à tout moment en insérant par une requête SQL le paramètre *history_retention* dans la table :ref:`emaj_param <emaj_param>`. La même rétention s’applique aux contenus des tables qui historisent les actions élémentaires des opérations de modification ou de rollback de groupes de tables.
 

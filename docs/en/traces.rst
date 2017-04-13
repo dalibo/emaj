@@ -132,10 +132,15 @@ The *hist_event* column can take the following values:
 +-------------------------+--------------------------+
 | SCHEMA DROPPED          | secondary schema dropped |
 +-------------------------+--------------------------+
-| TABLE ALTERED           |                          |
+| TABLE ATTR CHANGED	  | E-Maj attributes changed |
 +-------------------------+--------------------------+
 
 The *emaj_hist* content can be viewed by anyone who has the proper access rights on this table (*superuser*, *emaj_adm* or *emaj_viewer* roles).
 
-When a tables group is started, using the :ref:`emaj_start_group() <emaj_start_group>` function, or when old marks are deleted, using the :ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>` function, the oldest events are deleted from *emaj_hist* tables. The events kept are those not older than a parametrised retention delay and not older than the oldest active mark and not older than the oldest uncompleted rollback operation. By default, the retention delay for events equals 1 year. But this value can be modified at any time by inserting the *history_retention* parameter into the :ref:`emaj_param <emaj_param>` table with a SQL statement.
+To other internal tables keep traces of groups alter or rollback operations:
+
+* *emaj_alter_plan* lists the elementary steps performed during the execution of :ref:`emaj_alter_group() <emaj_alter_group>` and related functions,
+* *emaj_rlbk_plan* lists the elementary steps performed during the execution of :ref:`emaj_rollback_group() <emaj_rollback_group>` and related functions.
+
+When a tables group is started, using the :ref:`emaj_start_group() <emaj_start_group>` function, or when old marks are deleted, using the :ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>` function, the oldest events are deleted from *emaj_hist* tables. The events kept are those not older than a parametrised retention delay and not older than the oldest active mark and not older than the oldest uncompleted rollback operation. By default, the retention delay for events equals 1 year. But this value can be modified at any time by inserting the *history_retention* parameter into the :ref:`emaj_param <emaj_param>` table with a SQL statement. The same retention applies to the tables that log elementary steps of tables groups alter or rollback operations.
 

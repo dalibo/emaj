@@ -75,7 +75,7 @@ select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_comment_group('myGroup1','This is group #1');
 select emaj.emaj_create_group('myGroup2',true);
 
--- force a purge of the history and the rollback tables
+-- force a purge of the history, the alter and the rollback tables
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 second'::interval);
 select pg_sleep(1);
 select emaj.emaj_start_group('myGroup1','M1');

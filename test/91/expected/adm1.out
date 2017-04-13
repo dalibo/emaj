@@ -417,7 +417,7 @@ PL/pgSQL function "emaj_create_group" line 90 at PERFORM
                  8
 (1 row)
 
--- force a purge of the history and the rollback tables
+-- force a purge of the history, the alter and the rollback tables
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 second'::interval);
 select pg_sleep(1);
  pg_sleep 

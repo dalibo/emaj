@@ -8,7 +8,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
  count 
 -------
-    98
+   100
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
@@ -79,22 +79,24 @@ select schemaname, funcname, calls from pg_stat_user_functions
   order by 1,2;
  schemaname |                 funcname                  | calls 
 ------------+-------------------------------------------+-------
+ emaj       | _alter_exec                               |    46
  emaj       | _alter_groups                             |    46
- emaj       | _alter_tbl                                |    28
+ emaj       | _alter_plan                               |    46
+ emaj       | _change_attr_tbl                          |    28
  emaj       | _check_fk_groups                          |   163
- emaj       | _check_groups_content                     |    70
- emaj       | _check_names_array                        |   119
- emaj       | _check_new_mark                           |   147
+ emaj       | _check_groups_content                     |    72
+ emaj       | _check_names_array                        |   118
+ emaj       | _check_new_mark                           |   145
  emaj       | _create_log_schema                        |    23
  emaj       | _create_seq                               |    32
  emaj       | _create_tbl                               |   106
  emaj       | _dblink_close_cnx                         |    42
- emaj       | _dblink_is_cnx_opened                     |   440
+ emaj       | _dblink_is_cnx_opened                     |   438
  emaj       | _dblink_open_cnx                          |    55
  emaj       | _delete_between_marks_group               |    19
  emaj       | _delete_intermediate_mark_group           |    16
  emaj       | _delete_log_tbl                           |    33
- emaj       | _disable_event_triggers                   |    70
+ emaj       | _disable_event_triggers                   |    72
  emaj       | _drop_group                               |    19
  emaj       | _drop_log_schema                          |    17
  emaj       | _drop_seq                                 |    33
@@ -104,13 +106,13 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | _gen_sql_groups                           |    18
  emaj       | _gen_sql_tbl                              |    38
  emaj       | _get_default_tablespace                   |     6
- emaj       | _get_mark_name                            |   548
+ emaj       | _get_mark_name                            |   545
  emaj       | _get_mark_time_id                         |   197
- emaj       | _lock_groups                              |   155
- emaj       | _log_stat_tbl                             |  1867
+ emaj       | _lock_groups                              |   153
+ emaj       | _log_stat_tbl                             |  1851
  emaj       | _log_truncate_fnct                        |     2
  emaj       | _purge_hist                               |    83
- emaj       | _reset_groups                             |    87
+ emaj       | _reset_groups                             |    97
  emaj       | _rlbk_async                               |     2
  emaj       | _rlbk_check                               |    67
  emaj       | _rlbk_end                                 |    51
@@ -124,16 +126,16 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | _rlbk_start_mark                          |    52
  emaj       | _rlbk_tbl                                 |    83
  emaj       | _rollback_activity                        |    15
- emaj       | _set_mark_groups                          |   186
+ emaj       | _set_mark_groups                          |   184
  emaj       | _set_time_stamp                           |   284
  emaj       | _start_groups                             |    42
- emaj       | _stop_groups                              |    53
+ emaj       | _stop_groups                              |    51
  emaj       | _verify_all_groups                        |    31
  emaj       | _verify_all_schemas                       |    31
- emaj       | _verify_groups                            |   219
+ emaj       | _verify_groups                            |   221
  emaj       | emaj_alter_group                          |    36
  emaj       | emaj_alter_groups                         |    10
- emaj       | emaj_cleanup_rollback_state               |   195
+ emaj       | emaj_cleanup_rollback_state               |   193
  emaj       | emaj_comment_group                        |     5
  emaj       | emaj_comment_mark_group                   |    10
  emaj       | emaj_consolidate_rollback_group           |     9
@@ -153,7 +155,7 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | emaj_get_consolidable_rollbacks           |     6
  emaj       | emaj_get_previous_mark_group              |     8
  emaj       | emaj_get_previous_mark_group              |     8
- emaj       | emaj_log_stat_group                       |   209
+ emaj       | emaj_log_stat_group                       |   206
  emaj       | emaj_logged_rollback_group                |    19
  emaj       | emaj_logged_rollback_groups               |     4
  emaj       | emaj_protect_group                        |     8
@@ -169,12 +171,12 @@ select schemaname, funcname, calls from pg_stat_user_functions
  emaj       | emaj_snap_log_group                       |     5
  emaj       | emaj_start_group                          |    33
  emaj       | emaj_start_groups                         |     9
- emaj       | emaj_stop_group                           |    29
- emaj       | emaj_stop_groups                          |    10
+ emaj       | emaj_stop_group                           |    28
+ emaj       | emaj_stop_groups                          |     9
  emaj       | emaj_unprotect_group                      |     8
  emaj       | emaj_unprotect_mark_group                 |     5
  emaj       | emaj_verify_all                           |    31
-(95 rows)
+(97 rows)
 
 -----------------------------
 -- execute the perl script that checks the code

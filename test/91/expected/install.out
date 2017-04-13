@@ -26,6 +26,7 @@ select relname from pg_catalog.pg_class,
   order by 1;
            relname           
 -----------------------------
+ emaj_alter_plan
  emaj_global_seq
  emaj_group
  emaj_group_def
@@ -44,7 +45,7 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(18 rows)
+(19 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -69,6 +70,33 @@ Composite type "emaj._verify_groups_type"
  ver_schema | text | 
  ver_tblseq | text | 
  ver_msg    | text | 
+
+               Table "emaj.emaj_alter_plan"
+        Column         |         Type          | Modifiers 
+-----------------------+-----------------------+-----------
+ altr_time_id          | bigint                | not null
+ altr_step             | emaj._alter_step_enum | not null
+ altr_schema           | text                  | not null
+ altr_tblseq           | text                  | not null
+ altr_group            | text                  | not null
+ altr_priority         | integer               | 
+ altr_group_is_logging | boolean               | 
+ altr_new_group        | text                  | 
+ altr_new_priority     | integer               | 
+Indexes:
+    "emaj_alter_plan_pkey" PRIMARY KEY, btree (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group)
+Foreign-key constraints:
+    "emaj_alter_plan_altr_time_id_fkey" FOREIGN KEY (altr_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+
+          Index "emaj.emaj_alter_plan_pkey"
+    Column    |         Type          |  Definition  
+--------------+-----------------------+--------------
+ altr_time_id | bigint                | altr_time_id
+ altr_step    | emaj._alter_step_enum | altr_step
+ altr_schema  | text                  | altr_schema
+ altr_tblseq  | text                  | altr_tblseq
+ altr_group   | text                  | altr_group
+primary key, btree, for table "emaj.emaj_alter_plan"
 
 Composite type "emaj.emaj_consolidable_rollback_type"
            Column           |  Type   | Modifiers 
@@ -140,6 +168,14 @@ Referenced by:
  grpdef_log_idx_tsp       | text    | 
 Indexes:
     "emaj_group_def_pkey" PRIMARY KEY, btree (grpdef_group, grpdef_schema, grpdef_tblseq)
+    "emaj_group_def_idx1" btree (grpdef_schema, grpdef_tblseq)
+
+   Index "emaj.emaj_group_def_idx1"
+    Column     | Type |  Definition   
+---------------+------+---------------
+ grpdef_schema | text | grpdef_schema
+ grpdef_tblseq | text | grpdef_tblseq
+btree, for table "emaj.emaj_group_def"
 
    Index "emaj.emaj_group_def_pkey"
     Column     | Type |  Definition   
@@ -510,6 +546,7 @@ primary key, btree, for table "emaj.emaj_sequence"
 Indexes:
     "emaj_time_stamp_pkey" PRIMARY KEY, btree (time_id)
 Referenced by:
+    TABLE "emaj.emaj_alter_plan" CONSTRAINT "emaj_alter_plan_altr_time_id_fkey" FOREIGN KEY (altr_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)

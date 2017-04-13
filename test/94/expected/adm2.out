@@ -520,19 +520,25 @@ NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 182 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 182 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 182 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -617,19 +623,25 @@ NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 182 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 182 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 182 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -1583,28 +1595,35 @@ select emaj.emaj_alter_group('phil''s group#3",');
 NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name
 CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log_fnct"() CASCADE"
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 19 at EXECUTE statement
-SQL statement "SELECT emaj._drop_tbl(r_rel)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 100 at PERFORM
+SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint) line 25 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 NOTICE:  table "short_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3".short_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 182 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 182 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 41 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
 WARNING:  _check_fk_groups: table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 210 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean) line 41 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -3038,8 +3057,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     6314 | DISABLE_PROTECTION       | EVENT TRIGGERS DISABLED |                                                                                  | emaj_protection_trg, emaj_sql_drop_trg                                                                                 | postgres
     6315 | ALTER_GROUP              | BEGIN                   | phil's group#3",                                                                 |                                                                                                                        | postgres
     6316 | ALTER_GROUP              | SCHEMA CREATED          | emaj3                                                                            |                                                                                                                        | postgres
-    6317 | ALTER_GROUP              | TABLE ALTERED           | "phil's schema3"."myTbl2\"                                                       | Applied changes: log schema, emaj names prefix                                                                         | postgres
-    6318 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | 1 dropped, 1 altered and 1 (re)created relations                                                                       | postgres
+    6317 | ALTER_GROUP              | TABLE ATTR CHANGED      | "phil's schema3"."myTbl2\"                                                       | Applied changes: log schema, emaj names prefix                                                                         | postgres
+    6318 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | Timestamp Id : 636                                                                                                     | postgres
     6319 | START_GROUP              | BEGIN                   | phil's group#3",                                                                 | With log reset                                                                                                         | postgres
     6320 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                                        | postgres
     6321 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                                                                                         | postgres
@@ -3056,9 +3075,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     6332 | CREATE_GROUP             | BEGIN                   | myGroup4                                                                         | rollbackable                                                                                                           | postgres
     6333 | CREATE_GROUP             | END                     | myGroup4                                                                         | 3 tables/sequences processed                                                                                           | postgres
     6334 | ALTER_GROUPS             | BEGIN                   | phil's group#3",,myGroup4                                                        |                                                                                                                        | postgres
-    6335 | ALTER_GROUP              | TABLE ALTERED           | "phil's schema3"."myTbl2\"                                                       | Applied changes: log schema, emaj names prefix                                                                         | postgres
+    6335 | ALTER_GROUP              | TABLE ATTR CHANGED      | "phil's schema3"."myTbl2\"                                                       | Applied changes: log schema, emaj names prefix                                                                         | postgres
     6336 | ALTER_GROUP              | SCHEMA DROPPED          | emaj3                                                                            |                                                                                                                        | postgres
-    6337 | ALTER_GROUPS             | END                     | phil's group#3",,myGroup4                                                        | 1 dropped, 1 altered and 1 (re)created relations                                                                       | postgres
+    6337 | ALTER_GROUPS             | END                     | phil's group#3",,myGroup4                                                        | Timestamp Id : 640                                                                                                     | postgres
     6338 | DROP_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                                        | postgres
     6339 | DROP_GROUP               | SCHEMA DROPPED          | "emaj #'3"                                                                       |                                                                                                                        | postgres
     6340 | DROP_GROUP               | END                     | phil's group#3",                                                                 | 4 tables/sequences processed                                                                                           | postgres
@@ -3147,7 +3166,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     6462 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | STOP_%                                                                                                                 | postgres
     6463 | STOP_GROUP               | END                     | phil's group#3",                                                                 | 4 tables/sequences processed                                                                                           | postgres
     6464 | ALTER_GROUP              | BEGIN                   | phil's group#3",                                                                 |                                                                                                                        | postgres
-    6465 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | 1 dropped, 0 altered and 1 (re)created relations                                                                       | postgres
+    6465 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | Timestamp Id : 654                                                                                                     | postgres
     6466 | START_GROUP              | BEGIN                   | phil's group#3",                                                                 | With log reset                                                                                                         | postgres
     6467 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                                        | postgres
     6468 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                                                                                         | postgres
