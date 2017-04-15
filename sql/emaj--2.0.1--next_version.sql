@@ -1223,12 +1223,12 @@ $_alter_exec$
     r_rel                    emaj.emaj_relation%ROWTYPE;
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
   BEGIN
--- scan the emaj_alter_plan table and execute each elementary item
+-- scan the emaj_alter_plan table and execute each elementary item in the proper order
     FOR r_plan IN
       SELECT altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging, altr_new_group, altr_new_priority
         FROM emaj.emaj_alter_plan
         WHERE altr_time_id = v_timeId
-        ORDER BY altr_step, altr_priority, altr_schema, altr_tblseq
+        ORDER BY altr_step, altr_priority, altr_schema, altr_tblseq, altr_group
       LOOP
       CASE r_plan.altr_step
         WHEN 'REMOVE_TBL' THEN
@@ -1272,7 +1272,7 @@ $_alter_exec$
 --
         WHEN 'REPAIR_SEQ' THEN
           IF r_plan.altr_group_is_logging THEN
-            RAISE EXCEPTION 'alter_exec: cannot repair the table %.%. Its group % is in LOGGING state', r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
+            RAISE EXCEPTION 'alter_exec: cannot repair the sequence %.%. Its group % is in LOGGING state', r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
           ELSE
 -- get the sequence description from emaj_group_def
             SELECT * INTO r_grpdef

@@ -74,5 +74,5 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
   (select * from emaj.emaj_hist order by hist_id) as t;
 --
 truncate emaj.emaj_hist;
-alter sequence emaj.emaj_hist_hist_id_seq restart 10000;
+alter sequence emaj.emaj_hist_hist_id_seq restart 30000;
 

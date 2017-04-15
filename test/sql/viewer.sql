@@ -4,6 +4,16 @@
 -- grant emaj_viewer role
 -----------------------------
 grant emaj_viewer to emaj_regression_tests_viewer_user;
+
+-----------------------------
+-- prepare groups for the test
+-----------------------------
+select emaj.emaj_create_group('myGroup1');
+select emaj.emaj_start_group('myGroup1','Start');
+select emaj.emaj_create_group('myGroup2');
+select emaj.emaj_create_group('emptyGroup');
+select emaj.emaj_start_group('emptyGroup');
+
 --
 set role emaj_regression_tests_viewer_user;
 --

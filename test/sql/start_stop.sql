@@ -3,12 +3,26 @@
 --                      emaj_protect_group() and emaj_unprotect_group() functions
 --
 SET client_min_messages TO WARNING;
+
+-- set sequence restart value
+alter sequence emaj.emaj_hist_hist_id_seq restart 1000;
+alter sequence emaj.emaj_time_stamp_time_id_seq restart 1000;
+alter sequence emaj.emaj_mark_mark_id_seq restart 1000;
+
 -- prepare groups
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2');
+select emaj.emaj_create_group('emptyGroup',true,true);
 
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 second'::interval);
 select pg_sleep(1);
+
+-----------------------------
+-- disable event triggers 
+-----------------------------
+-- this is done to allow tests with missing or renamed or altered components
+-- triggers will be re-enabled in misc.sql
+select emaj.emaj_disable_protection_by_event_triggers();
 
 -----------------------------
 -- emaj_start_group() tests
@@ -129,7 +143,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
        group_creation_time_id, group_last_alter_time_id, group_comment
   from emaj.emaj_group order by group_name;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 200 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 1000 order by time_id;
 
 -- check old events are deleted
 select hist_function, hist_event, hist_object,
@@ -165,7 +179,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
        group_creation_time_id, group_last_alter_time_id, group_comment
   from emaj.emaj_group order by group_name;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 200 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 1000 order by time_id;
 
 -- should be OK
 select emaj.emaj_stop_group('myGroup2','Stop mark');
@@ -230,7 +244,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
        group_creation_time_id, group_last_alter_time_id, group_comment
   from emaj.emaj_group order by group_name;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 200 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 1000 order by time_id;
 
 -----------------------------
 -- emaj_stop_groups() tests
@@ -297,7 +311,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
        group_creation_time_id, group_last_alter_time_id, group_comment
   from emaj.emaj_group order by group_name;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 200 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 1000 order by time_id;
 
 -----------------------------
 -- emaj_protect_group() tests
@@ -347,9 +361,4 @@ select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where grou
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
   hist_user from emaj.emaj_hist order by hist_id;
-
-truncate emaj.emaj_hist;
-alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 300;
-alter sequence emaj.emaj_mark_mark_id_seq restart 300;
 

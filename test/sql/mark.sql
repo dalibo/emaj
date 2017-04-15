@@ -2,6 +2,12 @@
 -- emaj_rename_mark_group(), emaj_get_previous_mark_group(), emaj_delete_mark_group(),
 -- emaj_protect_mark_group() and emaj_unprotect_mark_group() functions
 --
+
+-- set sequence restart value
+alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
+alter sequence emaj.emaj_time_stamp_time_id_seq restart 2000;
+alter sequence emaj.emaj_mark_mark_id_seq restart 2000;
+
 select emaj.emaj_start_group('myGroup1','Mark1');
 select emaj.emaj_start_group('myGroup2','Mark2');
 select emaj.emaj_start_group('emptyGroup','MarkInit');
@@ -67,7 +73,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
 
 -- impact of mark set
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 300 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 
 -----------------------------
@@ -265,12 +271,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 300 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
 select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
-
-truncate emaj.emaj_hist;
-alter sequence emaj.emaj_hist_hist_id_seq restart 4000;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 400;
-alter sequence emaj.emaj_mark_mark_id_seq restart 400;
 

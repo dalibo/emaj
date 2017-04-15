@@ -2,6 +2,17 @@
 --            playing with both myGroup1 and myGroup2 tables groups
 --
 SET datestyle TO ymd;
+
+-- set sequence restart value
+truncate emaj.emaj_hist;
+alter sequence emaj.emaj_hist_hist_id_seq restart 10000;
+alter sequence emaj.emaj_time_stamp_time_id_seq restart 10000;
+alter sequence emaj.emaj_mark_mark_id_seq restart 10000;
+alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 10000;
+
+select * from emaj.emaj_global_seq;
+alter sequence emaj.emaj_global_seq restart 100000;
+
 -----------------------------
 -- grant emaj_adm role 
 -----------------------------
@@ -27,16 +38,12 @@ select count(*) from emaj.emaj_rlbk_stat;
 select count(*) from emaj.mySchema1_myTbl1_log;
 
 -----------------------------
--- stop, reset and drop groups
+-- stop, reset and drop existing groups
 -----------------------------
-select emaj.emaj_stop_group('myGroup1');
+select emaj.emaj_stop_group('myGroup1','Simple stop mark');
 select emaj.emaj_reset_group('myGroup1');
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
-select emaj.emaj_stop_group('phil''s group#3",','Simple stop mark');
-select emaj.emaj_drop_group('phil''s group#3",');
-select emaj.emaj_force_stop_group('myGroup4');
-select emaj.emaj_drop_group('myGroup4');
 select emaj.emaj_force_stop_group('emptyGroup');
 select emaj.emaj_drop_group('emptyGroup');
 
@@ -362,7 +369,7 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 -----------------------------
 -- emaj tables
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 600 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
 -- user tables

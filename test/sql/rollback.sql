@@ -3,6 +3,12 @@
 --                emaj_cleanup_rollback_state(), emaj_rollback_activity(),
 --                emaj_consolidate_rollback_group() and emaj_get_consolidable_rollbacks() functions.
 --
+
+-- set sequence restart value
+alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
+alter sequence emaj.emaj_time_stamp_time_id_seq restart 3000;
+alter sequence emaj.emaj_mark_mark_id_seq restart 3000;
+
 -----------------------------
 -- rollback nothing tests
 -----------------------------
@@ -570,13 +576,7 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
 -----------------------------
 -- test end: reset history and force sequences id
 -----------------------------
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 300 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3000 order by time_id;
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist order by hist_id) as t;
-
-truncate emaj.emaj_hist;
-alter sequence emaj.emaj_hist_hist_id_seq restart 5000;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 500;
-alter sequence emaj.emaj_mark_mark_id_seq restart 500;
-alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 100;
+  (select * from emaj.emaj_hist where hist_id >= 3000 order by hist_id) as t;
 

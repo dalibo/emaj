@@ -4,6 +4,209 @@
 -- grant emaj_viewer role
 -----------------------------
 grant emaj_viewer to emaj_regression_tests_viewer_user;
+-----------------------------
+-- prepare groups for the test
+-----------------------------
+select emaj.emaj_create_group('myGroup1');
+NOTICE:  table "myschema1_myTbl3_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema1_myTbl3_log""
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "myTbl3" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1."myTbl3""
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "myTbl3" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1."myTbl3""
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "mytbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "mytbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  table "myschema1_mytbl4_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl4_log"
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl4"
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl4"
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  table "myschema1_mytbl2_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl2_log"
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "mytbl2" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2"
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "mytbl2" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl2"
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emajb.myschema1_mytbl2b_log"
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "mytbl2b" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2b"
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "mytbl2b" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl2b"
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+ emaj_create_group 
+-------------------
+                 6
+(1 row)
+
+select emaj.emaj_start_group('myGroup1','Start');
+ emaj_start_group 
+------------------
+                6
+(1 row)
+
+select emaj.emaj_create_group('myGroup2');
+NOTICE:  table "myschema2_mytbl1_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl1_log"
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "mytbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl1"
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "mytbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl1"
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  table "myschema2_mytbl2_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl2_log"
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "mytbl2" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl2"
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "mytbl2" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl2"
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  table "myschema2_myTbl3_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema2_myTbl3_log""
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "myTbl3" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "myTbl3" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2."myTbl3""
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  table "myschema2_mytbl4_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl4_log"
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl4"
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl4"
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  table "otherPrefix4mytbl5_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."otherPrefix4mytbl5_log""
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "mytbl5" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl5"
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "mytbl5" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl5"
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  table "myschema2_mytbl6_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl6_log"
+PL/pgSQL function "_create_tbl" line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "mytbl6" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl6"
+PL/pgSQL function "_create_tbl" line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "mytbl6" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl6"
+PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function "emaj_create_group" line 70 at PERFORM
+WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
+WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+PL/pgSQL function "emaj_create_group" line 90 at PERFORM
+ emaj_create_group 
+-------------------
+                 8
+(1 row)
+
+select emaj.emaj_create_group('emptyGroup');
+ERROR:  emaj_create_group: group "emptyGroup" is already created.
+select emaj.emaj_start_group('emptyGroup');
+ emaj_start_group 
+------------------
+                0
+(1 row)
+
 --
 set role emaj_regression_tests_viewer_user;
 --
@@ -19,7 +222,7 @@ select count(*) from emaj.emaj_visible_param;
 select count(*) from emaj.emaj_hist;
  count 
 -------
-     0
+    18
 (1 row)
 
 select count(*) from emaj.emaj_group_def;
@@ -31,31 +234,31 @@ select count(*) from emaj.emaj_group_def;
 select count(*) from emaj.emaj_group;
  count 
 -------
-     5
+     3
 (1 row)
 
 select count(*) from emaj.emaj_relation;
  count 
 -------
-    21
+    14
 (1 row)
 
 select count(*) from emaj.emaj_mark;
  count 
 -------
-    13
+     2
 (1 row)
 
 select count(*) from emaj.emaj_sequence;
  count 
 -------
-    79
+     6
 (1 row)
 
 select count(*) from emaj.emaj_seq_hole;
  count 
 -------
-     3
+     0
 (1 row)
 
 select count(*) from emaj.emaj_rlbk;
@@ -100,13 +303,13 @@ select * from emaj.emaj_verify_all();
 select emaj.emaj_get_previous_mark_group('myGroup1', current_timestamp);
  emaj_get_previous_mark_group 
 ------------------------------
- Multi-3
+ Start
 (1 row)
 
 select emaj.emaj_get_previous_mark_group('myGroup1', 'EMAJ_LAST_MARK');
  emaj_get_previous_mark_group 
 ------------------------------
- Multi-2
+ 
 (1 row)
 
 select emaj.emaj_cleanup_rollback_state();
@@ -120,7 +323,7 @@ select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
 ------------+-------------+------------+-----------
  myGroup1   | myschema1   | myTbl3     |         0
  myGroup1   | myschema1   | mytbl1     |         0
- myGroup1   | myschema1   | mytbl4     |        11
+ myGroup1   | myschema1   | mytbl4     |         0
  myGroup1   | myschema1   | mytbl2     |         0
  myGroup1   | myschema1   | mytbl2b    |         0
 (5 rows)
@@ -133,13 +336,13 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
 select emaj.emaj_estimate_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 0.05927 secs
+ @ 0.006 secs
 (1 row)
 
 select emaj.emaj_estimate_rollback_groups(array['myGroup1'],emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 0.05927 secs
+ @ 0.006 secs
 (1 row)
 
 select * from emaj.emaj_rollback_activity();
