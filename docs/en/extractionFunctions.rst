@@ -143,5 +143,9 @@ As the function can generate a large or even very large file (depending on the l
 
 It is also the user's responsibility to deactivate triggers, if any exist, before executing the generated script.
 
-Using the :ref:`emaj_gen_sql_groups() <multi_groups_functions_list>` function, it is possible to generate a sql script related to several groups.
+Using the *emaj_gen_sql_groups()* function, it is possible to generate a sql script related to several groups::
+
+   SELECT emaj.emaj_gen_sql_groups('<group.names.array>', '<start.mark>', '<end.mark>', '<file>' [, <tables/sequences.array>);
+
+More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 

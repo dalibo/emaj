@@ -143,5 +143,9 @@ Comme la fonction peut générer un gros voire très gros fichier (en fonction d
 
 Il est aussi de la responsabilité de l'utilisateur de désactiver d'éventuels triggers avant d'exécuter le script généré.
 
-La fonction :ref:`emaj_gen_sql_groups() <multi_groups_functions_list>` permet de générer des scripts SQL portant sur plusieurs groupes de tables.
+La fonction *emaj_gen_sql_groups()* permet de générer des scripts SQL portant sur plusieurs groupes de tables ::
+
+   SELECT emaj.emaj_gen_sql_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>', '<fichier>'[,<liste.tables.séquences>]);
+
+Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
 

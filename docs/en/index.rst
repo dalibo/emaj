@@ -35,12 +35,13 @@ Welcome to the E-Maj's documentation!
 
    accessPolicy
    mainFunctions
-   multiGroupsFunctions
+   alterGroups
    otherGroupsFunctions
    marksFunctions
    statFunctions
    extractionFunctions
    otherFunctions
+   multiGroupsFunctions
    parallelRollbackClient
    rollbackMonitorClient
 

@@ -133,5 +133,9 @@ Compte tenu de la répartition très variable entre les verbes *INSERT*, *UPDATE
 
 Sans statistique sur les rollbacks précédents, si les résultats obtenus sont de qualité médiocre, il est possible d'ajuster les :doc:`paramètres <parameters>` génériques. Il est également possible de modifier manuellement le contenu de la table *emaj.emaj_rlbk_stat* qui conserve la durée des rollbacks précédents, en supprimant par exemple les lignes correspondant à des rollbacks effectués dans des conditions de charge inhabituelles.
 
-La fonction :ref:`emaj_estimate_rollback_groups() <multi_groups_functions_list>` permet d’estimer la durée d’un rollback portant sur plusieurs groupes de tables.
+La fonction *emaj_estimate_rollback_groups()* permet d’estimer la durée d’un rollback portant sur plusieurs groupes de tables ::
+
+   SELECT emaj.emaj_estimate_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>', <est tracé>);
+
+Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
 
