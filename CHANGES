@@ -3,6 +3,9 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
+  - in the emaj_group_def table, a priority change for a table or a sequence 
+    can be taken into account by the emaj_alter_group() function while the 
+    related group is in LOGGING state.
   - add a new emaj_alter_groups() function that can alter several groups at 
     once.
   - it is now possible to create and manage empty tables groups. That may be 

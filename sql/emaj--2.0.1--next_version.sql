@@ -107,6 +107,7 @@ CREATE TABLE emaj.emaj_alter_plan (
   altr_group_is_logging        BOOLEAN     ,               -- copy of the emaj_group.group_is_logging column at alter time
   altr_new_group               TEXT        ,               -- target group name, when the relation changes its group ownership
   altr_new_priority            INT         ,               -- target priority level, when the relation changes its priority level
+  altr_new_group_is_logging    BOOLEAN     ,               -- state of the target group, when the relation changes its group ownership
   PRIMARY KEY (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group),
   FOREIGN KEY (altr_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
   );
@@ -137,6 +138,7 @@ DROP FUNCTION emaj._check_group_content(V_GROUPNAME TEXT);
 DROP FUNCTION emaj._create_tbl(R_GRPDEF EMAJ.EMAJ_GROUP_DEF,V_GROUPNAME TEXT,V_ISROLLBACKABLE BOOLEAN,V_DEFTSP TEXT);
 DROP FUNCTION emaj._create_seq(GRPDEF EMAJ.EMAJ_GROUP_DEF,V_GROUPNAME TEXT);
 DROP FUNCTION emaj.emaj_create_group(V_GROUPNAME TEXT,V_ISROLLBACKABLE BOOLEAN);
+DROP FUNCTION emaj.emaj_alter_group(V_GROUPNAME TEXT);
 DROP FUNCTION emaj._reset_group(V_GROUPNAME TEXT);
 
 ------------------------------------------------------------------
@@ -592,7 +594,7 @@ $_create_tbl$;
 CREATE OR REPLACE FUNCTION emaj._change_attr_tbl(r_rel emaj.emaj_relation, v_newLogSchemaSuffix TEXT, v_newNamesPrefix TEXT, v_newLogDatTsp TEXT, v_newLogIdxTsp TEXT)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_change_attr_tbl$
--- This function processes the attributes changes registered in the emaj_group_def table for an application table
+-- This function processes the attributes changes registered in the emaj_group_def table for an application table (all but the priority level)
 -- Input: the existing emaj_relation row for the table, and the parameters from emaj_group_def that may by changed
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
@@ -1000,33 +1002,33 @@ $emaj_create_group$;
 COMMENT ON FUNCTION emaj.emaj_create_group(TEXT,BOOLEAN,BOOLEAN) IS
 $$Creates an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_alter_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_alter_group(v_groupName TEXT, v_mark TEXT DEFAULT 'ALTER_%')
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_alter_group$
 -- This function alters a tables group.
 -- Input: group name
 -- Output: number of tables and sequences belonging to the group after the operation
   BEGIN
-    RETURN emaj._alter_groups(ARRAY[v_groupName], false);
+    RETURN emaj._alter_groups(ARRAY[v_groupName], false, v_mark);
   END;
 $emaj_alter_group$;
-COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT, TEXT) IS
 $$Alter an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_alter_groups(v_groupNames TEXT[])
+CREATE OR REPLACE FUNCTION emaj.emaj_alter_groups(v_groupNames TEXT[], v_mark TEXT DEFAULT 'ALTER_%')
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_alter_groups$
 -- This function alters several tables groups.
 -- Input: group names array
 -- Output: number of tables and sequences belonging to the groups after the operation
   BEGIN
-    RETURN emaj._alter_groups(v_groupNames, true);
+    RETURN emaj._alter_groups(v_groupNames, true, v_mark);
   END;
 $emaj_alter_groups$;
-COMMENT ON FUNCTION emaj.emaj_alter_groups(TEXT[]) IS
+COMMENT ON FUNCTION emaj.emaj_alter_groups(TEXT[], TEXT) IS
 $$Alter several E-Maj groups.$$;
 
-CREATE OR REPLACE FUNCTION emaj._alter_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._alter_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $_alter_groups$
 -- This function effectively alters a tables groups array.
@@ -1035,6 +1037,8 @@ $_alter_groups$
 -- Output: number of tables and sequences belonging to the groups after the operation
   DECLARE
     v_aGroupName             TEXT;
+    v_loggingGroups          TEXT[];
+    v_markName               TEXT;
     v_timeId                 BIGINT;
     v_eventTriggers          TEXT[];
   BEGIN
@@ -1050,9 +1054,23 @@ $_alter_groups$
     END LOOP;
 -- performs various checks on the groups content described in the emaj_group_def table
     PERFORM emaj._check_groups_content(v_groupNames, NULL);
+-- build the list of groups that are in logging state
+    SELECT array_agg(group_name) INTO v_loggingGroups FROM emaj.emaj_group
+      WHERE group_name = ANY(v_groupNames) AND group_is_logging;
+-- check and process the supplied mark name, if it is worth to be done
+    IF v_loggingGroups IS NOT NULL THEN
+      SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
+    END IF;
 -- OK
 -- get the time stamp of the operation
     SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- for LOGGING groups, lock all tables to get a stable point
+    IF v_loggingGroups IS NOT NULL THEN
+-- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
+       PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', v_multiGroup);
+-- and set the mark, using the same time identifier
+       PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, v_multiGroup, true, NULL, v_timeId);
+    END IF;
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- we can now plan all the steps needed to perform the operation
@@ -1193,11 +1211,16 @@ $_alter_plan$
       FROM emaj.emaj_group
       WHERE altr_group = group_name
         AND altr_time_id = v_timeId AND altr_group <> '';
+-- set the altr_new_group_is_logging column value for the cases when the group ownership changes
+    UPDATE emaj.emaj_alter_plan SET altr_new_group_is_logging = group_is_logging
+      FROM emaj.emaj_group
+      WHERE altr_new_group = group_name
+        AND altr_time_id = v_timeId AND altr_new_group IS NOT NULL;
 -- check groups LOGGING state, depending on the steps to perform
     SELECT string_agg(altr_group, ', ') INTO v_groups
       FROM emaj.emaj_alter_plan
       WHERE altr_time_id = v_timeId
-        AND altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ', 'RESET_GROUP', 'REPAIR_TBL', 'ATTRIBUTE_TBL', 'ASSIGN_REL', 'PRIORITY_REL', 'ADD_TBL', 'ADD_SEQ')
+        AND altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ', 'RESET_GROUP', 'REPAIR_TBL', 'ATTRIBUTE_TBL', 'ASSIGN_REL', 'ADD_TBL', 'ADD_SEQ')
         AND altr_group_is_logging;
     IF v_groups IS NOT NULL THEN
       RAISE EXCEPTION '_alter_plan: the groups "%" cannot be altered because they are in LOGGING state.', v_groups;

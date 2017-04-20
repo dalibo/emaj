@@ -522,24 +522,24 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECU
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for table "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
                 4
@@ -625,24 +625,24 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECU
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
-PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
-PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for table "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 59 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
-PL/pgSQL function emaj.emaj_alter_groups(text[]) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
                  7
@@ -665,6 +665,26 @@ select emaj.emaj_enable_protection_by_event_triggers();
 ------------------------------------------
                                         0
 (1 row)
+
+-----------------------------
+-- Checking step 9
+-----------------------------
+select * from emaj.emaj_alter_plan where altr_time_id > 10000 order by 1,2,3,4,5;
+ altr_time_id |     altr_step     |  altr_schema   | altr_tblseq |    altr_group    | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging 
+--------------+-------------------+----------------+-------------+------------------+---------------+-----------------------+----------------+-------------------+---------------------------
+        10035 | CREATE_LOG_SCHEMA | emaj3          |             |                  |               |                       |                |                   | 
+        10035 | REPAIR_TBL        | phil's schema3 | phil's tbl1 | phil's group#3", |               | f                     |                |                   | 
+        10035 | RESET_GROUP       |                |             | phil's group#3", |               | f                     |                |                   | 
+        10035 | ATTRIBUTE_TBL     | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                   | 
+        10035 | PRIORITY_REL      | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                 1 | 
+        10039 | REPAIR_TBL        | phil's schema3 | phil's tbl1 | phil's group#3", |               | f                     |                |                   | 
+        10039 | RESET_GROUP       |                |             | myGroup4         |               | f                     |                |                   | 
+        10039 | RESET_GROUP       |                |             | phil's group#3", |               | f                     |                |                   | 
+        10039 | ATTRIBUTE_TBL     | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                   | 
+        10039 | PRIORITY_REL      | myschema4      | mytblm      | myGroup4         |               | f                     |                |               999 | 
+        10039 | PRIORITY_REL      | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                   | 
+        10039 | DROP_LOG_SCHEMA   | emaj3          |             |                  |               |                       |                |                   | 
+(12 rows)
 
 -----------------------------
 -- Step 10 : for phil''s group#3", recreate the group as rollbackable, update tables, 
@@ -1600,32 +1620,32 @@ SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relati
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint) line 25 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  table "short_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3".short_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 31 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 41 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 57 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean) line 41 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 57 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
                 4
@@ -2787,7 +2807,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
  hist_id |      hist_function       |       hist_event        |                                   hist_object                                    |                                                     regexp_replace                                                     | hist_user 
 ---------+--------------------------+-------------------------+----------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------+-----------
    10027 | START_GROUP              | BEGIN                   | myGroup1                                                                         | With log reset                                                                                                         | postgres
-   10028 | PURGE_HISTORY            |                         |                                                                                  | 27 emaj_hist rows deleted ; 37 alter groups events deleted ; 21 rollback events deleted                                | postgres
+   10028 | PURGE_HISTORY            |                         |                                                                                  | 27 emaj_hist rows deleted ; 39 alter groups events deleted ; 21 rollback events deleted                                | postgres
    10029 | LOCK_GROUP               | BEGIN                   | myGroup1                                                                         |                                                                                                                        | postgres
    10030 | LOCK_GROUP               | END                     | myGroup1                                                                         | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
    10031 | SET_MARK_GROUP           | BEGIN                   | myGroup1                                                                         | M1                                                                                                                     | postgres

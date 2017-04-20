@@ -124,6 +124,10 @@ select emaj.emaj_drop_group('phil''s group#3",');
 select emaj.emaj_drop_group('myGroup4');
 
 select emaj.emaj_enable_protection_by_event_triggers();
+-----------------------------
+-- Checking step 9
+-----------------------------
+select * from emaj.emaj_alter_plan where altr_time_id > 10000 order by 1,2,3,4,5;
 
 -----------------------------
 -- Step 10 : for phil''s group#3", recreate the group as rollbackable, update tables, 

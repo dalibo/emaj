@@ -174,7 +174,8 @@ alter table public.mytbl1_new_name rename to mytbl1;
 alter table public.mytbl1 set schema myschema1;
 update emaj.emaj_group_def set grpdef_schema = 'myschema1', grpdef_tblseq = 'mytbl1'
   where grpdef_schema = 'public' and grpdef_tblseq = 'mytbl1_new_name';
-select emaj.emaj_alter_group('myGroup1');
+-- the next call gives a useless mark name parameter (the group is in idle state)
+select emaj.emaj_alter_group('myGroup1','useless_mark_name');
 
 -- missing emaj components
 select emaj.emaj_disable_protection_by_event_triggers();
@@ -284,7 +285,8 @@ select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' group by 1 order by 1;
 update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
-select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+-- the next call gives a useless mark name parameter (the group is in idle state)
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','useless_mark_name_%');
 select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' group by 1 order by 1;
 
 -- groups are now empty
@@ -294,8 +296,25 @@ begin;
 rollback;
 
 -----------------------------
+-- emaj_alter_group() and emaj_alter_groups() tests on logging groups
+-----------------------------
+select emaj.emaj_start_group('myGroup1');
+select emaj.emaj_start_group('myGroup2');
+
+-- change the priority
+update emaj.emaj_group_def set grpdef_priority = 30 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+select emaj.emaj_alter_group('myGroup1');
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+select emaj.emaj_alter_groups(array['myGroup1','myGroup2'],'Priority Changed');
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+
+
+-----------------------------
 -- test end: check and force sequences id
 -----------------------------
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_id > 6000 order by mark_id;
+
 select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
