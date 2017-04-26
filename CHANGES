@@ -3,21 +3,22 @@ E-Maj - Release notes
 <NEXT_VERSION>
 ------
 Enhancements:
-  - in the emaj_group_def table, a priority change for a table or a sequence 
-    can be taken into account by the emaj_alter_group() function while the 
-    related group is in LOGGING state.
-  - add a new emaj_alter_groups() function that can alter several groups at 
+  - The emaj_alter_group() function can process any attribute change 
+    registered in the emaj_group_def table, among priority level, log schema 
+    suffix, emaj names prefix, log data or index tablespace, for relations 
+    whose groups are in LOGGING state.
+  - Add a new emaj_alter_groups() function that can alter several groups at 
     once.
-  - it is now possible to create and manage empty tables groups. That may be 
+  - It is now possible to create and manage empty tables groups. That may be 
     useful when moving tables or sequences from one group to another.
-  - the tspemaj tablespace has no specific processing anymore. If it exists, 
+  - The tspemaj tablespace has no specific processing anymore. If it exists, 
     it will be used to hold E-Maj tables/indexes as any other tablespace, 
     either by being set as default tablespace at installation or group 
     creation time or being specified as log data tablespace or log index 
     tablespace into the emaj_group_def table.
-  - improve the checks performed on tables groups: verify that application 
+  - Improve the checks performed on tables groups: verify that application 
     tables have not been altered as UNLOGGED after their tables group creation.
-  - forbid tables declared as WITH OIDS into tables groups.
+  - Forbid tables declared as WITH OIDS into tables groups.
   - Optimize the execution of alter group operations.
 
 Bug fixes:
@@ -25,11 +26,11 @@ Bug fixes:
 2.0.1
 ------
 Enhancements:
-  - rollback simulations using the emaj_estimate_rollback_group() function is 
+  - Rollback simulations using the emaj_estimate_rollback_group() function is 
     now able to process protected groups or marks.
   - In internal checks and in the emaj_verify_all() function, verify that 
     tables of rollbackable groups have their primary key.
-  - some minor code improvements.
+  - Some minor code improvements.
 
 Bug fixes:
   - Fix the extension upgrade procedure. The extension upgrade scripts from 
@@ -41,57 +42,57 @@ Bug fixes:
 Enhancements:
   - E-Maj is now installed as a standard extension using the CREATE
     EXTENSION SQL command.
-  - the uninstallation script is renamed emaj_uninstall.sql and includes the 
+  - The uninstallation script is renamed emaj_uninstall.sql and includes the 
     DROP EXTENSION statement.
   - PostgreSQL versions prior 9.1 are not supported by E-Maj anymore.
-  - various changes in the functions code to take benefit from the features 
+  - Various changes in the functions code to take benefit from the features 
     brought by 8.4 to 9.1 postgres versions.
-  - a new emaj_consolidate_rollback_group() function consolidates a rollback
+  - A new emaj_consolidate_rollback_group() function consolidates a rollback
     for a group. It means the function transforms a logged rollback already
     executed as if it were an unlogged rollback, by deleting all the log
     records and marks between the mark used as target for the already
     executed logged rollback and the mark that has taged the end of this
     rollback.
-  - a new emaj_get_consolidable_rollbacks() function returns the list of 
+  - A new emaj_get_consolidable_rollbacks() function returns the list of 
     logged rollback operations that may be consolidated. Two of the returned 
     columns can directly feed the emaj_consolidate_rollback_group() function. 
     It also gives information about the amount of log updates that may be 
     deleted and the number of marks what would be deleted by a consolidation.
-  - when postgres version allows it, add event triggers to protect 
+  - When postgres version allows it, add event triggers to protect 
     application or E-Maj components against drop or some table structure 
     changes. The new functions emaj_disable_protection_by_event_triggers() 
     and emaj_enable_protection_by_event_triggers() respectively disable and 
     re-enable these event triggers, if needed.
-  - in emaj_start_group() and emaj_start_groups() functions, allow to not 
+  - In emaj_start_group() and emaj_start_groups() functions, allow to not 
     supply the mark name parameter. In this case, the default mark name is
     built as START_hh.mm.ss.ms, using the current timestamp. A mark name set 
     to NULL or '' is now also transformed into START_hh.mm.ss.ms.
-  - in emaj_set_mark_group() and emaj_set_mark_groups() functions, allow to 
+  - In emaj_set_mark_group() and emaj_set_mark_groups() functions, allow to 
     not supply the mark name parameter. In this case, the default mark name 
     is built as MARK_hh.mm.ss.ms, using the current timestamp.
-  - in emaj_stop_group() and emaj_stop_groups() functions, if the supplied 
+  - In emaj_stop_group() and emaj_stop_groups() functions, if the supplied 
     mark name is NULL or '', it is now transformed into STOP_hh.mm.ss.ms.
-  - for emaj_gen_sql_group() and emaj_gen_sql_groups() functions, change the 
+  - For emaj_gen_sql_group() and emaj_gen_sql_groups() functions, change the 
     type of the returned value representing the number of generated sql 
     statements to BIGINT.
-  - the purge of the history now keeps the events after the beginning of 
+  - The purge of the history now keeps the events after the beginning of 
     possibly in progress rollbacks. It also doesn't purge the internal 
     emaj_rlbk table anymore.
-  - in rollback functions, trap all exceptions that may happen when the 
+  - In rollback functions, trap all exceptions that may happen when the 
     rollback uses autonomous transactions with dblink and set the proper 
     aborted state of the rollback operation in the emaj_rlbk table.
-  - in error and warning messages, all groups, marks, schemas or tables names 
+  - In error and warning messages, all groups, marks, schemas or tables names 
     are surrounded by double quotes to improve the readability.
-  - a new emaj_time_stamp table records the timestamps of main E-Maj events 
+  - A new emaj_time_stamp table records the timestamps of main E-Maj events 
     like groups creation, marks setting and rollbacks, leading to significant 
     changes in some existing internal tables structure.
-  - various minor coding enhancements.
-  - the demonstration script is renamed emaj_demo.sql and enhanced.
-  - the script supplied to prepare a parallel rollback test environment is 
+  - Various minor coding enhancements.
+  - The demonstration script is renamed emaj_demo.sql and enhanced.
+  - The script supplied to prepare a parallel rollback test environment is 
     renamed emaj_prepare_parallel_rollback_test.sql and enhanced.
 
 Bug fixes:
-  - the emaj_gen_sql_group() and emaj_gen_sql_groups() functions now properly  
+  - The emaj_gen_sql_group() and emaj_gen_sql_groups() functions now properly  
     generate an error if the "list of tables/sequences to filter" parameter 
     is empty.
 

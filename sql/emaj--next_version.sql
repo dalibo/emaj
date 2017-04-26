@@ -1312,6 +1312,9 @@ $_change_attr_tbl$
       EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
       EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
       EXECUTE 'ALTER FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() SET SCHEMA ' || quote_ident(v_newLogSchema);
+-- adjust sequences schema names in emaj_sequence tables
+      UPDATE emaj.emaj_sequence SET sequ_schema = v_newLogSchema WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
+--
       v_changeMsg = v_changeMsg || ', log schema';
     END IF;
 -- if the emaj names prefix in emaj_group_def has changed, process the change
@@ -1320,11 +1323,14 @@ $_change_attr_tbl$
       EXECUTE 'ALTER INDEX ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_index)|| ' RENAME TO ' || quote_ident(v_newLogIndexName);
       EXECUTE 'ALTER SEQUENCE ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' RENAME TO ' || quote_ident(v_newLogSequenceName);
       EXECUTE 'ALTER FUNCTION ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function) || '() RENAME TO ' || quote_ident(v_newLogFunctionName);
+-- adjust sequences schema names in emaj_sequence tables
+      UPDATE emaj.emaj_sequence SET sequ_name = v_newLogSequenceName WHERE sequ_schema = v_newLogSchema AND sequ_name = r_rel.rel_log_sequence;
+--
       v_changeMsg = v_changeMsg || ', emaj names prefix';
     END IF;
--- detect if the log data tablespace in emaj_group_def has changed
+-- if the log data tablespace in emaj_group_def has changed, process the change
     IF coalesce(r_rel.rel_log_dat_tsp,'') <> coalesce(v_newLogDatTsp,'') THEN
--- build the new data tablespace name. Get if needed the name of the current default tablespace.
+-- build the new data tablespace name. If needed, get the name of the current default tablespace.
       v_newTsp = v_newLogDatTsp;
       IF v_newTsp IS NULL OR v_newTsp = '' THEN
         v_newTsp = emaj._get_default_tablespace();
@@ -1332,9 +1338,9 @@ $_change_attr_tbl$
       EXECUTE 'ALTER TABLE ' || quote_ident(v_newLogSchema) || '.' || quote_ident(v_newLogTableName) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
       v_changeMsg = v_changeMsg || ', log data tablespace';
     END IF;
--- detect if the log index tablespace in emaj_group_def has changed
+-- if the log index tablespace in emaj_group_def has changed, process the change
     IF coalesce(r_rel.rel_log_idx_tsp,'') <> coalesce(v_newLogIdxTsp,'') THEN
--- build the new index tablespace name. Get if needed the name of the current default tablespace.
+-- build the new index tablespace name. If needed, get the name of the current default tablespace.
       v_newTsp = v_newLogIdxTsp;
       IF v_newTsp IS NULL OR v_newTsp = '' THEN
         v_newTsp = emaj._get_default_tablespace();
@@ -2376,7 +2382,7 @@ $_alter_groups$
 -- performs various checks on the groups content described in the emaj_group_def table
     PERFORM emaj._check_groups_content(v_groupNames, NULL);
 -- build the list of groups that are in logging state
-    SELECT array_agg(group_name) INTO v_loggingGroups FROM emaj.emaj_group
+    SELECT array_agg(group_name ORDER BY group_name) INTO v_loggingGroups FROM emaj.emaj_group
       WHERE group_name = ANY(v_groupNames) AND group_is_logging;
 -- check and process the supplied mark name, if it is worth to be done
     IF v_loggingGroups IS NOT NULL THEN
@@ -2541,7 +2547,7 @@ $_alter_plan$
     SELECT string_agg(altr_group, ', ') INTO v_groups
       FROM emaj.emaj_alter_plan
       WHERE altr_time_id = v_timeId
-        AND altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ', 'RESET_GROUP', 'REPAIR_TBL', 'ATTRIBUTE_TBL', 'ASSIGN_REL', 'ADD_TBL', 'ADD_SEQ')
+        AND altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ', 'RESET_GROUP', 'REPAIR_TBL', 'ASSIGN_REL', 'ADD_TBL', 'ADD_SEQ')
         AND altr_group_is_logging;
     IF v_groups IS NOT NULL THEN
       RAISE EXCEPTION '_alter_plan: the groups "%" cannot be altered because they are in LOGGING state.', v_groups;

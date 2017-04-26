@@ -36,8 +36,8 @@ select pg_proc.proname
 -----------------------------
 -- get test coverage data just before cleanup
 -----------------------------
--- wait during half a second to let the statistics collector aggregate the latest stats
-select pg_sleep(0.5);
+-- wait to let the statistics collector aggregate the latest stats
+select pg_sleep(1.5);
 
 -- display the functions that are not called by any regression test script
 --   (_forbid_truncate_fnct is actualy executed but not counted in statistics)

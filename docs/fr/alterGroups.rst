@@ -13,7 +13,7 @@ Modification de groupes en état *IDLE*
 Dans tous les cas, la démarche suivante peut être suivie :
 
 * arrêter le groupe s'il est dans un état actif, avec la fonction :ref:`emaj_stop_group() <emaj_stop_group>`,
-* adapter le contenu de la table emaj_group_def et/ou modifier la structure des tables applicatives,
+* adapter le contenu de la table :ref:`emaj_group_def <emaj_group_def>` et/ou modifier la structure des tables applicatives,
 * supprimer puis recréer le groupe avec les fonctions :ref:`emaj_drop_group() <emaj_drop_group>` et :ref:`emaj_create_group() <emaj_create_group>`.
 
 Mais l'enchaînement des deux fonctions emaj_drop_group() et emaj_create_group() peut être remplacé par l'exécution de la fonction *emaj_alter_group()*, avec une requête SQL du type ::
@@ -52,49 +52,73 @@ Mais la méthode précédente présente plusieurs inconvénients :
 * les logs antérieurs à l’opération sont perdus,
 * il n’est plus possible de remettre le groupe de tables dans un état antérieur.
 
-Néanmoins certaines actions sont possibles sur des groupes de tables maintenus en état *LOGGING*. Le tableau suivant liste les actions possibles et leurs conditions de réalisation.
+Néanmoins certaines actions sont possibles sur des groupes de tables maintenus en état *LOGGING*. Le tableau suivant liste ces actions possibles et leurs conditions de réalisation.
 
-+-------------------------------------+----------------+--------------------+
-| Action                              | Groupe LOGGING | Méthode            |
-+=====================================+================+====================+
-| Changer le groupe d'appartenance    | Non            |                    | 
-+-------------------------------------+----------------+--------------------+
-| Changer le suffixe du schéma de log | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Changer le préfixe des noms emaj    | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Changer le tablespace de log data   | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Changer le tablespace de log index  | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Changer la priorité E-Maj           | Oui            | \(1)               |
-+-------------------------------------+----------------+--------------------+
-| Oter une table d’un groupe          | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Oter une séquence d’un groupe       | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Ajouter une table à un groupe       | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Ajouter une séquence à un groupe    | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Réparer une table ou une séquence   | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Renommer une table                  | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Renommer une séquence               | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Changer le schéma d’une table       | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Changer le schéma d’une séquence    | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Renommer une colonne d’une table    | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Changer la structure d’une table    | Non            |                    |
-+-------------------------------------+----------------+--------------------+
-| Autres formes d’ALTER TABLE         | Oui            | Sans impact E-Maj  |
-+-------------------------------------+----------------+--------------------+
-| Autres formes d’ALTER SEQUENCE      | Oui            | Sans impact E-Maj  |
-+-------------------------------------+----------------+--------------------+
++-------------------------------------+----------------+---------------------------+
+| Action                              | Groupe LOGGING | Méthode                   |
++=====================================+================+===========================+
+| Changer le groupe d'appartenance    | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Changer le suffixe du schéma de log | Oui            | Ajustement emaj_group_def |
++-------------------------------------+----------------+---------------------------+
+| Changer le préfixe des noms emaj    | Oui            | Ajustement emaj_group_def |
++-------------------------------------+----------------+---------------------------+
+| Changer le tablespace de log data   | Oui            | Ajustement emaj_group_def |
++-------------------------------------+----------------+---------------------------+
+| Changer le tablespace de log index  | Oui            | Ajustement emaj_group_def |
++-------------------------------------+----------------+---------------------------+
+| Changer la priorité E-Maj           | Oui            | Ajustement emaj_group_def |
++-------------------------------------+----------------+---------------------------+
+| Oter une table d’un groupe          | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Oter une séquence d’un groupe       | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Ajouter une table à un groupe       | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Ajouter une séquence à un groupe    | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Réparer une table ou une séquence   | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Renommer une table                  | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Renommer une séquence               | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Changer le schéma d’une table       | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Changer le schéma d’une séquence    | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Renommer une colonne d’une table    | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Changer la structure d’une table    | Non            |                           |
++-------------------------------------+----------------+---------------------------+
+| Autres formes d’ALTER TABLE         | Oui            | Sans impact E-Maj         |
++-------------------------------------+----------------+---------------------------+
+| Autres formes d’ALTER SEQUENCE      | Oui            | Sans impact E-Maj         |
++-------------------------------------+----------------+---------------------------+
 
-(1) : modifier la table *emaj_group_def* puis appeler l’une des fonctions *emaj_alter_group()* ou *emaj_alter_groups()*.
+Méthode "Modification emaj_group_def"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+La plupart des attributs de la table :ref:`emaj_group_def <emaj_group_def>` décrivant les groupes de tables peuvent être modifiés et pris en compte en dynamique, sans que les groupes de tables ne soient arrêtés.
+
+Pour ce faire, il suffit d’enchaîner les opérations :
+
+* modifier la table :ref:`emaj_group_def <emaj_group_def>`,
+* appeler l’une des fonctions *emaj_alter_group()* ou *emaj_alter_groups()*.
+
+Pour les groupes de tables en état *LOGGING*, ces fonctions posent un verrou de type *ROW EXCLUSIVE* sur chaque table applicative constituant les groupes de tables concernés. 
+
+Sur ces mêmes groupes, elles posent également une marque dont le nom peut être fourni en paramètre. La syntaxe de ces appels devient ::
+
+   SELECT emaj.emaj_alter_group('<nom.du.groupe>' [,'<marque>']);
+
+ou ::
+
+   SELECT emaj.emaj_alter_groups('<tableau.des.groupes>' [,'<marque>']);
+
+Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : « ALTER_% », où le caractère '%' représente l'heure de début de la transaction courante, au format « hh.mn.ss.mmm ».
+
+Une opération de rollback E-Maj ciblant une marque antérieure à une modification de groupes de tables ne procède **PAS** automatiquement à une annulation de ces changements.
+
+Néanmoins, l’administrateur a la possibilité d’appliquer cette même procédure pour revenir à un état antérieur.
 

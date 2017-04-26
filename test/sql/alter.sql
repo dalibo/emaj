@@ -187,12 +187,6 @@ drop table emaj.myschema1_mytbl1_log;
 select emaj.emaj_alter_group('myGroup1');
 select emaj.emaj_enable_protection_by_event_triggers();
 
--- the group is now empty
-begin;
-  delete from emaj.emaj_group_def where grpdef_group = 'myGroup1';
-  select emaj.emaj_alter_group('myGroup1');
-rollback;
-
 -----------------------------
 -- emaj_alter_groups() tests
 -----------------------------
@@ -289,7 +283,7 @@ update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = '
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','useless_mark_name_%');
 select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' group by 1 order by 1;
 
--- groups are now empty
+-- one group is now empty
 begin;
   delete from emaj.emaj_group_def where grpdef_group = 'myGroup2';
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
@@ -303,11 +297,35 @@ select emaj.emaj_start_group('myGroup2');
 
 -- change the priority
 update emaj.emaj_group_def set grpdef_priority = 30 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-select emaj.emaj_alter_group('myGroup1');
+select emaj.emaj_alter_group('myGroup1','Priority Changed');
 select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
 update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-select emaj.emaj_alter_groups(array['myGroup1','myGroup2'],'Priority Changed');
+select emaj.emaj_alter_groups(array['myGroup1','myGroup2']);
 select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+
+-- change the emaj names prefix, the log schema, the log data tablespace and the log index tablespace for different tables
+update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsplog1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
+set default_tablespace = tspemaj_renamed;
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','Attributes_changed');
+reset default_tablespace;
+select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema2_myTbl3_log';
+select count(*) from "emajC".s1t3_log;
+select * from emaj.emaj_sequence where (sequ_name like '%myTbl3%' or sequ_name like 's1t3%') and sequ_schema like 'emaj%' order by 1,2,3;
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema2_mytbl6_log_idx';
+--
+update emaj.emaj_group_def set grpdef_log_schema_suffix = 'C' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema2_myTbl3_log';
+select count(*) from "emajC"."myschema1_myTbl3_log";
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
+select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema2_mytbl6_log_idx';
 
 
 -----------------------------

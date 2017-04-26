@@ -98,18 +98,19 @@ Composite type "emaj._verify_groups_type"
  ver_tblseq | text | 
  ver_msg    | text | 
 
-               Table "emaj.emaj_alter_plan"
-        Column         |         Type          | Modifiers 
------------------------+-----------------------+-----------
- altr_time_id          | bigint                | not null
- altr_step             | emaj._alter_step_enum | not null
- altr_schema           | text                  | not null
- altr_tblseq           | text                  | not null
- altr_group            | text                  | not null
- altr_priority         | integer               | 
- altr_group_is_logging | boolean               | 
- altr_new_group        | text                  | 
- altr_new_priority     | integer               | 
+                 Table "emaj.emaj_alter_plan"
+          Column           |         Type          | Modifiers 
+---------------------------+-----------------------+-----------
+ altr_time_id              | bigint                | not null
+ altr_step                 | emaj._alter_step_enum | not null
+ altr_schema               | text                  | not null
+ altr_tblseq               | text                  | not null
+ altr_group                | text                  | not null
+ altr_priority             | integer               | 
+ altr_group_is_logging     | boolean               | 
+ altr_new_group            | text                  | 
+ altr_new_priority         | integer               | 
+ altr_new_group_is_logging | boolean               | 
 Indexes:
     "emaj_alter_plan_pkey" PRIMARY KEY, btree (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group), tablespace "tspemaj"
 Foreign-key constraints:
