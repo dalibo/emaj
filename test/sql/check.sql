@@ -56,6 +56,10 @@ select schemaname, funcname, calls from pg_stat_user_functions
   where (funcname like E'emaj\\_%' or funcname like E'\\_%') and funcname <> '_pg_version_num'
   order by 1,2;
 
+-- count the total number of user-callable function calls
+select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
+
+
 -----------------------------
 -- execute the perl script that checks the code
 -----------------------------

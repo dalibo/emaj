@@ -43,6 +43,14 @@ select emaj.emaj_set_mark_group('myGroup2');
 -- use of % in mark name
 select emaj.emaj_set_mark_group('myGroup1','Foo%Bar');
 
+-- multiple emaj_set_mark_group() using the same generated start mark name => fails
+-- this test is commented because the generated error message differs from one run to another
+--begin;
+--  select emaj.emaj_start_group('myGroup4');
+--  select emaj.emaj_set_mark_group('myGroup4');
+--  select emaj.emaj_set_mark_group('myGroup4');
+--rollback;
+
 -----------------------------
 -- emaj_set_mark_groups() tests
 -----------------------------

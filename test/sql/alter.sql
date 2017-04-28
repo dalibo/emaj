@@ -26,6 +26,7 @@ select emaj.emaj_drop_group('emptyGroup');
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2');
 select emaj.emaj_create_group('emptyGroup',true,true);
+select emaj.emaj_create_group('myGroup4');
 
 -- unknown group
 select emaj.emaj_alter_group(NULL);
@@ -187,6 +188,14 @@ drop table emaj.myschema1_mytbl1_log;
 select emaj.emaj_alter_group('myGroup1');
 select emaj.emaj_enable_protection_by_event_triggers();
 
+-- multiple emaj_alter_group() on a logging group => fails
+-- this test is commented because the generated error message differs from one run to another
+--begin;
+--  select emaj.emaj_start_group('myGroup4');
+--  select emaj.emaj_alter_group('myGroup4');
+--  select emaj.emaj_alter_group('myGroup4');
+--rollback;
+
 -----------------------------
 -- emaj_alter_groups() tests
 -----------------------------
@@ -335,6 +344,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 
 select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
+select emaj.emaj_force_drop_group('myGroup4');
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 

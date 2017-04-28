@@ -2231,13 +2231,140 @@ select emaj.emaj_rollback_group('myGroup1','Multi-1');
 (1 row)
 
 -----------------------------
+-- Step 15 : test transactions with several emaj operations
+-----------------------------
+select emaj.emaj_create_group('myGroup4');
+NOTICE:  table "myschema4_mytblm_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema4_mytblm_log"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "myschema4.mytblm" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblm"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "myschema4.mytblm" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblm"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
+WARNING:  _create_tbl: table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
+NOTICE:  table "myschema4_mytblc1_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema4_mytblc1_log"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "myschema4.mytblc1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc1"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "myschema4.mytblc1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc1"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
+NOTICE:  table "myschema4_mytblc2_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema4_mytblc2_log"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "myschema4.mytblc2" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc2"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "myschema4.mytblc2" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc2"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
+ emaj_create_group 
+-------------------
+                 3
+(1 row)
+
+-- several similar operations in a single transaction, using different mark names
+begin;
+  select emaj.emaj_start_group('myGroup4','M1');
+ emaj_start_group 
+------------------
+                3
+(1 row)
+
+  select emaj.emaj_set_mark_group('myGroup4','M2');
+ emaj_set_mark_group 
+---------------------
+                   3
+(1 row)
+
+  select emaj.emaj_set_mark_group('myGroup4','M3');
+ emaj_set_mark_group 
+---------------------
+                   3
+(1 row)
+
+  select emaj.emaj_alter_group('myGroup4','M4');
+ emaj_alter_group 
+------------------
+                3
+(1 row)
+
+  select emaj.emaj_alter_group('myGroup4','M5');
+ emaj_alter_group 
+------------------
+                3
+(1 row)
+
+  select emaj.emaj_stop_group('myGroup4','M6');
+ emaj_stop_group 
+-----------------
+               3
+(1 row)
+
+  select emaj.emaj_start_group('myGroup4','M7',false);
+ emaj_start_group 
+------------------
+                3
+(1 row)
+
+  select emaj.emaj_stop_group('myGroup4','M8');
+ emaj_stop_group 
+-----------------
+               3
+(1 row)
+
+commit;
+select * from emaj.emaj_mark where mark_group = 'myGroup4' order by mark_id;
+ mark_group | mark_name | mark_id | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------+---------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup4   | M1        |   10077 |        10091 | t               | f                      |              |                         0 | 
+ myGroup4   | M2        |   10078 |        10092 | t               | f                      |              |                         0 | 
+ myGroup4   | M3        |   10079 |        10093 | t               | f                      |              |                         0 | 
+ myGroup4   | M4        |   10080 |        10094 | t               | f                      |              |                         0 | 
+ myGroup4   | M5        |   10081 |        10095 | t               | f                      |              |                         0 | 
+ myGroup4   | M6        |   10082 |        10096 | t               | f                      |              |                         0 | 
+ myGroup4   | M7        |   10083 |        10097 | t               | f                      |              |                         0 | 
+ myGroup4   | M8        |   10084 |        10098 | t               | f                      |              |                         0 | 
+(8 rows)
+
+select emaj.emaj_drop_group('myGroup4');
+ emaj_drop_group 
+-----------------
+               3
+(1 row)
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 -- first set all rollback events state
 select emaj.emaj_cleanup_rollback_state();
  emaj_cleanup_rollback_state 
 -----------------------------
-                           2
+                           0
 (1 row)
 
 -- check rollback related tables
@@ -2801,7 +2928,16 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10087 |             100499 | R
    10088 |             100512 | M
    10089 |             100512 | R
-(90 rows)
+   10090 |             100512 | C
+   10091 |             100512 | M
+   10092 |             100512 | M
+   10093 |             100512 | M
+   10094 |             100512 | A
+   10095 |             100512 | A
+   10096 |             100512 | M
+   10097 |             100512 | M
+   10098 |             100512 | M
+(99 rows)
 
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from emaj.emaj_hist order by hist_id;
  hist_id |      hist_function       |       hist_event        |                                   hist_object                                    |                                                     regexp_replace                                                     | hist_user 
@@ -3451,9 +3587,57 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10712 | ROLLBACK_SEQUENCE        |                         | myschema1."myTbl3_col31_seq"                                                     | RESTART 21                                                                                                             | postgres
    10713 | ROLLBACK_GROUP           | END                     | myGroup1                                                                         | Rollback_id 10026, 2 tables and 1 sequences effectively processed                                                      | postgres
    10714 | DBLINK_CLOSE_CNX         |                         | rlbk#1                                                                           |                                                                                                                        | postgres
-   10715 | CLEANUP_RLBK_STATE       |                         | rollback id 10025                                                                | set to COMMITTED                                                                                                       | postgres
-   10716 | CLEANUP_RLBK_STATE       |                         | rollback id 10026                                                                | set to COMMITTED                                                                                                       | postgres
-(647 rows)
+   10715 | CREATE_GROUP             | BEGIN                   | myGroup4                                                                         | rollbackable                                                                                                           | postgres
+   10716 | CREATE_GROUP             | END                     | myGroup4                                                                         | 3 tables/sequences processed                                                                                           | postgres
+   10717 | START_GROUP              | BEGIN                   | myGroup4                                                                         | With log reset                                                                                                         | postgres
+   10718 | LOCK_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10719 | LOCK_GROUP               | END                     | myGroup4                                                                         | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+   10720 | SET_MARK_GROUP           | BEGIN                   | myGroup4                                                                         | M1                                                                                                                     | postgres
+   10721 | CLEANUP_RLBK_STATE       |                         | rollback id 10025                                                                | set to COMMITTED                                                                                                       | postgres
+   10722 | CLEANUP_RLBK_STATE       |                         | rollback id 10026                                                                | set to COMMITTED                                                                                                       | postgres
+   10723 | SET_MARK_GROUP           | END                     | myGroup4                                                                         | M1                                                                                                                     | postgres
+   10724 | START_GROUP              | END                     | myGroup4                                                                         | 3 tables/sequences processed                                                                                           | postgres
+   10725 | SET_MARK_GROUP           | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10726 | LOCK_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10727 | LOCK_GROUP               | END                     | myGroup4                                                                         | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+   10728 | SET_MARK_GROUP           | END                     | myGroup4                                                                         | M2                                                                                                                     | postgres
+   10729 | SET_MARK_GROUP           | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10730 | LOCK_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10731 | LOCK_GROUP               | END                     | myGroup4                                                                         | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+   10732 | SET_MARK_GROUP           | END                     | myGroup4                                                                         | M3                                                                                                                     | postgres
+   10733 | ALTER_GROUP              | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10734 | LOCK_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10735 | LOCK_GROUP               | END                     | myGroup4                                                                         | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+   10736 | SET_MARK_GROUP           | BEGIN                   | myGroup4                                                                         | M4                                                                                                                     | postgres
+   10737 | SET_MARK_GROUP           | END                     | myGroup4                                                                         | M4                                                                                                                     | postgres
+   10738 | ALTER_GROUP              | END                     | myGroup4                                                                         | Timestamp Id : 10094                                                                                                   | postgres
+   10739 | ALTER_GROUP              | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10740 | LOCK_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10741 | LOCK_GROUP               | END                     | myGroup4                                                                         | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+   10742 | SET_MARK_GROUP           | BEGIN                   | myGroup4                                                                         | M5                                                                                                                     | postgres
+   10743 | SET_MARK_GROUP           | END                     | myGroup4                                                                         | M5                                                                                                                     | postgres
+   10744 | ALTER_GROUP              | END                     | myGroup4                                                                         | Timestamp Id : 10095                                                                                                   | postgres
+   10745 | STOP_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10746 | LOCK_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10747 | LOCK_GROUP               | END                     | myGroup4                                                                         | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+   10748 | SET_MARK_GROUP           | BEGIN                   | myGroup4                                                                         | M6                                                                                                                     | postgres
+   10749 | SET_MARK_GROUP           | END                     | myGroup4                                                                         | M6                                                                                                                     | postgres
+   10750 | STOP_GROUP               | END                     | myGroup4                                                                         | 3 tables/sequences processed                                                                                           | postgres
+   10751 | START_GROUP              | BEGIN                   | myGroup4                                                                         | Without log reset                                                                                                      | postgres
+   10752 | LOCK_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10753 | LOCK_GROUP               | END                     | myGroup4                                                                         | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+   10754 | SET_MARK_GROUP           | BEGIN                   | myGroup4                                                                         | M7                                                                                                                     | postgres
+   10755 | SET_MARK_GROUP           | END                     | myGroup4                                                                         | M7                                                                                                                     | postgres
+   10756 | START_GROUP              | END                     | myGroup4                                                                         | 3 tables/sequences processed                                                                                           | postgres
+   10757 | STOP_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10758 | LOCK_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10759 | LOCK_GROUP               | END                     | myGroup4                                                                         | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+   10760 | SET_MARK_GROUP           | BEGIN                   | myGroup4                                                                         | M8                                                                                                                     | postgres
+   10761 | SET_MARK_GROUP           | END                     | myGroup4                                                                         | M8                                                                                                                     | postgres
+   10762 | STOP_GROUP               | END                     | myGroup4                                                                         | 3 tables/sequences processed                                                                                           | postgres
+   10763 | DROP_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                                        | postgres
+   10764 | DROP_GROUP               | END                     | myGroup4                                                                         | 3 tables/sequences processed                                                                                           | postgres
+(695 rows)
 
 --
 reset role;

@@ -136,6 +136,18 @@ select "phil's col11", "phil's col12", "phil\s col13",
        emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, emaj_user_port 
   from "emaj #'3"."phil's schema3_phil's tbl1_log";
 
+-- use of % in start mark name
+select emaj.emaj_start_group('myGroup1','Foo%Bar');
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+
+-- multiple emaj_start_group() using the same generated start mark name => fails
+-- this test is commented because the generated error message differs from one run to another
+--begin;
+--  select emaj.emaj_start_group('myGroup4');
+--  select emaj.emaj_stop_group('myGroup4');
+--  select emaj.emaj_start_group('myGroup4',NULL,false);
+--rollback;
+
 SET client_min_messages TO WARNING;
 
 -- impact of started group
@@ -200,9 +212,14 @@ begin transaction;
   select emaj.emaj_stop_group('myGroup2','');
 commit;
 
--- use of % in start mark name
-select emaj.emaj_start_group('myGroup1','Foo%Bar');
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
+-- multiple emaj_stop_group() using the same generated start mark name => fails
+-- this test is commented because the generated error message differs from one run to another
+--begin;
+--  select emaj.emaj_start_group('myGroup4','a_first_start_mark');
+--  select emaj.emaj_stop_group('myGroup4','%');
+--  select emaj.emaj_start_group('myGroup4','another_start_mark',false);
+--  select emaj.emaj_stop_group('myGroup4','%');
+--rollback;
 
 -----------------------------
 -- emaj_start_groups() tests

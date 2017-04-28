@@ -112,6 +112,13 @@ select emaj.emaj_set_mark_group('myGroup1','Foo%Bar');
                    6
 (1 row)
 
+-- multiple emaj_set_mark_group() using the same generated start mark name => fails
+-- this test is commented because the generated error message differs from one run to another
+--begin;
+--  select emaj.emaj_start_group('myGroup4');
+--  select emaj.emaj_set_mark_group('myGroup4');
+--  select emaj.emaj_set_mark_group('myGroup4');
+--rollback;
 -----------------------------
 -- emaj_set_mark_groups() tests
 -----------------------------
@@ -1165,7 +1172,7 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     2139 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
     2140 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
     2141 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
-    2142 | PURGE_HISTORY            |            |                   | 202 emaj_hist rows deleted                      | postgres
+    2142 | PURGE_HISTORY            |            |                   | 192 emaj_hist rows deleted                      | postgres
     2143 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
     2144 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
     2145 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres

@@ -459,6 +459,25 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 select emaj.emaj_rollback_group('myGroup1','Multi-1');
 
 -----------------------------
+-- Step 15 : test transactions with several emaj operations
+-----------------------------
+select emaj.emaj_create_group('myGroup4');
+
+-- several similar operations in a single transaction, using different mark names
+begin;
+  select emaj.emaj_start_group('myGroup4','M1');
+  select emaj.emaj_set_mark_group('myGroup4','M2');
+  select emaj.emaj_set_mark_group('myGroup4','M3');
+  select emaj.emaj_alter_group('myGroup4','M4');
+  select emaj.emaj_alter_group('myGroup4','M5');
+  select emaj.emaj_stop_group('myGroup4','M6');
+  select emaj.emaj_start_group('myGroup4','M7',false);
+  select emaj.emaj_stop_group('myGroup4','M8');
+commit;
+select * from emaj.emaj_mark where mark_group = 'myGroup4' order by mark_id;
+select emaj.emaj_drop_group('myGroup4');
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 -- first set all rollback events state
