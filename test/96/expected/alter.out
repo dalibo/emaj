@@ -1132,18 +1132,18 @@ select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.
 -----------------------------
 -- test end: check and force sequences id
 -----------------------------
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_id > 6000 order by mark_id;
- mark_id | mark_group |   regexp_replace   | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+--------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    6008 | myGroup1   | START_%            |         6048 | f               | f                      |              |                         0 | 
-    6009 | myGroup2   | START_%            |         6049 | f               | f                      |              |                         0 | 
-    6010 | myGroup1   | Priority Changed   |         6050 | f               | f                      |              |                         0 | 
-    6011 | myGroup1   | ALTER_%            |         6051 | f               | f                      |              |                         0 | 
-    6012 | myGroup2   | ALTER_%            |         6051 | f               | f                      |              |                         0 | 
-    6013 | myGroup1   | Attributes_changed |         6052 | f               | f                      |              |                         0 | 
-    6014 | myGroup2   | Attributes_changed |         6052 | f               | f                      |              |                         0 | 
-    6015 | myGroup1   | ALTER_%            |         6053 | f               | f                      |              |                           | 
-    6016 | myGroup2   | ALTER_%            |         6053 | f               | f                      |              |                           | 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_targetable, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_id > 6000 order by mark_id;
+ mark_id | mark_group |   regexp_replace   | mark_time_id | mark_is_targetable | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+--------------------+--------------+--------------------+------------------------+--------------+---------------------------+------------------------------
+    6008 | myGroup1   | START_%            |         6048 | t                  | f                      |              |                         0 | 
+    6009 | myGroup2   | START_%            |         6049 | t                  | f                      |              |                         0 | 
+    6010 | myGroup1   | Priority Changed   |         6050 | t                  | f                      |              |                         0 | 
+    6011 | myGroup1   | ALTER_%            |         6051 | t                  | f                      |              |                         0 | 
+    6012 | myGroup2   | ALTER_%            |         6051 | t                  | f                      |              |                         0 | 
+    6013 | myGroup1   | Attributes_changed |         6052 | t                  | f                      |              |                         0 | 
+    6014 | myGroup2   | Attributes_changed |         6052 | t                  | f                      |              |                         0 | 
+    6015 | myGroup1   | ALTER_%            |         6053 | t                  | f                      |              |                           | 
+    6016 | myGroup2   | ALTER_%            |         6053 | t                  | f                      |              |                           | 
 (9 rows)
 
 select emaj.emaj_force_drop_group('myGroup1');

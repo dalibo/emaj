@@ -445,7 +445,7 @@ select emaj.emaj_start_group('myGroup1','');
 (1 row)
 
 select emaj.emaj_drop_group('myGroup1');
-ERROR:  _drop_group: The group "myGroup1" cannot be deleted because it is in LOGGING state.
+ERROR:  _drop_group: The group "myGroup1" cannot be dropped because it is in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 26 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
