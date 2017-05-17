@@ -6,8 +6,8 @@ E-Maj functions that are available to users are listed in alphabetic order below
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | Functions                                        | Input parameters              | Output data                           |
 +==================================================+===============================+=======================================+
-| :ref:`emaj_alter_group                           | | group TEXT                  | #.tables.and.seq INT                  |
-| <emaj_alter_group>`                              |                               |                                       |
+| :doc:`emaj_alter_group                           | | group TEXT                  | #.tables.and.seq INT                  |
+| <alterGroups>`                                   |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_alter_groups                          | | groups.array TEXT[]         | #.tables.and.seq INT                  |
 | <multiGroupsFunctions>`                          |                               |                                       |
@@ -26,7 +26,7 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | <emaj_consolidate_rollback_group>`               | | end.rollback.mark TEXT      |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_create_group                          | | group TEXT,                 | #.tables.and.seq INT                  |
-| <emaj_create_group>`                             | | [is.rollbackable BOOLEAN]   |                                       |
+| <emaj_create_group>`                             | | [is.rollbackable BOOLEAN],  |                                       |
 |                                                  | | [is.empty BOOLEAN]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_delete_before_mark_group              | | group TEXT,                 | #.deleted.marks INT                   |
@@ -85,11 +85,15 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | <emaj_log_stat_group>` (V)                       | | start.mark TEXT,            |                                       |
 |                                                  | | end.mark TEXT               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_logged_rollback_group                 | | group TEXT,                 | #.proc.tables.and.seq  INT            |
-| <emaj_logged_rollback_group>`                    | | mark TEXT                   |                                       |
+| :ref:`emaj_logged_rollback_group                 | | group TEXT,                 | SETOF (severity TEXT, message TEXT)   |
+| <emaj_logged_rollback_group>`                    | | mark TEXT,                  |                                       |
+|                                                  | | is_alter_group_allowed      |                                       |
+|                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :doc:`emaj_logged_rollback_groups                | | groups.array TEXT[],        | #.proc.tables.and.seq  INT            |
-| <multiGroupsFunctions>`                          | | mark TEXT                   |                                       |
+| :doc:`emaj_logged_rollback_groups                | | groups.array TEXT[],        | SETOF (severity TEXT, message TEXT)   |
+| <multiGroupsFunctions>`                          | | mark TEXT,                  |                                       |
+|                                                  | | is_alter_group_allowed      |                                       |
+|                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_group                         | | group TEXT                  | 0/1 INT                               |
 | <emaj_protect_group>`                            |                               |                                       |
@@ -107,11 +111,15 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |
 | <emaj_rollback_activity>` (V)                    |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_rollback_group                        | | group TEXT,                 | #.proc.tables.and.seq  INT            |
-| <emaj_rollback_group>`                           | | mark TEXT                   |                                       |
+| :ref:`emaj_rollback_group                        | | group TEXT,                 | SETOF (severity TEXT, message TEXT)   |
+| <emaj_rollback_group>`                           | | mark TEXT,                  |                                       |
+|                                                  | | is_alter_group_allowed      |                                       |
+|                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :doc:`emaj_rollback_groups                       | | groups.array TEXT[],        | #.proc.tables.and.seq  INT            |
-| <multiGroupsFunctions>`                          | | mark TEXT                   |                                       |
+| :doc:`emaj_rollback_groups                       | | groups.array TEXT[],        | SETOF (severity TEXT, message TEXT)   |
+| <multiGroupsFunctions>`                          | | mark TEXT,                  |                                       |
+|                                                  | | is_alter_group_allowed      |                                       |
+|                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_set_mark_group                        | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_set_mark_group>`                           | | [mark TEXT]                 |                                       |

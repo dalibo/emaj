@@ -6,8 +6,8 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | Fonctions                                        | Paramètres en entrée          | Données restituées                    |
 +==================================================+===============================+=======================================+
-| :ref:`emaj_alter_group                           | | groupe TEXT                 | nb.tables.et.seq INT                  |
-| <emaj_alter_group>`                              |                               |                                       |
+| :doc:`emaj_alter_group                           | | groupe TEXT                 | nb.tables.et.seq INT                  |
+| <alterGroups>`                                   |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_alter_groups                          | | tableau.groupes TEXT[]      | nb.tables.et.seq INT                  |
 | <multiGroupsFunctions>`                          |                               |                                       |
@@ -85,11 +85,15 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 | <emaj_log_stat_group>` (V)                       | | marque.début TEXT,          |                                       |
 |                                                  | | marque.fin TEXT             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_logged_rollback_group                 | | groupe TEXT,                | nb.proc.tables.et.seq  INT            |
-| <emaj_logged_rollback_group>`                    | | marque TEXT                 |                                       |
+| :ref:`emaj_logged_rollback_group                 | | groupe TEXT,                | SETOF (sévérité TEXT, message TEXT)   |
+| <emaj_logged_rollback_group>`                    | | marque TEXT,                |                                       |
+|                                                  | | est_modif_groupe_autorisé   |                                       |
+|                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :doc:`emaj_logged_rollback_groups                | | tableau.groupes TEXT[],     | nb.proc.tables.et.seq  INT            |
-| <multiGroupsFunctions>`                          | | marque TEXT                 |                                       |
+| :doc:`emaj_logged_rollback_groups                | | tableau.groupes TEXT[],     | SETOF (sévérité TEXT, message TEXT)   |
+| <multiGroupsFunctions>`                          | | marque TEXT,                |                                       |
+|                                                  | | est_modif_groupe_autorisé   |                                       |
+|                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_group                         | | groupe TEXT                 | 0/1 INT                               |
 | <emaj_protect_group>`                            |                               |                                       |
@@ -107,11 +111,15 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 | :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |
 | <emaj_rollback_activity>` (V)                    |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_rollback_group                        | | groupe TEXT,                | nb.proc.tables.et.seq  INT            |
-| <emaj_rollback_group>`                           | | marque TEXT                 |                                       |
+| :ref:`emaj_rollback_group                        | | groupe TEXT,                | SETOF (sévérité TEXT, message TEXT)   |
+| <emaj_rollback_group>`                           | | marque TEXT,                |                                       |
+|                                                  | | est_modif_groupe_autorisé   |                                       |
+|                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :doc:`emaj_rollback_groups                       | | tableau.groupes TEXT[],     | nb.proc.tables.et.seq  INT            |
-| <multiGroupsFunctions>`                          | | marque TEXT                 |                                       |
+| :doc:`emaj_rollback_groups                       | | tableau.groupes TEXT[],     | SETOF (sévérité TEXT, message TEXT)   |
+| <multiGroupsFunctions>`                          | | marque TEXT,                |                                       |
+|                                                  | | est_modif_groupe_autorisé   |                                       |
+|                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_set_mark_group                        | | groupe TEXT,                | nb.tables.et.seq INT                  |
 | <emaj_set_mark_group>`                           | | [marque TEXT]               |                                       |

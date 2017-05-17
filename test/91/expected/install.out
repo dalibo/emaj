@@ -335,24 +335,25 @@ Index "emaj.emaj_relation_pkey"
  rel_tblseq | text | rel_tblseq
 primary key, btree, for table "emaj.emaj_relation"
 
-                                              Table "emaj.emaj_rlbk"
-       Column        |           Type           |                            Modifiers                             
----------------------+--------------------------+------------------------------------------------------------------
- rlbk_id             | integer                  | not null default nextval('emaj.emaj_rlbk_rlbk_id_seq'::regclass)
- rlbk_groups         | text[]                   | not null
- rlbk_mark           | text                     | not null
- rlbk_mark_time_id   | bigint                   | not null
- rlbk_time_id        | bigint                   | 
- rlbk_is_logged      | boolean                  | not null
- rlbk_nb_session     | integer                  | not null
- rlbk_nb_table       | integer                  | 
- rlbk_nb_sequence    | integer                  | 
- rlbk_eff_nb_table   | integer                  | 
- rlbk_status         | emaj._rlbk_status_enum   | 
- rlbk_begin_hist_id  | bigint                   | 
- rlbk_is_dblink_used | boolean                  | 
- rlbk_end_datetime   | timestamp with time zone | 
- rlbk_msg            | text                     | 
+                                                  Table "emaj.emaj_rlbk"
+           Column            |           Type           |                            Modifiers                             
+-----------------------------+--------------------------+------------------------------------------------------------------
+ rlbk_id                     | integer                  | not null default nextval('emaj.emaj_rlbk_rlbk_id_seq'::regclass)
+ rlbk_groups                 | text[]                   | not null
+ rlbk_mark                   | text                     | not null
+ rlbk_mark_time_id           | bigint                   | not null
+ rlbk_time_id                | bigint                   | 
+ rlbk_is_logged              | boolean                  | not null
+ rlbk_is_alter_group_allowed | boolean                  | not null
+ rlbk_nb_session             | integer                  | not null
+ rlbk_nb_table               | integer                  | 
+ rlbk_nb_sequence            | integer                  | 
+ rlbk_eff_nb_table           | integer                  | 
+ rlbk_status                 | emaj._rlbk_status_enum   | 
+ rlbk_begin_hist_id          | bigint                   | 
+ rlbk_is_dblink_used         | boolean                  | 
+ rlbk_end_datetime           | timestamp with time zone | 
+ rlbk_msg                    | text                     | 
 Indexes:
     "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id)
     "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum])
@@ -467,23 +468,24 @@ Foreign-key constraints:
  rlbt_rlbk_id | integer              | rlbt_rlbk_id
 primary key, btree, for table "emaj.emaj_rlbk_stat"
 
-     Composite type "emaj.emaj_rollback_activity_type"
-       Column        |           Type           | Modifiers 
----------------------+--------------------------+-----------
- rlbk_id             | integer                  | 
- rlbk_groups         | text[]                   | 
- rlbk_mark           | text                     | 
- rlbk_mark_datetime  | timestamp with time zone | 
- rlbk_is_logged      | boolean                  | 
- rlbk_nb_session     | integer                  | 
- rlbk_nb_table       | integer                  | 
- rlbk_nb_sequence    | integer                  | 
- rlbk_eff_nb_table   | integer                  | 
- rlbk_status         | emaj._rlbk_status_enum   | 
- rlbk_start_datetime | timestamp with time zone | 
- rlbk_elapse         | interval                 | 
- rlbk_remaining      | interval                 | 
- rlbk_completion_pct | smallint                 | 
+         Composite type "emaj.emaj_rollback_activity_type"
+           Column            |           Type           | Modifiers 
+-----------------------------+--------------------------+-----------
+ rlbk_id                     | integer                  | 
+ rlbk_groups                 | text[]                   | 
+ rlbk_mark                   | text                     | 
+ rlbk_mark_datetime          | timestamp with time zone | 
+ rlbk_is_logged              | boolean                  | 
+ rlbk_is_alter_group_allowed | boolean                  | 
+ rlbk_nb_session             | integer                  | 
+ rlbk_nb_table               | integer                  | 
+ rlbk_nb_sequence            | integer                  | 
+ rlbk_eff_nb_table           | integer                  | 
+ rlbk_status                 | emaj._rlbk_status_enum   | 
+ rlbk_start_datetime         | timestamp with time zone | 
+ rlbk_elapse                 | interval                 | 
+ rlbk_remaining              | interval                 | 
+ rlbk_completion_pct         | smallint                 | 
 
        Table "emaj.emaj_seq_hole"
        Column       |  Type  | Modifiers 

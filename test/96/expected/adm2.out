@@ -29,30 +29,30 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
 (1 row)
 
 -- logged rollback to Multi-1
-select emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1');
+select * from emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
- emaj_logged_rollback_groups 
------------------------------
-                           3
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 0 tables and 3 sequences effectively processed.
 (1 row)
 
 -- rollback to Multi-2
-select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2');
+select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
- emaj_rollback_groups 
-----------------------
-                    3
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 0 tables and 3 sequences effectively processed.
 (1 row)
 
 -- rollback and stop to Multi-1
-select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1');
+select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
- emaj_rollback_groups 
-----------------------
-                    3
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 0 tables and 3 sequences effectively processed.
 (1 row)
 
 select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback');
@@ -100,12 +100,12 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
 ------------+-------------+------------+-----------+-----------+-----------
 (0 rows)
 
-select emaj.emaj_rollback_group('myGroup2','Multi-2');
+select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
- emaj_rollback_group 
----------------------
-                   2
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 0 tables and 2 sequences effectively processed.
 (1 row)
 
 select emaj.emaj_delete_mark_group('myGroup2','Multi-2');
@@ -181,19 +181,19 @@ select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is deleted');
 -- try to get a rollback duration estimate on a deleted mark
 select emaj.emaj_estimate_rollback_group('myGroup2','M3',TRUE);
 ERROR:  _rlbk_check: mark "M3" for group "myGroup2" is not usable for rollback.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 45 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 46 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 -- try to rollback on a deleted mark
-select emaj.emaj_rollback_group('myGroup2','M3');
+select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 ERROR:  _rlbk_check: mark "M3" for group "myGroup2" is not usable for rollback.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 45 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean) line 20 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 46 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
 -----------------------------
 -- Checking step 8
 -----------------------------
@@ -632,20 +632,20 @@ select * from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mar
 (0 rows)
 
 --
-select emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3');
+select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
 WARNING:  _check_fk_groups: table "phil's schema3.phil's tbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
- emaj_logged_rollback_group 
-----------------------------
-                          2
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 0 tables and 2 sequences effectively processed.
 (1 row)
 
-select emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3');
+select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
 WARNING:  _check_fk_groups: table "phil's schema3.phil's tbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
- emaj_rollback_group 
----------------------
-                   2
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 0 tables and 2 sequences effectively processed.
 (1 row)
 
 -----------------------------
@@ -964,10 +964,10 @@ begin transaction;
   delete from mytbl1;
 rollback;
 --
-select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
- emaj_rollback_group 
----------------------
-                   2
+select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 1 tables and 1 sequences effectively processed.
 (1 row)
 
 -----------------------------
@@ -1187,26 +1187,26 @@ myGroup2.sql_s
 --   rollback groups, replay updates with generated scripts, snap groups again and cancel the transaction
 reset role;
 begin;
-  select emaj.emaj_rollback_group('myGroup1','Multi-1');
- emaj_rollback_group 
----------------------
-                   1
+  select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 0 tables and 1 sequences effectively processed.
 (1 row)
 
-  select emaj.emaj_rollback_group('myGroup2','Multi-1');
+  select * from emaj.emaj_rollback_group('myGroup2','Multi-1',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
- emaj_rollback_group 
----------------------
-                   4
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 2 tables and 2 sequences effectively processed.
 (1 row)
 
-  select emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable');
+  select * from emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
 WARNING:  _check_fk_groups: table "phil's schema3.phil's tbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
- emaj_rollback_group 
----------------------
-                   4
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 2 tables and 2 sequences effectively processed.
 (1 row)
 
 \i /tmp/emaj_test/sql_scripts/myGroup1.sql
@@ -1398,12 +1398,12 @@ select emaj.emaj_set_mark_group('phil''s group#3",','M2');
 (1 row)
 
 delete from "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
-select emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group');
+select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
 WARNING:  _check_fk_groups: table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
- emaj_rollback_group 
----------------------
-                   3
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 1 tables and 2 sequences effectively processed.
 (1 row)
 
 select emaj.emaj_stop_group('phil''s group#3",');
@@ -1428,14 +1428,14 @@ select emaj.emaj_protect_group('myGroup2');
                   1
 (1 row)
 
-select emaj.emaj_rollback_group('myGroup2','M3');
+select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 ERROR:  _rlbk_check: Group "myGroup2" is currently protected against rollback.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 34 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean) line 20 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 35 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
 select emaj.emaj_unprotect_group('myGroup2');
  emaj_unprotect_group 
 ----------------------
@@ -1455,14 +1455,14 @@ select emaj.emaj_protect_mark_group('myGroup1','Mark_to_protect');
                        1
 (1 row)
 
-select emaj.emaj_rollback_group('myGroup1','Multi-1');
+select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
 ERROR:  _rlbk_check: protected marks (Mark_to_protect) for group "myGroup1" block the rollback to mark "Multi-1".
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 54 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean) line 20 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 55 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
 select emaj.emaj_unprotect_mark_group('myGroup1','Mark_to_protect');
  emaj_unprotect_mark_group 
 ---------------------------
@@ -1500,10 +1500,10 @@ select emaj.emaj_set_mark_group('myGroup1','MC2');
 (1 row)
 
 update myTbl2 set col22 = 'TC2' WHERE col22 ='TC1';
-select emaj.emaj_logged_rollback_group('myGroup1','MC1');
- emaj_logged_rollback_group 
-----------------------------
-                          3
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC1',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 2 tables and 1 sequences effectively processed.
 (1 row)
 
 insert into myTbl2 values (2000,'TC3',NULL);
@@ -1534,10 +1534,10 @@ select emaj.emaj_set_mark_group('myGroup1','MC5');
                    6
 (1 row)
 
-select emaj.emaj_logged_rollback_group('myGroup1','MC3');
- emaj_logged_rollback_group 
-----------------------------
-                          3
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC3',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 2 tables and 1 sequences effectively processed.
 (1 row)
 
 select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
@@ -1603,10 +1603,10 @@ select emaj.emaj_set_mark_group('myGroup1','MC8');
 (1 row)
 
 insert into myTbl2 values (3001,'TC8',NULL);
-select emaj.emaj_logged_rollback_group('myGroup1','MC8');
- emaj_logged_rollback_group 
-----------------------------
-                          2
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC8',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 1 tables and 1 sequences effectively processed.
 (1 row)
 
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
@@ -1624,10 +1624,10 @@ select emaj.emaj_set_mark_group('myGroup1','MC9');
 insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
 update myTbl4 set col43 = NULL where col41 = 2000;
-select emaj.emaj_logged_rollback_group('myGroup1','MC6');
- emaj_logged_rollback_group 
-----------------------------
-                          5
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 4 tables and 1 sequences effectively processed.
 (1 row)
 
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
@@ -1655,10 +1655,10 @@ select emaj.emaj_set_mark_group('myGroup1','MC10');
 
 insert into myTbl1 select i, 'Test', 'Conso' from generate_series (3000,3010) as i;
 delete from myTbl1 where col11 > 3005;
-select emaj.emaj_logged_rollback_group('myGroup1','MC10');
- emaj_logged_rollback_group 
-----------------------------
-                          2
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 1 tables and 1 sequences effectively processed.
 (1 row)
 
 update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
@@ -1670,10 +1670,10 @@ select emaj.emaj_set_mark_group('myGroup1','MC11');
 
 insert into myTbl4 values (3000,'FK...',1,10,'ABC');
 update myTbl4 set col43 = NULL where col41 = 3000;
-select emaj.emaj_logged_rollback_group('myGroup1','MC10');
- emaj_logged_rollback_group 
-----------------------------
-                          3
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 2 tables and 1 sequences effectively processed.
 (1 row)
 
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
@@ -1709,10 +1709,10 @@ select emaj.emaj_set_mark_group('myGroup1','MC16');
 (1 row)
 
 update myTbl2 set col22 = 'TC16' WHERE col22 ='TC15';
-select emaj.emaj_logged_rollback_group('myGroup1','MC15');
- emaj_logged_rollback_group 
-----------------------------
-                          3
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC15',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 2 tables and 1 sequences effectively processed.
 (1 row)
 
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC15_DONE');
@@ -1728,10 +1728,10 @@ select emaj.emaj_set_mark_group('myGroup1','MC17');
 (1 row)
 
 insert into myTbl2 values (4001,'TC15',NULL);
-select emaj.emaj_logged_rollback_group('myGroup1','MC16');
- emaj_logged_rollback_group 
-----------------------------
-                          3
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC16',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 2 tables and 1 sequences effectively processed.
 (1 row)
 
 select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC15_DONE');
@@ -1938,10 +1938,10 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
  myschema1   | mytbl4     |              10076 |            10081 |              3
 (15 rows)
 
-select emaj.emaj_rollback_group('myGroup1','Multi-1');
- emaj_rollback_group 
----------------------
-                   3
+select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 2 tables and 1 sequences effectively processed.
 (1 row)
 
 -----------------------------
@@ -2044,61 +2044,62 @@ select emaj.emaj_cleanup_rollback_state();
 (1 row)
 
 -- check rollback related tables
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_msg
   from emaj.emaj_rlbk order by rlbk_id;
- rlbk_id |      rlbk_groups      |      rlbk_mark       | rlbk_time_id | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_is_dblink_used | end_datetime |                         rlbk_msg                          
----------+-----------------------+----------------------+--------------+----------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+---------------------+--------------+-----------------------------------------------------------
-       1 | {myGroup1}            | Different_Mark       |         3006 | f              |               1 |             5 |                1 |                 0 | COMMITTED   |               3036 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-       4 | {myGroup1}            | Different_Mark       |         3015 | f              |               1 |             5 |                1 |                 0 | COMMITTED   |               3088 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-       5 | {myGroup2}            | Mark21               |         3016 | f              |               1 |             6 |                2 |                 0 | COMMITTED   |               3094 | f                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
-       6 | {myGroup1}            | Different_Mark       |         3017 | t              |               1 |             5 |                1 |                 0 | COMMITTED   |               3102 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-       7 | {myGroup2}            | Mark21               |         3019 | t              |               1 |             6 |                2 |                 0 | COMMITTED   |               3112 | f                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
-       8 | {myGroup1,myGroup2}   | Mark1B               |         3022 | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               3127 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-       9 | {myGroup1,myGroup2}   | Mark1B               |         3023 | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               3135 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-      10 | {myGroup1,myGroup2}   | Mark1B               |         3024 | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               3143 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-      11 | {myGroup1,myGroup2}   | Mark1B               |         3026 | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               3155 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-      12 | {myGroup1}            | Mark12               |         3033 | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               3195 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-      13 | {myGroup1}            | Mark11               |         3034 | f              |               1 |             5 |                1 |                 3 | COMMITTED   |               3207 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
-      14 | {myGroup1}            | Mark12               |         3039 | t              |               1 |             5 |                1 |                 2 | COMMITTED   |               3243 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-      15 | {myGroup1}            | Mark11               |         3041 | t              |               1 |             5 |                1 |                 5 | COMMITTED   |               3258 | t                   | [ts]         | Completed: 5 tables and 1 sequences effectively processed
-      16 | {myGroup1}            | Mark13               |         3043 | f              |               1 |             5 |                1 |                 5 | COMMITTED   |               3280 | t                   | [ts]         | Completed: 5 tables and 1 sequences effectively processed
-      17 | {emptyGroup}          | MarkInit             |         3044 | f              |               1 |             0 |                0 |                 0 | COMMITTED   |               3301 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
-      18 | {myGroup4}            | mark1                |         3047 | t              |               1 |             3 |                0 |                 3 | COMMITTED   |               3320 | t                   | [ts]         | Completed: 3 tables and 0 sequences effectively processed
-      19 | {myGroup4}            | myGroup4_start       |         3049 | f              |               1 |             3 |                0 |                 3 | COMMITTED   |               3336 | t                   | [ts]         | Completed: 3 tables and 0 sequences effectively processed
-      20 | {myGroup1}            | Conso_M1             |         3051 | t              |               1 |             5 |                1 |                 0 | COMMITTED   |               3358 | t                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-      21 | {myGroup1}            | Conso_M2             |         3055 | t              |               1 |             5 |                1 |                 3 | COMMITTED   |               3380 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
-      22 | {myGroup1}            | Conso_M1             |         3057 | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               3405 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-      23 | {myGroup4}            | myGroup4_start       |         3058 | f              |               1 |             3 |                0 |                 0 | ABORTED     |               3419 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
-   10000 | {myGroup2}            | M2                   |        10009 | t              |               1 |             6 |                2 |                 3 | COMMITTED   |              10057 | f                   | [ts]         | Completed: 3 tables and 2 sequences effectively processed
-   10001 | {myGroup2}            | M3                   |        10011 | t              |               1 |             6 |                2 |                 3 | COMMITTED   |              10074 | f                   | [ts]         | Completed: 3 tables and 2 sequences effectively processed
-   10002 | {myGroup1}            | M2                   |        10013 | f              |               1 |             5 |                1 |                 2 | COMMITTED   |              10091 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-   10003 | {myGroup2}            | M2                   |        10017 | t              |               1 |             6 |                2 |                 3 | COMMITTED   |              10116 | t                   | [ts]         | Completed: 3 tables and 2 sequences effectively processed
-   10004 | {myGroup2}            | M3                   |        10019 | f              |               1 |             6 |                2 |                 3 | COMMITTED   |              10134 | t                   | [ts]         | Completed: 3 tables and 2 sequences effectively processed
-   10005 | {myGroup1}            | M5                   |        10020 | f              |               1 |             5 |                1 |                 2 | COMMITTED   |              10154 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-   10006 | {myGroup1}            | M4                   |        10021 | t              |               1 |             5 |                1 |                 3 | COMMITTED   |              10166 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
-   10007 | {myGroup1,myGroup2}   | Multi-1              |        10026 | t              |               1 |            11 |                3 |                 0 | COMMITTED   |              10214 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-   10008 | {myGroup1,myGroup2}   | Multi-2              |        10028 | f              |               1 |            11 |                3 |                 0 | COMMITTED   |              10227 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-   10009 | {myGroup1,myGroup2}   | Multi-1              |        10029 | f              |               1 |            11 |                3 |                 0 | COMMITTED   |              10240 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-   10010 | {myGroup2}            | Multi-2              |        10033 | f              |               1 |             6 |                2 |                 0 | COMMITTED   |              10273 | t                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
-   10011 | {"phil's group#3\","} | phil's mark #3       |        10045 | t              |               1 |             2 |                2 |                 0 | COMMITTED   |              10355 | t                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
-   10012 | {"phil's group#3\","} | phil's mark #3       |        10047 | f              |               1 |             2 |                2 |                 0 | COMMITTED   |              10367 | t                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
-   10013 | {myGroup1}            | Multi-1              |        10048 | f              |               1 |             5 |                1 |                 1 | COMMITTED   |              10377 | t                   | [ts]         | Completed: 1 tables and 1 sequences effectively processed
-   10014 | {myGroup1}            | Multi-1              |        10049 | f              |               1 |             5 |                1 |                 0 | ABORTED     |              10398 | t                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-   10015 | {myGroup2}            | Multi-1              |        10050 | f              |               1 |             6 |                2 |                 2 | ABORTED     |              10405 | t                   | [ts]         | Completed: 2 tables and 2 sequences effectively processed
-   10016 | {"phil's group#3\","} | M1_rollbackable      |        10051 | f              |               1 |             2 |                2 |                 2 | ABORTED     |              10417 | t                   | [ts]         | Completed: 2 tables and 2 sequences effectively processed
-   10017 | {"phil's group#3\","} | M1_after_alter_group |        10056 | f              |               1 |             2 |                2 |                 1 | COMMITTED   |              10461 | t                   | [ts]         | Completed: 1 tables and 2 sequences effectively processed
-   10018 | {myGroup1}            | MC1                  |        10061 | t              |               1 |             5 |                1 |                 2 | COMMITTED   |              10500 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-   10019 | {myGroup1}            | MC3                  |        10066 | t              |               1 |             5 |                1 |                 2 | COMMITTED   |              10530 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-   10020 | {myGroup1}            | MC8                  |        10071 | t              |               1 |             5 |                1 |                 1 | COMMITTED   |              10562 | t                   | [ts]         | Completed: 1 tables and 1 sequences effectively processed
-   10021 | {myGroup1}            | MC6                  |        10074 | t              |               1 |             5 |                1 |                 4 | COMMITTED   |              10582 | t                   | [ts]         | Completed: 4 tables and 1 sequences effectively processed
-   10022 | {myGroup1}            | MC10                 |        10077 | t              |               1 |             5 |                1 |                 1 | COMMITTED   |              10608 | t                   | [ts]         | Completed: 1 tables and 1 sequences effectively processed
-   10023 | {myGroup1}            | MC10                 |        10080 | t              |               1 |             5 |                1 |                 2 | COMMITTED   |              10626 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-   10024 | {myGroup1}            | MC15                 |        10084 | t              |               1 |             5 |                1 |                 2 | COMMITTED   |              10652 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-   10025 | {myGroup1}            | MC16                 |        10087 | t              |               1 |             5 |                1 |                 2 | COMMITTED   |              10674 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-   10026 | {myGroup1}            | Multi-1              |        10089 | f              |               1 |             5 |                1 |                 2 | COMMITTED   |              10691 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-(48 rows)
+ rlbk_id |      rlbk_groups      |      rlbk_mark       | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_is_dblink_used | end_datetime |                         rlbk_msg                          
+---------+-----------------------+----------------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+---------------------+--------------+-----------------------------------------------------------
+       1 | {myGroup1}            | Different_Mark       |         3006 | f              | f                           |               1 |             5 |                1 |                 0 | COMMITTED   |               3036 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+       4 | {myGroup1}            | Different_Mark       |         3015 | f              | f                           |               1 |             5 |                1 |                 0 | COMMITTED   |               3088 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+       5 | {myGroup2}            | Mark21               |         3016 | f              | f                           |               1 |             6 |                2 |                 0 | COMMITTED   |               3094 | f                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+       6 | {myGroup1}            | Different_Mark       |         3017 | t              | f                           |               1 |             5 |                1 |                 0 | COMMITTED   |               3102 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+       7 | {myGroup2}            | Mark21               |         3019 | t              | f                           |               1 |             6 |                2 |                 0 | COMMITTED   |               3112 | f                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+       8 | {myGroup1,myGroup2}   | Mark1B               |         3022 | f              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |               3127 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+       9 | {myGroup1,myGroup2}   | Mark1B               |         3023 | f              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |               3135 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+      10 | {myGroup1,myGroup2}   | Mark1B               |         3024 | t              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |               3143 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+      11 | {myGroup1,myGroup2}   | Mark1B               |         3026 | t              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |               3155 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+      12 | {myGroup1}            | Mark12               |         3033 | f              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |               3195 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      13 | {myGroup1}            | Mark11               |         3034 | f              | f                           |               1 |             5 |                1 |                 3 | COMMITTED   |               3207 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
+      14 | {myGroup1}            | Mark12               |         3039 | t              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |               3243 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      15 | {myGroup1}            | Mark11               |         3041 | t              | f                           |               1 |             5 |                1 |                 5 | COMMITTED   |               3258 | t                   | [ts]         | Completed: 5 tables and 1 sequences effectively processed
+      16 | {myGroup1}            | Mark13               |         3043 | f              | f                           |               1 |             5 |                1 |                 5 | COMMITTED   |               3280 | t                   | [ts]         | Completed: 5 tables and 1 sequences effectively processed
+      17 | {emptyGroup}          | MarkInit             |         3044 | f              | f                           |               1 |             0 |                0 |                 0 | COMMITTED   |               3301 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
+      18 | {myGroup4}            | mark1                |         3047 | t              | f                           |               1 |             3 |                0 |                 3 | COMMITTED   |               3320 | t                   | [ts]         | Completed: 3 tables and 0 sequences effectively processed
+      19 | {myGroup4}            | myGroup4_start       |         3049 | f              | t                           |               1 |             3 |                0 |                 3 | COMMITTED   |               3336 | t                   | [ts]         | Completed: 3 tables and 0 sequences effectively processed
+      20 | {myGroup1}            | Conso_M1             |         3051 | t              | f                           |               1 |             5 |                1 |                 0 | COMMITTED   |               3358 | t                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+      21 | {myGroup1}            | Conso_M2             |         3055 | t              | f                           |               1 |             5 |                1 |                 3 | COMMITTED   |               3380 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
+      22 | {myGroup1}            | Conso_M1             |         3057 | f              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |               3405 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      23 | {myGroup4}            | myGroup4_start       |         3058 | f              | f                           |               1 |             3 |                0 |                 0 | ABORTED     |               3419 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
+    6000 | {myGroup1,myGroup2}   | Init                 |         6053 | f              | t                           |               1 |            11 |                3 |                 0 | ABORTED     |               6232 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+   10000 | {myGroup2}            | M2                   |        10009 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10057 | f                   | [ts]         | Completed: 3 tables and 2 sequences effectively processed
+   10001 | {myGroup2}            | M3                   |        10011 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10074 | f                   | [ts]         | Completed: 3 tables and 2 sequences effectively processed
+   10002 | {myGroup1}            | M2                   |        10013 | f              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |              10091 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+   10003 | {myGroup2}            | M2                   |        10017 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10116 | t                   | [ts]         | Completed: 3 tables and 2 sequences effectively processed
+   10004 | {myGroup2}            | M3                   |        10019 | f              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10134 | t                   | [ts]         | Completed: 3 tables and 2 sequences effectively processed
+   10005 | {myGroup1}            | M5                   |        10020 | f              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |              10154 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+   10006 | {myGroup1}            | M4                   |        10021 | t              | t                           |               1 |             5 |                1 |                 3 | COMMITTED   |              10166 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
+   10007 | {myGroup1,myGroup2}   | Multi-1              |        10026 | t              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |              10214 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+   10008 | {myGroup1,myGroup2}   | Multi-2              |        10028 | f              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |              10227 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+   10009 | {myGroup1,myGroup2}   | Multi-1              |        10029 | f              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |              10240 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+   10010 | {myGroup2}            | Multi-2              |        10033 | f              | f                           |               1 |             6 |                2 |                 0 | COMMITTED   |              10273 | t                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+   10011 | {"phil's group#3\","} | phil's mark #3       |        10045 | t              | f                           |               1 |             2 |                2 |                 0 | COMMITTED   |              10355 | t                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+   10012 | {"phil's group#3\","} | phil's mark #3       |        10047 | f              | f                           |               1 |             2 |                2 |                 0 | COMMITTED   |              10367 | t                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+   10013 | {myGroup1}            | Multi-1              |        10048 | f              | f                           |               1 |             5 |                1 |                 1 | COMMITTED   |              10377 | t                   | [ts]         | Completed: 1 tables and 1 sequences effectively processed
+   10014 | {myGroup1}            | Multi-1              |        10049 | f              | f                           |               1 |             5 |                1 |                 0 | ABORTED     |              10398 | t                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+   10015 | {myGroup2}            | Multi-1              |        10050 | f              | f                           |               1 |             6 |                2 |                 2 | ABORTED     |              10405 | t                   | [ts]         | Completed: 2 tables and 2 sequences effectively processed
+   10016 | {"phil's group#3\","} | M1_rollbackable      |        10051 | f              | f                           |               1 |             2 |                2 |                 2 | ABORTED     |              10417 | t                   | [ts]         | Completed: 2 tables and 2 sequences effectively processed
+   10017 | {"phil's group#3\","} | M1_after_alter_group |        10056 | f              | f                           |               1 |             2 |                2 |                 1 | COMMITTED   |              10461 | t                   | [ts]         | Completed: 1 tables and 2 sequences effectively processed
+   10018 | {myGroup1}            | MC1                  |        10061 | t              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |              10500 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+   10019 | {myGroup1}            | MC3                  |        10066 | t              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |              10530 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+   10020 | {myGroup1}            | MC8                  |        10071 | t              | f                           |               1 |             5 |                1 |                 1 | COMMITTED   |              10562 | t                   | [ts]         | Completed: 1 tables and 1 sequences effectively processed
+   10021 | {myGroup1}            | MC6                  |        10074 | t              | f                           |               1 |             5 |                1 |                 4 | COMMITTED   |              10582 | t                   | [ts]         | Completed: 4 tables and 1 sequences effectively processed
+   10022 | {myGroup1}            | MC10                 |        10077 | t              | f                           |               1 |             5 |                1 |                 1 | COMMITTED   |              10608 | t                   | [ts]         | Completed: 1 tables and 1 sequences effectively processed
+   10023 | {myGroup1}            | MC10                 |        10080 | t              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |              10626 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+   10024 | {myGroup1}            | MC15                 |        10084 | t              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |              10652 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+   10025 | {myGroup1}            | MC16                 |        10087 | t              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |              10674 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+   10026 | {myGroup1}            | Multi-1              |        10089 | f              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |              10691 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+(49 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
        case when rlbs_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
@@ -2619,7 +2620,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
  hist_id |      hist_function       |       hist_event        |                                   hist_object                                    |                                                     regexp_replace                                                     | hist_user 
 ---------+--------------------------+-------------------------+----------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------+-----------
    10027 | START_GROUP              | BEGIN                   | myGroup1                                                                         | With log reset                                                                                                         | postgres
-   10028 | PURGE_HISTORY            |                         |                                                                                  | 27 emaj_hist rows deleted ; 41 alter groups events deleted ; 21 rollback events deleted                                | postgres
+   10028 | PURGE_HISTORY            |                         |                                                                                  | 27 emaj_hist rows deleted ; 41 alter groups events deleted ; 22 rollback events deleted                                | postgres
    10029 | LOCK_GROUP               | BEGIN                   | myGroup1                                                                         |                                                                                                                        | postgres
    10030 | LOCK_GROUP               | END                     | myGroup1                                                                         | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
    10031 | SET_MARK_GROUP           | BEGIN                   | myGroup1                                                                         | M1                                                                                                                     | postgres

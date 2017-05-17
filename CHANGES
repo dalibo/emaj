@@ -9,6 +9,10 @@ Enhancements:
     whose groups are in LOGGING state.
   - Add a new emaj_alter_groups() function that can alter several groups at 
     once.
+  - Create a new set of rollback functions having an additional boolean 
+    parameter that grants rollback operations to target a mark set before 
+    alter group operations. These functions return a set of records 
+    representing the execution report of the function.
   - It is now possible to create and manage empty tables groups. That may be 
     useful when moving tables or sequences from one group to another.
   - The tspemaj tablespace has no specific processing anymore. If it exists, 

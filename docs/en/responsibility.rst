@@ -9,7 +9,7 @@ Defining the content of tables group is essential to guarantee the database inte
 Appropriate call of main functions
 ----------------------------------
 
-The :ref:`emaj_start_group() <emaj_start_group>`, :ref:`emaj_set_mark_group() <emaj_set_mark_group>`, :ref:`emaj_rollback_group() <emaj_rollback_group>` and :ref:`emaj_logged_rollback_group() <emaj_logged_rollback_group>` functions (and their related multi-groups functions) set explicit locks on tables of the group to be sure that no transactions updating these tables are running at the same time. But it is the user's responsibility to execute these operations “at the right time”, i.e. at moments that really correspond to stable point in the life of these tables.
+The :ref:`emaj_start_group() <emaj_start_group>`, :ref:`emaj_stop_group() <emaj_stop_group>`, :ref:`emaj_set_mark_group() <emaj_set_mark_group>`, :ref:`emaj_rollback_group() <emaj_rollback_group>` and :ref:`emaj_logged_rollback_group() <emaj_logged_rollback_group>` functions (and their related multi-groups functions) set explicit locks on tables of the group to be sure that no transactions updating these tables are running at the same time. But it is the user's responsibility to execute these operations “at the right time”, i.e. at moments that really correspond to a stable point in the life of these tables. He must also take care of warning messages that may be reported by E-Maj rollback functions.
 
 .. _application_triggers:
 

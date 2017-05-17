@@ -455,33 +455,33 @@ rollback;
 -- group is unknown in emaj_group_def
 select emaj.emaj_estimate_rollback_group(NULL,NULL,FALSE);
 ERROR:  _rlbk_check: group "<NULL>" has not been created.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 22 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_group('unknownGroup',NULL,TRUE);
 ERROR:  _rlbk_check: group "unknownGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 22 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups('{"myGroup2","unknownGroup"}',NULL,TRUE);
 ERROR:  _rlbk_check: No mark "<NULL>" exists for group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 39 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 40 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 8 at RETURN
 -- invalid marks
 select emaj.emaj_estimate_rollback_group('myGroup2','dummyMark',TRUE);
 ERROR:  _rlbk_check: No mark "dummyMark" exists for group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 39 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 40 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups(array['myGroup1','myGroup2'],'Mark21',TRUE);
 ERROR:  _rlbk_check: Mark "Mark21" does not represent the same point in time for all groups.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 62 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 63 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 8 at RETURN
 -- group not in logging state
@@ -494,8 +494,8 @@ begin;
 
   select emaj.emaj_estimate_rollback_group('myGroup1','Mark11',FALSE);
 ERROR:  _rlbk_check: Group "myGroup1" is not in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 26 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 27 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 rollback;
@@ -1475,9 +1475,10 @@ PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 27 at PERFORM
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 141 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 26 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
   rollback to savepoint sp1;
 -- but it is possible to stop, drop and recreate the group

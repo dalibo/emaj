@@ -29,23 +29,43 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
-CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean) line 50 at RAISE in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 135
+CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 50 at RAISE in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 140
 Call of _rlbk_init() function failed 
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
--- unlogged rollback for 2 groups
+-- unlogged rollback for 2 groups in strict mode, after having performed an alter group operation
+update emaj.emaj_group_def set grpdef_priority = 1 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+select emaj.emaj_alter_group('myGroup1');
+ emaj_alter_group 
+------------------
+                6
+(1 row)
+
 \! ../../php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
+PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previously exectuted alter group operations. You can remove this protection by using a less strict setting for this function.
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 69 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 140
+Call of _rlbk_init() function failed 
+-- unlogged rollback for 2 groups in unstrict mode
+\! ../../php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+ E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
+-----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
-==> Logged rollback completed (9 tables and 3 sequences effectively processed).
+==> Logged rollback completed.
+    Notice: 9 tables and 3 sequences effectively processed.
+    Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 
 -- logged rollback for a single group and a single session
-\! ../../php/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1
+\! ../../php/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
-==> Rollback completed (3 tables and 1 sequences effectively processed).
+==> Rollback completed.
+    Notice: 3 tables and 1 sequences effectively processed.
+    Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 
 --------------------------------------------
 -- Prepare data for emajRollbackMonitor.php
@@ -53,9 +73,9 @@ insert into emaj.emaj_param (param_key, param_value_text)
 -- 1st rollback, in EXECUTING state
 insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-1, now()-'110.1 seconds'::interval);
 insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) values (-2, '2000-01-01 01:00:00');
-insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
+insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
            rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
-  values (20101,array['group20101'],'mark20101',-2,-1,true,1,
+  values (20101,array['group20101'],'mark20101',-2,-1,true,false,1,
            5,4,3,'EXECUTING');
 insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
@@ -72,9 +92,9 @@ update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '65 seconds'::inter
   where rlbp_rlbk_id = 20101 and rlbp_table = 't2';
 -- 2nd rollback, in LOCKING state with RLBK_TABLE steps
 insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-3, now()-'2 minutes'::interval);
-insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
+insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
            rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
-  values (20102,array['group20102'],'mark20102',-2,-3,true,1,
+  values (20102,array['group20102'],'mark20102',-2,-3,true,false,1,
            5,4,3,'LOCKING');
 insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
@@ -86,9 +106,9 @@ insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_tabl
          (20102, 'RLBK_TABLE','schema','t3','','0:00:20'::interval,null,null);
 -- 3rd rollback, in PLANNING state
 insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-4, now()-'1 minute'::interval);
-insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
+insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
            rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
-  values (20103,array['group20103'],'mark20103',-2,-4,true,1,
+  values (20103,array['group20103'],'mark20103',-2,-4,true,false,1,
            5,4,3,'PLANNING');
 --------------------------------------------
 -- call emajRollbackMonitor.php using an emaj_viewer role
@@ -98,44 +118,44 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 ---------------------------------------------------------------
 [current date and time]
 ** rollback 20000 started at [rollback start time] for groups {myGroup1,myGroup2}
-   status: COMMITTED ; ended at [rollback end time] 
+   status: COMMITTED ; ended at [rollback end time]
    rollback to mark: Multi-1 set at [mark time]
-   3 session(s) to process 9 table(s) and 3 sequence(s) 
+   3 session(s) to process 9 table(s) and 3 sequence(s)
 ** rollback 20001 started at [rollback start time] for groups {myGroup1}
-   status: COMMITTED ; ended at [rollback end time] 
+   status: COMMITTED ; ended at [rollback end time]
    rollback to mark: Multi-1 set at [mark time]
-   1 session(s) to process 3 table(s) and 1 sequence(s) 
+   1 session(s) to process 3 table(s) and 1 sequence(s)
 -> rollback 20101 started at [rollback start time] for groups {group20101}
-   status: EXECUTING ; completion 85 % ; @ 20 secs remaining
+   status: EXECUTING ; completion 85 %; @ 20 secs remaining
    rollback to mark: mark20101 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s) 
+   1 session(s) to process 3 table(s) and 4 sequence(s)
 -> rollback 20102 started at [rollback start time] for groups {group20102}
-   status: LOCKING ; completion 0 % ; @ 22 mins 20 secs remaining
+   status: LOCKING ; completion 0 %; @ 22 mins 20 secs remaining
    rollback to mark: mark20102 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s) 
+   1 session(s) to process 3 table(s) and 4 sequence(s)
 -> rollback 20103 started at [rollback start time] for groups {group20103}
-   status: PLANNING ; completion 0 % 
+   status: PLANNING ; completion 0 %
    rollback to mark: mark20103 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s) 
+   1 session(s) to process 3 table(s) and 4 sequence(s)
 [current date and time]
 ** rollback 20000 started at [rollback start time] for groups {myGroup1,myGroup2}
-   status: COMMITTED ; ended at [rollback end time] 
+   status: COMMITTED ; ended at [rollback end time]
    rollback to mark: Multi-1 set at [mark time]
-   3 session(s) to process 9 table(s) and 3 sequence(s) 
+   3 session(s) to process 9 table(s) and 3 sequence(s)
 ** rollback 20001 started at [rollback start time] for groups {myGroup1}
-   status: COMMITTED ; ended at [rollback end time] 
+   status: COMMITTED ; ended at [rollback end time]
    rollback to mark: Multi-1 set at [mark time]
-   1 session(s) to process 3 table(s) and 1 sequence(s) 
+   1 session(s) to process 3 table(s) and 1 sequence(s)
 -> rollback 20101 started at [rollback start time] for groups {group20101}
-   status: EXECUTING ; completion 85 % ; @ 20 secs remaining
+   status: EXECUTING ; completion 85 %; @ 20 secs remaining
    rollback to mark: mark20101 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s) 
+   1 session(s) to process 3 table(s) and 4 sequence(s)
 -> rollback 20102 started at [rollback start time] for groups {group20102}
-   status: LOCKING ; completion 0 % ; @ 22 mins 20 secs remaining
+   status: LOCKING ; completion 0 %; @ 22 mins 20 secs remaining
    rollback to mark: mark20102 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s) 
+   1 session(s) to process 3 table(s) and 4 sequence(s)
 -> rollback 20103 started at [rollback start time] for groups {group20103}
-   status: PLANNING ; completion 0 % 
+   status: PLANNING ; completion 0 %
    rollback to mark: mark20103 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s) 
+   1 session(s) to process 3 table(s) and 4 sequence(s)
 

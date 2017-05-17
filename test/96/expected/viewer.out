@@ -85,7 +85,7 @@ select count(*) from emaj.emaj_visible_param;
 select count(*) from emaj.emaj_hist;
  count 
 -------
-    18
+    19
 (1 row)
 
 select count(*) from emaj.emaj_group_def;
@@ -127,13 +127,13 @@ select count(*) from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    21
+    22
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    21
+    22
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
@@ -209,8 +209,8 @@ select emaj.emaj_estimate_rollback_groups(array['myGroup1'],emaj.emaj_get_previo
 (1 row)
 
 select * from emaj.emaj_rollback_activity();
- rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_start_datetime | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
----------+-------------+-----------+--------------------+----------------+-----------------+---------------+------------------+-------------------+-------------+---------------------+-------------+----------------+---------------------
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_start_datetime | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
+---------+-------------+-----------+--------------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+---------------------+-------------+----------------+---------------------
 (0 rows)
 
 select * from emaj.emaj_get_consolidable_rollbacks();

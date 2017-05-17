@@ -15,13 +15,13 @@ select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
 
 -- logged rollback to Multi-1
-select emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1');
+select * from emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
 
 -- rollback to Multi-2
-select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2');
+select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2',false) order by 1,2;
 
 -- rollback and stop to Multi-1
-select emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1');
+select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
 select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback');
 
 -- try to start both groups, but with an old deleted mark name
@@ -38,7 +38,7 @@ select emaj.emaj_delete_mark_group('myGroup1','Multi-2');
 
 -- use this mark for the other group before delete it
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
-select emaj.emaj_rollback_group('myGroup2','Multi-2');
+select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
 select emaj.emaj_delete_mark_group('myGroup2','Multi-2');
 
 -- get statistics using deleted marks
@@ -66,7 +66,7 @@ select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is deleted');
 select emaj.emaj_estimate_rollback_group('myGroup2','M3',TRUE);
 
 -- try to rollback on a deleted mark
-select emaj.emaj_rollback_group('myGroup2','M3');
+select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 
 -----------------------------
 -- Checking step 8
@@ -171,8 +171,8 @@ select emaj.emaj_delete_mark_group('phil''s group#3",','M2_again!');
 select * from emaj.emaj_log_stat_group('phil''s group#3",','','');
 select * from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mark #3','');
 --
-select emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3');
-select emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3');
+select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
+select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
 
 -----------------------------
 -- Checking step 10
@@ -200,7 +200,7 @@ begin transaction;
   delete from mytbl1;
 rollback;
 --
-select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
+select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK',false) order by 1,2;
 
 -----------------------------
 -- Checking step 11
@@ -261,9 +261,9 @@ select sum(stat_rows) + 1 as check from emaj.emaj_detailed_log_stat_group('phil'
 --   rollback groups, replay updates with generated scripts, snap groups again and cancel the transaction
 reset role;
 begin;
-  select emaj.emaj_rollback_group('myGroup1','Multi-1');
-  select emaj.emaj_rollback_group('myGroup2','Multi-1');
-  select emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable');
+  select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
+  select * from emaj.emaj_rollback_group('myGroup2','Multi-1',false) order by 1,2;
+  select * from emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable',false) order by 1,2;
 
 \i /tmp/emaj_test/sql_scripts/myGroup1.sql
 \i /tmp/emaj_test/sql_scripts/myGroup2.sql
@@ -304,7 +304,7 @@ update "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooo
 select emaj.emaj_set_mark_group('phil''s group#3",','M2');
 delete from "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
 
-select emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group');
+select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group',false) order by 1,2;
 select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
 
@@ -313,13 +313,13 @@ select emaj.emaj_drop_group('phil''s group#3",');
 -----------------------------
 -- try to rollback a protected group
 select emaj.emaj_protect_group('myGroup2');
-select emaj.emaj_rollback_group('myGroup2','M3');
+select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 select emaj.emaj_unprotect_group('myGroup2');
 
 -- try to rollback over a protected mark
 select emaj.emaj_set_mark_group('myGroup1','Mark_to_protect');
 select emaj.emaj_protect_mark_group('myGroup1','Mark_to_protect');
-select emaj.emaj_rollback_group('myGroup1','Multi-1');
+select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
 select emaj.emaj_unprotect_mark_group('myGroup1','Mark_to_protect');
 select emaj.emaj_delete_mark_group('myGroup1','Mark_to_protect');
 
@@ -342,7 +342,7 @@ delete from myTbl1 where col11 > 2010;
 select emaj.emaj_set_mark_group('myGroup1','MC2');
 update myTbl2 set col22 = 'TC2' WHERE col22 ='TC1';
 
-select emaj.emaj_logged_rollback_group('myGroup1','MC1');
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC1',false) order by 1,2;
 insert into myTbl2 values (2000,'TC3',NULL);
 
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC1_DONE');
@@ -355,7 +355,7 @@ update myTbl4 set col43 = NULL where col41 = 2000;
 select emaj.emaj_set_mark_group('myGroup1','MC4');
 select emaj.emaj_set_mark_group('myGroup1','MC5');
 
-select emaj.emaj_logged_rollback_group('myGroup1','MC3');
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC3',false) order by 1,2;
 
 select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
        cons_target_rlbk_mark_name, cons_end_rlbk_mark_id, cons_target_rlbk_mark_id, cons_rows, cons_marks, cons_marks
@@ -390,7 +390,7 @@ update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
 select emaj.emaj_set_mark_group('myGroup1','MC8');
 insert into myTbl2 values (3001,'TC8',NULL);
 
-select emaj.emaj_logged_rollback_group('myGroup1','MC8');
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC8',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
 select emaj.emaj_set_mark_group('myGroup1','MC9');
@@ -398,7 +398,7 @@ insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
 update myTbl4 set col43 = NULL where col41 = 2000;
 
-select emaj.emaj_logged_rollback_group('myGroup1','MC6');
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
 select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
@@ -413,14 +413,14 @@ select emaj.emaj_set_mark_group('myGroup1','MC10');
 insert into myTbl1 select i, 'Test', 'Conso' from generate_series (3000,3010) as i;
 delete from myTbl1 where col11 > 3005;
 
-select emaj.emaj_logged_rollback_group('myGroup1','MC10');
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
 update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
 
 select emaj.emaj_set_mark_group('myGroup1','MC11');
 insert into myTbl4 values (3000,'FK...',1,10,'ABC');
 update myTbl4 set col43 = NULL where col41 = 3000;
 
-select emaj.emaj_logged_rollback_group('myGroup1','MC10');
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
 select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
@@ -439,13 +439,13 @@ delete from myTbl1 where col11 > 4010;
 select emaj.emaj_set_mark_group('myGroup1','MC16');
 update myTbl2 set col22 = 'TC16' WHERE col22 ='TC15';
 
-select emaj.emaj_logged_rollback_group('myGroup1','MC15');
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC15',false) order by 1,2;
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC15_DONE');
 
 select emaj.emaj_set_mark_group('myGroup1','MC17');
 insert into myTbl2 values (4001,'TC15',NULL);
 
-select emaj.emaj_logged_rollback_group('myGroup1','MC16');
+select * from emaj.emaj_logged_rollback_group('myGroup1','MC16',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC15_DONE');
 
 select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
@@ -456,7 +456,7 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_time_id, sequ_schema, sequ_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
 
-select emaj.emaj_rollback_group('myGroup1','Multi-1');
+select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
 
 -----------------------------
 -- Step 15 : test transactions with several emaj operations
@@ -484,7 +484,7 @@ select emaj.emaj_drop_group('myGroup4');
 select emaj.emaj_cleanup_rollback_state();
 
 -- check rollback related tables
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_msg
   from emaj.emaj_rlbk order by rlbk_id;

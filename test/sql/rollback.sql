@@ -382,10 +382,10 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_myt
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mytblc2_log;
 
 -- use the functions dedicated to the ppa plugin
--- for an equivalent of "select emaj.emaj_rollback_group('myGroup4','myGroup4_start');"
-select emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false), false);
+-- for an equivalent of "select * from emaj.emaj_rollback_group('myGroup4','myGroup4_start',true);"
+select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false, true), false, true);
 -- and check the result
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_msg
  from emaj.emaj_rlbk order by rlbk_id desc limit 1; 
 
@@ -398,10 +398,10 @@ begin;
 -- 1 rollback operation in EXECUTING state, but no rollback steps have started yet
   insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-1, now()-'0.1 seconds'::interval);
   insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) values (-2, '2000-01-01 01:00:00');
-  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
-             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
-    values (1232,array['group1232'],'mark1232',-2,-1,true,1,
-             5,4,3,'EXECUTING');
+  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+    values (1232,array['group1232'],'mark1232',-2,-1,true,false,
+             1,5,4,3,'EXECUTING');
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
              rlbp_estimated_duration, rlbp_estimated_quantity, rlbp_start_datetime, rlbp_duration)
     values (1232, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null,null),
@@ -458,10 +458,10 @@ begin;
 -- 1 rollback operation in LOCKING state and without step other than LOCK_TABLE
   insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-1, now()-'2 minutes'::interval);
   insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) values (-2, '2000-01-01 01:00:00');
-  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
-             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
-    values (1233,array['group1233'],'mark1233',-2,-1,true,1,
-             5,4,3,'LOCKING');
+  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+    values (1233,array['group1233'],'mark1233',-2,-1,true,false,
+             1,5,4,3,'LOCKING');
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
              rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
     values (1233, 'LOCK_TABLE','schema','t1','',null,null,null),
@@ -477,10 +477,10 @@ begin;
   select rlbk_id, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
 -- +1 rollback operation in PLANNING state
   insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-3, now()-'1 minute'::interval);
-  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
-             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
-    values (1234,array['group1234'],'mark1234',-2,-3,true,1,
-             5,4,3,'PLANNING');
+  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+    values (1234,array['group1234'],'mark1234',-2,-3,true,false,
+             1,5,4,3,'PLANNING');
   select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table,
          rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct 
     from emaj._rollback_activity();
@@ -560,7 +560,7 @@ select emaj.emaj_cleanup_rollback_state();
 -----------------------------
 -- check rollback tables
 -----------------------------
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_msg
   from emaj.emaj_rlbk order by rlbk_id;

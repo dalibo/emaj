@@ -301,8 +301,7 @@ rollback;
 -----------------------------
 -- emaj_alter_group() and emaj_alter_groups() tests on logging groups
 -----------------------------
-select emaj.emaj_start_group('myGroup1');
-select emaj.emaj_start_group('myGroup2');
+select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Init');
 
 -- change the priority
 update emaj.emaj_group_def set grpdef_priority = 30 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
@@ -336,11 +335,16 @@ select count(*) from "emajC"."myschema1_myTbl3_log";
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema2_mytbl6_log_idx';
 
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_targetable, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_id > 6000 order by mark_id;
+
+-- execute rollbacks crossing alter group operations
+select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Init',false);
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Init',false);
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Init',true);
 
 -----------------------------
 -- test end: check and force sequences id
 -----------------------------
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_targetable, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_id > 6000 order by mark_id;
 
 select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');

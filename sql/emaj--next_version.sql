@@ -325,6 +325,7 @@ CREATE TABLE emaj.emaj_rlbk (
   rlbk_mark_time_id            BIGINT      NOT NULL,       -- time stamp id of the mark to rollback to
   rlbk_time_id                 BIGINT,                     -- time stamp id at the rollback start
   rlbk_is_logged               BOOLEAN     NOT NULL,       -- rollback type: true = logged rollback
+  rlbk_is_alter_group_allowed  BOOLEAN     NOT NULL,       -- flag allowing to rollback to a mark set before alter group operations
   rlbk_nb_session              INT         NOT NULL,       -- number of requested rollback sessions
   rlbk_nb_table                INT,                        -- total number of tables in groups
   rlbk_nb_sequence             INT,                        -- number of sequences to rollback
@@ -442,6 +443,7 @@ CREATE TYPE emaj.emaj_rollback_activity_type AS (
   rlbk_mark                    TEXT,                       -- mark to rollback to
   rlbk_mark_datetime           TIMESTAMPTZ,                -- timestamp of the mark as recorded into emaj_mark
   rlbk_is_logged               BOOLEAN,                    -- rollback type: true = logged rollback
+  rlbk_is_alter_group_allowed  BOOLEAN,                    -- flag allowing to rollback to a mark set before alter group operations
   rlbk_nb_session              INT,                        -- number of requested sessions
   rlbk_nb_table                INT,                        -- total number of tables in groups
   rlbk_nb_sequence             INT,                        -- number of sequences to rollback
@@ -3826,29 +3828,29 @@ CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEX
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_rollback_group$
 -- The function rollbacks all tables and sequences of a group up to a mark in the history
--- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
+-- Input: group name, mark to rollback to
 -- Output: number of processed tables and sequences
   BEGIN
--- just (unlogged) rollback the group (with boolean: isLoggedRlbk = false, multiGroup = false)
-    RETURN emaj._rlbk_groups(array[v_groupName], v_mark, false, false);
+-- just (unlogged) rollback the group (with boolean: isLoggedRlbk = false, multiGroup = false, v_isAlterGroupAllowed = null)
+    RETURN rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice';
   END;
 $emaj_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT) IS
-$$Rollbacks an E-Maj group to a given mark.$$;
+$$Rollbacks an E-Maj group to a given mark (deprecated).$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_rollback_groups$
 -- The function rollbacks all tables and sequences of a group array up to a mark in the history
--- Input: array of group names, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
+-- Input: array of group names, mark to rollback to
 -- Output: number of processed tables and sequences
   BEGIN
--- just (unlogged) rollback the groups (with boolean: isLoggedRlbk = false, multiGroup = true)
-    RETURN emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, false, true);
+-- just (unlogged) rollback the groups (with boolean: isLoggedRlbk = false, multiGroup = true, v_isAlterGroupAllowed = null)
+    RETURN rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice';
   END;
 $emaj_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT) IS
-$$Rollbacks an set of E-Maj groups to a given mark.$$;
+$$Rollbacks an set of E-Maj groups to a given mark (deprecated).$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -3858,15 +3860,15 @@ $emaj_logged_rollback_group$
 -- - log triggers are not disabled at rollback time,
 -- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
 -- - rolled back log rows and any marks inside the rollback time frame are kept.
--- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
+-- Input: group name, mark to rollback to
 -- Output: number of processed tables and sequences
   BEGIN
--- just "logged-rollback" the group (with boolean: isLoggedRlbk = true, multiGroup = false)
-    RETURN emaj._rlbk_groups(array[v_groupName], v_mark, true, false);
+-- just "logged-rollback" the group (with boolean: isLoggedRlbk = true, multiGroup = false, v_isAlterGroupAllowed = null)
+    RETURN rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice';
   END;
 $emaj_logged_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT) IS
-$$Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark.$$;
+$$Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark (deprecated).$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -3876,71 +3878,132 @@ $emaj_logged_rollback_groups$
 -- - log triggers are not disabled at rollback time,
 -- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
 -- - rolled back log rows and any marks inside the rollback time frame are kept.
--- Input: array of group names, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
--- Output: number of tables and sequences effectively processed
+-- Input: array of group names, mark to rollback to
+-- Output: number of processed tables and sequences
   BEGIN
--- just "logged-rollback" the groups (with boolean: isLoggedRlbk = true, multiGroup = true)
-    RETURN emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, true);
+-- just "logged-rollback" the groups (with boolean: isLoggedRlbk = true, multiGroup = true, v_isAlterGroupAllowed = null)
+    RETURN rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice';
   END;
 $emaj_logged_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT) IS
+$$Performs a logged (cancellable) rollbacks for a set of E-Maj groups to a given mark (deprecated).$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$emaj_rollback_group$
+-- The function rollbacks all tables and sequences of a group up to a mark in the history
+-- Input: group name, mark to rollback to, boolean indicating whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  BEGIN
+-- just (unlogged) rollback the group (with boolean: isLoggedRlbk = false, multiGroup = false)
+    RETURN QUERY SELECT * FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, coalesce(v_isAlterGroupAllowed, FALSE));
+  END;
+$emaj_rollback_group$;
+COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT,BOOLEAN) IS
+$$Rollbacks an E-Maj group to a given mark.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$emaj_rollback_groups$
+-- The function rollbacks all tables and sequences of a group array up to a mark in the history
+-- Input: array of group names, mark to rollback to, boolean indicating whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  BEGIN
+-- just (unlogged) rollback the groups (with boolean: isLoggedRlbk = false, multiGroup = true)
+    RETURN QUERY SELECT * FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, coalesce(v_isAlterGroupAllowed, FALSE));
+  END;
+$emaj_rollback_groups$;
+COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT,BOOLEAN) IS
+$$Rollbacks an set of E-Maj groups to a given mark.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$emaj_logged_rollback_group$
+-- The function performs a logged rollback of all tables and sequences of a group up to a mark in the history.
+-- A logged rollback is a rollback which can be later rolled back! To achieve this:
+-- - log triggers are not disabled at rollback time,
+-- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
+-- - rolled back log rows and any marks inside the rollback time frame are kept.
+-- Input: group name, mark to rollback to, boolean indicating whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  BEGIN
+-- just "logged-rollback" the group (with boolean: isLoggedRlbk = true, multiGroup = false)
+    RETURN QUERY SELECT * FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, coalesce(v_isAlterGroupAllowed, FALSE));
+  END;
+$emaj_logged_rollback_group$;
+COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT,BOOLEAN) IS
+$$Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$emaj_logged_rollback_groups$
+-- The function performs a logged rollback of all tables and sequences of a groups array up to a mark in the history.
+-- A logged rollback is a rollback which can be later rolled back! To achieve this:
+-- - log triggers are not disabled at rollback time,
+-- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
+-- - rolled back log rows and any marks inside the rollback time frame are kept.
+-- Input: array of group names, mark to rollback to, boolean indicating whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  BEGIN
+-- just "logged-rollback" the groups (with boolean: isLoggedRlbk = true, multiGroup = true)
+    RETURN QUERY SELECT * FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, coalesce(v_isAlterGroupAllowed, FALSE));
+  END;
+$emaj_logged_rollback_groups$;
+COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT,BOOLEAN) IS
 $$Performs a logged (cancellable) rollbacks for a set of E-Maj groups to a given mark.$$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN)
-RETURNS INT LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $_rlbk_groups$
 -- The function rollbacks all tables and sequences of a groups array up to a mark in the history.
 -- It is called by emaj_rollback_group.
 -- It effectively manages the rollback operation for each table or sequence, deleting rows from log tables
 -- only when asked by the calling functions.
 -- Its activity is split into smaller functions that are also called by the parallel restore php function
--- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group
---        and a boolean saying if the rollback is a logged rollback
--- Output: number of tables and sequences effectively processed
+-- Input: group name, mark to rollback to, a boolean indicating whether the rollback is a logged rollback, a boolean indicating whether the function
+--        is a multi_group function and a boolean saying whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
   DECLARE
     v_rlbkId                 INT;
-    v_nbTbl                  INT;
-    v_nbSeq                  INT;
   BEGIN
 -- if the group names array is null, immediately return 0
     IF v_groupNames IS NULL THEN
-      RETURN 0;
+       rlbk_severity = 'Notice'; rlbk_message = 0;
+       RETURN NEXT;
+      RETURN;
     END IF;
 -- check supplied parameter and prepare the rollback operation
-    SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup) INTO v_rlbkId;
+    SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed) INTO v_rlbkId;
 -- lock all tables
     PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
 -- set a rollback start mark if logged rollback
     PERFORM emaj._rlbk_start_mark(v_rlbkId, v_multiGroup);
 -- execute the rollback planning
-    SELECT emaj._rlbk_session_exec(v_rlbkId, 1) INTO v_nbTbl;
--- process sequences and complete the rollback operation
-    SELECT emaj._rlbk_end(v_rlbkId, v_multiGroup) INTO v_nbSeq;
-    RETURN v_nbTbl + v_nbSeq;
+    PERFORM emaj._rlbk_session_exec(v_rlbkId, 1);
+-- process sequences, complete the rollback operation and return the execution report
+    RETURN QUERY SELECT * FROM emaj._rlbk_end(v_rlbkId, v_multiGroup, v_isAlterGroupAllowed);
   END;
 $_rlbk_groups$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN)
-RETURNS INT LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $_rlbk_async$
 -- The function calls the main rollback functions following the initialisation phase.
 -- It is only called by the phpPgAdmin plugin, in an asynchronous way, so that the rollback can be then monitored by the client.
--- Input: rollback identifier and a boolean saying if the rollback is a logged rollback
--- Output: number of tables and sequences effectively processed
+-- Input: rollback identifier, a boolean saying if the rollback is a logged rollback
+--        and a boolean saying whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
   DECLARE
-    v_nbTbl                  INT;
-    v_nbSeq                  INT;
   BEGIN
 -- simply chain the internal functions
     PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
     PERFORM emaj._rlbk_start_mark(v_rlbkId, v_multiGroup);
-    SELECT emaj._rlbk_session_exec(v_rlbkId, 1) INTO v_nbTbl;
-    SELECT emaj._rlbk_end(v_rlbkId, v_multiGroup) INTO v_nbSeq;
-    RETURN v_nbTbl + v_nbSeq;
+    PERFORM emaj._rlbk_session_exec(v_rlbkId, 1);
+    RETURN QUERY SELECT * FROM emaj._rlbk_end(v_rlbkId, v_multiGroup, v_isAlterGroupAllowed);
   END;
 $_rlbk_async$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_init$
 -- This is the first step of a rollback group processing.
@@ -3965,7 +4028,7 @@ $_rlbk_init$
 -- lock the groups to rollback
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = ANY(v_groupNames) FOR UPDATE;
 -- check supplied group names and mark parameters
-    SELECT emaj._rlbk_check(v_groupNames, v_mark) INTO v_markName;
+    SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE) INTO v_markName;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- get the time stamp id and its clock timestamp for the 1st group (as we know this time stamp is the same for all groups of the array)
@@ -3994,11 +4057,11 @@ $_rlbk_init$
       RAISE EXCEPTION '_rlbk_init: cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = % - see E-Maj documentation)', v_dbLinkCnxStatus;
     END IF;
 -- create the row representing the rollback event in the emaj_rlbk table and get the rollback id back
-    v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, ' ||
+    v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, ' ||
              'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
              'rlbk_is_dblink_used) ' ||
              'VALUES (' || quote_literal(v_groupNames) || ',' || quote_literal(v_markName) || ',' ||
-             v_markTimeId || ',' || v_isLoggedRlbk || ',' ||
+             v_markTimeId || ',' || v_isLoggedRlbk || ',' || coalesce(v_isAlterGroupAllowed, false) || ',' ||
              v_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
              v_isDblinkUsable || ') RETURNING rlbk_id';
     IF v_isDblinkUsable THEN
@@ -4034,7 +4097,7 @@ $_rlbk_init$
   END;
 $_rlbk_init$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, isRollbackSimulation BOOLEAN DEFAULT FALSE)
+CREATE OR REPLACE FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, isRollbackSimulation BOOLEAN)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_rlbk_check$
 -- This functions performs checks on group names and mark names supplied as parameter for the emaj_rollback_groups()
@@ -4047,6 +4110,7 @@ $_rlbk_check$
     v_groupIsRollbackable    BOOLEAN;
     v_markName               TEXT;
     v_markId                 BIGINT;
+    v_markTimeId             BIGINT;
     v_markIsTargetable       BOOLEAN;
     v_protectedMarkList      TEXT;
     v_cpt                    INT;
@@ -4077,7 +4141,7 @@ $_rlbk_check$
         RAISE EXCEPTION '_rlbk_check: No mark "%" exists for group "%".', v_mark, v_aGroupName;
       END IF;
 -- ... and this mark can be used as target for a rollback
-      SELECT mark_id, mark_is_targetable INTO v_markId, v_markIsTargetable FROM emaj.emaj_mark
+      SELECT mark_id, mark_time_id, mark_is_targetable INTO v_markId, v_markTimeId, v_markIsTargetable FROM emaj.emaj_mark
         WHERE mark_group = v_aGroupName AND mark_name = v_markName;
       IF NOT v_markIsTargetable THEN
         RAISE EXCEPTION '_rlbk_check: mark "%" for group "%" is not usable for rollback.', v_markName, v_aGroupName;
@@ -4098,6 +4162,13 @@ $_rlbk_check$
       WHERE group_name = ANY (v_groupNames);
     IF v_cpt > 1 THEN
       RAISE EXCEPTION '_rlbk_check: Mark "%" does not represent the same point in time for all groups.', v_mark;
+    END IF;
+-- if the isAlterGroupAllowed flag is set to true, check that the rollback would not cross any alter group operation for the groups
+    IF NOT v_isAlterGroupAllowed THEN
+       PERFORM 0 FROM emaj.emaj_alter_plan WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames);
+       IF FOUND THEN
+         RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously exectuted alter group operations. You can remove this protection by using a less strict setting for this function.';
+       END IF;
     END IF;
     RETURN v_markName;
   END;
@@ -4741,17 +4812,15 @@ $_rlbk_start_mark$
 $_rlbk_start_mark$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_session_exec$
 -- This function executes the main part of a rollback operation.
 -- It executes the steps identified by _rlbk_planning() and stored into emaj_rlbk_plan, for one session.
--- The function returns the effective number of processed tables.
 -- It updates the emaj_rlbk_plan table, using dblink connection if possible, giving a visibility of the rollback progress.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it doesn't own the application tables.
   DECLARE
     v_stmt                   TEXT;
     v_isDblinkUsable         BOOLEAN = false;
-    v_effNbTable             INT = 0;
     v_groupNames             TEXT[];
     v_mark                   TEXT;
     v_rlbkMarkTimeId         BIGINT;
@@ -4820,7 +4889,6 @@ $_rlbk_session_exec$
           SELECT emaj._rlbk_tbl(emaj_relation.*, v_lastGlobalSeq, v_maxGlobalSeq, v_nbSession, v_isLoggedRlbk) INTO v_nbRows
             FROM emaj.emaj_relation
             WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
-          v_effNbTable = v_effNbTable + 1;
         WHEN 'DELETE_LOG' THEN
 -- process the deletion of log rows
           SELECT emaj._delete_log_tbl(emaj_relation.*, v_rlbkMarkTimeId, v_rlbkTimeId, v_lastGlobalSeq)
@@ -4875,7 +4943,7 @@ $_rlbk_session_exec$
 -- ... or directly
       EXECUTE v_stmt;
     END IF;
-    RETURN v_effNbTable;
+    RETURN;
 -- trap and record exception during the rollback operation
   EXCEPTION
     WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
@@ -4886,8 +4954,8 @@ $_rlbk_session_exec$
   END;
 $_rlbk_session_exec$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_end(v_rlbkId INT, v_multiGroup BOOLEAN)
-RETURNS INT LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION emaj._rlbk_end(v_rlbkId INT, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $_rlbk_end$
 -- This is the last step of a rollback group processing. It :
 --    - deletes the marks that are no longer available,
@@ -4896,7 +4964,7 @@ $_rlbk_end$
 --    - rollbacks all sequences of the groups,
 --    - set the end rollback mark if logged rollback,
 --    - and finaly set the operation as COMPLETED or COMMITED.
--- It returns the number of processed sequences.
+-- It returns the execution report of the rollback operation (a set of rows).
   DECLARE
     v_stmt                   TEXT;
     v_isDblinkUsable         BOOLEAN = false;
@@ -5043,7 +5111,28 @@ $_rlbk_end$
                v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed''' ||
                ' WHERE rlbk_id = ' || v_rlbkId;
     END IF;
-    RETURN v_nbSeq;
+-- build and return the execution report
+    IF v_isAlterGroupAllowed IS NULL THEN
+-- return the number of processed tables and sequences to old style calling functions
+       rlbk_severity = 'Notice'; rlbk_message = (v_effNbTbl + v_nbSeq)::TEXT;
+       RETURN NEXT;
+    ELSE
+-- return the execution report to new style calling functions
+       rlbk_severity = 'Notice'; rlbk_message = format ('%s tables and %s sequences effectively processed.',v_effNbTbl::TEXT, v_nbSeq::TEXT);
+       RETURN NEXT;
+--TODO add missing cases
+       RETURN QUERY
+         SELECT 'Warning'::TEXT AS rlbk_severity,
+               ('Tables group change not rolled back: ' || CASE altr_step
+                   WHEN 'PRIORITY_REL' THEN 'E-Maj priority for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   WHEN 'ATTRIBUTE_TBL' THEN 'E-Maj attribute for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   ELSE altr_step::TEXT || ' / ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   END)::TEXT AS rlbk_message
+           FROM emaj.emaj_alter_plan
+           WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> ''
+        ORDER BY altr_time_id, altr_step, altr_schema, altr_tblseq;
+    END IF;
+    RETURN;
 -- trap and record exception during the rollback operation
   EXCEPTION
     WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
@@ -5516,8 +5605,8 @@ $_estimate_rollback_groups$
     v_estimDuration          INTERVAL;
     v_nbTblseq               INT;
   BEGIN
--- check supplied group names and mark parameters with the isRollbackSimulation flag set to true
-    SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE) INTO v_markName;
+-- check supplied group names and mark parameters with the isAlterGroupAllowed and isRollbackSimulation flags set to true
+    SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE) INTO v_markName;
 -- compute a random negative rollback-id (not to interfere with ids of real rollbacks)
     SELECT (random() * -2147483648)::int INTO v_rlbkId;
 --
@@ -5525,8 +5614,8 @@ $_estimate_rollback_groups$
 --
     BEGIN
 -- insert a row into the emaj_rlbk table for this simulated rollback operation
-      INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_nb_session)
-        VALUES (v_rlbkId, v_groupNames, v_mark, emaj._get_mark_time_id(v_groupNames[1], v_markName), v_isLoggedRlbk, 1);
+      INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session)
+        VALUES (v_rlbkId, v_groupNames, v_mark, emaj._get_mark_time_id(v_groupNames[1], v_markName), v_isLoggedRlbk, false, 1);
 -- call the _rlbk_planning function
       PERFORM emaj._rlbk_planning(v_rlbkId);
 -- compute the sum of the duration estimates of all elementary steps (except LOCK_TABLE)
@@ -5587,8 +5676,8 @@ $_rollback_activity$
   BEGIN
 -- retrieve all not completed rollback operations (ie in 'PLANNING', 'LOCKING' or 'EXECUTING' state)
     FOR r_rlbk IN
-      SELECT rlbk_id, rlbk_groups, rlbk_mark, t1.time_clock_timestamp, rlbk_is_logged, rlbk_nb_session,
-             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, t2.time_tx_timestamp,
+      SELECT rlbk_id, rlbk_groups, rlbk_mark, t1.time_clock_timestamp, rlbk_is_logged, rlbk_is_alter_group_allowed,
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, t2.time_tx_timestamp,
              transaction_timestamp() - t2.time_tx_timestamp AS "elapse", NULL, 0
         FROM emaj.emaj_rlbk
              JOIN emaj.emaj_time_stamp t1 ON (rlbk_mark_time_id = t1.time_id)
@@ -6926,7 +7015,7 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_firstMa
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, isRollbackSimulation BOOLEAN) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, isRollbackSimulation BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_viewer;

@@ -132,9 +132,9 @@
         $row['rlbk_mark_datetime'] = '[mark time]';
       }
       echo "** rollback {$row['rlbk_id']} started at {$row['rlbk_start_datetime']} for groups {$row['rlbk_groups']}\n";
-      echo "   status: {$row['rlbk_status']} ; ended at {$row['rlbk_end_datetime']} \n";
+      echo "   status: {$row['rlbk_status']} ; ended at {$row['rlbk_end_datetime']}\n";
       if ($verbose) echo "   rollback to mark: {$row['rlbk_mark']} set at {$row['rlbk_mark_datetime']}\n";
-      if ($verbose) echo "   {$row['rlbk_nb_session']} session(s) to process {$row['rlbk_eff_nb_table']} table(s) and {$row['rlbk_nb_sequence']} sequence(s) \n";
+      if ($verbose) echo "   {$row['rlbk_nb_session']} session(s) to process {$row['rlbk_eff_nb_table']} table(s) and {$row['rlbk_nb_sequence']} sequence(s)\n";
     }
 
     pg_free_result($result);
@@ -151,13 +151,13 @@
         $row['rlbk_mark_datetime'] = '[mark time]';
       }
       echo "-> rollback {$row['rlbk_id']} started at {$row['rlbk_start_datetime']} for groups {$row['rlbk_groups']}\n";
-      echo "   status: {$row['rlbk_status']} ; completion {$row['rlbk_completion_pct']} % ";
+      echo "   status: {$row['rlbk_status']} ; completion {$row['rlbk_completion_pct']} %";
       if (is_null($row['rlbk_remaining']))
         echo "\n";
       else
         echo "; {$row['rlbk_remaining']} remaining\n";
       if ($verbose) echo "   rollback to mark: {$row['rlbk_mark']} set at {$row['rlbk_mark_datetime']}\n";
-      if ($verbose) echo "   {$row['rlbk_nb_session']} session(s) to process {$row['rlbk_eff_nb_table']} table(s) and {$row['rlbk_nb_sequence']} sequence(s) \n";
+      if ($verbose) echo "   {$row['rlbk_nb_session']} session(s) to process {$row['rlbk_eff_nb_table']} table(s) and {$row['rlbk_nb_sequence']} sequence(s)\n";
     }
 
     pg_free_result($result);

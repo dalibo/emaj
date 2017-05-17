@@ -205,13 +205,15 @@ Rollback a tables group
 
 If it is necessary to reset tables and sequences of a group in the state they were when a mark was set, a rollback must be performed. To perform a simple (“*unlogged*”) rollback, the following SQL statement can be executed::
 
-   SELECT emaj.emaj_rollback_group('<group.name>', '<mark.name>');
+   SELECT * FROM emaj.emaj_rollback_group('<group.name>', '<mark.name>', <is_alter_group_allowed>);
 
 The tables group must be in *LOGGING* state and the supplied mark must be usable for a rollback, i.e. it cannot be logically deleted.
 
 The '*EMAJ_LAST_MARK*' keyword can be used as mark name, meaning the last set mark.
 
-The function returns the number of tables and sequences that have been effectively modified by the rollback operation.
+The third parameter is a boolean that indicates whether the rollback operation may target a mark set before an :doc:`alter group <alterGroups>` operation. Depending on their nature, changes performed on tables groups in *LOGGING* state can be automatically cancelled or not. In some cases, this cancellation can be partial. By default, this parameter is set to *FALSE*.
+
+The function returns a set of rows with a severity level set to either “*Notice*” or “*Warning*” values, and a textual message. The function returns a “*Notice*” row indicating the number of tables and sequences that have been effectively modified by the rollback operation. Other messages of type “*Warning*” may also be reported when the rollback operation has processed tables group changes.
 
 To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If the PostgreSQL version is prior 9.5, the lock mode is even *ACCESS EXCLUSIVE* for tables having updates to cancel and whose log trigger must consequently be disabled during the operation. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 
@@ -236,11 +238,19 @@ Then, it is possible to continue updating processes, to set other marks, and if 
 
 Using the *emaj_rollback_groups()* function, several groups can be rolled back at once::
 
-   SELECT emaj.emaj_rollback_groups('<group.names.array>', '<mark.name>');
+   SELECT * FROM emaj.emaj_rollback_groups('<group.names.array>', '<mark.name>', <is_alter_group_allowed>);
 
 The supplied mark must correspond to the same point in time for all groups. In other words, this mark must have been set by the same :ref:`emaj_set_mark_group() <emaj_set_mark_group>` function call.
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
+
+An old version of these functions had only 2 input parameters and just returned an integer representing the number of effectively processed tables and sequences::
+
+   SELECT emaj.emaj_rollback_group('<group.name>', '<mark.name>');
+
+   SELECT emaj.emaj_rollback_groups('<group.names.array>', '<mark.name>');
+
+Both functions are deprecated and are subject to be deleted in a future E-Maj version.
 
 
 .. _emaj_logged_rollback_group:
@@ -252,7 +262,7 @@ Another function executes a “*logged*” rollback. In this case, log triggers 
 
 To execute a “*logged*” rollback, the following SQL statement can be executed::
 
-   SELECT emaj.emaj_logged_rollback_group('<group.name>', '<mark.name>');
+   SELECT * FROM emaj.emaj_logged_rollback_group('<group.name>', '<mark.name>', <is_alter_group_allowed>);
 
 The usage rules are the same as with *emaj_rollback_group()* function.
 
@@ -260,7 +270,9 @@ The tables group must be in *LOGGING* state and the supplied mark must be usable
 
 The '*EMAJ_LAST_MARK*' keyword can be used as mark name, meaning the last set mark.
 
-The function returns the number of tables and sequences that have been effectively modified by the rollback operation.
+The third parameter is a boolean that indicates whether the rollback operation may target a mark set before an :doc:`alter group <alterGroups>` operation. Depending on their nature, changes performed on tables groups in *LOGGING* state can be automatically cancelled or not. In some cases, this cancellation can be partial. By default, this parameter is set to *FALSE*.
+
+The function returns a set of rows with a severity level set to either “*Notice*” or “*Warning*” values, and a textual message. The function returns a “*Notice*” row indicating the number of tables and sequences that have been effectively modified by the rollback operation. Other messages of type “*Warning*” may also be reported when the rollback operation has processed tables group changes.
 
 To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 
@@ -298,12 +310,19 @@ A :ref:`"consolidation" function <emaj_consolidate_rollback_group>` for “logge
 
 Using the *emaj_rollback_groups()* function, several groups can be rolled back at once::
 
-   SELECT emaj.emaj_logged_rollback_groups('<group.names.array>', '<mark.name>');
+   SELECT * FROM emaj.emaj_logged_rollback_groups('<group.names.array>', '<mark.name>', <is_alter_group_allowed>);
 
 The supplied mark must correspond to the same point in time for all groups. In other words, this mark must have been set by the same :ref:`emaj_set_mark_group() <emaj_set_mark_group>` function call.
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
+An old version of these functions had only 2 input parameters and just returned an integer representing the number of effectively processed tables and sequences::
+
+   SELECT emaj.emaj_logged_rollback_group('<group.name>', '<mark.name>');
+
+   SELECT emaj.emaj_logged_rollback_groups('<group.names.array>', '<mark.name>');
+
+Both functions are deprecated and are subject to be deleted in a future E-Maj version.
 
 .. _emaj_stop_group:
 

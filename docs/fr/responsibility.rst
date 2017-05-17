@@ -11,7 +11,7 @@ La constitution des groupes de tables est fondamentale pour garantir l'intégrit
 Exécution appropriée des fonctions principales
 ----------------------------------------------
 
-Les fonctions de démarrage et d'arrêt de groupe, de pose de marque et de rollback positionnent des verrous sur les tables du groupe pour s'assurer que des transactions de mises à jour ne sont pas en cours lors de ces opérations. Mais il est de la responsabilité de l'utilisateur d'effectuer ces opérations au « bon moment », c'est à dire à des moments qui correspondent à des points vraiment stables dans la vie de la base.
+Les fonctions de :ref:`démarrage <emaj_start_group>` et d':ref:`arrêt <emaj_stop_group>` de groupe, de :ref:`pose de marque <emaj_set_mark_group>` et de :ref:`rollback <emaj_rollback_group>` positionnent des verrous sur les tables du groupe pour s'assurer que des transactions de mises à jour ne sont pas en cours lors de ces opérations. Mais il est de la responsabilité de l'utilisateur d'effectuer ces opérations au « bon moment », c'est à dire à des moments qui correspondent à des points vraiment stables dans la vie de la base. Il doit également apporter une attention particulière aux éventuelles messages d’avertissement rapportés par les fonctions de rollback.
 
 
 .. _application_triggers:

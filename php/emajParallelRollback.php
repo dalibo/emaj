@@ -41,9 +41,10 @@
   $nbSession = 1;                     // -s number of parallel E-maj sessions to use for rollback (default=1)
   $verbose = false;                   // -v flag for verbose mode
   $isLogged = 'false';                // -l flag for logged rollback mode
+  $isAlterGroupAllowed = 'false';     // -a flag to allow the rollback to reach a mark set before alter group operations
 
 // Get supplied parameters
-  $shortOptions = "d:h:p:U:W:g:m:s:vl";
+  $shortOptions = "d:h:p:U:W:g:m:s:vla";
   $options = getopt($shortOptions);
 
 // ... and process them
@@ -51,6 +52,7 @@
   $multiGroup = 'false';
   $msgRlbk = 'Rollback';
   foreach (array_keys($options) as $opt) switch ($opt) {
+// connection parameters
     case 'd':
       $dbname = $options['d'];
       $conn_string .= 'dbname='.$dbname.' ';
@@ -70,6 +72,10 @@
     case 'W':
       $password = $options['W'];
       $conn_string .= 'password='.$username.' ';
+      break;
+// other parameters
+    case 'a':
+      $isAlterGroupAllowed = 'true';
       break;
     case 'g':
       $groups = "'" . str_replace(",","','",$options['g']) . "'";
@@ -129,8 +135,7 @@
 
 // Call _rlbk_init() on first session
 // This checks the groups and mark, and prepares the parallel rollback by creating well balanced sessions
-
-  $query = "SELECT emaj._rlbk_init (array[".$groups."],'".pg_escape_string($mark)."',$isLogged,$nbSession, $multiGroup)";
+  $query = "SELECT emaj._rlbk_init (array[".$groups."],'".pg_escape_string($mark)."',$isLogged,$nbSession, $multiGroup, $isAlterGroupAllowed)";
   if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_init for groups $groups and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call of _rlbk_init() function failed '.pg_last_error()."\n");
@@ -170,28 +175,23 @@
 
 // For each session, get the result of the previous call of _rlbk_exec()
 
-  $cumNbTbl = 0;
   for ($i = 1 ; $i <= $nbSession ; $i++){
     $result = pg_get_result($dbconn[$i])
       or die('Getting the result of the _rlbk_session_exec() function failed '.pg_last_error()."\n");
     if ($verbose) echo date("d/m/Y - H:i:s.u")." get result of _rlbk_session_exec call for session #$i...\n";
     if (pg_result_error($result)) 
       die("Execution of _rlbk_session_exec function failed \n".pg_result_error($result)."\n");
-    $nbTbl = pg_fetch_result($result,0,0);
-    if ($verbose) echo "===> Number of rollbacked tables for session $i = $nbTbl\n";
-    $cumNbTbl = $cumNbTbl + $nbTbl;
     }
   pg_free_result($result);
 
 // Call emaj_rlbk_end() on first session to complete the rollback operation
 
-  $query = "SELECT emaj._rlbk_end ($rlbkId,$multiGroup)";
+  $query = "SELECT * FROM emaj._rlbk_end ($rlbkId,$multiGroup,$isAlterGroupAllowed)";
   if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_end -> complete rollback operation...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call of _rlbk_end() function failed '.pg_last_error()."\n");
-  $nbSeq = pg_fetch_result($result,0,0);
+  $execReportRows = pg_fetch_all($result);
   pg_free_result($result);
-  if ($verbose) echo "===> Number of rollbacked sequences for groups '$groups' = $nbSeq\n";
 
 // If there is only 1 session, perform a usual COMMIT
 
@@ -237,7 +237,10 @@
 
 // And issue the final message
 
-  echo "==> $msgRlbk completed ($cumNbTbl tables and $nbSeq sequences effectively processed).\n";
+  echo "==> $msgRlbk completed.\n";
+  foreach ($execReportRows as $execReportRow) {
+    echo "    {$execReportRow['rlbk_severity']}: {$execReportRow['rlbk_message']}\n";
+  }
 
 function print_help(){
   global $progName,$EmajVersion;
@@ -248,6 +251,7 @@ function print_help(){
   echo "  $progName -g <comma separated list of E-Maj group names> -m <E-Maj mark> -s <number of sessions> [OPTION]... \n";
   echo "\nOptions:\n";
   echo "  -l          logged rollback mode (i.e. 'rollbackable' rollback)\n";
+  echo "  -a          flag to allow rollback to reach a mark set before alter group operations\n";
   echo "  -v          verbose mode; writes more information about the processing\n";
   echo "  --help      shows this help, then exit\n";
   echo "  --version   outputs version information, then exit\n";

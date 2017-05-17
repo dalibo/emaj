@@ -81,13 +81,13 @@ select count(*) from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    21
+    22
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    21
+    22
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
@@ -176,13 +176,13 @@ select * from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    21
+    22
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    21
+    22
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
@@ -802,20 +802,20 @@ analyze mytbl4;
 -- rollback with dblink_connect_u not granted
 revoke execute on function dblink_connect_u(text,text) from emaj_adm;
 set role emaj_regression_tests_adm_user;
-select emaj.emaj_logged_rollback_group('myGroup2','M2');
+select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
- emaj_logged_rollback_group 
-----------------------------
-                          5
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 3 tables and 2 sequences effectively processed.
 (1 row)
 
-select emaj.emaj_logged_rollback_group('myGroup2','M3');
+select * from emaj.emaj_logged_rollback_group('myGroup2','M3',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
- emaj_logged_rollback_group 
-----------------------------
-                          5
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 3 tables and 2 sequences effectively processed.
 (1 row)
 
 reset role;
@@ -1085,10 +1085,10 @@ select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid
 -----------------------------
 -- Step 4 : for myGroup1, rollback then update tables then set 3 marks
 -----------------------------
-select emaj.emaj_rollback_group('myGroup1','M2');
- emaj_rollback_group 
----------------------
-                   3
+select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 2 tables and 1 sequences effectively processed.
 (1 row)
 
 --
@@ -1384,21 +1384,21 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -----------------------------
 -- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------
-select emaj.emaj_logged_rollback_group('myGroup2','M2');
+select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
- emaj_logged_rollback_group 
-----------------------------
-                          5
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 3 tables and 2 sequences effectively processed.
 (1 row)
 
 --
-select emaj.emaj_rollback_group('myGroup2','M3');
+select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
- emaj_rollback_group 
----------------------
-                   5
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 3 tables and 2 sequences effectively processed.
 (1 row)
 
 -----------------------------
@@ -1647,10 +1647,10 @@ insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
 insert into myTbl4 values (11,'FK...',1,1,'Step 6');
 insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 --
-select emaj.emaj_rollback_group('myGroup1','M5');
- emaj_rollback_group 
----------------------
-                   3
+select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 2 tables and 1 sequences effectively processed.
 (1 row)
 
 --
@@ -1658,20 +1658,20 @@ insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
 insert into myTbl4 values (11,'',1,1,'Step 6');
 insert into myTbl4 values (12,'',1,1,'Step 6');
 --
--- for an equivalent of "select emaj.emaj_logged_rollback_group('myGroup1','M4');"
-select emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false), false);
- _rlbk_async 
--------------
-           4
+-- for an equivalent of "select * from emaj.emaj_logged_rollback_group('myGroup1','M4',true);"
+select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false, true), false, true);
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 3 tables and 1 sequences effectively processed.
 (1 row)
 
 -- and check the rollback result
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_msg
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
- rlbk_id | rlbk_groups | rlbk_mark | rlbk_time_id | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status |                         rlbk_msg                          
----------+-------------+-----------+--------------+----------------+-----------------+---------------+------------------+-------------------+-------------+-----------------------------------------------------------
-   10006 | {myGroup1}  | M4        |        10021 | t              |               1 |             5 |                1 |                 3 | COMPLETED   | Completed: 3 tables and 1 sequences effectively processed
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status |                         rlbk_msg                          
+---------+-------------+-----------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+-----------------------------------------------------------
+   10006 | {myGroup1}  | M4        |        10021 | t              | t                           |               1 |             5 |                1 |                 3 | COMPLETED   | Completed: 3 tables and 1 sequences effectively processed
 (1 row)
 
 -----------------------------
@@ -2271,19 +2271,19 @@ ERROR:  emaj_detailed_log_stat_group: group "dummyGroup" has not been created.
 CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 27 at RAISE
 select emaj.emaj_estimate_rollback_group('dummyGroup', 'dummyMark', TRUE);
 ERROR:  _rlbk_check: group "dummyGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 22 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
 ERROR:  _rlbk_check: group "dummyGroup" has not been created.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean) line 22 at RAISE
-SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE)"
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 8 at RETURN
 select * from emaj.emaj_rollback_activity();
- rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_start_datetime | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
----------+-------------+-----------+--------------------+----------------+-----------------+---------------+------------------+-------------------+-------------+---------------------+-------------+----------------+---------------------
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_start_datetime | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
+---------+-------------+-----------+--------------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+---------------------+-------------+----------------+---------------------
 (0 rows)
 
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);

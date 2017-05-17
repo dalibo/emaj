@@ -202,16 +202,17 @@ Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`
 Rollback simple d'un groupe de tables
 -------------------------------------
 
-S'il est nécessaire de remettre les tables et séquences d'un groupe dans l'état dans lequel elles se trouvaient lors de la prise d'une marque, il faut procéder à un rollback. Pour un rollback simple (« *unlogged* »), il suffit d'exécuter la requête SQL suivante ::
+S'il est nécessaire de remettre les tables et séquences d'un groupe dans l'état dans lequel elles se trouvaient lors de la prise d'une marque, il faut procéder à un rollback. Pour un rollback simple (« *unlogged* » ou « *non tracé* »), il suffit d'exécuter la requête SQL suivante ::
 
-   SELECT emaj.emaj_rollback_group('<nom.du.groupe>', '<nom.de.marque>');
+   SELECT * FROM emaj.emaj_rollback_group('<nom.du.groupe>', '<nom.de.marque>', <est_altération_groupe_permise>);
 
 Le groupe de tables doit être à l'état actif et la marque indiquée doit être toujours « active », c'est à dire qu'elle ne doit pas être marquée comme logiquement supprimée.
 
 Le mot clé '*EMAJ_LAST_MARK*' peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 
-La fonction retourne le nombre de tables et de séquences effectivement modifiées par l'opération de rollback.  
-Rollback a tables group
+Le 3ème paramètre est un booléen qui indique si l’opération de rollback peut cibler une marque posée antérieurement à une opération de :doc:`modification du groupe de tables <alterGroups>`. Selon leur nature, les modifications de groupe de tables effectuées alors que ce dernier est en état *LOGGING* peuvent être ou non automatiquement annulées. Dans certains cas, cette annulation peut être partielle. Par défaut, ce paramètre prend la valeur *FAUX*.
+
+La fonction retourne un ensemble de lignes comportant un niveau de sévérité pouvant prendre les valeurs « *Notice* » ou « *Warning* », et un texte de message. La fonction retourne une ligne de type « *Notice* » indiquant le nombre de tables et de séquences effectivement modifiées par l'opération de rollback. Des lignes de types « *Warning* » peuvent aussi être émises dans le cas où des opérations de modification du groupe de tables ont du être traitées par le rollback.
 
 Pour être certain qu'aucune transaction concurrente ne mette à jour une table du groupe pendant toute la durée du rollback, la fonction *emaj_rollback_group()* pose explicitement un verrou de type *EXCLUSIVE* sur chacune des tables du groupe. Lorsque la version de PostgreSQL est antérieure à 9.5, le verrou est même de type *ACCESS EXCLUSIVE* pour les tables ayant des mises à jour à annuler et dont le trigger de log doit donc être désactivé durant l'opération. Si des transactions accédant à ces tables en mise à jour sont en cours, ceci peut se traduire par la survenue d'une étreinte fatale (deadlock). Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le deadlock est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives. En revanche, les tables du groupe continuent à être accessibles en lecture pendant l'opération.
 
@@ -236,11 +237,19 @@ Il est alors possible de poursuivre les traitements de mises à jour, de poser e
 
 Plusieurs groupes de tables peuvent être « rollbackés » en même temps, en utilisant la fonction *emaj_rollback_groups()* ::
 
-   SELECT emaj.emaj_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>');
+   SELECT * FROM emaj.emaj_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>', <est_altération_groupe_permise>);
 
 La marque indiquée doit strictement correspondre à un même moment dans le temps pour chacun des groupes listés. En d'autres termes, cette marque doit avoir été posée par l'appel d'une même fonction :ref:`emaj_set_mark_groups() <emaj_set_mark_group>`.
 
-Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`. 
+Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
+
+Une ancienne version de ces fonctions ne comportait pas de troisième paramètre et retournait un simple entier correspondant au nombre de tables et séquences effectivement traitées::
+
+   SELECT emaj.emaj_rollback_group('<nom.du.groupe>', '<nom.de.marque>');
+
+   SELECT emaj.emaj_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>');
+
+Ces 2 fonctions sont dépréciées et sont amenées à être supprimées dans une prochaine version.
 
 
 .. _emaj_logged_rollback_group:
@@ -250,9 +259,9 @@ Rollback annulable d'un groupe de tables
 
 Une autre fonction permet d'exécuter un rollback de type « *logged* », Dans ce cas, les triggers de log sur les tables applicatives ne sont pas désactivés durant le rollback, de sorte que durant le rollback les mises à jours de tables appliquées sont elles-mêmes enregistrées dans les tables de log. Ainsi, il est ensuite possible d'annuler le rollback ou, en quelque sorte, de « rollbacker le rollback ». 
 
-Pour exécuter un « *logged rollback* » sur un groupe de tables, il suffit d'exécuter la requête SQL suivante ::
+Pour exécuter un « *logged rollback* » sur un groupe de tables, il suffit d'exécuter la requête SQL suivante::
 
-   SELECT emaj.emaj_logged_rollback_group('<nom.du.groupe>', '<nom.de.marque>');
+   SELECT * FROM emaj.emaj_logged_rollback_group('<nom.du.groupe>', '<nom.de.marque>', <est_altération_groupe_permise>);
 
 Les règles d'utilisation sont les mêmes que pour la fonction *emaj_rollback_group()*, 
 
@@ -260,7 +269,9 @@ Le groupe de tables doit être en état démarré (*LOGGING*) et la marque indiq
 
 Le mot clé 'EMAJ_LAST_MARK' peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 
-La fonction retourne le nombre de tables et de séquences effectivement modifiées par l'opération de rollback.  
+Le 3ème paramètre est un booléen qui indique si l’opération de rollback peut cibler une marque posée antérieurement à une opération de :doc:`modification du groupe de tables <alterGroups>`. Selon leur nature, les modifications de groupe de tables effectuées alors que ce dernier est en état *LOGGING* peuvent être ou non automatiquement annulées. Dans certains cas, cette annulation peut être partielle. Par défaut, ce paramètre prend la valeur *FAUX*.
+
+La fonction retourne un ensemble de lignes comportant un niveau de sévérité pouvant prendre les valeurs « *Notice* » ou « *Warning* », et un texte de message. La fonction retourne une ligne de type « *Notice* » indiquant le nombre de tables et de séquences effectivement modifiées par l'opération de rollback. Des lignes de types « *Warning* » peuvent aussi être émises dans le cas où des opérations de modification du groupe de tables ont du être traitées par le rollback.
 
 Pour être certain qu'aucune transaction concurrente ne mette à jour une table du groupe pendant toute la durée du rollback, la fonction *emaj_logged_rollback_group()* pose explicitement un verrou de type *EXCLUSIVE* sur chacune des tables du groupe. Si des transactions accédant à ces tables en mise à jour sont en cours, ceci peut se traduire par la survenue d'une étreinte fatale (*deadlock*). Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le *deadlock* est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives. En revanche, les tables du groupe continuent à être accessibles en lecture pendant l'opération.
 
@@ -282,7 +293,7 @@ Lorsque le volume de mises à jour à annuler est important et que l'opération 
 Les opérations de rollback sont historisées dans la table *emaj_rlbk*. L'état final des opérations de rollback est accessible dans les colonnes *rlbk_status* et *rlbk_msg* de cette table *emaj_rlbk*.
 
 A l'issue du rollback, il est possible de poursuivre les traitements de mises à jour, de poser d'autres marques et éventuellement de procéder à un nouveau rollback sur une marque quelconque, y compris la marque automatiquement posée en début de rollback, pour annuler ce dernier, ou encore une ancienne marque postérieure à la marque utilisée pour le rollback.
-oDes rollbacks de différents types (*logged* / *unlogged*) peuvent être exécutés en séquence. on peut ainsi procéder à l'enchaînement suivant ::
+oDes rollbacks de différents types (*logged* / *unlogged*) peuvent être exécutés en séquence. on peut ainsi procéder à l'enchaînement suivant::
 
 * Pose de la marque M1
 * …
@@ -298,11 +309,19 @@ Une :ref:`fonction de « consolidation »<emaj_consolidate_rollback_group>` de
 
 Plusieurs groupes de tables peuvent être « rollbackés » en même temps, en utilisant la fonction *emaj_logged_rollback_groups()* ::
 
-   SELECT emaj.emaj_logged_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>');
+   SELECT * FROM emaj.emaj_logged_rollback_groups ('<tableau.des.groupes>', '<nom.de.marque>', <est_altération_groupe_permise>);
 
 La marque indiquée doit strictement correspondre à un même moment dans le temps pour chacun des groupes listés. En d'autres termes, cette marque doit avoir été posée par l'appel d'une même fonction :ref:`emaj_set_mark_groups() <emaj_set_mark_group>`.
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`. 
+
+Une ancienne version de ces fonctions ne comportait pas de troisième paramètre et retournait un simple entier correspondant au nombre de tables et séquences effectivement traitées::
+
+   SELECT emaj.emaj_logged_rollback_group('<nom.du.groupe>', '<nom.de.marque>');
+
+   SELECT emaj.emaj_logged_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>');
+
+Ces 2 fonctions sont dépréciées et sont amenées à être supprimées dans une prochaine version.
 
 
 .. _emaj_stop_group:

@@ -82,6 +82,12 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_alter_plan_pkey" for table "emaj_alter_plan"
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
+drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
+NOTICE:  CREATE TABLE will create implicit sequence "emaj_rlbk_rlbk_id_seq" for serial column "emaj_rlbk.rlbk_id"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_rlbk_pkey" for table "emaj_rlbk"
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------

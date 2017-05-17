@@ -10,9 +10,9 @@ select * from emaj.emaj_verify_all();
 -----------------------------
 -- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group
 -----------------------------
-select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common');
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',false) order by 1,2;
 select emaj.emaj_unprotect_group('myGroup1');
-select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common');
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',false) order by 1,2;
 
 -----------------------------
 -- Step 3 : for myGroup1, update tables, then unprotect, logged_rollback, rename the end rollback mark and consolidate the rollback
@@ -22,9 +22,9 @@ set search_path=myschema1;
 update "myTbl3" set col33 = col33 / 2;
 --
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;
-select emaj.emaj_rollback_group('myGroup1','M2');
+select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 select emaj.emaj_unprotect_mark_group('myGroup1','M3');
-select emaj.emaj_logged_rollback_group('myGroup1','M2');
+select * from emaj.emaj_logged_rollback_group('myGroup1','M2',false) order by 1,2;
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','End_rollback_to_M2');
@@ -50,9 +50,9 @@ select emaj.emaj_set_mark_group('myGroup1','M6');
 -----------------------------
 -- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------
-select emaj.emaj_logged_rollback_group('myGroup2','M2');
+select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
 --
-select emaj.emaj_rollback_group('myGroup2','M3');
+select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 
 -----------------------------
 -- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
@@ -64,7 +64,7 @@ insert into myTbl4 values (11,'FK...',1,1,'Step 6');
 insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 --
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;
-select emaj.emaj_rollback_group('myGroup1','M5');
+select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --
 insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
@@ -74,7 +74,7 @@ copy myTbl4 from stdin;
 \.
 --
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;
-select emaj.emaj_logged_rollback_group('myGroup1','M4');
+select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,2;
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 
 -----------------------------

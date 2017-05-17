@@ -13,21 +13,24 @@ alter sequence emaj.emaj_mark_mark_id_seq restart 3000;
 -- group or groups is NULL
 select emaj.emaj_rollback_group(NULL,NULL);
 ERROR:  _rlbk_check: group "<NULL>" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 select emaj.emaj_logged_rollback_group(NULL,NULL);
 ERROR:  _rlbk_check: group "<NULL>" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_rollback_groups(NULL,NULL);
 WARNING:  _check_names_array: No group name to process.
-CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
+CONTEXT:  SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
+PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
  emaj_rollback_groups 
 ----------------------
                     0
@@ -35,7 +38,8 @@ CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 
 select emaj.emaj_logged_rollback_groups(NULL,NULL);
 WARNING:  _check_names_array: No group name to process.
-CONTEXT:  PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
+CONTEXT:  SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
+PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
  emaj_logged_rollback_groups 
 -----------------------------
                            0
@@ -44,31 +48,35 @@ CONTEXT:  PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 -- group is unknown in emaj_group_def
 select emaj.emaj_rollback_group('unknownGroup',NULL);
 ERROR:  _rlbk_check: group "unknownGroup" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 select emaj.emaj_logged_rollback_group('unknownGroup',NULL);
 ERROR:  _rlbk_check: group "unknownGroup" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_rollback_groups('{"unknownGroup"}',NULL);
 ERROR:  _rlbk_check: group "unknownGroup" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 select emaj.emaj_logged_rollback_groups('{"unknownGroup","myGroup1"}',NULL);
 ERROR:  _rlbk_check: group "unknownGroup" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 begin;
   select emaj.emaj_start_group('myGroup1','');
@@ -79,47 +87,53 @@ begin;
 
   select emaj.emaj_rollback_groups('{"myGroup1","unknownGroup"}','EMAJ_LAST_MARK');
 ERROR:  _rlbk_check: group "unknownGroup" has not been created.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 rollback;
 -- group not in logging state
 select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _rlbk_check: Group "myGroup1" is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _rlbk_check: Group "myGroup2" is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 select emaj.emaj_logged_rollback_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _rlbk_check: Group "myGroup1" is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_logged_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _rlbk_check: Group "myGroup2" is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}',NULL);
 ERROR:  _rlbk_check: Group "myGroup1" is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 begin;
   select emaj.emaj_start_group('myGroup1','');
@@ -130,10 +144,11 @@ begin;
 
   select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 ERROR:  _rlbk_check: Group "myGroup2" is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 rollback;
 -- start groups and set some marks
@@ -241,17 +256,19 @@ select emaj.emaj_protect_group('myGroup2');
 
 select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _rlbk_check: Group "myGroup1" is currently protected against rollback.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 select emaj.emaj_logged_rollback_groups('{"myGroup2","myGroup1"}',NULL);
 ERROR:  _rlbk_check: Group "myGroup2" is currently protected against rollback.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 select emaj.emaj_unprotect_group('myGroup1');
  emaj_unprotect_group 
@@ -274,95 +291,110 @@ select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 -- unknown mark name
 select emaj.emaj_rollback_group('myGroup1',NULL);
 ERROR:  _rlbk_check: No mark "<NULL>" exists for group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 select emaj.emaj_rollback_group('myGroup1','DummyMark');
 ERROR:  _rlbk_check: No mark "DummyMark" exists for group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 select emaj.emaj_logged_rollback_group('myGroup1',NULL);
 ERROR:  _rlbk_check: No mark "<NULL>" exists for group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_logged_rollback_group('myGroup1','DummyMark');
 ERROR:  _rlbk_check: No mark "DummyMark" exists for group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",""}',NULL);
 WARNING:  _check_names_array: a group name is NULL or empty.
-CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
+CONTEXT:  SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
+PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 ERROR:  _rlbk_check: No mark "<NULL>" exists for group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",NULL}',NULL);
 WARNING:  _check_names_array: a group name is NULL or empty.
-CONTEXT:  PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
+CONTEXT:  SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
+PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 ERROR:  _rlbk_check: No mark "<NULL>" exists for group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','DummyMark');
 ERROR:  _rlbk_check: No mark "DummyMark" exists for group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2","myGroup2"}',NULL);
 WARNING:  _check_names_array: duplicate group name "myGroup2".
-CONTEXT:  PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
+CONTEXT:  SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
+PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 ERROR:  _rlbk_check: No mark "<NULL>" exists for group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark11');
 ERROR:  _rlbk_check: No mark "Mark11" exists for group "myGroup2".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 -- mark name referencing different points in time
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Different_Mark');
 ERROR:  _rlbk_check: Mark "Different_Mark" does not represent the same point in time for all groups.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 -- attempt to rollback an 'audit_only' group
 select emaj.emaj_rollback_group('phil''s group#3",','EMAJ_LAST_MARK');
 ERROR:  _rlbk_check: Group "phil's group#3"," has been created for audit only purpose.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 select emaj.emaj_logged_rollback_group('phil''s group#3",','M1_audit_only');
 ERROR:  _rlbk_check: Group "phil's group#3"," has been created for audit only purpose.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 -- attempt to rollback to a stop mark
 begin;
@@ -386,10 +418,11 @@ begin;
 
   select emaj.emaj_rollback_group('myGroup1','GeneratedStopMark');
 ERROR:  _rlbk_check: mark "GeneratedStopMark" for group "myGroup1" is not usable for rollback.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 rollback;
 -- attempt to rollback over protected marks
@@ -420,10 +453,11 @@ begin;
 
   select emaj.emaj_rollback_group('myGroup1','Mark11');
 ERROR:  _rlbk_check: protected marks (Protected Mark 1, Protected Mark 2) for group "myGroup1" block the rollback to mark "Mark11".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 rollback;
 -- attempt to rollback several groups over one single-mark protected marks
@@ -448,10 +482,11 @@ begin;
 
   select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common Mark 1');
 ERROR:  _rlbk_check: protected marks (Protected Mark 1) for group "myGroup1" block the rollback to mark "Common Mark 1".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 rollback;
 -- attempt to logged-rollback over a protected mark
@@ -464,10 +499,11 @@ begin;
 
   select emaj.emaj_logged_rollback_group('myGroup1','Mark11');
 ERROR:  _rlbk_check: protected marks (Different_Mark) for group "myGroup1" block the rollback to mark "Mark11".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 rollback;
 -- rollback to a protected mark
@@ -492,8 +528,9 @@ begin;
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_rlbk_init" line 26 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 rollback;
 begin;
@@ -502,8 +539,9 @@ begin;
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_rlbk_init" line 26 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 rollback;
 -- internal error when the row corresponding to an application sequence to rollback is missing in emaj_sequence
@@ -513,14 +551,16 @@ begin;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 ERROR:  _rlbk_seq: Mark at time id "3003" not found for sequence "myschema2.myseq1".
 CONTEXT:  SQL statement "SELECT emaj._rlbk_seq(t.*, v_markTimeId)
@@ -528,8 +568,8 @@ CONTEXT:  SQL statement "SELECT emaj._rlbk_seq(t.*, v_markTimeId)
               WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t"
 PL/pgSQL function "_rlbk_end" line 122 at PERFORM
-SQL statement "SELECT emaj._rlbk_end(v_rlbkId, v_multiGroup)"
-PL/pgSQL function "_rlbk_groups" line 28 at SQL statement
+PL/pgSQL function "_rlbk_groups" line 28 at RETURN QUERY
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 rollback;
 -- should be OK, with different cases of dblink status
@@ -546,14 +586,16 @@ select emaj.emaj_rollback_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_group" line 7 at RETURN
  emaj_rollback_group 
 ---------------------
@@ -574,14 +616,16 @@ select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_group" line 11 at RETURN
  emaj_logged_rollback_group 
 ----------------------------
@@ -600,14 +644,16 @@ select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
  emaj_rollback_groups 
 ----------------------
@@ -621,14 +667,16 @@ select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
  emaj_rollback_groups 
 ----------------------
@@ -642,14 +690,16 @@ begin;
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
  emaj_logged_rollback_groups 
 -----------------------------
@@ -664,14 +714,16 @@ select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
  emaj_logged_rollback_groups 
 -----------------------------
@@ -685,8 +737,9 @@ begin;
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_rlbk_init" line 26 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN
 rollback;
 begin;
@@ -695,8 +748,9 @@ begin;
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function "_rlbk_init" line 26 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup)"
+SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN
 rollback;
 -- restart groups
@@ -1795,20 +1849,20 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_myt
 (3 rows)
 
 -- use the functions dedicated to the ppa plugin
--- for an equivalent of "select emaj.emaj_rollback_group('myGroup4','myGroup4_start');"
-select emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false), false);
- _rlbk_async 
--------------
-           3
+-- for an equivalent of "select * from emaj.emaj_rollback_group('myGroup4','myGroup4_start',true);"
+select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false, true), false, true);
+ rlbk_severity |                  rlbk_message                   
+---------------+-------------------------------------------------
+ Notice        | 3 tables and 0 sequences effectively processed.
 (1 row)
 
 -- and check the result
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_msg
  from emaj.emaj_rlbk order by rlbk_id desc limit 1; 
- rlbk_id | rlbk_groups |   rlbk_mark    | rlbk_time_id | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status |                         rlbk_msg                          
----------+-------------+----------------+--------------+----------------+-----------------+---------------+------------------+-------------------+-------------+-----------------------------------------------------------
-      19 | {myGroup4}  | myGroup4_start |         3049 | f              |               1 |             3 |                0 |                 3 | COMPLETED   | Completed: 3 tables and 0 sequences effectively processed
+ rlbk_id | rlbk_groups |   rlbk_mark    | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status |                         rlbk_msg                          
+---------+-------------+----------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+-----------------------------------------------------------
+      19 | {myGroup4}  | myGroup4_start |         3049 | f              | t                           |               1 |             3 |                0 |                 3 | COMPLETED   | Completed: 3 tables and 0 sequences effectively processed
 (1 row)
 
 -----------------------------
@@ -1820,10 +1874,10 @@ begin;
 -- 1 rollback operation in EXECUTING state, but no rollback steps have started yet
   insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-1, now()-'0.1 seconds'::interval);
   insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) values (-2, '2000-01-01 01:00:00');
-  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
-             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
-    values (1232,array['group1232'],'mark1232',-2,-1,true,1,
-             5,4,3,'EXECUTING');
+  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+    values (1232,array['group1232'],'mark1232',-2,-1,true,false,
+             1,5,4,3,'EXECUTING');
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
              rlbp_estimated_duration, rlbp_estimated_quantity, rlbp_start_datetime, rlbp_duration)
     values (1232, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null,null),
@@ -1955,10 +2009,10 @@ begin;
 -- 1 rollback operation in LOCKING state and without step other than LOCK_TABLE
   insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-1, now()-'2 minutes'::interval);
   insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) values (-2, '2000-01-01 01:00:00');
-  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
-             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
-    values (1233,array['group1233'],'mark1233',-2,-1,true,1,
-             5,4,3,'LOCKING');
+  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+    values (1233,array['group1233'],'mark1233',-2,-1,true,false,
+             1,5,4,3,'LOCKING');
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
              rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
     values (1233, 'LOCK_TABLE','schema','t1','',null,null,null),
@@ -1984,10 +2038,10 @@ begin;
 
 -- +1 rollback operation in PLANNING state
   insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-3, now()-'1 minute'::interval);
-  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, 
-             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
-    values (1234,array['group1234'],'mark1234',-2,-3,true,1,
-             5,4,3,'PLANNING');
+  insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+    values (1234,array['group1234'],'mark1234',-2,-3,true,false,
+             1,5,4,3,'PLANNING');
   select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table,
          rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct 
     from emaj._rollback_activity();
@@ -2209,33 +2263,33 @@ select emaj.emaj_cleanup_rollback_state();
 -----------------------------
 -- check rollback tables
 -----------------------------
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_msg
   from emaj.emaj_rlbk order by rlbk_id;
- rlbk_id |     rlbk_groups     |   rlbk_mark    | rlbk_time_id | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_is_dblink_used | end_datetime |                         rlbk_msg                          
----------+---------------------+----------------+--------------+----------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+---------------------+--------------+-----------------------------------------------------------
-       1 | {myGroup1}          | Different_Mark |         3006 | f              |               1 |             5 |                1 |                 0 | COMMITTED   |               3036 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-       4 | {myGroup1}          | Different_Mark |         3015 | f              |               1 |             5 |                1 |                 0 | COMMITTED   |               3088 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-       5 | {myGroup2}          | Mark21         |         3016 | f              |               1 |             6 |                2 |                 0 | COMMITTED   |               3094 | f                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
-       6 | {myGroup1}          | Different_Mark |         3017 | t              |               1 |             5 |                1 |                 0 | COMMITTED   |               3102 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-       7 | {myGroup2}          | Mark21         |         3019 | t              |               1 |             6 |                2 |                 0 | COMMITTED   |               3112 | f                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
-       8 | {myGroup1,myGroup2} | Mark1B         |         3022 | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               3127 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-       9 | {myGroup1,myGroup2} | Mark1B         |         3023 | f              |               1 |            11 |                3 |                 0 | COMMITTED   |               3135 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-      10 | {myGroup1,myGroup2} | Mark1B         |         3024 | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               3143 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-      11 | {myGroup1,myGroup2} | Mark1B         |         3026 | t              |               1 |            11 |                3 |                 0 | COMMITTED   |               3155 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
-      12 | {myGroup1}          | Mark12         |         3033 | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               3195 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-      13 | {myGroup1}          | Mark11         |         3034 | f              |               1 |             5 |                1 |                 3 | COMMITTED   |               3207 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
-      14 | {myGroup1}          | Mark12         |         3039 | t              |               1 |             5 |                1 |                 2 | COMMITTED   |               3243 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-      15 | {myGroup1}          | Mark11         |         3041 | t              |               1 |             5 |                1 |                 5 | COMMITTED   |               3258 | t                   | [ts]         | Completed: 5 tables and 1 sequences effectively processed
-      16 | {myGroup1}          | Mark13         |         3043 | f              |               1 |             5 |                1 |                 5 | COMMITTED   |               3280 | t                   | [ts]         | Completed: 5 tables and 1 sequences effectively processed
-      17 | {emptyGroup}        | MarkInit       |         3044 | f              |               1 |             0 |                0 |                 0 | COMMITTED   |               3301 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
-      18 | {myGroup4}          | mark1          |         3047 | t              |               1 |             3 |                0 |                 3 | COMMITTED   |               3320 | t                   | [ts]         | Completed: 3 tables and 0 sequences effectively processed
-      19 | {myGroup4}          | myGroup4_start |         3049 | f              |               1 |             3 |                0 |                 3 | COMMITTED   |               3336 | t                   | [ts]         | Completed: 3 tables and 0 sequences effectively processed
-      20 | {myGroup1}          | Conso_M1       |         3051 | t              |               1 |             5 |                1 |                 0 | COMMITTED   |               3358 | t                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
-      21 | {myGroup1}          | Conso_M2       |         3055 | t              |               1 |             5 |                1 |                 3 | COMMITTED   |               3380 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
-      22 | {myGroup1}          | Conso_M1       |         3057 | f              |               1 |             5 |                1 |                 2 | COMMITTED   |               3405 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
-      23 | {myGroup4}          | myGroup4_start |         3058 | f              |               1 |             3 |                0 |                 0 | ABORTED     |               3419 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
+ rlbk_id |     rlbk_groups     |   rlbk_mark    | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_is_dblink_used | end_datetime |                         rlbk_msg                          
+---------+---------------------+----------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+---------------------+--------------+-----------------------------------------------------------
+       1 | {myGroup1}          | Different_Mark |         3006 | f              | f                           |               1 |             5 |                1 |                 0 | COMMITTED   |               3036 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+       4 | {myGroup1}          | Different_Mark |         3015 | f              | f                           |               1 |             5 |                1 |                 0 | COMMITTED   |               3088 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+       5 | {myGroup2}          | Mark21         |         3016 | f              | f                           |               1 |             6 |                2 |                 0 | COMMITTED   |               3094 | f                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+       6 | {myGroup1}          | Different_Mark |         3017 | t              | f                           |               1 |             5 |                1 |                 0 | COMMITTED   |               3102 | f                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+       7 | {myGroup2}          | Mark21         |         3019 | t              | f                           |               1 |             6 |                2 |                 0 | COMMITTED   |               3112 | f                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+       8 | {myGroup1,myGroup2} | Mark1B         |         3022 | f              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |               3127 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+       9 | {myGroup1,myGroup2} | Mark1B         |         3023 | f              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |               3135 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+      10 | {myGroup1,myGroup2} | Mark1B         |         3024 | t              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |               3143 | f                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+      11 | {myGroup1,myGroup2} | Mark1B         |         3026 | t              | f                           |               1 |            11 |                3 |                 0 | COMMITTED   |               3155 | t                   | [ts]         | Completed: 0 tables and 3 sequences effectively processed
+      12 | {myGroup1}          | Mark12         |         3033 | f              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |               3195 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      13 | {myGroup1}          | Mark11         |         3034 | f              | f                           |               1 |             5 |                1 |                 3 | COMMITTED   |               3207 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
+      14 | {myGroup1}          | Mark12         |         3039 | t              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |               3243 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      15 | {myGroup1}          | Mark11         |         3041 | t              | f                           |               1 |             5 |                1 |                 5 | COMMITTED   |               3258 | t                   | [ts]         | Completed: 5 tables and 1 sequences effectively processed
+      16 | {myGroup1}          | Mark13         |         3043 | f              | f                           |               1 |             5 |                1 |                 5 | COMMITTED   |               3280 | t                   | [ts]         | Completed: 5 tables and 1 sequences effectively processed
+      17 | {emptyGroup}        | MarkInit       |         3044 | f              | f                           |               1 |             0 |                0 |                 0 | COMMITTED   |               3301 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
+      18 | {myGroup4}          | mark1          |         3047 | t              | f                           |               1 |             3 |                0 |                 3 | COMMITTED   |               3320 | t                   | [ts]         | Completed: 3 tables and 0 sequences effectively processed
+      19 | {myGroup4}          | myGroup4_start |         3049 | f              | t                           |               1 |             3 |                0 |                 3 | COMMITTED   |               3336 | t                   | [ts]         | Completed: 3 tables and 0 sequences effectively processed
+      20 | {myGroup1}          | Conso_M1       |         3051 | t              | f                           |               1 |             5 |                1 |                 0 | COMMITTED   |               3358 | t                   | [ts]         | Completed: 0 tables and 1 sequences effectively processed
+      21 | {myGroup1}          | Conso_M2       |         3055 | t              | f                           |               1 |             5 |                1 |                 3 | COMMITTED   |               3380 | t                   | [ts]         | Completed: 3 tables and 1 sequences effectively processed
+      22 | {myGroup1}          | Conso_M1       |         3057 | f              | f                           |               1 |             5 |                1 |                 2 | COMMITTED   |               3405 | t                   | [ts]         | Completed: 2 tables and 1 sequences effectively processed
+      23 | {myGroup4}          | myGroup4_start |         3058 | f              | f                           |               1 |             3 |                0 |                 0 | ABORTED     |               3419 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
 (21 rows)
 
 select rlbs_rlbk_id, rlbs_session, 

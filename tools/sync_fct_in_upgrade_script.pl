@@ -288,6 +288,9 @@ use warnings; use strict;
       # if a comment also exists, write it
       # remove variable names from the function signature
       $shortSignature = $fnctSignature; $shortSignature =~ s/(V|R)_\S*\s//g;
+      # remove also the output variables (the intermediate ones and then the last of the function signature)
+      $shortSignature =~ s/,\s*OUT\s+(.*?),/,/g; $shortSignature =~ s/,\s*OUT\s+(.*)\)/\)/;
+
       if (exists($currComments{$shortSignature})) {
         print FICUPG $currComments{$shortSignature};
         $nbCommentUpgrade++;

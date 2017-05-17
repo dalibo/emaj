@@ -207,8 +207,8 @@ analyze mytbl4;
 -- rollback with dblink_connect_u not granted
 revoke execute on function dblink_connect_u(text,text) from emaj_adm;
 set role emaj_regression_tests_adm_user;
-select emaj.emaj_logged_rollback_group('myGroup2','M2');
-select emaj.emaj_logged_rollback_group('myGroup2','M3');
+select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
+select * from emaj.emaj_logged_rollback_group('myGroup2','M3',false) order by 1,2;
 reset role;
 grant execute on function dblink_connect_u(text,text) to emaj_adm;
 set role emaj_regression_tests_adm_user;
@@ -235,7 +235,7 @@ select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid
 -----------------------------
 -- Step 4 : for myGroup1, rollback then update tables then set 3 marks
 -----------------------------
-select emaj.emaj_rollback_group('myGroup1','M2');
+select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 --
 set search_path=public,myschema1;
 insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,110) as i;
@@ -272,9 +272,9 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -----------------------------
 -- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------
-select emaj.emaj_logged_rollback_group('myGroup2','M2');
+select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
 --
-select emaj.emaj_rollback_group('myGroup2','M3');
+select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 -----------------------------
 -- Checking step 5
 -----------------------------
@@ -305,16 +305,16 @@ insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
 insert into myTbl4 values (11,'FK...',1,1,'Step 6');
 insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 --
-select emaj.emaj_rollback_group('myGroup1','M5');
+select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
 --
 insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
 insert into myTbl4 values (11,'',1,1,'Step 6');
 insert into myTbl4 values (12,'',1,1,'Step 6');
 --
--- for an equivalent of "select emaj.emaj_logged_rollback_group('myGroup1','M4');"
-select emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false), false);
+-- for an equivalent of "select * from emaj.emaj_logged_rollback_group('myGroup1','M4',true);"
+select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false, true), false, true);
 -- and check the rollback result
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_msg
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
 
