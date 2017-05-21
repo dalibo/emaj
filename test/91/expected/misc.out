@@ -664,18 +664,18 @@ ERROR:  emaj_snap_group: directory parameter cannot be NULL
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO 'unknown_directory/myschema1_myTbl3_col31_seq.snap' "
-PL/pgSQL function "emaj_snap_group" line 81 at EXECUTE statement
+PL/pgSQL function "emaj_snap_group" line 90 at EXECUTE statement
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3_col31_seq.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/unknown_directory/myschema1_myTbl3_col31_seq.snap' "
-PL/pgSQL function "emaj_snap_group" line 81 at EXECUTE statement
+PL/pgSQL function "emaj_snap_group" line 90 at EXECUTE statement
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','dummy_option');
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: .../emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/tmp/emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_option
-CONTEXT:  PL/pgSQL function "emaj_snap_group" line 81 at EXECUTE statement
+CONTEXT:  PL/pgSQL function "emaj_snap_group" line 90 at EXECUTE statement
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_group: invalid COPY options parameter format

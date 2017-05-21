@@ -33,6 +33,10 @@ PGPORT96="5496"
 PGDIR96="$PG_HOME/pg96"
 PGREG96="$PG_HOME/postgresql-9.6/src/test/regress"
 
+PGPORT10="5410"
+PGDIR10="$PG_HOME/pg10"
+PGREG10="$PG_HOME/postgresql-10/src/test/regress"
+
 #---------------------------------------------#
 #            Functions definition             #
 #---------------------------------------------#
@@ -172,8 +176,9 @@ echo "	c- pg 9.3 (port $PGPORT93) standart test"
 echo "	d- pg 9.4 (port $PGPORT94) standart test"
 echo "	e- pg 9.5 (port $PGPORT95) standart test"
 echo "	f- pg 9.6 (port $PGPORT96) standart test"
+echo "	g- pg 10 (port $PGPORT10) standart test"
 echo "	m- pg 9.1 dump and 9.5 restore"
-echo "	t- all tests, from a to f"
+echo "	t- all tests, from a to g"
 echo "	u- pg 9.1 upgraded to pg 9.6"
 echo "	x- pg 9.1 (port $PGPORT91) created with psql script"
 echo "	A- pg 9.1 (port $PGPORT91) starting with E-Maj upgrade"
@@ -182,7 +187,8 @@ echo "	C- pg 9.3 (port $PGPORT93) starting with E-Maj upgrade"
 echo "	D- pg 9.4 (port $PGPORT94) starting with E-Maj upgrade"
 echo "	E- pg 9.5 (port $PGPORT95) starting with E-Maj upgrade"
 echo "	F- pg 9.6 (port $PGPORT96) starting with E-Maj upgrade"
-echo "	T- all tests with E-Maj upgrade, from A to F"
+echo "	G- pg 10 (port $PGPORT10) starting with E-Maj upgrade"
+echo "	T- all tests with E-Maj upgrade, from A to G"
 echo "	V- pg 9.1 (port $PGPORT91) mixed with E-Maj upgrade"
 echo "	W- pg 9.3 (port $PGPORT93) mixed with E-Maj upgrade"
 echo "	X- pg 9.5 (port $PGPORT95) mixed with E-Maj upgrade"
@@ -198,6 +204,7 @@ case $ANSWER in
 	d) reg_test_version "94" "standart";;
 	e) reg_test_version "95" "standart";;
 	f) reg_test_version "96" "standart";;
+	g) reg_test_version "10" "standart";;
 	m) migrat_test "95" "91";;
 	t)
 		reg_test_version "91" "standart"
@@ -206,6 +213,7 @@ case $ANSWER in
 		reg_test_version "94" "standart"
 		reg_test_version "95" "standart"
 		reg_test_version "96" "standart"
+		reg_test_version "10" "standart"
 		;;
 	u) pg_upgrade_test "91" "96" "db96b";;
 	A) reg_test_version "91" "initial_upgrade";;
@@ -214,6 +222,7 @@ case $ANSWER in
 	D) reg_test_version "94" "initial_upgrade";;
 	E) reg_test_version "95" "initial_upgrade";;
 	F) reg_test_version "96" "initial_upgrade";;
+	G) reg_test_version "10" "initial_upgrade";;
 	T)
 		reg_test_version "91" "initial_upgrade"
 		reg_test_version "92" "initial_upgrade"
@@ -221,6 +230,7 @@ case $ANSWER in
 		reg_test_version "94" "initial_upgrade"
 		reg_test_version "95" "initial_upgrade"
 		reg_test_version "96" "initial_upgrade"
+		reg_test_version "10" "initial_upgrade"
 		;;
 	V|v) reg_test_version "91" "upgrade_while_loging";;
 	W|w) reg_test_version "93" "upgrade_while_loging";;
