@@ -119,7 +119,7 @@ On the contrary, if specific tablespaces are referenced for any log table or log
 
 The *emaj_create_group()* function also checks the existence of application triggers on any tables of the group. If a trigger exists on a table of the group, a message is returned, suggesting the user to verify that this trigger does not update any tables that would not belong to the group. 
 
-If a sequence of the group is associated to a *SERIAL* or *BIGSERIAL* column and the table that owns this column does not belong to the same tables group, the function also issues a *WARNING* message.
+If a sequence of the group is associated either to a *SERIAL* or *BIGSERIAL* column or to a column created with a *GENERATED AS IDENTITY* clause, and the table that owns this column does not belong to the same tables group, the function also issues a *WARNING* message.
 
 A specific version of the function allows to create an empty tables group, i.e. without any table or sequence at creation time::
 

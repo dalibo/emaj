@@ -275,7 +275,7 @@ begin;
 -- temporarily insert new rows into myTbl4 of myschema1
   insert into myschema1.myTbl4 select i,'FK...',2,1,'ABC' from generate_series (10,20) as i;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
--- should return 2.728023 sec
+-- should return 2.729023 sec
 rollback;
 
 -- delete all manualy inserted rollback statistics, cleanup the statistics table and recreate its foreign key

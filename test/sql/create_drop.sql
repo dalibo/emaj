@@ -12,6 +12,7 @@ insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,NULL,'tsplog1','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b_col20_seq');
 
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');

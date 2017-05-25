@@ -10,11 +10,9 @@ revoke all on mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.
 revoke all on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6, mySchema2.myTbl7, mySchema2.myTbl8 from emaj_regression_tests_adm_user;
 revoke all on "phil's schema3"."phil's tbl1", "phil's schema3"."myTbl2\", "phil's schema3".myTbl4 from emaj_regression_tests_adm_user;
 revoke all on mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2, mySchema4.myPartP1, mySchema4.myPartP2 from emaj_regression_tests_adm_user;
-revoke all on sequence mySchema1."myTbl3_col31_seq" from emaj_regression_tests_adm_user;
-revoke all on sequence mySchema2."myTbl3_col31_seq" from emaj_regression_tests_adm_user;
-revoke all on sequence myschema2.myseq1 from emaj_regression_tests_adm_user;
-revoke all on sequence "phil's schema3"."myTbl2\_col21_seq" from emaj_regression_tests_adm_user;
-revoke all on sequence "phil's schema3"."phil's seq\1" from emaj_regression_tests_adm_user;
+revoke all on sequence mySchema1.myTbl2b_col20_seq, mySchema1."myTbl3_col31_seq" from emaj_regression_tests_adm_user;
+revoke all on sequence mySchema2."myTbl3_col31_seq", myschema2.myseq1 from emaj_regression_tests_adm_user;
+revoke all on sequence "phil's schema3"."myTbl2\_col21_seq", "phil's schema3"."phil's seq\1" from emaj_regression_tests_adm_user;
 --
 drop role emaj_regression_tests_adm_user;
 
@@ -26,11 +24,9 @@ revoke all on mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.
 revoke all on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6, mySchema2.myTbl7, mySchema2.myTbl8 from emaj_regression_tests_viewer_user;
 revoke all on "phil's schema3"."phil's tbl1", "phil's schema3"."myTbl2\" from emaj_regression_tests_viewer_user;
 revoke all on mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2, mySchema4.myPartP1, mySchema4.myPartP2 from emaj_regression_tests_viewer_user;
-revoke all on sequence mySchema1."myTbl3_col31_seq" from emaj_regression_tests_viewer_user;
-revoke all on sequence mySchema2."myTbl3_col31_seq" from emaj_regression_tests_viewer_user;
-revoke all on sequence mySchema2.mySeq1 from emaj_regression_tests_viewer_user;
-revoke all on sequence "phil's schema3"."myTbl2\_col21_seq" from emaj_regression_tests_viewer_user;
-revoke all on sequence "phil's schema3"."phil's seq\1" from emaj_regression_tests_viewer_user;
+revoke all on sequence mySchema1.myTbl2b_col20_seq, mySchema1."myTbl3_col31_seq" from emaj_regression_tests_viewer_user;
+revoke all on sequence mySchema2."myTbl3_col31_seq", myschema2.myseq1 from emaj_regression_tests_viewer_user;
+revoke all on sequence "phil's schema3"."myTbl2\_col21_seq", "phil's schema3"."phil's seq\1" from emaj_regression_tests_viewer_user;
 --
 drop role emaj_regression_tests_viewer_user;
 

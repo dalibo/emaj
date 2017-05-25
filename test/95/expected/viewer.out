@@ -88,13 +88,13 @@ SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
  emaj_create_group 
 -------------------
-                 6
+                 7
 (1 row)
 
 select emaj.emaj_start_group('myGroup1','Start');
  emaj_start_group 
 ------------------
-                6
+                7
 (1 row)
 
 select emaj.emaj_create_group('myGroup2');
@@ -228,7 +228,7 @@ select count(*) from emaj.emaj_hist;
 select count(*) from emaj.emaj_group_def;
  count 
 -------
-    29
+    30
 (1 row)
 
 select count(*) from emaj.emaj_group;
@@ -240,7 +240,7 @@ select count(*) from emaj.emaj_group;
 select count(*) from emaj.emaj_relation;
  count 
 -------
-    14
+    15
 (1 row)
 
 select count(*) from emaj.emaj_mark;
@@ -252,7 +252,7 @@ select count(*) from emaj.emaj_mark;
 select count(*) from emaj.emaj_sequence;
  count 
 -------
-     6
+     7
 (1 row)
 
 select count(*) from emaj.emaj_seq_hole;
@@ -336,13 +336,13 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
 select emaj.emaj_estimate_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 0.006 secs
+ @ 0.007 secs
 (1 row)
 
 select emaj.emaj_estimate_rollback_groups(array['myGroup1'],emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 0.006 secs
+ @ 0.007 secs
 (1 row)
 
 select * from emaj.emaj_rollback_activity();

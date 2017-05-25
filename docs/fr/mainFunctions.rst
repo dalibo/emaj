@@ -119,7 +119,7 @@ En revanche, si des tablespaces spécifiques pour les tables de log ou pour leur
 
 La fonction *emaj_create_group()* contrôle également l'existence de « triggers applicatifs » impliquant les tables du groupe. Si un trigger existe sur une table du groupe, un message d'avertissement est retourné incitant l'utilisateur à vérifier que ce trigger ne fait pas de mises à jour sur des tables n'appartenant pas au groupe.
 
-Si une séquence du groupe est associée à une colonne de type *SERIAL* ou *BIGSERIAL* et que sa table d'appartenance ne fait pas partie du groupe, la fonction génère également un message de type *WARNING*.
+Si une séquence du groupe est associée à une colonne soit de type *SERIAL* ou *BIGSERIAL* soit définie avec une clause *GENERATED AS IDENTITY*, et que sa table d'appartenance ne fait pas partie du groupe, la fonction génère également un message de type *WARNING*. 
 
 Une forme particulière de la fonction permet de créer un groupe de table vide, c’est à dire ne contenant à sa création aucune table ni séquence ::
 

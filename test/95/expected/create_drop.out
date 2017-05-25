@@ -12,6 +12,7 @@ insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,NULL,'tsplog1','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b_col20_seq');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
@@ -201,7 +202,7 @@ CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
  emaj_create_group 
 -------------------
-                 6
+                 7
 (1 row)
 
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl1';
@@ -250,7 +251,7 @@ CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
  emaj_create_group 
 -------------------
-                 6
+                 7
 (1 row)
 
 -- explicitely create an empty group (here audit_only)
@@ -366,7 +367,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
     group_name    | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
 ------------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
  emptyGroup       | f                | t                       |              0 |                 0 | f                     |                      5 |                          | 
- myGroup1         | f                | f                       |              5 |                 1 | t                     |                      4 |                          | 
+ myGroup1         | f                | f                       |              5 |                 2 | t                     |                      4 |                          | 
  myGroup2         | f                | f                       |              6 |                 2 | t                     |                      6 |                          | 
  myGroup4         | f                | f                       |              5 |                 0 | t                     |                     10 |                          | 
  phil's group#3", | f                | t                       |              2 |                 2 | f                     |                      9 |                          | 
@@ -381,6 +382,7 @@ select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, r
  myschema1      | mytbl4            | myGroup1         | r        |           20 | emaj           | myschema1_mytbl4_log           | tsplog1         | myschema1_mytbl4_log_idx           | tsp log'2       | myschema1_mytbl4_log_seq           | myschema1_mytbl4_log_fnct           | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45           | col41                         | tbl.col41 = keys.col41
  myschema1      | mytbl2            | myGroup1         | r        |              | emaj           | myschema1_mytbl2_log           | tsplog1         | myschema1_mytbl2_log_idx           | tsplog1         | myschema1_mytbl2_log_seq           | myschema1_mytbl2_log_fnct           | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21
  myschema1      | mytbl2b           | myGroup1         | r        |              | emajb          | myschema1_mytbl2b_log          | tsp log'2       | myschema1_mytbl2b_log_idx          | tsp log'2       | myschema1_mytbl2b_log_seq          | myschema1_mytbl2b_log_fnct          | tbl.col20,tbl.col21                                         | col20                         | tbl.col20 = keys.col20
+ myschema1      | mytbl2b_col20_seq | myGroup1         | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
  myschema2      | myseq1            | myGroup2         | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
  myschema2      | mytbl1            | myGroup2         | r        |              | emaj           | myschema2_mytbl1_log           |                 | myschema2_mytbl1_log_idx           |                 | myschema2_mytbl1_log_seq           | myschema2_mytbl1_log_fnct           | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12
  myschema2      | mytbl2            | myGroup2         | r        |              | emaj           | myschema2_mytbl2_log           |                 | myschema2_mytbl2_log_idx           |                 | myschema2_mytbl2_log_seq           | myschema2_mytbl2_log_fnct           | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21
@@ -398,7 +400,7 @@ select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, r
  phil's schema3 | myTbl2\_col21_seq | phil's group#3", | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
  phil's schema3 | phil's seq\1      | phil's group#3", | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
  phil's schema3 | phil's tbl1       | phil's group#3", | r        |              | emaj #'3       | phil's schema3_phil's tbl1_log |                 | phil's schema3_phil's tbl1_log_idx |                 | phil's schema3_phil's tbl1_log_seq | phil's schema3_phil's tbl1_log_fnct | tbl."phil's col11",tbl."phil's col12",tbl."phil\s col13"    | "phil's col11","phil's col12" | tbl."phil's col11" = keys."phil's col11" AND tbl."phil's col12" = keys."phil's col12"
-(23 rows)
+(24 rows)
 
 select * from pg_tables where schemaname like 'emaj%' order by tablename;
  schemaname |           tablename            | tableowner | tablespace | hasindexes | hasrules | hastriggers | rowsecurity 
@@ -498,7 +500,7 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 select emaj.emaj_start_group('myGroup1','');
  emaj_start_group 
 ------------------
-                6
+                7
 (1 row)
 
 select emaj.emaj_drop_group('myGroup1');
@@ -508,7 +510,7 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
-               6
+               7
 (1 row)
 
 -- secondary schema with an object blocking the schema drop
@@ -525,7 +527,7 @@ rollback;
 select emaj.emaj_drop_group('myGroup1');
  emaj_drop_group 
 -----------------
-               6
+               7
 (1 row)
 
 select emaj.emaj_drop_group('myGroup2');
@@ -569,19 +571,19 @@ CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 70 at PERFORM
  emaj_create_group 
 -------------------
-                 6
+                 7
 (1 row)
 
 select emaj.emaj_start_group('myGroup1','');
  emaj_start_group 
 ------------------
-                6
+                7
 (1 row)
 
 select emaj.emaj_force_drop_group('myGroup1');
  emaj_force_drop_group 
 -----------------------
-                     6
+                     7
 (1 row)
 
 select emaj.emaj_create_group('myGroup2',true);
@@ -621,7 +623,7 @@ select hist_function, hist_event, hist_object,
  CREATE_GROUP     | BEGIN          | myGroup1         | rollbackable                   | postgres
  CREATE_GROUP     | SCHEMA CREATED | emajb            |                                | postgres
  CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                | postgres
- CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed   | postgres
+ CREATE_GROUP     | END            | myGroup1         | 7 tables/sequences processed   | postgres
  CREATE_GROUP     | BEGIN          | emptyGroup       | audit_only                     | postgres
  CREATE_GROUP     | END            | emptyGroup       | 0 tables/sequences processed   | postgres
  CREATE_GROUP     | BEGIN          | myGroup2         | rollbackable                   | postgres
@@ -640,16 +642,16 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s) | postgres
  SET_MARK_GROUP   | BEGIN          | myGroup1         | START_%                        | postgres
  SET_MARK_GROUP   | END            | myGroup1         | START_%                        | postgres
- START_GROUP      | END            | myGroup1         | 6 tables/sequences processed   | postgres
+ START_GROUP      | END            | myGroup1         | 7 tables/sequences processed   | postgres
  STOP_GROUP       | BEGIN          | myGroup1         |                                | postgres
  LOCK_GROUP       | BEGIN          | myGroup1         |                                | postgres
  LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s) | postgres
  SET_MARK_GROUP   | BEGIN          | myGroup1         | STOP_%                         | postgres
  SET_MARK_GROUP   | END            | myGroup1         | STOP_%                         | postgres
- STOP_GROUP       | END            | myGroup1         | 6 tables/sequences processed   | postgres
+ STOP_GROUP       | END            | myGroup1         | 7 tables/sequences processed   | postgres
  DROP_GROUP       | BEGIN          | myGroup1         |                                | postgres
  DROP_GROUP       | SCHEMA DROPPED | emajb            |                                | postgres
- DROP_GROUP       | END            | myGroup1         | 6 tables/sequences processed   | postgres
+ DROP_GROUP       | END            | myGroup1         | 7 tables/sequences processed   | postgres
  DROP_GROUP       | BEGIN          | myGroup2         |                                | postgres
  DROP_GROUP       | SCHEMA DROPPED | "emajC"          |                                | postgres
  DROP_GROUP       | END            | myGroup2         | 8 tables/sequences processed   | postgres
@@ -658,17 +660,17 @@ select hist_function, hist_event, hist_object,
  CREATE_GROUP     | BEGIN          | myGroup1         | audit_only                     | postgres
  CREATE_GROUP     | SCHEMA CREATED | emajb            |                                | postgres
  CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                | postgres
- CREATE_GROUP     | END            | myGroup1         | 6 tables/sequences processed   | postgres
+ CREATE_GROUP     | END            | myGroup1         | 7 tables/sequences processed   | postgres
  START_GROUP      | BEGIN          | myGroup1         | With log reset                 | postgres
  LOCK_GROUP       | BEGIN          | myGroup1         |                                | postgres
  LOCK_GROUP       | END            | myGroup1         | 5 tables locked, 0 deadlock(s) | postgres
  SET_MARK_GROUP   | BEGIN          | myGroup1         | START_%                        | postgres
  SET_MARK_GROUP   | END            | myGroup1         | START_%                        | postgres
- START_GROUP      | END            | myGroup1         | 6 tables/sequences processed   | postgres
+ START_GROUP      | END            | myGroup1         | 7 tables/sequences processed   | postgres
  FORCE_DROP_GROUP | BEGIN          | myGroup1         |                                | postgres
  FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                | postgres
  FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                | postgres
- FORCE_DROP_GROUP | END            | myGroup1         | 6 tables/sequences processed   | postgres
+ FORCE_DROP_GROUP | END            | myGroup1         | 7 tables/sequences processed   | postgres
  CREATE_GROUP     | BEGIN          | myGroup2         | rollbackable                   | postgres
  CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                | postgres
  CREATE_GROUP     | END            | myGroup2         | 8 tables/sequences processed   | postgres

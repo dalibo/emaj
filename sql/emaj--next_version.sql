@@ -1422,7 +1422,7 @@ $_create_seq$
     v_tableGroup             TEXT;
   BEGIN
 -- the checks on the sequence properties are performed by the calling functions
--- get the schema and the name of the table that contains a serial column this sequence is linked to, if one exists
+-- get the schema and the name of the table that contains a serial or a "generated as identity" column this sequence is linked to, if one exists
     SELECT nt.nspname, ct.relname INTO v_tableSchema, v_tableName
       FROM pg_catalog.pg_class cs, pg_catalog.pg_namespace ns, pg_depend,
            pg_catalog.pg_class ct, pg_catalog.pg_namespace nt
@@ -1480,6 +1480,7 @@ $_rlbk_tbl$
     v_logTableName           TEXT;
     v_tmpTable               TEXT;
     v_tableType              TEXT;
+    v_insertClause           TEXT = '';
     v_nbPk                   BIGINT;
   BEGIN
     v_fullTableName  = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
@@ -1513,7 +1514,10 @@ $_rlbk_tbl$
       EXECUTE 'ANALYZE ' || v_logTableName;
     END IF;
 -- insert into the application table rows that were deleted or updated during the rolled back period
-    EXECUTE 'INSERT INTO ' || v_fullTableName
+    IF emaj._pg_version_num() >= 100000 THEN
+      v_insertClause = ' OVERRIDING SYSTEM VALUE';
+    END IF;
+    EXECUTE 'INSERT INTO ' || v_fullTableName || v_insertClause
          || '  SELECT ' || r_rel.rel_sql_columns
          || '    FROM ' || v_logTableName || ' tbl, ' || v_tmpTable || ' keys '
          || '    WHERE ' || r_rel.rel_sql_pk_eq_conditions || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD'''

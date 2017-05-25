@@ -9,7 +9,7 @@ alter sequence emaj.emaj_mark_mark_id_seq restart 2000;
 select emaj.emaj_start_group('myGroup1','Mark1');
  emaj_start_group 
 ------------------
-                6
+                7
 (1 row)
 
 select emaj.emaj_start_group('myGroup2','Mark2');
@@ -46,7 +46,7 @@ PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 29 at SQL statement
 select emaj.emaj_set_mark_group('myGroup1','SM1');
  emaj_set_mark_group 
 ---------------------
-                   6
+                   7
 (1 row)
 
 select emaj.emaj_set_mark_group('myGroup2','SM1');
@@ -78,7 +78,7 @@ begin transaction;
   select emaj.emaj_set_mark_group('myGroup1',NULL);
  emaj_set_mark_group 
 ---------------------
-                   6
+                   7
 (1 row)
 
   select emaj.emaj_set_mark_group('myGroup2','');
@@ -105,7 +105,7 @@ select emaj.emaj_set_mark_group('myGroup2');
 select emaj.emaj_set_mark_group('myGroup1','Foo%Bar');
  emaj_set_mark_group 
 ---------------------
-                   6
+                   7
 (1 row)
 
 -- multiple emaj_set_mark_group() using the same generated start mark name => fails
@@ -141,7 +141,7 @@ PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 44 at SQL statemen
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
  emaj_set_mark_groups 
 ----------------------
-                   14
+                   15
 (1 row)
 
 -- duplicate mark name and warning on group names array content
@@ -159,7 +159,7 @@ PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 44 at SQL statemen
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','');
  emaj_set_mark_groups 
 ----------------------
-                   14
+                   15
 (1 row)
 
 select pg_sleep(0.001);
@@ -171,7 +171,7 @@ select pg_sleep(0.001);
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}',NULL);
  emaj_set_mark_groups 
 ----------------------
-                   14
+                   15
 (1 row)
 
 select pg_sleep(0.001);
@@ -183,14 +183,14 @@ select pg_sleep(0.001);
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}');
  emaj_set_mark_groups 
 ----------------------
-                   14
+                   15
 (1 row)
 
 -- use of % in mark name
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
  emaj_set_mark_groups 
 ----------------------
-                   14
+                   15
 (1 row)
 
 -- impact of mark set
@@ -254,6 +254,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl4_log_seq           |         2000 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |         2000 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2000 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2000 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2000 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         2001 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         2001 |             1 | f
@@ -268,6 +269,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl4_log_seq           |         2003 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |         2003 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2003 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2003 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2003 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         2004 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         2004 |             1 | f
@@ -290,6 +292,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl4_log_seq           |         2007 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |         2007 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2007 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2007 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2007 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         2008 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         2008 |             1 | f
@@ -312,6 +315,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl4_log_seq           |         2010 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |         2010 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2010 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2010 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2010 |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |         2011 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |         2011 |             1 | f
@@ -324,6 +328,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajb          | myschema1_mytbl2b_log_seq          |         2011 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2011 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         2011 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2011 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2011 |             1 | f
  myschema2      | myseq1                             |         2011 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2011 |             1 | f
@@ -338,6 +343,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajb          | myschema1_mytbl2b_log_seq          |         2012 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2012 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         2012 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2012 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2012 |             1 | f
  myschema2      | myseq1                             |         2012 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2012 |             1 | f
@@ -352,6 +358,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajb          | myschema1_mytbl2b_log_seq          |         2013 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2013 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         2013 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2013 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2013 |             1 | f
  myschema2      | myseq1                             |         2013 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2013 |             1 | f
@@ -366,6 +373,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajb          | myschema1_mytbl2b_log_seq          |         2014 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2014 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         2014 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2014 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2014 |             1 | f
  myschema2      | myseq1                             |         2014 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2014 |             1 | f
@@ -380,10 +388,11 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajb          | myschema1_mytbl2b_log_seq          |         2015 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2015 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         2015 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2015 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2015 |             1 | f
  myschema2      | myseq1                             |         2015 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2015 |             1 | f
-(138 rows)
+(147 rows)
 
 -----------------------------
 -- emaj_comment_mark_group() tests
@@ -597,6 +606,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl4_log_seq           |         2000 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |         2000 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2000 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2000 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2000 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         2001 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         2001 |             1 | f
@@ -611,6 +621,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl4_log_seq           |         2003 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |         2003 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2003 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2003 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2003 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         2004 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         2004 |             1 | f
@@ -633,6 +644,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl4_log_seq           |         2007 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |         2007 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2007 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2007 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2007 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         2008 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         2008 |             1 | f
@@ -655,6 +667,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl4_log_seq           |         2010 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |         2010 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2010 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2010 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2010 |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |         2011 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |         2011 |             1 | f
@@ -667,6 +680,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajb          | myschema1_mytbl2b_log_seq          |         2011 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2011 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         2011 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2011 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2011 |             1 | f
  myschema2      | myseq1                             |         2011 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2011 |             1 | f
@@ -681,6 +695,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajb          | myschema1_mytbl2b_log_seq          |         2012 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2012 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         2012 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2012 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2012 |             1 | f
  myschema2      | myseq1                             |         2012 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2012 |             1 | f
@@ -695,6 +710,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajb          | myschema1_mytbl2b_log_seq          |         2013 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2013 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         2013 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2013 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2013 |             1 | f
  myschema2      | myseq1                             |         2013 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2013 |             1 | f
@@ -709,6 +725,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajb          | myschema1_mytbl2b_log_seq          |         2014 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2014 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         2014 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2014 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2014 |             1 | f
  myschema2      | myseq1                             |         2014 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2014 |             1 | f
@@ -723,10 +740,11 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajb          | myschema1_mytbl2b_log_seq          |         2015 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2015 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         2015 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2015 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2015 |             1 | f
  myschema2      | myseq1                             |         2015 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2015 |             1 | f
-(138 rows)
+(147 rows)
 
 -----------------------------
 -- emaj_delete_mark_group() tests
@@ -974,7 +992,7 @@ select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
-               6
+               7
 (1 row)
 
 select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_targetable, mark_is_rlbk_protected 
@@ -1030,6 +1048,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl4_log_seq           |         2011 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |         2011 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2011 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2011 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2011 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         2015 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         2015 |             1 | f
@@ -1048,6 +1067,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl4_log_seq           |         2017 |             1 | f
  emajb          | myschema1_mytbl2b_log_seq          |         2017 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         2017 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2017 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         2017 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         2018 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         2018 |             1 | f
@@ -1057,7 +1077,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC          | myschema2_myTbl3_log_seq           |         2018 |             1 | f
  myschema2      | myseq1                             |         2018 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2018 |             1 | f
-(32 rows)
+(34 rows)
 
 -----------------------------
 -- test end: check, reset history and force sequences id
@@ -1211,7 +1231,7 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     2151 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
     2152 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
     2153 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
-    2154 | STOP_GROUP               | END        | myGroup1          | 6 tables/sequences processed                    | postgres
+    2154 | STOP_GROUP               | END        | myGroup1          | 7 tables/sequences processed                    | postgres
     2155 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
     2156 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
     2157 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres

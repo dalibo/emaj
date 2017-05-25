@@ -841,6 +841,72 @@ $_create_seq$
   END;
 $_create_seq$;
 
+CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, v_minGlobalSeq BIGINT, v_maxGlobalSeq BIGINT, v_nbSession INT, v_isLoggedRlbk BOOLEAN)
+RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
+$_rlbk_tbl$
+-- This function rollbacks one table to a given point in time represented by the value of the global sequence
+-- The function is called by emaj._rlbk_session_exec()
+-- Input: row from emaj_relation corresponding to the appplication table to proccess
+--        global sequence (non inclusive) lower and (inclusive) upper limits covering the rollback time frame
+-- Output: number of rolled back primary keys
+-- For unlogged rollback, the log triggers have been disabled previously and will be enabled later.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
+  DECLARE
+    v_fullTableName          TEXT;
+    v_logTableName           TEXT;
+    v_tmpTable               TEXT;
+    v_tableType              TEXT;
+    v_insertClause           TEXT = '';
+    v_nbPk                   BIGINT;
+  BEGIN
+    v_fullTableName  = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
+    v_logTableName   = quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
+-- insert begin event in history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ROLLBACK_TABLE', 'BEGIN', v_fullTableName, 'All log rows with emaj_gid > ' || v_minGlobalSeq || ' and <= ' || v_maxGlobalSeq);
+-- create the temporary table containing all primary key values with their earliest emaj_gid
+    IF v_nbSession = 1 THEN
+      v_tableType = 'TEMP';
+      v_tmpTable = 'emaj_tmp_' || pg_backend_pid();
+    ELSE
+--   with multi session parallel rollbacks, the table cannot be a TEMP table because it would not be usable in 2PC
+--   but it may be an UNLOGGED table
+      v_tableType = 'UNLOGGED';
+      v_tmpTable = 'emaj.emaj_tmp_' || pg_backend_pid();
+    END IF;
+    EXECUTE 'CREATE ' || v_tableType || ' TABLE ' || v_tmpTable || ' AS '
+         || '  SELECT ' || r_rel.rel_sql_pk_columns || ', min(emaj_gid) as emaj_gid'
+         || '    FROM ' || v_logTableName
+         || '    WHERE emaj_gid > ' || v_minGlobalSeq || 'AND emaj_gid <= ' || v_maxGlobalSeq
+         || '    GROUP BY ' || r_rel.rel_sql_pk_columns;
+    GET DIAGNOSTICS v_nbPk = ROW_COUNT;
+-- delete all rows from the application table corresponding to each touched primary key
+--   this deletes rows inserted or updated during the rolled back period
+    EXECUTE 'DELETE FROM ONLY ' || v_fullTableName || ' tbl USING ' || v_tmpTable || ' keys '
+         || '  WHERE ' || r_rel.rel_sql_pk_eq_conditions;
+-- for logged rollbacks, if the number of pkey to process is greater than 1.000, ANALYZE the log table to take into account
+--   the impact of just inserted rows, avoiding a potentialy bad plan for the next INSERT statement
+    IF v_isLoggedRlbk AND v_nbPk > 1000 THEN
+      EXECUTE 'ANALYZE ' || v_logTableName;
+    END IF;
+-- insert into the application table rows that were deleted or updated during the rolled back period
+    IF emaj._pg_version_num() >= 100000 THEN
+      v_insertClause = ' OVERRIDING SYSTEM VALUE';
+    END IF;
+    EXECUTE 'INSERT INTO ' || v_fullTableName || v_insertClause
+         || '  SELECT ' || r_rel.rel_sql_columns
+         || '    FROM ' || v_logTableName || ' tbl, ' || v_tmpTable || ' keys '
+         || '    WHERE ' || r_rel.rel_sql_pk_eq_conditions || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD'''
+         || '      AND tbl.emaj_gid > ' || v_minGlobalSeq || 'AND tbl.emaj_gid <= ' || v_maxGlobalSeq;
+-- drop the now useless temporary table
+    EXECUTE 'DROP TABLE ' || v_tmpTable;
+-- insert end event in history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ROLLBACK_TABLE', 'END', v_fullTableName, v_nbPk || ' rolled back primary keys');
+    RETURN v_nbPk;
+  END;
+$_rlbk_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._delete_log_tbl(r_rel emaj.emaj_relation, v_beginTimeId BIGINT, v_endTimeId BIGINT, v_lastGlobalSeq BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_delete_log_tbl$

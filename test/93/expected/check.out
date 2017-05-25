@@ -88,7 +88,7 @@ select funcname, calls from pg_stat_user_functions
  _check_names_array                        |   121
  _check_new_mark                           |   163
  _create_log_schema                        |    25
- _create_seq                               |    35
+ _create_seq                               |    42
  _create_tbl                               |   131
  _dblink_close_cnx                         |    43
  _dblink_is_cnx_opened                     |   460
@@ -99,7 +99,7 @@ select funcname, calls from pg_stat_user_functions
  _disable_event_triggers                   |    87
  _drop_group                               |    24
  _drop_log_schema                          |    18
- _drop_seq                                 |    35
+ _drop_seq                                 |    43
  _drop_tbl                                 |   142
  _enable_event_triggers                    |    83
  _estimate_rollback_groups                 |    10
@@ -120,7 +120,7 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_groups                              |    50
  _rlbk_init                                |    53
  _rlbk_planning                            |    63
- _rlbk_seq                                 |    78
+ _rlbk_seq                                 |   114
  _rlbk_session_exec                        |    55
  _rlbk_session_lock                        |    55
  _rlbk_set_batch_number                    |   144
