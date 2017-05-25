@@ -11,7 +11,7 @@ alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 10000;
 select * from emaj.emaj_global_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-      11861 |      19 | t
+      11867 |      13 | t
 (1 row)
 
 alter sequence emaj.emaj_global_seq restart 100000;
@@ -45,7 +45,7 @@ select count(*) from emaj.emaj_hist;
 select count(*) from emaj.emaj_group_def;
  count 
 -------
-    27
+    29
 (1 row)
 
 select count(*) from emaj.emaj_group;
@@ -93,7 +93,7 @@ select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   108
+   117
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
@@ -188,7 +188,7 @@ select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   108
+   117
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
@@ -208,6 +208,7 @@ insert into myschema2.myTbl6 (col61) values (0);
 insert into myschema2.myTbl8 (col81) values (0);
 alter sequence mySchema2.mySeq1 restart 1000;
 truncate mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2;
+truncate mySchema4.myTblP, mySchema4.myPartP1, mySchema4.myPartP2;
 -- starting from this point, disable the trigger on myTbl2
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 set role emaj_regression_tests_adm_user;

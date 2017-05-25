@@ -371,15 +371,19 @@ select emaj.emaj_rollback_group('emptyGroup','MarkInit');
 -----------------------------
 select emaj.emaj_start_group('myGroup4','myGroup4_start');
 insert into myschema4.myTblM values ('2001-09-11',0,'abc'),('2011-09-11',10,'def'),('2021-09-11',20,'ghi');
+insert into myschema4.myTblP values (-1,'abc'),(0,'def'),(1,'ghi');
 
 select emaj.emaj_set_mark_group('myGroup4','mark1');
 delete from myschema4.myTblM;
+update myschema4.myTblP set col2 = 'DEF' where col1 = 0;
 
 select emaj.emaj_logged_rollback_group('myGroup4','mark1');
 
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mytblm_log;
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mytblc1_log;
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mytblc2_log;
+select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartp1_log;          -- empty in pg 9.6-
+select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartp2_log;          -- empty in pg 9.6-
 
 -- use the functions dedicated to the ppa plugin
 -- for an equivalent of "select * from emaj.emaj_rollback_group('myGroup4','myGroup4_start',true);"
@@ -387,7 +391,7 @@ select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_star
 -- and check the result
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_msg
- from emaj.emaj_rlbk order by rlbk_id desc limit 1; 
+ from emaj.emaj_rlbk order by rlbk_id desc limit 1;
 
 -----------------------------
 -- test emaj_rollback_activity()

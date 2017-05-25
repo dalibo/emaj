@@ -6,7 +6,7 @@ E-Maj is built on three main concepts.
 Tables Group
 ************
 
-The **tables group** represents a set of application tables that live at the same rhythm, meaning that their content can be restored as a whole if needed. Typically, it deals with all tables of a database that are updated by one or more sets of programs.  Each tables group is defined by a name which must be unique inside its database. By extent, a tables group can also contain application sequences (in the RDBMS sense). Tables and sequences that constitute a tables group can belong to different schemas of the database.
+The **tables group** represents a set of **application tables** that live at the same rhythm, meaning that their content can be restored as a whole if needed. Typically, it deals with all tables of a database that are updated by one or more sets of programs.  Each tables group is defined by a name which must be unique inside its database. By extent, a tables group can also contain **partitions** of partitionned tables and **sequences**. Tables (including partitions) and sequences that constitute a tables group can belong to different schemas of the database.
 
 At a given time, a tables group is either in a **LOGGING** state or in a **IDLE** state. The *LOGGING* state means that all updates applied on the tables of the group are recorded.
 

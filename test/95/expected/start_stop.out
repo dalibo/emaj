@@ -358,7 +358,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  emptyGroup       | t                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
  myGroup1         | t                | f                       |              5 |                 1 | t                     |                   1000 |                          | 
  myGroup2         | t                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              3 |                 0 | t                     |                     10 |                          | 
+ myGroup4         | f                | f                       |              5 |                 0 | t                     |                     10 |                          | 
  phil's group#3", | t                | t                       |              2 |                 2 | f                     |                      9 |                          | 
 (5 rows)
 
@@ -513,7 +513,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  emptyGroup       | f                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
  myGroup1         | f                | f                       |              5 |                 1 | t                     |                   1000 |                          | 
  myGroup2         | t                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              3 |                 0 | t                     |                     10 |                          | 
+ myGroup4         | f                | f                       |              5 |                 0 | t                     |                     10 |                          | 
  phil's group#3", | t                | t                       |              2 |                 2 | f                     |                      9 |                          | 
 (5 rows)
 
@@ -783,7 +783,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  emptyGroup       | f                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
  myGroup1         | t                | f                       |              5 |                 1 | t                     |                   1000 |                          | 
  myGroup2         | t                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              3 |                 0 | t                     |                     10 |                          | 
+ myGroup4         | f                | f                       |              5 |                 0 | t                     |                     10 |                          | 
  phil's group#3", | t                | t                       |              2 |                 2 | f                     |                      9 |                          | 
 (5 rows)
 
@@ -1046,7 +1046,7 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  emptyGroup       | f                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
  myGroup1         | f                | f                       |              5 |                 1 | t                     |                   1000 |                          | 
  myGroup2         | f                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              3 |                 0 | t                     |                     10 |                          | 
+ myGroup4         | f                | f                       |              5 |                 0 | t                     |                     10 |                          | 
  phil's group#3", | t                | t                       |              2 |                 2 | f                     |                      9 |                          | 
 (5 rows)
 

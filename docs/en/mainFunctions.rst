@@ -58,6 +58,8 @@ A table or a sequence of a given schema (**grpdef_schema** and **grpdef_tblseq**
 
 All tables assigned to a group not created in *AUDIT_ONLY* mode must have an explicit *primary key* (*PRIMARY KEY* clause in *CREATE TABLE* or *ALTER TABLE*).
 
+E-Maj can process elementary partitions of partitionned tables created with the declarative DDL (with PostgreSQL 10+). They are processed as any other tables. However, as there is no need to protect mother tables, which remain empty, E-Maj refuses to include them in tables groups. All partitions of a partitionned table do not need to belong to a tables group. Partitions of a partitionned table can be assigned to different tables groups.
+
 By their nature, neither *TEMPORARY TABLE* nor *UNLOGGED TABLE* are supported by E-Maj. Tables must also be implicitely or explicitely defined as *WITHOUT OIDS*.
 
 If a sequence is associated to an application table, it must be explicitly declared as member of the same group as its table, so that, in case of rollback, the sequence can be reset to its state at the set mark time.

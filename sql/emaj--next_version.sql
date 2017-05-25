@@ -828,10 +828,21 @@ $_check_groups_content$
           FROM emaj.emaj_group_def WHERE grpdef_group = ANY(v_groupNames)
         EXCEPT
         SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-          WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S')
+          WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S','p')
         ORDER BY 1,2) AS t
     LOOP
       RAISE WARNING '_check_groups_content: Error, the table or sequence %.% does not exist.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check that no application table is a partitioned table (only elementary partitions can be managed by E-Maj)
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
+          AND grpdef_group = ANY(v_groupNames) AND relkind = 'p'
+        ORDER BY 1,2
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table %.% is a partitionned table (only elementary partitions are supported by E-Maj).', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
       v_nbError = v_nbError + 1;
     END LOOP;
 -- check no application schema listed for the group in the emaj_group_def table is an E-Maj schema
@@ -5855,7 +5866,6 @@ $emaj_snap_group$
                   quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
         WHEN 'S' THEN
 -- if it is a sequence, the statement has no order by
-----TODO add the schema name
           IF emaj._pg_version_num() < 100000 THEN
             v_stmt= 'COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, ' ||
                     'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName ||
@@ -5900,15 +5910,16 @@ $emaj_snap_log_group$
 --   - the function can be called while other transactions are running,
 --   - the snap files will present a coherent state of tables.
 -- It's users responsability :
---   - to create the directory (with proper permissions allowing the cluster to write into) before
--- emaj_snap_log_group function call, and
---   - maintain its content outside E-maj.
--- Input: group name, the 2 mark names defining a range, the absolute pathname of the directory where the files are to be created, options for COPY TO statements
+--   - to create the directory (with proper permissions allowing the cluster to write into) before emaj_snap_log_group function call, and
+--   - to maintain its content outside E-maj.
+-- Input: group name, the 2 mark names defining a range,
+--        the absolute pathname of the directory where the files are to be created,
+--        options for COPY TO statements
 --   a NULL value or an empty string as first_mark indicates the first recorded mark
 --   a NULL value or an empty string can be used as last_mark indicating the current state
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: number of processed tables and sequences
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it.
   DECLARE
     v_nbTb                   INT = 0;
     r_tblsq                  RECORD;
@@ -6012,7 +6023,7 @@ $emaj_snap_log_group$
     END LOOP;
 -- generate the file for sequences state at start mark
     v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_realFirstMark;
--- execute the COPY statement
+-- and execute the COPY statement
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_time_id = ' || quote_literal(v_firstMarkTsId) || ' AND ' ||
@@ -6027,7 +6038,7 @@ $emaj_snap_log_group$
     ELSE
       v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_lastMarkTs,'HH24.MI.SS.MS');
     END IF;
--- execute the COPY statement
+-- and execute the COPY statement
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_time_id = ' || quote_literal(v_lastMarkTsId) || ' AND ' ||

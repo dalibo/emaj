@@ -31,6 +31,8 @@ insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblm');
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc1');
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc2');
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp1');
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp2');
 
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
 insert into emaj.emaj_group_def values ('dummyGrp1','myschema1','dummyTable');
@@ -53,6 +55,11 @@ select emaj.emaj_create_group('unknownGroup',false);
 select emaj.emaj_create_group('myGroup1',true,true);
 -- unknown schema or table in emaj_group_def
 select emaj.emaj_create_group('dummyGrp1');
+-- group with a partitionned table (in PG 10+) (abort for lack of PRIMARY KEY with prior PG versions)
+begin;
+  insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblp');
+  select emaj.emaj_create_group('myGroup4');
+rollback;
 -- group with a temp table
 begin;
   CREATE TEMPORARY TABLE myTempTbl (

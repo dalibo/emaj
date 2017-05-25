@@ -89,19 +89,19 @@ select funcname, calls from pg_stat_user_functions
  _check_new_mark                           |   163
  _create_log_schema                        |    25
  _create_seq                               |    35
- _create_tbl                               |   123
+ _create_tbl                               |   131
  _dblink_close_cnx                         |    43
  _dblink_is_cnx_opened                     |   460
  _dblink_open_cnx                          |    56
  _delete_between_marks_group               |    19
  _delete_intermediate_mark_group           |    16
- _delete_log_tbl                           |    33
+ _delete_log_tbl                           |    35
  _disable_event_triggers                   |    87
  _drop_group                               |    24
  _drop_log_schema                          |    18
  _drop_seq                                 |    35
- _drop_tbl                                 |   134
- _emaj_event_trigger_table_rewrite_fnct    |    92
+ _drop_tbl                                 |   142
+ _emaj_event_trigger_table_rewrite_fnct    |    98
  _enable_event_triggers                    |    83
  _estimate_rollback_groups                 |    10
  _event_trigger_sql_drop_fnct              |    60
@@ -111,7 +111,7 @@ select funcname, calls from pg_stat_user_functions
  _get_mark_name                            |   567
  _get_mark_time_id                         |   207
  _lock_groups                              |   171
- _log_stat_tbl                             |  1953
+ _log_stat_tbl                             |  1986
  _log_truncate_fnct                        |     2
  _purge_hist                               |    89
  _reset_groups                             |   100
@@ -124,9 +124,9 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_seq                                 |    78
  _rlbk_session_exec                        |    55
  _rlbk_session_lock                        |    55
- _rlbk_set_batch_number                    |   144
+ _rlbk_set_batch_number                    |   147
  _rlbk_start_mark                          |    53
- _rlbk_tbl                                 |    83
+ _rlbk_tbl                                 |    86
  _rollback_activity                        |    15
  _set_mark_groups                          |   201
  _set_time_stamp                           |   304

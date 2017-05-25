@@ -4,6 +4,7 @@ E-Maj - Release notes
 ------
 Enhancements:
   - Let E-Maj work with PostgreSQL 10.
+  - Support elementary partitions of partitionned tables (PostgreSQL 10+).
   - The emaj_alter_group() function can process any attribute change 
     registered in the emaj_group_def table, among priority level, log schema 
     suffix, emaj names prefix, log data or index tablespace, for relations 

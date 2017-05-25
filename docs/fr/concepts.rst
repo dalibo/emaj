@@ -6,7 +6,7 @@ E-Maj s'appuie sur trois concepts principaux.
 Groupe de tables
 ****************
 
-Le « **groupe de tables** » (*tables group*) représente un ensemble de tables applicatives qui vivent au même rythme, c'est-à-dire dont, en cas de besoin, le contenu doit être restauré comme un tout. Il s'agit typiquement de toutes les tables d'une base de données mises à jour par un ou plusieurs traitements. Chaque groupe de tables est défini par un nom unique pour la base de données concernée. Par extension, un groupe de tables peut également contenir des séquences applicatives (au sens du SGBD). Les tables et séquences qui constituent un groupe peuvent appartenir à des schémas différents de la base de données.
+Le « **groupe de tables** » (*tables group*) représente un ensemble de **tables applicatives** qui vivent au même rythme, c'est-à-dire dont, en cas de besoin, le contenu doit être restauré comme un tout. Il s'agit typiquement de toutes les tables d'une base de données mises à jour par un ou plusieurs traitements. Chaque groupe de tables est défini par un nom unique pour la base de données concernée. Par extension, un groupe de tables peut également contenir des **partitions** de tables partitionnées et des **séquences**. Les tables (incluant les partitions) et séquences qui constituent un groupe peuvent appartenir à des schémas différents de la base de données.
 
 A un instant donné, un groupe de tables est soit dans un état « **actif** » (*LOGGING*), soit dans un état « **inactif** » (*IDLE*). L'état actif signifie que les mises à jour apportées aux tables du groupe sont enregistrées.
 

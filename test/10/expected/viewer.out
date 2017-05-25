@@ -91,7 +91,7 @@ select count(*) from emaj.emaj_hist;
 select count(*) from emaj.emaj_group_def;
  count 
 -------
-    27
+    29
 (1 row)
 
 select count(*) from emaj.emaj_group;
@@ -139,7 +139,7 @@ select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   108
+   117
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
