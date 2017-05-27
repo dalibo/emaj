@@ -95,12 +95,45 @@ Dans le cas d'une utilisation en mode continu d'E-Maj, c'est à dire sans arrêt
 Utilisation d'E-Maj avec de la réplication
 ------------------------------------------
 
-Réplication intégrée
-^^^^^^^^^^^^^^^^^^^^
+Réplication physique intégrée
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-E-Maj est parfaitement compatible avec le fonctionnement des différents mode de réplication intégrée de PostgreSQL (archivage des *WAL* et *PITR*, *Streaming Replication* asynchrone ou synchrone). Tous les objets E-Maj des bases hébergées sur le cluster sont en effet répliqués comme toutes les autres objets du cluster.
+E-Maj est parfaitement compatible avec le fonctionnement des différents modes de réplication physique intégrée de PostgreSQL (archivage des *WAL* et *PITR*, *Streaming Replication* asynchrone ou synchrone). Tous les objets E-Maj des bases hébergées sur le cluster sont en effet répliqués comme toutes les autres objets du cluster.
 
 Néanmoins, compte tenu de la façon dont PostgreSQL gère les séquences, la valeur courante des séquences peut être un peu en avance sur les clusters esclave par rapport au cluster maître. Pour E-Maj, ceci induit des statistiques générales indiquant parfois un nombre de lignes de log un peu supérieur à la réalité. Mais il n'y a pas de conséquence sur l'intégrité des données.
+
+Réplication logique intégrée
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Les versions 10 et suivantes de PostgreSQL intègrent des mécanismes de réplication logique, La granularité de réplication est ici la table. L’objet de publication utilisé dans la réplication logique est assez proche du concept de groupes de tables E-Maj, à ceci près qu’une publication ne peut contenir de séquences.
+
+**Réplication de tables applicatives gérées par E-Maj**
+
+.. image:: images/logical_repl1.png
+   :align: center
+
+Une table applicative appartenant à un groupe de tables E-Maj peut être également mise en réplication, sans condition particulière. Les éventuels rollbacks E-Maj se répliqueront naturellement côté *subscriber*.
+
+**Réplication de tables applicatives avec gestion par E-Maj côté subscriber**
+
+.. image:: images/logical_repl2.png
+   :align: center
+
+Il est possible d’insérer une table applicative dans un groupe de tables E-Maj avec des mises à jour en provenance d’un flux de réplication. Mais toutes les opérations E-Maj sont bien sûr exécutées côté *subscriber* (démarrage/arrêt du groupe, pose de marque,...). On peut effectuer un rollback E-Maj de ce groupe de tables, une fois stoppée la réplication (pour éviter des conflits dans les mises à jour). Mais à l’issue du rollback, les tables du *publisher* et du *subscriber* ne seront plus en cohérence.
+
+**Réplication de tables de log E-Maj**
+
+.. image:: images/logical_repl3.png
+   :align: center
+
+Il est techniquement possible de mettre une table de log E-Maj en réplication (en trouvant un moyen de construire le DDL de création – par *pg_dump* par exemple). Ceci peut permettre de dupliquer ou concentrer les données de log sur un autre serveur. Mais la table de log répliquée ne peut être utilisée qu’en **consultation**. En effet, les séquences de log et les verbes de *TRUNCATE* n’étant pas répliqués, ces logs ne peuvent pas être utilisés à d’autres fins.
+
+**Réplication de tables applicatives et de tables de log E-Maj**
+
+.. image:: images/logical_repl4.png
+   :align: center
+
+Tables applicatives et tables de log peuvent être répliquées simultanément. Mais comme dans le cas précédent, ces logs ne sont utilisables qu’à des fins de **consultation**. Les éventuelles opérations de rollback E-Maj ne peuvent s’effectuer que côté *publisher*.
 
 
 Autres solutions de réplication
