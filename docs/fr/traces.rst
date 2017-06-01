@@ -115,25 +115,33 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 
 La colonne *hist_event* peut prendre les valeurs suivantes.
 
-+-------------------------+----------------------------------------+
-| Valeur                  | Signification                          |
-+=========================+========================================+
-| BEGIN                   | début                                  |
-+-------------------------+----------------------------------------+
-| END                     | fin                                    |
-+-------------------------+----------------------------------------+
-| EVENT TRIGGERS DISABLED | triggers sur événements désactivés     |
-+-------------------------+----------------------------------------+
-| EVENT TRIGGERS ENABLED  | triggers sur événements activés        |
-+-------------------------+----------------------------------------+
-| MARK DELETED            | marque supprimée                       |
-+-------------------------+----------------------------------------+
-| SCHEMA CREATED          | schéma secondaire créé                 |
-+-------------------------+----------------------------------------+
-| SCHEMA DROPPED          | schéma secondaire supprimé             |
-+-------------------------+----------------------------------------+
-| TABLE ATTR CHANGED      | attributs E-Maj pour la table modifiés |
-+-------------------------+----------------------------------------+
++------------------------------+-----------------------------------------+
+| Valeur                       | Signification                           |
++==============================+=========================================+
+| BEGIN                        | début                                   |
++------------------------------+-----------------------------------------+
+| END                          | fin                                     |
++------------------------------+-----------------------------------------+
+| EVENT TRIGGERS DISABLED      | triggers sur événements désactivés      |
++------------------------------+-----------------------------------------+
+| EVENT TRIGGERS ENABLED       | triggers sur événements activés         |
++------------------------------+-----------------------------------------+
+| MARK DELETED                 | marque supprimée                        |
++------------------------------+-----------------------------------------+
+| SCHEMA CREATED               | schéma secondaire créé                  |
++------------------------------+-----------------------------------------+
+| SCHEMA DROPPED               | schéma secondaire supprimé              |
++------------------------------+-----------------------------------------+
+| TABLE ATTR CHANGED           | attributs E-Maj pour la table modifiés  |
++------------------------------+-----------------------------------------+
+| LOG SCHEMA CHANGED           | Schéma de log modifié                   |
++------------------------------+-----------------------------------------+
+| NAMES PREFIX CHANGED         | Préfixe des noms E-Maj modifié          |
++------------------------------+-----------------------------------------+
+| LOG DATA TABLESPACE CHANGED  | Tablespace pour la table de log modifié |
++------------------------------+-----------------------------------------+
+| LOG INDEX TABLESPACE CHANGED | Tablespace pour l’index de log modifié  |
++------------------------------+-----------------------------------------+
 
 Le contenu de la table *emaj_hist* peut être visualisé par quiconque dispose des autorisations suffisantes (rôles super-utilisateur, *emaj_adm* ou *emaj_viewer*)
 

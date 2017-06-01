@@ -572,7 +572,7 @@ NOTICE:  table "myschema1_myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema1_myTbl3_log""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -580,7 +580,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1."myTbl3""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -588,7 +588,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1."myTbl3""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -596,7 +596,7 @@ NOTICE:  table "myschema1_mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl4_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -604,7 +604,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl4"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -612,7 +612,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl4"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -620,7 +620,7 @@ NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emajb.myschema1_mytbl2b_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -628,7 +628,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist,
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2b"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -636,7 +636,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exis
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl2b"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -988,7 +988,7 @@ NOTICE:  table "myschema1_mytbl1_new_name_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_new_name_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -996,7 +996,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1_new_name" does no
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1_new_name"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1022,7 +1022,7 @@ NOTICE:  table "public_mytbl1_new_name_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.public_mytbl1_new_name_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1030,7 +1030,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "public.mytbl1_new_name" does not e
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON public.mytbl1_new_name"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1058,7 +1058,7 @@ NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1066,7 +1066,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1371,7 +1371,7 @@ NOTICE:  table "myschema1_myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema1_myTbl3_log""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1379,7 +1379,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1."myTbl3""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1387,7 +1387,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1."myTbl3""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1395,7 +1395,7 @@ NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emajb.myschema1_mytbl2b_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1403,7 +1403,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist,
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2b"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1411,7 +1411,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exis
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl2b"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1419,7 +1419,7 @@ NOTICE:  table "myschema2_mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl4_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 66 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1427,7 +1427,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl4" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl4"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 120 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1435,7 +1435,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl4" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl4"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,boolean) line 127 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 109 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1860,19 +1860,19 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) l
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
- rlbk_severity |                                rlbk_message                                 
----------------+-----------------------------------------------------------------------------
+ rlbk_severity |                                  rlbk_message                                  
+---------------+--------------------------------------------------------------------------------
  Notice        | 0 tables and 4 sequences effectively processed.
  Warning       | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
  Warning       | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
- Warning       | Tables group change not rolled back: E-Maj attribute for myschema1.mytbl2b
- Warning       | Tables group change not rolled back: E-Maj attribute for myschema1."myTbl3"
- Warning       | Tables group change not rolled back: E-Maj attribute for myschema2."myTbl3"
- Warning       | Tables group change not rolled back: E-Maj attribute for myschema2.mytbl6
- Warning       | Tables group change not rolled back: E-Maj attribute for myschema1.mytbl2b
- Warning       | Tables group change not rolled back: E-Maj attribute for myschema1."myTbl3"
- Warning       | Tables group change not rolled back: E-Maj attribute for myschema2."myTbl3"
- Warning       | Tables group change not rolled back: E-Maj attribute for myschema2.mytbl6
+ Warning       | Tables group change not rolled back: E-Maj log schema for myschema2."myTbl3"
+ Warning       | Tables group change not rolled back: E-Maj names prefix for myschema1."myTbl3"
+ Warning       | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b
+ Warning       | Tables group change not rolled back: log index tablespace for myschema2.mytbl6
+ Warning       | Tables group change not rolled back: E-Maj log schema for myschema2."myTbl3"
+ Warning       | Tables group change not rolled back: E-Maj names prefix for myschema1."myTbl3"
+ Warning       | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b
+ Warning       | Tables group change not rolled back: log index tablespace for myschema2.mytbl6
 (11 rows)
 
 -----------------------------
@@ -1906,221 +1906,221 @@ select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
   from emaj.emaj_hist where hist_id > 6000 order by hist_id;
-   hist_function    |       hist_event        |         hist_object          |                          regexp_replace                          | hist_user 
---------------------+-------------------------+------------------------------+------------------------------------------------------------------+-----------
- LOCK_GROUP         | BEGIN                   | myGroup1                     |                                                                  | postgres
- LOCK_GROUP         | END                     | myGroup1                     | 5 tables locked, 0 deadlock(s)                                   | postgres
- SET_MARK_GROUP     | BEGIN                   | myGroup1                     | STOP_%                                                           | postgres
- SET_MARK_GROUP     | END                     | myGroup1                     | STOP_%                                                           | postgres
- STOP_GROUP         | END                     | myGroup1                     | 7 tables/sequences processed                                     | postgres
- RESET_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- RESET_GROUP        | END                     | myGroup1                     | 7 tables/sequences processed                                     | postgres
- DROP_GROUP         | BEGIN                   | myGroup1                     |                                                                  | postgres
- DROP_GROUP         | SCHEMA DROPPED          | emajb                        |                                                                  | postgres
- DROP_GROUP         | END                     | myGroup1                     | 7 tables/sequences processed                                     | postgres
- FORCE_DROP_GROUP   | BEGIN                   | myGroup2                     |                                                                  | postgres
- FORCE_DROP_GROUP   | SCHEMA DROPPED          | "emajC"                      |                                                                  | postgres
- FORCE_DROP_GROUP   | END                     | myGroup2                     | 8 tables/sequences processed                                     | postgres
- STOP_GROUP         | BEGIN                   | phil's group#3",             |                                                                  | postgres
- LOCK_GROUP         | BEGIN                   | phil's group#3",             |                                                                  | postgres
- LOCK_GROUP         | END                     | phil's group#3",             | 2 tables locked, 0 deadlock(s)                                   | postgres
- SET_MARK_GROUP     | BEGIN                   | phil's group#3",             | Simple stop mark                                                 | postgres
- SET_MARK_GROUP     | END                     | phil's group#3",             | Simple stop mark                                                 | postgres
- STOP_GROUP         | END                     | phil's group#3",             | 4 tables/sequences processed                                     | postgres
- DROP_GROUP         | BEGIN                   | phil's group#3",             |                                                                  | postgres
- DROP_GROUP         | SCHEMA DROPPED          | "emaj #'3"                   |                                                                  | postgres
- DROP_GROUP         | END                     | phil's group#3",             | 4 tables/sequences processed                                     | postgres
- FORCE_STOP_GROUP   | BEGIN                   | myGroup4                     |                                                                  | postgres
- LOCK_GROUP         | BEGIN                   | myGroup4                     |                                                                  | postgres
- LOCK_GROUP         | END                     | myGroup4                     | 5 tables locked, 0 deadlock(s)                                   | postgres
- FORCE_STOP_GROUP   | END                     | myGroup4                     | 5 tables/sequences processed                                     | postgres
- DROP_GROUP         | BEGIN                   | myGroup4                     |                                                                  | postgres
- DROP_GROUP         | END                     | myGroup4                     | 5 tables/sequences processed                                     | postgres
- FORCE_STOP_GROUP   | BEGIN                   | emptyGroup                   |                                                                  | postgres
- LOCK_GROUP         | BEGIN                   | emptyGroup                   |                                                                  | postgres
- LOCK_GROUP         | END                     | emptyGroup                   | 0 tables locked, 0 deadlock(s)                                   | postgres
- FORCE_STOP_GROUP   | END                     | emptyGroup                   | 0 tables/sequences processed                                     | postgres
- DROP_GROUP         | BEGIN                   | emptyGroup                   |                                                                  | postgres
- DROP_GROUP         | END                     | emptyGroup                   | 0 tables/sequences processed                                     | postgres
- CREATE_GROUP       | BEGIN                   | myGroup1                     | rollbackable                                                     | postgres
- CREATE_GROUP       | SCHEMA CREATED          | emajb                        |                                                                  | postgres
- CREATE_GROUP       | SCHEMA CREATED          | "emajC"                      |                                                                  | postgres
- CREATE_GROUP       | END                     | myGroup1                     | 7 tables/sequences processed                                     | postgres
- CREATE_GROUP       | BEGIN                   | myGroup2                     | rollbackable                                                     | postgres
- CREATE_GROUP       | END                     | myGroup2                     | 8 tables/sequences processed                                     | postgres
- CREATE_GROUP       | BEGIN                   | emptyGroup                   | rollbackable                                                     | postgres
- CREATE_GROUP       | END                     | emptyGroup                   | 0 tables/sequences processed                                     | postgres
- CREATE_GROUP       | BEGIN                   | myGroup4                     | rollbackable                                                     | postgres
- CREATE_GROUP       | END                     | myGroup4                     | 5 tables/sequences processed                                     | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6008                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | SCHEMA DROPPED          | emajb                        |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6009                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6010                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | SCHEMA CREATED          | emajb                        |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6011                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6012                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1."myTbl3"           | Applied changes: log schema                                      | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6013                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1."myTbl3"           | Applied changes: log schema                                      | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6014                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1."myTbl3"           | Applied changes: emaj names prefix                               | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6015                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1."myTbl3"           | Applied changes: emaj names prefix                               | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6016                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2b            | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6017                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2b            | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6018                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1."myTbl3"           | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl1             | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl4             | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2             | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2b            | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6019                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1."myTbl3"           | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl1             | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl4             | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2             | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2b            | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6020                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2b            | Applied changes: log index tablespace                            | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6021                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2b            | Applied changes: log index tablespace                            | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6022                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6023                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6024                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6025                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6026                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6027                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6028                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6029                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6030                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6031                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6032                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6033                                              | postgres
- DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg   | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6034                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6035                                              | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6036                                              | postgres
- ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg   | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- ALTER_GROUP        | SCHEMA DROPPED          | emajb                        |                                                                  | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6039                                              | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- ALTER_GROUP        | SCHEMA CREATED          | emajb                        |                                                                  | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6040                                              | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1."myTbl3"           | Applied changes: emaj names prefix                               | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema2."myTbl3"           | Applied changes: log schema                                      | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6041                                              | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1."myTbl3"           | Applied changes: emaj names prefix                               | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema2."myTbl3"           | Applied changes: log schema                                      | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6042                                              | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2b            | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema2.mytbl6             | Applied changes: log index tablespace                            | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6043                                              | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2b            | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema2.mytbl6             | Applied changes: log index tablespace                            | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6044                                              | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6045                                              | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6046                                              | postgres
- START_GROUPS       | BEGIN                   | myGroup1,myGroup2            | With log reset                                                   | postgres
- LOCK_GROUPS        | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- LOCK_GROUPS        | END                     | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                  | postgres
- SET_MARK_GROUPS    | BEGIN                   | myGroup1,myGroup2            | Init                                                             | postgres
- SET_MARK_GROUPS    | END                     | myGroup1,myGroup2            | Init                                                             | postgres
- START_GROUPS       | END                     | myGroup1,myGroup2            | 15 tables/sequences processed                                    | postgres
- ALTER_GROUP        | BEGIN                   | myGroup1                     |                                                                  | postgres
- LOCK_GROUP         | BEGIN                   | myGroup1                     |                                                                  | postgres
- LOCK_GROUP         | END                     | myGroup1                     | 5 tables locked, 0 deadlock(s)                                   | postgres
- SET_MARK_GROUP     | BEGIN                   | myGroup1                     | Priority Changed                                                 | postgres
- SET_MARK_GROUP     | END                     | myGroup1                     | Priority Changed                                                 | postgres
- ALTER_GROUP        | END                     | myGroup1                     | Timestamp Id : 6049                                              | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- LOCK_GROUPS        | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- LOCK_GROUPS        | END                     | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                  | postgres
- SET_MARK_GROUPS    | BEGIN                   | myGroup1,myGroup2            | ALTER_%                                                          | postgres
- SET_MARK_GROUPS    | END                     | myGroup1,myGroup2            | ALTER_%                                                          | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6050                                              | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- LOCK_GROUPS        | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- LOCK_GROUPS        | END                     | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                  | postgres
- SET_MARK_GROUPS    | BEGIN                   | myGroup1,myGroup2            | Attributes_changed                                               | postgres
- SET_MARK_GROUPS    | END                     | myGroup1,myGroup2            | Attributes_changed                                               | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1."myTbl3"           | Applied changes: emaj names prefix                               | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2b            | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema2."myTbl3"           | Applied changes: log schema                                      | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema2.mytbl6             | Applied changes: log index tablespace                            | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6051                                              | postgres
- ALTER_GROUPS       | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- LOCK_GROUPS        | BEGIN                   | myGroup1,myGroup2            |                                                                  | postgres
- LOCK_GROUPS        | END                     | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                  | postgres
- SET_MARK_GROUPS    | BEGIN                   | myGroup1,myGroup2            | ALTER_%                                                          | postgres
- SET_MARK_GROUPS    | END                     | myGroup1,myGroup2            | ALTER_%                                                          | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1."myTbl3"           | Applied changes: emaj names prefix                               | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema1.mytbl2b            | Applied changes: log data tablespace                             | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema2."myTbl3"           | Applied changes: log schema                                      | postgres
- ALTER_GROUP        | TABLE ATTR CHANGED      | myschema2.mytbl6             | Applied changes: log index tablespace                            | postgres
- ALTER_GROUPS       | END                     | myGroup1,myGroup2            | Timestamp Id : 6052                                              | postgres
- ROLLBACK_GROUPS    | BEGIN                   | myGroup1,myGroup2            | Unlogged rollback to mark Init (timestamp)                       | postgres
- DBLINK_OPEN_CNX    |                         | rlbk#1                       | Status = 1                                                       | postgres
- LOCK_GROUP         | BEGIN                   | myGroup1,myGroup2            | Rollback session #1                                              | postgres
- LOCK_GROUP         | END                     | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)             | postgres
- ROLLBACK_GROUPS    | MARK DELETED            | myGroup1                     | mark Priority Changed is deleted                                 | postgres
- ROLLBACK_GROUPS    | MARK DELETED            | myGroup1                     | mark ALTER_% is deleted                                          | postgres
- ROLLBACK_GROUPS    | MARK DELETED            | myGroup2                     | mark ALTER_% is deleted                                          | postgres
- ROLLBACK_GROUPS    | MARK DELETED            | myGroup1                     | mark Attributes_changed is deleted                               | postgres
- ROLLBACK_GROUPS    | MARK DELETED            | myGroup2                     | mark Attributes_changed is deleted                               | postgres
- ROLLBACK_GROUPS    | MARK DELETED            | myGroup1                     | mark ALTER_% is deleted                                          | postgres
- ROLLBACK_GROUPS    | MARK DELETED            | myGroup2                     | mark ALTER_% is deleted                                          | postgres
- ROLLBACK_SEQUENCE  |                         | myschema1."myTbl3_col31_seq" |                                                                  | postgres
- ROLLBACK_SEQUENCE  |                         | myschema1.mytbl2b_col20_seq  |                                                                  | postgres
- ROLLBACK_SEQUENCE  |                         | myschema2.myseq1             |                                                                  | postgres
- ROLLBACK_SEQUENCE  |                         | myschema2."myTbl3_col31_seq" |                                                                  | postgres
- ROLLBACK_GROUPS    | END                     | myGroup1,myGroup2            | Rollback_id 6000, 0 tables and 4 sequences effectively processed | postgres
- DBLINK_CLOSE_CNX   |                         | rlbk#1                       |                                                                  | postgres
- FORCE_DROP_GROUP   | BEGIN                   | myGroup1                     |                                                                  | postgres
- FORCE_DROP_GROUP   | SCHEMA DROPPED          | emajb                        |                                                                  | postgres
- FORCE_DROP_GROUP   | END                     | myGroup1                     | 7 tables/sequences processed                                     | postgres
- FORCE_DROP_GROUP   | BEGIN                   | myGroup2                     |                                                                  | postgres
- FORCE_DROP_GROUP   | SCHEMA DROPPED          | "emajC"                      |                                                                  | postgres
- FORCE_DROP_GROUP   | END                     | myGroup2                     | 8 tables/sequences processed                                     | postgres
- FORCE_DROP_GROUP   | BEGIN                   | myGroup4                     |                                                                  | postgres
- FORCE_DROP_GROUP   | END                     | myGroup4                     | 5 tables/sequences processed                                     | postgres
+   hist_function    |          hist_event          |         hist_object          |                          regexp_replace                          | hist_user 
+--------------------+------------------------------+------------------------------+------------------------------------------------------------------+-----------
+ LOCK_GROUP         | BEGIN                        | myGroup1                     |                                                                  | postgres
+ LOCK_GROUP         | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                   | postgres
+ SET_MARK_GROUP     | BEGIN                        | myGroup1                     | STOP_%                                                           | postgres
+ SET_MARK_GROUP     | END                          | myGroup1                     | STOP_%                                                           | postgres
+ STOP_GROUP         | END                          | myGroup1                     | 7 tables/sequences processed                                     | postgres
+ RESET_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ RESET_GROUP        | END                          | myGroup1                     | 7 tables/sequences processed                                     | postgres
+ DROP_GROUP         | BEGIN                        | myGroup1                     |                                                                  | postgres
+ DROP_GROUP         | SCHEMA DROPPED               | emajb                        |                                                                  | postgres
+ DROP_GROUP         | END                          | myGroup1                     | 7 tables/sequences processed                                     | postgres
+ FORCE_DROP_GROUP   | BEGIN                        | myGroup2                     |                                                                  | postgres
+ FORCE_DROP_GROUP   | SCHEMA DROPPED               | "emajC"                      |                                                                  | postgres
+ FORCE_DROP_GROUP   | END                          | myGroup2                     | 8 tables/sequences processed                                     | postgres
+ STOP_GROUP         | BEGIN                        | phil's group#3",             |                                                                  | postgres
+ LOCK_GROUP         | BEGIN                        | phil's group#3",             |                                                                  | postgres
+ LOCK_GROUP         | END                          | phil's group#3",             | 2 tables locked, 0 deadlock(s)                                   | postgres
+ SET_MARK_GROUP     | BEGIN                        | phil's group#3",             | Simple stop mark                                                 | postgres
+ SET_MARK_GROUP     | END                          | phil's group#3",             | Simple stop mark                                                 | postgres
+ STOP_GROUP         | END                          | phil's group#3",             | 4 tables/sequences processed                                     | postgres
+ DROP_GROUP         | BEGIN                        | phil's group#3",             |                                                                  | postgres
+ DROP_GROUP         | SCHEMA DROPPED               | "emaj #'3"                   |                                                                  | postgres
+ DROP_GROUP         | END                          | phil's group#3",             | 4 tables/sequences processed                                     | postgres
+ FORCE_STOP_GROUP   | BEGIN                        | myGroup4                     |                                                                  | postgres
+ LOCK_GROUP         | BEGIN                        | myGroup4                     |                                                                  | postgres
+ LOCK_GROUP         | END                          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                   | postgres
+ FORCE_STOP_GROUP   | END                          | myGroup4                     | 5 tables/sequences processed                                     | postgres
+ DROP_GROUP         | BEGIN                        | myGroup4                     |                                                                  | postgres
+ DROP_GROUP         | END                          | myGroup4                     | 5 tables/sequences processed                                     | postgres
+ FORCE_STOP_GROUP   | BEGIN                        | emptyGroup                   |                                                                  | postgres
+ LOCK_GROUP         | BEGIN                        | emptyGroup                   |                                                                  | postgres
+ LOCK_GROUP         | END                          | emptyGroup                   | 0 tables locked, 0 deadlock(s)                                   | postgres
+ FORCE_STOP_GROUP   | END                          | emptyGroup                   | 0 tables/sequences processed                                     | postgres
+ DROP_GROUP         | BEGIN                        | emptyGroup                   |                                                                  | postgres
+ DROP_GROUP         | END                          | emptyGroup                   | 0 tables/sequences processed                                     | postgres
+ CREATE_GROUP       | BEGIN                        | myGroup1                     | rollbackable                                                     | postgres
+ CREATE_GROUP       | SCHEMA CREATED               | emajb                        |                                                                  | postgres
+ CREATE_GROUP       | SCHEMA CREATED               | "emajC"                      |                                                                  | postgres
+ CREATE_GROUP       | END                          | myGroup1                     | 7 tables/sequences processed                                     | postgres
+ CREATE_GROUP       | BEGIN                        | myGroup2                     | rollbackable                                                     | postgres
+ CREATE_GROUP       | END                          | myGroup2                     | 8 tables/sequences processed                                     | postgres
+ CREATE_GROUP       | BEGIN                        | emptyGroup                   | rollbackable                                                     | postgres
+ CREATE_GROUP       | END                          | emptyGroup                   | 0 tables/sequences processed                                     | postgres
+ CREATE_GROUP       | BEGIN                        | myGroup4                     | rollbackable                                                     | postgres
+ CREATE_GROUP       | END                          | myGroup4                     | 5 tables/sequences processed                                     | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6008                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | SCHEMA DROPPED               | emajb                        |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6009                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6010                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | SCHEMA CREATED               | emajb                        |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6011                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6012                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | LOG SCHEMA CHANGED           | myschema1."myTbl3"           | emajC => emaj                                                    | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6013                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | LOG SCHEMA CHANGED           | myschema1."myTbl3"           | emaj => emajC                                                    | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6014                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                         | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6015                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                         | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6016                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6017                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6018                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1."myTbl3"           | tsplog1 => tsp log'2                                             | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl1             | Default tablespace => tsplog1                                    | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl4             | tsplog1 => tsp log'2                                             | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2             | tsplog1 => tsp log'2                                             | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6019                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1."myTbl3"           | tsp log'2 => tsplog1                                             | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl1             | tsplog1 => Default tablespace                                    | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl4             | tsp log'2 => tsplog1                                             | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2             | tsp log'2 => tsplog1                                             | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6020                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | LOG INDEX TABLESPACE CHANGED | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6021                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | LOG INDEX TABLESPACE CHANGED | myschema1.mytbl2b            | Default tablespace => tsp log'2                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6022                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6023                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6024                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6025                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6026                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6027                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6028                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6029                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6030                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6031                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6032                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6033                                              | postgres
+ DISABLE_PROTECTION | EVENT TRIGGERS DISABLED      |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg   | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6034                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6035                                              | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6036                                              | postgres
+ ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED       |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg   | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ ALTER_GROUP        | SCHEMA DROPPED               | emajb                        |                                                                  | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6039                                              | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ ALTER_GROUP        | SCHEMA CREATED               | emajb                        |                                                                  | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6040                                              | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ ALTER_GROUP        | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj                                                    | postgres
+ ALTER_GROUP        | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                         | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6041                                              | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ ALTER_GROUP        | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emaj => emajC                                                    | postgres
+ ALTER_GROUP        | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                         | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6042                                              | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                  | postgres
+ ALTER_GROUP        | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | Default tablespace => tsplog1                                    | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6043                                              | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                  | postgres
+ ALTER_GROUP        | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                    | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6044                                              | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6045                                              | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6046                                              | postgres
+ START_GROUPS       | BEGIN                        | myGroup1,myGroup2            | With log reset                                                   | postgres
+ LOCK_GROUPS        | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ LOCK_GROUPS        | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                  | postgres
+ SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Init                                                             | postgres
+ SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | Init                                                             | postgres
+ START_GROUPS       | END                          | myGroup1,myGroup2            | 15 tables/sequences processed                                    | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                  | postgres
+ LOCK_GROUP         | BEGIN                        | myGroup1                     |                                                                  | postgres
+ LOCK_GROUP         | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                   | postgres
+ SET_MARK_GROUP     | BEGIN                        | myGroup1                     | Priority Changed                                                 | postgres
+ SET_MARK_GROUP     | END                          | myGroup1                     | Priority Changed                                                 | postgres
+ ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6049                                              | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ LOCK_GROUPS        | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ LOCK_GROUPS        | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                  | postgres
+ SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | ALTER_%                                                          | postgres
+ SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | ALTER_%                                                          | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6050                                              | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ LOCK_GROUPS        | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ LOCK_GROUPS        | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                  | postgres
+ SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Attributes_changed                                               | postgres
+ SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | Attributes_changed                                               | postgres
+ ALTER_GROUP        | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj                                                    | postgres
+ ALTER_GROUP        | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                         | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                  | postgres
+ ALTER_GROUP        | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | Default tablespace => tsplog1                                    | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6051                                              | postgres
+ ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ LOCK_GROUPS        | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
+ LOCK_GROUPS        | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                  | postgres
+ SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | ALTER_%                                                          | postgres
+ SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | ALTER_%                                                          | postgres
+ ALTER_GROUP        | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emaj => emajC                                                    | postgres
+ ALTER_GROUP        | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                         | postgres
+ ALTER_GROUP        | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                  | postgres
+ ALTER_GROUP        | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                    | postgres
+ ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6052                                              | postgres
+ ROLLBACK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Unlogged rollback to mark Init (timestamp)                       | postgres
+ DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                       | postgres
+ LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                              | postgres
+ LOCK_GROUP         | END                          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)             | postgres
+ ROLLBACK_GROUPS    | MARK DELETED                 | myGroup1                     | mark Priority Changed is deleted                                 | postgres
+ ROLLBACK_GROUPS    | MARK DELETED                 | myGroup1                     | mark ALTER_% is deleted                                          | postgres
+ ROLLBACK_GROUPS    | MARK DELETED                 | myGroup2                     | mark ALTER_% is deleted                                          | postgres
+ ROLLBACK_GROUPS    | MARK DELETED                 | myGroup1                     | mark Attributes_changed is deleted                               | postgres
+ ROLLBACK_GROUPS    | MARK DELETED                 | myGroup2                     | mark Attributes_changed is deleted                               | postgres
+ ROLLBACK_GROUPS    | MARK DELETED                 | myGroup1                     | mark ALTER_% is deleted                                          | postgres
+ ROLLBACK_GROUPS    | MARK DELETED                 | myGroup2                     | mark ALTER_% is deleted                                          | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema1."myTbl3_col31_seq" |                                                                  | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                  | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                  | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                  | postgres
+ ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6000, 0 tables and 4 sequences effectively processed | postgres
+ DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                  | postgres
+ FORCE_DROP_GROUP   | BEGIN                        | myGroup1                     |                                                                  | postgres
+ FORCE_DROP_GROUP   | SCHEMA DROPPED               | emajb                        |                                                                  | postgres
+ FORCE_DROP_GROUP   | END                          | myGroup1                     | 7 tables/sequences processed                                     | postgres
+ FORCE_DROP_GROUP   | BEGIN                        | myGroup2                     |                                                                  | postgres
+ FORCE_DROP_GROUP   | SCHEMA DROPPED               | "emajC"                      |                                                                  | postgres
+ FORCE_DROP_GROUP   | END                          | myGroup2                     | 8 tables/sequences processed                                     | postgres
+ FORCE_DROP_GROUP   | BEGIN                        | myGroup4                     |                                                                  | postgres
+ FORCE_DROP_GROUP   | END                          | myGroup4                     | 5 tables/sequences processed                                     | postgres
 (213 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
@@ -2177,131 +2177,131 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 (48 rows)
 
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
- altr_time_id |     altr_step     | altr_schema |   altr_tblseq    | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging 
---------------+-------------------+-------------+------------------+------------+---------------+-----------------------+----------------+-------------------+---------------------------
-         6008 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6009 | REMOVE_TBL        | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6009 | REMOVE_TBL        | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6009 | REMOVE_TBL        | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   | 
-         6009 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6009 | DROP_LOG_SCHEMA   | emajb       |                  |            |               |                       |                |                   | 
-         6010 | REMOVE_SEQ        | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   | 
-         6010 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6011 | CREATE_LOG_SCHEMA | emajb       |                  |            |               |                       |                |                   | 
-         6011 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6011 | ADD_TBL           | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6011 | ADD_TBL           | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6011 | ADD_TBL           | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   | 
-         6012 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6012 | ADD_SEQ           | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   | 
-         6013 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6013 | ATTRIBUTE_TBL     | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6014 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6014 | ATTRIBUTE_TBL     | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6015 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6015 | ATTRIBUTE_TBL     | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6016 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6016 | ATTRIBUTE_TBL     | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6017 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6017 | ATTRIBUTE_TBL     | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6018 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6018 | ATTRIBUTE_TBL     | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6019 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6019 | ATTRIBUTE_TBL     | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6019 | ATTRIBUTE_TBL     | myschema1   | mytbl2           | myGroup1   |               | f                     |                |                   | 
-         6019 | ATTRIBUTE_TBL     | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6019 | ATTRIBUTE_TBL     | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6019 | ATTRIBUTE_TBL     | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   | 
-         6020 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6020 | ATTRIBUTE_TBL     | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6020 | ATTRIBUTE_TBL     | myschema1   | mytbl2           | myGroup1   |               | f                     |                |                   | 
-         6020 | ATTRIBUTE_TBL     | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6020 | ATTRIBUTE_TBL     | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6020 | ATTRIBUTE_TBL     | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   | 
-         6021 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6021 | ATTRIBUTE_TBL     | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6022 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6022 | ATTRIBUTE_TBL     | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6023 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6023 | PRIORITY_REL      | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                30 | 
-         6024 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6024 | PRIORITY_REL      | myschema1   | mytbl1           | myGroup1   |            30 | f                     |                |                   | 
-         6025 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6025 | PRIORITY_REL      | myschema1   | mytbl1           | myGroup1   |               | f                     |                |                20 | 
-         6026 | REPAIR_TBL        | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6026 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6027 | REPAIR_TBL        | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6027 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6028 | REPAIR_TBL        | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6028 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6029 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6030 | REPAIR_TBL        | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6030 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6031 | REMOVE_TBL        | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6031 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6031 | ADD_TBL           | myschema1   | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   | 
-         6032 | REMOVE_TBL        | myschema1   | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   | 
-         6032 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6032 | ADD_TBL           | public      | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   | 
-         6033 | REMOVE_TBL        | public      | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   | 
-         6033 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6033 | ADD_TBL           | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6034 | REPAIR_TBL        | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6034 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6035 | REPAIR_TBL        | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6035 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6036 | REPAIR_TBL        | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
-         6036 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6039 | REMOVE_TBL        | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6039 | REMOVE_TBL        | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6039 | REMOVE_TBL        | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                   | 
-         6039 | REMOVE_SEQ        | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   | 
-         6039 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6039 | RESET_GROUP       |             |                  | myGroup2   |               | f                     |                |                   | 
-         6039 | DROP_LOG_SCHEMA   | emajb       |                  |            |               |                       |                |                   | 
-         6040 | CREATE_LOG_SCHEMA | emajb       |                  |            |               |                       |                |                   | 
-         6040 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6040 | RESET_GROUP       |             |                  | myGroup2   |               | f                     |                |                   | 
-         6040 | ADD_TBL           | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6040 | ADD_TBL           | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6040 | ADD_TBL           | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                   | 
-         6040 | ADD_SEQ           | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   | 
-         6041 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6041 | RESET_GROUP       |             |                  | myGroup2   |               | f                     |                |                   | 
-         6041 | ATTRIBUTE_TBL     | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6041 | ATTRIBUTE_TBL     | myschema2   | myTbl3           | myGroup2   |               | f                     |                |                   | 
-         6042 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6042 | RESET_GROUP       |             |                  | myGroup2   |               | f                     |                |                   | 
-         6042 | ATTRIBUTE_TBL     | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
-         6042 | ATTRIBUTE_TBL     | myschema2   | myTbl3           | myGroup2   |               | f                     |                |                   | 
-         6043 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6043 | RESET_GROUP       |             |                  | myGroup2   |               | f                     |                |                   | 
-         6043 | ATTRIBUTE_TBL     | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6043 | ATTRIBUTE_TBL     | myschema2   | mytbl6           | myGroup2   |               | f                     |                |                   | 
-         6043 | PRIORITY_REL      | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                30 | 
-         6044 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6044 | RESET_GROUP       |             |                  | myGroup2   |               | f                     |                |                   | 
-         6044 | ATTRIBUTE_TBL     | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
-         6044 | ATTRIBUTE_TBL     | myschema2   | mytbl6           | myGroup2   |               | f                     |                |                   | 
-         6044 | PRIORITY_REL      | myschema1   | mytbl1           | myGroup1   |            30 | f                     |                |                20 | 
-         6045 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6045 | RESET_GROUP       |             |                  | myGroup2   |               | f                     |                |                   | 
-         6045 | ASSIGN_REL        | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       |                   | f
-         6045 | ASSIGN_REL        | myschema2   | myTbl3_col31_seq | myGroup2   |               | f                     | myGroup1       |                   | f
-         6046 | RESET_GROUP       |             |                  | myGroup1   |               | f                     |                |                   | 
-         6046 | RESET_GROUP       |             |                  | myGroup2   |               | f                     |                |                   | 
-         6046 | ASSIGN_REL        | myschema2   | myTbl3           | myGroup1   |               | f                     | myGroup2       |                   | f
-         6046 | ASSIGN_REL        | myschema2   | myTbl3_col31_seq | myGroup1   |               | f                     | myGroup2       |                   | f
-         6049 | PRIORITY_REL      | myschema1   | mytbl1           | myGroup1   |            20 | t                     |                |                30 | 
-         6050 | PRIORITY_REL      | myschema1   | mytbl1           | myGroup1   |            30 | t                     |                |                20 | 
-         6051 | ATTRIBUTE_TBL     | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                   | 
-         6051 | ATTRIBUTE_TBL     | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                   | 
-         6051 | ATTRIBUTE_TBL     | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                   | 
-         6051 | ATTRIBUTE_TBL     | myschema2   | mytbl6           | myGroup2   |               | t                     |                |                   | 
-         6052 | ATTRIBUTE_TBL     | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                   | 
-         6052 | ATTRIBUTE_TBL     | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                   | 
-         6052 | ATTRIBUTE_TBL     | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                   | 
-         6052 | ATTRIBUTE_TBL     | myschema2   | mytbl6           | myGroup2   |               | t                     |                |                   | 
+ altr_time_id |        altr_step         | altr_schema |   altr_tblseq    | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging 
+--------------+--------------------------+-------------+------------------+------------+---------------+-----------------------+----------------+-------------------+---------------------------
+         6008 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6009 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6009 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6009 | REMOVE_TBL               | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   | 
+         6009 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6009 | DROP_LOG_SCHEMA          | emajb       |                  |            |               |                       |                |                   | 
+         6010 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   | 
+         6010 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6011 | CREATE_LOG_SCHEMA        | emajb       |                  |            |               |                       |                |                   | 
+         6011 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6011 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6011 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6011 | ADD_TBL                  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   | 
+         6012 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6012 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   | 
+         6013 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6013 | CHANGE_TBL_LOG_SCHEMA    | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6014 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6014 | CHANGE_TBL_LOG_SCHEMA    | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6015 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6015 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6016 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6016 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6017 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6017 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6018 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6018 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6019 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6019 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6019 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2           | myGroup1   |               | f                     |                |                   | 
+         6019 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6019 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6019 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   | 
+         6020 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2           | myGroup1   |               | f                     |                |                   | 
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   | 
+         6021 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6021 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6022 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6022 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6023 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6023 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                30 | 
+         6024 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6024 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            30 | f                     |                |                   | 
+         6025 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6025 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |               | f                     |                |                20 | 
+         6026 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6026 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6027 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6027 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6028 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6028 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6029 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6030 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6030 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6031 | REMOVE_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6031 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6031 | ADD_TBL                  | myschema1   | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   | 
+         6032 | REMOVE_TBL               | myschema1   | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   | 
+         6032 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6032 | ADD_TBL                  | public      | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   | 
+         6033 | REMOVE_TBL               | public      | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   | 
+         6033 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6033 | ADD_TBL                  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6034 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6034 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6035 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6035 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6036 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   | 
+         6036 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6039 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6039 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6039 | REMOVE_TBL               | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                   | 
+         6039 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   | 
+         6039 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6039 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   | 
+         6039 | DROP_LOG_SCHEMA          | emajb       |                  |            |               |                       |                |                   | 
+         6040 | CREATE_LOG_SCHEMA        | emajb       |                  |            |               |                       |                |                   | 
+         6040 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6040 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   | 
+         6040 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6040 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6040 | ADD_TBL                  | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                   | 
+         6040 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   | 
+         6041 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6041 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   | 
+         6041 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | f                     |                |                   | 
+         6041 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6042 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6042 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   | 
+         6042 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | f                     |                |                   | 
+         6042 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   | 
+         6043 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6043 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   | 
+         6043 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6043 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | f                     |                |                   | 
+         6043 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                30 | 
+         6044 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6044 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   | 
+         6044 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   | 
+         6044 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | f                     |                |                   | 
+         6044 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            30 | f                     |                |                20 | 
+         6045 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6045 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   | 
+         6045 | ASSIGN_REL               | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       |                   | f
+         6045 | ASSIGN_REL               | myschema2   | myTbl3_col31_seq | myGroup2   |               | f                     | myGroup1       |                   | f
+         6046 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   | 
+         6046 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   | 
+         6046 | ASSIGN_REL               | myschema2   | myTbl3           | myGroup1   |               | f                     | myGroup2       |                   | f
+         6046 | ASSIGN_REL               | myschema2   | myTbl3_col31_seq | myGroup1   |               | f                     | myGroup2       |                   | f
+         6049 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            20 | t                     |                |                30 | 
+         6050 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            30 | t                     |                |                20 | 
+         6051 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                   | 
+         6051 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                   | 
+         6051 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                   | 
+         6051 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | t                     |                |                   | 
+         6052 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                   | 
+         6052 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                   | 
+         6052 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                   | 
+         6052 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | t                     |                |                   | 
 (123 rows)
 
 truncate emaj.emaj_hist;

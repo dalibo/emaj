@@ -70,9 +70,12 @@ CREATE TYPE emaj._alter_step_enum AS ENUM (
   'REPAIR_TBL',              -- repair a damaged table
   'REPAIR_SEQ',              -- repair a damaged sequence
   'RESET_GROUP',             -- reset an idle group
-  'ATTRIBUTE_TBL',           -- change the attributes for a table (log schema suffix, emaj names prefix, log data or index tablespace)
+  'CHANGE_TBL_LOG_SCHEMA',   -- change the log schema for a table
+  'CHANGE_TBL_NAMES_PREFIX', -- change the E-Maj names prefix for a table
+  'CHANGE_TBL_LOG_DATA_TSP', -- change the log data tablespace for a table
+  'CHANGE_TBL_LOG_INDEX_TSP',-- change the log index tablespace for a table
   'ASSIGN_REL',              -- move a table or a sequence from one group to another
-  'PRIORITY_REL',            -- change the priority level for a table or a sequence
+  'CHANGE_REL_PRIORITY',     -- change the priority level for a table or a sequence
   'ADD_TBL',                 -- add a table to a group
   'ADD_SEQ',                 -- add a sequence to a group
   'DROP_LOG_SCHEMA'          -- drop a secondary log schema
@@ -720,85 +723,128 @@ $_create_tbl$
   END;
 $_create_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_attr_tbl(r_rel emaj.emaj_relation, v_newLogSchemaSuffix TEXT, v_newNamesPrefix TEXT, v_newLogDatTsp TEXT, v_newLogIdxTsp TEXT)
+CREATE OR REPLACE FUNCTION emaj._change_log_schema_tbl(r_rel emaj.emaj_relation, v_newLogSchemaSuffix TEXT)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
-$_change_attr_tbl$
--- This function processes the attributes changes registered in the emaj_group_def table for an application table (all but the priority level)
--- Input: the existing emaj_relation row for the table, and the parameters from emaj_group_def that may by changed
+$_change_log_schema_tbl$
+-- This function processes the change of log schema for an application table
+-- Input: the existing emaj_relation row for the table, and the new log schema suffix
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_emajSchema             TEXT = 'emaj';
     v_schemaPrefix           TEXT = 'emaj';
-    v_changeMsg              TEXT = '';
     v_newLogSchema           TEXT;
+  BEGIN
+-- build the name of new log schema
+    v_newLogSchema = coalesce(v_schemaPrefix || v_newLogSchemaSuffix, v_emajSchema);
+-- process the log schema change
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
+    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
+    EXECUTE 'ALTER FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() SET SCHEMA ' || quote_ident(v_newLogSchema);
+-- adjust sequences schema names in emaj_sequence tables
+    UPDATE emaj.emaj_sequence SET sequ_schema = v_newLogSchema WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation SET rel_log_schema = v_newLogSchema
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'LOG SCHEMA CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              r_rel.rel_log_schema || ' => ' || v_newLogSchema);
+    RETURN;
+  END;
+$_change_log_schema_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_emaj_names_prefix(r_rel emaj.emaj_relation, v_newNamesPrefix TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_emaj_names_prefix$
+-- This function processes the change of emaj names prefix for an application table
+-- Input: the existing emaj_relation row for the table and the new emaj names prefix
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
+  DECLARE
     v_newEmajNamesPrefix     TEXT;
     v_newLogTableName        TEXT;
     v_newLogFunctionName     TEXT;
     v_newLogSequenceName     TEXT;
     v_newLogIndexName        TEXT;
-    v_newTsp                 TEXT;
   BEGIN
 -- build the name of new emaj components associated to the application table (non schema qualified and not quoted)
-    v_newLogSchema = coalesce(v_schemaPrefix || v_newLogSchemaSuffix, v_emajSchema);
     v_newEmajNamesPrefix = coalesce(v_newNamesPrefix, r_rel.rel_schema || '_' || r_rel.rel_tblseq);
     v_newLogTableName    = v_newEmajNamesPrefix || '_log';
     v_newLogIndexName    = v_newEmajNamesPrefix || '_log_idx';
     v_newLogFunctionName = v_newEmajNamesPrefix || '_log_fnct';
     v_newLogSequenceName = v_newEmajNamesPrefix || '_log_seq';
--- if the log schema in emaj_group_def has changed, process the change
-    IF r_rel.rel_log_schema <> v_newLogSchema THEN
-      EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
-      EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
-      EXECUTE 'ALTER FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() SET SCHEMA ' || quote_ident(v_newLogSchema);
+-- process the emaj names prefix change
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' RENAME TO ' || quote_ident(v_newLogTableName);
+    EXECUTE 'ALTER INDEX ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_index)|| ' RENAME TO ' || quote_ident(v_newLogIndexName);
+    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' RENAME TO ' || quote_ident(v_newLogSequenceName);
+    EXECUTE 'ALTER FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() RENAME TO ' || quote_ident(v_newLogFunctionName);
 -- adjust sequences schema names in emaj_sequence tables
-      UPDATE emaj.emaj_sequence SET sequ_schema = v_newLogSchema WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
---
-      v_changeMsg = v_changeMsg || ', log schema';
-    END IF;
--- if the emaj names prefix in emaj_group_def has changed, process the change
-    IF r_rel.rel_log_table <> v_newLogTableName THEN
-      EXECUTE 'ALTER TABLE ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table)|| ' RENAME TO ' || quote_ident(v_newLogTableName);
-      EXECUTE 'ALTER INDEX ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_index)|| ' RENAME TO ' || quote_ident(v_newLogIndexName);
-      EXECUTE 'ALTER SEQUENCE ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' RENAME TO ' || quote_ident(v_newLogSequenceName);
-      EXECUTE 'ALTER FUNCTION ' || quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function) || '() RENAME TO ' || quote_ident(v_newLogFunctionName);
--- adjust sequences schema names in emaj_sequence tables
-      UPDATE emaj.emaj_sequence SET sequ_name = v_newLogSequenceName WHERE sequ_schema = v_newLogSchema AND sequ_name = r_rel.rel_log_sequence;
---
-      v_changeMsg = v_changeMsg || ', emaj names prefix';
-    END IF;
--- if the log data tablespace in emaj_group_def has changed, process the change
-    IF coalesce(r_rel.rel_log_dat_tsp,'') <> coalesce(v_newLogDatTsp,'') THEN
--- build the new data tablespace name. If needed, get the name of the current default tablespace.
-      v_newTsp = v_newLogDatTsp;
-      IF v_newTsp IS NULL OR v_newTsp = '' THEN
-        v_newTsp = emaj._get_default_tablespace();
-      END IF;
-      EXECUTE 'ALTER TABLE ' || quote_ident(v_newLogSchema) || '.' || quote_ident(v_newLogTableName) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
-      v_changeMsg = v_changeMsg || ', log data tablespace';
-    END IF;
--- if the log index tablespace in emaj_group_def has changed, process the change
-    IF coalesce(r_rel.rel_log_idx_tsp,'') <> coalesce(v_newLogIdxTsp,'') THEN
--- build the new index tablespace name. If needed, get the name of the current default tablespace.
-      v_newTsp = v_newLogIdxTsp;
-      IF v_newTsp IS NULL OR v_newTsp = '' THEN
-        v_newTsp = emaj._get_default_tablespace();
-      END IF;
-      EXECUTE 'ALTER TABLE ' || quote_ident(v_newLogSchema) || '.' || quote_ident(v_newLogIndexName) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
-      v_changeMsg = v_changeMsg || ', log index tablespace';
-    END IF;
+    UPDATE emaj.emaj_sequence SET sequ_name = v_newLogSequenceName WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
 -- update the table attributes into emaj_relation
     UPDATE emaj.emaj_relation
-      SET rel_log_schema = v_newLogSchema, rel_log_table = v_newLogTableName, rel_log_dat_tsp = v_newLogDatTsp,
-          rel_log_index = v_newLogIndexName, rel_log_idx_tsp = v_newLogIdxTsp, rel_log_sequence = v_newLogSequenceName,
-          rel_log_function = v_newLogFunctionName
+      SET rel_log_table = v_newLogTableName, rel_log_index = v_newLogIndexName,
+          rel_log_sequence = v_newLogSequenceName, rel_log_function = v_newLogFunctionName
       WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUP', 'TABLE ATTR CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq), 'Applied changes: ' || substr(v_changeMsg, 3));
---
+      VALUES ('ALTER_GROUP', 'NAMES PREFIX CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(substring(r_rel.rel_log_table FROM '(.*)_log$'),r_rel.rel_log_table,'Internal error in _change_emaj_names_prefix') || ' => ' || v_newEmajNamesPrefix);
     RETURN;
   END;
-$_change_attr_tbl$;
+$_change_emaj_names_prefix$;
+
+CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(r_rel emaj.emaj_relation, v_newLogDatTsp TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_log_data_tsp_tbl$
+-- This function changes the log data tablespace for an application table
+-- Input: the existing emaj_relation row for the table and the new log data tablespace
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
+  DECLARE
+    v_newTsp                 TEXT;
+  BEGIN
+-- build the new data tablespace name. If needed, get the name of the current default tablespace.
+    v_newTsp = v_newLogDatTsp;
+    IF v_newTsp IS NULL OR v_newTsp = '' THEN
+      v_newTsp = emaj._get_default_tablespace();
+    END IF;
+-- process the log data tablespace change
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation SET rel_log_dat_tsp = v_newLogDatTsp
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'LOG DATA TABLESPACE CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(r_rel.rel_log_dat_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogDatTsp, 'Default tablespace'));
+    RETURN;
+  END;
+$_change_log_data_tsp_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(r_rel emaj.emaj_relation, v_newLogIdxTsp TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_log_index_tsp_tbl$
+-- This function changes the log index tablespace for an application table
+-- Input: the existing emaj_relation row for the table and the new log index tablespace
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
+  DECLARE
+    v_newTsp                 TEXT;
+  BEGIN
+-- build the new data tablespace name. If needed, get the name of the current default tablespace.
+    v_newTsp = v_newLogIdxTsp;
+    IF v_newTsp IS NULL OR v_newTsp = '' THEN
+      v_newTsp = emaj._get_default_tablespace();
+    END IF;
+-- process the log index tablespace change
+    EXECUTE 'ALTER INDEX ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_index) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation SET rel_log_idx_tsp = v_newLogIdxTsp
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'LOG INDEX TABLESPACE CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(r_rel.rel_log_idx_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogIdxTsp, 'Default tablespace'));
+    RETURN;
+  END;
+$_change_log_index_tsp_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._create_seq(grpdef emaj.emaj_group_def)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -812,7 +858,7 @@ $_create_seq$
     v_tableGroup             TEXT;
   BEGIN
 -- the checks on the sequence properties are performed by the calling functions
--- get the schema and the name of the table that contains a serial column this sequence is linked to, if one exists
+-- get the schema and the name of the table that contains a serial or a "generated as identity" column this sequence is linked to, if one exists
     SELECT nt.nspname, ct.relname INTO v_tableSchema, v_tableName
       FROM pg_catalog.pg_class cs, pg_catalog.pg_namespace ns, pg_depend,
            pg_catalog.pg_class ct, pg_catalog.pg_namespace nt
@@ -1605,23 +1651,51 @@ $_alter_plan$
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groupNames)
           AND NOT group_is_logging;
--- determine the tables whose attributes in emaj_group_def have changed
+-- determine the tables whose log schema in emaj_group_def has changed
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
-      SELECT v_timeId, 'ATTRIBUTE_TBL', rel_schema, rel_tblseq, rel_group, grpdef_priority
+      SELECT v_timeId, 'CHANGE_TBL_LOG_SCHEMA', rel_schema, rel_tblseq, rel_group, grpdef_priority
         FROM emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
           AND rel_group = ANY (v_groupNames)
           AND grpdef_group = ANY (v_groupNames)
           AND rel_kind = 'r'
-          AND (
---   detect if the log data tablespace in emaj_group_def has changed
-               coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp,'')
---   or if the log index tablespace in emaj_group_def has changed
-            OR coalesce(rel_log_idx_tsp,'') <> coalesce(grpdef_log_idx_tsp,'')
---   or if the log schema in emaj_group_def has changed
-            OR rel_log_schema <> (v_schemaPrefix || coalesce(grpdef_log_schema_suffix, ''))
---   or if the emaj names prefix in emaj_group_def has changed (detected with the log table name)
-            OR rel_log_table <> (coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log'))
+          AND rel_log_schema <> (v_schemaPrefix || coalesce(grpdef_log_schema_suffix, ''))
+--   exclude tables that will have been repaired in a previous step
+          AND (rel_schema, rel_tblseq) NOT IN (
+            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
+-- determine the tables whose emaj names prefix in emaj_group_def has changed
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_TBL_NAMES_PREFIX', rel_schema, rel_tblseq, rel_group, grpdef_priority
+        FROM emaj.emaj_relation, emaj.emaj_group_def
+        WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+          AND rel_group = ANY (v_groupNames)
+          AND grpdef_group = ANY (v_groupNames)
+          AND rel_kind = 'r'
+          AND rel_log_table <> (coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log')
+--   exclude tables that will have been repaired in a previous step
+          AND (rel_schema, rel_tblseq) NOT IN (
+            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
+-- determine the tables whose log data tablespace in emaj_group_def has changed
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_TBL_LOG_DATA_TSP', rel_schema, rel_tblseq, rel_group, grpdef_priority
+        FROM emaj.emaj_relation, emaj.emaj_group_def
+        WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+          AND rel_group = ANY (v_groupNames)
+          AND grpdef_group = ANY (v_groupNames)
+          AND rel_kind = 'r'
+          AND coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp,'')
+--   exclude tables that will have been repaired in a previous step
+          AND (rel_schema, rel_tblseq) NOT IN (
+            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
+-- determine the tables whose log data tablespace in emaj_group_def has changed
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_TBL_LOG_INDEX_TSP', rel_schema, rel_tblseq, rel_group, grpdef_priority
+        FROM emaj.emaj_relation, emaj.emaj_group_def
+        WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+          AND rel_group = ANY (v_groupNames)
+          AND grpdef_group = ANY (v_groupNames)
+          AND rel_kind = 'r'
+          AND coalesce(rel_log_idx_tsp,'') <> coalesce(grpdef_log_idx_tsp,'')
 --   exclude tables that will have been repaired in a previous step
           AND (rel_schema, rel_tblseq) NOT IN (
             SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
@@ -1635,7 +1709,7 @@ $_alter_plan$
         AND rel_group <> grpdef_group;
 -- determine the relation that change their priority level
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_priority)
-      SELECT v_timeId, 'PRIORITY_REL', rel_schema, rel_tblseq, rel_group, rel_priority, grpdef_priority
+      SELECT v_timeId, 'CHANGE_REL_PRIORITY', rel_schema, rel_tblseq, rel_group, rel_priority, grpdef_priority
       FROM emaj.emaj_relation, emaj.emaj_group_def
       WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
         AND rel_group = ANY (v_groupNames)
@@ -1769,25 +1843,52 @@ $_alter_exec$
             PERFORM emaj._create_seq(r_grpdef);
           END IF;
 --
-        WHEN 'ATTRIBUTE_TBL' THEN
+        WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN
 -- get the table description from emaj_relation
-          SELECT * INTO r_rel
-            FROM emaj.emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
 -- get the table description from emaj_group_def
-          SELECT grpdef_log_schema_suffix, grpdef_emaj_names_prefix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
-            INTO v_logSchemaSuffix, v_emajNamesPrefix, v_logDatTsp, v_logIdxTsp
-            FROM emaj.emaj_group_def
+          SELECT grpdef_log_schema_suffix INTO v_logSchemaSuffix FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
--- then alter the relation
-          PERFORM emaj._change_attr_tbl(r_rel, v_logSchemaSuffix, v_emajNamesPrefix, v_logDatTsp, v_logIdxTsp);
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix);
+--
+        WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+-- get the table description from emaj_group_def
+          SELECT grpdef_emaj_names_prefix INTO v_emajNamesPrefix FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix);
+--
+        WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+-- get the table description from emaj_group_def
+          SELECT grpdef_log_dat_tsp INTO v_logDatTsp FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp);
+--
+        WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+-- get the table description from emaj_group_def
+          SELECT grpdef_log_idx_tsp INTO v_logIdxTsp FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp);
 --
         WHEN 'ASSIGN_REL' THEN
 -- update the emaj_relation table to report the group ownership change
           UPDATE emaj.emaj_relation SET rel_group = r_plan.altr_new_group
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
 --
-        WHEN 'PRIORITY_REL' THEN
+        WHEN 'CHANGE_REL_PRIORITY' THEN
 -- update the emaj_relation table to report the priority change
           UPDATE emaj.emaj_relation SET rel_priority = r_plan.altr_new_priority
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
@@ -2808,14 +2909,19 @@ $_rlbk_end$
        RETURN NEXT;
     ELSE
 -- return the execution report to new style calling functions
+-- ... the general notice message with counters
        rlbk_severity = 'Notice'; rlbk_message = format ('%s tables and %s sequences effectively processed.',v_effNbTbl::TEXT, v_nbSeq::TEXT);
        RETURN NEXT;
+-- ... and warning messages for any elementary action from alter group operations that has not been rolled back
 --TODO add missing cases
        RETURN QUERY
          SELECT 'Warning'::TEXT AS rlbk_severity,
                ('Tables group change not rolled back: ' || CASE altr_step
-                   WHEN 'PRIORITY_REL' THEN 'E-Maj priority for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                   WHEN 'ATTRIBUTE_TBL' THEN 'E-Maj attribute for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   WHEN 'CHANGE_REL_PRIORITY' THEN 'E-Maj priority for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN 'E-Maj log schema for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN 'E-Maj names prefix for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN 'log data tablespace for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN 'log index tablespace for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
                    ELSE altr_step::TEXT || ' / ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
                    END)::TEXT AS rlbk_message
            FROM emaj.emaj_alter_plan
