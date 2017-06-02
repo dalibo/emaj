@@ -335,7 +335,7 @@ select count(*) from "emajC"."myschema1_myTbl3_log";
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
 select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema2_mytbl6_log_idx';
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_targetable, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_id > 6000 order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_id > 6000 order by mark_id;
 
 -- execute rollbacks crossing alter group operations
 select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Init',false);

@@ -247,7 +247,7 @@ CREATE TABLE emaj.emaj_mark (
                                                            -- that are not safe if system time changes)
   mark_time_id                 BIGINT      NOT NULL,       -- time stamp of the mark creation, used as a reference
                                                            --   for other tables like emaj_sequence and all log tables
-  mark_is_targetable           BOOLEAN     NOT NULL,       -- boolean to indicate whether the mark can be used as targed for a rollback
+  mark_is_deleted              BOOLEAN     NOT NULL,       -- boolean to indicate whether the mark is deleted
   mark_is_rlbk_protected       BOOLEAN     NOT NULL,       -- boolean to indicate whether the mark is protected against rollbacks (false by default)
   mark_comment                 TEXT,                       -- optional user comment
   mark_log_rows_before_next    BIGINT,                     -- number of log rows recorded for the group between the mark
@@ -718,9 +718,9 @@ $_purge_hist$
       (                                           -- compute the timestamp limit from the history_retention parameter
         (SELECT current_timestamp -
            coalesce((SELECT param_value_interval FROM emaj.emaj_param WHERE param_key = 'history_retention'),'1 YEAR'))
-      UNION ALL                                   -- get the transaction timestamp of the oldest targetable mark for all groups
+      UNION ALL                                   -- get the transaction timestamp of the oldest non deleted mark for all groups
         (SELECT MIN(time_tx_timestamp) FROM emaj.emaj_time_stamp, emaj.emaj_mark
-           WHERE time_id = mark_time_id AND mark_is_targetable)
+           WHERE time_id = mark_time_id AND NOT mark_is_deleted)
       UNION ALL                                   -- get the transaction timestamp of the oldest non committed or aborted rollback
         (SELECT MIN(time_tx_timestamp) FROM emaj.emaj_time_stamp, emaj.emaj_rlbk
            WHERE time_id = rlbk_time_id AND rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED'))
@@ -3168,11 +3168,11 @@ $_stop_groups$
           WHERE mark_group = ANY (v_validGroupNames)
             AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
                 (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
-                 WHERE mark_group = ANY (v_validGroupNames) AND mark_is_targetable GROUP BY mark_group);
+                 WHERE mark_group = ANY (v_validGroupNames) AND NOT mark_is_deleted GROUP BY mark_group);
       END IF;
--- set all marks for the groups from the emaj_mark table as un-targetable to avoid any further rollback and remove protection if any
-      UPDATE emaj.emaj_mark SET mark_is_targetable = FALSE, mark_is_rlbk_protected = FALSE
-        WHERE mark_group = ANY (v_validGroupNames) AND mark_is_targetable;
+-- set all marks for the groups from the emaj_mark table as 'DELETED' to avoid any further rollback and remove protection if any
+      UPDATE emaj.emaj_mark SET mark_is_deleted = TRUE, mark_is_rlbk_protected = FALSE
+        WHERE mark_group = ANY (v_validGroupNames) AND NOT mark_is_deleted;
 -- update the state of the groups rows from the emaj_group table (the rollback protection of rollbackable groups is reset)
       UPDATE emaj.emaj_group SET group_is_logging = FALSE, group_is_rlbk_protected = NOT group_is_rollbackable
         WHERE group_name = ANY (v_validGroupNames);
@@ -3429,9 +3429,9 @@ $_set_mark_groups$
     UPDATE emaj.emaj_mark m SET mark_log_rows_before_next =
       coalesce( (SELECT sum(stat_rows) FROM emaj.emaj_log_stat_group(m.mark_group,'EMAJ_LAST_MARK',NULL)) ,0)
       WHERE mark_group = ANY (v_groupNames)
-        AND (mark_group, mark_id) IN                   -- select only the last targetable mark of each concerned group
+        AND (mark_group, mark_id) IN                   -- select only the last non deleted mark of each concerned group
             (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
-             WHERE mark_group = ANY (v_groupNames) AND mark_is_targetable GROUP BY mark_group);
+             WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted GROUP BY mark_group);
 -- for each table of the groups, ...
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
@@ -3460,8 +3460,8 @@ $_set_mark_groups$
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- record the mark for each group into the emaj_mark table
-    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_targetable, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
-      SELECT group_name, v_mark, v_timeId, group_is_rollbackable, FALSE, v_loggedRlbkTargetMark
+    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
+      SELECT group_name, v_mark, v_timeId, FALSE, FALSE, v_loggedRlbkTargetMark
         FROM emaj.emaj_group WHERE group_name = ANY(v_groupNames) ORDER BY group_name;
 -- before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table
     IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
@@ -4277,7 +4277,7 @@ $_rlbk_check$
     v_markName               TEXT;
     v_markId                 BIGINT;
     v_markTimeId             BIGINT;
-    v_markIsTargetable       BOOLEAN;
+    v_markIsDeleted          BOOLEAN;
     v_protectedMarkList      TEXT;
     v_cpt                    INT;
   BEGIN
@@ -4307,9 +4307,9 @@ $_rlbk_check$
         RAISE EXCEPTION '_rlbk_check: No mark "%" exists for group "%".', v_mark, v_aGroupName;
       END IF;
 -- ... and this mark can be used as target for a rollback
-      SELECT mark_id, mark_time_id, mark_is_targetable INTO v_markId, v_markTimeId, v_markIsTargetable FROM emaj.emaj_mark
+      SELECT mark_id, mark_time_id, mark_is_deleted INTO v_markId, v_markTimeId, v_markIsDeleted FROM emaj.emaj_mark
         WHERE mark_group = v_aGroupName AND mark_name = v_markName;
-      IF NOT v_markIsTargetable THEN
+      IF v_markIsDeleted THEN
         RAISE EXCEPTION '_rlbk_check: mark "%" for group "%" is not usable for rollback.', v_markName, v_aGroupName;
       END IF;
 -- ... and the rollback wouldn't delete protected marks (check disabled for rollback simulation)
@@ -5176,9 +5176,9 @@ $_rlbk_end$
 -- and reset the mark_log_rows_before_next column for the new last mark
       UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
         WHERE mark_group = ANY (v_groupNames)
-          AND (mark_group, mark_id) IN                -- select only the last targetable mark of each concerned group
+          AND (mark_group, mark_id) IN                -- select only the last non deleted mark of each concerned group
               (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
-               WHERE mark_group = ANY (v_groupNames) AND mark_is_targetable GROUP BY mark_group);
+               WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted GROUP BY mark_group);
 -- the sequences related to the deleted marks can be also suppressed
 --   delete first application sequences related data for the groups
       DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation

@@ -110,10 +110,10 @@ select funcname, calls from pg_stat_user_functions
  _gen_sql_groups                           |    18
  _gen_sql_tbl                              |    38
  _get_default_tablespace                   |     8
- _get_mark_name                            |   567
+ _get_mark_name                            |   570
  _get_mark_time_id                         |   207
  _lock_groups                              |   171
- _log_stat_tbl                             |  1983
+ _log_stat_tbl                             |  1989
  _log_truncate_fnct                        |     2
  _purge_hist                               |    88
  _reset_groups                             |   100
@@ -159,7 +159,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_consolidable_rollbacks           |     6
  emaj_get_previous_mark_group              |     8
  emaj_get_previous_mark_group              |     8
- emaj_log_stat_group                       |   220
+ emaj_log_stat_group                       |   223
  emaj_logged_rollback_group                |     7
  emaj_logged_rollback_group                |    12
  emaj_logged_rollback_groups               |     3
@@ -190,7 +190,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum 
 -----
- 988
+ 991
 (1 row)
 
 -----------------------------

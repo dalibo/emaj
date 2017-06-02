@@ -228,7 +228,7 @@ primary key, btree, for table "emaj.emaj_hist"
  mark_name                    | text    |           | not null | 
  mark_id                      | bigint  |           | not null | nextval('emaj.emaj_mark_mark_id_seq'::regclass)
  mark_time_id                 | bigint  |           | not null | 
- mark_is_targetable           | boolean |           | not null | 
+ mark_is_deleted              | boolean |           | not null | 
  mark_is_rlbk_protected       | boolean |           | not null | 
  mark_comment                 | text    |           |          | 
  mark_log_rows_before_next    | bigint  |           |          | 
