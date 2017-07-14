@@ -1,17 +1,31 @@
-Utilisation du plug-in phpPgAdmin
-=================================
+Utilisation des clients web
+===========================
 
 Accès à E-Maj dans l'interface phpPgAdmin
 -----------------------------------------
 
-Une fois connecté à une base de données dans laquelle l'extension E-Maj a été installée, et avec un rôle qui dispose des droits suffisants (super-utilisateur, *emaj_adm* ou *emaj_viewer*), une nouvelle icône rouge apparaît à droite dans la barre d'icônes horizontale de la base. Bien sûr, le schéma *emaj* apparaît dans la liste des schémas.
+Une fois connecté à une base de données dans laquelle l'extension E-Maj a été installée, et avec un rôle qui dispose des droits suffisants (super-utilisateur, *emaj_adm* ou *emaj_viewer*), une nouvelle icône rouge apparaît à droite dans la barre d'icônes horizontale de la base. Bien sûr, le schéma *emaj* figure dans la liste des schémas.
 
 Dans l'arborescence de gauche, un nouvel objet E-Maj apparaît également. Son ouverture permet de visualiser la liste des groupes de tables créés et d'accéder à l'un d'eux.
 
 .. figure:: images/ppa01.png
    :align: center
 
-   Figure 1 – Connexion à une base de données où E-Maj est installé.
+   Figure 1a – *phpPgAdmin* : connexion à une base de données où E-Maj est installé.
+
+Accès à Emaj_web
+----------------
+
+La connexion à une base de données est similaire à *phpPgAdmin*.
+
+Une fois connecté à une base de données dans laquelle l'extension E-Maj a été installée, et avec un rôle qui dispose des droits suffisants (super-utilisateur, *emaj_adm* ou *emaj_viewer*), l’icône rouge à droite dans la barre d'icônes horizontale de la base permet d’accéder aux fonctions spécifiques d’E-Maj.
+
+Dans l'arborescence de gauche, l’objet E-Maj apparaît également. Son ouverture permet de visualiser la liste des groupes de tables créés et d'accéder à l'un d'eux.
+
+.. figure:: images/web01.png
+	:align: center
+
+	Figure 1b – *Emaj_web* : connexion à une base de données où E-Maj est installé.
 
 
 Liste des groupes de tables

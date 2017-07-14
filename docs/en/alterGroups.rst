@@ -1,6 +1,8 @@
 Modifying tables groups
 =======================
 
+.. _emaj_alter_group:
+
 Several types of events may lead to alter a tables group:
 
 * the tables group definition may change, some tables or sequences may have been added or suppressed,

@@ -11,7 +11,6 @@ Les avantages qui en résultent sont :
 * de pouvoir traiter tous les groupes de tables dans une seule transaction,
 * d'assurer un verrouillage de toutes les tables à traiter en début d'opération, et ainsi minimiser les risques d'étreintes fatales.
 
-
 .. _multi_groups_functions_list:
 
 Liste des fonctions multi-groupes

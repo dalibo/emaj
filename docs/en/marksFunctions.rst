@@ -20,7 +20,7 @@ To delete a comment, just call the function, supplying a *NULL* value as comment
 
 Comments are stored into the *mark_comment* column from the *emaj_mark* table, which describes … marks. 
 
-Comments are mostly interesting when using the E-Maj :doc:`phpPgAdmin plug-in <ppaPluginOverview>`. Indeed, the plug-in systematically displays the comments in the groups marks list.
+Comments are mostly interesting when using the E-Maj :doc:`web clients<webOverview>`. Indeed, they systematically display the comments in the groups marks list.
 
 .. _emaj_get_previous_mark_group:
 

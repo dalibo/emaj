@@ -1,6 +1,8 @@
 Modification des groupes de tables
 ==================================
 
+.. _emaj_alter_group:
+
 Plusieurs types d'événements peuvent rendre nécessaire la modification d'un groupe de tables : 
 
 * la composition du groupe de tables change, avec l'ajout ou la suppression de tables ou de séquence dans le groupe,

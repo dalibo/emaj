@@ -1,17 +1,33 @@
-Using the phpPgAdmin plug-in
-============================
+Using the web clients
+=====================
 
 Accessing E-Maj from the phpPgAdmin interface
 ---------------------------------------------
 
-Once connected to a database where the E-Maj extension has been installed, and using a role having sufficient privileges (*super-user*, *emaj_adm* or *emaj_viewer*), a new red icon is appears on the right in the horizontal database icons tab. Obviously, the *emaj* schema appears in schemas list.
+Once connected to a database where the E-Maj extension has been installed, and using a role having sufficient privileges (*super-user*, *emaj_adm* or *emaj_viewer*), a new red icon appears on the right in the horizontal database icons tab. Obviously, the *emaj* schema appears in schemas list.
 
 In the browser tree on the left, a new E-Maj object also appears. By opening it, the list of created tables groups becomes directly accessible.
 
 .. figure:: images/ppa01.png
    :align: center
 
-   Figure 1 – Connection to a database where E-Maj is installed.
+   Figure 1a – *phpPgAdmin*: connection to a database where E-Maj is installed.
+
+
+Access to Emaj_web
+------------------
+
+The connection to a database is similar to *phpPgAdmin*.
+
+Once connected to a database where the E-Maj extension has been installed, and using a role having sufficient privileges (*super-user*, *emaj_adm* or *emaj_viewer*), a red icon appears on the right in the horizontal database icons tab.
+
+In the browser tree on the left, the E-Maj object also appears. By opening it, the list of created tables groups becomes directly accessible.
+
+.. figure:: images/web01.png
+	:align: center
+
+	Figure 1b – *Emaj_web*: connection to a database where E-Maj is installed.
+
 
 Tables groups list
 ------------------

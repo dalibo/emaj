@@ -37,5 +37,5 @@ In order to submit batch rollback (i.e. without blocking the use of the browser 
 * *$plugin_conf['psql_path']* defines the access path of the *psql* executable file,
 * *$plugin_conf['temp_dir']* defines a temporary directory that rollback functions can use.
 
-The distributed *config.inc.php-dist* file can be used as a configuration file model.
+The distributed *config.inc.php-dist* file can be used as a configuration template.
 

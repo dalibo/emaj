@@ -1,7 +1,14 @@
-Présentation générale du plug-in phpPgAdmin
-===========================================
+Présentation générale des clients web
+=====================================
 
-Pour faciliter l'utilisation d'E-Maj, un « **plug-in** » pour l'outil d'administration **phpPgAdmin**, dans ses versions 5.1 et suivantes, est également disponible.
+Pour faciliter l'utilisation d'E-Maj, deux applications web sont disponibles :
+
+* un « **plug-in** » pour l'outil d'administration **phpPgAdmin**, dans ses versions 5.1 et suivantes,
+* une application web indépendante, **Emaj_web**.
+
+Les deux clients web offrent les mêmes fonctionnalités autour d’E-Maj, avec une interface utilisateur similaire.
+
+*Emaj_web* empreinte à *phpPgAdmin* son infrastructure (browser, barre d’icones, connexion aux bases de données,...) et quelques fonctions utiles telles que la consultation du contenu de tables ou la saisie de requêtes SQL.
 
 Pour les bases de données dans lesquelles l'extension E-Maj a été installée, et si l'utilisateur est connecté avec un rôle qui dispose des autorisations nécessaires, tous les objets E-Maj sont visibles et manipulables.
 

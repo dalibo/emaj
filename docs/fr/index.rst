@@ -60,12 +60,12 @@ Bienvenue dans la documentation E-Maj !
 
 .. toctree::
    :maxdepth: 1
-   :caption: Le plug-in phpPgAdmin :
+   :caption: Clients web :
 
-   ppaPluginOverview
+   webOverview
    ppaPluginInstall
-   ppaPluginUsage
-
+   webInstall
+   webUsage
 
 .. toctree::
    :maxdepth: 1

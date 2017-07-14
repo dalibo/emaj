@@ -20,7 +20,7 @@ Pour supprimer un commentaire, il suffit d'exécuter la fonction avec une valeur
 
 Les commentaires sont stockés dans la colonne *mark_comment* de la table *emaj.emaj_mark* qui décrit les marques.
 
-Les commentaires sont surtout intéressants avec l'utilisation du :doc:`plug-in E-Maj pour phpPgAdmin <ppaPluginOverview>`. En effet, ce dernier les affiche systématiquement dans le tableau des marques d'un groupe.
+Les commentaires sont surtout intéressants avec l'utilisation des :doc:`clients web<webOverview>`. En effet, ces derniers les affichent systématiquement dans le tableau des marques d'un groupe.
 
 .. _emaj_get_previous_mark_group:
 
