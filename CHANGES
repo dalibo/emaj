@@ -27,6 +27,7 @@ Enhancements:
     tables have not been altered as UNLOGGED after their tables group creation.
   - Forbid tables declared as WITH OIDS into tables groups.
   - Optimize the execution of alter group operations.
+  - Some error message improvements.
 
 Bug fixes:
 

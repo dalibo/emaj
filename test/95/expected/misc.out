@@ -10,9 +10,9 @@ alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 5000;
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_reset_group(NULL);
-ERROR:  emaj_reset_group: group "<NULL>" has not been created.
+ERROR:  emaj_reset_group: group "<NULL>" does not exist.
 select emaj.emaj_reset_group('unknownGroup');
-ERROR:  emaj_reset_group: group "unknownGroup" has not been created.
+ERROR:  emaj_reset_group: group "unknownGroup" does not exist.
 -- group not in logging state
 select emaj.emaj_reset_group('myGroup1');
 ERROR:  emaj_reset_group: Group "myGroup1" cannot be reset because it is in LOGGING state. An emaj_stop_group function must be previously executed.
@@ -168,13 +168,13 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
 -----------------------------
 -- group is unknown in emaj_group_def
 select * from emaj.emaj_log_stat_group(NULL,NULL,NULL);
-ERROR:  emaj_log_stat_group: group "<NULL>" has not been created.
+ERROR:  emaj_log_stat_group: group "<NULL>" does not exist.
 select * from emaj.emaj_log_stat_group('unknownGroup',NULL,NULL);
-ERROR:  emaj_log_stat_group: group "unknownGroup" has not been created.
+ERROR:  emaj_log_stat_group: group "unknownGroup" does not exist.
 select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
-ERROR:  emaj_detailed_log_stat_group: group "<NULL>" has not been created.
+ERROR:  emaj_detailed_log_stat_group: group "<NULL>" does not exist.
 select * from emaj.emaj_detailed_log_stat_group('unknownGroup',NULL,NULL);
-ERROR:  emaj_detailed_log_stat_group: group "unknownGroup" has not been created.
+ERROR:  emaj_detailed_log_stat_group: group "unknownGroup" does not exist.
 -- invalid marks
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  emaj_log_stat_group: Start mark "dummyStartMark" is unknown for group "myGroup2".
@@ -442,12 +442,12 @@ rollback;
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_estimate_rollback_group(NULL,NULL,FALSE);
-ERROR:  _rlbk_check: group "<NULL>" has not been created.
+ERROR:  _rlbk_check: group "<NULL>" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_group('unknownGroup',NULL,TRUE);
-ERROR:  _rlbk_check: group "unknownGroup" has not been created.
+ERROR:  _rlbk_check: group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
@@ -655,9 +655,9 @@ alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.e
 \! mkdir /tmp/emaj_test/snaps
 -- group is unknown in emaj_group_def
 select emaj.emaj_snap_group(NULL,NULL,NULL);
-ERROR:  emaj_snap_group: group "<NULL>" has not been created.
+ERROR:  emaj_snap_group: group "<NULL>" does not exist.
 select emaj.emaj_snap_group('unknownGroup',NULL,NULL);
-ERROR:  emaj_snap_group: group "unknownGroup" has not been created.
+ERROR:  emaj_snap_group: group "unknownGroup" does not exist.
 -- invalid directory
 select emaj.emaj_snap_group('myGroup1',NULL,NULL);
 ERROR:  emaj_snap_group: directory parameter cannot be NULL
@@ -707,9 +707,9 @@ myschema1_mytbl4.snap
 \! mkdir /tmp/emaj_test/log_snaps
 -- group is unknown in emaj_group_def
 select emaj.emaj_snap_log_group(NULL,NULL,NULL,NULL,NULL);
-ERROR:  emaj_snap_log_group: group "<NULL>" has not been created.
+ERROR:  emaj_snap_log_group: group "<NULL>" does not exist.
 select emaj.emaj_snap_log_group('unknownGroup',NULL,NULL,NULL,NULL);
-ERROR:  emaj_snap_log_group: group "unknownGroup" has not been created.
+ERROR:  emaj_snap_log_group: group "unknownGroup" does not exist.
 -- invalid directory
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',NULL,NULL);
 ERROR:  emaj_snap_log_group: directory parameter cannot be NULL
@@ -829,7 +829,7 @@ PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at
 (1 row)
 
 select emaj.emaj_gen_sql_group('unknownGroup', NULL, NULL, NULL, NULL);
-ERROR:  _gen_sql_groups: group "unknownGroup" has not been created.
+ERROR:  _gen_sql_groups: group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_groups(NULL, NULL, NULL, NULL);
@@ -843,7 +843,7 @@ PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22
 (1 row)
 
 select emaj.emaj_gen_sql_groups('{"myGroup1","unknownGroup"}', NULL, NULL, NULL);
-ERROR:  _gen_sql_groups: group "unknownGroup" has not been created.
+ERROR:  _gen_sql_groups: group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- the tables group contains a table without pkey

@@ -399,10 +399,10 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
 -----------------------------
 -- unknown group
 select emaj.emaj_comment_group(NULL,NULL);
-ERROR:  emaj_comment_group: group "<NULL>" has not been created.
+ERROR:  emaj_comment_group: group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function emaj.emaj_comment_group(text,text) line 11 at RAISE
 select emaj.emaj_comment_group('unkownGroup',NULL);
-ERROR:  emaj_comment_group: group "unkownGroup" has not been created.
+ERROR:  emaj_comment_group: group "unkownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj.emaj_comment_group(text,text) line 11 at RAISE
 -- should be OK
 select emaj.emaj_comment_group('myGroup1','a first comment for group #1');
@@ -446,12 +446,12 @@ select group_name, group_comment from emaj.emaj_group where group_name = 'myGrou
 -----------------------------
 -- unknown group
 select emaj.emaj_drop_group(NULL);
-ERROR:  _drop_group: group "<NULL>" has not been created.
+ERROR:  _drop_group: group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 select emaj.emaj_drop_group('unknownGroup');
-ERROR:  _drop_group: group "unknownGroup" has not been created.
+ERROR:  _drop_group: group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
@@ -505,7 +505,7 @@ select emaj.emaj_drop_group('emptyGroup');
 
 -- already dropped
 select emaj.emaj_drop_group('myGroup2');
-ERROR:  _drop_group: group "myGroup2" has not been created.
+ERROR:  _drop_group: group "myGroup2" does not exist.
 CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
@@ -514,18 +514,18 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 -----------------------------
 -- unknown group
 select emaj.emaj_force_drop_group(NULL);
-ERROR:  _drop_group: group "<NULL>" has not been created.
+ERROR:  _drop_group: group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 select emaj.emaj_force_drop_group('unkownGroup');
-ERROR:  _drop_group: group "unkownGroup" has not been created.
+ERROR:  _drop_group: group "unkownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 -- already dropped
 select emaj.emaj_force_drop_group('myGroup2');
-ERROR:  _drop_group: group "myGroup2" has not been created.
+ERROR:  _drop_group: group "myGroup2" does not exist.
 CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 20 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement

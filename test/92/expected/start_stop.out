@@ -58,11 +58,11 @@ select emaj.emaj_disable_protection_by_event_triggers();
 -----------------------------
 -- group is unknown in emaj_group
 select emaj.emaj_start_group(NULL,NULL);
-ERROR:  _start_groups: group "<NULL>" has not been created.
+ERROR:  _start_groups: group "<NULL>" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
-ERROR:  _start_groups: group "unknownGroup" has not been created.
+ERROR:  _start_groups: group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 -- reserved mark name
@@ -453,19 +453,19 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 -----------------------------
 -- unknown group
 select emaj.emaj_stop_group(NULL);
-ERROR:  _stop_groups: group "<NULL>" has not been created.
+ERROR:  _stop_groups: group "<NULL>" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
 select emaj.emaj_stop_group('unkownGroup');
-ERROR:  _stop_groups: group "unkownGroup" has not been created.
+ERROR:  _stop_groups: group "unkownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
 select emaj.emaj_stop_group(NULL,NULL);
-ERROR:  _stop_groups: group "<NULL>" has not been created.
+ERROR:  _stop_groups: group "<NULL>" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
 select emaj.emaj_stop_group('unkownGroup',NULL);
-ERROR:  _stop_groups: group "unkownGroup" has not been created.
+ERROR:  _stop_groups: group "unkownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
 -- invalid mark
@@ -669,11 +669,11 @@ select emaj.emaj_start_groups('{"unknownGroup",""}',NULL,true);
 WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
-ERROR:  _start_groups: group "unknownGroup" has not been created.
+ERROR:  _start_groups: group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 select emaj.emaj_start_groups('{"myGroup1","unknownGroup"}',NULL,false);
-ERROR:  _start_groups: group "unknownGroup" has not been created.
+ERROR:  _start_groups: group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 -- reserved mark name
@@ -852,11 +852,11 @@ select emaj.emaj_stop_groups('{"unknownGroup",""}');
 WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 13 at SQL statement
-ERROR:  _stop_groups: group "unknownGroup" has not been created.
+ERROR:  _stop_groups: group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 13 at SQL statement
 select emaj.emaj_stop_groups('{"myGroup1","unknownGroup"}');
-ERROR:  _stop_groups: group "unknownGroup" has not been created.
+ERROR:  _stop_groups: group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, false)"
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 13 at SQL statement
 -- missing application table
@@ -935,11 +935,11 @@ PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL sta
 
 -- unknown group
 select emaj.emaj_force_stop_group(NULL);
-ERROR:  _stop_groups: group "<NULL>" has not been created.
+ERROR:  _stop_groups: group "<NULL>" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
 select emaj.emaj_force_stop_group('unkownGroup');
-ERROR:  _stop_groups: group "unkownGroup" has not been created.
+ERROR:  _stop_groups: group "unkownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
 -- should be OK
@@ -1158,9 +1158,9 @@ select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where grou
 -----------------------------
 -- group is unknown
 select emaj.emaj_unprotect_group(NULL);
-ERROR:  emaj_unprotect_group: group "<NULL>" has not been created.
+ERROR:  emaj_unprotect_group: group "<NULL>" does not exist.
 select emaj.emaj_unprotect_group('unknownGroup');
-ERROR:  emaj_unprotect_group: group "unknownGroup" has not been created.
+ERROR:  emaj_unprotect_group: group "unknownGroup" does not exist.
 -- group is not rollbackable
 select emaj.emaj_unprotect_group('phil''s group#3",');
 ERROR:  emaj_unprotect_group: The group "phil's group#3"," cannot be unprotected because it is an AUDIT_ONLY group.

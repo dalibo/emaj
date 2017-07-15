@@ -12,7 +12,7 @@ alter sequence emaj.emaj_mark_mark_id_seq restart 3000;
 -----------------------------
 -- group or groups is NULL
 select emaj.emaj_rollback_group(NULL,NULL);
-ERROR:  _rlbk_check: group "<NULL>" has not been created.
+ERROR:  _rlbk_check: group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
@@ -21,7 +21,7 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 select emaj.emaj_logged_rollback_group(NULL,NULL);
-ERROR:  _rlbk_check: group "<NULL>" has not been created.
+ERROR:  _rlbk_check: group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
@@ -45,7 +45,7 @@ WARNING:  _check_names_array: No group name to process.
 
 -- group is unknown in emaj_group_def
 select emaj.emaj_rollback_group('unknownGroup',NULL);
-ERROR:  _rlbk_check: group "unknownGroup" has not been created.
+ERROR:  _rlbk_check: group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
@@ -54,7 +54,7 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 select emaj.emaj_logged_rollback_group('unknownGroup',NULL);
-ERROR:  _rlbk_check: group "unknownGroup" has not been created.
+ERROR:  _rlbk_check: group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
@@ -63,7 +63,7 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 11 at RETURN
 select emaj.emaj_rollback_groups('{"unknownGroup"}',NULL);
-ERROR:  _rlbk_check: group "unknownGroup" has not been created.
+ERROR:  _rlbk_check: group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
@@ -72,7 +72,7 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text) line 7 at RETURN
 select emaj.emaj_logged_rollback_groups('{"unknownGroup","myGroup1"}',NULL);
-ERROR:  _rlbk_check: group "unknownGroup" has not been created.
+ERROR:  _rlbk_check: group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
@@ -88,7 +88,7 @@ begin;
 (1 row)
 
   select emaj.emaj_rollback_groups('{"myGroup1","unknownGroup"}','EMAJ_LAST_MARK');
-ERROR:  _rlbk_check: group "unknownGroup" has not been created.
+ERROR:  _rlbk_check: group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 23 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
@@ -2022,10 +2022,10 @@ rollback;
 -----------------------------
 -- group is NULL or unknown
 select emaj.emaj_consolidate_rollback_group(NULL,NULL);
-ERROR:  emaj_consolidate_rollback_group: group "<NULL>" has not been created.
+ERROR:  emaj_consolidate_rollback_group: group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function emaj.emaj_consolidate_rollback_group(text,text) line 17 at RAISE
 select emaj.emaj_consolidate_rollback_group('unknownGroup',NULL);
-ERROR:  emaj_consolidate_rollback_group: group "unknownGroup" has not been created.
+ERROR:  emaj_consolidate_rollback_group: group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj.emaj_consolidate_rollback_group(text,text) line 17 at RAISE
 -- mark is unknown
 select emaj.emaj_consolidate_rollback_group('myGroup1',NULL);

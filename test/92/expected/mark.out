@@ -39,9 +39,9 @@ select emaj.emaj_start_group('emptyGroup','MarkInit');
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_set_mark_group(NULL,NULL);
-ERROR:  emaj_set_mark_group: group "<NULL>" has not been created.
+ERROR:  emaj_set_mark_group: group "<NULL>" does not exist.
 select emaj.emaj_set_mark_group('unknownGroup',NULL);
-ERROR:  emaj_set_mark_group: group "unknownGroup" has not been created.
+ERROR:  emaj_set_mark_group: group "unknownGroup" does not exist.
 -- reserved mark name
 select emaj.emaj_set_mark_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
@@ -135,7 +135,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 15 at as
 select emaj.emaj_set_mark_groups('{"unknownGroup",""}',NULL);
 WARNING:  _check_names_array: a group name is NULL or empty.
 CONTEXT:  PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 15 at assignment
-ERROR:  emaj_set_mark_groups: group "unknownGroup" has not been created.
+ERROR:  emaj_set_mark_groups: group "unknownGroup" does not exist.
 -- reserved mark name
 select emaj.emaj_set_mark_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
@@ -407,9 +407,9 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_comment_mark_group(NULL,NULL,NULL);
-ERROR:  emaj_comment_mark_group: group "<NULL>" has not been created.
+ERROR:  emaj_comment_mark_group: group "<NULL>" does not exist.
 select emaj.emaj_comment_mark_group('unknownGroup',NULL,NULL);
-ERROR:  emaj_comment_mark_group: group "unknownGroup" has not been created.
+ERROR:  emaj_comment_mark_group: group "unknownGroup" does not exist.
 -- mark is unknown
 select emaj.emaj_comment_mark_group('myGroup1','unknownMark',NULL);
 ERROR:  emaj_comment_mark_group: "unknownMark" is not a known mark for group "myGroup1".
@@ -461,13 +461,13 @@ select emaj.emaj_comment_mark_group('emptyGroup','SM1','a comment on a mark for 
 -----------------------------
 -- group is unknown in both emaj_group_def version
 select emaj.emaj_get_previous_mark_group(NULL,NULL::timestamptz);
-ERROR:  emaj_get_previous_mark_group (1): group "<NULL>" has not been created.
+ERROR:  emaj_get_previous_mark_group (1): group "<NULL>" does not exist.
 select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::timestamptz);
-ERROR:  emaj_get_previous_mark_group (1): group "unknownGroup" has not been created.
+ERROR:  emaj_get_previous_mark_group (1): group "unknownGroup" does not exist.
 select emaj.emaj_get_previous_mark_group(NULL,NULL::text);
-ERROR:  emaj_get_previous_mark_group (2): group "<NULL>" has not been created.
+ERROR:  emaj_get_previous_mark_group (2): group "<NULL>" does not exist.
 select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::text);
-ERROR:  emaj_get_previous_mark_group (2): group "unknownGroup" has not been created.
+ERROR:  emaj_get_previous_mark_group (2): group "unknownGroup" does not exist.
 -- mark is unknown in emaj_mark
 select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');
 ERROR:  emaj_get_previous_mark_group: "unknownMark" is not a known mark for group "myGroup2".
@@ -513,9 +513,9 @@ select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previo
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_rename_mark_group(NULL,NULL,NULL);
-ERROR:  emaj_rename_mark_group: group "<NULL>" has not been created.
+ERROR:  emaj_rename_mark_group: group "<NULL>" does not exist.
 select emaj.emaj_rename_mark_group('unknownGroup',NULL,NULL);
-ERROR:  emaj_rename_mark_group: group "unknownGroup" has not been created.
+ERROR:  emaj_rename_mark_group: group "unknownGroup" does not exist.
 -- unknown mark name
 select emaj.emaj_rename_mark_group('myGroup1','DummyMark','new mark');
 ERROR:  emaj_rename_mark_group: mark "DummyMark" does not exist for group "myGroup1".
@@ -745,9 +745,9 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_delete_mark_group(NULL,NULL);
-ERROR:  emaj_delete_mark_group: group "<NULL>" has not been created.
+ERROR:  emaj_delete_mark_group: group "<NULL>" does not exist.
 select emaj.emaj_delete_mark_group('unknownGroup',NULL);
-ERROR:  emaj_delete_mark_group: group "unknownGroup" has not been created.
+ERROR:  emaj_delete_mark_group: group "unknownGroup" does not exist.
 -- unknown mark name
 select emaj.emaj_delete_mark_group('myGroup2',NULL);
 ERROR:  emaj_delete_mark_group: "<NULL>" is not a known mark for group "myGroup2".
@@ -809,9 +809,9 @@ ERROR:  emaj_delete_mark_group: "SM3" is the only mark of the group. It cannot b
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_delete_before_mark_group(NULL,NULL);
-ERROR:  emaj_delete_before_mark_group: group "<NULL>" has not been created.
+ERROR:  emaj_delete_before_mark_group: group "<NULL>" does not exist.
 select emaj.emaj_delete_before_mark_group('unknownGroup',NULL);
-ERROR:  emaj_delete_before_mark_group: group "unknownGroup" has not been created.
+ERROR:  emaj_delete_before_mark_group: group "unknownGroup" does not exist.
 -- unknown mark name
 select emaj.emaj_delete_before_mark_group('myGroup2','DummyMark');
 ERROR:  emaj_delete_before_mark_group: "DummyMark" is not a known mark for group "myGroup2".
@@ -872,9 +872,9 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 -----------------------------
 -- group is unknown
 select emaj.emaj_protect_mark_group(NULL,NULL);
-ERROR:  emaj_protect_mark_group: group "<NULL>" has not been created.
+ERROR:  emaj_protect_mark_group: group "<NULL>" does not exist.
 select emaj.emaj_protect_mark_group('unknownGroup',NULL);
-ERROR:  emaj_protect_mark_group: group "unknownGroup" has not been created.
+ERROR:  emaj_protect_mark_group: group "unknownGroup" does not exist.
 -- group is not rollbackable
 select emaj.emaj_protect_mark_group('phil''s group#3",',NULL);
 ERROR:  emaj_protect_mark_group: A mark on the group "phil's group#3"," cannot be protected because it is an AUDIT_ONLY group.
@@ -914,9 +914,9 @@ select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected f
 -----------------------------
 -- group is unknown
 select emaj.emaj_unprotect_mark_group(NULL,NULL);
-ERROR:  emaj_unprotect_mark_group: group "<NULL>" has not been created.
+ERROR:  emaj_unprotect_mark_group: group "<NULL>" does not exist.
 select emaj.emaj_unprotect_mark_group('unknownGroup',NULL);
-ERROR:  emaj_unprotect_mark_group: group "unknownGroup" has not been created.
+ERROR:  emaj_unprotect_mark_group: group "unknownGroup" does not exist.
 -- group is not rollbackable
 select emaj.emaj_unprotect_mark_group('phil''s group#3",',NULL);
 ERROR:  emaj_unprotect_mark_group: A mark on the group "phil's group#3"," cannot be unprotected because it is an AUDIT_ONLY group.

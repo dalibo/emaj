@@ -149,11 +149,11 @@ WARNING:  _create_tbl: table "myschema4.mytblm" has triggers (mytblm_insert_trig
 
 -- unknown group
 select emaj.emaj_alter_group(NULL);
-ERROR:  _alter_groups: the group "<NULL>" has not been created.
+ERROR:  _alter_groups: the group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 20 at RAISE
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 select emaj.emaj_alter_group('unknownGroup');
-ERROR:  _alter_groups: the group "unknownGroup" has not been created.
+ERROR:  _alter_groups: the group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 20 at RAISE
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 -- group in logging state
@@ -695,11 +695,11 @@ select emaj.emaj_enable_protection_by_event_triggers();
 -----------------------------
 -- unknown groups
 select emaj.emaj_alter_groups('{NULL,"unknownGroup"}');
-ERROR:  _alter_groups: the group "<NULL>" has not been created.
+ERROR:  _alter_groups: the group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 20 at RAISE
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 select emaj.emaj_alter_groups('{"myGroup1","unknownGroup"}');
-ERROR:  _alter_groups: the group "unknownGroup" has not been created.
+ERROR:  _alter_groups: the group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 20 at RAISE
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 -- groups in logging state
