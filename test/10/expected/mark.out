@@ -887,21 +887,21 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 -- group is unknown
 select emaj.emaj_protect_mark_group(NULL,NULL);
 ERROR:  emaj_protect_mark_group: group "<NULL>" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 19 at RAISE
 select emaj.emaj_protect_mark_group('unknownGroup',NULL);
 ERROR:  emaj_protect_mark_group: group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 19 at RAISE
 -- group is not rollbackable
 select emaj.emaj_protect_mark_group('phil''s group#3",',NULL);
 ERROR:  emaj_protect_mark_group: A mark on the group "phil's group#3"," cannot be protected because it is an AUDIT_ONLY group.
-CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 22 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 23 at RAISE
 -- mark is unknown
 select emaj.emaj_protect_mark_group('myGroup1',NULL);
 ERROR:  emaj_protect_mark_group: mark "<NULL>" does not exist for group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 31 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 28 at RAISE
 select emaj.emaj_protect_mark_group('myGroup1','unknownMark');
 ERROR:  emaj_protect_mark_group: mark "unknownMark" does not exist for group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 31 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 28 at RAISE
 -- should be ok
 select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_protect_mark_group 
@@ -1020,8 +1020,8 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'SM1');
 ERROR:  emaj_set_mark_groups: A mark cannot be set for group "myGroup1" because it is not in LOGGING state. An emaj_start_group function must be previously executed.
 CONTEXT:  PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 38 at RAISE
 select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
-ERROR:  emaj_protect_mark_group: A mark on the group "myGroup1" cannot be protected because it is not in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 26 at RAISE
+ERROR:  emaj_protect_mark_group: The mark "EMAJ_LAST_MARK" for the group "myGroup1" is logicaly deleted and thus cannot be protected.
+CONTEXT:  PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 34 at RAISE
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 
 ---------------------------

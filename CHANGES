@@ -26,8 +26,9 @@ Enhancements:
   - Improve the checks performed on tables groups: verify that application 
     tables have not been altered as UNLOGGED after their tables group creation.
   - Forbid tables declared as WITH OIDS into tables groups.
+  - Forbid to protect a mark that is logicaly deleted.
   - Optimize the execution of alter group operations.
-  - Some error message improvements.
+  - Improve some error messages.
 
 Bug fixes:
 

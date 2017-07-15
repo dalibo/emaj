@@ -994,7 +994,7 @@ ERROR:  emaj_set_mark_group: A mark cannot be set for group "myGroup1" because i
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'SM1');
 ERROR:  emaj_set_mark_groups: A mark cannot be set for group "myGroup1" because it is not in LOGGING state. An emaj_start_group function must be previously executed.
 select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
-ERROR:  emaj_protect_mark_group: A mark on the group "myGroup1" cannot be protected because it is not in LOGGING state.
+ERROR:  emaj_protect_mark_group: The mark "EMAJ_LAST_MARK" for the group "myGroup1" is logicaly deleted and thus cannot be protected.
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 
 ---------------------------

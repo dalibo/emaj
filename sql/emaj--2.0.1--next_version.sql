@@ -2679,6 +2679,7 @@ $emaj_protect_mark_group$
     v_groupIsLogging         BOOLEAN;
     v_realMark               TEXT;
     v_markIsProtected        BOOLEAN;
+    v_markIsDeleted          BOOLEAN;
     v_status                 INT;
   BEGIN
 -- check that the group is recorded in emaj_group table
@@ -2691,18 +2692,18 @@ $emaj_protect_mark_group$
     IF NOT v_groupIsRollbackable THEN
       RAISE EXCEPTION 'emaj_protect_mark_group: A mark on the group "%" cannot be protected because it is an AUDIT_ONLY group.', v_groupName;
     END IF;
--- check that the group is not in LOGGING state
-    IF NOT v_groupIsLogging THEN
-      RAISE EXCEPTION 'emaj_protect_mark_group: A mark on the group "%" cannot be protected because it is not in LOGGING state.', v_groupName;
-    END IF;
--- retrieve and check the mark name
+-- retrieve and check that the mark name exists
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
       RAISE EXCEPTION 'emaj_protect_mark_group: mark "%" does not exist for group "%".', v_mark, v_groupName;
     END IF;
--- OK, set the protection
-    SELECT mark_is_rlbk_protected INTO v_markIsProtected FROM emaj.emaj_mark
+-- check that the mark is not logicaly deleted
+    SELECT mark_is_deleted, mark_is_rlbk_protected INTO v_markIsDeleted, v_markIsProtected FROM emaj.emaj_mark
       WHERE mark_group = v_groupName AND mark_name = v_realMark;
+    IF v_markIsDeleted THEN
+      RAISE EXCEPTION 'emaj_protect_mark_group: The mark "%" for the group "%" is logicaly deleted and thus cannot be protected.', v_mark, v_groupName;
+    END IF;
+-- OK, set the protection, if not already set
     IF v_markIsProtected THEN
       v_status = 0;
     ELSE
