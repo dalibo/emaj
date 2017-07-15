@@ -132,7 +132,7 @@ CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytb
 PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 70 at PERFORM
-WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 70 at PERFORM
 NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
@@ -246,10 +246,10 @@ CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytb
 PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 70 at PERFORM
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
 PL/pgSQL function "emaj_create_group" line 90 at PERFORM
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
 PL/pgSQL function "emaj_create_group" line 90 at PERFORM
  emaj_create_group 
@@ -339,7 +339,7 @@ CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytb
 PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 70 at PERFORM
-WARNING:  _create_tbl: table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 70 at PERFORM
  emaj_create_group 
@@ -349,10 +349,10 @@ PL/pgSQL function "emaj_create_group" line 70 at PERFORM
 
 -- unknown group
 select emaj.emaj_alter_group(NULL);
-ERROR:  _alter_groups: the group "<NULL>" does not exist.
+ERROR:  _alter_groups: The group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 select emaj.emaj_alter_group('unknownGroup');
-ERROR:  _alter_groups: the group "unknownGroup" does not exist.
+ERROR:  _alter_groups: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function "emaj_alter_group" line 6 at RETURN
 -- group in logging state
 begin;
@@ -376,7 +376,7 @@ begin;
 (1 row)
 
   select emaj.emaj_alter_group('myGroup1');
-ERROR:  _alter_plan: the groups "myGroup1" cannot be altered because they are in LOGGING state.
+ERROR:  _alter_plan: The groups "myGroup1" cannot be altered because they are in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._alter_plan(v_groupNames, v_timeId)"
 PL/pgSQL function "_alter_groups" line 45 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
@@ -393,7 +393,7 @@ WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl1" is al
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
-ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
@@ -406,7 +406,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
-ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
@@ -419,7 +419,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
-ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
@@ -432,7 +432,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
-ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
@@ -444,7 +444,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
-ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
@@ -473,7 +473,7 @@ WARNING:  _check_groups_content: Error, the table or sequence myschema1.mytbl2b_
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
-ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
@@ -515,11 +515,11 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl4';
 select emaj.emaj_alter_group('myGroup1');
-WARNING:  _check_fk_groups: table "myschema1.mytbl2" is referenced by foreign key "mytbl4_col43_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
+WARNING:  _check_fk_groups: The table "myschema1.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema1.mytbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
+WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
@@ -544,11 +544,11 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 -- only 1 sequence to remove
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
 select emaj.emaj_alter_group('myGroup1');
-WARNING:  _check_fk_groups: table "myschema1.mytbl2" is referenced by foreign key "mytbl4_col43_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
+WARNING:  _check_fk_groups: The table "myschema1.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema1.mytbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "myschema1.mytbl4" that is outside groups (myGroup1).
+WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_group" line 6 at RETURN
@@ -1230,20 +1230,20 @@ select emaj.emaj_enable_protection_by_event_triggers();
 -----------------------------
 -- unknown groups
 select emaj.emaj_alter_groups('{NULL,"unknownGroup"}');
-ERROR:  _alter_groups: the group "<NULL>" does not exist.
+ERROR:  _alter_groups: The group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
 select emaj.emaj_alter_groups('{"myGroup1","unknownGroup"}');
-ERROR:  _alter_groups: the group "unknownGroup" does not exist.
+ERROR:  _alter_groups: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
 -- groups in logging state
 begin;
   select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
@@ -1268,7 +1268,7 @@ PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
 (1 row)
 
   select emaj.emaj_alter_groups('{"myGroup2","myGroup1"}');
-ERROR:  _alter_plan: the groups "myGroup2, myGroup1" cannot be altered because they are in LOGGING state.
+ERROR:  _alter_plan: The groups "myGroup2, myGroup1" cannot be altered because they are in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._alter_plan(v_groupNames, v_timeId)"
 PL/pgSQL function "_alter_groups" line 45 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1281,7 +1281,7 @@ WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl1" is co
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1294,7 +1294,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1307,7 +1307,7 @@ WARNING:  _check_groups_content: Error, the table myschema1.mytbl4 has no PRIMAR
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-ERROR:  _check_groups_content: one or several errors have been detected in the emaj_group_def table content.
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function "_alter_groups" line 24 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1326,19 +1326,19 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tbl
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl2" is referenced by foreign key "mytbl4_col43_fkey" from table "myschema2.mytbl4" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "myschema2.mytbl4" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1439,11 +1439,11 @@ PL/pgSQL function "_alter_exec" line 136 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function "_alter_groups" line 47 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1471,11 +1471,11 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1500,11 +1500,11 @@ select count(*) from "emajC".s1t3_log;
 update emaj.emaj_group_def set grpdef_log_schema_suffix = 'C' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1531,11 +1531,11 @@ update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsplog1' where grpdef_schem
 update emaj.emaj_group_def set grpdef_priority = 30 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
 set default_tablespace = tspemaj_renamed;
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1568,11 +1568,11 @@ update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_sc
 update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
 update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1610,11 +1610,11 @@ select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup
 (3 rows)
 
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1635,11 +1635,11 @@ update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = '
 update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
 -- the next call gives a useless mark name parameter (the group is in idle state)
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','useless_mark_name_%');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1670,12 +1670,12 @@ rollback;
 -- emaj_alter_group() and emaj_alter_groups() tests on logging groups
 -----------------------------
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Init');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function "emaj_start_groups" line 16 at SQL statement
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_start_groups" line 36 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
@@ -1701,11 +1701,11 @@ select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and r
 
 update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
 select emaj.emaj_alter_groups(array['myGroup1','myGroup2']);
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1727,11 +1727,11 @@ update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = '
 update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsplog1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
 set default_tablespace = tspemaj_renamed;
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','Attributes_changed');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1783,11 +1783,11 @@ update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_sche
 update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_alter_groups" line 57 at PERFORM
 PL/pgSQL function "emaj_alter_groups" line 6 at RETURN
@@ -1848,13 +1848,13 @@ SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN QUERY
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Init',true);
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN QUERY
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"

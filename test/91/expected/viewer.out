@@ -68,7 +68,7 @@ CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytb
 PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 70 at PERFORM
-WARNING:  _create_tbl: table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 70 at PERFORM
 NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
@@ -188,10 +188,10 @@ CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytb
 PL/pgSQL function "_create_tbl" line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_isRollbackable)"
 PL/pgSQL function "emaj_create_group" line 70 at PERFORM
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
 PL/pgSQL function "emaj_create_group" line 90 at PERFORM
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
 PL/pgSQL function "emaj_create_group" line 90 at PERFORM
  emaj_create_group 
@@ -200,7 +200,7 @@ PL/pgSQL function "emaj_create_group" line 90 at PERFORM
 (1 row)
 
 select emaj.emaj_create_group('emptyGroup');
-ERROR:  emaj_create_group: group "emptyGroup" is already created.
+ERROR:  emaj_create_group: The group "emptyGroup" already exists.
 select emaj.emaj_start_group('emptyGroup');
  emaj_start_group 
 ------------------

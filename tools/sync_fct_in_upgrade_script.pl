@@ -154,6 +154,11 @@ use warnings; use strict;
 #      next;
 #    }
   
+    # Stop the analysis of the source at event trigger creation
+    # (As the few functions created in this section depends on the postgres version, the processing would be too complex)
+    # TODO: remove the next line once event triggers will be supported by all postgres version compatible with E-Maj
+    last if ($line =~ /^-- event triggers and related functions --/);
+
     # Beginning of a CREATE FUNCTION sql verb
     if ($line =~ /^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/) {
       $fnctSignature = $1; 
@@ -197,7 +202,7 @@ use warnings; use strict;
     # Stop the analysis of the source at event trigger creation
     # (As the few functions created in this section depends on the postgres version, the processing would be too complex)
     # TODO: remove the next line once event triggers will be supported by all postgres version compatible with E-Maj
-#    last if ($line =~ /^-- event triggers and related functions --/);
+    last if ($line =~ /^-- event triggers and related functions --/);
 
     # Beginning of a CREATE FUNCTION sql verb
     if ($line =~ /^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/) {

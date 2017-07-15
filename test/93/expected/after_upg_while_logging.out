@@ -15,7 +15,7 @@ select * from emaj.emaj_verify_all();
 -- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group
 -----------------------------
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',false) order by 1,2;
-ERROR:  _rlbk_check: Group "myGroup1" is currently protected against rollback.
+ERROR:  _rlbk_check: The group "myGroup1" is currently protected against rollback.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -42,7 +42,7 @@ update "myTbl3" set col33 = col33 / 2;
 --
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
-ERROR:  _rlbk_check: protected marks (M3) for group "myGroup1" block the rollback to mark "M2".
+ERROR:  _rlbk_check: Protected marks (M3) for group "myGroup1" block the rollback to the mark "M2".
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"

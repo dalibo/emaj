@@ -136,23 +136,23 @@ use warnings; use strict;
     if ($nbFound == 0) {
 # do not report some messages known to not be present in the regression test suite
                             # installation conditions that are not met during the tests
-      if ($msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: the current user (%) is not a superuser.'
-       && $msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: the current postgres version (%) is too old for E-Maj.'
-       && $msgs{$fnctId} ne 'WARNING:E-Maj installation: as the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback is possible.'
-       && $msgs{$fnctId} ne 'EXCEPTION:The current postgres version (%) is not compatible with E-Maj.'
+      if ($msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current user (%) is not a superuser.'
+       && $msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current postgres version (%) is too old for E-Maj.'
+       && $msgs{$fnctId} ne 'WARNING:E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback is possible.'
+       && $msgs{$fnctId} ne 'EXCEPTION:_verify_groups : The current postgres version (%) is not compatible with E-Maj.'
                             # internal errors (errors that should never appear and that would due to coding error)
-       && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schema: internal error (schema "%" does not exist).'
-       && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: internal error (group "%" is empty).'
+       && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schema: Internal error (the schema "%" does not exist).'
+       && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: Internal error (group "%" is empty).'
 #       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_tbl: internal error (at least one list is NULL (columns list = %, pk columns list = %, conditions list = %).'
                             # execution conditions that cannot be reproduced without parallelism
-       && $msgs{$fnctId} ne 'EXCEPTION:_lock_groups: too many (5) deadlocks encountered while locking tables of group "%".'
-       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: too many (5) deadlocks encountered while locking tables for groups "%".'
+       && $msgs{$fnctId} ne 'EXCEPTION:_lock_groups: Too many (5) deadlocks encountered while locking tables of group "%".'
+       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables for groups "%".'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_start_mark: % Please retry.'
                             # cases that are tested in the misc.sql script but without displaying the error messages 
                             # because they contain timestamp fields that are not stable though test executions
-       && $msgs{$fnctId} ne 'EXCEPTION:emaj_log_stat_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).'
-       && $msgs{$fnctId} ne 'EXCEPTION:emaj_detailed_log_stat_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).'
-       && $msgs{$fnctId} ne 'EXCEPTION:emaj_snap_log_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).'
+       && $msgs{$fnctId} ne 'EXCEPTION:emaj_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).'
+       && $msgs{$fnctId} ne 'EXCEPTION:emaj_detailed_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).'
+       && $msgs{$fnctId} ne 'EXCEPTION:emaj_snap_log_group: The start mark "%" (%) has been set after the end mark "%" (%).'
          ) {
 # report the other messages
         if (! $isTittleDisplayed) {

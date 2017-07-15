@@ -14,8 +14,8 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 
 -- start both groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_start_groups 
 -------------------
                 15
@@ -30,8 +30,8 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
 
 -- logged rollback to Multi-1
 select * from emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  rlbk_severity |                  rlbk_message                   
 ---------------+-------------------------------------------------
  Notice        | 0 tables and 4 sequences effectively processed.
@@ -39,8 +39,8 @@ WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign ke
 
 -- rollback to Multi-2
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2',false) order by 1,2;
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  rlbk_severity |                  rlbk_message                   
 ---------------+-------------------------------------------------
  Notice        | 0 tables and 4 sequences effectively processed.
@@ -48,8 +48,8 @@ WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign ke
 
 -- rollback and stop to Multi-1
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  rlbk_severity |                  rlbk_message                   
 ---------------+-------------------------------------------------
  Notice        | 0 tables and 4 sequences effectively processed.
@@ -63,9 +63,9 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback')
 
 -- try to start both groups, but with an old deleted mark name
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
-ERROR:  _check_new_mark: Group "myGroup1" already contains a mark named "Multi-1".
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
+ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "Multi-1".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text,text[]) line 30 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 45 at SQL statement
@@ -73,8 +73,8 @@ SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'g
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 -- really start both groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1b', false);
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_start_groups 
 -------------------
                 15
@@ -101,8 +101,8 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
 (0 rows)
 
 select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  rlbk_severity |                  rlbk_message                   
 ---------------+-------------------------------------------------
  Notice        | 0 tables and 2 sequences effectively processed.
@@ -180,14 +180,14 @@ select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is deleted');
 
 -- try to get a rollback duration estimate on a deleted mark
 select emaj.emaj_estimate_rollback_group('myGroup2','M3',TRUE);
-ERROR:  _rlbk_check: mark "M3" for group "myGroup2" is not usable for rollback.
+ERROR:  _rlbk_check: The mark "M3" for the group "myGroup2" is not usable for rollback.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 46 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 -- try to rollback on a deleted mark
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
-ERROR:  _rlbk_check: mark "M3" for group "myGroup2" is not usable for rollback.
+ERROR:  _rlbk_check: The mark "M3" for the group "myGroup2" is not usable for rollback.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 46 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
@@ -476,7 +476,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exis
 NOTICE:  table "myschema4_mytblm_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
-WARNING:  _create_tbl: table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
  emaj_create_group 
 -------------------
                  5
@@ -551,16 +551,16 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
-WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
-WARNING:  _check_fk_groups: table "phil's schema3.phil's tbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
  emaj_create_group 
 -------------------
                  4
 (1 row)
 
 select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
-WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
-WARNING:  _check_fk_groups: table "phil's schema3.phil's tbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
  emaj_start_group 
 ------------------
                 4
@@ -647,16 +647,16 @@ select * from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mar
 
 --
 select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
-WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
-WARNING:  _check_fk_groups: table "phil's schema3.phil's tbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
  rlbk_severity |                  rlbk_message                   
 ---------------+-------------------------------------------------
  Notice        | 0 tables and 2 sequences effectively processed.
 (1 row)
 
 select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
-WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
-WARNING:  _check_fk_groups: table "phil's schema3.phil's tbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
  rlbk_severity |                  rlbk_message                   
 ---------------+-------------------------------------------------
  Notice        | 0 tables and 2 sequences effectively processed.
@@ -1215,16 +1215,16 @@ begin;
 (1 row)
 
   select * from emaj.emaj_rollback_group('myGroup2','Multi-1',false) order by 1,2;
-WARNING:  _check_fk_groups: Foreign key "mytbl6_col61_fkey", from table "myschema2.mytbl6", references "myschema2.mytbl7" that is outside groups (myGroup2).
-WARNING:  _check_fk_groups: table "myschema2.mytbl6" is referenced by foreign key "mytbl8_col81_fkey" from table "myschema2.mytbl8" that is outside groups (myGroup2).
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  rlbk_severity |                  rlbk_message                   
 ---------------+-------------------------------------------------
  Notice        | 2 tables and 2 sequences effectively processed.
 (1 row)
 
   select * from emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable',false) order by 1,2;
-WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
-WARNING:  _check_fk_groups: table "phil's schema3.phil's tbl1" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
  rlbk_severity |                  rlbk_message                   
 ---------------+-------------------------------------------------
  Notice        | 2 tables and 2 sequences effectively processed.
@@ -1396,8 +1396,8 @@ select emaj.emaj_alter_group('phil''s group#3",');
 NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name
 NOTICE:  table "short_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
-WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
-WARNING:  _check_fk_groups: table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
  emaj_alter_group 
 ------------------
                 4
@@ -1405,8 +1405,8 @@ WARNING:  _check_fk_groups: table "phil's schema3.table_with_very_looooooooooooo
 
 -- use the table and its group
 select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
-WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
-WARNING:  _check_fk_groups: table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
  emaj_start_group 
 ------------------
                 4
@@ -1421,8 +1421,8 @@ select emaj.emaj_set_mark_group('phil''s group#3",','M2');
 
 delete from "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
 select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group',false) order by 1,2;
-WARNING:  _check_fk_groups: Foreign key "mytbl2_col21_fkey", from table "phil's schema3.myTbl2\", references "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
-WARNING:  _check_fk_groups: table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by foreign key "mytbl4_col44_fkey" from table "phil's schema3.mytbl4" that is outside groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
  rlbk_severity |                  rlbk_message                   
 ---------------+-------------------------------------------------
  Notice        | 1 tables and 2 sequences effectively processed.
@@ -1451,7 +1451,7 @@ select emaj.emaj_protect_group('myGroup2');
 (1 row)
 
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
-ERROR:  _rlbk_check: Group "myGroup2" is currently protected against rollback.
+ERROR:  _rlbk_check: The group "myGroup2" is currently protected against rollback.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 35 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
@@ -1478,7 +1478,7 @@ select emaj.emaj_protect_mark_group('myGroup1','Mark_to_protect');
 (1 row)
 
 select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
-ERROR:  _rlbk_check: protected marks (Mark_to_protect) for group "myGroup1" block the rollback to mark "Multi-1".
+ERROR:  _rlbk_check: Protected marks (Mark_to_protect) for group "myGroup1" block the rollback to the mark "Multi-1".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 55 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
@@ -1973,7 +1973,7 @@ select emaj.emaj_create_group('myGroup4');
 NOTICE:  table "myschema4_mytblm_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
-WARNING:  _create_tbl: table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 NOTICE:  table "myschema4_mypartp1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1" does not exist, skipping
