@@ -36,6 +36,7 @@ begin;
   select emaj.emaj_start_group('myGroup1','');
   select emaj.emaj_disable_protection_by_event_triggers();
   drop table emaj.myschema1_mytbl1_log;
+  drop table emaj.myschema1_mytbl4_log;
   select emaj.emaj_enable_protection_by_event_triggers();
   select emaj.emaj_alter_group('myGroup1');
 rollback;
@@ -210,7 +211,7 @@ begin;
   drop table emaj.myschema1_mytbl1_log;
   drop table emaj.myschema2_mytbl1_log;
   select emaj.emaj_enable_protection_by_event_triggers();
-  select emaj.emaj_alter_groups('{"myGroup2","myGroup1"}');
+  select emaj.emaj_alter_groups('{"myGroup2","myGroup1","myGroup4"}');
 rollback;
 -- alter groups with a table now already belonging to another group
 begin;

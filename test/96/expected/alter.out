@@ -171,6 +171,7 @@ begin;
 (1 row)
 
   drop table emaj.myschema1_mytbl1_log;
+  drop table emaj.myschema1_mytbl4_log;
   select emaj.emaj_enable_protection_by_event_triggers();
  emaj_enable_protection_by_event_triggers 
 ------------------------------------------
@@ -726,8 +727,8 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                                         3
 (1 row)
 
-  select emaj.emaj_alter_groups('{"myGroup2","myGroup1"}');
-ERROR:  _alter_plan: The groups "myGroup2, myGroup1" cannot be altered because they are in LOGGING state.
+  select emaj.emaj_alter_groups('{"myGroup2","myGroup1","myGroup4"}');
+ERROR:  _alter_plan: The groups "myGroup1, myGroup2" cannot be altered because they are in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._alter_plan(text[],bigint) line 154 at RAISE
 SQL statement "SELECT emaj._alter_plan(v_groupNames, v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 45 at PERFORM

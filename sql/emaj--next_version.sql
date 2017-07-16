@@ -2663,7 +2663,7 @@ $_alter_plan$
       WHERE altr_new_group = group_name
         AND altr_time_id = v_timeId AND altr_new_group IS NOT NULL;
 -- check groups LOGGING state, depending on the steps to perform
-    SELECT string_agg(altr_group, ', ') INTO v_groups
+    SELECT string_agg(DISTINCT altr_group, ', ') INTO v_groups
       FROM emaj.emaj_alter_plan
       WHERE altr_time_id = v_timeId
         AND altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ', 'RESET_GROUP', 'REPAIR_TBL', 'ASSIGN_REL', 'ADD_TBL', 'ADD_SEQ')
