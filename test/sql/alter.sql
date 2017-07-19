@@ -300,17 +300,13 @@ begin;
 rollback;
 
 -----------------------------
--- emaj_alter_group() and emaj_alter_groups() tests on logging groups
+-- emaj_alter_group() and emaj_alter_groups() tests on logging groups with rollbacks
 -----------------------------
-select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Init');
+select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mk1');
 
 -- change the priority
 update emaj.emaj_group_def set grpdef_priority = 30 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
 select emaj.emaj_alter_group('myGroup1','Priority Changed');
-select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
-update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-select emaj.emaj_alter_groups(array['myGroup1','myGroup2']);
-select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
 
 -- change the emaj names prefix, the log schema, the log data tablespace and the log index tablespace for different tables
 update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
@@ -320,28 +316,41 @@ update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsplog1' where grpdef_schem
 set default_tablespace = tspemaj_renamed;
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','Attributes_changed');
 reset default_tablespace;
-select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema2_myTbl3_log';
-select count(*) from "emajC".s1t3_log;
-select * from emaj.emaj_sequence where (sequ_name like '%myTbl3%' or sequ_name like 's1t3%') and sequ_schema like 'emaj%' order by 1,2,3;
-select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
-select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema2_mytbl6_log_idx';
---
+
+-- set an intermediate mark
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk2');
+
+-- change the priority back
+update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+select emaj.emaj_alter_groups(array['myGroup1','myGroup2']);
+
+-- change the other attributes back
 update emaj.emaj_group_def set grpdef_log_schema_suffix = 'C' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema2_myTbl3_log';
-select count(*) from "emajC"."myschema1_myTbl3_log";
-select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema1_mytbl2b_log';
-select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.oid and relname = 'myschema2_mytbl6_log_idx';
+
+-- set an intermediate mark
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_id > 6000 order by mark_id;
 
+-- estimate a rollback crossing alter group operations
+select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
+
+-- execute a rollback not crossing any alter group operation
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false);
+
 -- execute rollbacks crossing alter group operations
-select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Init',false);
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Init',false);
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Init',true);
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false);
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true);
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true);
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true);
+
+-- execute additional rollback not crossing alter operations anymore
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
 
 -----------------------------
 -- test end: check and force sequences id

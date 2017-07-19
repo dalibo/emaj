@@ -1858,7 +1858,7 @@ CREATE OR REPLACE FUNCTION emaj._alter_plan(v_groupNames TEXT[], v_timeId BIGINT
 RETURNS VOID LANGUAGE plpgsql AS
 $_alter_plan$
 -- This function build the elementary steps that will be needed to perform an alter_groups operation.
--- Looking at emaj_relation and emaj_group_def tables, it populate the emaj_alter_plan table that will be used by the _alter_exec() function.
+-- Looking at emaj_relation and emaj_group_def tables, it populates the emaj_alter_plan table that will be used by the _alter_exec() function.
 -- Input: group names array, timestamp id of the operation (it will be used to identify rows in the emaj_alter_plan table)
   DECLARE
     v_emajSchema             TEXT = 'emaj';
@@ -3383,7 +3383,7 @@ $_rlbk_check$
     IF NOT v_isAlterGroupAllowed THEN
        PERFORM 0 FROM emaj.emaj_alter_plan WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames);
        IF FOUND THEN
-         RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously exectuted alter group operations. You can remove this protection by using a less strict setting for this function.';
+         RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously executed alter group operations. You can remove this protection by using a less strict setting for this function.';
        END IF;
     END IF;
     RETURN v_markName;
@@ -3896,6 +3896,13 @@ $_rlbk_end$
            FROM emaj.emaj_alter_plan
            WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> ''
         ORDER BY altr_time_id, altr_step, altr_schema, altr_tblseq;
+-- for unlogged rollbacks, delete from alter group operations the elementary actions that have not been automatically rolled back
+--TODO add missing cases
+      IF NOT v_isLoggedRlbk THEN
+         DELETE FROM emaj.emaj_alter_plan
+           WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> ''
+             AND altr_step IN ('CHANGE_REL_PRIORITY', 'CHANGE_TBL_LOG_SCHEMA', 'CHANGE_TBL_NAMES_PREFIX', 'CHANGE_TBL_LOG_DATA_TSP', 'CHANGE_TBL_LOG_INDEX_TSP');
+      END IF;
     END IF;
     RETURN;
 -- trap and record exception during the rollback operation

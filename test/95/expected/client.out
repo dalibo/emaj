@@ -43,7 +43,7 @@ select emaj.emaj_alter_group('myGroup1');
 \! ../../php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <NEXT_VERSION>) - launching parallel rollbacks
 -----------------------------------------------------------
-PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previously exectuted alter group operations. You can remove this protection by using a less strict setting for this function.
+PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations. You can remove this protection by using a less strict setting for this function.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 140
 Call of _rlbk_init() function failed 
