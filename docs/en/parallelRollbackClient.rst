@@ -19,7 +19,7 @@ To build the most balanced sessions as possible, E-Maj takes into account:
 Prerequisites
 -------------
 
-The command to run parallel rollbacks is written in *php*. As a consequence, **php** software and its PostgreSQL interface has to be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL cluster).
+The command to run parallel rollbacks is written in *php*. As a consequence, **php** software and its PostgreSQL interface has to be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL instance).
 
 Rolling back each session on behalf of a unique transaction implies the use of two phase commit. As a consequence, the **max_prepared_transaction** parameter of the *postgresql.conf* file must be adjusted. As the default value of this parameter equals 0, it must be modified by specifying a value at least equal to the maximum number of *sessions* that will be used.
 

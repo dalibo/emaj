@@ -44,12 +44,12 @@ Then the script creates the *emaj* schema with its technical tables, types and f
 
 If they are not already present, both *emaj_adm* and *emaj_viewer* roles are created.
 
-Finally, the installation script looks at the cluster configuration and may display a warning message regarding the *-max-prepared-statements* parameter.
+Finally, the installation script looks at the instance configuration and may display a warning message regarding the *-max-prepared-statements* parameter.
 
 Changes in postgresql.conf configuration file
 ---------------------------------------------
 
-Main E-Maj functions set a lock on each table of a processed tables group. If some groups contains a large number of tables, it may be necessary to increase the value of the **max_locks_per_transaction** parameter in the *postgresql.conf* configuration file. This parameter is used by PostgreSQL to compute the size of the *shared lock table* that tracks locks for the whole cluster. Its default value equals 64. It can be increased if an E-Maj operation fails with a message indicating that all entries of the *shared lock table* have been used.
+Main E-Maj functions set a lock on each table of a processed tables group. If some groups contains a large number of tables, it may be necessary to increase the value of the **max_locks_per_transaction** parameter in the *postgresql.conf* configuration file. This parameter is used by PostgreSQL to compute the size of the *shared lock table* that tracks locks for the whole instance. Its default value equals 64. It can be increased if an E-Maj operation fails with a message indicating that all entries of the *shared lock table* have been used.
 
 Furthermore, if the :doc:`parallel rollback client <parallelRollbackClient>` may be used, it will be probably necessary to adjust the **max_prepared_transaction** parameter.
 

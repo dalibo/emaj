@@ -1,7 +1,7 @@
 Architecture
 ============
 
-In order to be able to perform a rollback operation without having previously kept a physical image of the PostgreSQL cluster's files, all updates applied on application tables must be recorded, so that they can be cancelled. 
+In order to be able to perform a rollback operation without having previously kept a physical image of the PostgreSQL instance's files, all updates applied on application tables must be recorded, so that they can be cancelled. 
 
 With E-Maj, this updates recording takes the following form.
 

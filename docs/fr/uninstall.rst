@@ -23,7 +23,7 @@ Ce script effectue les actions suivantes :
 * il arrête les groupes de tables encore actifs, s’il y en a,
 * il supprime les groupes de tables existants, supprimant en particulier les triggers sur les tables applicatives,
 * il supprime l'extension et le schéma principal *emaj*,
-* il supprime les rôles *emaj_adm* et *emaj_viewer* s'ils ne sont pas associés à d'autres rôles ou à d'autres bases de données du cluster et ne possèdent pas de droits sur d'autres tables. 
+* il supprime les rôles *emaj_adm* et *emaj_viewer* s'ils ne sont pas associés à d'autres rôles ou à d'autres bases de données de l'instance et ne possèdent pas de droits sur d'autres tables. 
 
 L'exécution du script de désinstallation affiche ceci ::
 

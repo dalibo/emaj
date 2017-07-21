@@ -1,7 +1,7 @@
 Architecture
 ============
 
-Pour mener à bien l'opération de rollback sans avoir conservé au préalable une image physique des fichiers du cluster PostgreSQL, il faut pouvoir enregistrer les mises à jour effectuées sur les tables applicatives de manière à pouvoir les annuler. 
+Pour mener à bien l'opération de rollback sans avoir conservé au préalable une image physique des fichiers de l'instance PostgreSQL, il faut pouvoir enregistrer les mises à jour effectuées sur les tables applicatives de manière à pouvoir les annuler.
 
 Avec E-Maj, cela prend la forme suivante.
 

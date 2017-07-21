@@ -22,7 +22,7 @@ En d’autres termes, E-Maj est une extension PostgreSQL qui permet un enregistr
 Il constitue ainsi une bonne solution pour :
 
 * positionner à des moments précis des points de sauvegarde sur un ensemble de tables,
-* restaurer si nécessaire cet ensemble de tables dans un état stable, sans arrêt du cluster,
+* restaurer si nécessaire cet ensemble de tables dans un état stable, sans arrêt de l'instance,
 * gérer plusieurs points de sauvegarde, chacun d'eux étant utilisable à tout moment comme point de restauration.
 
 Ainsi, dans un **environnement de production**, E-Maj peut permettre de simplifier l'architecture technique utilisée, en offrant une alternative souple et efficace à des sauvegardes intermédiaires longues (pg_dump) et/ou coûteuses en espace disque (disques miroirs). E-Maj peut également apporter une aide au débogage, en offrant la possibilité d'analyser de façon précise les mises à jour effectuées par un traitement suspect sur les tables applicatives.

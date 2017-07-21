@@ -1,17 +1,17 @@
-Impacts on cluster and database administration
-==============================================
+Impacts on instance and database administration
+===============================================
 
-Stopping and restarting the cluster
------------------------------------
+Stopping and restarting the instance
+------------------------------------
 
-Using E-Maj doesn't bring any particular constraint regarding stopping and restarting a PostgreSQL cluster.
+Using E-Maj doesn't bring any particular constraint regarding stopping and restarting a PostgreSQL instance.
 
 General rule
 ^^^^^^^^^^^^
 
-At cluster restart, all E-Maj objects are in the same state as at cluster stop: log triggers of tables groups in *LOGGING* state remains enabled and log tables contain cancel-able updates already recorded.
+At instance restart, all E-Maj objects are in the same state as at instance stop: log triggers of tables groups in *LOGGING* state remains enabled and log tables contain cancel-able updates already recorded.
 
-If a transaction with table updates were not committed at cluster stop, it would be rolled back during the recovery phase of the cluster start, the application tables updates and the log tables updates being cancelled at the same time. 
+If a transaction with table updates were not committed at instance stop, it would be rolled back during the recovery phase of the instance start, the application tables updates and the log tables updates being cancelled at the same time. 
 
 This rule also applies of course to transactions that execute E-Maj functions, like a tables group start or stop, a rollback, a mark deletion,...
 
@@ -20,7 +20,7 @@ Sequences rollback
 
 Due to a PostgreSQL constraint, the rollback of application sequences assigned to a tables group is the only operation that is not protected by transactions. That is the reason why application sequences are processed at the very end of the :ref:`rollback operations <emaj_rollback_group>`. (For the same reason, at set mark time, application sequences are processed at the beginning of the operation.) 
 
-In case of a cluster stop during an E-Maj rollback execution, it is recommended to rerun this rollback just after the cluster restart, to ensure that application sequences and tables remain properly synchronised.
+In case of an instance stop during an E-Maj rollback execution, it is recommended to rerun this rollback just after the instance restart, to ensure that application sequences and tables remain properly synchronised.
 
 Saving and restoring the database
 ---------------------------------
@@ -31,7 +31,7 @@ Saving and restoring the database
 File level saves and restores
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When saving or restoring clusters at file level, it is essential to save or restore **ALL** cluster files, including those stored on dedicated tablespaces.
+When saving or restoring instances at file level, it is essential to save or restore **ALL** instance files, including those stored on dedicated tablespaces.
 
 After a file level restore, tables groups are in the very same state as at the save time, and the database activity can be restarted without any particular E-Maj operation.
 
@@ -95,9 +95,9 @@ Using E-Maj with replication
 Integrated physical replication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-E-Maj is totally compatible with the use of the different PostgreSQL integrated physical replication modes (*WAL* archiving and *PITR*, asynchronous and synchronous *Streaming Replication*). Indeed, all E-Maj objects hosted in the cluster are replicated like all other objects of the cluster.
+E-Maj is totally compatible with the use of the different PostgreSQL integrated physical replication modes (*WAL* archiving and *PITR*, asynchronous and synchronous *Streaming Replication*). Indeed, all E-Maj objects hosted in the instance are replicated like all other objects of the instance.
 
-However, because of the way PostgreSQL manages sequences, the sequences' current values may be a little forward on slave clusters than on the master cluster. For E-Maj, this may lightly overestimate the number of log rows in general statistics. But there is no consequence on the data integrity.
+However, because of the way PostgreSQL manages sequences, the sequences' current values may be a little forward on slave instances than on the master instance. For E-Maj, this may lightly overestimate the number of log rows in general statistics. But there is no consequence on the data integrity.
 
 Integrated logical replication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

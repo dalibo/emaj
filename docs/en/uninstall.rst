@@ -22,7 +22,7 @@ This script performs the following steps:
 * it stops the tables groups in *LOGGING* state, if any,
 * it drops the tables groups, removing in particular the triggers on application tables,
 * it drops the extension and the main *emaj* schema,
-* it drops roles *emaj_adm* and *emaj_viewer* if they are not linked to any objects in the current database or in other databases of the cluster.
+* it drops roles *emaj_adm* and *emaj_viewer* if they are not linked to any objects in the current database or in other databases of the instance.
 
 The uninstallation script execution displays::
 

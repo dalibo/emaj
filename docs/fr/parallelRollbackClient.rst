@@ -19,7 +19,7 @@ Pour obtenir des sessions les plus équilibrées possibles, E-Maj tient compte :
 Préalables
 ----------
 
-La commande qui permet de lancer des rollbacks avec parallélisme est codée en php. En conséquence, le logiciel **php** et son interface PostgreSQL doivent être installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge le cluster PostgreSQL).
+La commande qui permet de lancer des rollbacks avec parallélisme est codée en php. En conséquence, le logiciel **php** et son interface PostgreSQL doivent être installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l'instance PostgreSQL).
 
 Le rollback de chaque session au sein d'une unique transaction implique l'utilisation de commit à deux phases. En conséquence, le paramètre **max_prepared_transaction** du fichier *postgresql.conf* doit être ajusté. La valeur par défaut du paramètre est 0. Il faut donc la modifier en spécifiant une valeur au moins égale au nombre maximum de *sessions* qui seront utilisées.
 

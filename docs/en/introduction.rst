@@ -22,7 +22,7 @@ In other words, E-Maj is a PostgreSQL extension which enables fine-grained write
 It provides a good solution to :
 
 * define save points at precise time on a set of tables,
-* restore, if needed, this table set into a stable state, without stopping the cluster,
+* restore, if needed, this table set into a stable state, without stopping the instance,
 * manage several save points, each of them being usable at any time as a restore point.
 
 So, in a **production environment**, E-Maj may simplify the technical architecture, by offering a smooth and efficient alternative to time and/or disk consuming intermediate saves (pg_dump, mirror disks,...). E-Maj may also bring a help to the debugging by giving a way to precisely analyse how suspicious programs update application tables.

@@ -7,7 +7,7 @@ E-Maj fournit un client externe qui se lance en ligne de commande et qui permet 
 Préalables
 ----------
 
-La commande qui permet de suivre l'exécution des opérations de rollbacks est codée en *php*. En conséquence, le logiciel **php** et son interface PostgreSQL doivent être installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge le cluster PostgreSQL).
+La commande qui permet de suivre l'exécution des opérations de rollbacks est codée en *php*. En conséquence, le logiciel **php** et son interface PostgreSQL doivent être installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l'instance PostgreSQL).
 
 Syntaxe
 -------

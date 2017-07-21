@@ -12,7 +12,7 @@ It may be useful to take images of all tables and sequences belonging to a group
 
    SELECT emaj.emaj_snap_group('<group.name>', '<storage.directory>', '<COPY.options>');
  
-The directory/folder name must be supplied as an absolute pathname and must have been previously created. This directory/folder must have the appropriate permission so that the PostgreSQL cluster can write in it.
+The directory/folder name must be supplied as an absolute pathname and must have been previously created. This directory/folder must have the appropriate permission so that the PostgreSQL instance can write in it.
 
 The third parameter defines the output files format. It is a character string that matches the precise syntax available for the *COPY TO* SQL statement. 
 
@@ -58,7 +58,7 @@ A *NULL* value or an empty string may be used as end mark, representing the curr
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.
 
-The directory/folder name must be supplied as an absolute pathname and must have been previously created. This directory/folder must have the appropriate permission so that the PostgreSQL cluster can write in it.
+The directory/folder name must be supplied as an absolute pathname and must have been previously created. This directory/folder must have the appropriate permission so that the PostgreSQL instance can write in it.
 
 The fifth parameter defines the output files format. It is a character string that matches the precise syntax available for the *COPY TO* SQL statement.
 
@@ -105,7 +105,7 @@ A *NULL* value or an empty string may be used as end mark, representing the curr
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.
 
-The output file name must be supplied as an absolute pathname. It must have the appropriate permission so that the PostgreSQL cluster can write to it. If the file already exists, its content is overwritten.
+The output file name must be supplied as an absolute pathname. It must have the appropriate permission so that the PostgreSQL instance can write to it. If the file already exists, its content is overwritten.
 
 The last parameter is optional. It allows filtering of the tables and sequences to process. If the parameter is omitted or has a *NULL* value, all tables and sequences of the tables group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
 

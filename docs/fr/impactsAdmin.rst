@@ -1,17 +1,17 @@
-Impacts sur l'administration du cluster et de la base de données
-================================================================
+Impacts sur l'administration de l'instance et de la base de données
+===================================================================
 
-Arrêt/relance du cluster
-------------------------
+Arrêt/relance de l'instance
+---------------------------
 
-L'utilisation d'E-Maj n'apporte aucune contrainte particulière sur l'arrêt et la relance des clusters PostgreSQL.
+L'utilisation d'E-Maj n'apporte aucune contrainte particulière sur l'arrêt et la relance des instances PostgreSQL.
 
 Règle générale
 ^^^^^^^^^^^^^^
 
-Au redémarrage du cluster, tous les objets d'E-Maj se retrouvent dans le même état que lors de l'arrêt du cluster : les triggers de logs des groupes de tables actifs restent activés et les tables de logs sont alimentées avec les mises à jours annulables déjà enregistrées.
+Au redémarrage de l'instance, tous les objets d'E-Maj se retrouvent dans le même état que lors de l'arrêt de l'instance : les triggers de logs des groupes de tables actifs restent activés et les tables de logs sont alimentées avec les mises à jours annulables déjà enregistrées.
 
-Si une transaction avait des mises à jour en cours non validées lors de l'arrêt du cluster, celle-ci est annulée lors du redémarrage, les écritures dans les tables de logs se trouvant ainsi annulées en même temps que les modifications de tables.
+Si une transaction avait des mises à jour en cours non validées lors de l'arrêt de l'instance, celle-ci est annulée lors du redémarrage, les écritures dans les tables de logs se trouvant ainsi annulées en même temps que les modifications de tables.
 
 Cette règle s'applique bien sûr aux transactions effectuant des opérations E-Maj telles que le démarrage ou l'arrêt d'un groupe, un rollback, une suppression de marque, etc.
 
@@ -20,7 +20,7 @@ Rollback des séquences
 
 Lié à une contrainte de PostgreSQL, seul le rollback des séquences applicatives n'est pas protégé par les transactions. C'est la raison pour laquelle les séquences sont rollbackées en toute fin d':ref:`opération de rollback <emaj_rollback_group>`. (Pour la même raison, lors de la pose d'une marque, les séquences applicatives sont traitées en début d'opération.)
 
-Au cas où un rollback serait en cours au moment de l'arrêt du cluster, il est recommandé de procéder à nouveau à ce même rollback juste après le redémarrage du cluster, afin de s'assurer que les séquences et tables applicatives restent bien en phase.
+Au cas où un rollback serait en cours au moment de l'arrêt de l'instance, il est recommandé de procéder à nouveau à ce même rollback juste après le redémarrage de l'instance, afin de s'assurer que les séquences et tables applicatives restent bien en phase.
 
 Sauvegarde et restauration
 --------------------------
@@ -32,7 +32,7 @@ Sauvegarde et restauration
 Sauvegarde et restauration au niveau fichier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Lors des sauvegardes ou des restauration des clusters au niveau fichier, il est essentiel de sauver ou restaurer **TOUS** les fichiers du cluster, y compris ceux stockés sur des tablespaces dédiés.
+Lors des sauvegardes ou des restauration des instances au niveau fichier, il est essentiel de sauver ou restaurer **TOUS** les fichiers e l'instance, y compris ceux stockés sur des tablespaces dédiés.
 
 Après restauration des fichiers, les groupes de tables se retrouveront dans l'état dans lequel ils se trouvaient lors de la sauvegarde, et l'activité de la base de données peut reprendre sans opération E-Maj particulière.
 
@@ -98,9 +98,9 @@ Utilisation d'E-Maj avec de la réplication
 Réplication physique intégrée
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-E-Maj est parfaitement compatible avec le fonctionnement des différents modes de réplication physique intégrée de PostgreSQL (archivage des *WAL* et *PITR*, *Streaming Replication* asynchrone ou synchrone). Tous les objets E-Maj des bases hébergées sur le cluster sont en effet répliqués comme toutes les autres objets du cluster.
+E-Maj est parfaitement compatible avec le fonctionnement des différents modes de réplication physique intégrée de PostgreSQL (archivage des *WAL* et *PITR*, *Streaming Replication* asynchrone ou synchrone). Tous les objets E-Maj des bases hébergées sur l'instance sont en effet répliqués comme toutes les autres objets de l'instance.
 
-Néanmoins, compte tenu de la façon dont PostgreSQL gère les séquences, la valeur courante des séquences peut être un peu en avance sur les clusters esclave par rapport au cluster maître. Pour E-Maj, ceci induit des statistiques générales indiquant parfois un nombre de lignes de log un peu supérieur à la réalité. Mais il n'y a pas de conséquence sur l'intégrité des données.
+Néanmoins, compte tenu de la façon dont PostgreSQL gère les séquences, la valeur courante des séquences peut être un peu en avance sur les instances secondaires par rapport à l'instance maître. Pour E-Maj, ceci induit des statistiques générales indiquant parfois un nombre de lignes de log un peu supérieur à la réalité. Mais il n'y a pas de conséquence sur l'intégrité des données.
 
 Réplication logique intégrée
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

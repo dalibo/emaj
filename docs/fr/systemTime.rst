@@ -1,7 +1,7 @@
 Sensibilité aux changements de date et heure système
 ====================================================
 
-Pour garantir l'intégrité du contenu des tables gérées par E-Maj, il est important que le mécanisme de rollback soit insensible aux éventuels changements de date et heure du système qui héberge le cluster PostgreSQL.
+Pour garantir l'intégrité du contenu des tables gérées par E-Maj, il est important que le mécanisme de rollback soit insensible aux éventuels changements de date et heure du système qui héberge l'instance PostgreSQL.
 
 Même si les date et heure de chaque mise à jour ou de chaque pose de marque sont enregistrées, ce sont les valeurs de séquences enregistrées lors des poses de marques qui servent à borner les opérations dans le temps. Ainsi, **les rollbacks comme les suppressions de marques sont insensibles aux changements éventuels de date et heure du système**.
 

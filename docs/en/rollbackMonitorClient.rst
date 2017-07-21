@@ -6,7 +6,7 @@ E-Maj delivers an external client to run as a command that monitors the progress
 Prerequisite
 ------------
 
-The command to monitor rollback operations is written in *php*. As a consequence, **php** software and its PostgreSQL interface has to be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL cluster).
+The command to monitor rollback operations is written in *php*. As a consequence, **php** software and its PostgreSQL interface has to be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL instance).
 
 Syntax
 ------
