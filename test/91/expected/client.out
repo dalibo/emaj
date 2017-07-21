@@ -53,7 +53,8 @@ Call of _rlbk_init() function failed
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
 ==> Logged rollback completed.
-    Notice: 9 tables and 4 sequences effectively processed.
+    Notice: 9 / 11 tables effectively processed.
+    Notice: 4 sequences processed.
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 
 -- logged rollback for a single group and a single session
@@ -62,7 +63,8 @@ Call of _rlbk_init() function failed
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
 ==> Rollback completed.
-    Notice: 3 tables and 2 sequences effectively processed.
+    Notice: 3 / 5 tables effectively processed.
+    Notice: 2 sequences processed.
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 
 --------------------------------------------

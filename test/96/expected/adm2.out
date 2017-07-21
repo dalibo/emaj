@@ -32,28 +32,31 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
 select * from emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 4 sequences effectively processed.
-(1 row)
+ rlbk_severity |             rlbk_message             
+---------------+--------------------------------------
+ Notice        | 0 / 11 tables effectively processed.
+ Notice        | 4 sequences processed.
+(2 rows)
 
 -- rollback to Multi-2
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 4 sequences effectively processed.
-(1 row)
+ rlbk_severity |             rlbk_message             
+---------------+--------------------------------------
+ Notice        | 0 / 11 tables effectively processed.
+ Notice        | 4 sequences processed.
+(2 rows)
 
 -- rollback and stop to Multi-1
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 4 sequences effectively processed.
-(1 row)
+ rlbk_severity |             rlbk_message             
+---------------+--------------------------------------
+ Notice        | 0 / 11 tables effectively processed.
+ Notice        | 4 sequences processed.
+(2 rows)
 
 select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback');
  emaj_stop_groups 
@@ -103,10 +106,11 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
 select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 0 / 6 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 select emaj.emaj_delete_mark_group('myGroup2','Multi-2');
  emaj_delete_mark_group 
@@ -649,18 +653,20 @@ select * from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mar
 select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 0 / 2 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 0 / 2 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 -----------------------------
 -- Checking step 10
@@ -985,10 +991,11 @@ begin transaction;
 rollback;
 --
 select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 1 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 1 / 5 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 -----------------------------
 -- Checking step 11
@@ -1209,26 +1216,29 @@ myGroup2.sql_s
 reset role;
 begin;
   select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 0 / 5 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
   select * from emaj.emaj_rollback_group('myGroup2','Multi-1',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 2 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 2 / 6 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
   select * from emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 2 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 2 / 2 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 \i /tmp/emaj_test/sql_scripts/myGroup1.sql
 -- SQL script generated by E-Maj at [ts]$
@@ -1423,10 +1433,11 @@ delete from "phil's schema3".table_with_very_loooooooooooooooooooooooooooooooooo
 select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 WARNING:  _check_fk_groups: The table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 1 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 1 / 2 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 select emaj.emaj_stop_group('phil''s group#3",');
  emaj_stop_group 
@@ -1523,10 +1534,11 @@ select emaj.emaj_set_mark_group('myGroup1','MC2');
 
 update myTbl2 set col22 = 'TC2' WHERE col22 ='TC1';
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC1',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 2 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 2 / 5 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 insert into myTbl2 values (2000,'TC3',NULL);
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC1_DONE');
@@ -1557,10 +1569,11 @@ select emaj.emaj_set_mark_group('myGroup1','MC5');
 (1 row)
 
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC3',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 2 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 2 / 5 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
        cons_target_rlbk_mark_name, cons_end_rlbk_mark_id, cons_target_rlbk_mark_id, cons_rows, cons_marks, cons_marks
@@ -1626,10 +1639,11 @@ select emaj.emaj_set_mark_group('myGroup1','MC8');
 
 insert into myTbl2 values (3001,'TC8',NULL);
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC8',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 1 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 1 / 5 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
  emaj_consolidate_rollback_group 
@@ -1647,10 +1661,11 @@ insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
 update myTbl4 set col43 = NULL where col41 = 2000;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 4 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 2 sequences processed.
+ Notice        | 4 / 5 tables effectively processed.
+(2 rows)
 
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
  emaj_consolidate_rollback_group 
@@ -1678,10 +1693,11 @@ select emaj.emaj_set_mark_group('myGroup1','MC10');
 insert into myTbl1 select i, 'Test', 'Conso' from generate_series (3000,3010) as i;
 delete from myTbl1 where col11 > 3005;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 1 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 1 / 5 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
 select emaj.emaj_set_mark_group('myGroup1','MC11');
@@ -1693,10 +1709,11 @@ select emaj.emaj_set_mark_group('myGroup1','MC11');
 insert into myTbl4 values (3000,'FK...',1,10,'ABC');
 update myTbl4 set col43 = NULL where col41 = 3000;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 2 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 2 / 5 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
  emaj_consolidate_rollback_group 
@@ -1732,10 +1749,11 @@ select emaj.emaj_set_mark_group('myGroup1','MC16');
 
 update myTbl2 set col22 = 'TC16' WHERE col22 ='TC15';
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC15',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 2 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 2 / 5 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC15_DONE');
  emaj_rename_mark_group 
@@ -1751,10 +1769,11 @@ select emaj.emaj_set_mark_group('myGroup1','MC17');
 
 insert into myTbl2 values (4001,'TC15',NULL);
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC16',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 2 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 2 / 5 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC15_DONE');
  emaj_consolidate_rollback_group 
@@ -1961,10 +1980,11 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 (15 rows)
 
 select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 2 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 2 / 5 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 -----------------------------
 -- Step 15 : test transactions with several emaj operations

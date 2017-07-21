@@ -340,17 +340,17 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
 
 -- execute a rollback not crossing any alter group operation
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false);
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false) order by 1,2;
 
 -- execute rollbacks crossing alter group operations
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false);
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true);
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true);
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true);
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) order by 1,2;
 
 -- execute additional rollback not crossing alter operations anymore
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 
 -----------------------------
 -- test end: check and force sequences id

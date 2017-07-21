@@ -28,10 +28,11 @@ select emaj.emaj_unprotect_group('myGroup1');
 (1 row)
 
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 3 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 0 / 9 tables effectively processed.
+ Notice        | 3 sequences processed.
+(2 rows)
 
 -----------------------------
 -- Step 3 : for myGroup1, update tables, then unprotect, logged_rollback, rename the end rollback mark and consolidate the rollback
@@ -55,10 +56,11 @@ select emaj.emaj_unprotect_mark_group('myGroup1','M3');
 (1 row)
 
 select * from emaj.emaj_logged_rollback_group('myGroup1','M2',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 3 tables and 1 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 1 sequences processed.
+ Notice        | 3 / 5 tables effectively processed.
+(2 rows)
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --
@@ -109,17 +111,19 @@ select emaj.emaj_set_mark_group('myGroup1','M6');
 -- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 1 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 1 / 4 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 --
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 1 tables and 2 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 1 / 4 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 -----------------------------
 -- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
@@ -132,10 +136,11 @@ insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 --
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 2 tables and 1 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 1 sequences processed.
+ Notice        | 2 / 5 tables effectively processed.
+(2 rows)
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --
@@ -144,10 +149,11 @@ copy myTbl4 from stdin;
 --
 alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,2;
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 3 tables and 1 sequences effectively processed.
-(1 row)
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 1 sequences processed.
+ Notice        | 3 / 5 tables effectively processed.
+(2 rows)
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -----------------------------

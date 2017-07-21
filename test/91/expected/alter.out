@@ -1790,7 +1790,7 @@ select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false)
 (1 row)
 
 -- execute a rollback not crossing any alter group operation
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false);
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
@@ -1803,20 +1803,21 @@ PL/pgSQL function "_rlbk_init" line 68 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN QUERY
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 4 sequences effectively processed.
-(1 row)
+ rlbk_severity |             rlbk_message             
+---------------+--------------------------------------
+ Notice        | 0 / 11 tables effectively processed.
+ Notice        | 4 sequences processed.
+(2 rows)
 
 -- execute rollbacks crossing alter group operations
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false);
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations. You can remove this protection by using a less strict setting for this function.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function "_rlbk_init" line 24 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN QUERY
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true);
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
@@ -1831,15 +1832,16 @@ PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN QUERY
  rlbk_severity |                                  rlbk_message                                  
 ---------------+--------------------------------------------------------------------------------
- Notice        | 0 tables and 4 sequences effectively processed.
- Warning       | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
+ Notice        | 0 / 11 tables effectively processed.
+ Notice        | 4 sequences processed.
  Warning       | Tables group change not rolled back: E-Maj log schema for myschema2."myTbl3"
  Warning       | Tables group change not rolled back: E-Maj names prefix for myschema1."myTbl3"
+ Warning       | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
  Warning       | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b
  Warning       | Tables group change not rolled back: log index tablespace for myschema2.mytbl6
-(6 rows)
+(7 rows)
 
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true);
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
@@ -1854,15 +1856,16 @@ PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN QUERY
  rlbk_severity |                                  rlbk_message                                  
 ---------------+--------------------------------------------------------------------------------
- Notice        | 0 tables and 4 sequences effectively processed.
- Warning       | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
+ Notice        | 0 / 11 tables effectively processed.
+ Notice        | 4 sequences processed.
  Warning       | Tables group change not rolled back: E-Maj log schema for myschema2."myTbl3"
  Warning       | Tables group change not rolled back: E-Maj names prefix for myschema1."myTbl3"
+ Warning       | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
  Warning       | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b
  Warning       | Tables group change not rolled back: log index tablespace for myschema2.mytbl6
-(6 rows)
+(7 rows)
 
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true);
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
@@ -1877,16 +1880,17 @@ PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN QUERY
  rlbk_severity |                                  rlbk_message                                  
 ---------------+--------------------------------------------------------------------------------
- Notice        | 0 tables and 4 sequences effectively processed.
- Warning       | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
+ Notice        | 0 / 11 tables effectively processed.
+ Notice        | 4 sequences processed.
  Warning       | Tables group change not rolled back: E-Maj log schema for myschema2."myTbl3"
  Warning       | Tables group change not rolled back: E-Maj names prefix for myschema1."myTbl3"
+ Warning       | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
  Warning       | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b
  Warning       | Tables group change not rolled back: log index tablespace for myschema2.mytbl6
-(6 rows)
+(7 rows)
 
 -- execute additional rollback not crossing alter operations anymore
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
@@ -1899,12 +1903,13 @@ PL/pgSQL function "_rlbk_init" line 68 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_logged_rollback_groups" line 11 at RETURN QUERY
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 4 sequences effectively processed.
-(1 row)
+ rlbk_severity |             rlbk_message             
+---------------+--------------------------------------
+ Notice        | 0 / 11 tables effectively processed.
+ Notice        | 4 sequences processed.
+(2 rows)
 
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
 PL/pgSQL function "_rlbk_init" line 68 at PERFORM
@@ -1917,10 +1922,11 @@ PL/pgSQL function "_rlbk_init" line 68 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function "_rlbk_groups" line 20 at SQL statement
 PL/pgSQL function "emaj_rollback_groups" line 7 at RETURN QUERY
- rlbk_severity |                  rlbk_message                   
----------------+-------------------------------------------------
- Notice        | 0 tables and 4 sequences effectively processed.
-(1 row)
+ rlbk_severity |             rlbk_message             
+---------------+--------------------------------------
+ Notice        | 0 / 11 tables effectively processed.
+ Notice        | 4 sequences processed.
+(2 rows)
 
 -----------------------------
 -- test end: check and force sequences id

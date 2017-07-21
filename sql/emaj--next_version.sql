@@ -5138,8 +5138,9 @@ $_rlbk_end$
     v_groupNames             TEXT[];
     v_mark                   TEXT;
     v_isLoggedRlbk           BOOLEAN;
-    v_rlbkDatetime           TIMESTAMPTZ;
+    v_nbTbl                  INT;
     v_effNbTbl               INT;
+    v_rlbkDatetime           TIMESTAMPTZ;
     v_ctrlDuration           INTERVAL;
     v_markId                 BIGINT;
     v_markTimeId             BIGINT;
@@ -5152,8 +5153,8 @@ $_rlbk_end$
       v_isDblinkUsable = true;
     END IF;
 -- get the rollack characteristics for the emaj_rlbk
-    SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_eff_nb_table, time_clock_timestamp
-      INTO v_groupNames, v_mark, v_isLoggedRlbk, v_effNbTbl, v_rlbkDatetime
+    SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_table, rlbk_eff_nb_table, time_clock_timestamp
+      INTO v_groupNames, v_mark, v_isLoggedRlbk, v_nbTbl, v_effNbTbl, v_rlbkDatetime
       FROM emaj.emaj_rlbk, emaj.emaj_time_stamp WHERE rlbk_time_id = time_id AND  rlbk_id = v_rlbkId;
 -- get the mark timestamp for the 1st group (they all share the same timestamp)
     SELECT mark_time_id INTO v_markTimeId FROM emaj.emaj_mark
@@ -5285,9 +5286,14 @@ $_rlbk_end$
        RETURN NEXT;
     ELSE
 -- return the execution report to new style calling functions
--- ... the general notice message with counters
-       rlbk_severity = 'Notice'; rlbk_message = format ('%s tables and %s sequences effectively processed.',v_effNbTbl::TEXT, v_nbSeq::TEXT);
+-- ... the general notice messages with counters
+       rlbk_severity = 'Notice';
+       rlbk_message = format ('%s / %s tables effectively processed.', v_effNbTbl::TEXT, v_nbTbl::TEXT);
        RETURN NEXT;
+       IF v_nbSeq > 0 THEN
+         rlbk_message = format ('%s sequences processed.', v_nbSeq::TEXT);
+         RETURN NEXT;
+       END IF;
 -- ... and warning messages for any elementary action from alter group operations that has not been rolled back
 --TODO add missing cases
        RETURN QUERY
