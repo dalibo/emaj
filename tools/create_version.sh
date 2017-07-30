@@ -32,8 +32,8 @@
 # ----------------------
 	cd $OLDDIR
 
-# Stamp the CHANGES file
-	sed -i "s/<NEXT_VERSION>/${NEW}/" CHANGES
+# Stamp the CHANGES.md file
+	sed -i "s/<NEXT_VERSION>/${NEW}/" CHANGES.md
 
 # Adapt and rename the migration script
 	sed -i "s/<NEXT_VERSION>/${NEW}/g" sql/emaj--*--next_version.sql
@@ -78,8 +78,8 @@
 	done
 	git mv sql/emaj--next_version.sql sql/emaj--${NEW}.sql
 
-# Change version identifiers inside files from /php + /tools + META.json README
-	find php tools META.json README -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
+# Change version identifiers inside files from /php + /tools + META.json README.md
+	find php tools META.json README.md -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
 
 # Change version identifiers inside files from /test/sql
 	find test/sql -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
@@ -103,7 +103,7 @@
 # ---------------------------------
 	cd $OLDDIR
 # Add a new entry in CHANGES
-	sed -i "3i<NEXT_VERSION>\n------\nEnhancements:\n\nBug fixes:\n" CHANGES
+	sed -i "3i<NEXT_VERSION>\n------\nEnhancements:\n\nBug fixes:\n" CHANGES.md
 
 # create a new empty migration script
 	echo "--" >sql/emaj--$NEW--next_version.sql

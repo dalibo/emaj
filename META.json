@@ -1,10 +1,18 @@
 {
    "name": "E-Maj",
-   "abstract": "E-Maj provides a set of functions to 1) log updates performed on groups of tables and 2) rollback these updates if needed",
+   "abstract": "E-Maj is a PostgreSQL extension which enables fine-grained write logging and time travel on subsets of the DB.",
+   "description": "Using triggers, E-Maj logs INSERT/UPDATE/DELETE executions in order to be able to look at the tables updates and cancel them through 'rollback operations'. It includes advanced features like statistics about updates, parallel rollbacks or 'logged rollback' allowing to ... cancel a rollback. A web GUI tool also helps in performing all E-Maj tasks.",
    "version": "<NEXT_VERSION>",
    "maintainer": "Philippe Beaudoin - phb<dot>emaj<at>free<dot>fr",
    "license": "gpl_2",
    "tags": [ "emaj", "table log", "audit log", "log trigger", "archive before journal", "logical rollback", "flashback" ],
+   "prereqs": {
+     "runtime": {
+       "requires": {
+         "dblink": "0"
+       },
+     },
+   },
    "provides": {
      "emaj": {
        "file": "sql/emaj--<NEXT_VERSION>.sql",
@@ -14,11 +22,15 @@
      }
    },
    "resources": {
+      "homepage": "http://emaj.readthedocs.io",
       "repository": {
         "url":  "https://github.com/beaud76/emaj.git",
         "web":  "https://github.com/beaud76/emaj/",
         "type": "git"
-      }
+      },
+      "bugtracker": {
+         "web": "https://github.com/beaud76/emaj/issues"
+      },
    },
    "meta-spec": {
       "version": "1.0.0",
