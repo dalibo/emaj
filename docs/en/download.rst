@@ -6,11 +6,12 @@ Download
 
 E-Maj is available for download on the Internet site **PGXN**, the PostgreSQL Extension Network (http://pgxn.org).
 
-E-Maj is also available on the **github.org** Internet site:
+E-Maj and its add-ons are also available on the **github.org** Internet site:
 
 * source components (https://github.com/beaud76/emaj)
 * documentation (https://github.com/beaud76/emaj_doc)
 * plug-in for phpPgAdmin (https://github.com/beaud76/emaj_ppa_plugin)
+* Emaj_web GUI (https://github.com/beaud76/emaj_web)
 
 
 Decompression
@@ -33,15 +34,15 @@ A new emaj-<version> directory is now available, containing the following files 
 +---------------------------------------------+---------------------------------------------------------------------+
 | Files                                       | Usage                                                               |
 +=============================================+=====================================================================+
-| sql/emaj--2.0.1.sql                         | installation script of the extension (vers. 2.0.1)                  |
+| sql/emaj--2.1.0.sql                         | installation script of the extension (vers. 2.1.0)                  |
++---------------------------------------------+---------------------------------------------------------------------+
+| sql/emaj--2.0.1--2.1.0.sql                  | extension upgrade script from 2.0.1 to 2.1.0                        |
 +---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj--2.0.0--2.0.1.sql                  | extension upgrade script from 2.0.0 to 2.0.1                        |
 +---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj--1.3.1--2.0.0.sql                  | extension upgrade script from 1.3.1 to 2.0.0                        |
 +---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj--unpackaged--1.3.1.sql             | script that transforms an existing 1.3.1 version into extension     |
-+---------------------------------------------+---------------------------------------------------------------------+
-| sql/emaj.control                            | extension control file used by the integrated extensions management |
 +---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj-1.3.0-to-1.3.1.sql                 | psql script that upgrades a 1.3.0 version                           |
 +---------------------------------------------+---------------------------------------------------------------------+
@@ -65,15 +66,17 @@ A new emaj-<version> directory is now available, containing the following files 
 +---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj_uninstall.sql                      | psql script to uninstall the E-Maj components                       |
 +---------------------------------------------+---------------------------------------------------------------------+
-| README                                      | reduced extension's documentation                                   |
+| README.md                                   | reduced extension's documentation                                   |
 +---------------------------------------------+---------------------------------------------------------------------+
-| CHANGES                                     | release notes                                                       |
+| CHANGES.md                                  | release notes                                                       |
 +---------------------------------------------+---------------------------------------------------------------------+
 | LICENSE                                     | information about E-Maj license                                     |
 +---------------------------------------------+---------------------------------------------------------------------+
 | AUTHORS                                     | who are the authors                                                 |
 +---------------------------------------------+---------------------------------------------------------------------+
 | META.json                                   | technical data for PGXN                                             |
++---------------------------------------------+---------------------------------------------------------------------+
+| emaj.control                                | extension control file used by the integrated extensions management |
 +---------------------------------------------+---------------------------------------------------------------------+
 | doc/Emaj.<version>_doc_en.pdf               | English version of the full E-Maj documentation                     |
 +---------------------------------------------+---------------------------------------------------------------------+

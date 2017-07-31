@@ -11,7 +11,7 @@ So a supplied *psql* script must be executed after each PostgreSQL version upgra
 
    \i <emaj_directory>/sql/emaj_upgrade_after_postgres_upgrade.sql
 
-For E-Maj version 2.0.0, the script only creates the event triggers that may be missing:
+For E-Maj versions 2.0.0 and later, the script only creates the event triggers that may be missing:
 
 * those that appear in version 9.3 and protect against the drop of the extension itself and the drop of E-Maj objects (log tables, functions,...),
 * those that appear in version 9.5 and protect against log table structure changes.

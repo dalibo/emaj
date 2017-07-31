@@ -1,5 +1,5 @@
-Installation de l'extension E-Maj
-=================================
+Installation de l'extension E-Maj dans une base de données
+==========================================================
 
 Si une version d'E-Maj est déjà installée dans la base de données, il faut la :doc:`mettre à jour <upgrade>`.
 

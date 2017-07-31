@@ -11,7 +11,7 @@ Aussi, un script *psql*, à passer après chaque changement de version PostgreSQ
 
    \i <répertoire_emaj>/sql/emaj_upgrade_after_postgres_upgrade.sql
 
-Dans la version E-Maj 2.0.0, ce script ne fait que créer les éventuels triggers sur événement manquants :
+Dans les versions E-Maj 2.0.0 et suivantes, ce script ne fait que créer les éventuels triggers sur événement manquants :
 
 * ceux qui apparaissent en version 9.3 et qui protègent contre la suppression de l’extension elle-même et contre la suppression d’objets E-Maj (tables de log, fonctions, …),
 * celui qui apparaît en version 9.5 et qui protège contre les changements de structure des tables de log.
