@@ -1,14 +1,13 @@
 --
--- E-Maj : logs and rollbacks table updates : Version 2.0.1
+-- E-Maj : logs and rollbacks table updates : Version 2.1.0
 --
 -- This software is distributed under the GNU General Public License.
 --
 -- This script is automatically called by a "CREATE EXTENSION emaj;" statement in postgres 9.1+.
 --
 -- This script must be executed by a role having SUPERUSER privileges.
--- The current cluster may already contain a tablespace named "tspemaj" to hold E-Maj files,
---   for instance previously created by a statement like:
---   CREATE TABLESPACE tspemaj LOCATION '/.../tspemaj',
+-- The E-Maj technical tables will be installed into the default tablespace.
+-- The user executing the installation may set it to a particular value using a "set default_tablespace to <name>;" statement.
 -- The emaj extension also installs the dblink extension into the database if it is not already installed.
 
 -- complain if this script is executed in psql, rather than via a CREATE EXTENSION statement
@@ -17,8 +16,7 @@
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 
--- create emaj roles
--- and set tspemaj as current_tablespace if exists
+-- perform some checks and create emaj roles
 DO LANGUAGE plpgsql
 $do$
   DECLARE
@@ -26,11 +24,11 @@ $do$
 -- check the current role is a superuser
     PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj installation: the current user (%) is not a superuser.', current_user;
+      RAISE EXCEPTION 'E-Maj installation: The current user (%) is not a superuser.', current_user;
     END IF;
 -- check postgres version is >= 9.1
     IF current_setting('server_version_num')::int < 90100 THEN
-      RAISE EXCEPTION 'E-Maj installation: the current postgres version (%) is too old for E-Maj.', current_setting('server_version');
+      RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for E-Maj.', current_setting('server_version');
     END IF;
 -- create emaj roles (NOLOGIN), if they do not exist
 -- does 'emaj_adm' already exist ?
@@ -49,14 +47,6 @@ $do$
       COMMENT ON ROLE emaj_viewer IS
         $$This role may be granted to other roles allowed to view E-Maj objects content.$$;
     END IF;
--- if tspemaj tablespace exists,
---   use it as default_tablespace for emaj tables creation
---   and grant the create rights on it to emaj_adm
-    PERFORM 0 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
-    IF FOUND THEN
-      SET LOCAL default_tablespace TO tspemaj;
-      GRANT CREATE ON TABLESPACE tspemaj TO emaj_adm;
-    END IF;
 --
     RETURN;
   END;
@@ -68,6 +58,25 @@ $do$;
 --                                            --
 ------------------------------------------------
 
+-- enum of the possible values for the alter groups steps
+CREATE TYPE emaj._alter_step_enum AS ENUM (
+  'REMOVE_TBL',              -- remove a table from a group
+  'REMOVE_SEQ',              -- remove a sequence from a group
+  'CREATE_LOG_SCHEMA',       -- create a secondary log schema
+  'REPAIR_TBL',              -- repair a damaged table
+  'REPAIR_SEQ',              -- repair a damaged sequence
+  'RESET_GROUP',             -- reset an idle group
+  'CHANGE_TBL_LOG_SCHEMA',   -- change the log schema for a table
+  'CHANGE_TBL_NAMES_PREFIX', -- change the E-Maj names prefix for a table
+  'CHANGE_TBL_LOG_DATA_TSP', -- change the log data tablespace for a table
+  'CHANGE_TBL_LOG_INDEX_TSP',-- change the log index tablespace for a table
+  'ASSIGN_REL',              -- move a table or a sequence from one group to another
+  'CHANGE_REL_PRIORITY',     -- change the priority level for a table or a sequence
+  'ADD_TBL',                 -- add a table to a group
+  'ADD_SEQ',                 -- add a sequence to a group
+  'DROP_LOG_SCHEMA'          -- drop a secondary log schema
+  );
+
 -- enum of the possible values for the rollback status columns
 CREATE TYPE emaj._rlbk_status_enum AS ENUM (
   'PLANNING',                -- the emaj rollback is in the initial planning phase
@@ -77,6 +86,7 @@ CREATE TYPE emaj._rlbk_status_enum AS ENUM (
   'COMMITTED',               -- the emaj rollback transaction is known as committed
   'ABORTED'                  -- the emaj rollback transaction is known as aborted
   );
+
 -- enum of the possible values for the rollback steps
 CREATE TYPE emaj._rlbk_step_enum AS ENUM (
   'LOCK_TABLE',              -- set a lock on a table
@@ -151,6 +161,8 @@ CREATE TABLE emaj.emaj_group_def (
   );
 COMMENT ON TABLE emaj.emaj_group_def IS
 $$Contains E-Maj groups definition, supplied by the E-Maj administrator.$$;
+-- index on emaj_grpdef used to speedup alter groups operations on groups with large E-Maj configuration
+CREATE INDEX emaj_group_def_idx1 ON emaj.emaj_group_def (grpdef_schema, grpdef_tblseq);
 
 -- table containing the time stamps of major E-Maj events.
 -- these stamps, used as time references in other internal tables, are insensitive to system time fluctuations and transaction wrapaound.
@@ -235,8 +247,8 @@ CREATE TABLE emaj.emaj_mark (
                                                            -- that are not safe if system time changes)
   mark_time_id                 BIGINT      NOT NULL,       -- time stamp of the mark creation, used as a reference
                                                            --   for other tables like emaj_sequence and all log tables
-  mark_is_deleted              BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is deleted
-  mark_is_rlbk_protected       BOOLEAN     NOT NULL,       -- boolean to indicate if the mark is protected from rollbacks (false by default)
+  mark_is_deleted              BOOLEAN     NOT NULL,       -- boolean to indicate whether the mark is deleted
+  mark_is_rlbk_protected       BOOLEAN     NOT NULL,       -- boolean to indicate whether the mark is protected against rollbacks (false by default)
   mark_comment                 TEXT,                       -- optional user comment
   mark_log_rows_before_next    BIGINT,                     -- number of log rows recorded for the group between the mark
                                                            -- and the next one (NULL if last mark)
@@ -286,6 +298,28 @@ CREATE TABLE emaj.emaj_seq_hole (
 COMMENT ON TABLE emaj.emaj_seq_hole IS
 $$Contains description of holes in sequence values for E-Maj log tables.$$;
 
+-- table containing the elementary steps to perform alter_groups operations
+-- the steps concerning a relation are identified by the altr_schema and altr_tblseq columns
+-- the steps concerning a schema are identified by the altr_schema column
+-- the steps concerning a group are identified by the altr_group column
+CREATE TABLE emaj.emaj_alter_plan (
+  altr_time_id                 BIGINT      NOT NULL,       -- time stamp id of the alter_groups operation
+  altr_step                    emaj._alter_step_enum
+                                           NOT NULL,       -- elementary step of the alter groups operation
+  altr_schema                  TEXT        NOT NULL,       -- schema name, depending on the step ('' when meaningless)
+  altr_tblseq                  TEXT        NOT NULL,       -- table or sequence name, depending on the step ('' when meaningless)
+  altr_group                   TEXT        NOT NULL,       -- group that owns the table or the sequence ('' when meaningless)
+  altr_priority                INT         ,               -- priority level, with the same meaning and representation than in emaj_group_def
+  altr_group_is_logging        BOOLEAN     ,               -- copy of the emaj_group.group_is_logging column at alter time
+  altr_new_group               TEXT        ,               -- target group name, when the relation changes its group ownership
+  altr_new_priority            INT         ,               -- target priority level, when the relation changes its priority level
+  altr_new_group_is_logging    BOOLEAN     ,               -- state of the target group, when the relation changes its group ownership
+  PRIMARY KEY (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group),
+  FOREIGN KEY (altr_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
+  );
+COMMENT ON TABLE emaj.emaj_alter_plan IS
+$$Contains elementary steps of alter_groups operations.$$;
+
 -- table containing rollback events
 CREATE TABLE emaj.emaj_rlbk (
   rlbk_id                      SERIAL      NOT NULL,       -- rollback id
@@ -294,6 +328,7 @@ CREATE TABLE emaj.emaj_rlbk (
   rlbk_mark_time_id            BIGINT      NOT NULL,       -- time stamp id of the mark to rollback to
   rlbk_time_id                 BIGINT,                     -- time stamp id at the rollback start
   rlbk_is_logged               BOOLEAN     NOT NULL,       -- rollback type: true = logged rollback
+  rlbk_is_alter_group_allowed  BOOLEAN     NOT NULL,       -- flag allowing to rollback to a mark set before alter group operations
   rlbk_nb_session              INT         NOT NULL,       -- number of requested rollback sessions
   rlbk_nb_table                INT,                        -- total number of tables in groups
   rlbk_nb_sequence             INT,                        -- number of sequences to rollback
@@ -411,6 +446,7 @@ CREATE TYPE emaj.emaj_rollback_activity_type AS (
   rlbk_mark                    TEXT,                       -- mark to rollback to
   rlbk_mark_datetime           TIMESTAMPTZ,                -- timestamp of the mark as recorded into emaj_mark
   rlbk_is_logged               BOOLEAN,                    -- rollback type: true = logged rollback
+  rlbk_is_alter_group_allowed  BOOLEAN,                    -- flag allowing to rollback to a mark set before alter group operations
   rlbk_nb_session              INT,                        -- number of requested sessions
   rlbk_nb_table                INT,                        -- total number of tables in groups
   rlbk_nb_sequence             INT,                        -- number of sequences to rollback
@@ -449,7 +485,7 @@ $$Represents the structure of rows returned by the internal _verify_groups() fun
 -- Parameters                     --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','2.0.1');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','2.1.0');
 
 -- Other parameters are optional. They may be set by E-Maj administrators if needed.
 
@@ -640,22 +676,45 @@ $_dblink_close_cnx$
   END;
 $_dblink_close_cnx$;
 
+CREATE OR REPLACE FUNCTION emaj._get_default_tablespace()
+RETURNS TEXT LANGUAGE plpgsql AS
+$_get_default_tablespace$
+-- This function returns the name of a default tablespace to use when moving an existing log table or index.
+-- Output: tablespace name
+-- The function is called at alter group time.
+  DECLARE
+    v_tablespace             TEXT;
+  BEGIN
+-- get the default tablespace set for the current session or set for the entire instance by GUC
+    SELECT setting INTO v_tablespace FROM pg_settings
+      WHERE name = 'default_tablespace';
+    IF v_tablespace = '' THEN
+-- get the default tablespace for the current database (pg_default if no specific tablespace name has been set for the database)
+      SELECT spcname INTO v_tablespace FROM pg_database, pg_tablespace
+        WHERE dattablespace = pg_tablespace.oid AND datname = current_database();
+    END IF;
+    RETURN v_tablespace;
+  END;
+$_get_default_tablespace$;
+
 CREATE OR REPLACE FUNCTION emaj._purge_hist()
 RETURNS VOID LANGUAGE plpgsql AS
 $_purge_hist$
 -- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter, but
 --   not deleting event traces neither after the oldest active mark or after the oldest not committed or aborted rollback operation.
--- It also purges oldest rows from the emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
+-- It also purges oldest rows from the maj_exec_plan, emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
 -- The function is called at start group time and when oldest marks are deleted.
   DECLARE
     v_datetimeLimit          TIMESTAMPTZ;
     v_nbPurgedHist           BIGINT;
+    v_maxTimeId              BIGINT;
     v_maxRlbkId              BIGINT;
     v_nbPurgedRlbk           BIGINT;
+    v_nbPurgedAlter          BIGINT;
     v_wording                TEXT = '';
   BEGIN
 -- compute the timestamp limit
-    SELECT MIN(datetime) FROM
+    SELECT MIN(datetime) INTO v_datetimeLimit FROM
       (                                           -- compute the timestamp limit from the history_retention parameter
         (SELECT current_timestamp -
            coalesce((SELECT param_value_interval FROM emaj.emaj_param WHERE param_key = 'history_retention'),'1 YEAR'))
@@ -665,17 +724,30 @@ $_purge_hist$
       UNION ALL                                   -- get the transaction timestamp of the oldest non committed or aborted rollback
         (SELECT MIN(time_tx_timestamp) FROM emaj.emaj_time_stamp, emaj.emaj_rlbk
            WHERE time_id = rlbk_time_id AND rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED'))
-      ) AS t(datetime) INTO v_datetimeLimit;
+      ) AS t(datetime);
+-- get the greatest timestamp identifier corresponding to the timeframe to purge, if any
+    SELECT MAX(time_id) INTO v_maxTimeId FROM emaj.emaj_time_stamp
+      WHERE time_tx_timestamp < v_datetimeLimit;
 -- delete oldest rows from emaj_hist
     DELETE FROM emaj.emaj_hist WHERE hist_datetime < v_datetimeLimit;
     GET DIAGNOSTICS v_nbPurgedHist = ROW_COUNT;
     IF v_nbPurgedHist > 0 THEN
       v_wording = v_nbPurgedHist || ' emaj_hist rows deleted';
     END IF;
+-- purge the emaj_alter_plan table
+    WITH deleted_alter AS (
+      DELETE FROM emaj.emaj_alter_plan
+        WHERE altr_time_id <= v_maxTimeId
+        RETURNING altr_time_id
+      )
+      SELECT COUNT (DISTINCT altr_time_id) INTO v_nbPurgedAlter FROM deleted_alter;
+    IF v_nbPurgedAlter > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedAlter || ' alter groups events deleted';
+    END IF;
 -- get the greatest rollback identifier to purge
-    SELECT MAX(rlbk_id) INTO v_maxRlbkId FROM emaj.emaj_rlbk, emaj.emaj_time_stamp
-      WHERE time_id = rlbk_time_id AND time_tx_timestamp < v_datetimeLimit;
--- and purge emaj_rlbk_plan and emaj_rlbk_session tables
+    SELECT MAX(rlbk_id) INTO v_maxRlbkId FROM emaj.emaj_rlbk
+      WHERE rlbk_time_id <= v_maxTimeId;
+-- and purge the emaj_rlbk_plan and emaj_rlbk_session tables
     IF v_maxRlbkId IS NOT NULL THEN
       DELETE FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id <= v_maxRlbkId;
       WITH deleted_rlbk AS (
@@ -713,10 +785,10 @@ $_check_names_array$
       FOREACH v_aName IN ARRAY v_names LOOP
 -- look for not NULL & not empty name
         IF v_aName IS NULL OR v_aName = '' THEN
-          RAISE WARNING '_check_names_array: a % name is NULL or empty.', v_type;
+          RAISE WARNING '_check_names_array: A % name is NULL or empty.', v_type;
 -- look for duplicate name
         ELSEIF v_outputNames IS NOT NULL AND v_aName = ANY (v_outputNames) THEN
-          RAISE WARNING '_check_names_array: duplicate % name "%".', v_type, v_aName;
+          RAISE WARNING '_check_names_array: Duplicate % name "%".', v_type, v_aName;
         ELSE
 -- OK, keep the name
           v_outputNames = v_outputNames || v_aName;
@@ -731,77 +803,203 @@ $_check_names_array$
   END;
 $_check_names_array$;
 
-CREATE OR REPLACE FUNCTION emaj._check_group_content(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj._check_groups_content(v_groupNames TEXT[], v_isRollbackable BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
-$_check_group_content$
+$_check_groups_content$
 -- This function verifies that the content of tables group as defined into the emaj_group_def table is correct.
+-- Any issue is reported as a warning message. If at least one issue is detected, an exception is raised before exiting the function.
 -- It is called by emaj_create_group() and emaj_alter_group() functions.
--- It checks that the referenced application tables and sequences,
+-- This function checks that the referenced application tables and sequences:
 --  - exist,
 --  - is not located into an E-Maj schema (to protect against an E-Maj recursive use),
 --  - do not already belong to another tables group,
 --  - will not generate conflicts on emaj objects to create (when emaj names prefix is not the default one)
--- Input: the name of the tables group to check
+-- It also checks that:
+--  - tables are not TEMPORARY, UNLOGGED or WITH OIDS
+--  - for rollbackable groups, all tables have a PRIMARY KEY
+--  - for sequences, the tablespaces, emaj log schema and emaj object name prefix are all set to NULL
+-- Input: name array of the tables group to check,
+--        flag indicating whether the group is rollbackable or not (NULL when called by _alter_groups(), the groups state will be read from emaj_group)
   DECLARE
-    v_msg                    TEXT;
+    v_nbError                INT = 0 ;
+    r                        RECORD;
   BEGIN
 -- check that all application tables and sequences listed for the group really exist
-    SELECT string_agg(full_name, ', ') INTO v_msg FROM (
-      SELECT grpdef_schema || '.' || grpdef_tblseq AS full_name
-        FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName
-      EXCEPT
-      SELECT nspname || '.' || relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S')
-      ORDER BY 1) AS t;
-    IF v_msg IS NOT NULL THEN
-      RAISE EXCEPTION '_check_group_content: one or several tables or sequences do not exist (%).', v_msg;
-    END IF;
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq FROM (
+        SELECT grpdef_schema, grpdef_tblseq
+          FROM emaj.emaj_group_def WHERE grpdef_group = ANY(v_groupNames)
+        EXCEPT
+        SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S','p')
+        ORDER BY 1,2) AS t
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table or sequence %.% does not exist.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check that no application table is a partitioned table (only elementary partitions can be managed by E-Maj)
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
+          AND grpdef_group = ANY(v_groupNames) AND relkind = 'p'
+        ORDER BY 1,2
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table %.% is a partitionned table (only elementary partitions are supported by E-Maj).', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
 -- check no application schema listed for the group in the emaj_group_def table is an E-Maj schema
-    SELECT string_agg(full_name, ', ') INTO v_msg FROM (
-      SELECT grpdef_schema || '.' || grpdef_tblseq AS full_name
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
         FROM emaj.emaj_group_def
-        WHERE grpdef_group = v_groupName
+        WHERE grpdef_group = ANY (v_groupNames)
           AND grpdef_schema IN (
                 SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
                 UNION
                 SELECT 'emaj')
-        ORDER BY 1) AS t;
-    IF v_msg IS NOT NULL THEN
-      RAISE EXCEPTION '_check_group_content: one or several tables or sequences belong to an E-Maj schema (%).', v_msg;
-    END IF;
--- check that no table or sequence of the new group already belongs to another created group
-    SELECT string_agg(full_name, ', ') INTO v_msg FROM (
-      SELECT grpdef_schema || '.' || grpdef_tblseq || ' in ' || rel_group AS full_name
+        ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table or sequence %.% belongs to an E-Maj schema.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check that no table or sequence of the checked groups already belongs to other created groups
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq, rel_group
         FROM emaj.emaj_group_def, emaj.emaj_relation
         WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
-          AND grpdef_group = v_groupName AND rel_group <> v_groupName
-      ORDER BY 1) AS t;
-    IF v_msg IS NOT NULL THEN
-      RAISE EXCEPTION '_check_group_content: one or several tables already belong to another group (%).', v_msg;
-    END IF;
+          AND grpdef_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames)
+        ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table or sequence %.% belongs to another group (%).', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq), r.rel_group;
+      v_nbError = v_nbError + 1;
+    END LOOP;
 -- check that several tables of the group have not the same emaj names prefix
-    SELECT string_agg(prefix, ', ') INTO v_msg FROM (
-      SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq)  AS prefix, count(*)
+    FOR r IN
+      SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix, count(*)
         FROM emaj.emaj_group_def
-        WHERE grpdef_group = v_groupName
-      GROUP BY 1 HAVING count(*) > 1 ORDER BY 1) AS t;
-    IF v_msg IS NOT NULL THEN
-      RAISE EXCEPTION '_check_group_content: one or several emaj prefix are configured for several tables in the group (%).', v_msg;
-    END IF;
+        WHERE grpdef_group = ANY (v_groupNames)
+        GROUP BY 1 HAVING count(*) > 1
+        ORDER BY 1
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the emaj prefix "%" is configured for several tables in the groups.', r.prefix;
+      v_nbError = v_nbError + 1;
+    END LOOP;
 -- check that emaj names prefix that will be generared will not generate conflict with objects from existing groups
-    SELECT string_agg(prefix, ', ') INTO v_msg FROM (
+    FOR r IN
       SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix
         FROM emaj.emaj_group_def, emaj.emaj_relation
         WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log' = rel_log_table
-          AND grpdef_group = v_groupName AND rel_group <> v_groupName
-      ORDER BY 1) AS t;
-    IF v_msg IS NOT NULL THEN
-      RAISE EXCEPTION '_check_group_content: one or several emaj prefix are already used (%).', v_msg;
+          AND grpdef_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames)
+      ORDER BY 1
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the emaj prefix "%" is already used.', r.prefix;
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check no table is a TEMP table
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 't'
+        ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table %.% is a TEMPORARY table.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check no table is an unlogged table
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 'u'
+        ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table %.% is an UNLOGGED table.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- check no table is a WITH OIDS table
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relhasoids
+        ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, the table %.% is declared WITH OIDS.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+    FOR r IN
+-- only 0 or 1 SELECT is really executed, depending on the v_isRollbackable value
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE v_isRollbackable                                                 -- true (or false) for tables groups creation
+          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r'
+          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+                            WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
+                            AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq)
+        UNION ALL
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
+        WHERE v_isRollbackable IS NULL                                         -- NULL for alter groups function call
+          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r'
+          AND group_name = grpdef_group AND group_is_rollbackable              -- the is_rollbackable attribute is read from the emaj_group table
+          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+                            WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
+                            AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq)
+      ORDER BY grpdef_schema, grpdef_tblseq
+    LOOP
+    RAISE WARNING '_check_groups_content: Error, the table %.% has no PRIMARY KEY.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- all sequences described in emaj_group_def have their log schema suffix attribute set to NULL
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_schema_suffix IS NOT NULL
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the secondary log schema suffix is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- all sequences described in emaj_group_def have their emaj names prefix attribute set to NULL
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_emaj_names_prefix IS NOT NULL
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the emaj names prefix is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- all sequences described in emaj_group_def have their data log tablespaces attributes set to NULL
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_dat_tsp IS NOT NULL
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the data log tablespace is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+-- all sequences described in emaj_group_def have their index log tablespaces attributes set to NULL
+    FOR r IN
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_idx_tsp IS NOT NULL
+    LOOP
+      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the index log tablespace is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
+      v_nbError = v_nbError + 1;
+    END LOOP;
+    IF v_nbError > 0 THEN
+      RAISE EXCEPTION '_check_groups_content: One or several errors have been detected in the emaj_group_def table content.';
     END IF;
 --
     RETURN;
   END;
-$_check_group_content$;
+$_check_groups_content$;
 
 CREATE OR REPLACE FUNCTION emaj._check_new_mark(v_mark TEXT, v_groupNames TEXT[])
 RETURNS TEXT LANGUAGE plpgsql AS
@@ -834,7 +1032,7 @@ $_check_new_mark$
         PERFORM 0 FROM emaj.emaj_mark
           WHERE mark_group = v_aGroupName AND mark_name = v_markName;
         IF FOUND THEN
-           RAISE EXCEPTION '_check_new_mark: Group "%" already contains a mark named "%".', v_aGroupName, v_markName;
+           RAISE EXCEPTION '_check_new_mark: The group "%" already contains a mark named "%".', v_aGroupName, v_markName;
         END IF;
       END LOOP;
     END IF;
@@ -885,7 +1083,7 @@ $_create_log_schema$
 -- check that the schema doesn't already exist
     PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = v_logSchemaName;
     IF FOUND THEN
-      RAISE EXCEPTION '_create_log_schema: schema "%" should not exist. Drop it manually, or modify emaj_group_def table''s content.',v_logSchemaName;
+      RAISE EXCEPTION '_create_log_schema: The schema "%" should not exist. Drop it manually, or modify emaj_group_def table''s content.',v_logSchemaName;
     END IF;
 -- create the schema and give the appropriate rights
     EXECUTE 'CREATE SCHEMA ' || quote_ident(v_logSchemaName);
@@ -906,7 +1104,7 @@ $_drop_log_schema$
 -- check that the schema exists
     PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = v_logSchemaName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION '_drop_log_schema: internal error (schema "%" does not exist).',v_logSchemaName;
+      RAISE EXCEPTION '_drop_log_schema: Internal error (the schema "%" does not exist).',v_logSchemaName;
     END IF;
     IF v_isForced THEN
 -- drop cascade when called by emaj_force_xxx_group()
@@ -918,7 +1116,7 @@ $_drop_log_schema$
         EXCEPTION
 -- trap the 2BP01 exception to generate a more understandable error message
           WHEN DEPENDENT_OBJECTS_STILL_EXIST THEN         -- SQLSTATE '2BP01'
-            RAISE EXCEPTION '_drop_log_schema: cannot drop schema "%". It probably owns unattended objects. Use the emaj_verify_all() function to get details', v_logSchemaName;
+            RAISE EXCEPTION '_drop_log_schema: Cannot drop the schema "%". It probably owns unattended objects. Use the emaj_verify_all() function to get details.', v_logSchemaName;
       END;
     END IF;
     RETURN;
@@ -931,11 +1129,11 @@ $_drop_log_schema$;
 --                                               --
 ---------------------------------------------------
 
-CREATE OR REPLACE FUNCTION emaj._create_tbl(r_grpdef emaj.emaj_group_def, v_groupName TEXT, v_isRollbackable BOOLEAN, v_defTsp TEXT)
+CREATE OR REPLACE FUNCTION emaj._create_tbl(r_grpdef emaj.emaj_group_def, v_isRollbackable BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table
--- Input: the emaj_group_def row related to the application table to process, the group name, a boolean indicating whether the group is rollbackable, and the default tablespace to use if no specific tablespace is set for this application table
+-- Input: the emaj_group_def row related to the application table to process, the group name, a boolean indicating whether the group is rollbackable
 -- Are created in the log schema:
 --    - the associated log table, with its own sequence
 --    - the function that logs the tables updates, defined as a trigger
@@ -943,8 +1141,6 @@ $_create_tbl$
   DECLARE
     v_emajSchema             TEXT = 'emaj';
     v_schemaPrefix           TEXT = 'emaj';
-    v_relPersistence         CHAR(1);
-    v_relhaspkey             BOOLEAN;
     v_emajNamesPrefix        TEXT;
     v_baseLogTableName       TEXT;
     v_baseLogIdxName         TEXT;
@@ -956,8 +1152,6 @@ $_create_tbl$
     v_logIdxName             TEXT;
     v_logFnctName            TEXT;
     v_sequenceName           TEXT;
-    v_logDatTsp              TEXT;
-    v_logIdxTsp              TEXT;
     v_dataTblSpace           TEXT;
     v_idxTblSpace            TEXT;
     v_colList                TEXT;
@@ -966,24 +1160,7 @@ $_create_tbl$
     v_stmt                   TEXT;
     v_triggerList            TEXT;
   BEGIN
--- check the table is neither a temporary nor an unlogged table
-    SELECT relpersistence INTO v_relPersistence FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-      WHERE relnamespace = pg_namespace.oid AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
-    IF v_relPersistence = 't' THEN
-      RAISE EXCEPTION '_create_tbl: table "%" is a temporary table.', r_grpdef.grpdef_tblseq;
-    ELSIF v_relPersistence = 'u' THEN
-      RAISE EXCEPTION '_create_tbl: table "%.%" is an unlogged table.', r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq;
-    END IF;
--- check the table has a primary key
-    SELECT true INTO v_relhaspkey FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
-      WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
-        AND contype = 'p' AND nspname = r_grpdef.grpdef_schema AND relname = r_grpdef.grpdef_tblseq;
-    IF NOT FOUND THEN
-      v_relhaspkey = false;
-    END IF;
-    IF v_isRollbackable AND v_relhaspkey = FALSE THEN
-      RAISE EXCEPTION '_create_tbl: table "%.%" has no PRIMARY KEY.', r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq;
-    END IF;
+-- the checks on the table properties are performed by the calling functions
 -- build the prefix of all emaj object to create, by default <schema>_<table>
     v_emajNamesPrefix = coalesce(r_grpdef.grpdef_emaj_names_prefix, r_grpdef.grpdef_schema || '_' || r_grpdef.grpdef_tblseq);
 -- build the name of emaj components associated to the application table (non schema qualified and not quoted)
@@ -999,10 +1176,8 @@ $_create_tbl$
     v_logFnctName      = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogFnctName);
     v_sequenceName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseSequenceName);
 -- prepare TABLESPACE clauses for data and index
-    v_logDatTsp = coalesce(r_grpdef.grpdef_log_dat_tsp, v_defTsp);
-    v_logIdxTsp = coalesce(r_grpdef.grpdef_log_idx_tsp, v_defTsp);
-    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logDatTsp),'');
-    v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logIdxTsp),'');
+    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(r_grpdef.grpdef_log_dat_tsp),'');
+    v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(r_grpdef.grpdef_log_idx_tsp),'');
 -- Build some pieces of SQL statements that will be needed at table rollback time
 --   build the tables's columns list
     SELECT string_agg(col_name, ',') INTO v_colList FROM (
@@ -1102,7 +1277,7 @@ $_create_tbl$
                 rel_log_index, rel_log_sequence, rel_log_function,
                 rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions)
         VALUES (r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq, r_grpdef.grpdef_group, r_grpdef.grpdef_priority, v_logSchema,
-                v_logDatTsp, v_logIdxTsp, 'r', v_baseLogTableName,
+                r_grpdef.grpdef_log_dat_tsp, r_grpdef.grpdef_log_idx_tsp, 'r', v_baseLogTableName,
                 v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName,
                 v_colList, v_pkColList, v_pkCondList);
 --
@@ -1112,7 +1287,7 @@ $_create_tbl$
         WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'emaj\\_%\\_trg') AS t;
 -- if yes, issue a warning (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
     IF v_triggerList IS NOT NULL THEN
-      RAISE WARNING '_create_tbl: table "%" has triggers (%). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.', v_fullTableName, v_triggerList;
+      RAISE WARNING '_create_tbl: The table "%" has triggers (%). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.', v_fullTableName, v_triggerList;
     END IF;
 -- grant appropriate rights to both emaj roles
     EXECUTE 'GRANT SELECT ON TABLE ' || v_logTableName || ' TO emaj_viewer';
@@ -1122,6 +1297,129 @@ $_create_tbl$
     RETURN;
   END;
 $_create_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_log_schema_tbl(r_rel emaj.emaj_relation, v_newLogSchemaSuffix TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_log_schema_tbl$
+-- This function processes the change of log schema for an application table
+-- Input: the existing emaj_relation row for the table, and the new log schema suffix
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
+  DECLARE
+    v_emajSchema             TEXT = 'emaj';
+    v_schemaPrefix           TEXT = 'emaj';
+    v_newLogSchema           TEXT;
+  BEGIN
+-- build the name of new log schema
+    v_newLogSchema = coalesce(v_schemaPrefix || v_newLogSchemaSuffix, v_emajSchema);
+-- process the log schema change
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
+    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
+    EXECUTE 'ALTER FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() SET SCHEMA ' || quote_ident(v_newLogSchema);
+-- adjust sequences schema names in emaj_sequence tables
+    UPDATE emaj.emaj_sequence SET sequ_schema = v_newLogSchema WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation SET rel_log_schema = v_newLogSchema
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'LOG SCHEMA CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              r_rel.rel_log_schema || ' => ' || v_newLogSchema);
+    RETURN;
+  END;
+$_change_log_schema_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_emaj_names_prefix(r_rel emaj.emaj_relation, v_newNamesPrefix TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_emaj_names_prefix$
+-- This function processes the change of emaj names prefix for an application table
+-- Input: the existing emaj_relation row for the table and the new emaj names prefix
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
+  DECLARE
+    v_newEmajNamesPrefix     TEXT;
+    v_newLogTableName        TEXT;
+    v_newLogFunctionName     TEXT;
+    v_newLogSequenceName     TEXT;
+    v_newLogIndexName        TEXT;
+  BEGIN
+-- build the name of new emaj components associated to the application table (non schema qualified and not quoted)
+    v_newEmajNamesPrefix = coalesce(v_newNamesPrefix, r_rel.rel_schema || '_' || r_rel.rel_tblseq);
+    v_newLogTableName    = v_newEmajNamesPrefix || '_log';
+    v_newLogIndexName    = v_newEmajNamesPrefix || '_log_idx';
+    v_newLogFunctionName = v_newEmajNamesPrefix || '_log_fnct';
+    v_newLogSequenceName = v_newEmajNamesPrefix || '_log_seq';
+-- process the emaj names prefix change
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' RENAME TO ' || quote_ident(v_newLogTableName);
+    EXECUTE 'ALTER INDEX ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_index)|| ' RENAME TO ' || quote_ident(v_newLogIndexName);
+    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' RENAME TO ' || quote_ident(v_newLogSequenceName);
+    EXECUTE 'ALTER FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() RENAME TO ' || quote_ident(v_newLogFunctionName);
+-- adjust sequences schema names in emaj_sequence tables
+    UPDATE emaj.emaj_sequence SET sequ_name = v_newLogSequenceName WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation
+      SET rel_log_table = v_newLogTableName, rel_log_index = v_newLogIndexName,
+          rel_log_sequence = v_newLogSequenceName, rel_log_function = v_newLogFunctionName
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'NAMES PREFIX CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(substring(r_rel.rel_log_table FROM '(.*)_log$'),r_rel.rel_log_table,'Internal error in _change_emaj_names_prefix') || ' => ' || v_newEmajNamesPrefix);
+    RETURN;
+  END;
+$_change_emaj_names_prefix$;
+
+CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(r_rel emaj.emaj_relation, v_newLogDatTsp TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_log_data_tsp_tbl$
+-- This function changes the log data tablespace for an application table
+-- Input: the existing emaj_relation row for the table and the new log data tablespace
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
+  DECLARE
+    v_newTsp                 TEXT;
+  BEGIN
+-- build the new data tablespace name. If needed, get the name of the current default tablespace.
+    v_newTsp = v_newLogDatTsp;
+    IF v_newTsp IS NULL OR v_newTsp = '' THEN
+      v_newTsp = emaj._get_default_tablespace();
+    END IF;
+-- process the log data tablespace change
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation SET rel_log_dat_tsp = v_newLogDatTsp
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'LOG DATA TABLESPACE CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(r_rel.rel_log_dat_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogDatTsp, 'Default tablespace'));
+    RETURN;
+  END;
+$_change_log_data_tsp_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(r_rel emaj.emaj_relation, v_newLogIdxTsp TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_log_index_tsp_tbl$
+-- This function changes the log index tablespace for an application table
+-- Input: the existing emaj_relation row for the table and the new log index tablespace
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
+  DECLARE
+    v_newTsp                 TEXT;
+  BEGIN
+-- build the new data tablespace name. If needed, get the name of the current default tablespace.
+    v_newTsp = v_newLogIdxTsp;
+    IF v_newTsp IS NULL OR v_newTsp = '' THEN
+      v_newTsp = emaj._get_default_tablespace();
+    END IF;
+-- process the log index tablespace change
+    EXECUTE 'ALTER INDEX ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_index) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation SET rel_log_idx_tsp = v_newLogIdxTsp
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'LOG INDEX TABLESPACE CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(r_rel.rel_log_idx_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogIdxTsp, 'Default tablespace'));
+    RETURN;
+  END;
+$_change_log_index_tsp_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
@@ -1158,7 +1456,7 @@ $_drop_tbl$
   END;
 $_drop_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._create_seq(grpdef emaj.emaj_group_def, v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj._create_seq(grpdef emaj.emaj_group_def)
 RETURNS VOID LANGUAGE plpgsql AS
 $_create_seq$
 -- The function checks whether the sequence is related to a serial column of an application table.
@@ -1169,19 +1467,8 @@ $_create_seq$
     v_tableName              TEXT;
     v_tableGroup             TEXT;
   BEGIN
--- check no log schema has been set as parameter in the emaj_group_def table
-    IF grpdef.grpdef_log_schema_suffix IS NOT NULL THEN
-      RAISE EXCEPTION '_create_seq: Defining a secondary log schema is not allowed for a sequence (%.%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq;
-    END IF;
--- check no emaj name prefix has been set as parameter in the emaj_group_def table
-    IF grpdef.grpdef_emaj_names_prefix IS NOT NULL THEN
-      RAISE EXCEPTION '_create_seq: Defining an emaj names prefix is not allowed for a sequence (%.%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq;
-    END IF;
--- check no tablespace has been set as parameter in the emaj_group_def table
-    IF grpdef.grpdef_log_dat_tsp IS NOT NULL OR grpdef.grpdef_log_idx_tsp IS NOT NULL THEN
-      RAISE EXCEPTION '_create_seq: Defining log tablespaces is not allowed for a sequence (%.%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq;
-    END IF;
--- get the schema and the name of the table that contains a serial column this sequence is linked to, if one exists
+-- the checks on the sequence properties are performed by the calling functions
+-- get the schema and the name of the table that contains a serial or a "generated as identity" column this sequence is linked to, if one exists
     SELECT nt.nspname, ct.relname INTO v_tableSchema, v_tableName
       FROM pg_catalog.pg_class cs, pg_catalog.pg_namespace ns, pg_depend,
            pg_catalog.pg_class ct, pg_catalog.pg_namespace nt
@@ -1196,16 +1483,16 @@ $_create_seq$
       SELECT grpdef_group INTO v_tableGroup FROM emaj.emaj_group_def
         WHERE grpdef_schema = v_tableSchema AND grpdef_tblseq = v_tableName;
       IF NOT FOUND THEN
-        RAISE WARNING '_create_seq: Sequence %.% is linked to table %.% but this table does not belong to any tables group.', grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_tableSchema, v_tableName;
+        RAISE WARNING '_create_seq: The sequence %.% is linked to table %.% but this table does not belong to any tables group.', grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_tableSchema, v_tableName;
       ELSE
-        IF v_tableGroup <> v_groupName THEN
-          RAISE WARNING '_create_seq: Sequence %.% is linked to table %.% but this table belong to another tables group (%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_tableSchema, v_tableName, v_tableGroup;
+        IF v_tableGroup <> grpdef.grpdef_group THEN
+          RAISE WARNING '_create_seq: The sequence %.% is linked to table %.% but this table belong to another tables group (%).', grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_tableSchema, v_tableName, v_tableGroup;
         END IF;
       END IF;
     END IF;
 -- record the sequence in the emaj_relation table
       INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_group, rel_priority, rel_kind)
-          VALUES (grpdef.grpdef_schema, grpdef.grpdef_tblseq, v_groupName, grpdef.grpdef_priority, 'S');
+          VALUES (grpdef.grpdef_schema, grpdef.grpdef_tblseq, grpdef.grpdef_group, grpdef.grpdef_priority, 'S');
     RETURN;
   END;
 $_create_seq$;
@@ -1239,6 +1526,7 @@ $_rlbk_tbl$
     v_logTableName           TEXT;
     v_tmpTable               TEXT;
     v_tableType              TEXT;
+    v_insertClause           TEXT = '';
     v_nbPk                   BIGINT;
   BEGIN
     v_fullTableName  = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
@@ -1272,7 +1560,10 @@ $_rlbk_tbl$
       EXECUTE 'ANALYZE ' || v_logTableName;
     END IF;
 -- insert into the application table rows that were deleted or updated during the rolled back period
-    EXECUTE 'INSERT INTO ' || v_fullTableName
+    IF emaj._pg_version_num() >= 100000 THEN
+      v_insertClause = ' OVERRIDING SYSTEM VALUE';
+    END IF;
+    EXECUTE 'INSERT INTO ' || v_fullTableName || v_insertClause
          || '  SELECT ' || r_rel.rel_sql_columns
          || '    FROM ' || v_logTableName || ' tbl, ' || v_tmpTable || ' keys '
          || '    WHERE ' || r_rel.rel_sql_pk_eq_conditions || ' AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD'''
@@ -1312,16 +1603,30 @@ $_delete_log_tbl$
       WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq
         AND sqhl_begin_time_id >= v_beginTimeId AND sqhl_begin_time_id < v_endTimeId;
 -- and then insert the new sequence hole
-    EXECUTE 'INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size) VALUES ('
-      || quote_literal(r_rel.rel_schema) || ',' || quote_literal(r_rel.rel_tblseq) || ',' || v_beginTimeId || ',' || v_endTimeId || ', ('
-      || ' SELECT CASE WHEN is_called THEN last_value + increment_by ELSE last_value END FROM '
-      || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)
-      || ')-('
-      || ' SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM '
-      || ' emaj.emaj_sequence WHERE'
-      || ' sequ_schema = ' || quote_literal(r_rel.rel_log_schema)
-      || ' AND sequ_name = ' || quote_literal(r_rel.rel_log_sequence)
-      || ' AND sequ_time_id = ' || v_beginTimeId || '))';
+    IF emaj._pg_version_num() < 100000 THEN
+      EXECUTE 'INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size) VALUES ('
+        || quote_literal(r_rel.rel_schema) || ',' || quote_literal(r_rel.rel_tblseq) || ',' || v_beginTimeId || ',' || v_endTimeId || ', ('
+        || ' SELECT CASE WHEN is_called THEN last_value + increment_by ELSE last_value END FROM '
+        || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)
+        || ')-('
+        || ' SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM '
+        || ' emaj.emaj_sequence WHERE'
+        || ' sequ_schema = ' || quote_literal(r_rel.rel_log_schema)
+        || ' AND sequ_name = ' || quote_literal(r_rel.rel_log_sequence)
+        || ' AND sequ_time_id = ' || v_beginTimeId || '))';
+    ELSE
+      EXECUTE 'INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size) VALUES ('
+        || quote_literal(r_rel.rel_schema) || ',' || quote_literal(r_rel.rel_tblseq) || ',' || v_beginTimeId || ',' || v_endTimeId || ', ('
+        || ' SELECT CASE WHEN rel.is_called THEN rel.last_value + increment_by ELSE rel.last_value END FROM '
+        || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence) || ' rel, pg_sequences'
+        || ' WHERE schemaname = '|| quote_literal(r_rel.rel_log_schema) || ' AND sequencename = ' || quote_literal(r_rel.rel_log_sequence)
+        || ')-('
+        || ' SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM '
+        || ' emaj.emaj_sequence WHERE'
+        || ' sequ_schema = ' || quote_literal(r_rel.rel_log_schema)
+        || ' AND sequ_name = ' || quote_literal(r_rel.rel_log_sequence)
+        || ' AND sequ_time_id = ' || v_beginTimeId || '))';
+    END IF;
     RETURN v_nbRows;
   END;
 $_delete_log_tbl$;
@@ -1348,13 +1653,20 @@ $_rlbk_seq$
         WHERE sequ_schema = r_rel.rel_schema AND sequ_name = r_rel.rel_tblseq AND sequ_time_id = v_timeId;
       EXCEPTION
         WHEN NO_DATA_FOUND THEN
-          RAISE EXCEPTION '_rlbk_seq: Mark at time id "%" not found for sequence "%.%".', v_timeId, r_rel.rel_schema, r_rel.rel_tblseq;
+          RAISE EXCEPTION '_rlbk_seq: No mark at time id "%" can be found for the sequence "%.%".', v_timeId, r_rel.rel_schema, r_rel.rel_tblseq;
     END;
 -- Read the current sequence's characteristics
     v_fullSeqName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
-    EXECUTE 'SELECT last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM '
-             || v_fullSeqName
-            INTO STRICT curr_seq_rec;
+    IF emaj._pg_version_num() < 100000 THEN
+      EXECUTE 'SELECT last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM '
+               || v_fullSeqName
+              INTO STRICT curr_seq_rec;
+    ELSE
+      EXECUTE 'SELECT rel.last_value, start_value, increment_by, max_value, min_value, cache_size as cache_value, cycle as is_cycled, rel.is_called FROM '
+               || v_fullSeqName || ' rel, pg_catalog.pg_sequences '
+               || 'WHERE schemaname = '|| quote_literal(r_rel.rel_schema) || ' AND sequencename = ' || quote_literal(r_rel.rel_tblseq)
+              INTO STRICT curr_seq_rec;
+    END IF;
 -- Build the ALTER SEQUENCE statement, depending on the differences between the present values and the related
 --   values at the requested mark time
     v_stmt='';
@@ -1421,8 +1733,15 @@ $_log_stat_tbl$
          AND sequ_time_id = v_beginTimeId;
     IF v_endTimeId IS NULL THEN
 -- last time id is NULL, so examine the current state of the log table id
-      EXECUTE 'SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END FROM '
-           || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence) INTO v_endLastValue;
+      IF emaj._pg_version_num() < 100000 THEN
+        EXECUTE 'SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END FROM '
+             || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence) INTO v_endLastValue;
+      ELSE
+        EXECUTE 'SELECT CASE WHEN rel.is_called THEN rel.last_value ELSE rel.last_value - increment_by END FROM '
+             || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)  || ' rel, pg_sequences'
+             || ' WHERE schemaname = '|| quote_literal(r_rel.rel_log_schema) || ' AND sequencename = ' || quote_literal(r_rel.rel_log_sequence)
+          INTO v_endLastValue;
+      END IF;
 --   and count the sum of hole from the start time to now
       SELECT coalesce(sum(sqhl_hole_size),0) INTO v_sumHole FROM emaj.emaj_seq_hole
         WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq
@@ -1567,7 +1886,7 @@ $_verify_groups$
 -- Let's start with some global checks that always raise an exception if an issue is detected
 -- check the postgres version: E-Maj needs postgres 9.1+
     IF emaj._pg_version_num() < 90100 THEN
-      RAISE EXCEPTION 'The current postgres version (%) is not compatible with E-Maj.', version();
+      RAISE EXCEPTION '_verify_groups : The current postgres version (%) is not compatible with E-Maj.', version();
     END IF;
 -- OK, now look for groups unconsistency
 -- Unlike emaj_verify_all(), there is no direct check that application schemas exist
@@ -1713,6 +2032,34 @@ $_verify_groups$
       if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
+-- check all tables are persistent tables (i.e. have not been altered as UNLOGGED after their tables group creation)
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq,
+             'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
+          AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+          AND relpersistence <> 'p'
+        ORDER BY 1,2,3
+    LOOP
+      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- check no table has been altered as WITH OIDS after tables groups creation
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq,
+             'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is declared WITH OIDS.' AS msg
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE rel_group = ANY (v_groups) AND rel_kind = 'r'
+          AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+          AND relhasoids
+        ORDER BY 1,2,3
+    LOOP
+      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
 --
     RETURN;
   END;
@@ -1744,7 +2091,7 @@ $_check_fk_groups$
                  WHERE rel_schema = nf.nspname AND rel_tblseq = tf.relname AND rel_group = ANY (v_groupNames))
         ORDER BY 1,2,3
       LOOP
-      RAISE WARNING '_check_fk_groups: Foreign key "%", from table "%.%", references "%.%" that is outside groups (%).',
+      RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" references the table "%.%" that is outside the groups (%).',
                 r_fk.conname,r_fk.rel_schema,r_fk.rel_tblseq,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
     END LOOP;
 -- issue a warning if a table of the groups is referenced by a table outside the groups
@@ -1764,7 +2111,7 @@ $_check_fk_groups$
                  WHERE rel_schema = n.nspname AND rel_tblseq = t.relname AND rel_group = ANY (v_groupNames))
         ORDER BY 1,2,3
       LOOP
-      RAISE WARNING '_check_fk_groups: table "%.%" is referenced by foreign key "%" from table "%.%" that is outside groups (%).',
+      RAISE WARNING '_check_fk_groups: The table "%.%" is referenced by the foreign key "%" on the table "%.%" that is outside the groups (%).',
                 r_fk.rel_schema,r_fk.rel_tblseq,r_fk.conname,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
     END LOOP;
     RETURN;
@@ -1811,11 +2158,11 @@ $_lock_groups$
       EXCEPTION
         WHEN deadlock_detected THEN
           v_nbRetry = v_nbRetry + 1;
-          RAISE NOTICE '_lock_groups: a deadlock has been trapped while locking tables of group "%".', v_groupNames;
+          RAISE NOTICE '_lock_groups: A deadlock has been trapped while locking tables of group "%".', v_groupNames;
       END;
     END LOOP;
     IF NOT v_ok THEN
-      RAISE EXCEPTION '_lock_groups: too many (5) deadlocks encountered while locking tables of group "%".',v_groupNames;
+      RAISE EXCEPTION '_lock_groups: Too many (5) deadlocks encountered while locking tables of group "%".',v_groupNames;
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -1824,19 +2171,20 @@ $_lock_groups$
   END;
 $_lock_groups$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN DEFAULT true)
+CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN DEFAULT true, v_is_empty BOOLEAN DEFAULT false)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_create_group$
 -- This function creates emaj objects for all tables of a group
 -- It also creates the secondary E-Maj schemas when needed
--- Input: group name, boolean indicating wether the group is rollbackable or not (true by default)
+-- Input: group name,
+--        boolean indicating whether the group is rollbackable or not (true by default),
+--        boolean explicitely indicating whether the group is empty or not
 -- Output: number of processed tables and sequences
   DECLARE
     v_timeId                 BIGINT;
     v_nbTbl                  INT = 0;
     v_nbSeq                  INT = 0;
     v_schemaPrefix           TEXT = 'emaj';
-    v_defTsp                 TEXT;
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
     r_schema                 RECORD;
   BEGIN
@@ -1845,24 +2193,27 @@ $emaj_create_group$
       VALUES ('CREATE_GROUP', 'BEGIN', v_groupName, CASE WHEN v_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
 -- check that the group name is valid
     IF v_groupName IS NULL OR v_groupName = ''THEN
-      RAISE EXCEPTION 'emaj_create_group: group name can''t be NULL or empty.';
-    END IF;
--- check the group is known in emaj_group_def table
-    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
-    IF NOT FOUND THEN
-       RAISE EXCEPTION 'emaj_create_group: group "%" is unknown in emaj_group_def table.', v_groupName;
+      RAISE EXCEPTION 'emaj_create_group: The group name can''t be NULL or empty.';
     END IF;
 -- check that the group is not yet recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF FOUND THEN
-      RAISE EXCEPTION 'emaj_create_group: group "%" is already created.', v_groupName;
+      RAISE EXCEPTION 'emaj_create_group: The group "%" already exists.', v_groupName;
+    END IF;
+-- check the consistency between the emaj_group_def table content and the v_is_empty input parameter
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
+    IF NOT v_is_empty AND NOT FOUND THEN
+       RAISE EXCEPTION 'emaj_create_group: The group "%" is unknown in the emaj_group_def table. To create an empty group, explicitely set the third parameter to true.', v_groupName;
+    END IF;
+    IF v_is_empty AND FOUND THEN
+       RAISE EXCEPTION 'emaj_create_group: The group "%" is referenced into the emaj_group_def table. This is not consistent with the <is_empty> parameter set to true.', v_groupName;
     END IF;
 -- performs various checks on the group's content described in the emaj_group_def table
-    PERFORM emaj._check_group_content(v_groupName);
+    PERFORM emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable);
 -- OK
 -- get the time stamp of the operation
     SELECT emaj._set_time_stamp('C') INTO v_timeId;
--- insert group row in the emaj_group table
+-- insert the row describing the group into the emaj_group table
 -- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable)
     INSERT INTO emaj.emaj_group (group_name, group_is_logging, group_is_rollbackable, group_is_rlbk_protected, group_creation_time_id)
       VALUES (v_groupName, FALSE, v_isRollbackable, NOT v_isRollbackable, v_timeId);
@@ -1881,8 +2232,6 @@ $emaj_create_group$
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
         VALUES ('CREATE_GROUP','SCHEMA CREATED',quote_ident(r_schema.log_schema));
     END LOOP;
--- define the default tablespace, NULL if tspemaj tablespace doesn't exist
-    SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
 -- get and process all tables of the group (in priority order, NULLS being processed last)
     FOR r_grpdef IN
         SELECT emaj.emaj_group_def.*
@@ -1893,7 +2242,7 @@ $emaj_create_group$
             AND relkind = 'r'
           ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
         LOOP
-      PERFORM emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp);
+      PERFORM emaj._create_tbl(r_grpdef, v_isRollbackable);
       v_nbTbl = v_nbTbl + 1;
     END LOOP;
 -- get and process all sequences of the group (in priority order, NULLS being processed last)
@@ -1906,7 +2255,7 @@ $emaj_create_group$
             AND relkind = 'S'
           ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
         LOOP
-      PERFORM emaj._create_seq(r_grpdef, v_groupName);
+      PERFORM emaj._create_seq(r_grpdef);
       v_nbSeq = v_nbSeq + 1;
     END LOOP;
 -- update tables and sequences counters in the emaj_group table
@@ -1920,7 +2269,7 @@ $emaj_create_group$
     RETURN v_nbTbl + v_nbSeq;
   END;
 $emaj_create_group$;
-COMMENT ON FUNCTION emaj.emaj_create_group(TEXT, BOOLEAN) IS
+COMMENT ON FUNCTION emaj.emaj_create_group(TEXT,BOOLEAN,BOOLEAN) IS
 $$Creates an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_comment_group(v_groupName TEXT, v_comment TEXT)
@@ -1935,7 +2284,7 @@ $emaj_comment_group$
     UPDATE emaj.emaj_group SET group_comment = v_comment WHERE group_name = v_groupName;
 -- check that the group has been found
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_comment_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_comment_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- insert event in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_object)
@@ -2018,13 +2367,13 @@ $_drop_group$
     SELECT group_is_logging INTO v_groupIsLogging
       FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION '_drop_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION '_drop_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- if the state of the group has to be checked,
     IF NOT v_isForced THEN
 --   check that the group is not in LOGGING state
       IF v_groupIsLogging THEN
-        RAISE EXCEPTION '_drop_group: The group "%" cannot be deleted because it is in LOGGING state.', v_groupName;
+        RAISE EXCEPTION '_drop_group: The group "%" cannot be dropped because it is in LOGGING state.', v_groupName;
       END IF;
     END IF;
 -- OK
@@ -2071,237 +2420,418 @@ $_drop_group$
   END;
 $_drop_group$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_alter_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_alter_group(v_groupName TEXT, v_mark TEXT DEFAULT 'ALTER_%')
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_alter_group$
 -- This function alters a tables group.
--- It takes into account the changes recorded in the emaj_group_def table since the group has been created.
--- Executing emaj_alter_group() is equivalent to chaining emaj_drop_group() and emaj_create_group().
--- But only emaj objects that need to be dropped or created are processed.
 -- Input: group name
 -- Output: number of tables and sequences belonging to the group after the operation
+  BEGIN
+    RETURN emaj._alter_groups(ARRAY[v_groupName], false, v_mark);
+  END;
+$emaj_alter_group$;
+COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT, TEXT) IS
+$$Alter an E-Maj group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_alter_groups(v_groupNames TEXT[], v_mark TEXT DEFAULT 'ALTER_%')
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_alter_groups$
+-- This function alters several tables groups.
+-- Input: group names array
+-- Output: number of tables and sequences belonging to the groups after the operation
+  BEGIN
+    RETURN emaj._alter_groups(v_groupNames, true, v_mark);
+  END;
+$emaj_alter_groups$;
+COMMENT ON FUNCTION emaj.emaj_alter_groups(TEXT[], TEXT) IS
+$$Alter several E-Maj groups.$$;
+
+CREATE OR REPLACE FUNCTION emaj._alter_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$_alter_groups$
+-- This function effectively alters a tables groups array.
+-- It takes into account the changes recorded in the emaj_group_def table since the groups have been created.
+-- Input: group names array, flag indicating whether the function is called by the multi-group function or not
+-- Output: number of tables and sequences belonging to the groups after the operation
   DECLARE
-    v_emajSchema             TEXT = 'emaj';
-    v_schemaPrefix           TEXT = 'emaj';
-    v_nbCreate               INT = 0;
-    v_nbDrop                 INT = 0;
-    v_nbTbl                  INT;
-    v_nbSeq                  INT;
-    v_groupIsLogging         BOOLEAN;
-    v_isRollbackable         BOOLEAN;
+    v_aGroupName             TEXT;
+    v_loggingGroups          TEXT[];
+    v_markName               TEXT;
     v_timeId                 BIGINT;
-    v_logSchema              TEXT;
-    v_logSchemasToDrop       TEXT[];
-    v_logSchemasToCreate     TEXT[];
-    v_aLogSchema             TEXT;
-    v_defTsp                 TEXT;
     v_eventTriggers          TEXT[];
-    r_grpdef                 emaj.emaj_group_def%ROWTYPE;
-    r_rel                    emaj.emaj_relation%ROWTYPE;
-    r_tblsq                  RECORD;
-    r_schema                 RECORD;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES ('ALTER_GROUP', 'BEGIN', v_groupName);
--- check that the group is recorded in emaj_group table
-    SELECT group_is_logging, group_is_rollbackable INTO v_groupIsLogging, v_isRollbackable
-      FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_alter_group: group "%" has not been created.', v_groupName;
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','));
+-- check that each group is recorded in emaj_group table, and take a lock on it to avoid other actions on these groups
+    FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
+      PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_aGroupName FOR UPDATE;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION '_alter_groups: The group "%" does not exist.', v_aGroupName;
+      END IF;
+    END LOOP;
+-- performs various checks on the groups content described in the emaj_group_def table
+    PERFORM emaj._check_groups_content(v_groupNames, NULL);
+-- build the list of groups that are in logging state
+    SELECT array_agg(group_name ORDER BY group_name) INTO v_loggingGroups FROM emaj.emaj_group
+      WHERE group_name = ANY(v_groupNames) AND group_is_logging;
+-- check and process the supplied mark name, if it is worth to be done
+    IF v_loggingGroups IS NOT NULL THEN
+      SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
     END IF;
--- check that the group is not in LOGGING state
-    IF v_groupIsLogging THEN
-      RAISE EXCEPTION 'emaj_alter_group: The group "%" cannot be altered because it is in LOGGING state.', v_groupName;
-    END IF;
--- check there are remaining rows for the group in emaj_group_def table
-    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
-    IF NOT FOUND THEN
-       RAISE EXCEPTION 'emaj_alter_group: Group "%" is unknown in emaj_group_def table.', v_groupName;
-    END IF;
--- performs various checks on the group's content described in the emaj_group_def table
-    PERFORM emaj._check_group_content(v_groupName);
 -- OK
 -- get the time stamp of the operation
     SELECT emaj._set_time_stamp('A') INTO v_timeId;
--- define the default tablespace, NULL if tspemaj tablespace doesn't exist
-    SELECT 'tspemaj' INTO v_defTsp FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
+-- for LOGGING groups, lock all tables to get a stable point
+    IF v_loggingGroups IS NOT NULL THEN
+-- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
+       PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', v_multiGroup);
+-- and set the mark, using the same time identifier
+       PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, v_multiGroup, true, NULL, v_timeId);
+    END IF;
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
--- We can now process:
---   - relations that do not belong to the tables group any more, by dropping their emaj components
---   - relations that continue to belong to the tables group but with different characteristics,
---     by first dropping their emaj components and letting the last step recreate them
---   - new relations in the tables group, by (re)creating their emaj components
---
--- build the list of secondary log schemas that will need to be dropped once obsolete log tables will be dropped
-    SELECT array_agg(rel_log_schema) INTO v_logSchemasToDrop FROM (
-      SELECT rel_log_schema FROM emaj.emaj_relation
-        WHERE rel_group = v_groupName AND rel_log_schema <> v_emajSchema                -- secondary log schemas that currently exist for the group
-      EXCEPT
-      SELECT rel_log_schema FROM emaj.emaj_relation
-        WHERE rel_group <> v_groupName                                                  -- minus those that exist for other groups
-      EXCEPT
-      SELECT v_schemaPrefix || grpdef_log_schema_suffix FROM emaj.emaj_group_def
-        WHERE grpdef_group = v_groupName
-          AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- minus those that will remain for the group
-    ) AS t;
--- build the list of secondary log schemas that will need to be created before new log tables will be created
-    SELECT array_agg(log_schema) INTO v_logSchemasToCreate FROM (
-      SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
-        WHERE grpdef_group = v_groupName
-          AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- secondary log schemas needed for the group
-      EXCEPT
-      SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                            -- minus those already created
-      ORDER BY 1
-    ) AS t;
--- list all relations that do not belong to the tables group any more
-    FOR r_rel IN
-      SELECT * FROM emaj.emaj_relation
-        WHERE rel_group = v_groupName
+-- we can now plan all the steps needed to perform the operation
+    PERFORM emaj._alter_plan(v_groupNames, v_timeId);
+-- and then execute the plan
+    PERFORM emaj._alter_exec(v_timeId);
+-- update tables and sequences counters and the last alter timestamp in the emaj_group table
+    UPDATE emaj.emaj_group
+      SET group_last_alter_time_id = v_timeId,
+          group_nb_table = (SELECT count(*) FROM emaj.emaj_relation WHERE rel_group = group_name AND rel_kind = 'r'),
+          group_nb_sequence = (SELECT count(*) FROM emaj.emaj_relation WHERE rel_group = group_name AND rel_kind = 'S')
+      WHERE group_name = ANY (v_groupNames);
+-- enable previously disabled event triggers
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- check foreign keys with tables outside the groups
+    PERFORM emaj._check_fk_groups(v_groupNames);
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'END', array_to_string(v_groupNames,','),
+              'Timestamp Id : ' || v_timeId );
+-- and return
+    RETURN sum(group_nb_table) + sum(group_nb_sequence) FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames);
+  END;
+$_alter_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._alter_plan(v_groupNames TEXT[], v_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_alter_plan$
+-- This function build the elementary steps that will be needed to perform an alter_groups operation.
+-- Looking at emaj_relation and emaj_group_def tables, it populates the emaj_alter_plan table that will be used by the _alter_exec() function.
+-- Input: group names array, timestamp id of the operation (it will be used to identify rows in the emaj_alter_plan table)
+  DECLARE
+    v_emajSchema             TEXT = 'emaj';
+    v_schemaPrefix           TEXT = 'emaj';
+    v_groups                 TEXT;
+  BEGIN
+-- determine the relations that do not belong to the groups anymore
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, CAST(CASE WHEN rel_kind = 'r' THEN 'REMOVE_TBL' ELSE 'REMOVE_SEQ' END AS emaj._alter_step_enum),
+             rel_schema, rel_tblseq, rel_group, rel_priority
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (v_groupNames)
           AND NOT EXISTS (
               SELECT NULL FROM emaj.emaj_group_def
                 WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
-                  AND grpdef_group = v_groupName)
-      UNION
--- ... and all relations that are damaged or whose log table is not synchronised with them any more
-      SELECT emaj.emaj_relation.*
+                  AND grpdef_group = ANY (v_groupNames));
+-- determine the secondary log schemas that need to be created before new log tables
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CREATE_LOG_SCHEMA', rel_log_schema, '', '', NULL FROM (
+        SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS rel_log_schema FROM emaj.emaj_group_def
+          WHERE grpdef_group = ANY (v_groupNames)
+            AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- secondary log schemas needed for the groups
+        EXCEPT
+        SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                            -- minus those already created
+        ) AS t;
+-- determine the tables that need to be "repaired" (damaged or out of sync E-Maj components)
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, CAST(CASE WHEN rel_kind = 'r' THEN 'REPAIR_TBL' ELSE 'REPAIR_SEQ' END AS emaj._alter_step_enum),
+             rel_schema, rel_tblseq, rel_group, rel_priority
         FROM (                                   -- all damaged or out of sync tables
-          SELECT DISTINCT ver_schema, ver_tblseq FROM emaj._verify_groups(ARRAY[v_groupName], false)
+          SELECT DISTINCT ver_schema, ver_tblseq FROM emaj._verify_groups(v_groupNames, false)
              ) AS t, emaj.emaj_relation
         WHERE rel_schema = ver_schema AND rel_tblseq = ver_tblseq
-      ORDER BY rel_priority, rel_schema, rel_tblseq
-      LOOP
-      CASE r_rel.rel_kind
-        WHEN 'r' THEN
--- if it is a table, delete the related emaj objects
-          PERFORM emaj._drop_tbl(r_rel);
-        WHEN 'S' THEN
--- if it is a sequence, delete all related data from emaj_sequence table
-          PERFORM emaj._drop_seq(r_rel);
-      END CASE;
-      v_nbDrop = v_nbDrop + 1;
-    END LOOP;
---
--- list relations that still belong to the tables group
-    FOR r_tblsq IN
-      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_table, rel_log_dat_tsp, rel_log_idx_tsp,
-             grpdef_priority, grpdef_schema, grpdef_tblseq, grpdef_log_schema_suffix, grpdef_emaj_names_prefix, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+          AND rel_group = ANY (v_groupNames)
+--   exclude tables that will have been removed in a previous step
+          AND (rel_schema, rel_tblseq) NOT IN (
+            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ'));
+-- determine the groups that will be reset (i.e. those in IDLE state)
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'RESET_GROUP', '', '', group_name, NULL
+        FROM emaj.emaj_group
+        WHERE group_name = ANY (v_groupNames)
+          AND NOT group_is_logging;
+-- determine the tables whose log schema in emaj_group_def has changed
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_TBL_LOG_SCHEMA', rel_schema, rel_tblseq, rel_group, grpdef_priority
         FROM emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
-          AND rel_group = v_groupName
-          AND grpdef_group = v_groupName
-      ORDER BY rel_priority, rel_schema, rel_tblseq
-      LOOP
--- now detect other changes that justify to drop and recreate the relation
--- detect if the log data tablespace in emaj_group_def has changed
-      IF   (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_dat_tsp,'') <> coalesce(r_tblsq.grpdef_log_dat_tsp, v_defTsp,''))
-        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_dat_tsp IS NOT NULL)
--- or if the log index tablespace in emaj_group_def has changed
-        OR (r_tblsq.rel_kind = 'r' AND coalesce(r_tblsq.rel_log_idx_tsp,'') <> coalesce(r_tblsq.grpdef_log_idx_tsp, v_defTsp,''))
-        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_idx_tsp IS NOT NULL)
--- or if the log schema in emaj_group_def has changed
-        OR (r_tblsq.rel_kind = 'r' AND r_tblsq.rel_log_schema <> (v_schemaPrefix || coalesce(r_tblsq.grpdef_log_schema_suffix, '')))
-        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_log_schema_suffix IS NOT NULL)
--- or if the emaj names prefix in emaj_group_def has changed (detected with the log table name)
-        OR (r_tblsq.rel_kind = 'r' AND
-            r_tblsq.rel_log_table <> (coalesce(r_tblsq.grpdef_emaj_names_prefix, r_tblsq.grpdef_schema || '_' || r_tblsq.grpdef_tblseq) || '_log'))
-        OR (r_tblsq.rel_kind = 'S' AND r_tblsq.grpdef_emaj_names_prefix IS NOT NULL) THEN
--- then drop the relation (it will be recreated later)
--- get the related row in emaj_relation
-        SELECT * FROM emaj.emaj_relation WHERE rel_schema = r_tblsq.rel_schema AND rel_tblseq = r_tblsq.rel_tblseq INTO r_rel;
-        IF r_tblsq.rel_kind = 'r' THEN
--- if it is a table, delete the related emaj objects
-          PERFORM emaj._drop_tbl (r_rel);
-        ELSEIF r_tblsq.rel_kind = 'S' THEN
--- if it is a sequence, delete all related data from emaj_sequence table
-          PERFORM emaj._drop_seq (r_rel);
-        END IF;
-        v_nbDrop = v_nbDrop + 1;
--- other case ?
--- has the priority changed in emaj_group_def ? If yes, just report the change into emaj_relation
-      ELSEIF (r_tblsq.rel_priority IS NULL AND r_tblsq.grpdef_priority IS NOT NULL) OR
-             (r_tblsq.rel_priority IS NOT NULL AND r_tblsq.grpdef_priority IS NULL) OR
-             (r_tblsq.rel_priority <> r_tblsq.grpdef_priority) THEN
-        UPDATE emaj.emaj_relation SET rel_priority = r_tblsq.grpdef_priority
-          WHERE rel_schema = r_tblsq.grpdef_schema AND rel_tblseq = r_tblsq.grpdef_tblseq;
-      END IF;
-    END LOOP;
---
--- cleanup all remaining log tables
-    PERFORM emaj._reset_group(v_groupName);
--- drop useless log schemas, using the list of schemas to drop built previously
-    IF v_logSchemasToDrop IS NOT NULL THEN
-      FOREACH v_aLogSchema IN ARRAY v_logSchemasToDrop LOOP
---   drop the log schema
-        PERFORM emaj._drop_log_schema(v_aLogSchema, false);
---   and record the schema drop in emaj_hist table
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-          VALUES ('ALTER_GROUP','SCHEMA DROPPED',quote_ident(v_aLogSchema));
-      END LOOP;
-    END IF;
--- create new log schemas, using the list of potential schemas to create built previously
-    IF v_logSchemasToCreate IS NOT NULL THEN
-      FOREACH v_aLogSchema IN ARRAY v_logSchemasToCreate LOOP
---   create the schema
-        PERFORM emaj._create_log_schema(v_aLogSchema);
---   and record the schema creation in emaj_hist table
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-          VALUES ('ALTER_GROUP','SCHEMA CREATED',quote_ident(v_aLogSchema));
-      END LOOP;
-    END IF;
---
--- get and process new tables in the tables group (really new or intentionaly dropped in the preceeding steps)
-    FOR r_grpdef IN
-      SELECT emaj.emaj_group_def.*
+          AND rel_group = ANY (v_groupNames)
+          AND grpdef_group = ANY (v_groupNames)
+          AND rel_kind = 'r'
+          AND rel_log_schema <> (v_schemaPrefix || coalesce(grpdef_log_schema_suffix, ''))
+--   exclude tables that will have been repaired in a previous step
+          AND (rel_schema, rel_tblseq) NOT IN (
+            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
+-- determine the tables whose emaj names prefix in emaj_group_def has changed
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_TBL_NAMES_PREFIX', rel_schema, rel_tblseq, rel_group, grpdef_priority
+        FROM emaj.emaj_relation, emaj.emaj_group_def
+        WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+          AND rel_group = ANY (v_groupNames)
+          AND grpdef_group = ANY (v_groupNames)
+          AND rel_kind = 'r'
+          AND rel_log_table <> (coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log')
+--   exclude tables that will have been repaired in a previous step
+          AND (rel_schema, rel_tblseq) NOT IN (
+            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
+-- determine the tables whose log data tablespace in emaj_group_def has changed
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_TBL_LOG_DATA_TSP', rel_schema, rel_tblseq, rel_group, grpdef_priority
+        FROM emaj.emaj_relation, emaj.emaj_group_def
+        WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+          AND rel_group = ANY (v_groupNames)
+          AND grpdef_group = ANY (v_groupNames)
+          AND rel_kind = 'r'
+          AND coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp,'')
+--   exclude tables that will have been repaired in a previous step
+          AND (rel_schema, rel_tblseq) NOT IN (
+            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
+-- determine the tables whose log data tablespace in emaj_group_def has changed
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_TBL_LOG_INDEX_TSP', rel_schema, rel_tblseq, rel_group, grpdef_priority
+        FROM emaj.emaj_relation, emaj.emaj_group_def
+        WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+          AND rel_group = ANY (v_groupNames)
+          AND grpdef_group = ANY (v_groupNames)
+          AND rel_kind = 'r'
+          AND coalesce(rel_log_idx_tsp,'') <> coalesce(grpdef_log_idx_tsp,'')
+--   exclude tables that will have been repaired in a previous step
+          AND (rel_schema, rel_tblseq) NOT IN (
+            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
+-- determine the relations that change their group ownership
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
+      SELECT v_timeId, 'ASSIGN_REL', rel_schema, rel_tblseq, rel_group, grpdef_priority, grpdef_group
+      FROM emaj.emaj_relation, emaj.emaj_group_def
+      WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+        AND rel_group = ANY (v_groupNames)
+        AND grpdef_group = ANY (v_groupNames)
+        AND rel_group <> grpdef_group;
+-- determine the relation that change their priority level
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_priority)
+      SELECT v_timeId, 'CHANGE_REL_PRIORITY', rel_schema, rel_tblseq, rel_group, rel_priority, grpdef_priority
+      FROM emaj.emaj_relation, emaj.emaj_group_def
+      WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
+        AND rel_group = ANY (v_groupNames)
+        AND grpdef_group = ANY (v_groupNames)
+        AND ( (rel_priority IS NULL AND grpdef_priority IS NOT NULL) OR
+              (rel_priority IS NOT NULL AND grpdef_priority IS NULL) OR
+              (rel_priority <> grpdef_priority) );
+-- determine the relations to add to the groups
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, CAST(CASE WHEN relkind = 'r' THEN 'ADD_TBL' ELSE 'ADD_SEQ' END AS emaj._alter_step_enum),
+             grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE grpdef_group = v_groupName
+        WHERE grpdef_group = ANY (v_groupNames)
           AND NOT EXISTS (
               SELECT NULL FROM emaj.emaj_relation
                 WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
-                  AND rel_group = v_groupName)
-          AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
-          AND relkind = 'r'
-      ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
-      LOOP
-      PERFORM emaj._create_tbl(r_grpdef, v_groupName, v_isRollbackable, v_defTsp);
-      v_nbCreate = v_nbCreate + 1;
-    END LOOP;
--- get and process new sequences in the tables group (really new or intentionaly dropped in the preceeding steps)
-    FOR r_grpdef IN
-      SELECT emaj.emaj_group_def.*
-        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE grpdef_group = v_groupName
-          AND NOT EXISTS (
-              SELECT NULL FROM emaj.emaj_relation
-                WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
-                  AND rel_group = v_groupName)
-          AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
-          AND relkind = 'S'
-      ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
-      LOOP
-      PERFORM emaj._create_seq(r_grpdef, v_groupName);
-      v_nbCreate = v_nbCreate + 1;
-    END LOOP;
--- update tables and sequences counters and the last alter timestamp in the emaj_group table
-    SELECT count(*) INTO v_nbTbl FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'r';
-    SELECT count(*) INTO v_nbSeq FROM emaj.emaj_relation WHERE rel_group = v_groupName AND rel_kind = 'S';
-    UPDATE emaj.emaj_group SET group_last_alter_time_id = v_timeId, group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
-      WHERE group_name = v_groupName;
--- delete old marks of the tables group from emaj_mark
-    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
--- enable previously disabled event triggers
-    PERFORM emaj._enable_event_triggers(v_eventTriggers);
--- check foreign keys with tables outside the group
-    PERFORM emaj._check_fk_groups(array[v_groupName]);
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUP', 'END', v_groupName, v_nbDrop || ' dropped relations and ' || v_nbCreate || ' (re)created relations');
-    RETURN v_nbTbl + v_nbSeq;
+                  AND rel_group = ANY (v_groupNames))
+          AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq;
+-- determine the secondary log schemas that will need to be dropped once obsolete log tables will be dropped
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'DROP_LOG_SCHEMA', rel_log_schema, '', '', NULL FROM (
+        SELECT rel_log_schema FROM emaj.emaj_relation
+          WHERE rel_group = ANY (v_groupNames) AND rel_log_schema <> v_emajSchema         -- secondary log schemas that currently exist for the groups
+        EXCEPT
+        SELECT rel_log_schema FROM emaj.emaj_relation
+          WHERE rel_group <> ALL (v_groupNames)                                           -- minus those that exist for other groups
+        EXCEPT
+        SELECT v_schemaPrefix || grpdef_log_schema_suffix FROM emaj.emaj_group_def
+          WHERE grpdef_group = ANY (v_groupNames)
+            AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- minus those that will remain for the groups
+        ) AS t;
+-- set the altr_group_is_logging column value
+    UPDATE emaj.emaj_alter_plan SET altr_group_is_logging = group_is_logging
+      FROM emaj.emaj_group
+      WHERE altr_group = group_name
+        AND altr_time_id = v_timeId AND altr_group <> '';
+-- set the altr_new_group_is_logging column value for the cases when the group ownership changes
+    UPDATE emaj.emaj_alter_plan SET altr_new_group_is_logging = group_is_logging
+      FROM emaj.emaj_group
+      WHERE altr_new_group = group_name
+        AND altr_time_id = v_timeId AND altr_new_group IS NOT NULL;
+-- check groups LOGGING state, depending on the steps to perform
+    SELECT string_agg(DISTINCT altr_group, ', ') INTO v_groups
+      FROM emaj.emaj_alter_plan
+      WHERE altr_time_id = v_timeId
+        AND altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ', 'RESET_GROUP', 'REPAIR_TBL', 'ASSIGN_REL', 'ADD_TBL', 'ADD_SEQ')
+        AND altr_group_is_logging;
+    IF v_groups IS NOT NULL THEN
+      RAISE EXCEPTION '_alter_plan: The groups "%" cannot be altered because they are in LOGGING state.', v_groups;
+    END IF;
+-- and return
+    RETURN;
   END;
-$emaj_alter_group$;
-COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT) IS
-$$Alter an E-Maj group.$$;
+$_alter_plan$;
+
+CREATE OR REPLACE FUNCTION emaj._alter_exec(v_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_alter_exec$
+-- This function executes the alter groups operation that has been planned by the _alter_plan() function.
+-- It looks at the emaj_alter_plan table and executes elementary step in proper order.
+-- Input: timestamp id of the operation
+  DECLARE
+    v_logSchemaSuffix        TEXT;
+    v_emajNamesPrefix        TEXT;
+    v_logDatTsp              TEXT;
+    v_logIdxTsp              TEXT;
+    v_isRollbackable         BOOLEAN;
+    r_plan                   RECORD;
+    r_rel                    emaj.emaj_relation%ROWTYPE;
+    r_grpdef                 emaj.emaj_group_def%ROWTYPE;
+  BEGIN
+-- scan the emaj_alter_plan table and execute each elementary item in the proper order
+    FOR r_plan IN
+      SELECT altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging, altr_new_group, altr_new_priority
+        FROM emaj.emaj_alter_plan
+        WHERE altr_time_id = v_timeId
+        ORDER BY altr_step, altr_priority, altr_schema, altr_tblseq, altr_group
+      LOOP
+      CASE r_plan.altr_step
+        WHEN 'REMOVE_TBL' THEN
+-- remove a table from its group
+          PERFORM emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+--
+        WHEN 'REMOVE_SEQ' THEN
+-- remove a sequence from its group
+          PERFORM emaj._drop_seq(emaj.emaj_relation.*) FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+--
+        WHEN 'RESET_GROUP' THEN
+-- reset a group
+          PERFORM emaj._reset_groups(ARRAY[r_plan.altr_group]);
+--
+        WHEN 'CREATE_LOG_SCHEMA' THEN
+-- create a log schema
+          PERFORM emaj._create_log_schema(r_plan.altr_schema);
+--   and record the schema creation in emaj_hist table
+          INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+            VALUES ('ALTER_GROUP','SCHEMA CREATED',quote_ident(r_plan.altr_schema));
+--
+        WHEN 'REPAIR_TBL' THEN
+          IF r_plan.altr_group_is_logging THEN
+            RAISE EXCEPTION 'alter_exec: Cannot repair the table %.%. Its group % is in LOGGING state', r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
+          ELSE
+-- get the is_rollbackable status of the related group
+            SELECT group_is_rollbackable INTO v_isRollbackable
+              FROM emaj.emaj_group WHERE group_name = r_plan.altr_group;
+-- get the table description from emaj_group_def
+            SELECT * INTO r_grpdef
+              FROM emaj.emaj_group_def
+             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- remove the table from its group
+            PERFORM emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
+              WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+-- and recreate it
+            PERFORM emaj._create_tbl(r_grpdef, v_isRollbackable);
+          END IF;
+--
+        WHEN 'REPAIR_SEQ' THEN
+          IF r_plan.altr_group_is_logging THEN
+            RAISE EXCEPTION 'alter_exec: Cannot repair the sequence %.%. Its group % is in LOGGING state.', r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
+          ELSE
+-- get the sequence description from emaj_group_def
+            SELECT * INTO r_grpdef
+              FROM emaj.emaj_group_def
+             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- remove the sequence from its group
+            PERFORM emaj._drop_seq(emaj.emaj_relation.*) FROM emaj.emaj_relation
+              WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+-- and recreate it
+            PERFORM emaj._create_seq(r_grpdef);
+          END IF;
+--
+        WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+-- get the table description from emaj_group_def
+          SELECT grpdef_log_schema_suffix INTO v_logSchemaSuffix FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix);
+--
+        WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+-- get the table description from emaj_group_def
+          SELECT grpdef_emaj_names_prefix INTO v_emajNamesPrefix FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix);
+--
+        WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+-- get the table description from emaj_group_def
+          SELECT grpdef_log_dat_tsp INTO v_logDatTsp FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp);
+--
+        WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+-- get the table description from emaj_group_def
+          SELECT grpdef_log_idx_tsp INTO v_logIdxTsp FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp);
+--
+        WHEN 'ASSIGN_REL' THEN
+-- update the emaj_relation table to report the group ownership change
+          UPDATE emaj.emaj_relation SET rel_group = r_plan.altr_new_group
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+--
+        WHEN 'CHANGE_REL_PRIORITY' THEN
+-- update the emaj_relation table to report the priority change
+          UPDATE emaj.emaj_relation SET rel_priority = r_plan.altr_new_priority
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+--
+        WHEN 'ADD_TBL' THEN
+-- get the is_rollbackable status of the related group
+          SELECT group_is_rollbackable INTO v_isRollbackable
+            FROM emaj.emaj_group WHERE group_name = r_plan.altr_group;
+-- get the table description from emaj_group_def
+          SELECT * INTO r_grpdef
+            FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- create the table
+          PERFORM emaj._create_tbl(r_grpdef, v_isRollbackable);
+--
+        WHEN 'ADD_SEQ' THEN
+-- create the sequence
+          PERFORM emaj._create_seq(emaj.emaj_group_def.*) FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+--
+        WHEN 'DROP_LOG_SCHEMA' THEN
+-- drop the log schema
+          PERFORM emaj._drop_log_schema(r_plan.altr_schema, false);
+-- and record the schema drop in emaj_hist table
+          INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+            VALUES ('ALTER_GROUP','SCHEMA DROPPED',quote_ident(r_plan.altr_schema));
+--
+      END CASE;
+    END LOOP;
+    RETURN;
+  END;
+$_alter_exec$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT DEFAULT 'START_%', v_resetLog BOOLEAN DEFAULT true)
 RETURNS INT LANGUAGE plpgsql AS
@@ -2385,7 +2915,7 @@ $_start_groups$
       SELECT group_is_logging INTO v_groupIsLogging
         FROM emaj.emaj_group WHERE group_name = v_aGroupName FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_start_groups: group "%" has not been created.', v_aGroupName;
+        RAISE EXCEPTION '_start_groups: The group "%" does not exist.', v_aGroupName;
       END IF;
 -- ... and is not in LOGGING state
       IF v_groupIsLogging THEN
@@ -2396,9 +2926,9 @@ $_start_groups$
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- check foreign keys with tables outside the group
     PERFORM emaj._check_fk_groups(v_groupNames);
--- if requested by the user, call the emaj_reset_group() function to erase remaining traces from previous logs
+-- if requested by the user, call the emaj_reset_groups() function to erase remaining traces from previous logs
     if v_resetLog THEN
-      PERFORM emaj._reset_group(unnest(v_groupNames));
+      PERFORM emaj._reset_groups(v_groupNames);
     END IF;
 -- check and process the supplied mark name
     IF v_mark IS NULL OR v_mark = '' THEN
@@ -2543,11 +3073,11 @@ $_stop_groups$
       SELECT group_is_logging INTO v_groupIsLogging
         FROM emaj.emaj_group WHERE group_name = v_aGroupName FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_stop_groups: group "%" has not been created.', v_aGroupName;
+        RAISE EXCEPTION '_stop_groups: The group "%" does not exist.', v_aGroupName;
       END IF;
 -- ... check that the group is in LOGGING state
       IF NOT v_groupIsLogging THEN
-        RAISE WARNING '_stop_groups: Group "%" cannot be stopped because it is not in LOGGING state.', v_aGroupName;
+        RAISE WARNING '_stop_groups: The group "%" cannot be stopped because it is not in LOGGING state.', v_aGroupName;
       ELSE
 -- ... if OK, add the group into the array of groups to process
         v_validGroupNames = v_validGroupNames || array[v_aGroupName];
@@ -2579,9 +3109,9 @@ $_stop_groups$
             ORDER BY rel_schema
         LOOP
         IF v_isForced THEN
-          RAISE WARNING '_stop_groups: Schema "%" does not exist any more.', r_schema.rel_schema;
+          RAISE WARNING '_stop_groups: The schema "%" does not exist any more.', r_schema.rel_schema;
         ELSE
-          RAISE EXCEPTION '_stop_groups: Schema "%" does not exist any more.', r_schema.rel_schema;
+          RAISE EXCEPTION '_stop_groups: The schema "%" does not exist any more.', r_schema.rel_schema;
         END IF;
       END LOOP;
 -- for each relation of the groups to process,
@@ -2596,9 +3126,9 @@ $_stop_groups$
               WHERE  relnamespace = pg_namespace.oid AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
             IF NOT FOUND THEN
               IF v_isForced THEN
-                RAISE WARNING '_stop_groups: Table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                RAISE WARNING '_stop_groups: The table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
               ELSE
-                RAISE EXCEPTION '_stop_groups: Table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                RAISE EXCEPTION '_stop_groups: The table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
               END IF;
             ELSE
 -- and disable the emaj log and truncate triggers
@@ -2609,9 +3139,9 @@ $_stop_groups$
               EXCEPTION
                 WHEN undefined_object THEN
                   IF v_isForced THEN
-                    RAISE WARNING '_stop_groups: Log trigger "emaj_log_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                    RAISE WARNING '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                   ELSE
-                    RAISE EXCEPTION '_stop_groups: Log trigger "emaj_log_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                    RAISE EXCEPTION '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                   END IF;
               END;
               BEGIN
@@ -2619,9 +3149,9 @@ $_stop_groups$
               EXCEPTION
                 WHEN undefined_object THEN
                   IF v_isForced THEN
-                    RAISE WARNING '_stop_groups: Truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                    RAISE WARNING '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                   ELSE
-                    RAISE EXCEPTION '_stop_groups: Truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                    RAISE EXCEPTION '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
                   END IF;
               END;
             END IF;
@@ -2668,7 +3198,7 @@ $emaj_protect_group$
     SELECT group_is_rollbackable, group_is_logging, group_is_rlbk_protected INTO v_groupIsRollbackable, v_groupIsLogging, v_groupIsProtected
       FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_protect_group: group % has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_protect_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- check that the group is ROLLBACKABLE
     IF NOT v_groupIsRollbackable THEN
@@ -2709,7 +3239,7 @@ $emaj_unprotect_group$
     SELECT group_is_rollbackable, group_is_rlbk_protected INTO v_groupIsRollbackable, v_groupIsProtected
       FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_unprotect_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_unprotect_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- check that the group is ROLLBACKABLE
     IF NOT v_groupIsRollbackable THEN
@@ -2752,7 +3282,7 @@ $emaj_set_mark_group$
     SELECT group_is_logging INTO v_groupIsLogging
       FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_set_mark_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_set_mark_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- check that the group is in LOGGING state
     IF NOT v_groupIsLogging THEN
@@ -2812,7 +3342,7 @@ $emaj_set_mark_groups$
       SELECT group_is_logging INTO v_groupIsLogging
         FROM emaj.emaj_group WHERE group_name = v_aGroupName FOR UPDATE;
       IF NOT FOUND THEN
-        RAISE EXCEPTION 'emaj_set_mark_groups: group "%" has not been created.', v_aGroupName;
+        RAISE EXCEPTION 'emaj_set_mark_groups: The group "%" does not exist.', v_aGroupName;
       END IF;
 -- ... check that the group is in LOGGING state
       IF NOT v_groupIsLogging THEN
@@ -2867,20 +3397,31 @@ $_set_mark_groups$
     END IF;
 -- look at the clock to get the 'official' timestamp representing the mark
     SELECT time_clock_timestamp INTO v_timestamp FROM emaj.emaj_time_stamp WHERE time_id = v_timeId;
--- process sequences as early as possible (no lock protect them from other transactions activity)
+-- process sequences as early as possible (no lock protects them from other transactions activity)
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
           ORDER BY rel_priority, rel_schema, rel_tblseq
       LOOP
 -- for each sequence of the groups, record the sequence parameters into the emaj_sequence table
-      EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
-               'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
-               'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-               ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
-               quote_literal(r_tblsq.rel_tblseq) || ', ' || v_timeId ||
-               ', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-               'FROM ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+      IF emaj._pg_version_num() < 100000 THEN
+        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
+                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
+                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
+                quote_literal(r_tblsq.rel_tblseq) || ', ' || v_timeId ||
+                ', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+      ELSE
+        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
+                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
+                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                ') SELECT schemaname, sequencename, ' || v_timeId ||
+                ', rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq) ||
+                ' rel, pg_catalog.pg_sequences ' ||
+                ' WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_tblseq);
+      END IF;
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- record the number of log rows for the old last mark of each group
@@ -2896,23 +3437,32 @@ $_set_mark_groups$
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
           ORDER BY rel_priority, rel_schema, rel_tblseq
-        LOOP
+      LOOP
 -- ... record the associated sequence parameters in the emaj sequence table
-      EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
-               'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
-               'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-               ') SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(r_tblsq.rel_log_sequence) || ', ' ||
-               v_timeId || ', last_value, start_value, ' ||
-               'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-               'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence);
+      IF emaj._pg_version_num() < 100000 THEN
+        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
+                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
+                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                ') SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(r_tblsq.rel_log_sequence) || ', ' ||
+                v_timeId || ', last_value, start_value, ' ||
+                'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence);
+      ELSE
+        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
+                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
+                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                ') SELECT schemaname, sequencename, ' || v_timeId ||
+                ', rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence) ||
+                ' rel, pg_catalog.pg_sequences ' ||
+                ' WHERE schemaname = '|| quote_literal(r_tblsq.rel_log_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_log_sequence);
+      END IF;
       v_nbTb = v_nbTb + 1;
     END LOOP;
--- record the marks into the emaj_mark table
-    FOR v_i IN 1 .. array_upper(v_groupNames,1) LOOP
-      INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
-        SELECT v_groupNames[v_i], v_mark, v_timeId, FALSE, FALSE, v_loggedRlbkTargetMark
-          FROM emaj.emaj_time_stamp WHERE time_id = v_timeId;
-    END LOOP;
+-- record the mark for each group into the emaj_mark table
+    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
+      SELECT group_name, v_mark, v_timeId, FALSE, FALSE, v_loggedRlbkTargetMark
+        FROM emaj.emaj_group WHERE group_name = ANY(v_groupNames) ORDER BY group_name;
 -- before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table
     IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
 -- ... either through dblink if we are currently performing a rollback with a dblink connection already opened
@@ -2945,12 +3495,12 @@ $emaj_comment_mark_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_comment_mark_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_comment_mark_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_comment_mark_group: "%" is not a known mark for group "%".', v_mark, v_groupName;
+      RAISE EXCEPTION 'emaj_comment_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
 -- OK, update the mark_comment from emaj_mark table
     UPDATE emaj.emaj_mark SET mark_comment = v_comment WHERE mark_group = v_groupName AND mark_name = v_realMark;
@@ -2977,7 +3527,7 @@ $emaj_get_previous_mark_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_get_previous_mark_group (1): group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_get_previous_mark_group (1): The group "%" does not exist.', v_groupName;
     END IF;
 -- find the requested mark
     SELECT mark_name INTO v_markName FROM emaj.emaj_mark, emaj.emaj_time_stamp
@@ -3008,12 +3558,12 @@ $emaj_get_previous_mark_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_get_previous_mark_group (2): group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_get_previous_mark_group (2): The group "%" does not exist.', v_groupName;
     END IF;
 -- retrieve and check the given mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_get_previous_mark_group: "%" is not a known mark for group "%".', v_mark, v_groupName;
+      RAISE EXCEPTION 'emaj_get_previous_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
 -- find the requested mark
     SELECT mark_name INTO v_markName FROM emaj.emaj_mark
@@ -3056,12 +3606,12 @@ $emaj_delete_mark_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_delete_mark_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_delete_mark_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_delete_mark_group: "%" is not a known mark for group "%".', v_mark, v_groupName;
+      RAISE EXCEPTION 'emaj_delete_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
 -- count the number of marks in the group
     SELECT count(*) INTO v_cpt FROM emaj.emaj_mark WHERE mark_group = v_groupName;
@@ -3112,7 +3662,7 @@ $emaj_delete_before_mark_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_delete_before_mark_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_delete_before_mark_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- return NULL if mark name is NULL
     IF v_mark IS NULL THEN
@@ -3121,7 +3671,7 @@ $emaj_delete_before_mark_group$
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_delete_before_mark_group: "%" is not a known mark for group "%".', v_mark, v_groupName;
+      RAISE EXCEPTION 'emaj_delete_before_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
 -- effectively delete all marks before the supplied mark
     SELECT (emaj._delete_between_marks_group(v_groupName, NULL, v_realMark)).v_nbMark INTO v_nbMark;
@@ -3310,12 +3860,12 @@ $emaj_rename_mark_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_rename_mark_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_rename_mark_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_rename_mark_group: mark "%" does not exist for group "%".', v_mark, v_groupName;
+      RAISE EXCEPTION 'emaj_rename_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
 -- check the new mark name is not 'EMAJ_LAST_MARK' or NULL
     IF v_newName = 'EMAJ_LAST_MARK' OR v_newName IS NULL THEN
@@ -3325,7 +3875,7 @@ $emaj_rename_mark_group$
     PERFORM 0 FROM emaj.emaj_mark
       WHERE mark_group = v_groupName AND mark_name = v_newName;
     IF FOUND THEN
-       RAISE EXCEPTION 'emaj_rename_mark_group: a mark "%" already exists for group "%".', v_newName, v_groupName;
+       RAISE EXCEPTION 'emaj_rename_mark_group: A mark "%" already exists for the group "%".', v_newName, v_groupName;
     END IF;
 -- OK, update the emaj_mark table
     UPDATE emaj.emaj_mark SET mark_name = v_newName
@@ -3355,30 +3905,31 @@ $emaj_protect_mark_group$
     v_groupIsLogging         BOOLEAN;
     v_realMark               TEXT;
     v_markIsProtected        BOOLEAN;
+    v_markIsDeleted          BOOLEAN;
     v_status                 INT;
   BEGIN
 -- check that the group is recorded in emaj_group table
     SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
       FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_protect_mark_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_protect_mark_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- check that the group is ROLLBACKABLE
     IF NOT v_groupIsRollbackable THEN
       RAISE EXCEPTION 'emaj_protect_mark_group: A mark on the group "%" cannot be protected because it is an AUDIT_ONLY group.', v_groupName;
     END IF;
--- check that the group is not in LOGGING state
-    IF NOT v_groupIsLogging THEN
-      RAISE EXCEPTION 'emaj_protect_mark_group: A mark on the group "%" cannot be protected because it is not in LOGGING state.', v_groupName;
-    END IF;
--- retrieve and check the mark name
+-- retrieve and check that the mark name exists
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_protect_mark_group: mark "%" does not exist for group "%".', v_mark, v_groupName;
+      RAISE EXCEPTION 'emaj_protect_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
--- OK, set the protection
-    SELECT mark_is_rlbk_protected INTO v_markIsProtected FROM emaj.emaj_mark
+-- check that the mark is not logicaly deleted
+    SELECT mark_is_deleted, mark_is_rlbk_protected INTO v_markIsDeleted, v_markIsProtected FROM emaj.emaj_mark
       WHERE mark_group = v_groupName AND mark_name = v_realMark;
+    IF v_markIsDeleted THEN
+      RAISE EXCEPTION 'emaj_protect_mark_group: The mark "%" for the group "%" is logicaly deleted and thus cannot be protected.', v_mark, v_groupName;
+    END IF;
+-- OK, set the protection, if not already set
     IF v_markIsProtected THEN
       v_status = 0;
     ELSE
@@ -3411,7 +3962,7 @@ $emaj_unprotect_mark_group$
     SELECT group_is_rollbackable INTO v_groupIsRollbackable
       FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_unprotect_mark_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_unprotect_mark_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- check that the group is ROLLBACKABLE
     IF NOT v_groupIsRollbackable THEN
@@ -3420,7 +3971,7 @@ $emaj_unprotect_mark_group$
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
     IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_unprotect_mark_group: mark "%" does not exist for group "%".', v_mark, v_groupName;
+      RAISE EXCEPTION 'emaj_unprotect_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
 -- OK, set the protection
     SELECT mark_is_rlbk_protected INTO v_markIsProtected FROM emaj.emaj_mark
@@ -3444,29 +3995,29 @@ CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEX
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_rollback_group$
 -- The function rollbacks all tables and sequences of a group up to a mark in the history
--- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
+-- Input: group name, mark to rollback to
 -- Output: number of processed tables and sequences
   BEGIN
--- just (unlogged) rollback the group (with boolean: isLoggedRlbk = false, multiGroup = false)
-    RETURN emaj._rlbk_groups(array[v_groupName], v_mark, false, false);
+-- just (unlogged) rollback the group (with boolean: isLoggedRlbk = false, multiGroup = false, v_isAlterGroupAllowed = null)
+    RETURN rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice';
   END;
 $emaj_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT) IS
-$$Rollbacks an E-Maj group to a given mark.$$;
+$$Rollbacks an E-Maj group to a given mark (deprecated).$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_rollback_groups$
 -- The function rollbacks all tables and sequences of a group array up to a mark in the history
--- Input: array of group names, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
+-- Input: array of group names, mark to rollback to
 -- Output: number of processed tables and sequences
   BEGIN
--- just (unlogged) rollback the groups (with boolean: isLoggedRlbk = false, multiGroup = true)
-    RETURN emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, false, true);
+-- just (unlogged) rollback the groups (with boolean: isLoggedRlbk = false, multiGroup = true, v_isAlterGroupAllowed = null)
+    RETURN rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice';
   END;
 $emaj_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT) IS
-$$Rollbacks an set of E-Maj groups to a given mark.$$;
+$$Rollbacks an set of E-Maj groups to a given mark (deprecated).$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -3476,15 +4027,15 @@ $emaj_logged_rollback_group$
 -- - log triggers are not disabled at rollback time,
 -- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
 -- - rolled back log rows and any marks inside the rollback time frame are kept.
--- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
+-- Input: group name, mark to rollback to
 -- Output: number of processed tables and sequences
   BEGIN
--- just "logged-rollback" the group (with boolean: isLoggedRlbk = true, multiGroup = false)
-    RETURN emaj._rlbk_groups(array[v_groupName], v_mark, true, false);
+-- just "logged-rollback" the group (with boolean: isLoggedRlbk = true, multiGroup = false, v_isAlterGroupAllowed = null)
+    RETURN rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice';
   END;
 $emaj_logged_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT) IS
-$$Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark.$$;
+$$Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark (deprecated).$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -3494,71 +4045,132 @@ $emaj_logged_rollback_groups$
 -- - log triggers are not disabled at rollback time,
 -- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
 -- - rolled back log rows and any marks inside the rollback time frame are kept.
--- Input: array of group names, mark in the history, as it is inserted by emaj.emaj_set_mark_group(s)
--- Output: number of tables and sequences effectively processed
+-- Input: array of group names, mark to rollback to
+-- Output: number of processed tables and sequences
   BEGIN
--- just "logged-rollback" the groups (with boolean: isLoggedRlbk = true, multiGroup = true)
-    RETURN emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, true);
+-- just "logged-rollback" the groups (with boolean: isLoggedRlbk = true, multiGroup = true, v_isAlterGroupAllowed = null)
+    RETURN rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice';
   END;
 $emaj_logged_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT) IS
+$$Performs a logged (cancellable) rollbacks for a set of E-Maj groups to a given mark (deprecated).$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$emaj_rollback_group$
+-- The function rollbacks all tables and sequences of a group up to a mark in the history
+-- Input: group name, mark to rollback to, boolean indicating whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  BEGIN
+-- just (unlogged) rollback the group (with boolean: isLoggedRlbk = false, multiGroup = false)
+    RETURN QUERY SELECT * FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, coalesce(v_isAlterGroupAllowed, FALSE));
+  END;
+$emaj_rollback_group$;
+COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT,BOOLEAN) IS
+$$Rollbacks an E-Maj group to a given mark.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$emaj_rollback_groups$
+-- The function rollbacks all tables and sequences of a group array up to a mark in the history
+-- Input: array of group names, mark to rollback to, boolean indicating whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  BEGIN
+-- just (unlogged) rollback the groups (with boolean: isLoggedRlbk = false, multiGroup = true)
+    RETURN QUERY SELECT * FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, FALSE, TRUE, coalesce(v_isAlterGroupAllowed, FALSE));
+  END;
+$emaj_rollback_groups$;
+COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT,BOOLEAN) IS
+$$Rollbacks an set of E-Maj groups to a given mark.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$emaj_logged_rollback_group$
+-- The function performs a logged rollback of all tables and sequences of a group up to a mark in the history.
+-- A logged rollback is a rollback which can be later rolled back! To achieve this:
+-- - log triggers are not disabled at rollback time,
+-- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
+-- - rolled back log rows and any marks inside the rollback time frame are kept.
+-- Input: group name, mark to rollback to, boolean indicating whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  BEGIN
+-- just "logged-rollback" the group (with boolean: isLoggedRlbk = true, multiGroup = false)
+    RETURN QUERY SELECT * FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, coalesce(v_isAlterGroupAllowed, FALSE));
+  END;
+$emaj_logged_rollback_group$;
+COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT,BOOLEAN) IS
+$$Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$emaj_logged_rollback_groups$
+-- The function performs a logged rollback of all tables and sequences of a groups array up to a mark in the history.
+-- A logged rollback is a rollback which can be later rolled back! To achieve this:
+-- - log triggers are not disabled at rollback time,
+-- - a mark is automaticaly set at the beginning and at the end of the rollback operation,
+-- - rolled back log rows and any marks inside the rollback time frame are kept.
+-- Input: array of group names, mark to rollback to, boolean indicating whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  BEGIN
+-- just "logged-rollback" the groups (with boolean: isLoggedRlbk = true, multiGroup = true)
+    RETURN QUERY SELECT * FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, coalesce(v_isAlterGroupAllowed, FALSE));
+  END;
+$emaj_logged_rollback_groups$;
+COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT,BOOLEAN) IS
 $$Performs a logged (cancellable) rollbacks for a set of E-Maj groups to a given mark.$$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN)
-RETURNS INT LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $_rlbk_groups$
 -- The function rollbacks all tables and sequences of a groups array up to a mark in the history.
 -- It is called by emaj_rollback_group.
 -- It effectively manages the rollback operation for each table or sequence, deleting rows from log tables
 -- only when asked by the calling functions.
 -- Its activity is split into smaller functions that are also called by the parallel restore php function
--- Input: group name, mark in the history, as it is inserted by emaj.emaj_set_mark_group
---        and a boolean saying if the rollback is a logged rollback
--- Output: number of tables and sequences effectively processed
+-- Input: group name, mark to rollback to, a boolean indicating whether the rollback is a logged rollback, a boolean indicating whether the function
+--        is a multi_group function and a boolean saying whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
   DECLARE
     v_rlbkId                 INT;
-    v_nbTbl                  INT;
-    v_nbSeq                  INT;
   BEGIN
 -- if the group names array is null, immediately return 0
     IF v_groupNames IS NULL THEN
-      RETURN 0;
+       rlbk_severity = 'Notice'; rlbk_message = 0;
+       RETURN NEXT;
+      RETURN;
     END IF;
 -- check supplied parameter and prepare the rollback operation
-    SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup) INTO v_rlbkId;
+    SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed) INTO v_rlbkId;
 -- lock all tables
     PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
 -- set a rollback start mark if logged rollback
     PERFORM emaj._rlbk_start_mark(v_rlbkId, v_multiGroup);
 -- execute the rollback planning
-    SELECT emaj._rlbk_session_exec(v_rlbkId, 1) INTO v_nbTbl;
--- process sequences and complete the rollback operation
-    SELECT emaj._rlbk_end(v_rlbkId, v_multiGroup) INTO v_nbSeq;
-    RETURN v_nbTbl + v_nbSeq;
+    PERFORM emaj._rlbk_session_exec(v_rlbkId, 1);
+-- process sequences, complete the rollback operation and return the execution report
+    RETURN QUERY SELECT * FROM emaj._rlbk_end(v_rlbkId, v_multiGroup, v_isAlterGroupAllowed);
   END;
 $_rlbk_groups$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN)
-RETURNS INT LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $_rlbk_async$
 -- The function calls the main rollback functions following the initialisation phase.
 -- It is only called by the phpPgAdmin plugin, in an asynchronous way, so that the rollback can be then monitored by the client.
--- Input: rollback identifier and a boolean saying if the rollback is a logged rollback
--- Output: number of tables and sequences effectively processed
+-- Input: rollback identifier, a boolean saying if the rollback is a logged rollback
+--        and a boolean saying whether the rollback may return to a mark set before an alter group operation
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
   DECLARE
-    v_nbTbl                  INT;
-    v_nbSeq                  INT;
   BEGIN
 -- simply chain the internal functions
     PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
     PERFORM emaj._rlbk_start_mark(v_rlbkId, v_multiGroup);
-    SELECT emaj._rlbk_session_exec(v_rlbkId, 1) INTO v_nbTbl;
-    SELECT emaj._rlbk_end(v_rlbkId, v_multiGroup) INTO v_nbSeq;
-    RETURN v_nbTbl + v_nbSeq;
+    PERFORM emaj._rlbk_session_exec(v_rlbkId, 1);
+    RETURN QUERY SELECT * FROM emaj._rlbk_end(v_rlbkId, v_multiGroup, v_isAlterGroupAllowed);
   END;
 $_rlbk_async$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_init$
 -- This is the first step of a rollback group processing.
@@ -3583,7 +4195,7 @@ $_rlbk_init$
 -- lock the groups to rollback
     PERFORM 1 FROM emaj.emaj_group WHERE group_name = ANY(v_groupNames) FOR UPDATE;
 -- check supplied group names and mark parameters
-    SELECT emaj._rlbk_check(v_groupNames, v_mark) INTO v_markName;
+    SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE) INTO v_markName;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- get the time stamp id and its clock timestamp for the 1st group (as we know this time stamp is the same for all groups of the array)
@@ -3609,14 +4221,14 @@ $_rlbk_init$
     v_isDblinkUsable = (v_dbLinkCnxStatus >= 0);
 -- for parallel rollback (nb sessions > 1) the dblink connection must be ok
     IF v_nbSession > 1 AND NOT v_isDblinkUsable THEN
-      RAISE EXCEPTION '_rlbk_init: cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = % - see E-Maj documentation)', v_dbLinkCnxStatus;
+      RAISE EXCEPTION '_rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = % - see E-Maj documentation)', v_dbLinkCnxStatus;
     END IF;
 -- create the row representing the rollback event in the emaj_rlbk table and get the rollback id back
-    v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, ' ||
+    v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, ' ||
              'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
              'rlbk_is_dblink_used) ' ||
              'VALUES (' || quote_literal(v_groupNames) || ',' || quote_literal(v_markName) || ',' ||
-             v_markTimeId || ',' || v_isLoggedRlbk || ',' ||
+             v_markTimeId || ',' || v_isLoggedRlbk || ',' || coalesce(v_isAlterGroupAllowed, false) || ',' ||
              v_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
              v_isDblinkUsable || ') RETURNING rlbk_id';
     IF v_isDblinkUsable THEN
@@ -3652,7 +4264,7 @@ $_rlbk_init$
   END;
 $_rlbk_init$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, isRollbackSimulation BOOLEAN DEFAULT FALSE)
+CREATE OR REPLACE FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, isRollbackSimulation BOOLEAN)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_rlbk_check$
 -- This functions performs checks on group names and mark names supplied as parameter for the emaj_rollback_groups()
@@ -3665,6 +4277,7 @@ $_rlbk_check$
     v_groupIsRollbackable    BOOLEAN;
     v_markName               TEXT;
     v_markId                 BIGINT;
+    v_markTimeId             BIGINT;
     v_markIsDeleted          BOOLEAN;
     v_protectedMarkList      TEXT;
     v_cpt                    INT;
@@ -3675,30 +4288,30 @@ $_rlbk_check$
       SELECT group_is_logging, group_is_rollbackable, group_is_rlbk_protected INTO v_groupIsLogging, v_groupIsRollbackable, v_groupIsProtected
         FROM emaj.emaj_group WHERE group_name = v_aGroupName;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_rlbk_check: group "%" has not been created.', v_aGroupName;
+        RAISE EXCEPTION '_rlbk_check: The group "%" does not exist.', v_aGroupName;
       END IF;
 -- ... is in LOGGING state
       IF NOT v_groupIsLogging THEN
-        RAISE EXCEPTION '_rlbk_check: Group "%" is not in LOGGING state.', v_aGroupName;
+        RAISE EXCEPTION '_rlbk_check: The group "%" is not in LOGGING state.', v_aGroupName;
       END IF;
 -- ... is ROLLBACKABLE
       IF NOT v_groupIsRollbackable THEN
-        RAISE EXCEPTION '_rlbk_check: Group "%" has been created for audit only purpose.', v_aGroupName;
+        RAISE EXCEPTION '_rlbk_check: The group "%" has been created for audit only purpose.', v_aGroupName;
       END IF;
 -- ... is not protected against rollback (check disabled for rollback simulation)
       IF v_groupIsProtected AND NOT isRollbackSimulation THEN
-        RAISE EXCEPTION '_rlbk_check: Group "%" is currently protected against rollback.', v_aGroupName;
+        RAISE EXCEPTION '_rlbk_check: The group "%" is currently protected against rollback.', v_aGroupName;
       END IF;
 -- ... owns the requested mark
       SELECT emaj._get_mark_name(v_aGroupName,v_mark) INTO v_markName;
       IF NOT FOUND OR v_markName IS NULL THEN
-        RAISE EXCEPTION '_rlbk_check: No mark "%" exists for group "%".', v_mark, v_aGroupName;
+        RAISE EXCEPTION '_rlbk_check: The mark "%" does not exist for the group "%".', v_mark, v_aGroupName;
       END IF;
--- ... and this mark is ACTIVE
-      SELECT mark_id, mark_is_deleted INTO v_markId, v_markIsDeleted FROM emaj.emaj_mark
+-- ... and this mark can be used as target for a rollback
+      SELECT mark_id, mark_time_id, mark_is_deleted INTO v_markId, v_markTimeId, v_markIsDeleted FROM emaj.emaj_mark
         WHERE mark_group = v_aGroupName AND mark_name = v_markName;
       IF v_markIsDeleted THEN
-        RAISE EXCEPTION '_rlbk_check: mark "%" for group "%" is not usable for rollback.', v_markName, v_aGroupName;
+        RAISE EXCEPTION '_rlbk_check: The mark "%" for the group "%" is not usable for rollback.', v_markName, v_aGroupName;
       END IF;
 -- ... and the rollback wouldn't delete protected marks (check disabled for rollback simulation)
       IF NOT isRollbackSimulation THEN
@@ -3707,7 +4320,7 @@ $_rlbk_check$
             WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
             ORDER BY mark_id) AS t;
         IF v_protectedMarkList IS NOT NULL THEN
-          RAISE EXCEPTION '_rlbk_check: protected marks (%) for group "%" block the rollback to mark "%".', v_protectedMarkList, v_aGroupName, v_markName;
+          RAISE EXCEPTION '_rlbk_check: Protected marks (%) for group "%" block the rollback to the mark "%".', v_protectedMarkList, v_aGroupName, v_markName;
         END IF;
       END IF;
     END LOOP;
@@ -3715,7 +4328,14 @@ $_rlbk_check$
     SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
       WHERE group_name = ANY (v_groupNames);
     IF v_cpt > 1 THEN
-      RAISE EXCEPTION '_rlbk_check: Mark "%" does not represent the same point in time for all groups.', v_mark;
+      RAISE EXCEPTION '_rlbk_check: The mark "%" does not represent the same point in time for all groups.', v_mark;
+    END IF;
+-- if the isAlterGroupAllowed flag is set to true, check that the rollback would not cross any alter group operation for the groups
+    IF NOT v_isAlterGroupAllowed THEN
+       PERFORM 0 FROM emaj.emaj_alter_plan WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames);
+       IF FOUND THEN
+         RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously executed alter group operations. You can remove this protection by using a less strict setting for this function.';
+       END IF;
     END IF;
     RETURN v_markName;
   END;
@@ -4252,12 +4872,12 @@ $_rlbk_session_lock$
       EXCEPTION
         WHEN deadlock_detected THEN
           v_nbRetry = v_nbRetry + 1;
-          RAISE NOTICE '_rlbk_session_lock: a deadlock has been trapped while locking tables for groups "%".', array_to_string(v_groupNames,',');
+          RAISE NOTICE '_rlbk_session_lock: A deadlock has been trapped while locking tables for groups "%".', array_to_string(v_groupNames,',');
       END;
     END LOOP;
     IF NOT v_ok THEN
-      PERFORM emaj._rlbk_error(v_rlbkId, '_rlbk_session_lock: too many (5) deadlocks encountered while locking tables', v_session);
-      RAISE EXCEPTION '_rlbk_session_lock: too many (5) deadlocks encountered while locking tables for groups "%".',array_to_string(v_groupNames,',');
+      PERFORM emaj._rlbk_error(v_rlbkId, '_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables', v_session);
+      RAISE EXCEPTION '_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables for groups "%".',array_to_string(v_groupNames,',');
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -4337,7 +4957,7 @@ $_rlbk_start_mark$
                     ) AS t
       WHERE emaj._log_stat_tbl(t, v_markTimeId, NULL) > 0;
     IF FOUND THEN
-      v_errorMsg = 'The rollback operation has been cancelled due to concurrent activity at E-Maj rollback planning time on tables to process.';
+      v_errorMsg = 'the rollback operation has been cancelled due to concurrent activity at E-Maj rollback planning time on tables to process.';
       PERFORM emaj._rlbk_error(v_rlbkId, v_errorMsg, 1);
       RAISE EXCEPTION '_rlbk_start_mark: % Please retry.', v_errorMsg;
     END IF;
@@ -4359,17 +4979,15 @@ $_rlbk_start_mark$
 $_rlbk_start_mark$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_session_exec$
 -- This function executes the main part of a rollback operation.
 -- It executes the steps identified by _rlbk_planning() and stored into emaj_rlbk_plan, for one session.
--- The function returns the effective number of processed tables.
 -- It updates the emaj_rlbk_plan table, using dblink connection if possible, giving a visibility of the rollback progress.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it doesn't own the application tables.
   DECLARE
     v_stmt                   TEXT;
     v_isDblinkUsable         BOOLEAN = false;
-    v_effNbTable             INT = 0;
     v_groupNames             TEXT[];
     v_mark                   TEXT;
     v_rlbkMarkTimeId         BIGINT;
@@ -4438,7 +5056,6 @@ $_rlbk_session_exec$
           SELECT emaj._rlbk_tbl(emaj_relation.*, v_lastGlobalSeq, v_maxGlobalSeq, v_nbSession, v_isLoggedRlbk) INTO v_nbRows
             FROM emaj.emaj_relation
             WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
-          v_effNbTable = v_effNbTable + 1;
         WHEN 'DELETE_LOG' THEN
 -- process the deletion of log rows
           SELECT emaj._delete_log_tbl(emaj_relation.*, v_rlbkMarkTimeId, v_rlbkTimeId, v_lastGlobalSeq)
@@ -4493,7 +5110,7 @@ $_rlbk_session_exec$
 -- ... or directly
       EXECUTE v_stmt;
     END IF;
-    RETURN v_effNbTable;
+    RETURN;
 -- trap and record exception during the rollback operation
   EXCEPTION
     WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
@@ -4504,8 +5121,8 @@ $_rlbk_session_exec$
   END;
 $_rlbk_session_exec$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_end(v_rlbkId INT, v_multiGroup BOOLEAN)
-RETURNS INT LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION emaj._rlbk_end(v_rlbkId INT, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $_rlbk_end$
 -- This is the last step of a rollback group processing. It :
 --    - deletes the marks that are no longer available,
@@ -4514,15 +5131,16 @@ $_rlbk_end$
 --    - rollbacks all sequences of the groups,
 --    - set the end rollback mark if logged rollback,
 --    - and finaly set the operation as COMPLETED or COMMITED.
--- It returns the number of processed sequences.
+-- It returns the execution report of the rollback operation (a set of rows).
   DECLARE
     v_stmt                   TEXT;
     v_isDblinkUsable         BOOLEAN = false;
     v_groupNames             TEXT[];
     v_mark                   TEXT;
     v_isLoggedRlbk           BOOLEAN;
-    v_rlbkDatetime           TIMESTAMPTZ;
+    v_nbTbl                  INT;
     v_effNbTbl               INT;
+    v_rlbkDatetime           TIMESTAMPTZ;
     v_ctrlDuration           INTERVAL;
     v_markId                 BIGINT;
     v_markTimeId             BIGINT;
@@ -4535,8 +5153,8 @@ $_rlbk_end$
       v_isDblinkUsable = true;
     END IF;
 -- get the rollack characteristics for the emaj_rlbk
-    SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_eff_nb_table, time_clock_timestamp
-      INTO v_groupNames, v_mark, v_isLoggedRlbk, v_effNbTbl, v_rlbkDatetime
+    SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_table, rlbk_eff_nb_table, time_clock_timestamp
+      INTO v_groupNames, v_mark, v_isLoggedRlbk, v_nbTbl, v_effNbTbl, v_rlbkDatetime
       FROM emaj.emaj_rlbk, emaj.emaj_time_stamp WHERE rlbk_time_id = time_id AND  rlbk_id = v_rlbkId;
 -- get the mark timestamp for the 1st group (they all share the same timestamp)
     SELECT mark_time_id INTO v_markTimeId FROM emaj.emaj_mark
@@ -4661,7 +5279,45 @@ $_rlbk_end$
                v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed''' ||
                ' WHERE rlbk_id = ' || v_rlbkId;
     END IF;
-    RETURN v_nbSeq;
+-- build and return the execution report
+    IF v_isAlterGroupAllowed IS NULL THEN
+-- return the number of processed tables and sequences to old style calling functions
+       rlbk_severity = 'Notice'; rlbk_message = (v_effNbTbl + v_nbSeq)::TEXT;
+       RETURN NEXT;
+    ELSE
+-- return the execution report to new style calling functions
+-- ... the general notice messages with counters
+       rlbk_severity = 'Notice';
+       rlbk_message = format ('%s / %s tables effectively processed.', v_effNbTbl::TEXT, v_nbTbl::TEXT);
+       RETURN NEXT;
+       IF v_nbSeq > 0 THEN
+         rlbk_message = format ('%s sequences processed.', v_nbSeq::TEXT);
+         RETURN NEXT;
+       END IF;
+-- ... and warning messages for any elementary action from alter group operations that has not been rolled back
+--TODO add missing cases
+       RETURN QUERY
+         SELECT 'Warning'::TEXT AS rlbk_severity,
+               ('Tables group change not rolled back: ' || CASE altr_step
+                   WHEN 'CHANGE_REL_PRIORITY' THEN 'E-Maj priority for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN 'E-Maj log schema for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN 'E-Maj names prefix for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN 'log data tablespace for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN 'log index tablespace for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   ELSE altr_step::TEXT || ' / ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                   END)::TEXT AS rlbk_message
+           FROM emaj.emaj_alter_plan
+           WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> ''
+        ORDER BY altr_time_id, altr_step, altr_schema, altr_tblseq;
+-- for unlogged rollbacks, delete from alter group operations the elementary actions that have not been automatically rolled back
+--TODO add missing cases
+      IF NOT v_isLoggedRlbk THEN
+         DELETE FROM emaj.emaj_alter_plan
+           WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> ''
+             AND altr_step IN ('CHANGE_REL_PRIORITY', 'CHANGE_TBL_LOG_SCHEMA', 'CHANGE_TBL_NAMES_PREFIX', 'CHANGE_TBL_LOG_DATA_TSP', 'CHANGE_TBL_LOG_INDEX_TSP');
+      END IF;
+    END IF;
+    RETURN;
 -- trap and record exception during the rollback operation
   EXCEPTION
     WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
@@ -4758,12 +5414,12 @@ $emaj_consolidate_rollback_group$
 -- check and lock the group to process
     SELECT group_nb_sequence INTO v_nbSeq FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_consolidate_rollback_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_consolidate_rollback_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- retrieve and check the mark name
     SELECT emaj._get_mark_name(v_groupName,v_endRlbkMark) INTO v_lastMark;
     IF v_lastMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_consolidate_rollback_group: mark "%" does not exist for group "%".', v_endRlbkMark, v_groupName;
+      RAISE EXCEPTION 'emaj_consolidate_rollback_group: The mark "%" does not exist for the group "%".', v_endRlbkMark, v_groupName;
     END IF;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(ARRAY[v_groupName], true);
@@ -4771,7 +5427,7 @@ $emaj_consolidate_rollback_group$
     SELECT mark_logged_rlbk_target_mark INTO v_firstMark FROM emaj.emaj_mark
       WHERE mark_group = v_groupName AND mark_name = v_lastMark;
     IF v_firstMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_consolidate_rollback_group: mark "%" for group "%" is not an end rollback mark.', v_lastMark, v_groupName;
+      RAISE EXCEPTION 'emaj_consolidate_rollback_group: The mark "%" for the group "%" is not an end rollback mark.', v_lastMark, v_groupName;
     END IF;
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -4779,7 +5435,7 @@ $emaj_consolidate_rollback_group$
 -- check the first mark really exists (it should, because deleting or renaming a mark must update the mark_logged_rlbk_mark_name column)
     PERFORM 1 FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_firstMark;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_consolidate_rollback_group: rollback target mark "%" for group "%" has not been found.', v_firstMark, v_groupName;
+      RAISE EXCEPTION 'emaj_consolidate_rollback_group: The rollback target mark "%" for the group "%" has not been found.', v_firstMark, v_groupName;
     END IF;
 -- perform the consolidation operation
     SELECT * FROM emaj._delete_between_marks_group(v_groupName, v_firstMark, v_lastMark) INTO v_nbMark,v_nbTbl;
@@ -4858,17 +5514,14 @@ $emaj_reset_group$
     SELECT group_is_logging INTO v_groupIsLogging
       FROM emaj.emaj_group WHERE group_name = v_groupName FOR UPDATE;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_reset_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_reset_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- check that the group is not in LOGGING state
     IF v_groupIsLogging THEN
-      RAISE EXCEPTION 'emaj_reset_group: Group "%" cannot be reset because it is in LOGGING state. An emaj_stop_group function must be previously executed.', v_groupName;
+      RAISE EXCEPTION 'emaj_reset_group: The group "%" cannot be reset because it is in LOGGING state. An emaj_stop_group function must be previously executed.', v_groupName;
     END IF;
 -- perform the reset operation
-    SELECT emaj._reset_group(v_groupName) INTO v_nbTb;
-    IF v_nbTb = 0 THEN
-       RAISE EXCEPTION 'emaj_reset_group: internal error (group "%" is empty).', v_groupName;
-    END IF;
+    SELECT emaj._reset_groups(ARRAY[v_groupName]) INTO v_nbTb;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('RESET_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
@@ -4878,38 +5531,38 @@ $emaj_reset_group$;
 COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS
 $$Resets all log tables content of a stopped E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj._reset_group(v_groupName TEXT)
+CREATE OR REPLACE FUNCTION emaj._reset_groups(v_groupNames TEXT[])
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
-$_reset_group$
+$_reset_groups$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences saves
--- It is called by both emaj_reset_group and emaj_start_group functions
--- Input: group name
+-- It is called by emaj_reset_group(), emaj_start_group() and emaj_alter_group() functions
+-- Input: group names array
 -- Output: number of processed tables and sequences
--- There is no check of the group state
+-- There is no check of the groups state (this is done by callers)
 -- The function is defined as SECURITY DEFINER so that an emaj_adm role can truncate log tables
   DECLARE
     v_nbTb                   INT;
     r_rel                    RECORD;
   BEGIN
--- delete all marks for the group from the emaj_mark table
-    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName;
--- delete emaj_sequence rows related to the tables of the group
+-- delete all marks for the groups from the emaj_mark table
+    DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames);
+-- delete emaj_sequence rows related to the tables of the groups
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'r' AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence;
--- delete all sequence holes for the tables of the group
+      WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence;
+-- delete all sequence holes for the tables of the groups
     DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table;
+      WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table;
 -- initialize the return value with the number of sequences
     SELECT count(*) INTO v_nbTb FROM emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'S';
--- delete emaj_sequence rows related to the sequences of the group
+      WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S';
+-- delete emaj_sequence rows related to the sequences of the groups
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE rel_schema = sequ_schema AND rel_tblseq = sequ_name AND
-            rel_group = v_groupName AND rel_kind = 'S';
+            rel_group = ANY (v_groupNames) AND rel_kind = 'S';
 -- then, truncate log tables for application tables
     FOR r_rel IN
         SELECT rel_log_schema, rel_log_table, rel_log_sequence FROM emaj.emaj_relation
-          WHERE rel_group = v_groupName AND rel_kind = 'r'
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 --   truncate the log table
@@ -4920,7 +5573,7 @@ $_reset_group$
     END LOOP;
     RETURN v_nbTb;
   END;
-$_reset_group$;
+$_reset_groups$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
@@ -4948,7 +5601,7 @@ $emaj_log_stat_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_log_stat_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_log_stat_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- if first mark is NULL or empty, retrieve the name, timestamp and last sequ_hole id of the first recorded mark for the group
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
@@ -4962,7 +5615,7 @@ $emaj_log_stat_group$
 -- else, check and retrieve the name, timestamp and last sequ_hole id of the supplied first mark for the group
       SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
       IF v_realFirstMark IS NULL THEN
-        RAISE EXCEPTION 'emaj_log_stat_group: Start mark "%" is unknown for group "%".', v_firstMark, v_groupName;
+        RAISE EXCEPTION 'emaj_log_stat_group: The start mark "%" is unknown for the group "%".', v_firstMark, v_groupName;
       END IF;
       SELECT mark_id, mark_time_id, time_clock_timestamp INTO v_firstMarkId, v_firstMarkTimeId, v_firstMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
@@ -4972,7 +5625,7 @@ $emaj_log_stat_group$
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
       SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
       IF v_realLastMark IS NULL THEN
-        RAISE EXCEPTION 'emaj_log_stat_group: End mark "%" is unknown for group "%".', v_lastMark, v_groupName;
+        RAISE EXCEPTION 'emaj_log_stat_group: The end mark "%" is unknown for the group "%".', v_lastMark, v_groupName;
       END IF;
       SELECT mark_id, mark_time_id, time_clock_timestamp INTO v_lastMarkId, v_lastMarkTimeId, v_lastMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
@@ -4981,7 +5634,7 @@ $emaj_log_stat_group$
     END IF;
 -- check that the first_mark < end_mark
     IF v_lastMarkTimeId IS NOT NULL AND v_firstMarkTimeId > v_lastMarkTimeId THEN
-      RAISE EXCEPTION 'emaj_log_stat_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).', v_firstMark, v_firstMarkId, v_firstMarkTs, v_lastMark,  v_lastMarkId, v_lastMarkTs;
+      RAISE EXCEPTION 'emaj_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).', v_realFirstMark, v_firstMarkTs, v_realLastMark, v_lastMarkTs;
     END IF;
 -- for each table of the emaj_relation table, get the number of log rows and return the statistic
     RETURN QUERY
@@ -5023,14 +5676,14 @@ $emaj_detailed_log_stat_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_detailed_log_stat_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_detailed_log_stat_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- catch the timestamp of the first mark
     IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
 -- check and retrieve the global sequence value and the timestamp of the start mark for the group
       SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
       IF v_realFirstMark IS NULL THEN
-          RAISE EXCEPTION 'emaj_detailed_log_stat_group: Start mark "%" is unknown for group "%".', v_firstMark, v_groupName;
+          RAISE EXCEPTION 'emaj_detailed_log_stat_group: The start mark "%" is unknown for the group "%".', v_firstMark, v_groupName;
       END IF;
       SELECT mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_firstMarkId, v_firstEmajGid, v_firstMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
@@ -5041,7 +5694,7 @@ $emaj_detailed_log_stat_group$
 -- else, check and retrieve the global sequence value and the timestamp of the end mark for the group
       SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
       IF v_realLastMark IS NULL THEN
-        RAISE EXCEPTION 'emaj_detailed_log_stat_group: End mark "%" is unknown for group "%".', v_lastMark, v_groupName;
+        RAISE EXCEPTION 'emaj_detailed_log_stat_group: The end mark "%" is unknown for the group "%".', v_lastMark, v_groupName;
       END IF;
       SELECT mark_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkId, v_lastEmajGid, v_lastMarkTs
         FROM emaj.emaj_mark, emaj.emaj_time_stamp
@@ -5049,7 +5702,7 @@ $emaj_detailed_log_stat_group$
     END IF;
 -- check that the first_mark < end_mark
     IF v_realFirstMark IS NOT NULL AND v_realLastMark IS NOT NULL AND v_firstMarkId > v_lastMarkId THEN
-      RAISE EXCEPTION 'emaj_detailed_log_stat_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).', v_realFirstMark, v_firstMarkId, v_firstMarkTs, v_realLastMark, v_lastMarkId, v_lastMarkTs;
+      RAISE EXCEPTION 'emaj_detailed_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).', v_realFirstMark, v_firstMarkTs, v_realLastMark, v_lastMarkTs;
     END IF;
 -- for each table of the emaj_relation table
     FOR r_tblsq IN
@@ -5137,8 +5790,8 @@ $_estimate_rollback_groups$
     v_estimDuration          INTERVAL;
     v_nbTblseq               INT;
   BEGIN
--- check supplied group names and mark parameters with the isRollbackSimulation flag set to true
-    SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE) INTO v_markName;
+-- check supplied group names and mark parameters with the isAlterGroupAllowed and isRollbackSimulation flags set to true
+    SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE) INTO v_markName;
 -- compute a random negative rollback-id (not to interfere with ids of real rollbacks)
     SELECT (random() * -2147483648)::int INTO v_rlbkId;
 --
@@ -5146,8 +5799,8 @@ $_estimate_rollback_groups$
 --
     BEGIN
 -- insert a row into the emaj_rlbk table for this simulated rollback operation
-      INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_nb_session)
-        VALUES (v_rlbkId, v_groupNames, v_mark, emaj._get_mark_time_id(v_groupNames[1], v_markName), v_isLoggedRlbk, 1);
+      INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session)
+        VALUES (v_rlbkId, v_groupNames, v_mark, emaj._get_mark_time_id(v_groupNames[1], v_markName), v_isLoggedRlbk, false, 1);
 -- call the _rlbk_planning function
       PERFORM emaj._rlbk_planning(v_rlbkId);
 -- compute the sum of the duration estimates of all elementary steps (except LOCK_TABLE)
@@ -5208,8 +5861,8 @@ $_rollback_activity$
   BEGIN
 -- retrieve all not completed rollback operations (ie in 'PLANNING', 'LOCKING' or 'EXECUTING' state)
     FOR r_rlbk IN
-      SELECT rlbk_id, rlbk_groups, rlbk_mark, t1.time_clock_timestamp, rlbk_is_logged, rlbk_nb_session,
-             rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, t2.time_tx_timestamp,
+      SELECT rlbk_id, rlbk_groups, rlbk_mark, t1.time_clock_timestamp, rlbk_is_logged, rlbk_is_alter_group_allowed,
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, t2.time_tx_timestamp,
              transaction_timestamp() - t2.time_tx_timestamp AS "elapse", NULL, 0
         FROM emaj.emaj_rlbk
              JOIN emaj.emaj_time_stamp t1 ON (rlbk_mark_time_id = t1.time_id)
@@ -5293,15 +5946,15 @@ $emaj_snap_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_snap_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_snap_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- check the supplied directory is not null
     IF v_dir IS NULL THEN
-      RAISE EXCEPTION 'emaj_snap_group: directory parameter cannot be NULL';
+      RAISE EXCEPTION 'emaj_snap_group: The directory parameter cannot be NULL.';
     END IF;
 -- check the copy options parameter doesn't contain unquoted ; that could be used for sql injection
     IF regexp_replace(v_copyOptions,'''.*''','') LIKE '%;%' THEN
-      RAISE EXCEPTION 'emaj_snap_group: invalid COPY options parameter format';
+      RAISE EXCEPTION 'emaj_snap_group: The COPY options parameter format is invalid.';
     END IF;
 -- for each table/sequence of the emaj_relation table
     FOR r_tblsq IN
@@ -5337,9 +5990,17 @@ $emaj_snap_group$
                   quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
         WHEN 'S' THEN
 -- if it is a sequence, the statement has no order by
-          v_stmt= 'COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, ' ||
-                  'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName || ') TO ' ||
-                  quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+          IF emaj._pg_version_num() < 100000 THEN
+            v_stmt= 'COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, ' ||
+                    'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName ||
+                    ') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+          ELSE
+            v_stmt= 'COPY (SELECT sequencename, rel.last_value, start_value, increment_by, max_value, ' ||
+                    'min_value, cache_size, cycle, rel.is_called ' ||
+                    'FROM ' || v_fullTableName || ' rel, pg_sequences ' ||
+                    'WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_tblseq) ||
+                    ') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+          END IF;
       END CASE;
 -- and finaly perform the COPY
       EXECUTE v_stmt;
@@ -5373,15 +6034,16 @@ $emaj_snap_log_group$
 --   - the function can be called while other transactions are running,
 --   - the snap files will present a coherent state of tables.
 -- It's users responsability :
---   - to create the directory (with proper permissions allowing the cluster to write into) before
--- emaj_snap_log_group function call, and
---   - maintain its content outside E-maj.
--- Input: group name, the 2 mark names defining a range, the absolute pathname of the directory where the files are to be created, options for COPY TO statements
+--   - to create the directory (with proper permissions allowing the cluster to write into) before emaj_snap_log_group function call, and
+--   - to maintain its content outside E-maj.
+-- Input: group name, the 2 mark names defining a range,
+--        the absolute pathname of the directory where the files are to be created,
+--        options for COPY TO statements
 --   a NULL value or an empty string as first_mark indicates the first recorded mark
 --   a NULL value or an empty string can be used as last_mark indicating the current state
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: number of processed tables and sequences
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it.
   DECLARE
     v_nbTb                   INT = 0;
     r_tblsq                  RECORD;
@@ -5409,22 +6071,22 @@ $emaj_snap_log_group$
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_snap_log_group: group "%" has not been created.', v_groupName;
+      RAISE EXCEPTION 'emaj_snap_log_group: The group "%" does not exist.', v_groupName;
     END IF;
 -- check the supplied directory is not null
     IF v_dir IS NULL THEN
-      RAISE EXCEPTION 'emaj_snap_log_group: directory parameter cannot be NULL';
+      RAISE EXCEPTION 'emaj_snap_log_group: The directory parameter cannot be NULL.';
     END IF;
 -- check the copy options parameter doesn't contain unquoted ; that could be used for sql injection
     IF regexp_replace(v_copyOptions,'''.*''','') LIKE '%;%'  THEN
-      RAISE EXCEPTION 'emaj_snap_log_group: invalid COPY options parameter format';
+      RAISE EXCEPTION 'emaj_snap_log_group: The COPY options parameter format is invalid.';
     END IF;
 -- catch the global sequence value and the timestamp of the first mark
     IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
 -- check and retrieve the global sequence value and the timestamp of the start mark for the group
       SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
       IF v_realFirstMark IS NULL THEN
-          RAISE EXCEPTION 'emaj_snap_log_group: Start mark "%" is unknown for group "%".', v_firstMark, v_groupName;
+          RAISE EXCEPTION 'emaj_snap_log_group: The start mark "%" is unknown for the group "%".', v_firstMark, v_groupName;
       END IF;
       SELECT mark_id, time_id, time_last_emaj_gid, time_clock_timestamp
         INTO v_firstMarkId, v_firstMarkTsId, v_firstEmajGid, v_firstMarkTs
@@ -5440,7 +6102,7 @@ $emaj_snap_log_group$
 -- the end mark is supplied
       SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
       IF v_realLastMark IS NULL THEN
-        RAISE EXCEPTION 'emaj_snap_log_group: End mark "%" is unknown for group "%".', v_lastMark, v_groupName;
+        RAISE EXCEPTION 'emaj_snap_log_group: The end mark "%" is unknown for the group "%".', v_lastMark, v_groupName;
       END IF;
     ELSE
 -- the end mark is not supplied (look for the current state)
@@ -5454,7 +6116,7 @@ $emaj_snap_log_group$
       WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_realLastMark;
 -- check that the first_mark < end_mark
     IF v_firstMarkId > v_lastMarkId THEN
-      RAISE EXCEPTION 'emaj_snap_log_group: mark id for "%" (% = %) is greater than mark id for "%" (% = %).', v_realFirstMark, v_firstMarkId, v_firstMarkTs, v_realLastMark, v_lastMarkId, v_lastMarkTs;
+      RAISE EXCEPTION 'emaj_snap_log_group: The start mark "%" (%) has been set after the end mark "%" (%).', v_realFirstMark, v_firstMarkTs, v_realLastMark, v_lastMarkTs;
     END IF;
 -- build the conditions on emaj_gid corresponding to this marks frame, used for the COPY statements dumping the tables
     v_conditions = 'TRUE';
@@ -5485,7 +6147,7 @@ $emaj_snap_log_group$
     END LOOP;
 -- generate the file for sequences state at start mark
     v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_realFirstMark;
--- execute the COPY statement
+-- and execute the COPY statement
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_time_id = ' || quote_literal(v_firstMarkTsId) || ' AND ' ||
@@ -5500,7 +6162,7 @@ $emaj_snap_log_group$
     ELSE
       v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_lastMarkTs,'HH24.MI.SS.MS');
     END IF;
--- execute the COPY statement
+-- and execute the COPY statement
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_time_id = ' || quote_literal(v_lastMarkTsId) || ' AND ' ||
@@ -5644,7 +6306,7 @@ $_gen_sql_groups$
 -- if table/sequence names are supplied, check them
     IF v_tblseqs IS NOT NULL THEN
       IF v_tblseqs = array[''] THEN
-        RAISE EXCEPTION '_gen_sql_groups: filtered table/sequence names array cannot be empty.';
+        RAISE EXCEPTION '_gen_sql_groups: The filtered table/sequence names array cannot be empty.';
       END IF;
       v_tblseqs = emaj._check_names_array(v_tblseqs,'table/sequence');
     END IF;
@@ -5653,7 +6315,7 @@ $_gen_sql_groups$
 -- ...is recorded into the emaj_group table
       PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_aGroupName;
       IF NOT FOUND THEN
-        RAISE EXCEPTION '_gen_sql_groups: group "%" has not been created.', v_aGroupName;
+        RAISE EXCEPTION '_gen_sql_groups: The group "%" does not exist.', v_aGroupName;
       END IF;
 -- ... has no tables without pkey
       SELECT string_agg(rel_schema || '.' || rel_tblseq,',') INTO v_tblList
@@ -5663,7 +6325,7 @@ $_gen_sql_groups$
           AND rel_group = v_aGroupName AND rel_kind = 'r'
           AND relhaspkey = false;
       IF v_tblList IS NOT NULL THEN
-        RAISE EXCEPTION '_gen_sql_groups: Tables group "%" contains tables without pkey (%).', v_aGroupName, v_tblList;
+        RAISE EXCEPTION '_gen_sql_groups: The tables group "%" contains tables without pkey (%).', v_aGroupName, v_tblList;
       END IF;
 -- If the first mark supplied is NULL or empty, get the first mark for the current processed group
 --   (in fact the first one) and override the supplied first mark
@@ -5671,19 +6333,19 @@ $_gen_sql_groups$
         SELECT mark_name INTO v_firstMarkCopy
           FROM emaj.emaj_mark WHERE mark_group = v_aGroupName ORDER BY mark_id LIMIT 1;
         IF NOT FOUND THEN
-           RAISE EXCEPTION '_gen_sql_groups: No initial mark can be found for group "%".', v_aGroupName;
+           RAISE EXCEPTION '_gen_sql_groups: No initial mark can be found for the group "%".', v_aGroupName;
         END IF;
       END IF;
 -- ... owns the requested first mark
       SELECT emaj._get_mark_name(v_aGroupName,v_firstMarkCopy) INTO v_realFirstMark;
       IF v_realFirstMark IS NULL THEN
-        RAISE EXCEPTION '_gen_sql_groups: Begin mark "%" does not exist for group "%".', v_firstMarkCopy, v_aGroupName;
+        RAISE EXCEPTION '_gen_sql_groups: The start mark "%" does not exist for the group "%".', v_firstMarkCopy, v_aGroupName;
       END IF;
 -- ... and owns the requested last mark, if supplied
       IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
         SELECT emaj._get_mark_name(v_aGroupName,v_lastMark) INTO v_realLastMark;
         IF v_realLastMark IS NULL THEN
-          RAISE EXCEPTION '_gen_sql_groups: End mark "%" does not exist for group "%".', v_lastMark, v_aGroupName;
+          RAISE EXCEPTION '_gen_sql_groups: The end mark "%" does not exist for the group "%".', v_lastMark, v_aGroupName;
         END IF;
       END IF;
     END LOOP;
@@ -5691,14 +6353,14 @@ $_gen_sql_groups$
     SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_firstMarkCopy)) INTO v_cpt FROM emaj.emaj_group
       WHERE group_name = ANY (v_groupNames);
     IF v_cpt > 1 THEN
-      RAISE EXCEPTION '_gen_sql_groups: Begin mark "%" does not represent the same point in time for all groups.', v_firstMarkCopy;
+      RAISE EXCEPTION '_gen_sql_groups: The start mark "%" does not represent the same point in time for all groups.', v_firstMarkCopy;
     END IF;
 -- check that the last mark timestamp, if supplied, is the same for all groups of the array
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
       SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_lastMark)) INTO v_cpt FROM emaj.emaj_group
         WHERE group_name = ANY (v_groupNames);
       IF v_cpt > 1 THEN
-        RAISE EXCEPTION '_gen_sql_groups: End mark "%" does not represent the same point in time for all groups.', v_lastMark;
+        RAISE EXCEPTION '_gen_sql_groups: The end mark "%" does not represent the same point in time for all groups.', v_lastMark;
       END IF;
     END IF;
 -- retrieve the name, the global sequence value and the timestamp of the supplied first mark for the 1st group
@@ -5719,7 +6381,7 @@ $_gen_sql_groups$
     END IF;
 -- check that the first_mark < end_mark
     IF v_lastMarkTimeId IS NOT NULL AND v_firstMarkTimeId > v_lastMarkTimeId THEN
-      RAISE EXCEPTION '_gen_sql_groups: time stamp for "%" (%) is greater than for "%" (%).', v_firstMarkCopy, v_firstMarkTs, v_lastMark, v_lastMarkTs;
+      RAISE EXCEPTION '_gen_sql_groups: The start mark "%" (%) has been set after the end mark "%" (%).', v_firstMarkCopy, v_firstMarkTs, v_lastMark, v_lastMarkTs;
     END IF;
 -- check the array of tables and sequences to filter, if supplied.
 -- each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups
@@ -5731,7 +6393,7 @@ $_gen_sql_groups$
           WHERE rel_group = ANY (v_groupNames)
         ) AS t2;
       IF v_tblseqErr IS NOT NULL THEN
-        RAISE EXCEPTION '_gen_sql_groups: some tables and/or sequences (%) do not belong to any of the selected tables groups.', v_tblseqErr;
+        RAISE EXCEPTION '_gen_sql_groups: Some tables and/or sequences (%) do not belong to any of the selected tables groups.', v_tblseqErr;
       END IF;
     END IF;
 -- test the supplied output file name by inserting a temporary line (trap NULL or bad file name)
@@ -5740,7 +6402,7 @@ $_gen_sql_groups$
                      || statement_timestamp() || ''') TO ' || quote_literal(v_location);
     EXCEPTION
       WHEN OTHERS THEN
-        RAISE EXCEPTION '_gen_sql_groups: file "%" cannot be used as script output file.', v_location;
+        RAISE EXCEPTION '_gen_sql_groups: The file "%" cannot be used as script output file.', v_location;
     END;
 -- create temporary table
     CREATE TEMP TABLE emaj_temp_script (
@@ -5780,9 +6442,16 @@ $_gen_sql_groups$
       v_fullSeqName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       IF v_lastMarkTimeId IS NULL THEN
 -- no supplied last mark, so get current sequence characteritics
-        EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
-                || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
-               || 'FROM ' || v_fullSeqName INTO v_rqSeq;
+        IF emaj._pg_version_num() < 100000 THEN
+          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
+                  || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
+                 || 'FROM ' || v_fullSeqName INTO v_rqSeq;
+        ELSE
+          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
+                  || ''' || '' RESTART '' || CASE WHEN rel.is_called THEN rel.last_value + increment_by ELSE rel.last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_size || CASE WHEN NOT cycle THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
+                 || 'FROM ' || v_fullSeqName  || ' rel, pg_catalog.pg_sequences ' ||
+                ' WHERE schemaname = ' || quote_literal(r_tblsq.rel_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_tblseq) INTO v_rqSeq;
+      END IF;
       ELSE
 -- a last mark is supplied, so get sequence characteristics from emaj_sequence table
         EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
@@ -5987,6 +6656,24 @@ $_verify_all_groups$
               (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
+-- check all tables are persistent tables (i.e. have not been altered as UNLOGGED after their tables group creation)
+    RETURN QUERY
+      SELECT 'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE rel_kind = 'r'
+          AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+          AND relpersistence <> 'p'
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- check all tables are WITHOUT OIDS (i.e. have not been altered as WITH OIDS after their tables group creation)
+    RETURN QUERY
+      SELECT 'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is WITH OIDS.' AS msg
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE rel_kind = 'r'
+          AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+          AND relhasoids
+        ORDER BY rel_schema, rel_tblseq, 1;
     RETURN;
   END;
 $_verify_all_groups$;
@@ -6122,12 +6809,12 @@ $emaj_verify_all$
         INTO v_nbMissingEventTrigger FROM pg_catalog.pg_event_trigger
         WHERE evtname IN ('emaj_protection_trg','emaj_sql_drop_trg','emaj_table_rewrite_trg');
       IF v_nbMissingEventTrigger > 0 THEN
-        RETURN NEXT 'Warning: some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.';
+        RETURN NEXT 'Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.';
       END IF;
 -- With postgres 9.3+, report a warning if some E-Maj event triggers exist but are not enabled
       PERFORM 1 FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
       IF FOUND THEN
-        RETURN NEXT 'Warning: some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.';
+        RETURN NEXT 'Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.';
       END IF;
     END IF;
 -- check all E-Maj primary and secondary schemas
@@ -6180,7 +6867,7 @@ $_emaj_protection_event_trigger_fnct$
 -- This function is called by the emaj_protection_trg event trigger
 -- The function only blocks any attempt to drop the emaj schema or the emaj extension
 -- It is located into the public schema to be able to detect the emaj schema removal attempt
--- It is also unlinked from the emaj extension to be able to detest the emaj extension removal attempt
+-- It is also unlinked from the emaj extension to be able to detect the emaj extension removal attempt
 -- Another pair of function and event trigger handles all other drop attempts
   DECLARE
     r_dropped                RECORD;
@@ -6191,11 +6878,11 @@ $_emaj_protection_event_trigger_fnct$
     LOOP
       IF r_dropped.object_type = 'schema' AND r_dropped.object_name = 'emaj' THEN
 -- detecting an attempt to drop the emaj object
-        RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the schema "emaj". Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.';
+        RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the schema "emaj". Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.';
       END IF;
       IF r_dropped.object_type = 'extension' AND r_dropped.object_name = 'emaj' THEN
 -- detecting an attempt to drop the emaj extension
-        RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the emaj extension. Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.';
+        RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the emaj extension. Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.';
       END IF;
     END LOOP;
   END;
@@ -6250,13 +6937,13 @@ $_event_trigger_sql_drop_fnct$
             WHERE rel_schema = r_dropped.object_name
               AND group_name = rel_group AND group_is_logging;
           IF v_groupName IS NOT NULL THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application schema "%". But it belongs to the active tables groups "%".', r_dropped.object_name, v_groupName;
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the application schema "%". But it belongs to the active tables groups "%".', r_dropped.object_name, v_groupName;
           END IF;
 --   look at the emaj_relation table to verify that the schema being dropped is not an E-Maj schema containing log tables
           PERFORM 1 FROM emaj.emaj_relation
             WHERE rel_log_schema = r_dropped.object_name;
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the schema "%". But dropping an E-Maj schema is not allowed.', r_dropped.object_name;
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the schema "%". But dropping an E-Maj schema is not allowed.', r_dropped.object_name;
           END IF;
         WHEN r_dropped.object_type = 'table' THEN
 -- the object is a table
@@ -6265,13 +6952,13 @@ $_event_trigger_sql_drop_fnct$
             WHERE rel_schema = r_dropped.schema_name AND rel_tblseq = r_dropped.object_name
               AND group_name = rel_group AND group_is_logging;
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application table "%.%". But it belongs to the active tables group "%".', r_dropped.schema_name, r_dropped.object_name, v_groupName;
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the application table "%.%". But it belongs to the active tables group "%".', r_dropped.schema_name, r_dropped.object_name, v_groupName;
           END IF;
 --   look at the emaj_relation table to verify that the table being dropped is not a log table
           PERFORM 1 FROM emaj.emaj_relation
             WHERE rel_log_schema = r_dropped.schema_name AND rel_log_table = r_dropped.object_name;
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log table "%.%". But dropping an E-Maj log table is not allowed.',
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the log table "%.%". But dropping an E-Maj log table is not allowed.',
                             r_dropped.schema_name, r_dropped.object_name;
           END IF;
         WHEN r_dropped.object_type = 'sequence' THEN
@@ -6281,13 +6968,13 @@ $_event_trigger_sql_drop_fnct$
             WHERE rel_schema = r_dropped.schema_name AND rel_tblseq = r_dropped.object_name
               AND group_name = rel_group AND group_is_logging;
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the application sequence "%.%". But it belongs to the active tables group "%".', r_dropped.schema_name, r_dropped.object_name, v_groupName;
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the application sequence "%.%". But it belongs to the active tables group "%".', r_dropped.schema_name, r_dropped.object_name, v_groupName;
           END IF;
 --   look at the emaj_relation table to verify that the sequence being dropped is not a log sequence
           PERFORM 1 FROM emaj.emaj_relation
             WHERE rel_log_schema = r_dropped.schema_name AND rel_log_sequence = r_dropped.object_name;
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log sequence "%.%". But dropping an E-Maj sequence is not allowed.', r_dropped.schema_name, r_dropped.object_name;
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the log sequence "%.%". But dropping an E-Maj sequence is not allowed.', r_dropped.schema_name, r_dropped.object_name;
           END IF;
         WHEN r_dropped.object_type = 'function' THEN
 -- the object is a function
@@ -6295,7 +6982,7 @@ $_event_trigger_sql_drop_fnct$
           PERFORM 1 FROM emaj.emaj_relation
             WHERE  r_dropped.object_identity = quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_function) || '()';
           IF FOUND THEN
-            RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the log function "%". But dropping an E-Maj log function is not allowed.', r_dropped.object_identity;
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the log function "%". But dropping an E-Maj log function is not allowed.', r_dropped.object_identity;
           END IF;
         WHEN r_dropped.object_type = 'trigger' THEN
 -- the object is a trigger
@@ -6305,7 +6992,7 @@ $_event_trigger_sql_drop_fnct$
           IF emaj._pg_version_num() >= 90500 THEN
             IF r_dropped.original AND
                (r_dropped.object_identity LIKE 'emaj_log_trg%' OR r_dropped.object_identity LIKE 'emaj_trunc_trg%') THEN
-              RAISE EXCEPTION 'E-Maj event trigger: attempting to drop the "%" E-Maj trigger. But dropping an E-Maj trigger is not allowed.', r_dropped.object_identity;
+              RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the "%" E-Maj trigger. But dropping an E-Maj trigger is not allowed.', r_dropped.object_identity;
             END IF;
           END IF;
         ELSE
@@ -6314,7 +7001,6 @@ $_event_trigger_sql_drop_fnct$
     END LOOP;
   END;
 $_event_trigger_sql_drop_fnct$;
-
 COMMENT ON FUNCTION emaj._event_trigger_sql_drop_fnct() IS
 $$E-Maj extension: support of the emaj_sql_drop_trg event trigger.$$;
 
@@ -6358,7 +7044,7 @@ $_emaj_event_trigger_table_rewrite_fnct$
               AND group_name = rel_group AND group_is_logging;
     IF FOUND THEN
 -- the table is an application table that belongs to a group, so raise an exception
-      RAISE EXCEPTION 'E-Maj event trigger: attempting to change the application table "%.%" structure. But the table belongs to the active tables group "%".',
+      RAISE EXCEPTION 'E-Maj event trigger: Attempting to change the application table "%.%" structure. But the table belongs to the active tables group "%".',
                       v_tableSchema, v_tableName , v_groupName;
     END IF;
 -- look at the emaj_relation table to verify that the table being rewritten is not a known log table
@@ -6366,12 +7052,11 @@ $_emaj_event_trigger_table_rewrite_fnct$
       WHERE rel_log_schema = v_tableSchema AND rel_log_table = v_tableName;
     IF FOUND THEN
 -- the table is an E-Maj log table, so raise an exception
-      RAISE EXCEPTION 'E-Maj event trigger: attempting to change the log table "%.%" structure. But the table belongs to the tables group "%".',
+      RAISE EXCEPTION 'E-Maj event trigger: Attempting to change the log table "%.%" structure. But the table belongs to the tables group "%".',
                       v_tableSchema, v_tableName , v_groupName;
     END IF;
   END;
 $_emaj_event_trigger_table_rewrite_fnct$;
-
 COMMENT ON FUNCTION emaj._emaj_event_trigger_table_rewrite_fnct() IS
 $$E-Maj extension: support of the emaj_table_rewrite_trg event trigger.$$;
 
@@ -6409,7 +7094,6 @@ $emaj_disable_protection_by_event_triggers$
     RETURN coalesce(array_length(v_eventTriggers,1),0);
   END;
 $emaj_disable_protection_by_event_triggers$;
-
 COMMENT ON FUNCTION emaj.emaj_disable_protection_by_event_triggers() IS
 $$Disables the protection of E-Maj components by event triggers.$$;
 
@@ -6438,7 +7122,6 @@ $emaj_enable_protection_by_event_triggers$
     RETURN coalesce(array_length(v_eventTriggers,1),0);
   END;
 $emaj_enable_protection_by_event_triggers$;
-
 COMMENT ON FUNCTION emaj.emaj_enable_protection_by_event_triggers() IS
 $$Enables the protection of E-Maj components by event triggers.$$;
 
@@ -6529,7 +7212,7 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_firstMa
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, isRollbackSimulation BOOLEAN) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, isRollbackSimulation BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_viewer;
@@ -6564,6 +7247,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_seq_hole','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_alter_plan','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_session','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_plan','');
@@ -6577,7 +7261,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_mark_mark_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
 -- and insert the init record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 2.0.1', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 2.1.0', 'Initialisation completed');
 
 -- Set comments for all internal functions,
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
@@ -6603,7 +7287,7 @@ $do$
   BEGIN
 -- check the max_prepared_transactions GUC value
     IF current_setting('max_prepared_transactions')::int <= 1 THEN
-      RAISE WARNING 'E-Maj installation: as the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback is possible.', current_setting('max_prepared_transactions');
+      RAISE WARNING 'E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback is possible.', current_setting('max_prepared_transactions');
     END IF;
     RETURN;
   END;

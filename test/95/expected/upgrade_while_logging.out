@@ -11,7 +11,7 @@ SET default_tablespace TO tspemaj;
 select * from pg_available_extension_versions where name = 'emaj';
  name |   version    | installed | superuser | relocatable | schema | requires |                                            comment                                             
 ------+--------------+-----------+-----------+-------------+--------+----------+------------------------------------------------------------------------------------------------
- emaj | 2.0.1        | t         | t         | f           | emaj   | {dblink} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+ emaj | 2.1.0        | t         | t         | f           | emaj   | {dblink} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
  emaj | next_version | f         | t         | f           | emaj   | {dblink} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
@@ -21,6 +21,7 @@ select relname from pg_catalog.pg_class,
   order by 1;
            relname           
 -----------------------------
+ emaj_alter_plan
  emaj_global_seq
  emaj_group
  emaj_group_def
@@ -39,14 +40,10 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(18 rows)
+(19 rows)
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
-NOTICE:  drop cascades to 3 other objects
-DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
-drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
-drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
 -----------------------------
 -- check installation
 -----------------------------
@@ -201,6 +198,15 @@ Tablespace: "tspemaj"
  grpdef_log_idx_tsp       | text    | 
 Indexes:
     "emaj_group_def_pkey" PRIMARY KEY, btree (grpdef_group, grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
+    "emaj_group_def_idx1" btree (grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
+Tablespace: "tspemaj"
+
+   Index "emaj.emaj_group_def_idx1"
+    Column     | Type |  Definition   
+---------------+------+---------------
+ grpdef_schema | text | grpdef_schema
+ grpdef_tblseq | text | grpdef_tblseq
+btree, for table "emaj.emaj_group_def"
 Tablespace: "tspemaj"
 
    Index "emaj.emaj_group_def_pkey"
@@ -463,7 +469,7 @@ Tablespace: "tspemaj"
  max_value     | bigint  | 9223372036854775807
  min_value     | bigint  | 1
  cache_value   | bigint  | 1
- log_cnt       | bigint  | 0
+ log_cnt       | bigint  | 29
  is_cycled     | boolean | f
  is_called     | boolean | t
 Owned by: emaj.emaj_rlbk.rlbk_id
@@ -1095,25 +1101,25 @@ Tablespace: "tspemaj"
 select * from emaj.emaj_group_def;
    grpdef_group   | grpdef_schema  |  grpdef_tblseq   | grpdef_priority | grpdef_log_schema_suffix | grpdef_emaj_names_prefix | grpdef_log_dat_tsp | grpdef_log_idx_tsp 
 ------------------+----------------+------------------+-----------------+--------------------------+--------------------------+--------------------+--------------------
+ myGroup1         | myschema1      | mytbl1           |              20 |                          |                          |                    | 
+ myGroup1         | myschema1      | mytbl2           |                 |                          |                          |                    | 
+ myGroup1         | myschema1      | mytbl2b          |                 |                          |                          |                    | 
  myGroup1         | myschema1      | myTbl3_col31_seq |               1 |                          |                          |                    | 
+ myGroup1         | myschema1      | myTbl3           |              10 |                          |                          |                    | 
+ myGroup1         | myschema1      | mytbl4           |              20 |                          |                          |                    | 
+ myGroup2         | myschema2      | mytbl1           |                 |                          |                          |                    | 
+ myGroup2         | myschema2      | mytbl2           |                 |                          |                          |                    | 
  myGroup2         | myschema2      | myTbl3_col31_seq |                 |                          |                          |                    | 
+ myGroup2         | myschema2      | myTbl3           |                 |                          |                          |                    | 
+ myGroup2         | myschema2      | mytbl4           |                 |                          |                          |                    | 
  myGroup2         | myschema2      | myseq1           |                 |                          |                          |                    | 
+ phil's group#3", | phil's schema3 | phil's tbl1      |                 |                          |                          |                    | 
+ phil's group#3", | phil's schema3 | myTbl2\          |                 |                          |                          |                    | 
  phil's group#3", | phil's schema3 | phil's seq\1     |                 |                          |                          |                    | 
  dummyGrp1        | dummySchema    | mytbl4           |                 |                          |                          |                    | 
  dummyGrp2        | myschema1      | dummyTable       |                 |                          |                          |                    | 
- myGroup1         | myschema1      | myTbl3           |              10 |                          |                          | tspemaj            | tspemaj
- myGroup1         | myschema1      | mytbl1           |              20 |                          |                          | tspemaj            | tspemaj
- dummyGrp3        | myschema1      | mytbl1           |                 |                          |                          | tspemaj            | tspemaj
- myGroup1         | myschema1      | mytbl4           |              20 |                          |                          | tspemaj            | tspemaj
- myGroup1         | myschema1      | mytbl2           |                 |                          |                          | tspemaj            | tspemaj
- myGroup1         | myschema1      | mytbl2b          |                 |                          |                          | tspemaj            | tspemaj
- myGroup2         | myschema2      | mytbl1           |                 |                          |                          | tspemaj            | tspemaj
- myGroup2         | myschema2      | mytbl2           |                 |                          |                          | tspemaj            | tspemaj
- dummyGrp3        | myschema2      | mytbl2           |                 |                          |                          | tspemaj            | tspemaj
- myGroup2         | myschema2      | myTbl3           |                 |                          |                          | tspemaj            | tspemaj
- myGroup2         | myschema2      | mytbl4           |                 |                          |                          | tspemaj            | tspemaj
- phil's group#3", | phil's schema3 | myTbl2\          |                 |                          |                          | tspemaj            | tspemaj
- phil's group#3", | phil's schema3 | phil's tbl1      |                 |                          |                          | tspemaj            | tspemaj
+ dummyGrp3        | myschema1      | mytbl1           |                 |                          |                          |                    | 
+ dummyGrp3        | myschema2      | mytbl2           |                 |                          |                          |                    | 
 (19 rows)
 
 -- log tables

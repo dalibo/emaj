@@ -230,7 +230,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id |      hist_function       |  hist_event  |         hist_object          |                         regexp_replace                         | hist_user 
 ---------+--------------------------+--------------+------------------------------+----------------------------------------------------------------+-----------
-       1 | EMAJ_INSTALL             |              | E-Maj 2.0.1                  | Initialisation completed                                       | postgres
+       1 | EMAJ_INSTALL             |              | E-Maj 2.1.0                  | Initialisation completed                                       | postgres
        2 | CREATE_GROUP             | BEGIN        | myGroup1                     | rollbackable                                                   | postgres
        3 | CREATE_GROUP             | END          | myGroup1                     | 6 tables/sequences processed                                   | postgres
        4 | CREATE_GROUP             | BEGIN        | myGroup2                     | rollbackable                                                   | postgres
@@ -324,7 +324,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
       92 | LOCK_GROUPS              | BEGIN        | myGroup1,myGroup2            |                                                                | postgres
       93 | LOCK_GROUPS              | END          | myGroup1,myGroup2            | 9 tables locked, 0 deadlock(s)                                 | postgres
       94 | SET_MARK_GROUPS          | END          | myGroup1,myGroup2            | Common                                                         | postgres
-      95 | EMAJ_INSTALL             |              | E-Maj <NEXT_VERSION>         | Upgrade from 2.0.1 completed                                   | postgres
+      95 | EMAJ_INSTALL             |              | E-Maj <NEXT_VERSION>         | Upgrade from 2.1.0 completed                                   | postgres
       96 | UNPROTECT_GROUP          |              | myGroup1                     | Status 1                                                       | postgres
       97 | ROLLBACK_GROUPS          | BEGIN        | myGroup1,myGroup2            | Unlogged rollback to mark Common (timestamp)                   | postgres
       98 | DBLINK_OPEN_CNX          |              | rlbk#1                       | Status = -5                                                    | postgres

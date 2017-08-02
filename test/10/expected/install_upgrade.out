@@ -12,45 +12,55 @@ CREATE EXTENSION IF NOT EXISTS dblink;
 select * from pg_available_extension_versions where name = 'emaj';
  name |   version    | installed | superuser | relocatable | schema | requires |                                            comment                                             
 ------+--------------+-----------+-----------+-------------+--------+----------+------------------------------------------------------------------------------------------------
- emaj | 2.0.1        | f         | t         | f           | emaj   | {dblink} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+ emaj | 2.1.0        | f         | t         | f           | emaj   | {dblink} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
  emaj | next_version | f         | t         | f           | emaj   | {dblink} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
 -- look at all available update paths
 select * from pg_extension_update_paths('emaj') order by 1,2;;
-    source    |    target    |                     path                      
---------------+--------------+-----------------------------------------------
+    source    |    target    |                         path                         
+--------------+--------------+------------------------------------------------------
  1.3.1        | 2.0.0        | 1.3.1--2.0.0
  1.3.1        | 2.0.1        | 1.3.1--2.0.0--2.0.1
- 1.3.1        | next_version | 1.3.1--2.0.0--2.0.1--next_version
+ 1.3.1        | 2.1.0        | 1.3.1--2.0.0--2.0.1--2.1.0
+ 1.3.1        | next_version | 1.3.1--2.0.0--2.0.1--2.1.0--next_version
  1.3.1        | unpackaged   | 
  2.0.0        | 1.3.1        | 
  2.0.0        | 2.0.1        | 2.0.0--2.0.1
- 2.0.0        | next_version | 2.0.0--2.0.1--next_version
+ 2.0.0        | 2.1.0        | 2.0.0--2.0.1--2.1.0
+ 2.0.0        | next_version | 2.0.0--2.0.1--2.1.0--next_version
  2.0.0        | unpackaged   | 
  2.0.1        | 1.3.1        | 
  2.0.1        | 2.0.0        | 
- 2.0.1        | next_version | 2.0.1--next_version
+ 2.0.1        | 2.1.0        | 2.0.1--2.1.0
+ 2.0.1        | next_version | 2.0.1--2.1.0--next_version
  2.0.1        | unpackaged   | 
+ 2.1.0        | 1.3.1        | 
+ 2.1.0        | 2.0.0        | 
+ 2.1.0        | 2.0.1        | 
+ 2.1.0        | next_version | 2.1.0--next_version
+ 2.1.0        | unpackaged   | 
  next_version | 1.3.1        | 
  next_version | 2.0.0        | 
  next_version | 2.0.1        | 
+ next_version | 2.1.0        | 
  next_version | unpackaged   | 
  unpackaged   | 1.3.1        | unpackaged--1.3.1
  unpackaged   | 2.0.0        | unpackaged--1.3.1--2.0.0
  unpackaged   | 2.0.1        | unpackaged--1.3.1--2.0.0--2.0.1
- unpackaged   | next_version | unpackaged--1.3.1--2.0.0--2.0.1--next_version
-(20 rows)
+ unpackaged   | 2.1.0        | unpackaged--1.3.1--2.0.0--2.0.1--2.1.0
+ unpackaged   | next_version | unpackaged--1.3.1--2.0.0--2.0.1--2.1.0--next_version
+(30 rows)
 
 -----------------------------------------------------------
 -- emaj update to next_version
 -----------------------------------------------------------
-CREATE EXTENSION emaj VERSION '2.0.1';
+CREATE EXTENSION emaj VERSION '2.1.0';
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
  extname | extversion 
 ---------+------------
- emaj    | 2.0.1
+ emaj    | 2.1.0
 (1 row)
 
 select relname from pg_catalog.pg_class, 
@@ -59,6 +69,7 @@ select relname from pg_catalog.pg_class,
   order by 1;
            relname           
 -----------------------------
+ emaj_alter_plan
  emaj_global_seq
  emaj_group
  emaj_group_def
@@ -77,14 +88,10 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(18 rows)
+(19 rows)
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
-NOTICE:  drop cascades to 3 other objects
-DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
-drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
-drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------
@@ -140,8 +147,8 @@ select emaj.emaj_verify_all();
 select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_id | hist_function | hist_event |     hist_object      |         hist_wording         | hist_user 
 ---------+---------------+------------+----------------------+------------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 2.0.1          | Initialisation completed     | postgres
-       2 | EMAJ_INSTALL  |            | E-Maj <NEXT_VERSION> | Upgrade from 2.0.1 completed | postgres
+       1 | EMAJ_INSTALL  |            | E-Maj 2.1.0          | Initialisation completed     | postgres
+       2 | EMAJ_INSTALL  |            | E-Maj <NEXT_VERSION> | Upgrade from 2.1.0 completed | postgres
 (2 rows)
 
 delete from emaj.emaj_hist;
