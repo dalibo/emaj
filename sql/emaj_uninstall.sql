@@ -30,6 +30,8 @@ $emaj_uninstall$
     v_dbList                TEXT;
     v_granteeRoleList       TEXT;
     v_granteeClassList      TEXT;
+    v_granteeFunctionList   TEXT;
+    v_tspList               TEXT;
   BEGIN
 --
 -- Check the current role is superuser
@@ -99,11 +101,15 @@ $emaj_uninstall$
 -- Drop the event trigger that is external to the extension, and its function
     DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
 --
--- Also revoke grants given on postgres function to both emaj roles
+-- Also revoke grants given on postgres functions to both emaj roles
     REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_viewer;
     REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_viewer;
     REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_adm;
     REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_adm;
+-- revoke also the grant given to emaj_adm on the dblink_connect_u function at install time with E-Maj versions 1.n
+    IF EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE proname = 'dblink_connect_u') THEN
+      REVOKE ALL ON FUNCTION dblink_connect_u(text,text) FROM emaj_adm;
+    END IF;
 --
 -- Check if emaj roles can be dropped
     v_roleToDrop = true;
@@ -111,7 +117,7 @@ $emaj_uninstall$
 -- Are emaj_roles also used in other databases of the cluster ?
     v_dbList = NULL;
     SELECT string_agg(datname,', ') INTO v_dbList FROM (
-      SELECT DISTINCT datname FROM pg_shdepend shd, pg_database db, pg_roles r 
+      SELECT DISTINCT datname FROM pg_catalog.pg_shdepend shd, pg_catalog.pg_database db, pg_catalog.pg_roles r
         WHERE db.oid = dbid AND r.oid = refobjid AND rolname = 'emaj_viewer' AND datname <> current_database()
       ) AS t;
     IF v_dbList IS NOT NULL THEN
@@ -121,7 +127,7 @@ $emaj_uninstall$
 --
     v_dbList = NULL;
     SELECT string_agg(datname,', ') INTO v_dbList FROM (
-      SELECT DISTINCT datname FROM pg_shdepend shd, pg_database db, pg_roles r 
+      SELECT DISTINCT datname FROM pg_catalog.pg_shdepend shd, pg_catalog.pg_database db, pg_catalog.pg_roles r
         WHERE db.oid = dbid AND r.oid = refobjid AND rolname = 'emaj_adm' AND datname <> current_database()
       ) AS t;
     IF v_dbList IS NOT NULL THEN
@@ -131,7 +137,7 @@ $emaj_uninstall$
 --
 -- Are emaj roles granted to other roles ?
     v_granteeRoleList = NULL;
-    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList FROM pg_auth_members m, pg_roles r, pg_roles q
+    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
       WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_viewer';
     IF v_granteeRoleList IS NOT NULL THEN
       RAISE WARNING 'emaj_uninstall: There are remaining roles (%) who have been granted emaj_viewer role.', v_granteeRoleList;
@@ -139,7 +145,7 @@ $emaj_uninstall$
     END IF;
 --
     v_granteeRoleList = NULL;
-    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList FROM pg_auth_members m, pg_roles r, pg_roles q
+    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
       WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_adm';
     IF v_granteeRoleList IS NOT NULL THEN
       RAISE WARNING 'emaj_uninstall: There are remaining roles (%) who have been granted emaj_adm role.', v_granteeRoleList;
@@ -148,7 +154,7 @@ $emaj_uninstall$
 --
 -- Are emaj roles granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
     v_granteeClassList = NULL;
-    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList FROM pg_namespace, pg_class 
+    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList FROM pg_catalog.pg_namespace, pg_catalog.pg_class
       WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_viewer=%';
     IF v_granteeClassList IS NOT NULL THEN
       IF length(v_granteeClassList) > 200 THEN
@@ -159,7 +165,7 @@ $emaj_uninstall$
     END IF;
 --
     v_granteeClassList = NULL;
-    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList FROM pg_namespace, pg_class 
+    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList FROM pg_catalog.pg_namespace, pg_catalog.pg_class
       WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_adm=%';
     IF v_granteeClassList IS NOT NULL THEN
       IF length(v_granteeClassList) > 200 THEN
@@ -169,14 +175,36 @@ $emaj_uninstall$
       v_roleToDrop = false;
     END IF;
 --
+-- Are emaj roles granted to functions (other than just dropped emaj ones) ?
+    v_granteeFunctionList = NULL;
+    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
+      WHERE pg_namespace.oid = pronamespace AND array_to_string (proacl,';') LIKE '%emaj_viewer=%';
+    IF v_granteeFunctionList IS NOT NULL THEN
+      IF length(v_granteeFunctionList) > 200 THEN
+        v_granteeFunctionList = substr(v_granteeFunctionList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_uninstall: emaj_viewer role has some remaining grants on functions (%).', v_granteeFunctionList;
+      v_roleToDrop = false;
+    END IF;
+--
+    v_granteeFunctionList = NULL;
+    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
+      WHERE pg_namespace.oid = pronamespace AND array_to_string (proacl,';') LIKE '%emaj_adm=%';
+    IF v_granteeFunctionList IS NOT NULL THEN
+      IF length(v_granteeFunctionList) > 200 THEN
+        v_granteeClassList = substr(v_granteeFunctionList,1,200) || '...';
+      END IF;
+      RAISE WARNING 'emaj_uninstall: emaj_adm role has some remaining grants on functions (%).', v_granteeFunctionList;
+      v_roleToDrop = false;
+    END IF;
+--
 -- If emaj roles can be dropped, drop them
     IF v_roleToDrop THEN
--- revoke the few remaining grants
-      IF v_existTspemaj THEN
-        REVOKE ALL ON TABLESPACE tspemaj FROM emaj_viewer, emaj_adm;
-      END IF;
-      IF EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE proname = 'dblink_connect_u') THEN
-        REVOKE ALL ON FUNCTION dblink_connect_u(text,text) FROM emaj_adm;
+-- revoke the remaining grants set on tablespaces
+      SELECT string_agg(spcname, ', ') INTO v_tspList FROM pg_catalog.pg_tablespace
+        WHERE array_to_string (spcacl,';') LIKE '%emaj_viewer=%' OR array_to_string (spcacl,';') LIKE '%emaj_adm=%';
+      IF v_tspList IS NOT NULL THEN
+        EXECUTE 'REVOKE ALL ON TABLESPACE ' || v_tspList || ' FROM emaj_viewer, emaj_adm';
       END IF;
 -- and drop both emaj_viewer and emaj_adm roles
       DROP ROLE emaj_viewer, emaj_adm;
