@@ -30,6 +30,7 @@ Enhancements:
   - Forbid to protect a mark that is logicaly deleted.
   - Optimize the execution of alter group operations.
   - Improve the installation procedure when E-Maj is downloaded from pgxn.org.
+    The emaj.control file is now in the root directory.
   - Improve some error messages.
 
 Bug fixes:

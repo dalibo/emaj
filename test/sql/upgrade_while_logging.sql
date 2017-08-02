@@ -8,7 +8,6 @@ SET default_tablespace TO tspemaj;
 -----------------------------
 -- emaj update to next_version
 -----------------------------
---\! cp /usr/local/pg912/share/postgresql/extension/emaj.control.0.12.0 /usr/local/pg912/share/postgresql/extension/emaj.control
 
 -- check the extension is available
 select * from pg_available_extension_versions where name = 'emaj';

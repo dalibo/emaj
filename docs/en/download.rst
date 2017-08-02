@@ -104,6 +104,6 @@ To perform this task:
 
    pg_config --sharedir
 
-* copy the emaj.contol file from the sql subdirectory of the decompressed structure into the *SHAREDIR* directory,
+* copy the emaj.contol file from the root directory of the decompressed structure into the *SHAREDIR* directory,
 * adjust the *directory* parameter of the *emaj.control* file to reflect the actual location of the E-Maj components.
 

@@ -3,7 +3,15 @@
 # Tool to create a new version from the un-versionned emaj environment
 # Usage:
 # 		cd ~/proj
-# 		sh emaj/tools/create_version <new_version>
+# 		bash emaj/tools/create_version <new_version>
+#
+# If the operation has to be reverted:
+#   rm -Rf ~/proj/<new directory>
+# and on ~/proj/emaj:
+#   git reset HEAD
+#   git checkout *
+#   rm sql/emaj--<new_vers>--next_version.sql
+#   rm sql/emaj--<old_vers>--<new_vers>.sql
 
 # Checks
 # ------
@@ -45,11 +53,6 @@
 	find -name "*~" -type f -exec rm '{}' \;
 	cd ..
 
-# tag the new version (do it manually, once the changes are committed)
-#	cd emaj
-#	git tag 'v$NEW'
-#	cd ..
-
 # Create the new version environment
 # ----------------------------------
 
@@ -71,7 +74,7 @@
 
 # Process sql directory: change version identifiers inside the right files (excluding migration scripts)
 	for file in sql/*; do
-		if [[ ! $file =~ "(--|-to-|control)" ]]; then
+		if [[ ! $file =~ "(--|-to-)" ]]; then
 			sed -i "s/<NEXT_VERSION>/${NEW}/g" $file
 			sed -i "s/next_version/${NEW}/g" $file
 		fi
@@ -80,6 +83,9 @@
 
 # Change version identifiers inside files from /php + /tools + META.json README.md
 	find php tools META.json README.md -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
+
+# Change version identifiers inside emaj.control
+	sed -i "s/next_version/${NEW}/g" emaj.control
 
 # Change version identifiers inside files from /test/sql
 	find test/sql -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
@@ -116,5 +122,5 @@
 # End of processing
 # -----------------
 	echo "--> New version $NEW is ready."
-	echo "Don't forget to: git commit -am 'Setup new $NEW version' on both environments..."
+	echo "Don't forget to: git commit -am 'Setup the new $NEW version' on both environments..."
 

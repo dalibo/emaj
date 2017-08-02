@@ -62,7 +62,7 @@ mkdir tsplog1
 mkdir tsplog2
 
 # Copy and adjust the emaj.control file                    # if pg 9.1+
-sudo cp $EMAJDIR/sql/emaj.control /usr/local/pg$PGVERSION/share/postgresql/extension/emaj.control
+sudo cp $EMAJDIR/emaj.control /usr/local/pg$PGVERSION/share/postgresql/extension/emaj.control
 sudo bash -c "echo \"directory = '$EMAJDIR/sql'\" >>/usr/local/pg$PGVERSION/share/postgresql/extension/emaj.control"
 
 # Create all what is needed inside the cluster (tablespaces, roles, extensions,...)

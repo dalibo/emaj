@@ -103,6 +103,6 @@ Pour ce faire :
 
    pg_config --sharedir
 
-* Copier le fichier emaj.control fourni dans le répertoire sql de la version décompressée vers le répertoire *SHAREDIR*,
+* Copier le fichier emaj.control fourni dans le répertoire racine de la version décompressée vers le répertoire *SHAREDIR*,
 * Adapter la directive *directory* du fichier *emaj.control* pour spécifier le répertoire sql contenant les scripts d’installation d’E-Maj.
 
