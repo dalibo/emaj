@@ -1,7 +1,13 @@
 E-Maj - Change log
 ==================
-
 <NEXT_VERSION>
+------
+Enhancements:
+
+Bug fixes:
+
+
+2.1.0
 ------
 Enhancements:
   - Let E-Maj work with PostgreSQL 10.

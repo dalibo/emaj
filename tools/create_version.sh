@@ -89,6 +89,8 @@
 
 # Change version identifiers inside files from /test/sql
 	find test/sql -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
+# Next line to check at next execution
+	find test/sql -type f -exec sed -i "s/'next_version'/'${NEW}'/g" '{}' \;
 	find test/sql -type f -exec sed -i "s/-to-next.sql/-to-${NEW}.sql/g" '{}' \;
 
 # Change environment directories and files into tools
