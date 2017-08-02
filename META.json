@@ -9,9 +9,9 @@
    "prereqs": {
      "runtime": {
        "requires": {
-         "dblink": "0"
-       },
-     },
+         "dblink": 0
+       }
+     }
    },
    "provides": {
      "emaj": {
@@ -30,7 +30,7 @@
       },
       "bugtracker": {
          "web": "https://github.com/beaud76/emaj/issues"
-      },
+      }
    },
    "meta-spec": {
       "version": "1.0.0",
