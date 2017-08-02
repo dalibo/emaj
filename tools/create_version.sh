@@ -94,12 +94,10 @@
 # Change environment directories and files into tools
 	sed -i "s/\/emaj/\/emaj-${NEW}/" tools/copy2Expected.sh
 	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/regress.sh
-### next lines must be checked during the next version creation
-	sed -i "s/\\\/proj\\\/emaj/\\\/proj\\\/emaj-${NEW}/" tools/regress.sh
+	sed -i "s/emaj..sql/emaj-${NEW}\\\\\/sql/" tools/regress.sh
 	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/check_code.pl
 	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/check_error_messages.pl
 
-### 2 next lines must be checked during the next version creation
 	sed -i "s/emaj--next_version.sql/emaj--${NEW}.sql/g" tools/check_code.pl
 	sed -i "s/emaj--next_version.sql/emaj--${NEW}.sql/g" tools/check_error_messages.pl
 
