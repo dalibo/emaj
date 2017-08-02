@@ -50,7 +50,7 @@ $do$
 -- check that the dblink connection parameter is defined
     PERFORM 0 FROM emaj.emaj_param WHERE param_key = 'dblink_user_password';
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj parallel rollback test setup: the "dblink_user_password" parameter is unknown in emaj_param';
+      RAISE EXCEPTION 'E-Maj parallel rollback test setup: the "dblink_user_password" parameter is unknown in emaj_param. Please create it with a statement like INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES (''dblink_user_password'',''user=<user> password=<password>'');.';
     END IF;
 -- check the max_prepared_transactions GUC value
     IF current_setting('max_prepared_transactions')::int <= 1 THEN
