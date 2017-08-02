@@ -108,8 +108,8 @@
 # Adjust the emaj directory content
 # ---------------------------------
 	cd $OLDDIR
-# Add a new entry in CHANGES
-	sed -i "3i<NEXT_VERSION>\n------\nEnhancements:\n\nBug fixes:\n" CHANGES.md
+# Add a new entry in CHANGES.md
+	sed -i "3i<NEXT_VERSION>\n------\n###Enhancements:###\n\n\n###Bug fixes:###\n\n\n" CHANGES.md
 
 # create a new empty migration script
 	echo "--" >sql/emaj--$NEW--next_version.sql
