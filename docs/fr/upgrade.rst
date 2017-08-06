@@ -4,7 +4,9 @@ Mise à jour d'une version E-Maj existante
 Démarche générale
 -----------------
 
-La procédure de mise à jour de la version d'E-Maj varie en fonction de la version E-Maj installée.
+La première étape consiste à :doc:`installer la nouvelle version du logiciel E-Maj <install>`. Conserver l’ancien répertoire E-Maj au moins jusqu’à la fin de la mise à jour. Certains fichiers pourront être utiles.
+
+Ensuite, la procédure de mise à jour de la version d'E-Maj installée dans une base de données dépend de cette version installée.
 
 Pour les versions d'E-Maj antérieures à 0.11.0, il n'existe pas de procédure spécifique de mise à jour. On procédera donc à une simple désinstallation puis réinstallation de l'extension. Cette démarche peut d'ailleurs être utilisée quelle que soit la version d'E-Maj installée. Elle présente néanmoins l'inconvénient de devoir supprimer tous les logs enregistrés, perdant ainsi toute capacité ultérieure de rollback ou d'examen des mises à jour enregistrées.
 

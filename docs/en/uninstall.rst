@@ -1,5 +1,5 @@
-E-Maj uninstall
-===============
+Uninstalling an E-Maj extension from a database
+===============================================
 
 To uninstall E-Maj from a database, the user must log on this database with *psql*, as a superuser.
 
@@ -32,5 +32,5 @@ The uninstallation script execution displays::
    psql:sql/emaj_uninstall.sql:203: WARNING:  emaj_uninstall: emaj_adm and emaj_viewer roles have been dropped.
    DO
    SET
-   >>> E-maj successfully uninstalled
+   >>> E-maj successfully uninstalled from this database
 

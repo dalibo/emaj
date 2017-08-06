@@ -1,5 +1,5 @@
-Désinstallation d'E-Maj
-=======================
+Désinstallation d'E-Maj d'une base de données
+=============================================
 
 Pour désinstaller E-Maj d'une base de données, l'utilisateur doit se connecter à cette base avec *psql*, en tant que super-utilisateur.
 
@@ -33,5 +33,5 @@ L'exécution du script de désinstallation affiche ceci ::
    psql:sql/emaj_uninstall.sql:203: WARNING:  emaj_uninstall: emaj_adm and emaj_viewer roles have been dropped.
    DO
    SET
-   >>> E-maj successfully uninstalled
+   >>> E-maj successfully uninstalled from this database
 

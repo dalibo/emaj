@@ -218,5 +218,5 @@ $emaj_uninstall$
 $emaj_uninstall$;
 
 SET client_min_messages TO default;
-\echo '>>> E-maj successfully uninstalled'
+\echo '>>> E-maj successfully uninstalled from this database'
 

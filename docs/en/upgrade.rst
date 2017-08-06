@@ -4,7 +4,9 @@ Upgrade an existing E-Maj version
 General approach
 ----------------
 
-The process to update E-Maj version depends on the already installed E-Maj version. 
+The first step consists in :doc:`installing the new version of the E-Maj software <install>`. Keep the old E-Maj version directory at least until the end of the upgrade. Some files may be needed.
+
+Then the process to upgrade an E-Maj extension in a database depends on the already installed E-Maj version.
 
 For E-Maj versions prior 0.11.0, there is no particular update procedure. A simple  E-Maj deletion and then re-installation has to be done. This approach can also be used for any E-Maj version, even though it has a drawback: all log contents are deleted, resulting in no further way to rollback or look at the recorded updates.  
 

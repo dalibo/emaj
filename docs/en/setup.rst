@@ -1,7 +1,7 @@
 E-Maj extension setup
 =====================
 
-If E-Maj is already installed in the database, you may need to :doc:`upgrade <upgrade>` it.
+If an extension already exists in the database, but in an old E-Maj version, you need to :doc:`upgrade <upgrade>` it.
 
 Otherwise, some preliminary operations are required.
 
@@ -27,10 +27,10 @@ Optionally, if the E-Maj administrator wants to store E-Maj technical tables int
    SET default_tablespace = <tablespace.name>;
 
 
-E-Maj components installation
------------------------------
+Creating the E-Maj extension
+----------------------------
 
-The E-Maj components can now be installed into the database, by executing the SQL command::
+The E-Maj extension can now be created into the database, by executing the SQL command::
 
    CREATE EXTENSION emaj;
 

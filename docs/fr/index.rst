@@ -23,7 +23,7 @@ Bienvenue dans la documentation E-Maj !
    :maxdepth: 1
    :caption: Comment installer E-Maj :
 
-   download
+   install
    setup
    upgrade
    uninstall
@@ -72,6 +72,7 @@ Bienvenue dans la documentation E-Maj !
    :caption: Annexes :
 
    functionsList
+   content
 
 Index et tables
 ===============
