@@ -10,7 +10,7 @@ CREATE EXTENSION dblink;
 ALTER TABLESPACE tspemaj_renamed RENAME TO tspemaj;
 SET default_tablespace TO tspemaj;
 ------------------------------------------------------------
--- emaj installation in 2.0.1 as extension
+-- emaj installation in its previous version as an extension
 ------------------------------------------------------------
 CREATE EXTENSION emaj VERSION '2.1.0';
 ------------------------------------------------------------

@@ -511,7 +511,7 @@ INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version'
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','4 millisecond'::interval);
 
 -- view readable by emaj_viewer role. It hides the 'dblink_user_password' parameter's value
-CREATE VIEW emaj.emaj_visible_param AS
+CREATE VIEW emaj.emaj_visible_param WITH (security_barrier) AS
   SELECT param_key,
          CASE WHEN param_key = 'dblink_user_password' THEN '<masked data>'
                                                       ELSE param_value_text END AS param_value_text,

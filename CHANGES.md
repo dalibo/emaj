@@ -6,6 +6,8 @@ E-Maj - Change log
 
   * Improve the documentation about the installation.
   * PostgreSQL versions prior 9.2 are not supported by E-Maj anymore.
+  * Improve the security of the emaj_visible_param view by declaring it as
+    'security_barrier'.
 
 ###Bug fixes:###
 

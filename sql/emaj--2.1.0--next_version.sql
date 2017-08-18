@@ -62,6 +62,8 @@ SELECT emaj._disable_event_triggers();
 --                                          --
 ----------------------------------------------
 
+-- set the 'security_barrier' option on the emaj_visible_param view
+ALTER VIEW emaj.emaj_visible_param SET (security_barrier);
 
 --
 -- add created or recreated tables and sequences to the list of content to save by pg_dump
