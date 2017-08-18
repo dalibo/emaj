@@ -3,7 +3,7 @@
 --
 -- This software is distributed under the GNU General Public License.
 --
--- This script is automatically called by a "CREATE EXTENSION emaj;" statement in postgres 9.1+.
+-- This script is automatically called by a "CREATE EXTENSION emaj;" statement.
 --
 -- This script must be executed by a role having SUPERUSER privileges.
 -- The E-Maj technical tables will be installed into the default tablespace.
@@ -26,9 +26,9 @@ $do$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj installation: The current user (%) is not a superuser.', current_user;
     END IF;
--- check postgres version is >= 9.1
-    IF current_setting('server_version_num')::int < 90100 THEN
-      RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for E-Maj.', current_setting('server_version');
+-- check postgres version is >= 9.2
+    IF current_setting('server_version_num')::int < 90200 THEN
+      RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 9.2.', current_setting('server_version');
     END IF;
 -- create emaj roles (NOLOGIN), if they do not exist
 -- does 'emaj_adm' already exist ?
@@ -1884,9 +1884,9 @@ $_verify_groups$
   BEGIN
 -- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
 -- Let's start with some global checks that always raise an exception if an issue is detected
--- check the postgres version: E-Maj needs postgres 9.1+
-    IF emaj._pg_version_num() < 90100 THEN
-      RAISE EXCEPTION '_verify_groups : The current postgres version (%) is not compatible with E-Maj.', version();
+-- check the postgres version: E-Maj needs postgres 9.2+
+    IF emaj._pg_version_num() < 90200 THEN
+      RAISE EXCEPTION '_verify_groups : The current postgres version (%) is not compatible with this E-Maj version. It should be at least 9.2.', version();
     END IF;
 -- OK, now look for groups unconsistency
 -- Unlike emaj_verify_all(), there is no direct check that application schemas exist
@@ -6508,13 +6508,13 @@ $_verify_all_groups$
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
   DECLARE
   BEGIN
--- check the postgres version at groups creation time is compatible (i.e. >= 9.1)
+-- check the postgres version at groups creation time is compatible (i.e. >= 8.4)
     RETURN QUERY
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
                group_pg_version || '). It must be dropped and recreated.' AS msg
         FROM emaj.emaj_group
         WHERE cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
-                   to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 901
+                   to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804
         ORDER BY msg;
 -- check all application schemas referenced in the emaj_relation table still exist
     RETURN QUERY
@@ -6798,9 +6798,9 @@ $emaj_verify_all$
     r_object                 RECORD;
   BEGIN
 -- Global checks
--- detect if the current postgres version is at least 9.1
-    IF emaj._pg_version_num() < 90100 THEN
-      RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with E-Maj.';
+-- detect if the current postgres version is at least 9.2
+    IF emaj._pg_version_num() < 90200 THEN
+      RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with this E-Maj version. It should be at least 9.2.';
       v_errorFound = TRUE;
     END IF;
     IF emaj._pg_version_num() >= 90300 THEN

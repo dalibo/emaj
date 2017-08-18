@@ -5,6 +5,7 @@ E-Maj - Change log
 ###Enhancements:###
 
   * Improve the documentation about the installation.
+  * PostgreSQL versions prior 9.2 are not supported by E-Maj anymore.
 
 ###Bug fixes:###
 

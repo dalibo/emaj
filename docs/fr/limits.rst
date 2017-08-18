@@ -3,7 +3,7 @@ Limites d'utilisation
 
 L'utilisation de l'extension E-Maj présente quelques limitations.
 
-* La **version PostgreSQL** minimum requise est la version 9.1.
+* La **version PostgreSQL** minimum requise est la version 9.2.
 * Toutes les tables appartenant à un groupe de tables de type « *rollbackable* » doivent avoir une **clé primaire** explicite (*PRIMARY KEY*).
 * Les tables *TEMPORARY*, *UNLOGGED* ou *WITH OIDS* ne sont pas gérées par E-Maj
 * Si un verbe SQL **TRUNCATE** est exécuté sur une table applicative appartenant à un groupe de tables, il n'est pas possible pour E-Maj de remettre la table dans un état antérieur à cette requête. En effet, lors de l'exécution d'un *TRUNCATE*, aucun trigger n'est déclenché à chaque suppression de ligne. Un trigger, créé par E-Maj, empêche l'exécution d'une requête *TRUNCATE* sur toute table appartenant à groupe de tables en état démarré.

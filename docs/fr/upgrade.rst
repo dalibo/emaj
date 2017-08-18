@@ -14,7 +14,7 @@ Pour les versions d'E-Maj installées 0.11.0 et suivantes, il est possible de pr
 
 .. caution::
 
-   A partir de la version 2.0.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.1. Si une version antérieure de PostgreSQL est utilisée, il faut la faire évoluer avant de migrer E-Maj dans une version supérieure.
+   A partir de la version 2.2.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.2. Si une version antérieure de PostgreSQL est utilisée, il faut la faire évoluer avant de migrer E-Maj dans une version supérieure.
 
 
 Mise à jour par désinstallation puis réinstallation

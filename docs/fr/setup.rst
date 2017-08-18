@@ -32,7 +32,7 @@ L'extension E-Maj peut maintenant être créée dans la base de données, en ex�
 
    CREATE EXTENSION emaj;
 
-Le script commence par vérifier que la version de PostgreSQL est supérieure ou égale à la version 9.1, que le rôle qui exécute le script a bien l'attribut *superuser*.
+Le script commence par vérifier que la version de PostgreSQL est supérieure ou égale à la version 9.2, que le rôle qui exécute le script a bien l'attribut *superuser*.
 
 Le script crée alors le schéma *emaj* avec ses tables techniques, ses types et ses fonctions. 
 

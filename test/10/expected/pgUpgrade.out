@@ -1,0 +1,19 @@
+                                                                      emaj_verify_all                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.
+ No error detected
+(2 rows)
+
+DO
+BEGIN
+LOCK TABLE
+psql:/home/postgres/proj/emaj/sql/emaj_upgrade_after_postgres_upgrade.sql:303: NOTICE:  E-Maj upgrade script: create the "emaj_protection_trg" event trigger.
+psql:/home/postgres/proj/emaj/sql/emaj_upgrade_after_postgres_upgrade.sql:303: NOTICE:  E-Maj upgrade script: create the "emaj_sql_drop_trg" event trigger.
+psql:/home/postgres/proj/emaj/sql/emaj_upgrade_after_postgres_upgrade.sql:303: NOTICE:  E-Maj upgrade script: create the "emaj_table_rewrite_trg" event trigger.
+DO
+COMMIT
+  emaj_verify_all  
+-------------------
+ No error detected
+(1 row)
+
