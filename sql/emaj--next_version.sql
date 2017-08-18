@@ -530,29 +530,29 @@ $$
 SELECT current_setting('server_version_num')::int;
 $$;
 
-CREATE OR REPLACE FUNCTION emaj._set_time_stamp(CHAR(1))
+CREATE OR REPLACE FUNCTION emaj._set_time_stamp(v_timeStampType CHAR(1))
 RETURNS BIGINT LANGUAGE SQL AS
 $$
 -- this function inserts a new time stamp in the emaj_time_stamp table and returns the identifier of the new row
 INSERT INTO emaj.emaj_time_stamp (time_last_emaj_gid, time_event)
-  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END, $1 FROM emaj.emaj_global_seq
+  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END, v_timeStampType FROM emaj.emaj_global_seq
   RETURNING time_id;
 $$;
 
-CREATE OR REPLACE FUNCTION emaj._get_mark_name(TEXT, TEXT)
+CREATE OR REPLACE FUNCTION emaj._get_mark_name(v_groupName TEXT, v_mark TEXT)
 RETURNS TEXT LANGUAGE sql AS
 $$
 -- This function returns a mark name if exists for a group, processing the EMAJ_LAST_MARK keyword.
 -- input: group name and mark name
 -- output: mark name or NULL
-SELECT case
-         when $2 = 'EMAJ_LAST_MARK' then
-              (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = $1 ORDER BY mark_id DESC LIMIT 1)
-         else (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = $1 AND mark_name = $2)
-       end
+SELECT CASE
+         WHEN v_mark = 'EMAJ_LAST_MARK' THEN
+              (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_id DESC LIMIT 1)
+         ELSE (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_mark)
+       END
 $$;
 
-CREATE OR REPLACE FUNCTION emaj._get_mark_time_id(TEXT, TEXT)
+CREATE OR REPLACE FUNCTION emaj._get_mark_time_id(v_groupName TEXT, v_mark TEXT)
 RETURNS BIGINT LANGUAGE sql AS
 $$
 -- This function returns the time stamp id of a mark, if exists, for a group,
@@ -560,11 +560,11 @@ $$
 -- input: group name and mark name
 -- output: mark time stamp id or NULL
 SELECT CASE
-         WHEN $2 = 'EMAJ_LAST_MARK' THEN
+         WHEN v_mark = 'EMAJ_LAST_MARK' THEN
               (SELECT time_id FROM emaj.emaj_mark, emaj.emaj_time_stamp
-                 WHERE time_id = mark_time_id AND mark_group = $1 ORDER BY time_id DESC LIMIT 1)
+                 WHERE time_id = mark_time_id AND mark_group = v_groupName ORDER BY time_id DESC LIMIT 1)
          ELSE (SELECT time_id FROM emaj.emaj_mark, emaj.emaj_time_stamp
-                 WHERE time_id = mark_time_id AND mark_group = $1 AND mark_name = $2)
+                 WHERE time_id = mark_time_id AND mark_group = v_groupName AND mark_name = v_mark)
        END
 $$;
 
@@ -7206,8 +7206,8 @@ REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
 -- ... and execute a subset of emaj functions for which rights are explicitely granted
 GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._get_mark_name(TEXT, TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._get_mark_time_id(TEXT, TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._get_mark_name(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._get_mark_time_id(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;

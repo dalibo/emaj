@@ -8,6 +8,8 @@ E-Maj - Change log
   * PostgreSQL versions prior 9.2 are not supported by E-Maj anymore.
   * Improve the security of the emaj_visible_param view by declaring it as
     'security_barrier'.
+  * Some minor code improvements.
+
 
 ###Bug fixes:###
 

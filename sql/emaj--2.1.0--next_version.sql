@@ -87,10 +87,51 @@ ALTER VIEW emaj.emaj_visible_param SET (security_barrier);
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION emaj._set_time_stamp(CHAR(1));
+DROP FUNCTION emaj._get_mark_name(TEXT,TEXT);
+DROP FUNCTION emaj._get_mark_time_id(TEXT,TEXT);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._set_time_stamp(v_timeStampType CHAR(1))
+RETURNS BIGINT LANGUAGE SQL AS
+$$
+-- this function inserts a new time stamp in the emaj_time_stamp table and returns the identifier of the new row
+INSERT INTO emaj.emaj_time_stamp (time_last_emaj_gid, time_event)
+  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END, v_timeStampType FROM emaj.emaj_global_seq
+  RETURNING time_id;
+$$;
+
+CREATE OR REPLACE FUNCTION emaj._get_mark_name(v_groupName TEXT, v_mark TEXT)
+RETURNS TEXT LANGUAGE sql AS
+$$
+-- This function returns a mark name if exists for a group, processing the EMAJ_LAST_MARK keyword.
+-- input: group name and mark name
+-- output: mark name or NULL
+SELECT CASE
+         WHEN v_mark = 'EMAJ_LAST_MARK' THEN
+              (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = v_groupName ORDER BY mark_id DESC LIMIT 1)
+         ELSE (SELECT mark_name FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_mark)
+       END
+$$;
+
+CREATE OR REPLACE FUNCTION emaj._get_mark_time_id(v_groupName TEXT, v_mark TEXT)
+RETURNS BIGINT LANGUAGE sql AS
+$$
+-- This function returns the time stamp id of a mark, if exists, for a group,
+--   processing the EMAJ_LAST_MARK keyword.
+-- input: group name and mark name
+-- output: mark time stamp id or NULL
+SELECT CASE
+         WHEN v_mark = 'EMAJ_LAST_MARK' THEN
+              (SELECT time_id FROM emaj.emaj_mark, emaj.emaj_time_stamp
+                 WHERE time_id = mark_time_id AND mark_group = v_groupName ORDER BY time_id DESC LIMIT 1)
+         ELSE (SELECT time_id FROM emaj.emaj_mark, emaj.emaj_time_stamp
+                 WHERE time_id = mark_time_id AND mark_group = v_groupName AND mark_name = v_mark)
+       END
+$$;
+
 CREATE OR REPLACE FUNCTION emaj._verify_groups(v_groups TEXT[], v_onErrorStop BOOLEAN)
 RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
 $_verify_groups$
@@ -539,6 +580,8 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
 GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._get_mark_name(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._get_mark_time_id(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
 
 ------------------------------------
 --                                --
