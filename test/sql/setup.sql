@@ -141,6 +141,7 @@ CREATE TABLE myTbl5 (
   col52       TEXT[]           ,
   col53       INT[]            ,
   col54       DATE[]           ,
+  col55       JSON             ,
   PRIMARY KEY (col51)
 );
 
