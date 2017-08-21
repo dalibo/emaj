@@ -5,6 +5,7 @@
 # This perl synchronizes the functions that need to be included into the E-Maj upgrade script.
 # It compares the new installation script with those of the previous version, 
 # and build the upgrade script leaving unchanged the other existing parts of the upgrade script.
+# It also recreates functions that need to be, due to dropped tables whose type is referenced as parameter.
 #
 # In the existing upgrade script, it requires 2 patterns that delimit the functions section to process: 2 lines beginning with
 #     --<begin_functions>
@@ -30,6 +31,7 @@ use warnings; use strict;
   my $nbCommentCurrSrc = 0;      # number of comments in current version source
   my $nbCommentUpgrade = 0;      # number of comments moved into the upgrade script
 
+  my $droppedTablesList = '';    # list of dropped tables built as regexp
   my %prevFunctions;             # functions code in the previous version source
   my @prevSignatures;            # array containing the function signatures for the previous version
   my %currFunctions;             # functions code in the current version source
@@ -120,8 +122,14 @@ use warnings; use strict;
   while (<FICUPG>){
     $line = $_;
 
-    # aggregate the code for the header part of the script (including the begin_functions pattern)
-    $upgradeScriptHeader .= $line if ($status == 0);
+    if ($status == 0) {
+      # detect existing tables that are dropped (if functions use their type as parameter, these functions will need to be recreated later)
+      if ($line =~ /DROP TABLE (emaj.emaj_.*?)(\s|;)/) {
+        if ($droppedTablesList eq '') { $droppedTablesList = $1 } else { $droppedTablesList .= '|' . $1 };
+      }
+      # aggregate the code for the header part of the script (including the begin_functions pattern)
+      $upgradeScriptHeader .= $line;
+    }
 
     # detect the beginning of the function definition part
     $status = 1 if ($line =~ /^--<begin_functions>/);
@@ -286,8 +294,11 @@ use warnings; use strict;
   print FICUPG "-- create new or modified functions                             --\n";
   print FICUPG "------------------------------------------------------------------\n";
   foreach $fnctSignature (@currSignatures) {
-    if (!exists($prevFunctions{$fnctSignature}) || $prevFunctions{$fnctSignature} ne $currFunctions{$fnctSignature}) {
-      # the function is either new or changed. So write it in the upgrade script
+
+    if (!exists($prevFunctions{$fnctSignature}) ||                              # the function is new or
+        $prevFunctions{$fnctSignature} ne $currFunctions{$fnctSignature} ||     # the function has changed or
+        $fnctSignature =~ /$droppedTablesList/i ) {                             # the function has a parameter whose type is a recreated table
+      # write the function in the upgrade script
       print FICUPG $currFunctions{$fnctSignature};
       $nbFctUpgrade++;
       # if a comment also exists, write it

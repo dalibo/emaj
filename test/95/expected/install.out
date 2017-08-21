@@ -3,9 +3,10 @@
 --               Then directly install as extension
 --
 -----------------------------
--- install dblink
+-- install dblink and btree_gist
 -----------------------------
 CREATE EXTENSION IF NOT EXISTS dblink;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 -----------------------------
 -- emaj installation as extension
 -----------------------------
@@ -292,28 +293,30 @@ Indexes:
  param_key | text | param_key
 primary key, btree, for table "emaj.emaj_param"
 
-           Table "emaj.emaj_relation"
-          Column          |  Type   | Modifiers 
---------------------------+---------+-----------
- rel_schema               | text    | not null
- rel_tblseq               | text    | not null
- rel_group                | text    | not null
- rel_kind                 | text    | 
- rel_priority             | integer | 
- rel_log_schema           | text    | 
- rel_log_table            | text    | 
- rel_log_dat_tsp          | text    | 
- rel_log_index            | text    | 
- rel_log_idx_tsp          | text    | 
- rel_log_sequence         | text    | 
- rel_log_function         | text    | 
- rel_sql_columns          | text    | 
- rel_sql_pk_columns       | text    | 
- rel_sql_pk_eq_conditions | text    | 
+            Table "emaj.emaj_relation"
+          Column          |   Type    | Modifiers 
+--------------------------+-----------+-----------
+ rel_schema               | text      | not null
+ rel_tblseq               | text      | not null
+ rel_time_range           | int8range | not null
+ rel_group                | text      | not null
+ rel_kind                 | text      | 
+ rel_priority             | integer   | 
+ rel_log_schema           | text      | 
+ rel_log_table            | text      | 
+ rel_log_dat_tsp          | text      | 
+ rel_log_index            | text      | 
+ rel_log_idx_tsp          | text      | 
+ rel_log_sequence         | text      | 
+ rel_log_function         | text      | 
+ rel_sql_columns          | text      | 
+ rel_sql_pk_columns       | text      | 
+ rel_sql_pk_eq_conditions | text      | 
 Indexes:
-    "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq)
+    "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq, rel_time_range)
     "emaj_relation_idx1" btree (rel_group, rel_kind)
     "emaj_relation_idx2" btree (rel_log_schema)
+    "emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl" EXCLUDE USING gist (rel_schema WITH =, rel_tblseq WITH =, rel_time_range WITH &&)
 Foreign-key constraints:
     "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
 
@@ -330,12 +333,21 @@ btree, for table "emaj.emaj_relation"
  rel_log_schema | text | rel_log_schema
 btree, for table "emaj.emaj_relation"
 
-Index "emaj.emaj_relation_pkey"
-   Column   | Type | Definition 
-------------+------+------------
- rel_schema | text | rel_schema
- rel_tblseq | text | rel_tblseq
+       Index "emaj.emaj_relation_pkey"
+     Column     |   Type    |   Definition   
+----------------+-----------+----------------
+ rel_schema     | text      | rel_schema
+ rel_tblseq     | text      | rel_tblseq
+ rel_time_range | int8range | rel_time_range
 primary key, btree, for table "emaj.emaj_relation"
+
+Index "emaj.emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl"
+     Column     |     Type      |   Definition   
+----------------+---------------+----------------
+ rel_schema     | gbtreekey_var | rel_schema
+ rel_tblseq     | gbtreekey_var | rel_tblseq
+ rel_time_range | int8range     | rel_time_range
+gist, for table "emaj.emaj_relation"
 
                                                   Table "emaj.emaj_rlbk"
            Column            |           Type           |                            Modifiers                             

@@ -1,11 +1,12 @@
--- install_upgrade.sql : Upgrade from E-Maj 2.0.1 to next_version while groups are not yet created.
+-- install_upgrade.sql : Upgrade from E-Maj 2.1.0 to next_version while groups are not yet created.
 -- install E-Maj as an extension 
 --
 
 ------------------------------------------------------------
--- install dblink
+-- install dblink and btree_gist
 ------------------------------------------------------------
 CREATE EXTENSION IF NOT EXISTS dblink;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -----------------------------
 -- check the extension's availability

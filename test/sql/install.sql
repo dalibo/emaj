@@ -4,9 +4,10 @@
 --
 
 -----------------------------
--- install dblink
+-- install dblink and btree_gist
 -----------------------------
 CREATE EXTENSION IF NOT EXISTS dblink;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -----------------------------
 -- emaj installation as extension

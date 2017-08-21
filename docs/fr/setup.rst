@@ -5,17 +5,20 @@ Si une extension existe déjà dans la base de données, mais dans une ancienne 
 
 Quelques opérations préliminaires sont requises.
 
+.. _preliminary_operations:
+
 Opérations préliminaires
 ------------------------
 
 Pour ces opérations, l'utilisateur doit se connecter à la base de données concernée en tant que super-utilisateur.
 
-Extension DBLINK
-^^^^^^^^^^^^^^^^
+Extensions *dblink* et *btree_gist*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-L’extension **dblink**, fournie avec PostgreSQL, est utilisée lors des opérations de rollback E-Maj pour en permettre le suivi. Si elle n'est pas déjà présente dans la base de données, il est donc nécessaire de l'installer avant E-Maj. Pour ce faire, il suffit d'exécuter ::
+Deux extensions sont requises pour faire fonctionner E-Maj : **dblink** et **btree_gist**. Elles sont fournies avec PostgreSQL. Si elles ne sont pas déjà présentes dans la base de données, il est donc nécessaire de les installer avant E-Maj. Pour ce faire, il suffit d'exécuter ::
 
-   CREATE EXTENSION dblink;
+   CREATE EXTENSION IF NOT EXISTS dblink;
+   CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 Tablespace
 ^^^^^^^^^^

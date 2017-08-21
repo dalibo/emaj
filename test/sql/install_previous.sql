@@ -1,9 +1,10 @@
 -- install_previous.sql : install previous version of E-Maj as an extension
 --
 ------------------------------------------------------------
--- install dblink
+-- install dblink and btree_gist
 ------------------------------------------------------------
 CREATE EXTENSION dblink;
+CREATE EXTENSION btree_gist;
 
 -----------------------------
 -- set the default_tablespace parameter to tspemaj to store new technical tables into this tablespace

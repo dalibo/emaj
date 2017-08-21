@@ -41,7 +41,7 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 -- emaj tables and sequences
 
 -- technical tables
-select * from emaj.emaj_group_def;
+select * from emaj.emaj_relation;
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;

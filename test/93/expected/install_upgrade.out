@@ -1,10 +1,11 @@
--- install_upgrade.sql : Upgrade from E-Maj 2.0.1 to next_version while groups are not yet created.
+-- install_upgrade.sql : Upgrade from E-Maj 2.1.0 to next_version while groups are not yet created.
 -- install E-Maj as an extension 
 --
 ------------------------------------------------------------
--- install dblink
+-- install dblink and btree_gist
 ------------------------------------------------------------
 CREATE EXTENSION IF NOT EXISTS dblink;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 -----------------------------
 -- check the extension's availability
 -----------------------------
@@ -92,6 +93,18 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
+NOTICE:  drop cascades to 11 other objects
+DETAIL:  drop cascades to function _change_log_schema_tbl(emaj_relation,text)
+drop cascades to function _change_emaj_names_prefix(emaj_relation,text)
+drop cascades to function _change_log_data_tsp_tbl(emaj_relation,text)
+drop cascades to function _change_log_index_tsp_tbl(emaj_relation,text)
+drop cascades to function _drop_tbl(emaj_relation)
+drop cascades to function _drop_seq(emaj_relation)
+drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean)
+drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _rlbk_seq(emaj_relation,bigint)
+drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_tbl(emaj_relation,text)
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------

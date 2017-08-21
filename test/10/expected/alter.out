@@ -516,7 +516,7 @@ select emaj.emaj_alter_group('myGroup1');
                 7
 (1 row)
 
-select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
  rel_priority 
 --------------
            30
@@ -529,7 +529,7 @@ select emaj.emaj_alter_group('myGroup1');
                 7
 (1 row)
 
-select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
  rel_priority 
 --------------
              
@@ -542,7 +542,7 @@ select emaj.emaj_alter_group('myGroup1');
                 7
 (1 row)
 
-select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
  rel_priority 
 --------------
            20
@@ -913,7 +913,7 @@ select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.
  tsplog1
 (1 row)
 
-select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
  rel_priority 
 --------------
            30
@@ -942,7 +942,7 @@ select spcname from pg_tablespace, pg_class where reltablespace = pg_tablespace.
 ---------
 (0 rows)
 
-select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
  rel_priority 
 --------------
            20
@@ -951,7 +951,7 @@ select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and r
 -- move 1 table and 1 sequence from a group to another
 update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
-select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' group by 1 order by 1;
+select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' and upper_inf(rel_time_range) group by 1 order by 1;
  rel_group | count 
 -----------+-------
  myGroup1  |     7
@@ -967,7 +967,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                 15
 (1 row)
 
-select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' group by 1 order by 1;
+select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' and upper_inf(rel_time_range) group by 1 order by 1;
  rel_group | count 
 -----------+-------
  myGroup1  |     9
@@ -986,7 +986,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                 15
 (1 row)
 
-select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' group by 1 order by 1;
+select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' and upper_inf(rel_time_range) group by 1 order by 1;
  rel_group | count 
 -----------+-------
  myGroup1  |     7

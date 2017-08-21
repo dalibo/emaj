@@ -9,7 +9,8 @@
    "prereqs": {
      "runtime": {
        "requires": {
-         "dblink": 0
+         "dblink": 0,
+         "btree_gist": 0
        }
      }
    },

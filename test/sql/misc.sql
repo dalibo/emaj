@@ -550,7 +550,7 @@ begin;
 rollback;
 -- detection of relation type change (a table is now a sequence!)
 begin;
-  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of a missing E-Maj secondary schema
@@ -618,7 +618,7 @@ begin;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
   drop table emaj.myschema1_mytbl1_log;
   alter table myschema1.mytbl1 add column newcol int;
-  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1';
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   alter table "phil's schema3"."myTbl2\" set with oids;
   select * from emaj.emaj_verify_all();

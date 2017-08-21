@@ -5,19 +5,22 @@ If an extension already exists in the database, but in an old E-Maj version, you
 
 Otherwise, some preliminary operations are required.
 
+.. _preliminary_operations:
+
 Preliminary operations
 ----------------------
 
 For these operations, the user must log on the concerned database as a superuser.
 
-DBLINK extension
-^^^^^^^^^^^^^^^^
+Dblink and btree_gist extensions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Supplied with PostgreSQL, the **dblink** extension is used during E-Maj rollback operations to help in monitoring those operations. If the dblink extension is not installed, it must be installed before installing E-Maj.
+Two extensions are required to let E-Maj work: **dblink** and **btree_gist**. They are supplied with PostgreSQL. If they are not installed into the database, they must be installed before installing E-Maj.
 
-To do it, just issue the following command::
+To do it, just issue the following commands::
 
-   CREATE EXTENSION dblink;
+   CREATE EXTENSION IF NOT EXISTS dblink;
+   CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 Tablespace
 ^^^^^^^^^^

@@ -44,7 +44,7 @@ begin;
 rollback;
 -- detection of relation type change (a table is now a sequence!)
 begin;
-  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
 -- detection of a missing E-Maj secondary schema

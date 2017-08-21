@@ -685,18 +685,18 @@ CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 36 at RAIS
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO 'unknown_directory/myschema1_myTbl3_col31_seq.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 89 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 90 at EXECUTE
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3_col31_seq.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/unknown_directory/myschema1_myTbl3_col31_seq.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 89 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 90 at EXECUTE
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','dummy_option');
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: .../emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/tmp/emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 89 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 90 at EXECUTE
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_group: The COPY options parameter format is invalid.
@@ -741,11 +741,11 @@ CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) l
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11850 ORDER BY emaj_gid ASC) TO 'unknown_directory/myschema2_mytbl1_log.snap' "
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 119 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 120 at EXECUTE
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema2_mytbl1_log.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11850 ORDER BY emaj_gid ASC) TO '/unknown_directory/myschema2_mytbl1_log.snap' "
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 119 at EXECUTE
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 120 at EXECUTE
 -- invalid start mark
 select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps',NULL);
 ERROR:  emaj_snap_log_group: The start mark "unknownMark" is unknown for the group "myGroup2".
@@ -789,7 +789,7 @@ ERROR:  syntax error at or near "dummy_option"
 LINE 1: ...mp/emaj_test/log_snaps/myschema2_mytbl1_log.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11850 ORDER BY emaj_gid ASC) TO '/tmp/emaj_test/log_snaps/myschema2_mytbl1_log.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 119 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 120 at EXECUTE
 -- SQL injection attempt
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_log_group: The COPY options parameter format is invalid.
@@ -1293,7 +1293,7 @@ begin;
 rollback;
 -- detection of relation type change (a table is now a sequence!)
 begin;
-  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1';
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   select * from emaj.emaj_verify_all();
                                                                 emaj_verify_all                                                                
 -----------------------------------------------------------------------------------------------------------------------------------------------
@@ -1438,7 +1438,7 @@ begin;
   drop function emaj.myschema1_mytbl1_log_fnct() cascade;
   drop table emaj.myschema1_mytbl1_log;
   alter table myschema1.mytbl1 add column newcol int;
-  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1';
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   alter table "phil's schema3"."myTbl2\" set with oids;
   select * from emaj.emaj_verify_all();
@@ -1469,13 +1469,13 @@ begin;
   savepoint sp1;
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 141 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 142 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(array[v_groupName], true)"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 27 at PERFORM
   rollback to savepoint sp1;
     select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 141 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 142 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -1523,7 +1523,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 81 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 82 at RAISE
 SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
   rollback to savepoint sp1;
@@ -1566,7 +1566,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 94 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 95 at RAISE
 SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
   rollback to savepoint sp1;
@@ -1605,7 +1605,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 104 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 105 at RAISE
 SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
   rollback to savepoint sp1;
