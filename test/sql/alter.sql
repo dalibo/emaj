@@ -74,6 +74,7 @@ rollback;
 
 -- should be OK
 -- nothing to change
+select emaj.emaj_alter_group('emptyGroup');
 select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable,
        group_creation_time_id, group_last_alter_time_id, group_comment
  from emaj.emaj_group where group_name = 'myGroup1';

@@ -364,7 +364,8 @@ select col20, col21 from myschema1.myTbl2b order by col20;
 -----------------------------
 -- rollback an empty group
 -----------------------------
-select emaj.emaj_rollback_group('emptyGroup','MarkInit');
+select emaj.emaj_rollback_group('emptyGroup','EGM4');
+select emaj.emaj_logged_rollback_group('emptyGroup','EGM3');
 
 -----------------------------
 -- test use of partitionned tables

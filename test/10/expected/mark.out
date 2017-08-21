@@ -496,6 +496,12 @@ select emaj.emaj_get_previous_mark_group('myGroup2','SM1');
  Mark2
 (1 row)
 
+select emaj.emaj_get_previous_mark_group('emptyGroup','SM1');
+ emaj_get_previous_mark_group 
+------------------------------
+ MarkInit
+(1 row)
+
 select coalesce(emaj.emaj_get_previous_mark_group('myGroup2','Mark2'),'No previous mark');
      coalesce     
 ------------------
@@ -784,7 +790,7 @@ select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark w
  myGroup1   | SM3       | 
 (1 row)
 
-select emaj.emaj_delete_mark_group('emptyGroup','EMAJ_LAST_MARK');
+select emaj.emaj_delete_mark_group('emptyGroup','MarkInit');
  emaj_delete_mark_group 
 ------------------------
                       1
@@ -844,6 +850,24 @@ select emaj.emaj_delete_before_mark_group('myGroup1','SM3');
 (1 row)
 
 select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_delete_before_mark_group 
+-------------------------------
+                             0
+(1 row)
+
+select emaj.emaj_set_mark_group('emptyGroup','EGM3');
+ emaj_set_mark_group 
+---------------------
+                   0
+(1 row)
+
+select emaj.emaj_set_mark_group('emptyGroup','EGM4');
+ emaj_set_mark_group 
+---------------------
+                   0
+(1 row)
+
+select emaj.emaj_delete_before_mark_group('emptyGroup','SM2');
  emaj_delete_before_mark_group 
 -------------------------------
                              0
@@ -915,6 +939,12 @@ select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected f
     2011 | SM3       | myGroup1   | f               | t
 (1 row)
 
+select emaj.emaj_protect_mark_group('emptyGroup','EMAJ_LAST_MARK');
+ emaj_protect_mark_group 
+-------------------------
+                       1
+(1 row)
+
 -- protect an already protected group
 select emaj.emaj_protect_mark_group('myGroup1','SM3');
  emaj_protect_mark_group 
@@ -960,6 +990,12 @@ select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected f
  mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
 ---------+-----------+------------+-----------------+------------------------
     2011 | SM3       | myGroup1   | f               | f
+(1 row)
+
+select emaj.emaj_unprotect_mark_group('emptyGroup','EMAJ_LAST_MARK');
+ emaj_unprotect_mark_group 
+---------------------------
+                         1
 (1 row)
 
 -- protect an already protected group
@@ -1030,15 +1066,17 @@ select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 
 -- check marks state
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |      mark_comment      | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+------------------------+---------------------------+------------------------------
-    2002 | emptyGroup       | MarkInit       |         2002 | f               | f                      |                        |                           | 
-    2011 | myGroup1         | SM3            |         2011 | t               | f                      |                        |                         0 | 
-    2020 | myGroup2         | SM2            |         2015 | t               | f                      | a comment for group #2 |                         0 | 
-    2021 | phil's group#3", | Mark4          |         2016 | f               | f                      |                        |                           | 
-    2022 | myGroup1         | STOP_%         |         2017 | t               | f                      |                        |                         0 | 
-    2023 | myGroup2         | STOP_%         |         2018 | t               | f                      |                        |                         0 | 
-(6 rows)
+ mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+    2011 | myGroup1         | SM3            |         2011 | t               | f                      |                                        |                         0 | 
+    2020 | myGroup2         | SM2            |         2015 | t               | f                      | a comment for group #2                 |                         0 | 
+    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
+    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
+    2024 | myGroup1         | STOP_%         |         2019 | t               | f                      |                                        |                         0 | 
+    2025 | myGroup2         | STOP_%         |         2020 | t               | f                      |                                        |                         0 | 
+(8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
@@ -1058,25 +1096,25 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC          | myschema2_myTbl3_log_seq           |         2015 |             1 | f
  myschema2      | myseq1                             |         2015 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         2015 |             1 | f
- emaj           | phil's schema3_myTbl2\_log_seq     |         2016 |             1 | f
- emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2016 |             1 | f
- phil's schema3 | myTbl2\_col21_seq                  |         2016 |             1 | f
- phil's schema3 | phil's seq\1                       |         2016 |          1000 | f
- emaj           | myschema1_mytbl1_log_seq           |         2017 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |         2017 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |         2017 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         2017 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |         2017 |             1 | f
- myschema1      | mytbl2b_col20_seq                  |         2017 |             1 | f
- myschema1      | myTbl3_col31_seq                   |         2017 |             1 | f
- emaj           | myschema2_mytbl1_log_seq           |         2018 |             1 | f
- emaj           | myschema2_mytbl2_log_seq           |         2018 |             1 | f
- emaj           | myschema2_mytbl4_log_seq           |         2018 |             1 | f
- emaj           | myschema2_mytbl6_log_seq           |         2018 |             1 | f
- emaj           | otherPrefix4mytbl5_log_seq         |         2018 |             1 | f
- emajC          | myschema2_myTbl3_log_seq           |         2018 |             1 | f
- myschema2      | myseq1                             |         2018 |          1000 | f
- myschema2      | myTbl3_col31_seq                   |         2018 |             1 | f
+ emaj           | phil's schema3_myTbl2\_log_seq     |         2018 |             1 | f
+ emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2018 |             1 | f
+ phil's schema3 | myTbl2\_col21_seq                  |         2018 |             1 | f
+ phil's schema3 | phil's seq\1                       |         2018 |          1000 | f
+ emaj           | myschema1_mytbl1_log_seq           |         2019 |             1 | f
+ emaj           | myschema1_mytbl2_log_seq           |         2019 |             1 | f
+ emaj           | myschema1_mytbl4_log_seq           |         2019 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         2019 |             1 | f
+ emajC          | myschema1_myTbl3_log_seq           |         2019 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         2019 |             1 | f
+ myschema1      | myTbl3_col31_seq                   |         2019 |             1 | f
+ emaj           | myschema2_mytbl1_log_seq           |         2020 |             1 | f
+ emaj           | myschema2_mytbl2_log_seq           |         2020 |             1 | f
+ emaj           | myschema2_mytbl4_log_seq           |         2020 |             1 | f
+ emaj           | myschema2_mytbl6_log_seq           |         2020 |             1 | f
+ emaj           | otherPrefix4mytbl5_log_seq         |         2020 |             1 | f
+ emajC          | myschema2_myTbl3_log_seq           |         2020 |             1 | f
+ myschema2      | myseq1                             |         2020 |          1000 | f
+ myschema2      | myTbl3_col31_seq                   |         2020 |             1 | f
 (34 rows)
 
 -----------------------------
@@ -1104,30 +1142,14 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     2016 |                  2 | M
     2017 |                  2 | M
     2018 |                  2 | M
-(19 rows)
+    2019 |                  2 | M
+    2020 |                  2 | M
+(21 rows)
 
 select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
  hist_id |      hist_function       | hist_event |  regexp_replace   |                 regexp_replace                  | hist_user 
 ---------+--------------------------+------------+-------------------+-------------------------------------------------+-----------
-    2012 | START_GROUP              | BEGIN      | emptyGroup        | With log reset                                  | postgres
-    2013 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
-    2014 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
-    2015 | SET_MARK_GROUP           | BEGIN      | emptyGroup        | MarkInit                                        | postgres
-    2016 | SET_MARK_GROUP           | END        | emptyGroup        | MarkInit                                        | postgres
-    2017 | START_GROUP              | END        | emptyGroup        | 0 tables/sequences processed                    | postgres
-    2021 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
-    2022 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    2023 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    2024 | SET_MARK_GROUP           | END        | myGroup1          | SM1                                             | postgres
-    2025 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
-    2026 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    2027 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    2028 | SET_MARK_GROUP           | END        | myGroup2          | SM1                                             | postgres
-    2029 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
-    2030 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    2031 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    2032 | SET_MARK_GROUP           | END        | myGroup2          | phil's mark #1                                  | postgres
     2033 | SET_MARK_GROUP           | BEGIN      | emptyGroup        |                                                 | postgres
     2034 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
     2035 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
@@ -1191,8 +1213,8 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     2107 | DELETE_MARK_GROUP        | END        | myGroup1          | SM2                                             | postgres
     2108 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM1                                             | postgres
     2109 | DELETE_MARK_GROUP        | END        | myGroup1          | SM1                                             | postgres
-    2110 | DELETE_MARK_GROUP        | BEGIN      | emptyGroup        | EMAJ_LAST_MARK                                  | postgres
-    2111 | DELETE_MARK_GROUP        | END        | emptyGroup        | SM2                                             | postgres
+    2110 | DELETE_MARK_GROUP        | BEGIN      | emptyGroup        | MarkInit                                        | postgres
+    2111 | DELETE_MARK_GROUP        | END        | emptyGroup        | MarkInit                                        | postgres
     2112 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                      | postgres
     2113 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                      | postgres
     2114 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
@@ -1212,32 +1234,44 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     2132 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
     2133 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
     2134 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
-    2135 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
-    2136 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
-    2137 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
-    2138 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
-    2139 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
-    2140 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
-    2141 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
-    2142 | PURGE_HISTORY            |            |                   | 192 emaj_hist rows deleted                      | postgres
-    2143 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
-    2144 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    2145 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres
-    2146 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    2147 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 0                             | postgres
-    2148 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    2149 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    2150 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    2151 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    2152 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
-    2153 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
-    2154 | STOP_GROUP               | END        | myGroup1          | 7 tables/sequences processed                    | postgres
-    2155 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    2156 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    2157 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    2158 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
-    2159 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
-    2160 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
-    2163 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark STOP_% ; status 0                          | postgres
-(129 rows)
+    2135 | SET_MARK_GROUP           | BEGIN      | emptyGroup        |                                                 | postgres
+    2136 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
+    2137 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
+    2138 | SET_MARK_GROUP           | END        | emptyGroup        | EGM3                                            | postgres
+    2139 | SET_MARK_GROUP           | BEGIN      | emptyGroup        |                                                 | postgres
+    2140 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
+    2141 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
+    2142 | SET_MARK_GROUP           | END        | emptyGroup        | EGM4                                            | postgres
+    2143 | DELETE_BEFORE_MARK_GROUP | BEGIN      | emptyGroup        | SM2                                             | postgres
+    2144 | DELETE_BEFORE_MARK_GROUP | END        | emptyGroup        | 0 marks deleted ; SM2 is now the initial mark   | postgres
+    2145 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
+    2146 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
+    2147 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
+    2148 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
+    2149 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
+    2150 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
+    2151 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
+    2152 | PURGE_HISTORY            |            |                   | 210 emaj_hist rows deleted                      | postgres
+    2153 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
+    2154 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    2155 | PROTECT_MARK_GROUP       |            | emptyGroup        | Mark EGM4 ; status 1                            | postgres
+    2156 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres
+    2157 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    2158 | UNPROTECT_MARK_GROUP     |            | emptyGroup        | Mark EGM4 ; status 1                            | postgres
+    2159 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 0                             | postgres
+    2160 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    2161 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    2162 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    2163 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    2164 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
+    2165 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
+    2166 | STOP_GROUP               | END        | myGroup1          | 7 tables/sequences processed                    | postgres
+    2167 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    2168 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    2169 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    2170 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
+    2171 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
+    2172 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
+    2175 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark STOP_% ; status 0                          | postgres
+(123 rows)
 

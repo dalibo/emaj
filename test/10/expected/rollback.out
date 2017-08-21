@@ -762,22 +762,24 @@ select emaj.emaj_set_mark_group('myGroup1','Mark12');
 (1 row)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    2002 | emptyGroup       | MarkInit       |         2002 | f               | f                      |              |                           | 
-    2021 | phil's group#3", | Mark4          |         2016 | f               | f                      |              |                           | 
-    3029 | myGroup1         | Mark11         |         3029 | f               | f                      |              |                        27 | 
-    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |              |                           | 
-    3031 | myGroup1         | Mark12         |         3031 | f               | f                      |              |                           | 
-(5 rows)
+ mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
+    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
+    3029 | myGroup1         | Mark11         |         3029 | f               | f                      |                                        |                        27 | 
+    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |                                        |                           | 
+    3031 | myGroup1         | Mark12         |         3031 | f               | f                      |                                        |                           | 
+(7 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+------------------------------------+--------------+---------------+----------------
- emaj           | phil's schema3_myTbl2\_log_seq     |         2016 |             1 | f
- emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2016 |             1 | f
- phil's schema3 | myTbl2\_col21_seq                  |         2016 |             1 | f
- phil's schema3 | phil's seq\1                       |         2016 |          1000 | f
+ emaj           | phil's schema3_myTbl2\_log_seq     |         2018 |             1 | f
+ emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2018 |             1 | f
+ phil's schema3 | myTbl2\_col21_seq                  |         2018 |             1 | f
+ phil's schema3 | phil's seq\1                       |         2018 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3029 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |         3029 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |         3029 |             1 | f
@@ -826,23 +828,25 @@ select emaj.emaj_set_mark_group('myGroup1','Mark13');
 (1 row)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    2002 | emptyGroup       | MarkInit       |         2002 | f               | f                      |              |                           | 
-    2021 | phil's group#3", | Mark4          |         2016 | f               | f                      |              |                           | 
-    3029 | myGroup1         | Mark11         |         3029 | f               | f                      |              |                        27 | 
-    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |              |                           | 
-    3031 | myGroup1         | Mark12         |         3031 | f               | f                      |              |                        12 | 
-    3032 | myGroup1         | Mark13         |         3032 | f               | f                      |              |                           | 
-(6 rows)
+ mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
+    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
+    3029 | myGroup1         | Mark11         |         3029 | f               | f                      |                                        |                        27 | 
+    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |                                        |                           | 
+    3031 | myGroup1         | Mark12         |         3031 | f               | f                      |                                        |                        12 | 
+    3032 | myGroup1         | Mark13         |         3032 | f               | f                      |                                        |                           | 
+(8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+------------------------------------+--------------+---------------+----------------
- emaj           | phil's schema3_myTbl2\_log_seq     |         2016 |             1 | f
- emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2016 |             1 | f
- phil's schema3 | myTbl2\_col21_seq                  |         2016 |             1 | f
- phil's schema3 | phil's seq\1                       |         2016 |          1000 | f
+ emaj           | phil's schema3_myTbl2\_log_seq     |         2018 |             1 | f
+ emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2018 |             1 | f
+ phil's schema3 | myTbl2\_col21_seq                  |         2018 |             1 | f
+ phil's schema3 | phil's seq\1                       |         2018 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3029 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |         3029 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |         3029 |             1 | f
@@ -955,22 +959,24 @@ select emaj.emaj_rollback_group('myGroup1','Mark12');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    2002 | emptyGroup       | MarkInit       |         2002 | f               | f                      |              |                           | 
-    2021 | phil's group#3", | Mark4          |         2016 | f               | f                      |              |                           | 
-    3029 | myGroup1         | Mark11         |         3029 | f               | f                      |              |                        27 | 
-    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |              |                           | 
-    3031 | myGroup1         | Mark12         |         3031 | f               | f                      |              |                           | 
-(5 rows)
+ mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
+    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
+    3029 | myGroup1         | Mark11         |         3029 | f               | f                      |                                        |                        27 | 
+    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |                                        |                           | 
+    3031 | myGroup1         | Mark12         |         3031 | f               | f                      |                                        |                           | 
+(7 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+------------------------------------+--------------+---------------+----------------
- emaj           | phil's schema3_myTbl2\_log_seq     |         2016 |             1 | f
- emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2016 |             1 | f
- phil's schema3 | myTbl2\_col21_seq                  |         2016 |             1 | f
- phil's schema3 | phil's seq\1                       |         2016 |          1000 | f
+ emaj           | phil's schema3_myTbl2\_log_seq     |         2018 |             1 | f
+ emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2018 |             1 | f
+ phil's schema3 | myTbl2\_col21_seq                  |         2018 |             1 | f
+ phil's schema3 | phil's seq\1                       |         2018 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3029 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |         3029 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |         3029 |             1 | f
@@ -1039,22 +1045,24 @@ select emaj.emaj_stop_group('myGroup1');
 
 -- check impact
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    2002 | emptyGroup       | MarkInit       |         2002 | f               | f                      |              |                           | 
-    2021 | phil's group#3", | Mark4          |         2016 | f               | f                      |              |                           | 
-    3029 | myGroup1         | Mark11         |         3029 | t               | f                      |              |                         0 | 
-    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |              |                           | 
-    3033 | myGroup1         | STOP_%         |         3035 | t               | f                      |              |                         0 | 
-(5 rows)
+ mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
+    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
+    3029 | myGroup1         | Mark11         |         3029 | t               | f                      |                                        |                         0 | 
+    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |                                        |                           | 
+    3033 | myGroup1         | STOP_%         |         3035 | t               | f                      |                                        |                         0 | 
+(7 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+------------------------------------+--------------+---------------+----------------
- emaj           | phil's schema3_myTbl2\_log_seq     |         2016 |             1 | f
- emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2016 |             1 | f
- phil's schema3 | myTbl2\_col21_seq                  |         2016 |             1 | f
- phil's schema3 | phil's seq\1                       |         2016 |          1000 | f
+ emaj           | phil's schema3_myTbl2\_log_seq     |         2018 |             1 | f
+ emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2018 |             1 | f
+ phil's schema3 | myTbl2\_col21_seq                  |         2018 |             1 | f
+ phil's schema3 | phil's seq\1                       |         2018 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3029 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |         3029 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |         3029 |             1 | f
@@ -1218,23 +1226,25 @@ select emaj.emaj_set_mark_group('myGroup1','Mark13');
 (1 row)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    2002 | emptyGroup       | MarkInit       |         2002 | f               | f                      |              |                           | 
-    2021 | phil's group#3", | Mark4          |         2016 | f               | f                      |              |                           | 
-    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |              |                           | 
-    3034 | myGroup1         | Mark11         |         3036 | f               | f                      |              |                        19 | 
-    3035 | myGroup1         | Mark12         |         3037 | f               | f                      |              |                        11 | 
-    3036 | myGroup1         | Mark13         |         3038 | f               | f                      |              |                           | 
-(6 rows)
+ mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
+    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
+    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |                                        |                           | 
+    3034 | myGroup1         | Mark11         |         3036 | f               | f                      |                                        |                        19 | 
+    3035 | myGroup1         | Mark12         |         3037 | f               | f                      |                                        |                        11 | 
+    3036 | myGroup1         | Mark13         |         3038 | f               | f                      |                                        |                           | 
+(8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+------------------------------------+--------------+---------------+----------------
- emaj           | phil's schema3_myTbl2\_log_seq     |         2016 |             1 | f
- emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2016 |             1 | f
- phil's schema3 | myTbl2\_col21_seq                  |         2016 |             1 | f
- phil's schema3 | phil's seq\1                       |         2016 |          1000 | f
+ emaj           | phil's schema3_myTbl2\_log_seq     |         2018 |             1 | f
+ emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2018 |             1 | f
+ phil's schema3 | myTbl2\_col21_seq                  |         2018 |             1 | f
+ phil's schema3 | phil's seq\1                       |         2018 |          1000 | f
  emaj           | myschema2_mytbl1_log_seq           |         3030 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         3030 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |         3030 |             1 | f
@@ -1335,25 +1345,27 @@ select emaj.emaj_logged_rollback_group('myGroup1','Mark12');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    |   regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+---------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    2002 | emptyGroup       | MarkInit            |         2002 | f               | f                      |              |                           | 
-    2021 | phil's group#3", | Mark4               |         2016 | f               | f                      |              |                           | 
-    3030 | myGroup2         | Mark21              |         3030 | f               | f                      |              |                           | 
-    3034 | myGroup1         | Mark11              |         3036 | f               | f                      |              |                        19 | 
-    3035 | myGroup1         | Mark12              |         3037 | f               | f                      |              |                        11 | 
-    3036 | myGroup1         | Mark13              |         3038 | f               | f                      |              |                         0 | 
-    3037 | myGroup1         | RLBK_Mark12_%_START |         3039 | f               | f                      |              |                        11 | 
-    3038 | myGroup1         | RLBK_Mark12_%_DONE  |         3040 | f               | f                      |              |                           | Mark12
-(8 rows)
+ mark_id |    mark_group    |   regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+---------------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+    2006 | emptyGroup       | SM2                 |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+    2021 | emptyGroup       | EGM3                |         2016 | f               | f                      |                                        |                         0 | 
+    2022 | emptyGroup       | EGM4                |         2017 | f               | f                      |                                        |                           | 
+    2023 | phil's group#3", | Mark4               |         2018 | f               | f                      |                                        |                           | 
+    3030 | myGroup2         | Mark21              |         3030 | f               | f                      |                                        |                           | 
+    3034 | myGroup1         | Mark11              |         3036 | f               | f                      |                                        |                        19 | 
+    3035 | myGroup1         | Mark12              |         3037 | f               | f                      |                                        |                        11 | 
+    3036 | myGroup1         | Mark13              |         3038 | f               | f                      |                                        |                         0 | 
+    3037 | myGroup1         | RLBK_Mark12_%_START |         3039 | f               | f                      |                                        |                        11 | 
+    3038 | myGroup1         | RLBK_Mark12_%_DONE  |         3040 | f               | f                      |                                        |                           | Mark12
+(10 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+------------------------------------+--------------+---------------+----------------
- emaj           | phil's schema3_myTbl2\_log_seq     |         2016 |             1 | f
- emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2016 |             1 | f
- phil's schema3 | myTbl2\_col21_seq                  |         2016 |             1 | f
- phil's schema3 | phil's seq\1                       |         2016 |          1000 | f
+ emaj           | phil's schema3_myTbl2\_log_seq     |         2018 |             1 | f
+ emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2018 |             1 | f
+ phil's schema3 | myTbl2\_col21_seq                  |         2018 |             1 | f
+ phil's schema3 | phil's seq\1                       |         2018 |          1000 | f
  emaj           | myschema2_mytbl1_log_seq           |         3030 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         3030 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |         3030 |             1 | f
@@ -1457,27 +1469,29 @@ select emaj.emaj_logged_rollback_group('myGroup1','Mark11');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    |   regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+---------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    2002 | emptyGroup       | MarkInit            |         2002 | f               | f                      |              |                           | 
-    2021 | phil's group#3", | Mark4               |         2016 | f               | f                      |              |                           | 
-    3030 | myGroup2         | Mark21              |         3030 | f               | f                      |              |                           | 
-    3034 | myGroup1         | Mark11              |         3036 | f               | f                      |              |                        19 | 
-    3035 | myGroup1         | Mark12              |         3037 | f               | f                      |              |                        11 | 
-    3036 | myGroup1         | Mark13              |         3038 | f               | f                      |              |                         0 | 
-    3037 | myGroup1         | RLBK_Mark12_%_START |         3039 | f               | f                      |              |                        11 | 
-    3038 | myGroup1         | RLBK_Mark12_%_DONE  |         3040 | f               | f                      |              |                         0 | Mark12
-    3039 | myGroup1         | RLBK_Mark11_%_START |         3041 | f               | f                      |              |                        14 | 
-    3040 | myGroup1         | RLBK_Mark11_%_DONE  |         3042 | f               | f                      |              |                           | Mark11
-(10 rows)
+ mark_id |    mark_group    |   regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+---------------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+    2006 | emptyGroup       | SM2                 |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+    2021 | emptyGroup       | EGM3                |         2016 | f               | f                      |                                        |                         0 | 
+    2022 | emptyGroup       | EGM4                |         2017 | f               | f                      |                                        |                           | 
+    2023 | phil's group#3", | Mark4               |         2018 | f               | f                      |                                        |                           | 
+    3030 | myGroup2         | Mark21              |         3030 | f               | f                      |                                        |                           | 
+    3034 | myGroup1         | Mark11              |         3036 | f               | f                      |                                        |                        19 | 
+    3035 | myGroup1         | Mark12              |         3037 | f               | f                      |                                        |                        11 | 
+    3036 | myGroup1         | Mark13              |         3038 | f               | f                      |                                        |                         0 | 
+    3037 | myGroup1         | RLBK_Mark12_%_START |         3039 | f               | f                      |                                        |                        11 | 
+    3038 | myGroup1         | RLBK_Mark12_%_DONE  |         3040 | f               | f                      |                                        |                         0 | Mark12
+    3039 | myGroup1         | RLBK_Mark11_%_START |         3041 | f               | f                      |                                        |                        14 | 
+    3040 | myGroup1         | RLBK_Mark11_%_DONE  |         3042 | f               | f                      |                                        |                           | Mark11
+(12 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+------------------------------------+--------------+---------------+----------------
- emaj           | phil's schema3_myTbl2\_log_seq     |         2016 |             1 | f
- emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2016 |             1 | f
- phil's schema3 | myTbl2\_col21_seq                  |         2016 |             1 | f
- phil's schema3 | phil's seq\1                       |         2016 |          1000 | f
+ emaj           | phil's schema3_myTbl2\_log_seq     |         2018 |             1 | f
+ emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2018 |             1 | f
+ phil's schema3 | myTbl2\_col21_seq                  |         2018 |             1 | f
+ phil's schema3 | phil's seq\1                       |         2018 |          1000 | f
  emaj           | myschema2_mytbl1_log_seq           |         3030 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         3030 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |         3030 |             1 | f
@@ -1621,23 +1635,25 @@ select emaj.emaj_rollback_group('myGroup1','Mark13');
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    2002 | emptyGroup       | MarkInit       |         2002 | f               | f                      |              |                           | 
-    2021 | phil's group#3", | Mark4          |         2016 | f               | f                      |              |                           | 
-    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |              |                           | 
-    3034 | myGroup1         | Mark11         |         3036 | f               | f                      |              |                        19 | 
-    3035 | myGroup1         | Mark12         |         3037 | f               | f                      |              |                        11 | 
-    3036 | myGroup1         | Mark13         |         3038 | f               | f                      |              |                           | 
-(6 rows)
+ mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
+    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
+    3030 | myGroup2         | Mark21         |         3030 | f               | f                      |                                        |                           | 
+    3034 | myGroup1         | Mark11         |         3036 | f               | f                      |                                        |                        19 | 
+    3035 | myGroup1         | Mark12         |         3037 | f               | f                      |                                        |                        11 | 
+    3036 | myGroup1         | Mark13         |         3038 | f               | f                      |                                        |                           | 
+(8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |             sequ_name              | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+------------------------------------+--------------+---------------+----------------
- emaj           | phil's schema3_myTbl2\_log_seq     |         2016 |             1 | f
- emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2016 |             1 | f
- phil's schema3 | myTbl2\_col21_seq                  |         2016 |             1 | f
- phil's schema3 | phil's seq\1                       |         2016 |          1000 | f
+ emaj           | phil's schema3_myTbl2\_log_seq     |         2018 |             1 | f
+ emaj #'3       | phil's schema3_phil's tbl1_log_seq |         2018 |             1 | f
+ phil's schema3 | myTbl2\_col21_seq                  |         2018 |             1 | f
+ phil's schema3 | phil's seq\1                       |         2018 |          1000 | f
  emaj           | myschema2_mytbl1_log_seq           |         3030 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         3030 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |         3030 |             1 | f
@@ -1748,10 +1764,16 @@ select col20, col21 from myschema1.myTbl2b order by col20;
 -----------------------------
 -- rollback an empty group
 -----------------------------
-select emaj.emaj_rollback_group('emptyGroup','MarkInit');
+select emaj.emaj_rollback_group('emptyGroup','EGM4');
  emaj_rollback_group 
 ---------------------
                    0
+(1 row)
+
+select emaj.emaj_logged_rollback_group('emptyGroup','EGM3');
+ emaj_logged_rollback_group 
+----------------------------
+                          0
 (1 row)
 
 -----------------------------
@@ -1834,7 +1856,7 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
  rlbk_id | rlbk_groups |   rlbk_mark    | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status |                         rlbk_msg                          
 ---------+-------------+----------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+-----------------------------------------------------------
-      19 | {myGroup4}  | myGroup4_start |         3049 | f              | t                           |               1 |             5 |                0 |                 5 | COMPLETED   | Completed: 5 tables and 0 sequences effectively processed
+      20 | {myGroup4}  | myGroup4_start |         3051 | f              | t                           |               1 |             5 |                0 |                 5 | COMPLETED   | Completed: 5 tables and 0 sequences effectively processed
 (1 row)
 
 -----------------------------
@@ -2114,9 +2136,10 @@ select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id,
   from emaj.emaj_get_consolidable_rollbacks();
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id |    regexp_replace    | cons_end_rlbk_mark_id | cons_rows | cons_marks 
 ------------+----------------------------+--------------------------+----------------------+-----------------------+-----------+------------
- myGroup1   | Conso_M1                   |                     3045 | RLBK_Conso_M1_%_DONE |                  3047 |         0 |          0
- myGroup1   | Renamed_conso_M2           |                     3048 | Renamed_last_mark    |                  3051 |        32 |          2
-(2 rows)
+ emptyGroup | EGM3                       |                     2021 | RLBK_EGM3_%_DONE     |                  3042 |           |          2
+ myGroup1   | Conso_M1                   |                     3047 | RLBK_Conso_M1_%_DONE |                  3049 |         0 |          0
+ myGroup1   | Renamed_conso_M2           |                     3050 | Renamed_last_mark    |                  3053 |        32 |          2
+(3 rows)
 
 select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
  emaj_consolidate_rollback_group 
@@ -2129,9 +2152,10 @@ select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id,
   from emaj.emaj_get_consolidable_rollbacks();
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id |    regexp_replace    | cons_end_rlbk_mark_id | cons_rows | cons_marks 
 ------------+----------------------------+--------------------------+----------------------+-----------------------+-----------+------------
- myGroup1   | Conso_M1                   |                     3045 | RLBK_Conso_M1_%_DONE |                  3047 |         0 |          0
- myGroup1   | Renamed_conso_M2           |                     3048 | Renamed_last_mark    |                  3051 |         0 |          0
-(2 rows)
+ emptyGroup | EGM3                       |                     2021 | RLBK_EGM3_%_DONE     |                  3042 |           |          2
+ myGroup1   | Conso_M1                   |                     3047 | RLBK_Conso_M1_%_DONE |                  3049 |         0 |          0
+ myGroup1   | Renamed_conso_M2           |                     3050 | Renamed_last_mark    |                  3053 |         0 |          0
+(3 rows)
 
 -- consolidate a rollback already consolidated
 select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
@@ -2146,10 +2170,10 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
     3034 | myGroup1   | Mark11               |         3036 | f               | f                      |              |                        19 | 
     3035 | myGroup1   | Mark12               |         3037 | f               | f                      |              |                        11 | 
     3036 | myGroup1   | Mark13               |         3038 | f               | f                      |              |                         0 | 
-    3045 | myGroup1   | Conso_M1             |         3050 | f               | f                      |              |                         0 | 
-    3047 | myGroup1   | RLBK_Conso_M1_%_DONE |         3052 | f               | f                      |              |                         0 | Conso_M1
-    3048 | myGroup1   | Renamed_conso_M2     |         3053 | f               | f                      |              |                         0 | 
-    3051 | myGroup1   | Renamed_last_mark    |         3056 | f               | f                      |              |                           | Renamed_conso_M2
+    3047 | myGroup1   | Conso_M1             |         3052 | f               | f                      |              |                         0 | 
+    3049 | myGroup1   | RLBK_Conso_M1_%_DONE |         3054 | f               | f                      |              |                         0 | Conso_M1
+    3050 | myGroup1   | Renamed_conso_M2     |         3055 | f               | f                      |              |                         0 | 
+    3053 | myGroup1   | Renamed_last_mark    |         3058 | f               | f                      |              |                           | Renamed_conso_M2
 (7 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_time_id, sequ_schema, sequ_name;
@@ -2170,37 +2194,37 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj        | myschema1_mytbl4_log_seq  |         3038 |             1 | t
  emajb       | myschema1_mytbl2b_log_seq |         3038 |             2 | t
  emajC       | myschema1_myTbl3_log_seq  |         3038 |            10 | t
- emaj        | myschema1_mytbl1_log_seq  |         3050 |            25 | t
- emaj        | myschema1_mytbl2_log_seq  |         3050 |             4 | t
- emaj        | myschema1_mytbl4_log_seq  |         3050 |             2 | t
- emajb       | myschema1_mytbl2b_log_seq |         3050 |             4 | t
- emajC       | myschema1_myTbl3_log_seq  |         3050 |            20 | t
  emaj        | myschema1_mytbl1_log_seq  |         3052 |            25 | t
  emaj        | myschema1_mytbl2_log_seq  |         3052 |             4 | t
  emaj        | myschema1_mytbl4_log_seq  |         3052 |             2 | t
  emajb       | myschema1_mytbl2b_log_seq |         3052 |             4 | t
  emajC       | myschema1_myTbl3_log_seq  |         3052 |            20 | t
- emaj        | myschema1_mytbl1_log_seq  |         3053 |            25 | t
- emaj        | myschema1_mytbl2_log_seq  |         3053 |             4 | t
- emaj        | myschema1_mytbl4_log_seq  |         3053 |             2 | t
- emajb       | myschema1_mytbl2b_log_seq |         3053 |             4 | t
- emajC       | myschema1_myTbl3_log_seq  |         3053 |            20 | t
- emaj        | myschema1_mytbl1_log_seq  |         3056 |            49 | t
- emaj        | myschema1_mytbl2_log_seq  |         3056 |             7 | t
- emaj        | myschema1_mytbl4_log_seq  |         3056 |             2 | t
- emajb       | myschema1_mytbl2b_log_seq |         3056 |             9 | t
- emajC       | myschema1_myTbl3_log_seq  |         3056 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq  |         3054 |            25 | t
+ emaj        | myschema1_mytbl2_log_seq  |         3054 |             4 | t
+ emaj        | myschema1_mytbl4_log_seq  |         3054 |             2 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3054 |             4 | t
+ emajC       | myschema1_myTbl3_log_seq  |         3054 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq  |         3055 |            25 | t
+ emaj        | myschema1_mytbl2_log_seq  |         3055 |             4 | t
+ emaj        | myschema1_mytbl4_log_seq  |         3055 |             2 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3055 |             4 | t
+ emajC       | myschema1_myTbl3_log_seq  |         3055 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq  |         3058 |            49 | t
+ emaj        | myschema1_mytbl2_log_seq  |         3058 |             7 | t
+ emaj        | myschema1_mytbl4_log_seq  |         3058 |             2 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3058 |             9 | t
+ emajC       | myschema1_myTbl3_log_seq  |         3058 |            20 | t
 (35 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
  myschema1   | mytbl1     |               3038 |             3043 |             10
- myschema1   | mytbl1     |               3053 |             3056 |             24
+ myschema1   | mytbl1     |               3055 |             3058 |             24
  myschema1   | mytbl2     |               3038 |             3043 |              2
- myschema1   | mytbl2     |               3053 |             3056 |              3
+ myschema1   | mytbl2     |               3055 |             3058 |              3
  myschema1   | mytbl2b    |               3038 |             3043 |              2
- myschema1   | mytbl2b    |               3053 |             3056 |              5
+ myschema1   | mytbl2b    |               3055 |             3058 |              5
  myschema1   | myTbl3     |               3038 |             3043 |             10
  myschema1   | mytbl4     |               3038 |             3043 |              1
 (8 rows)
@@ -2227,9 +2251,9 @@ select rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session from emaj.emaj_
   where rlbk_status in ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED') order by rlbk_id;
  rlbk_id | rlbk_status | rlbk_begin_hist_id | rlbk_nb_session 
 ---------+-------------+--------------------+-----------------
-      21 | COMPLETED   |               3400 |               1
-      22 | COMPLETED   |               3426 |               1
-      23 | COMPLETED   |               3441 |               1
+      22 | COMPLETED   |               3411 |               1
+      23 | COMPLETED   |               3437 |               1
+      24 | COMPLETED   |               3452 |               1
 (3 rows)
 
 select emaj.emaj_cleanup_rollback_state();
@@ -2261,14 +2285,15 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
       14 | {myGroup1}          | Mark12         |         3039 | t              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |               3253 | t                   | [ts]         | Completed: 2 tables and 2 sequences effectively processed
       15 | {myGroup1}          | Mark11         |         3041 | t              | f                           |               1 |             5 |                2 |                 5 | COMMITTED   |               3269 | t                   | [ts]         | Completed: 5 tables and 2 sequences effectively processed
       16 | {myGroup1}          | Mark13         |         3043 | f              | f                           |               1 |             5 |                2 |                 5 | COMMITTED   |               3292 | t                   | [ts]         | Completed: 5 tables and 2 sequences effectively processed
-      17 | {emptyGroup}        | MarkInit       |         3044 | f              | f                           |               1 |             0 |                0 |                 0 | COMMITTED   |               3314 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
-      18 | {myGroup4}          | mark1          |         3047 | t              | f                           |               1 |             5 |                0 |                 4 | COMMITTED   |               3333 | t                   | [ts]         | Completed: 4 tables and 0 sequences effectively processed
-      19 | {myGroup4}          | myGroup4_start |         3049 | f              | t                           |               1 |             5 |                0 |                 5 | COMMITTED   |               3351 | t                   | [ts]         | Completed: 5 tables and 0 sequences effectively processed
-      20 | {myGroup1}          | Conso_M1       |         3051 | t              | f                           |               1 |             5 |                2 |                 0 | COMMITTED   |               3377 | t                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
-      21 | {myGroup1}          | Conso_M2       |         3055 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |               3400 | t                   | [ts]         | Completed: 3 tables and 2 sequences effectively processed
-      22 | {myGroup1}          | Conso_M1       |         3057 | f              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |               3426 | t                   | [ts]         | Completed: 2 tables and 2 sequences effectively processed
-      23 | {myGroup4}          | myGroup4_start |         3058 | f              | f                           |               1 |             5 |                0 |                 0 | ABORTED     |               3441 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
-(21 rows)
+      17 | {emptyGroup}        | EGM4           |         3044 | f              | f                           |               1 |             0 |                0 |                 0 | COMMITTED   |               3314 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
+      18 | {emptyGroup}        | EGM3           |         3045 | t              | f                           |               1 |             0 |                0 |                 0 | COMMITTED   |               3320 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
+      19 | {myGroup4}          | mark1          |         3049 | t              | f                           |               1 |             5 |                0 |                 4 | COMMITTED   |               3344 | t                   | [ts]         | Completed: 4 tables and 0 sequences effectively processed
+      20 | {myGroup4}          | myGroup4_start |         3051 | f              | t                           |               1 |             5 |                0 |                 5 | COMMITTED   |               3362 | t                   | [ts]         | Completed: 5 tables and 0 sequences effectively processed
+      21 | {myGroup1}          | Conso_M1       |         3053 | t              | f                           |               1 |             5 |                2 |                 0 | COMMITTED   |               3388 | t                   | [ts]         | Completed: 0 tables and 2 sequences effectively processed
+      22 | {myGroup1}          | Conso_M2       |         3057 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |               3411 | t                   | [ts]         | Completed: 3 tables and 2 sequences effectively processed
+      23 | {myGroup1}          | Conso_M1       |         3059 | f              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |               3437 | t                   | [ts]         | Completed: 2 tables and 2 sequences effectively processed
+      24 | {myGroup4}          | myGroup4_start |         3060 | f              | f                           |               1 |             5 |                0 |                 0 | ABORTED     |               3452 | t                   | [ts]         | Completed: 0 tables and 0 sequences effectively processed
+(22 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
        case when rlbs_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
@@ -2296,7 +2321,8 @@ select rlbs_rlbk_id, rlbs_session,
            21 |            1 | [ts]
            22 |            1 | [ts]
            23 |            1 | [ts]
-(21 rows)
+           24 |            1 | [ts]
+(22 rows)
 
 select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_session,
        rlbp_fkey_def, rlbp_estimated_quantity, rlbp_estimate_method, rlbp_quantity
@@ -2375,51 +2401,51 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
            16 | ENA_LOG_TRG | myschema1   | myTbl3     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            16 | ENA_LOG_TRG | myschema1   | mytbl4     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
            16 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      24 |                    2 |              
-           18 | RLBK_TABLE  | myschema4   | mypartp2   |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           18 | RLBK_TABLE  | myschema4   | mytblc1    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           18 | RLBK_TABLE  | myschema4   | mytblc2    |                   |                 3 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           18 | RLBK_TABLE  | myschema4   | mytblm     |                   |                 4 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           18 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       4 |                    2 |              
-           19 | DIS_LOG_TRG | myschema4   | mypartp1   |                   |                 5 |            1 |                                                                                                                                         |                         |                    2 |              
-           19 | DIS_LOG_TRG | myschema4   | mypartp2   |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           19 | DIS_LOG_TRG | myschema4   | mytblc1    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           19 | DIS_LOG_TRG | myschema4   | mytblc2    |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
-           19 | DIS_LOG_TRG | myschema4   | mytblm     |                   |                 4 |            1 |                                                                                                                                         |                         |                    2 |              
-           19 | RLBK_TABLE  | myschema4   | mypartp1   |                   |                 5 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           19 | RLBK_TABLE  | myschema4   | mypartp2   |                   |                 1 |            1 |                                                                                                                                         |                       5 |                    1 |             2
-           19 | RLBK_TABLE  | myschema4   | mytblc1    |                   |                 2 |            1 |                                                                                                                                         |                       3 |                    1 |             1
-           19 | RLBK_TABLE  | myschema4   | mytblc2    |                   |                 3 |            1 |                                                                                                                                         |                       3 |                    1 |             1
-           19 | RLBK_TABLE  | myschema4   | mytblm     |                   |                 4 |            1 |                                                                                                                                         |                       3 |                    1 |             1
-           19 | DELETE_LOG  | myschema4   | mypartp1   |                   |                 5 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           19 | DELETE_LOG  | myschema4   | mypartp2   |                   |                 1 |            1 |                                                                                                                                         |                       5 |                    3 |             6
-           19 | DELETE_LOG  | myschema4   | mytblc1    |                   |                 2 |            1 |                                                                                                                                         |                       3 |                    3 |             3
-           19 | DELETE_LOG  | myschema4   | mytblc2    |                   |                 3 |            1 |                                                                                                                                         |                       3 |                    3 |             3
-           19 | DELETE_LOG  | myschema4   | mytblm     |                   |                 4 |            1 |                                                                                                                                         |                       3 |                    3 |             3
-           19 | ENA_LOG_TRG | myschema4   | mypartp1   |                   |                 5 |            1 |                                                                                                                                         |                         |                    2 |              
-           19 | ENA_LOG_TRG | myschema4   | mypartp2   |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           19 | ENA_LOG_TRG | myschema4   | mytblc1    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           19 | ENA_LOG_TRG | myschema4   | mytblc2    |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
-           19 | ENA_LOG_TRG | myschema4   | mytblm     |                   |                 4 |            1 |                                                                                                                                         |                         |                    2 |              
-           19 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      20 |                    2 |              
-           21 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           21 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           21 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                      13 |                    1 |            12
-           21 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       2 |                    1 |             1
-           21 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           21 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                       2 |                    2 |              
-           21 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 1 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
-           21 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       7 |                    2 |              
-           22 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           22 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           19 | RLBK_TABLE  | myschema4   | mypartp2   |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    3 |             1
+           19 | RLBK_TABLE  | myschema4   | mytblc1    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    3 |             1
+           19 | RLBK_TABLE  | myschema4   | mytblc2    |                   |                 3 |            1 |                                                                                                                                         |                       1 |                    3 |             1
+           19 | RLBK_TABLE  | myschema4   | mytblm     |                   |                 4 |            1 |                                                                                                                                         |                       1 |                    3 |             1
+           19 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       4 |                    2 |              
+           20 | DIS_LOG_TRG | myschema4   | mypartp1   |                   |                 5 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | DIS_LOG_TRG | myschema4   | mypartp2   |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | DIS_LOG_TRG | myschema4   | mytblc1    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | DIS_LOG_TRG | myschema4   | mytblc2    |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | DIS_LOG_TRG | myschema4   | mytblm     |                   |                 4 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | RLBK_TABLE  | myschema4   | mypartp1   |                   |                 5 |            1 |                                                                                                                                         |                       1 |                    3 |             1
+           20 | RLBK_TABLE  | myschema4   | mypartp2   |                   |                 1 |            1 |                                                                                                                                         |                       5 |                    1 |             2
+           20 | RLBK_TABLE  | myschema4   | mytblc1    |                   |                 2 |            1 |                                                                                                                                         |                       3 |                    1 |             1
+           20 | RLBK_TABLE  | myschema4   | mytblc2    |                   |                 3 |            1 |                                                                                                                                         |                       3 |                    1 |             1
+           20 | RLBK_TABLE  | myschema4   | mytblm     |                   |                 4 |            1 |                                                                                                                                         |                       3 |                    1 |             1
+           20 | DELETE_LOG  | myschema4   | mypartp1   |                   |                 5 |            1 |                                                                                                                                         |                       1 |                    3 |             1
+           20 | DELETE_LOG  | myschema4   | mypartp2   |                   |                 1 |            1 |                                                                                                                                         |                       5 |                    3 |             6
+           20 | DELETE_LOG  | myschema4   | mytblc1    |                   |                 2 |            1 |                                                                                                                                         |                       3 |                    3 |             3
+           20 | DELETE_LOG  | myschema4   | mytblc2    |                   |                 3 |            1 |                                                                                                                                         |                       3 |                    3 |             3
+           20 | DELETE_LOG  | myschema4   | mytblm     |                   |                 4 |            1 |                                                                                                                                         |                       3 |                    3 |             3
+           20 | ENA_LOG_TRG | myschema4   | mypartp1   |                   |                 5 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | ENA_LOG_TRG | myschema4   | mypartp2   |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | ENA_LOG_TRG | myschema4   | mytblc1    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | ENA_LOG_TRG | myschema4   | mytblc2    |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | ENA_LOG_TRG | myschema4   | mytblm     |                   |                 4 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      20 |                    2 |              
+           22 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
            22 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           22 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           22 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           22 | DELETE_LOG  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           22 | DELETE_LOG  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             2
-           22 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                       1 |                    2 |              
-           22 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           22 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           22 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      10 |                    2 |              
+           22 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                      13 |                    1 |            12
+           22 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       2 |                    1 |             1
+           22 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
+           22 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                       2 |                    2 |              
+           22 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 1 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
+           22 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       7 |                    2 |              
+           23 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           23 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           23 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           23 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           23 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           23 | DELETE_LOG  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           23 | DELETE_LOG  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             2
+           23 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                       1 |                    2 |              
+           23 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           23 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           23 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      10 |                    2 |              
 (117 rows)
 
 select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
@@ -2484,41 +2510,41 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |           16 |             0
  ENA_LOG_TRG |             |            |                   |           16 |             5
  CTRL+DBLINK |             |            |                   |           16 |            24
- RLBK_TABLE  | myschema4   | mypartp2   |                   |           18 |             1
- RLBK_TABLE  | myschema4   | mytblc1    |                   |           18 |             1
- RLBK_TABLE  | myschema4   | mytblc2    |                   |           18 |             1
- RLBK_TABLE  | myschema4   | mytblm     |                   |           18 |             1
- CTRL+DBLINK |             |            |                   |           18 |             4
- DIS_LOG_TRG |             |            |                   |           19 |             5
- RLBK_TABLE  | myschema4   | mypartp1   |                   |           19 |             1
- RLBK_TABLE  | myschema4   | mypartp2   |                   |           19 |             5
- RLBK_TABLE  | myschema4   | mytblc1    |                   |           19 |             3
- RLBK_TABLE  | myschema4   | mytblc2    |                   |           19 |             3
- RLBK_TABLE  | myschema4   | mytblm     |                   |           19 |             3
- DELETE_LOG  | myschema4   | mypartp1   |                   |           19 |             1
- DELETE_LOG  | myschema4   | mypartp2   |                   |           19 |             5
- DELETE_LOG  | myschema4   | mytblc1    |                   |           19 |             3
- DELETE_LOG  | myschema4   | mytblc2    |                   |           19 |             3
- DELETE_LOG  | myschema4   | mytblm     |                   |           19 |             3
- ENA_LOG_TRG |             |            |                   |           19 |             5
- CTRL+DBLINK |             |            |                   |           19 |            20
- DROP_FK     |             |            |                   |           21 |             1
- SET_FK_DEF  |             |            |                   |           21 |             1
- RLBK_TABLE  | myschema1   | mytbl1     |                   |           21 |            13
- RLBK_TABLE  | myschema1   | mytbl2     |                   |           21 |             2
- RLBK_TABLE  | myschema1   | mytbl2b    |                   |           21 |             2
- SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |           21 |             2
- ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |           21 |             0
- CTRL+DBLINK |             |            |                   |           21 |             7
- DIS_LOG_TRG |             |            |                   |           22 |             2
+ RLBK_TABLE  | myschema4   | mypartp2   |                   |           19 |             1
+ RLBK_TABLE  | myschema4   | mytblc1    |                   |           19 |             1
+ RLBK_TABLE  | myschema4   | mytblc2    |                   |           19 |             1
+ RLBK_TABLE  | myschema4   | mytblm     |                   |           19 |             1
+ CTRL+DBLINK |             |            |                   |           19 |             4
+ DIS_LOG_TRG |             |            |                   |           20 |             5
+ RLBK_TABLE  | myschema4   | mypartp1   |                   |           20 |             1
+ RLBK_TABLE  | myschema4   | mypartp2   |                   |           20 |             5
+ RLBK_TABLE  | myschema4   | mytblc1    |                   |           20 |             3
+ RLBK_TABLE  | myschema4   | mytblc2    |                   |           20 |             3
+ RLBK_TABLE  | myschema4   | mytblm     |                   |           20 |             3
+ DELETE_LOG  | myschema4   | mypartp1   |                   |           20 |             1
+ DELETE_LOG  | myschema4   | mypartp2   |                   |           20 |             5
+ DELETE_LOG  | myschema4   | mytblc1    |                   |           20 |             3
+ DELETE_LOG  | myschema4   | mytblc2    |                   |           20 |             3
+ DELETE_LOG  | myschema4   | mytblm     |                   |           20 |             3
+ ENA_LOG_TRG |             |            |                   |           20 |             5
+ CTRL+DBLINK |             |            |                   |           20 |            20
+ DROP_FK     |             |            |                   |           22 |             1
  SET_FK_DEF  |             |            |                   |           22 |             1
- RLBK_TABLE  | myschema1   | mytbl2     |                   |           22 |             1
- RLBK_TABLE  | myschema1   | mytbl2b    |                   |           22 |             1
- DELETE_LOG  | myschema1   | mytbl2     |                   |           22 |             1
- DELETE_LOG  | myschema1   | mytbl2b    |                   |           22 |             1
- SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |           22 |             1
- ENA_LOG_TRG |             |            |                   |           22 |             2
- CTRL+DBLINK |             |            |                   |           22 |            10
+ RLBK_TABLE  | myschema1   | mytbl1     |                   |           22 |            13
+ RLBK_TABLE  | myschema1   | mytbl2     |                   |           22 |             2
+ RLBK_TABLE  | myschema1   | mytbl2b    |                   |           22 |             2
+ SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |           22 |             2
+ ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |           22 |             0
+ CTRL+DBLINK |             |            |                   |           22 |             7
+ DIS_LOG_TRG |             |            |                   |           23 |             2
+ SET_FK_DEF  |             |            |                   |           23 |             1
+ RLBK_TABLE  | myschema1   | mytbl2     |                   |           23 |             1
+ RLBK_TABLE  | myschema1   | mytbl2b    |                   |           23 |             1
+ DELETE_LOG  | myschema1   | mytbl2     |                   |           23 |             1
+ DELETE_LOG  | myschema1   | mytbl2b    |                   |           23 |             1
+ SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |           23 |             1
+ ENA_LOG_TRG |             |            |                   |           23 |             2
+ CTRL+DBLINK |             |            |                   |           23 |            10
 (93 rows)
 
 -----------------------------
@@ -2562,21 +2588,23 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     3042 |                 96 | M
     3043 |                 96 | R
     3044 |                 96 | R
-    3045 |                 96 | M
-    3046 |                102 | M
-    3047 |                106 | R
-    3048 |                111 | M
-    3049 |                111 | R
+    3045 |                 96 | R
+    3046 |                 96 | M
+    3047 |                 96 | M
+    3048 |                102 | M
+    3049 |                106 | R
     3050 |                111 | M
     3051 |                111 | R
     3052 |                111 | M
-    3053 |                111 | M
-    3054 |                126 | M
-    3055 |                128 | R
-    3056 |                143 | M
-    3057 |                145 | R
-    3058 |                146 | R
-(49 rows)
+    3053 |                111 | R
+    3054 |                111 | M
+    3055 |                111 | M
+    3056 |                126 | M
+    3057 |                128 | R
+    3058 |                143 | M
+    3059 |                145 | R
+    3060 |                146 | R
+(51 rows)
 
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist where hist_id >= 3000 order by hist_id) as t;
@@ -2837,134 +2865,145 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3311 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
     3312 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 16, 5 tables and 2 sequences effectively processed | postgres
     3313 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3314 | ROLLBACK_GROUP         | BEGIN        | emptyGroup                   | Unlogged rollback to mark MarkInit (timestamp)                 | postgres
+    3314 | ROLLBACK_GROUP         | BEGIN        | emptyGroup                   | Unlogged rollback to mark EGM4 (timestamp)                     | postgres
     3315 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
     3316 | LOCK_GROUP             | BEGIN        | emptyGroup                   | Rollback session #1                                            | postgres
     3317 | LOCK_GROUP             | END          | emptyGroup                   | Rollback session #1: 0 tables locked, 0 deadlock(s)            | postgres
     3318 | ROLLBACK_GROUP         | END          | emptyGroup                   | Rollback_id 17, 0 tables and 0 sequences effectively processed | postgres
     3319 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3320 | START_GROUP            | BEGIN        | myGroup4                     | With log reset                                                 | postgres
-    3321 | LOCK_GROUP             | BEGIN        | myGroup4                     |                                                                | postgres
-    3322 | LOCK_GROUP             | END          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3323 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | myGroup4_start                                                 | postgres
-    3324 | CLEANUP_RLBK_STATE     |              | rollback id 15               | set to COMMITTED                                               | postgres
-    3325 | CLEANUP_RLBK_STATE     |              | rollback id 16               | set to COMMITTED                                               | postgres
-    3326 | CLEANUP_RLBK_STATE     |              | rollback id 17               | set to COMMITTED                                               | postgres
-    3327 | SET_MARK_GROUP         | END          | myGroup4                     | myGroup4_start                                                 | postgres
-    3328 | START_GROUP            | END          | myGroup4                     | 5 tables/sequences processed                                   | postgres
-    3329 | SET_MARK_GROUP         | BEGIN        | myGroup4                     |                                                                | postgres
-    3330 | LOCK_GROUP             | BEGIN        | myGroup4                     |                                                                | postgres
-    3331 | LOCK_GROUP             | END          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3332 | SET_MARK_GROUP         | END          | myGroup4                     | mark1                                                          | postgres
-    3333 | ROLLBACK_GROUP         | BEGIN        | myGroup4                     | Logged rollback to mark mark1 (timestamp)                      | postgres
-    3334 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3335 | LOCK_GROUP             | BEGIN        | myGroup4                     | Rollback session #1                                            | postgres
-    3336 | LOCK_GROUP             | END          | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3337 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | RLBK_mark1_%_START                                             | postgres
-    3338 | SET_MARK_GROUP         | END          | myGroup4                     | RLBK_mark1_%_START                                             | postgres
-    3339 | ROLLBACK_TABLE         | BEGIN        | myschema4.mypartp2           | All log rows with emaj_gid > 102 and <= 106                    | postgres
-    3340 | ROLLBACK_TABLE         | END          | myschema4.mypartp2           | 1 rolled back primary keys                                     | postgres
-    3341 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc1            | All log rows with emaj_gid > 102 and <= 106                    | postgres
-    3342 | ROLLBACK_TABLE         | END          | myschema4.mytblc1            | 1 rolled back primary keys                                     | postgres
-    3343 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc2            | All log rows with emaj_gid > 102 and <= 106                    | postgres
-    3344 | ROLLBACK_TABLE         | END          | myschema4.mytblc2            | 1 rolled back primary keys                                     | postgres
-    3345 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblm             | All log rows with emaj_gid > 102 and <= 106                    | postgres
-    3346 | ROLLBACK_TABLE         | END          | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
-    3347 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
-    3348 | SET_MARK_GROUP         | END          | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
-    3349 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 18, 4 tables and 0 sequences effectively processed | postgres
-    3350 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3351 | ROLLBACK_GROUP         | BEGIN        | myGroup4                     | Unlogged rollback to mark myGroup4_start (timestamp)           | postgres
-    3352 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3353 | LOCK_GROUP             | BEGIN        | myGroup4                     | Rollback session #1                                            | postgres
-    3354 | LOCK_GROUP             | END          | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3355 | ROLLBACK_TABLE         | BEGIN        | myschema4.mypartp2           | All log rows with emaj_gid > 96 and <= 111                     | postgres
-    3356 | ROLLBACK_TABLE         | END          | myschema4.mypartp2           | 2 rolled back primary keys                                     | postgres
-    3357 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc1            | All log rows with emaj_gid > 96 and <= 111                     | postgres
-    3358 | ROLLBACK_TABLE         | END          | myschema4.mytblc1            | 1 rolled back primary keys                                     | postgres
-    3359 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc2            | All log rows with emaj_gid > 96 and <= 111                     | postgres
-    3360 | ROLLBACK_TABLE         | END          | myschema4.mytblc2            | 1 rolled back primary keys                                     | postgres
-    3361 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblm             | All log rows with emaj_gid > 96 and <= 111                     | postgres
-    3362 | ROLLBACK_TABLE         | END          | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
-    3363 | ROLLBACK_TABLE         | BEGIN        | myschema4.mypartp1           | All log rows with emaj_gid > 96 and <= 111                     | postgres
-    3364 | ROLLBACK_TABLE         | END          | myschema4.mypartp1           | 1 rolled back primary keys                                     | postgres
-    3365 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark mark1 is deleted                                          | postgres
-    3366 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark RLBK_mark1_%_START is deleted                             | postgres
-    3367 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark RLBK_mark1_%_DONE is deleted                              | postgres
-    3368 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 19, 5 tables and 0 sequences effectively processed | postgres
-    3369 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3371 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
-    3372 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3373 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3374 | CLEANUP_RLBK_STATE     |              | rollback id 18               | set to COMMITTED                                               | postgres
-    3375 | CLEANUP_RLBK_STATE     |              | rollback id 19               | set to COMMITTED                                               | postgres
-    3376 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M1                                                       | postgres
-    3377 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Conso_M1 (timestamp)                   | postgres
-    3378 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3379 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3380 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3381 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M1_%_START                                          | postgres
-    3382 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M1_%_START                                          | postgres
-    3383 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3384 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3385 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M1_%_DONE                                           | postgres
-    3386 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M1_%_DONE                                           | postgres
-    3387 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 20, 0 tables and 2 sequences effectively processed | postgres
-    3388 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3389 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Conso_M1 and RLBK_Conso_M1_%_DONE      | postgres
-    3390 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted           | postgres
-    3391 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
-    3392 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3393 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3394 | CLEANUP_RLBK_STATE     |              | rollback id 20               | set to COMMITTED                                               | postgres
-    3395 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M2                                                       | postgres
-    3396 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
-    3397 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3398 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3399 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M3                                                       | postgres
-    3400 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Conso_M2 (timestamp)                   | postgres
-    3401 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3402 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3403 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3404 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M2_%_START                                          | postgres
-    3405 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M2_%_START                                          | postgres
-    3406 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 111 and <= 128                    | postgres
-    3407 | ROLLBACK_TABLE         | END          | myschema1.mytbl1             | 12 rolled back primary keys                                    | postgres
-    3408 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 111 and <= 128                    | postgres
-    3409 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 1 rolled back primary keys                                     | postgres
-    3410 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 111 and <= 128                    | postgres
-    3411 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 2 rolled back primary keys                                     | postgres
-    3412 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3413 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
-    3414 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M2_%_DONE                                           | postgres
-    3415 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M2_%_DONE                                           | postgres
-    3416 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 21, 3 tables and 2 sequences effectively processed | postgres
-    3417 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3418 | RENAME_MARK_GROUP      | BEGIN        | myGroup1                     | Conso_M2                                                       | postgres
-    3419 | RENAME_MARK_GROUP      | END          | myGroup1                     | Conso_M2 renamed Renamed_conso_M2                              | postgres
-    3420 | RENAME_MARK_GROUP      | BEGIN        | myGroup1                     | EMAJ_LAST_MARK                                                 | postgres
-    3421 | RENAME_MARK_GROUP      | END          | myGroup1                     | RLBK_Conso_M2_%_DONE renamed Renamed_last_mark                 | postgres
-    3422 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark | postgres
-    3423 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted           | postgres
-    3424 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark | postgres
-    3425 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 0 tables and 2 sequences processed ; 0 marks deleted           | postgres
-    3426 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Conso_M1 (timestamp)                 | postgres
-    3427 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3428 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3429 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3430 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 111 and <= 145                    | postgres
-    3431 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 1 rolled back primary keys                                     | postgres
-    3432 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 111 and <= 145                    | postgres
-    3433 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 1 rolled back primary keys                                     | postgres
-    3434 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Conso_M1_%_DONE is deleted                           | postgres
-    3435 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Renamed_conso_M2 is deleted                               | postgres
-    3436 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Renamed_last_mark is deleted                              | postgres
-    3437 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3438 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
-    3439 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 22, 2 tables and 2 sequences effectively processed | postgres
-    3440 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3447 | CLEANUP_RLBK_STATE     |              | rollback id 21               | set to COMMITTED                                               | postgres
-    3448 | CLEANUP_RLBK_STATE     |              | rollback id 22               | set to COMMITTED                                               | postgres
-    3449 | CLEANUP_RLBK_STATE     |              | rollback id 23               | set to ABORTED                                                 | postgres
-(384 rows)
+    3320 | ROLLBACK_GROUP         | BEGIN        | emptyGroup                   | Logged rollback to mark EGM3 (timestamp)                       | postgres
+    3321 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3322 | LOCK_GROUP             | BEGIN        | emptyGroup                   | Rollback session #1                                            | postgres
+    3323 | LOCK_GROUP             | END          | emptyGroup                   | Rollback session #1: 0 tables locked, 0 deadlock(s)            | postgres
+    3324 | SET_MARK_GROUP         | BEGIN        | emptyGroup                   | RLBK_EGM3_%_START                                              | postgres
+    3325 | CLEANUP_RLBK_STATE     |              | rollback id 15               | set to COMMITTED                                               | postgres
+    3326 | CLEANUP_RLBK_STATE     |              | rollback id 16               | set to COMMITTED                                               | postgres
+    3327 | CLEANUP_RLBK_STATE     |              | rollback id 17               | set to COMMITTED                                               | postgres
+    3328 | SET_MARK_GROUP         | END          | emptyGroup                   | RLBK_EGM3_%_START                                              | postgres
+    3329 | SET_MARK_GROUP         | BEGIN        | emptyGroup                   | RLBK_EGM3_%_DONE                                               | postgres
+    3330 | SET_MARK_GROUP         | END          | emptyGroup                   | RLBK_EGM3_%_DONE                                               | postgres
+    3331 | ROLLBACK_GROUP         | END          | emptyGroup                   | Rollback_id 18, 0 tables and 0 sequences effectively processed | postgres
+    3332 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3333 | START_GROUP            | BEGIN        | myGroup4                     | With log reset                                                 | postgres
+    3334 | LOCK_GROUP             | BEGIN        | myGroup4                     |                                                                | postgres
+    3335 | LOCK_GROUP             | END          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3336 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | myGroup4_start                                                 | postgres
+    3337 | CLEANUP_RLBK_STATE     |              | rollback id 18               | set to COMMITTED                                               | postgres
+    3338 | SET_MARK_GROUP         | END          | myGroup4                     | myGroup4_start                                                 | postgres
+    3339 | START_GROUP            | END          | myGroup4                     | 5 tables/sequences processed                                   | postgres
+    3340 | SET_MARK_GROUP         | BEGIN        | myGroup4                     |                                                                | postgres
+    3341 | LOCK_GROUP             | BEGIN        | myGroup4                     |                                                                | postgres
+    3342 | LOCK_GROUP             | END          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3343 | SET_MARK_GROUP         | END          | myGroup4                     | mark1                                                          | postgres
+    3344 | ROLLBACK_GROUP         | BEGIN        | myGroup4                     | Logged rollback to mark mark1 (timestamp)                      | postgres
+    3345 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3346 | LOCK_GROUP             | BEGIN        | myGroup4                     | Rollback session #1                                            | postgres
+    3347 | LOCK_GROUP             | END          | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3348 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | RLBK_mark1_%_START                                             | postgres
+    3349 | SET_MARK_GROUP         | END          | myGroup4                     | RLBK_mark1_%_START                                             | postgres
+    3350 | ROLLBACK_TABLE         | BEGIN        | myschema4.mypartp2           | All log rows with emaj_gid > 102 and <= 106                    | postgres
+    3351 | ROLLBACK_TABLE         | END          | myschema4.mypartp2           | 1 rolled back primary keys                                     | postgres
+    3352 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc1            | All log rows with emaj_gid > 102 and <= 106                    | postgres
+    3353 | ROLLBACK_TABLE         | END          | myschema4.mytblc1            | 1 rolled back primary keys                                     | postgres
+    3354 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc2            | All log rows with emaj_gid > 102 and <= 106                    | postgres
+    3355 | ROLLBACK_TABLE         | END          | myschema4.mytblc2            | 1 rolled back primary keys                                     | postgres
+    3356 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblm             | All log rows with emaj_gid > 102 and <= 106                    | postgres
+    3357 | ROLLBACK_TABLE         | END          | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
+    3358 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
+    3359 | SET_MARK_GROUP         | END          | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
+    3360 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 19, 4 tables and 0 sequences effectively processed | postgres
+    3361 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3362 | ROLLBACK_GROUP         | BEGIN        | myGroup4                     | Unlogged rollback to mark myGroup4_start (timestamp)           | postgres
+    3363 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3364 | LOCK_GROUP             | BEGIN        | myGroup4                     | Rollback session #1                                            | postgres
+    3365 | LOCK_GROUP             | END          | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3366 | ROLLBACK_TABLE         | BEGIN        | myschema4.mypartp2           | All log rows with emaj_gid > 96 and <= 111                     | postgres
+    3367 | ROLLBACK_TABLE         | END          | myschema4.mypartp2           | 2 rolled back primary keys                                     | postgres
+    3368 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc1            | All log rows with emaj_gid > 96 and <= 111                     | postgres
+    3369 | ROLLBACK_TABLE         | END          | myschema4.mytblc1            | 1 rolled back primary keys                                     | postgres
+    3370 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc2            | All log rows with emaj_gid > 96 and <= 111                     | postgres
+    3371 | ROLLBACK_TABLE         | END          | myschema4.mytblc2            | 1 rolled back primary keys                                     | postgres
+    3372 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblm             | All log rows with emaj_gid > 96 and <= 111                     | postgres
+    3373 | ROLLBACK_TABLE         | END          | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
+    3374 | ROLLBACK_TABLE         | BEGIN        | myschema4.mypartp1           | All log rows with emaj_gid > 96 and <= 111                     | postgres
+    3375 | ROLLBACK_TABLE         | END          | myschema4.mypartp1           | 1 rolled back primary keys                                     | postgres
+    3376 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark mark1 is deleted                                          | postgres
+    3377 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark RLBK_mark1_%_START is deleted                             | postgres
+    3378 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark RLBK_mark1_%_DONE is deleted                              | postgres
+    3379 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 20, 5 tables and 0 sequences effectively processed | postgres
+    3380 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3382 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
+    3383 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3384 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3385 | CLEANUP_RLBK_STATE     |              | rollback id 19               | set to COMMITTED                                               | postgres
+    3386 | CLEANUP_RLBK_STATE     |              | rollback id 20               | set to COMMITTED                                               | postgres
+    3387 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M1                                                       | postgres
+    3388 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Conso_M1 (timestamp)                   | postgres
+    3389 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3390 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3391 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3392 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M1_%_START                                          | postgres
+    3393 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M1_%_START                                          | postgres
+    3394 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3395 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
+    3396 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M1_%_DONE                                           | postgres
+    3397 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M1_%_DONE                                           | postgres
+    3398 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 21, 0 tables and 2 sequences effectively processed | postgres
+    3399 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3400 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Conso_M1 and RLBK_Conso_M1_%_DONE      | postgres
+    3401 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted           | postgres
+    3402 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
+    3403 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3404 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3405 | CLEANUP_RLBK_STATE     |              | rollback id 21               | set to COMMITTED                                               | postgres
+    3406 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M2                                                       | postgres
+    3407 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
+    3408 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3409 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3410 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M3                                                       | postgres
+    3411 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Conso_M2 (timestamp)                   | postgres
+    3412 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3413 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3414 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3415 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M2_%_START                                          | postgres
+    3416 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M2_%_START                                          | postgres
+    3417 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 111 and <= 128                    | postgres
+    3418 | ROLLBACK_TABLE         | END          | myschema1.mytbl1             | 12 rolled back primary keys                                    | postgres
+    3419 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 111 and <= 128                    | postgres
+    3420 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 1 rolled back primary keys                                     | postgres
+    3421 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 111 and <= 128                    | postgres
+    3422 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 2 rolled back primary keys                                     | postgres
+    3423 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3424 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
+    3425 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M2_%_DONE                                           | postgres
+    3426 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M2_%_DONE                                           | postgres
+    3427 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 22, 3 tables and 2 sequences effectively processed | postgres
+    3428 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3429 | RENAME_MARK_GROUP      | BEGIN        | myGroup1                     | Conso_M2                                                       | postgres
+    3430 | RENAME_MARK_GROUP      | END          | myGroup1                     | Conso_M2 renamed Renamed_conso_M2                              | postgres
+    3431 | RENAME_MARK_GROUP      | BEGIN        | myGroup1                     | EMAJ_LAST_MARK                                                 | postgres
+    3432 | RENAME_MARK_GROUP      | END          | myGroup1                     | RLBK_Conso_M2_%_DONE renamed Renamed_last_mark                 | postgres
+    3433 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark | postgres
+    3434 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted           | postgres
+    3435 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark | postgres
+    3436 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 0 tables and 2 sequences processed ; 0 marks deleted           | postgres
+    3437 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Conso_M1 (timestamp)                 | postgres
+    3438 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3439 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3440 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3441 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 111 and <= 145                    | postgres
+    3442 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 1 rolled back primary keys                                     | postgres
+    3443 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 111 and <= 145                    | postgres
+    3444 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 1 rolled back primary keys                                     | postgres
+    3445 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Conso_M1_%_DONE is deleted                           | postgres
+    3446 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Renamed_conso_M2 is deleted                               | postgres
+    3447 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Renamed_last_mark is deleted                              | postgres
+    3448 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3449 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
+    3450 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 23, 2 tables and 2 sequences effectively processed | postgres
+    3451 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3458 | CLEANUP_RLBK_STATE     |              | rollback id 22               | set to COMMITTED                                               | postgres
+    3459 | CLEANUP_RLBK_STATE     |              | rollback id 23               | set to COMMITTED                                               | postgres
+    3460 | CLEANUP_RLBK_STATE     |              | rollback id 24               | set to ABORTED                                                 | postgres
+(395 rows)
 

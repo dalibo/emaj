@@ -172,6 +172,9 @@ begin;
   select emaj.emaj_estimate_rollback_group('myGroup1','Mark11',FALSE);
 rollback;
 
+-- estimate a rollback of an empty group
+select emaj.emaj_estimate_rollback_group('emptyGroup','EGM4',TRUE);
+
 -- insert 1 timing parameters (=> so use 3 default values)
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_step_rollback_duration','2.5 millisecond'::interval);
 
@@ -307,6 +310,8 @@ select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','dummy_option');
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 
 -- should be OK (even when executed twice, files being overwriten)
+select emaj.emaj_snap_group('emptyGroup','/tmp/emaj_test/snaps','');
+\! ls /tmp/emaj_test/snaps
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','');
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','CSV HEADER DELIMITER '';'' ');
 \! ls /tmp/emaj_test/snaps
@@ -356,6 +361,11 @@ select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 
 -- should be ok
+select emaj.emaj_snap_log_group('emptyGroup','EGM3','EGM4','/tmp/emaj_test/log_snaps',NULL);
+\! ls /tmp/emaj_test/log_snaps
+\! cat /tmp/emaj_test/log_snaps/emptyGroup_sequences_at_EGM3
+\! rm /tmp/emaj_test/log_snaps/*
+
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps',NULL);
 select emaj.emaj_snap_log_group('myGroup2','','','/tmp/emaj_test/log_snaps','CSV');
 select emaj.emaj_snap_log_group('myGroup2','Mark21',NULL,'/tmp/emaj_test/log_snaps','CSV HEADER');

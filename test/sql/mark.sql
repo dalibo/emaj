@@ -121,6 +121,7 @@ select emaj.emaj_get_previous_mark_group('myGroup2',(select time_clock_timestamp
 select emaj.emaj_get_previous_mark_group('myGroup1',(select min(time_clock_timestamp) from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup1'));
 
 select emaj.emaj_get_previous_mark_group('myGroup2','SM1');
+select emaj.emaj_get_previous_mark_group('emptyGroup','SM1');
 select coalesce(emaj.emaj_get_previous_mark_group('myGroup2','Mark2'),'No previous mark');
 select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2','EMAJ_LAST_MARK')))))));
 
@@ -174,7 +175,7 @@ update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group 
 select emaj.emaj_delete_mark_group('myGroup1','SM1');
 select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'SM3';
 
-select emaj.emaj_delete_mark_group('emptyGroup','EMAJ_LAST_MARK');
+select emaj.emaj_delete_mark_group('emptyGroup','MarkInit');
 
 select emaj.emaj_delete_mark_group('myGroup1','First Mark');
 select sum(emaj.emaj_delete_mark_group('myGroup1',mark_name)) from 
@@ -202,6 +203,9 @@ select emaj.emaj_delete_before_mark_group('myGroup2',NULL);
 -- should be OK
 select emaj.emaj_delete_before_mark_group('myGroup1','SM3');
 select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
+select emaj.emaj_set_mark_group('emptyGroup','EGM3');
+select emaj.emaj_set_mark_group('emptyGroup','EGM4');
+select emaj.emaj_delete_before_mark_group('emptyGroup','SM2');
 
 -- simulate SM2 is an end mark of a logged rollback operations on myGroup2 group
 update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group = 'myGroup2' and mark_name = 'SM2';
@@ -231,6 +235,8 @@ select emaj.emaj_protect_mark_group('myGroup1','unknownMark');
 -- should be ok
 select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+select emaj.emaj_protect_mark_group('emptyGroup','EMAJ_LAST_MARK');
+
 -- protect an already protected group
 select emaj.emaj_protect_mark_group('myGroup1','SM3');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
@@ -249,6 +255,8 @@ select emaj.emaj_unprotect_mark_group('myGroup1','unknownMark');
 -- should be ok
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+select emaj.emaj_unprotect_mark_group('emptyGroup','EMAJ_LAST_MARK');
+
 -- protect an already protected group
 select emaj.emaj_unprotect_mark_group('myGroup1','SM3');
 select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
