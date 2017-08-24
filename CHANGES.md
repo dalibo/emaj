@@ -6,6 +6,8 @@ E-Maj - Change log
 
   * Improve the documentation about the installation.
   * PostgreSQL versions prior 9.2 are not supported by E-Maj anymore.
+  * A sequence can be removed from a tables group in LOGGING state. A 
+    subsequent rollback operation will let it unchanged.
   * Improve the security of the emaj_visible_param view by declaring it as
     'security_barrier'.
   * Some minor code improvements.

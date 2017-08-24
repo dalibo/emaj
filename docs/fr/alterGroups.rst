@@ -73,7 +73,7 @@ Néanmoins certaines actions sont possibles sur des groupes de tables maintenus 
 +-------------------------------------+----------------+---------------------------+
 | Oter une table d’un groupe          | Non            |                           |
 +-------------------------------------+----------------+---------------------------+
-| Oter une séquence d’un groupe       | Non            |                           |
+| Oter une séquence d’un groupe       | Oui            | Ajustement emaj_group_def |
 +-------------------------------------+----------------+---------------------------+
 | Ajouter une table à un groupe       | Non            |                           |
 +-------------------------------------+----------------+---------------------------+
@@ -123,4 +123,8 @@ Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide 
 Une opération de rollback E-Maj ciblant une marque antérieure à une modification de groupes de tables ne procède **PAS** automatiquement à une annulation de ces changements.
 
 Néanmoins, l’administrateur a la possibilité d’appliquer cette même procédure pour revenir à un état antérieur.
+
+.. caution::
+
+	Quand une séquence est sortie de son groupe de tables, toute opération de rollback ultérieure sur ce groupe sera sans effet sur cet objet. Une fois la séquence applicative décrochée de son groupe de tables, elle peut être modifiée ou supprimée. Les historiques liés à l’objet (logs, trace des marques,...) sont conservés pour examen éventuel. Ils restent néanmoins associés au groupe d'appartenance de l'objet et ne seront supprimés que par les opérations de :ref:`réinitialisation du groupe de tables <emaj_reset_group>` ou par les :ref:`suppressions des plus anciennes marques <emaj_delete_before_mark_group>` du groupe.
 

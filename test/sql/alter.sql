@@ -21,7 +21,7 @@ select emaj.emaj_force_stop_group('emptyGroup');
 select emaj.emaj_drop_group('emptyGroup');
 
 -----------------------------
--- emaj_alter_group() tests
+-- emaj_alter_group() tests on IDLE groups
 -----------------------------
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2');
@@ -31,7 +31,7 @@ select emaj.emaj_create_group('myGroup4');
 -- unknown group
 select emaj.emaj_alter_group(NULL);
 select emaj.emaj_alter_group('unknownGroup');
--- group in logging state
+-- group in logging state (2 tables need to be repaired)
 begin;
   select emaj.emaj_start_group('myGroup1','');
   select emaj.emaj_disable_protection_by_event_triggers();
@@ -199,7 +199,7 @@ select emaj.emaj_enable_protection_by_event_triggers();
 --rollback;
 
 -----------------------------
--- emaj_alter_groups() tests
+-- emaj_alter_groups() tests on IDLE groups
 -----------------------------
 
 -- unknown groups
@@ -301,7 +301,7 @@ begin;
 rollback;
 
 -----------------------------
--- emaj_alter_group() and emaj_alter_groups() tests on logging groups with rollbacks
+-- emaj_alter_group() and emaj_alter_groups() tests on LOGGING groups with rollbacks
 -----------------------------
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mk1');
 
@@ -331,6 +331,37 @@ update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_sche
 update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+
+-- remove a sequence
+--TODO: remove the transaction when adding a sequence will be possible and move the rollbacks later
+select emaj.emaj_set_mark_group('myGroup1','Mk2b');
+begin;
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  select emaj.emaj_alter_group('myGroup1');
+  select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+  select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq';
+  -- testing rollback
+--select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
+  select * from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+  select * from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+--select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
+  savepoint svp1;
+  -- testing group's reset
+  select emaj.emaj_stop_group('myGroup1');
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+  select emaj.emaj_reset_group('myGroup1');
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+  rollback to svp1;
+  -- testing marks deletion
+  select emaj.emaj_set_mark_group('myGroup1','Mk2c');
+  select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+  select emaj.emaj_delete_before_mark_group('myGroup1','Mk2c');
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+  -- testing the sequence drop
+  drop sequence mySchema1."myTbl3_col31_seq" cascade;
+--select * from emaj.emaj_hist order by hist_id desc limit 50;
+rollback;
 
 -- set an intermediate mark
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
