@@ -8,6 +8,10 @@ E-Maj - Change log
   * PostgreSQL versions prior 9.2 are not supported by E-Maj anymore.
   * A sequence can be removed from a tables group in LOGGING state. A 
     subsequent rollback operation will let it unchanged.
+  * A table can be removed from a tables group in LOGGING state. Once 
+    removed, the table will be excluded from all operations. Only logs remain 
+    accessible until the group is reset or all marks before the alter time 
+    are deleted. 
   * Improve the security of the emaj_visible_param view by declaring it as
     'security_barrier'.
   * Some minor code improvements.

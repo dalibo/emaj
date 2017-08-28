@@ -71,7 +71,7 @@ However, some actions are possible while the tables groups are in *LOGGING* stat
 +-------------------------------------+---------------+-----------------------+
 | Change the E-Maj priority           | Yes           | emaj_group_def update |
 +-------------------------------------+---------------+-----------------------+
-| Remove a table from a group         | No            |                       |
+| Remove a table from a group         | Yes           | emaj_group_def update |
 +-------------------------------------+---------------+-----------------------+
 | Remove a sequence from a group      | Yes           | emaj_group_def update |
 +-------------------------------------+---------------+-----------------------+
@@ -125,5 +125,5 @@ However, the administrator can apply the same procedure to reset a tables group 
 
 .. caution::
 
-	Once a sequence is removed from a tables group, any rollback operation will left this object unchanged. Once unlinked from its tables group, the application sequence can be altered or dropped. The historical data linked to the object (logs, marks traces,...) are kept as is so that they can be later examined. However, they remain linked to the tables group that owned the object and will only be deleted by a :ref:`group’s reset <emaj_reset_group>` operation or by the :ref:`deletion of the oldest marks <emaj_delete_before_mark_group>` of the group.
+	Once a table or a sequence is removed from a tables group, any rollback operation will leave this object unchanged. Once unlinked from its tables group, the application table or sequence can be altered or dropped. The historical data linked to the object (logs, marks traces,...) are kept as is so that they can be later examined. However, they remain linked to the tables group that owned the object and will only be deleted by a :ref:`group’s reset <emaj_reset_group>` operation or by the :ref:`deletion of the oldest marks <emaj_delete_before_mark_group>` of the group.
 
