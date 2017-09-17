@@ -2330,7 +2330,7 @@ $emaj_create_group$
     UPDATE emaj.emaj_group SET group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
       WHERE group_name = v_groupName;
 -- check foreign keys with tables outside the group
-    PERFORM emaj._check_fk_groups (array[v_groupName]);
+    PERFORM emaj._check_fk_groups(array[v_groupName]);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('CREATE_GROUP', 'END', v_groupName, v_nbTbl + v_nbSeq || ' tables/sequences processed');
@@ -7322,7 +7322,8 @@ CREATE OR REPLACE FUNCTION emaj._disable_event_triggers()
  RETURNS TEXT[] LANGUAGE plpgsql SECURITY DEFINER AS
 $_disable_event_triggers$
 -- This function disables all known E-Maj event triggers that are in enabled state.
--- The function is called by functions that alter or drop E-Maj components, such as emaj_drop_group().
+-- The function is called by functions that alter or drop E-Maj components, such as
+--   _drop_groups(), _alter_groups(), _delete_before_marks_group() and _reset_groups().
 -- It is also called by the user emaj_disable_event_triggers_protection() function.
 -- Output: array of effectively disabled event trigger names. It can be reused as input when calling _enable_event_triggers()
   DECLARE
@@ -7332,6 +7333,7 @@ $_disable_event_triggers$
     IF emaj._pg_version_num() >= 90300 THEN
 -- build the event trigger names array from the pg_event_trigger table
 -- (pg_event_trigger table doesn't exists in 9.2- postgres versions)
+-- A single operation like emaj_alter_groups() may call the function several times. But this is not an issue as only enabled triggers are disabled.
       SELECT coalesce(array_agg(evtname ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
         FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled <> 'D';
 -- disable each event trigger
@@ -7348,7 +7350,8 @@ CREATE OR REPLACE FUNCTION emaj._enable_event_triggers(v_eventTriggers TEXT[])
  RETURNS TEXT[] LANGUAGE plpgsql SECURITY DEFINER AS
 $_enable_event_triggers$
 -- This function enables all event triggers supplied as parameter
--- The function is called by functions that alter or drop E-Maj components, such as emaj_drop_group().
+-- The function is called by functions that alter or drop E-Maj components, such as
+--   _drop_groups(), _alter_groups(), _delete_before_marks_group() and _reset_groups().
 -- It is also called by the user emaj_enable_event_triggers_protection() function.
 -- Input: array of event trigger names to enable
 -- Output: same array

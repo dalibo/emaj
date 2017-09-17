@@ -266,10 +266,10 @@ alter table myschema2.myTbl6 add foreign key (col61) references myschema2.myTbl7
 alter table myschema2.myTbl8 add foreign key (col81) references myschema2.myTbl6 (col61) deferrable;
 select emaj.emaj_create_group('myGroup2',true);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 90 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 90 at PERFORM
  emaj_create_group 
 -------------------
@@ -588,10 +588,10 @@ select emaj.emaj_force_drop_group('myGroup1');
 
 select emaj.emaj_create_group('myGroup2',true);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 90 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups (array[v_groupName])"
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 90 at PERFORM
  emaj_create_group 
 -------------------

@@ -1615,7 +1615,7 @@ $emaj_create_group$
     UPDATE emaj.emaj_group SET group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
       WHERE group_name = v_groupName;
 -- check foreign keys with tables outside the group
-    PERFORM emaj._check_fk_groups (array[v_groupName]);
+    PERFORM emaj._check_fk_groups(array[v_groupName]);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('CREATE_GROUP', 'END', v_groupName, v_nbTbl + v_nbSeq || ' tables/sequences processed');

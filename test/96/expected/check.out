@@ -140,7 +140,7 @@ select funcname, calls from pg_stat_user_functions
  _stop_groups                              |    57
  _verify_all_groups                        |    35
  _verify_all_schemas                       |    35
- _verify_groups                            |   254
+ _verify_groups                            |   255
  emaj_alter_group                          |    43
  emaj_alter_groups                         |    13
  emaj_cleanup_rollback_state               |   235
