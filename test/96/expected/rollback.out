@@ -2129,7 +2129,7 @@ select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id,
   from emaj.emaj_get_consolidable_rollbacks();
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id |    regexp_replace    | cons_end_rlbk_mark_id | cons_rows | cons_marks 
 ------------+----------------------------+--------------------------+----------------------+-----------------------+-----------+------------
- emptyGroup | EGM3                       |                     2021 | RLBK_EGM3_%_DONE     |                  3042 |           |          2
+ emptyGroup | EGM3                       |                     2021 | RLBK_EGM3_%_DONE     |                  3042 |         0 |          2
  myGroup1   | Conso_M1                   |                     3047 | RLBK_Conso_M1_%_DONE |                  3049 |         0 |          0
  myGroup1   | Renamed_conso_M2           |                     3050 | Renamed_last_mark    |                  3053 |        32 |          2
 (3 rows)
@@ -2145,7 +2145,7 @@ select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id,
   from emaj.emaj_get_consolidable_rollbacks();
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id |    regexp_replace    | cons_end_rlbk_mark_id | cons_rows | cons_marks 
 ------------+----------------------------+--------------------------+----------------------+-----------------------+-----------+------------
- emptyGroup | EGM3                       |                     2021 | RLBK_EGM3_%_DONE     |                  3042 |           |          2
+ emptyGroup | EGM3                       |                     2021 | RLBK_EGM3_%_DONE     |                  3042 |         0 |          2
  myGroup1   | Conso_M1                   |                     3047 | RLBK_Conso_M1_%_DONE |                  3049 |         0 |          0
  myGroup1   | Renamed_conso_M2           |                     3050 | Renamed_last_mark    |                  3053 |         0 |          0
 (3 rows)

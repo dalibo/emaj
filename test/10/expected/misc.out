@@ -173,10 +173,10 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
 -- group is unknown in emaj_group_def
 select * from emaj.emaj_log_stat_group(NULL,NULL,NULL);
 ERROR:  emaj_log_stat_group: The group "<NULL>" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 25 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 22 at RAISE
 select * from emaj.emaj_log_stat_group('unknownGroup',NULL,NULL);
 ERROR:  emaj_log_stat_group: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 25 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 22 at RAISE
 select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
 ERROR:  emaj_detailed_log_stat_group: The group "<NULL>" does not exist.
 CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 27 at RAISE
@@ -186,10 +186,10 @@ CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) li
 -- invalid marks
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  emaj_log_stat_group: The start mark "dummyStartMark" is unknown for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 39 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 36 at RAISE
 select * from emaj.emaj_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  emaj_log_stat_group: The end mark "dummyEndMark" is unknown for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 49 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 46 at RAISE
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  emaj_detailed_log_stat_group: The start mark "dummyStartMark" is unknown for the group "myGroup2".
 CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 34 at RAISE

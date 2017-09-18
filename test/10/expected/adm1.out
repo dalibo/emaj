@@ -2301,7 +2301,7 @@ ERROR:  emaj_get_previous_mark_group (2): The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 14 at RAISE
 select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL); 
 ERROR:  emaj_log_stat_group: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 25 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 22 at RAISE
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);
 ERROR:  emaj_detailed_log_stat_group: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 27 at RAISE
