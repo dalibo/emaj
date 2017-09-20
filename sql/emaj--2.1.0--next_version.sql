@@ -2329,10 +2329,10 @@ $_set_mark_groups$
     IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
 -- ... either through dblink if we are currently performing a rollback with a dblink connection already opened
 --     this is mandatory to avoid deadlock
-      PERFORM 0 FROM dblink('rlbk#1','SELECT emaj.emaj_cleanup_rollback_state()') AS (dummy INT);
+      PERFORM 0 FROM dblink('rlbk#1','SELECT emaj._cleanup_rollback_state()') AS (dummy INT);
     ELSE
 -- ... or directly
-      PERFORM emaj.emaj_cleanup_rollback_state();
+      PERFORM emaj._cleanup_rollback_state();
     END IF;
 -- if requested, record the set mark end in emaj_hist
     IF v_eventToRecord THEN
@@ -3555,6 +3555,68 @@ $_rlbk_end$
   END;
 $_rlbk_end$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_cleanup_rollback_state()
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_cleanup_rollback_state$
+-- This function sets the status of not yet "COMMITTED" or "ABORTED" rollback events.
+-- To perform its tasks, it just calls the _cleanup_rollback_state() function.
+-- Input: no parameter
+-- Output: number of updated rollback events
+  BEGIN
+    RETURN emaj._cleanup_rollback_state();
+  END;
+$emaj_cleanup_rollback_state$;
+COMMENT ON FUNCTION emaj.emaj_cleanup_rollback_state() IS
+$$Sets the status of pending E-Maj rollback events.$$;
+
+CREATE OR REPLACE FUNCTION emaj._cleanup_rollback_state()
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+$_cleanup_rollback_state$
+-- This function effectively cleans the rollback states up. It is called by the emaj_cleanup_rollback_state()
+-- and by other emaj functions.
+-- The rollbacks whose transaction(s) is/are active are left as is.
+-- Among the others, those which are also visible in the emaj_hist table are set "COMMITTED",
+--   while those which are not visible in the emaj_hist table are set "ABORTED".
+-- Input: no parameter
+-- Output: number of updated rollback events
+  DECLARE
+    v_nbRlbk                 INT = 0;
+    v_newStatus              emaj._rlbk_status_enum;
+    r_rlbk                   RECORD;
+  BEGIN
+-- scan all pending rollback events having all their session transactions completed (either committed or rolled back)
+    FOR r_rlbk IN
+      SELECT rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session, count(rlbs_txid) AS nbVisibleTx
+        FROM emaj.emaj_rlbk
+             LEFT OUTER JOIN emaj.emaj_rlbk_session ON
+               (    rlbk_id = rlbs_rlbk_id                                      -- main join condition
+                AND txid_visible_in_snapshot(rlbs_txid,txid_current_snapshot()) -- only visible tx
+                AND rlbs_txid <> txid_current()                                 -- exclude the current tx
+               )
+        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED')  -- only pending rollback events
+        GROUP BY rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session
+        HAVING count(rlbs_txid) = rlbk_nb_session                               -- all sessions tx must be visible
+        ORDER BY rlbk_id
+      LOOP
+-- look at the emaj_hist to find the trace of the rollback begin event
+      PERFORM 0 FROM emaj.emaj_hist WHERE hist_id = r_rlbk.rlbk_begin_hist_id;
+      IF FOUND THEN
+-- if the emaj_hist rollback_begin event is visible, the rollback transaction has been committed.
+-- then set the rollback event in emaj_rlbk as "COMMITTED"
+        v_newStatus = 'COMMITTED';
+      ELSE
+-- otherwise, set the rollback event in emaj_rlbk as "ABORTED"
+        v_newStatus = 'ABORTED';
+      END IF;
+      UPDATE emaj.emaj_rlbk SET rlbk_status = v_newStatus WHERE rlbk_id = r_rlbk.rlbk_id;
+      INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+        VALUES ('CLEANUP_RLBK_STATE', 'rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
+      v_nbRlbk = v_nbRlbk + 1;
+    END LOOP;
+    RETURN v_nbRlbk;
+  END;
+$_cleanup_rollback_state$;
+
 CREATE OR REPLACE FUNCTION emaj._delete_between_marks_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, OUT v_nbMark INT, OUT v_nbTbl INT)
 RETURNS RECORD LANGUAGE plpgsql AS
 $_delete_between_marks_group$
@@ -3928,6 +3990,93 @@ $emaj_detailed_log_stat_group$
 $emaj_detailed_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT,TEXT,TEXT) IS
 $$Returns detailed statistics about logged events for an E-Maj group between 2 marks.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_activity()
+RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
+$emaj_rollback_activity$
+-- This function returns the list of rollback operations currently in execution, with information about their progress
+-- It doesn't need input parameter.
+-- It returns a set of emaj_rollback_activity_type records.
+  BEGIN
+-- cleanup the freshly completed rollback operations, if any
+    PERFORM emaj._cleanup_rollback_state();
+-- and retrieve information regarding the rollback operations that are always in execution
+    RETURN QUERY SELECT * FROM emaj._rollback_activity();
+  END;
+$emaj_rollback_activity$;
+COMMENT ON FUNCTION emaj.emaj_rollback_activity() IS
+$$Returns the list of rollback operations currently in execution, with information about their progress.$$;
+
+CREATE OR REPLACE FUNCTION emaj._rollback_activity()
+RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
+$_rollback_activity$
+-- This function effectively builds the list of rollback operations currently in execution.
+-- It is called by the emaj_rollback_activity() function.
+-- This is a separate function to help in testing the feature (avoiding the effects of _cleanup_rollback_state()).
+-- The number of parallel rollback sessions is not taken into account here,
+--   as it is difficult to estimate the benefit brought by several parallel sessions.
+-- The times and progression indicators reported are based on the transaction timestamp (allowing stable results in regression tests).
+  DECLARE
+    v_ipsDuration            INTERVAL;           -- In Progress Steps Duration
+    v_nyssDuration           INTERVAL;           -- Not Yes Started Steps Duration
+    v_nbNyss                 INT;                -- Number of Net Yes Started Steps
+    v_ctrlDuration           INTERVAL;
+    v_currentTotalEstimate   INTERVAL;
+    r_rlbk                   emaj.emaj_rollback_activity_type;
+  BEGIN
+-- retrieve all not completed rollback operations (ie in 'PLANNING', 'LOCKING' or 'EXECUTING' state)
+    FOR r_rlbk IN
+      SELECT rlbk_id, rlbk_groups, rlbk_mark, t1.time_clock_timestamp, rlbk_is_logged, rlbk_is_alter_group_allowed,
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, t2.time_tx_timestamp,
+             transaction_timestamp() - t2.time_tx_timestamp AS "elapse", NULL, 0
+        FROM emaj.emaj_rlbk
+             JOIN emaj.emaj_time_stamp t1 ON (rlbk_mark_time_id = t1.time_id)
+             LEFT OUTER JOIN emaj.emaj_time_stamp t2 ON (rlbk_time_id = t2.time_id)
+        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING')
+        ORDER BY rlbk_id
+        LOOP
+-- compute the estimated remaining duration
+--   for rollback operations in 'PLANNING' state, the remaining duration is NULL
+      IF r_rlbk.rlbk_status IN ('LOCKING', 'EXECUTING') THEN
+--     estimated duration of remaining work of in progress steps
+        SELECT coalesce(
+               sum(CASE WHEN rlbp_start_datetime + rlbp_estimated_duration - transaction_timestamp() > '0'::interval
+                        THEN rlbp_start_datetime + rlbp_estimated_duration - transaction_timestamp()
+                        ELSE '0'::interval END),'0'::interval) INTO v_ipsDuration
+          FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+           AND rlbp_start_datetime IS NOT NULL AND rlbp_duration IS NULL;
+--     estimated duration and number of not yet started steps
+        SELECT coalesce(sum(rlbp_estimated_duration),'0'::interval), count(*) INTO v_nyssDuration, v_nbNyss
+          FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+           AND rlbp_start_datetime IS NULL
+           AND rlbp_step NOT IN ('CTRL-DBLINK','CTRL+DBLINK');
+--     estimated duration of inter-step duration for not yet started steps
+        SELECT coalesce(sum(rlbp_estimated_duration) * v_nbNyss / sum(rlbp_estimated_quantity),'0'::interval)
+          INTO v_ctrlDuration
+          FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id = r_rlbk.rlbk_id
+           AND rlbp_step IN ('CTRL-DBLINK','CTRL+DBLINK');
+--     update the global remaining duration estimate
+        r_rlbk.rlbk_remaining = v_ipsDuration + v_nyssDuration + v_ctrlDuration;
+      END IF;
+-- compute the completion pct
+--   for rollback operations in 'PLANNING' or 'LOCKING' state, the completion_pct = 0
+      IF r_rlbk.rlbk_status = 'EXECUTING' THEN
+--   first compute the new total duration estimate, using the estimate of the remaining work
+        SELECT transaction_timestamp() - time_tx_timestamp + r_rlbk.rlbk_remaining INTO v_currentTotalEstimate
+          FROM emaj.emaj_rlbk, emaj.emaj_time_stamp
+          WHERE rlbk_time_id = time_id AND rlbk_id = r_rlbk.rlbk_id;
+--   and then the completion pct
+        IF v_currentTotalEstimate <> '0'::interval THEN
+          SELECT 100 - (extract(epoch FROM r_rlbk.rlbk_remaining) * 100
+                      / extract(epoch FROM v_currentTotalEstimate))::smallint
+            INTO r_rlbk.rlbk_completion_pct;
+        END IF;
+      END IF;
+      RETURN NEXT r_rlbk;
+    END LOOP;
+    RETURN;
+  END;
+$_rollback_activity$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
@@ -4813,6 +4962,7 @@ GRANT EXECUTE ON FUNCTION emaj._get_mark_name(v_groupName TEXT, v_mark TEXT) TO 
 GRANT EXECUTE ON FUNCTION emaj._get_mark_time_id(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._sum_log_stat_group(v_groupName TEXT, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._cleanup_rollback_state() TO emaj_viewer;
 
 ------------------------------------
 --                                --

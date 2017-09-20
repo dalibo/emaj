@@ -3537,10 +3537,10 @@ $_set_mark_groups$
     IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
 -- ... either through dblink if we are currently performing a rollback with a dblink connection already opened
 --     this is mandatory to avoid deadlock
-      PERFORM 0 FROM dblink('rlbk#1','SELECT emaj.emaj_cleanup_rollback_state()') AS (dummy INT);
+      PERFORM 0 FROM dblink('rlbk#1','SELECT emaj._cleanup_rollback_state()') AS (dummy INT);
     ELSE
 -- ... or directly
-      PERFORM emaj.emaj_cleanup_rollback_state();
+      PERFORM emaj._cleanup_rollback_state();
     END IF;
 -- if requested, record the set mark end in emaj_hist
     IF v_eventToRecord THEN
@@ -5416,10 +5416,25 @@ $_rlbk_error$
 $_rlbk_error$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_cleanup_rollback_state()
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_cleanup_rollback_state$
--- This function examines all rollback events from the emaj_rlbk table not in "COMMITTED" or "ABORTED" state.
--- Those whose transaction(s) is/are active are left as is.
+-- This function sets the status of not yet "COMMITTED" or "ABORTED" rollback events.
+-- To perform its tasks, it just calls the _cleanup_rollback_state() function.
+-- Input: no parameter
+-- Output: number of updated rollback events
+  BEGIN
+    RETURN emaj._cleanup_rollback_state();
+  END;
+$emaj_cleanup_rollback_state$;
+COMMENT ON FUNCTION emaj.emaj_cleanup_rollback_state() IS
+$$Sets the status of pending E-Maj rollback events.$$;
+
+CREATE OR REPLACE FUNCTION emaj._cleanup_rollback_state()
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+$_cleanup_rollback_state$
+-- This function effectively cleans the rollback states up. It is called by the emaj_cleanup_rollback_state()
+-- and by other emaj functions.
+-- The rollbacks whose transaction(s) is/are active are left as is.
 -- Among the others, those which are also visible in the emaj_hist table are set "COMMITTED",
 --   while those which are not visible in the emaj_hist table are set "ABORTED".
 -- Input: no parameter
@@ -5434,13 +5449,13 @@ $emaj_cleanup_rollback_state$
       SELECT rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session, count(rlbs_txid) AS nbVisibleTx
         FROM emaj.emaj_rlbk
              LEFT OUTER JOIN emaj.emaj_rlbk_session ON
-               (    rlbk_id = rlbs_rlbk_id                                  -- main join condition
+               (    rlbk_id = rlbs_rlbk_id                                      -- main join condition
                 AND txid_visible_in_snapshot(rlbs_txid,txid_current_snapshot()) -- only visible tx
                 AND rlbs_txid <> txid_current()                                 -- exclude the current tx
                )
-        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED')   -- only pending rollback events
+        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED')  -- only pending rollback events
         GROUP BY rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session
-        HAVING count(rlbs_txid) = rlbk_nb_session                                -- all sessions tx must be visible
+        HAVING count(rlbs_txid) = rlbk_nb_session                               -- all sessions tx must be visible
         ORDER BY rlbk_id
       LOOP
 -- look at the emaj_hist to find the trace of the rollback begin event
@@ -5460,9 +5475,7 @@ $emaj_cleanup_rollback_state$
     END LOOP;
     RETURN v_nbRlbk;
   END;
-$emaj_cleanup_rollback_state$;
-COMMENT ON FUNCTION emaj.emaj_cleanup_rollback_state() IS
-$$Sets the status of pending E-Maj rollback events.$$;
+$_cleanup_rollback_state$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_consolidate_rollback_group(v_groupName TEXT, v_endRlbkMark TEXT)
 RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
@@ -6016,7 +6029,7 @@ $emaj_rollback_activity$
 -- It returns a set of emaj_rollback_activity_type records.
   BEGIN
 -- cleanup the freshly completed rollback operations, if any
-    PERFORM emaj.emaj_cleanup_rollback_state();
+    PERFORM emaj._cleanup_rollback_state();
 -- and retrieve information regarding the rollback operations that are always in execution
     RETURN QUERY SELECT * FROM emaj._rollback_activity();
   END;
@@ -6029,7 +6042,7 @@ RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
 $_rollback_activity$
 -- This function effectively builds the list of rollback operations currently in execution.
 -- It is called by the emaj_rollback_activity() function.
--- This is a separate function to help in testing the feature (avoiding the effects of emaj_cleanup_rollback_state()).
+-- This is a separate function to help in testing the feature (avoiding the effects of _cleanup_rollback_state()).
 -- The number of parallel rollback sessions is not taken into account here,
 --   as it is difficult to estimate the benefit brought by several parallel sessions.
 -- The times and progression indicators reported are based on the transaction timestamp (allowing stable results in regression tests).
@@ -7411,6 +7424,7 @@ GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, v_i
 GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._cleanup_rollback_state() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._sum_log_stat_group(v_groupName TEXT, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
