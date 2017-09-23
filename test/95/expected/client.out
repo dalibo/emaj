@@ -65,7 +65,6 @@ Call of _rlbk_init() function failed
 ==> Rollback completed.
     Notice: 3 / 5 tables effectively processed.
     Notice: 2 sequences processed.
-    Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 
 --------------------------------------------
 -- Prepare data for emajRollbackMonitor.php

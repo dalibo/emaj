@@ -457,7 +457,7 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false) o
 -- execute rollbacks crossing alter group operations
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) order by 1,2;
 
 -- execute additional rollback not crossing alter operations anymore

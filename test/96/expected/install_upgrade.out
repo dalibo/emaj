@@ -178,6 +178,6 @@ select count(*) from
     where (funcname like E'emaj\\_%' or funcname like E'\\_%')) as t;
  count 
 -------
-     0
+     6
 (1 row)
 

@@ -135,6 +135,14 @@ CREATE INDEX emaj_relation_idx1 ON emaj.emaj_relation (rel_group, rel_kind);
 CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
 
 -- recreate the foreign keys that point on this table
+--   there is no fkey for this table
+
+--
+-- process the emaj_alter_plan table
+--
+-- just add a column at the end of the table, with a NULL default value
+ALTER TABLE emaj.emaj_alter_plan ADD COLUMN altr_rlbk_id BIGINT;
+
 
 --
 -- add created or recreated tables and sequences to the list of content to save by pg_dump
@@ -2588,6 +2596,83 @@ $_delete_intermediate_mark_group$
   END;
 $_delete_intermediate_mark_group$;
 
+CREATE OR REPLACE FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, isRollbackSimulation BOOLEAN)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_rlbk_check$
+-- This functions performs checks on group names and mark names supplied as parameter for the emaj_rollback_groups()
+-- and emaj_estimate_rollback_groups() functions.
+-- It returns the real mark name.
+  DECLARE
+    v_aGroupName             TEXT;
+    v_groupIsLogging         BOOLEAN;
+    v_groupIsProtected       BOOLEAN;
+    v_groupIsRollbackable    BOOLEAN;
+    v_markName               TEXT;
+    v_markId                 BIGINT;
+    v_markTimeId             BIGINT;
+    v_markIsDeleted          BOOLEAN;
+    v_protectedMarkList      TEXT;
+    v_cpt                    INT;
+  BEGIN
+-- check that each group ...
+-- ...is recorded in emaj_group table
+    FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
+      SELECT group_is_logging, group_is_rollbackable, group_is_rlbk_protected INTO v_groupIsLogging, v_groupIsRollbackable, v_groupIsProtected
+        FROM emaj.emaj_group WHERE group_name = v_aGroupName;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION '_rlbk_check: The group "%" does not exist.', v_aGroupName;
+      END IF;
+-- ... is in LOGGING state
+      IF NOT v_groupIsLogging THEN
+        RAISE EXCEPTION '_rlbk_check: The group "%" is not in LOGGING state.', v_aGroupName;
+      END IF;
+-- ... is ROLLBACKABLE
+      IF NOT v_groupIsRollbackable THEN
+        RAISE EXCEPTION '_rlbk_check: The group "%" has been created for audit only purpose.', v_aGroupName;
+      END IF;
+-- ... is not protected against rollback (check disabled for rollback simulation)
+      IF v_groupIsProtected AND NOT isRollbackSimulation THEN
+        RAISE EXCEPTION '_rlbk_check: The group "%" is currently protected against rollback.', v_aGroupName;
+      END IF;
+-- ... owns the requested mark
+      SELECT emaj._get_mark_name(v_aGroupName,v_mark) INTO v_markName;
+      IF NOT FOUND OR v_markName IS NULL THEN
+        RAISE EXCEPTION '_rlbk_check: The mark "%" does not exist for the group "%".', v_mark, v_aGroupName;
+      END IF;
+-- ... and this mark can be used as target for a rollback
+      SELECT mark_id, mark_time_id, mark_is_deleted INTO v_markId, v_markTimeId, v_markIsDeleted FROM emaj.emaj_mark
+        WHERE mark_group = v_aGroupName AND mark_name = v_markName;
+      IF v_markIsDeleted THEN
+        RAISE EXCEPTION '_rlbk_check: The mark "%" for the group "%" is not usable for rollback.', v_markName, v_aGroupName;
+      END IF;
+-- ... and the rollback wouldn't delete protected marks (check disabled for rollback simulation)
+      IF NOT isRollbackSimulation THEN
+        SELECT string_agg(mark_name,', ') INTO v_protectedMarkList FROM (
+          SELECT mark_name FROM emaj.emaj_mark
+            WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
+            ORDER BY mark_id) AS t;
+        IF v_protectedMarkList IS NOT NULL THEN
+          RAISE EXCEPTION '_rlbk_check: Protected marks (%) for group "%" block the rollback to the mark "%".', v_protectedMarkList, v_aGroupName, v_markName;
+        END IF;
+      END IF;
+    END LOOP;
+-- get the mark timestamp and check it is the same for all groups of the array
+    SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
+      WHERE group_name = ANY (v_groupNames);
+    IF v_cpt > 1 THEN
+      RAISE EXCEPTION '_rlbk_check: The mark "%" does not represent the same point in time for all groups.', v_mark;
+    END IF;
+-- if the isAlterGroupAllowed flag is set to true, check that the rollback would not cross any alter group operation for the groups
+    IF NOT v_isAlterGroupAllowed THEN
+       PERFORM 0 FROM emaj.emaj_alter_plan WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_rlbk_id IS NULL;
+       IF FOUND THEN
+         RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously executed alter group operations. You can remove this protection by using a less strict setting for this function.';
+       END IF;
+    END IF;
+    RETURN v_markName;
+  END;
+$_rlbk_check$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_planning(v_rlbkId INT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_rlbk_planning$
@@ -3499,51 +3584,46 @@ $_rlbk_end$
 -- build and return the execution report
     IF v_isAlterGroupAllowed IS NULL THEN
 -- return the number of processed tables and sequences to old style calling functions
-       rlbk_severity = 'Notice'; rlbk_message = (v_effNbTbl + v_nbSeq)::TEXT;
-       RETURN NEXT;
+      rlbk_severity = 'Notice'; rlbk_message = (v_effNbTbl + v_nbSeq)::TEXT;
+      RETURN NEXT;
     ELSE
 -- return the execution report to new style calling functions
 -- ... the general notice messages with counters
-       rlbk_severity = 'Notice';
-       rlbk_message = format ('%s / %s tables effectively processed.', v_effNbTbl::TEXT, v_nbTbl::TEXT);
-       RETURN NEXT;
-       IF v_nbSeq > 0 THEN
-         rlbk_message = format ('%s sequences processed.', v_nbSeq::TEXT);
-         RETURN NEXT;
-       END IF;
+      rlbk_severity = 'Notice';
+      rlbk_message = format ('%s / %s tables effectively processed.', v_effNbTbl::TEXT, v_nbTbl::TEXT);
+      RETURN NEXT;
+      IF v_nbSeq > 0 THEN
+        rlbk_message = format ('%s sequences processed.', v_nbSeq::TEXT);
+        RETURN NEXT;
+      END IF;
 -- ... and warning messages for any elementary action from alter group operations that has not been rolled back
 --TODO add missing cases
-       RETURN QUERY
-         SELECT 'Warning'::TEXT AS rlbk_severity,
-               (CASE altr_step
-                   WHEN 'CHANGE_REL_PRIORITY' THEN
-                     'Tables group change not rolled back: E-Maj priority for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                   WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN
-                     'Tables group change not rolled back: E-Maj log schema for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                   WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN
-                     'Tables group change not rolled back: E-Maj names prefix for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                   WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN
-                     'Tables group change not rolled back: log data tablespace for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                   WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
-                     'Tables group change not rolled back: log index tablespace for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                   WHEN 'REMOVE_SEQ' THEN
-                     'The sequence ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) || ' has been left unchanged (not in group anymore)'
-                   WHEN 'REMOVE_TBL' THEN
-                     'The table ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) || ' has been left unchanged (not in group anymore)'
-                   ELSE altr_step::TEXT || ' / ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                   END)::TEXT AS rlbk_message
-           FROM emaj.emaj_alter_plan
-           WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> ''
-           ORDER BY altr_time_id, altr_step, altr_schema, altr_tblseq;
--- for unlogged rollbacks, delete from alter group operations the elementary actions that have not been automatically rolled back
---TODO add missing cases
-      IF NOT v_isLoggedRlbk THEN
-         DELETE FROM emaj.emaj_alter_plan
-           WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> ''
-             AND altr_step IN ('CHANGE_REL_PRIORITY', 'CHANGE_TBL_LOG_SCHEMA', 'CHANGE_TBL_NAMES_PREFIX', 'CHANGE_TBL_LOG_DATA_TSP', 'CHANGE_TBL_LOG_INDEX_TSP',
-                               'REMOVE_TBL', 'REMOVE_SEQ');
-      END IF;
+      RETURN QUERY
+        SELECT 'Warning'::TEXT AS rlbk_severity,
+              (CASE altr_step
+                  WHEN 'CHANGE_REL_PRIORITY' THEN
+                    'Tables group change not rolled back: E-Maj priority for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                  WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN
+                    'Tables group change not rolled back: E-Maj log schema for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                  WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN
+                    'Tables group change not rolled back: E-Maj names prefix for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                  WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN
+                    'Tables group change not rolled back: log data tablespace for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                  WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
+                    'Tables group change not rolled back: log index tablespace for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                  WHEN 'REMOVE_SEQ' THEN
+                    'The sequence ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) || ' has been left unchanged (not in group anymore)'
+                  WHEN 'REMOVE_TBL' THEN
+                    'The table ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) || ' has been left unchanged (not in group anymore)'
+                  ELSE altr_step::TEXT || ' / ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                  END)::TEXT AS rlbk_message
+          FROM emaj.emaj_alter_plan
+          WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> '' AND altr_rlbk_id IS NULL
+          ORDER BY altr_time_id, altr_step, altr_schema, altr_tblseq;
     END IF;
+-- update the alter steps that have been covered by the rollback
+    UPDATE emaj.emaj_alter_plan SET altr_rlbk_id = v_rlbkId
+      WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_rlbk_id IS NULL;
     RETURN;
 -- trap and record exception during the rollback operation
   EXCEPTION

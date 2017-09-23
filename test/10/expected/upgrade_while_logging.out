@@ -122,6 +122,7 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  altr_new_group            | text                  |           |          | 
  altr_new_priority         | integer               |           |          | 
  altr_new_group_is_logging | boolean               |           |          | 
+ altr_rlbk_id              | bigint                |           |          | 
 Indexes:
     "emaj_alter_plan_pkey" PRIMARY KEY, btree (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group), tablespace "tspemaj"
 Foreign-key constraints:
