@@ -17,11 +17,11 @@ E-Maj - Change log
     'security_barrier'.
   * Some minor code improvements.
 
-
 ###Bug fixes:###
 
   * Fix the format of this change log so that it is correctly displayed on the 
     pgxn.org site. Also add the release dates.
+  * Fix 2 bogus calls to the _rlbk_error() internal function.
 
 2.1.0 (2017-Aug-02)
 ------
