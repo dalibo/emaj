@@ -87,7 +87,7 @@ begin;
     select 'myGroup5',nspname,'mytemptbl' from pg_class, pg_namespace
       where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
   select emaj.emaj_create_group('myGroup5');
-WARNING:  _check_groups_content: Error, the table pg_temp_3.mytemptbl is a TEMPORARY table.
+WARNING:  _check_groups_content: Error, the table pg_temp_2.mytemptbl is a TEMPORARY table.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"

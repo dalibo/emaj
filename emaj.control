@@ -7,5 +7,5 @@ comment 			= 'E-Maj extension enables fine-grained write logging and time travel
 superuser 			= true
 schema 				= 'emaj'
 relocatable 		= false
-requires 			= 'dblink'
+requires 			= 'dblink, btree_gist'
 

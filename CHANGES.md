@@ -11,7 +11,8 @@ E-Maj - Change log
   * A table can be removed from a tables group in LOGGING state. Once 
     removed, the table will be excluded from all operations. Only logs remain 
     accessible until the group is reset or all marks before the alter time 
-    are deleted. 
+    are deleted.
+  * The btree_gist extension is now required.
   * Improve the security of the emaj_visible_param view by declaring it as
     'security_barrier'.
   * Some minor code improvements.
