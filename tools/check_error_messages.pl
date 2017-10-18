@@ -141,7 +141,7 @@ use warnings; use strict;
        && $msgs{$fnctId} ne 'WARNING:E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback is possible.'
        && $msgs{$fnctId} ne 'EXCEPTION:_verify_groups : The current postgres version (%) is not compatible with this E-Maj version. It should be at least 9.2.'
                             # internal errors (errors that should never appear and that would due to coding error)
-       && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schema: Internal error (the schema "%" does not exist).'
+       && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schemas: Internal error (the schema "%" does not exist).'
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: Internal error (group "%" is empty).'
 #       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_tbl: internal error (at least one list is NULL (columns list = %, pk columns list = %, conditions list = %).'
                             # execution conditions that cannot be reproduced without parallelism

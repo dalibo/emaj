@@ -249,8 +249,8 @@ Tablespace: "tspemaj"
 Sequence "emaj.emaj_hist_hist_id_seq"
    Column   |  Type   | Value 
 ------------+---------+-------
- last_value | bigint  | 95
- log_cnt    | bigint  | 4
+ last_value | bigint  | 103
+ log_cnt    | bigint  | 29
  is_called  | boolean | t
 Owned by: emaj.emaj_hist.hist_id
 
@@ -291,8 +291,8 @@ Tablespace: "tspemaj"
 Sequence "emaj.emaj_mark_mark_id_seq"
    Column   |  Type   | Value 
 ------------+---------+-------
- last_value | bigint  | 13
- log_cnt    | bigint  | 20
+ last_value | bigint  | 14
+ log_cnt    | bigint  | 19
  is_called  | boolean | t
 Owned by: emaj.emaj_mark.mark_id
 
@@ -626,8 +626,8 @@ Tablespace: "tspemaj"
 Sequence "emaj.emaj_time_stamp_time_id_seq"
    Column   |  Type   | Value 
 ------------+---------+-------
- last_value | bigint  | 17
- log_cnt    | bigint  | 16
+ last_value | bigint  | 18
+ log_cnt    | bigint  | 15
  is_called  | boolean | t
 Owned by: emaj.emaj_time_stamp.time_id
 
@@ -737,38 +737,6 @@ Sequence "emaj.myschema1_mytbl2_log_seq"
 ------------+---------+-------
  last_value | bigint  | 3
  log_cnt    | bigint  | 30
- is_called  | boolean | t
-
-                                      Table "emaj.myschema1_mytbl2b_log"
-     Column     |           Type           | Collation | Nullable |                  Default                  
-----------------+--------------------------+-----------+----------+-------------------------------------------
- col20          | integer                  |           |          | 
- col21          | integer                  |           |          | 
- emaj_verb      | character varying(3)     |           |          | 
- emaj_tuple     | character varying(3)     |           |          | 
- emaj_gid       | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
- emaj_changed   | timestamp with time zone |           |          | clock_timestamp()
- emaj_txid      | bigint                   |           |          | txid_current()
- emaj_user      | character varying(32)    |           |          | SESSION_USER
- emaj_user_ip   | inet                     |           |          | inet_client_addr()
- emaj_user_port | integer                  |           |          | inet_client_port()
-Indexes:
-    "myschema1_mytbl2b_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
-
-     Index "emaj.myschema1_mytbl2b_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj.myschema1_mytbl2b_log", clustered
-Tablespace: "tspemaj"
-
-Sequence "emaj.myschema1_mytbl2b_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 4
- log_cnt    | bigint  | 29
  is_called  | boolean | t
 
                                       Table "emaj.myschema1_mytbl4_log"
@@ -1006,6 +974,39 @@ Sequence "emaj.phil's schema3_phil's tbl1_log_seq"
  log_cnt    | bigint  | 0
  is_called  | boolean | f
 
+\d emajb.*
+                                     Table "emajb.myschema1_mytbl2b_log"
+     Column     |           Type           | Collation | Nullable |                  Default                  
+----------------+--------------------------+-----------+----------+-------------------------------------------
+ col20          | integer                  |           |          | 
+ col21          | integer                  |           |          | 
+ emaj_verb      | character varying(3)     |           |          | 
+ emaj_tuple     | character varying(3)     |           |          | 
+ emaj_gid       | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
+ emaj_changed   | timestamp with time zone |           |          | clock_timestamp()
+ emaj_txid      | bigint                   |           |          | txid_current()
+ emaj_user      | character varying(32)    |           |          | SESSION_USER
+ emaj_user_ip   | inet                     |           |          | inet_client_addr()
+ emaj_user_port | integer                  |           |          | inet_client_port()
+Indexes:
+    "myschema1_mytbl2b_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+Tablespace: "tspemaj"
+
+    Index "emajb.myschema1_mytbl2b_log_idx"
+   Column   |         Type         | Definition 
+------------+----------------------+------------
+ emaj_gid   | bigint               | emaj_gid
+ emaj_tuple | character varying(3) | emaj_tuple
+unique, btree, for table "emajb.myschema1_mytbl2b_log", clustered
+Tablespace: "tspemaj"
+
+Sequence "emajb.myschema1_mytbl2b_log_seq"
+   Column   |  Type   | Value 
+------------+---------+-------
+ last_value | bigint  | 4
+ log_cnt    | bigint  | 29
+ is_called  | boolean | t
+
 -----------------------------
 -- Check the tables and sequences after upgrade
 -----------------------------
@@ -1023,8 +1024,8 @@ select * from emaj.emaj_relation;
  phil's schema3 | phil's seq\1     | [3,)           | phil's group#3", | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                          |                               | 
  phil's schema3 | phil's tbl1      | [3,)           | phil's group#3", | r        |              | emaj           | phil's schema3_phil's tbl1_log |                 | phil's schema3_phil's tbl1_log_idx |                 | phil's schema3_phil's tbl1_log_seq | phil's schema3_phil's tbl1_log_fnct | tbl."phil's col11",tbl."phil's col12",tbl."phil\s col13" | "phil's col11","phil's col12" | tbl."phil's col11" = keys."phil's col11" AND tbl."phil's col12" = keys."phil's col12"
  phil's schema3 | myTbl2\          | [3,)           | phil's group#3", | r        |              | emaj           | phil's schema3_myTbl2\_log     |                 | phil's schema3_myTbl2\_log_idx     |                 | phil's schema3_myTbl2\_log_seq     | phil's schema3_myTbl2\_log_fnct     | tbl.col21,tbl.col22,tbl.col23                            |                               | 
+ myschema1      | mytbl2b          | [1,)           | myGroup1         | r        |              | emajb          | myschema1_mytbl2b_log          |                 | myschema1_mytbl2b_log_idx          |                 | myschema1_mytbl2b_log_seq          | myschema1_mytbl2b_log_fnct          | tbl.col20,tbl.col21                                      | col20                         | tbl.col20 = keys.col20
  myschema1      | myTbl3_col31_seq | [1,)           | myGroup1         | S        |            1 |                |                                |                 |                                    |                 |                                    |                                     |                                                          |                               | 
- myschema1      | mytbl2b          | [1,)           | myGroup1         | r        |              | emaj           | myschema1_mytbl2b_log          |                 | myschema1_mytbl2b_log_idx          |                 | myschema1_mytbl2b_log_seq          | myschema1_mytbl2b_log_fnct          | tbl.col20,tbl.col21                                      | col20                         | tbl.col20 = keys.col20
  myschema1      | mytbl2           | [1,)           | myGroup1         | r        |              | emaj           | myschema1_mytbl2_log           |                 | myschema1_mytbl2_log_idx           |                 | myschema1_mytbl2_log_seq           | myschema1_mytbl2_log_fnct           | tbl.col21,tbl.col22,tbl.col23                            | col21                         | tbl.col21 = keys.col21
  myschema1      | mytbl4           | [1,)           | myGroup1         | r        |           20 | emaj           | myschema1_mytbl4_log           |                 | myschema1_mytbl4_log_idx           |                 | myschema1_mytbl4_log_seq           | myschema1_mytbl4_log_fnct           | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45        | col41                         | tbl.col41 = keys.col41
  myschema1      | mytbl1           | [1,)           | myGroup1         | r        |           20 | emaj           | myschema1_mytbl1_log           |                 | myschema1_mytbl1_log_idx           |                 | myschema1_mytbl1_log_seq           | myschema1_mytbl1_log_fnct           | tbl.col11,tbl.col12,tbl.col13                            | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12
@@ -1067,7 +1068,7 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_
      2 | DEF   |            | INS       | NEW        |       18
 (2 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
  col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
      1 |     1 | INS       | NEW        |       16

@@ -251,7 +251,7 @@ select group_name, group_nb_table, group_nb_sequence from emaj.emaj_group where 
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 
 -- change a log schema and the emaj_names_prefix for 2 tables
-update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+update emaj.emaj_group_def set grpdef_log_schema_suffix = 'tmp' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema2_myTbl3_log';
@@ -363,16 +363,16 @@ begin;
   savepoint svp1;
   -- testing group's reset
   select emaj.emaj_stop_group('myGroup1');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select emaj.emaj_reset_group('myGroup1');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   rollback to svp1;
   -- testing marks deletion
   select emaj.emaj_set_mark_group('myGroup1','Mk2c');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2c');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   -- testing the sequence drop
   drop sequence mySchema1."myTbl3_col31_seq" cascade;
 --select * from emaj.emaj_hist order by hist_id desc limit 50;
@@ -383,10 +383,10 @@ rollback;
 begin;
   insert into myschema1."myTbl3" (col33) values (1.);
 --select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and (grpdef_tblseq = 'myTbl3' or grpdef_tblseq = 'mytbl2b');
   select emaj.emaj_alter_group('myGroup1');
   select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
-  select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3';
+  select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2;
   delete from myschema1."myTbl3" where col33 = 1.;
   select count(*) from "emajC"."myschema1_myTbl3_log";
   select * from emaj.emaj_verify_all();
@@ -410,16 +410,17 @@ begin;
   savepoint svp1;
   -- testing marks deletion (delete all marks before the alter_group)
   select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
-  select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_myTbl3_log' and nspname = 'emajC';
+  select 'should not exist' from pg_namespace where nspname = 'emajb';
+  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
   rollback to svp1;
   -- testing marks deletion (other cases)
   select emaj.emaj_set_mark_group('myGroup1','Mk2c');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
-  select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_myTbl3_log' and nspname = 'emajC';
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+  select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2c');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
-  select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_myTbl3_log' and nspname = 'emajC';
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
   rollback to svp1;
   -- testing rollback
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
@@ -430,10 +431,10 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
   savepoint svp1;
   -- testing group's reset
   select emaj.emaj_stop_group('myGroup1');
---select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
   select emaj.emaj_reset_group('myGroup1');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
-  select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_myTbl3_log' and nspname = 'emajC';
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+  select 'should not exist' from pg_namespace where nspname = 'emajb';
+  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
   rollback to svp1;
   -- testing the table drop (remove first the sequence linked to the table, otherwise an event triger fires)
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';

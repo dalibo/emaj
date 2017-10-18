@@ -124,7 +124,13 @@ select emaj.emaj_logged_rollback_group('myGroup2','M3');
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Common');
 
 -----------------------------
--- Checking steps 1 to 4
+-- Step 5 : alter group myGroup1 by changing a log schema
+-----------------------------
+update emaj.emaj_group_def set grpdef_log_schema_suffix = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+select emaj.emaj_alter_group('myGroup1');
+
+-----------------------------
+-- Checking steps 1 to 5
 -----------------------------
 -- emaj tables
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
@@ -143,10 +149,12 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size
   from emaj.emaj_seq_hole order by 1,2,3;
 
+select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
+
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 --

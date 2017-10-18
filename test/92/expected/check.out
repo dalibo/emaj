@@ -91,7 +91,7 @@ select funcname, calls from pg_stat_user_functions
  _check_names_array                        |   132
  _check_new_mark                           |   177
  _cleanup_rollback_state                   |   235
- _create_log_schema                        |    25
+ _create_log_schemas                       |    84
  _create_seq                               |    42
  _create_tbl                               |   131
  _dblink_close_cnx                         |    51
@@ -103,7 +103,7 @@ select funcname, calls from pg_stat_user_functions
  _delete_log_tbl                           |    34
  _disable_event_triggers                   |   211
  _drop_group                               |    24
- _drop_log_schema                          |    18
+ _drop_log_schemas                         |   200
  _drop_seq                                 |    43
  _drop_tbl                                 |   142
  _enable_event_triggers                    |   200
@@ -114,11 +114,11 @@ select funcname, calls from pg_stat_user_functions
  _get_mark_name                            |   380
  _get_mark_time_id                         |   453
  _lock_groups                              |   183
- _log_stat_tbl                             |  2259
+ _log_stat_tbl                             |  2248
  _log_truncate_fnct                        |     2
  _purge_hist                               |    86
  _remove_seq                               |     7
- _remove_tbl                               |    19
+ _remove_tbl                               |    20
  _reset_groups                             |   103
  _rlbk_async                               |     2
  _rlbk_check                               |    80
