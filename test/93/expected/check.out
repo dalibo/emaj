@@ -88,7 +88,7 @@ select funcname, calls from pg_stat_user_functions
  _change_log_schema_tbl                    |     8
  _check_fk_groups                          |   193
  _check_groups_content                     |    87
- _check_names_array                        |   132
+ _check_names_array                        |   133
  _check_new_mark                           |   177
  _cleanup_rollback_state                   |   235
  _create_log_schemas                       |    84
@@ -112,8 +112,8 @@ select funcname, calls from pg_stat_user_functions
  _gen_sql_groups                           |    15
  _gen_sql_tbl                              |    34
  _get_default_tablespace                   |     8
- _get_mark_name                            |   380
- _get_mark_time_id                         |   453
+ _get_mark_name                            |   382
+ _get_mark_time_id                         |   455
  _lock_groups                              |   183
  _log_stat_tbl                             |  2248
  _log_truncate_fnct                        |     2

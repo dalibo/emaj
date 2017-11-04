@@ -22,6 +22,8 @@ E-Maj - Change log
   * Fix the format of this change log so that it is correctly displayed on the 
     pgxn.org site. Also add the release dates.
   * Fix 2 bogus calls to the _rlbk_error() internal function.
+  * Old versions of rollback functions now properly check that no previous
+    alter group operations would be crossed by a requested rollback.
 
 2.1.0 (2017-Aug-02)
 ------

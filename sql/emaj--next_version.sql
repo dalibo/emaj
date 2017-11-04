@@ -4362,11 +4362,11 @@ $_rlbk_check$
     IF v_cpt > 1 THEN
       RAISE EXCEPTION '_rlbk_check: The mark "%" does not represent the same point in time for all groups.', v_mark;
     END IF;
--- if the isAlterGroupAllowed flag is set to true, check that the rollback would not cross any alter group operation for the groups
-    IF NOT v_isAlterGroupAllowed THEN
+-- if the isAlterGroupAllowed flag is not explicitely set to true, check that the rollback would not cross any alter group operation for the groups
+    IF v_isAlterGroupAllowed IS NULL OR NOT v_isAlterGroupAllowed THEN
        PERFORM 0 FROM emaj.emaj_alter_plan WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_rlbk_id IS NULL;
        IF FOUND THEN
-         RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously executed alter group operations. You can remove this protection by using a less strict setting for this function.';
+         RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.';
        END IF;
     END IF;
     RETURN v_markName;
