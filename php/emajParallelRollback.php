@@ -186,7 +186,7 @@
 
 // Call emaj_rlbk_end() on first session to complete the rollback operation
 
-  $query = "SELECT * FROM emaj._rlbk_end ($rlbkId,$multiGroup,$isAlterGroupAllowed)";
+  $query = "SELECT * FROM emaj._rlbk_end ($rlbkId,$multiGroup)";
   if ($verbose) echo date("d/m/Y - H:i:s.u")." _rlbk_end -> complete rollback operation...\n";
   $result = pg_query($dbconn[1],$query)
       or die('Call of _rlbk_end() function failed '.pg_last_error()."\n");

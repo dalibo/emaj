@@ -359,7 +359,7 @@ gist, for table "emaj.emaj_relation"
  rlbk_mark_time_id           | bigint                   | not null
  rlbk_time_id                | bigint                   | 
  rlbk_is_logged              | boolean                  | not null
- rlbk_is_alter_group_allowed | boolean                  | not null
+ rlbk_is_alter_group_allowed | boolean                  | 
  rlbk_nb_session             | integer                  | not null
  rlbk_nb_table               | integer                  | 
  rlbk_nb_sequence            | integer                  | 
