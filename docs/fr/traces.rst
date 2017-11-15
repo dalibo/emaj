@@ -115,33 +115,37 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 
 La colonne *hist_event* peut prendre les valeurs suivantes.
 
-+------------------------------+-----------------------------------------+
-| Valeur                       | Signification                           |
-+==============================+=========================================+
-| BEGIN                        | début                                   |
-+------------------------------+-----------------------------------------+
-| END                          | fin                                     |
-+------------------------------+-----------------------------------------+
-| EVENT TRIGGERS DISABLED      | triggers sur événements désactivés      |
-+------------------------------+-----------------------------------------+
-| EVENT TRIGGERS ENABLED       | triggers sur événements activés         |
-+------------------------------+-----------------------------------------+
-| MARK DELETED                 | marque supprimée                        |
-+------------------------------+-----------------------------------------+
-| SCHEMA CREATED               | schéma secondaire créé                  |
-+------------------------------+-----------------------------------------+
-| SCHEMA DROPPED               | schéma secondaire supprimé              |
-+------------------------------+-----------------------------------------+
-| TABLE ATTR CHANGED           | attributs E-Maj pour la table modifiés  |
-+------------------------------+-----------------------------------------+
-| LOG SCHEMA CHANGED           | Schéma de log modifié                   |
-+------------------------------+-----------------------------------------+
-| NAMES PREFIX CHANGED         | Préfixe des noms E-Maj modifié          |
-+------------------------------+-----------------------------------------+
-| LOG DATA TABLESPACE CHANGED  | Tablespace pour la table de log modifié |
-+------------------------------+-----------------------------------------+
-| LOG INDEX TABLESPACE CHANGED | Tablespace pour l’index de log modifié  |
-+------------------------------+-----------------------------------------+
++------------------------------+--------------------------------------------+
+| Valeur                       | Signification                              |
++==============================+============================================+
+| BEGIN                        | début                                      |
++------------------------------+--------------------------------------------+
+| END                          | fin                                        |
++------------------------------+--------------------------------------------+
+| EVENT TRIGGERS DISABLED      | triggers sur événements désactivés         |
++------------------------------+--------------------------------------------+
+| EVENT TRIGGERS ENABLED       | triggers sur événements activés            |
++------------------------------+--------------------------------------------+
+| LOG DATA TABLESPACE CHANGED  | tablespace pour la table de log modifié    |
++------------------------------+--------------------------------------------+
+| LOG INDEX TABLESPACE CHANGED | tablespace pour l’index de log modifié     |
++------------------------------+--------------------------------------------+
+| LOG SCHEMA CHANGED           | schéma de log modifié                      |
++------------------------------+--------------------------------------------+
+| MARK DELETED                 | marque supprimée                           |
++------------------------------+--------------------------------------------+
+| NAMES PREFIX CHANGED         | préfixe des noms E-Maj modifié             |
++------------------------------+--------------------------------------------+
+| NOTICE                       | message d’information issu d’un rollback   |
++------------------------------+--------------------------------------------+
+| SCHEMA CREATED               | schéma secondaire créé                     |
++------------------------------+--------------------------------------------+
+| SCHEMA DROPPED               | schéma secondaire supprimé                 |
++------------------------------+--------------------------------------------+
+| TABLE ATTR CHANGED           | attributs E-Maj pour la table modifiés     |
++------------------------------+--------------------------------------------+
+| WARNING                      | message d’avertissement issu d’un rollback |
++------------------------------+--------------------------------------------+
 
 Le contenu de la table *emaj_hist* peut être visualisé par quiconque dispose des autorisations suffisantes (rôles super-utilisateur, *emaj_adm* ou *emaj_viewer*)
 

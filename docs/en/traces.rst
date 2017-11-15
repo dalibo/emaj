@@ -126,19 +126,23 @@ The *hist_event* column can take the following values:
 +------------------------------+-----------------------------------------+
 | EVENT TRIGGERS ENABLED       |                                         |
 +------------------------------+-----------------------------------------+
+| LOG DATA TABLESPACE CHANGED  | tablespace for the log table modified   |
++------------------------------+-----------------------------------------+
+| LOG INDEX TABLESPACE CHANGED | tablespace for the log index modified   |
++------------------------------+-----------------------------------------+
+| LOG SCHEMA CHANGED           |                                         |
++------------------------------+-----------------------------------------+
 | MARK DELETED                 |                                         |
++------------------------------+-----------------------------------------+
+| NAMES PREFIX CHANGED         | E-Maj names prefix modified             |
++------------------------------+-----------------------------------------+
+| NOTICE                       | warning message issued by a rollback    |
 +------------------------------+-----------------------------------------+
 | SCHEMA CREATED               | secondary schema created                |
 +------------------------------+-----------------------------------------+
 | SCHEMA DROPPED               | secondary schema dropped                |
 +------------------------------+-----------------------------------------+
-| LOG SCHEMA CHANGED           |                                         |
-+------------------------------+-----------------------------------------+
-| NAMES PREFIX CHANGED         | E-Maj names prefix modified             |
-+------------------------------+-----------------------------------------+
-| LOG DATA TABLESPACE CHANGED  | Tablespace for the log table modified   |
-+------------------------------+-----------------------------------------+
-| LOG INDEX TABLESPACE CHANGED | Tablespace for the log index modified   |
+| WARNING                      | warning message issued by a rollback    |
 +------------------------------+-----------------------------------------+
 
 The *emaj_hist* content can be viewed by anyone who has the proper access rights on this table (*superuser*, *emaj_adm* or *emaj_viewer* roles).

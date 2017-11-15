@@ -15,6 +15,7 @@ E-Maj - Change log
   * The btree_gist extension is now required.
   * Improve the security of the emaj_visible_param view by declaring it as
     'security_barrier'.
+  * Log into the emaj_hist table the final report of rollback operations.
   * Some minor code improvements.
 
 ###Bug fixes:###

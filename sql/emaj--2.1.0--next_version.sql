@@ -3871,21 +3871,30 @@ $_rlbk_end$
     IF v_isAlterGroupAllowed IS NULL THEN
 -- return the number of processed tables and sequences to old style calling functions
       rlbk_severity = 'Notice'; rlbk_message = (v_effNbTbl + v_nbSeq)::TEXT;
-      RETURN NEXT;
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message)
+        RETURNING hist_datetime INTO v_histDateTime;
+        RETURN NEXT;
     ELSE
 -- return the execution report to new style calling functions
 -- ... the general notice messages with counters
       rlbk_severity = 'Notice';
       rlbk_message = format ('%s / %s tables effectively processed.', v_effNbTbl::TEXT, v_nbTbl::TEXT);
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message)
+        RETURNING hist_datetime INTO v_histDateTime;
       RETURN NEXT;
       IF v_nbSeq > 0 THEN
         rlbk_message = format ('%s sequences processed.', v_nbSeq::TEXT);
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+          VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message);
         RETURN NEXT;
       END IF;
 -- ... and warning messages for any elementary action from alter group operations that has not been rolled back
 --TODO add missing cases
       RETURN QUERY
-        SELECT 'Warning'::TEXT AS rlbk_severity,
+        WITH warnings AS
+          (SELECT 'Warning'::TEXT AS rlbk_severity,
               (CASE altr_step
                   WHEN 'CHANGE_REL_PRIORITY' THEN
                     'Tables group change not rolled back: E-Maj priority for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
@@ -3903,9 +3912,15 @@ $_rlbk_end$
                     'The table ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) || ' has been left unchanged (not in group anymore)'
                   ELSE altr_step::TEXT || ' / ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
                   END)::TEXT AS rlbk_message
-          FROM emaj.emaj_alter_plan
-          WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> '' AND altr_rlbk_id IS NULL
-          ORDER BY altr_time_id, altr_step, altr_schema, altr_tblseq;
+            FROM emaj.emaj_alter_plan
+            WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> '' AND altr_rlbk_id IS NULL
+            ORDER BY altr_time_id, altr_step, altr_schema, altr_tblseq
+          ), ins AS
+          (INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+            SELECT CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'WARNING', 'Rollback id ' || v_rlbkId, warnings.rlbk_message
+            FROM warnings
+          )
+        SELECT warnings.rlbk_severity, warnings.rlbk_message FROM warnings;
     END IF;
 -- update the alter steps that have been covered by the rollback
     UPDATE emaj.emaj_alter_plan SET altr_rlbk_id = v_rlbkId
@@ -3976,7 +3991,7 @@ $_cleanup_rollback_state$
       END IF;
       UPDATE emaj.emaj_rlbk SET rlbk_status = v_newStatus WHERE rlbk_id = r_rlbk.rlbk_id;
       INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-        VALUES ('CLEANUP_RLBK_STATE', 'rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
+        VALUES ('CLEANUP_RLBK_STATE', 'Rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
       v_nbRlbk = v_nbRlbk + 1;
     END LOOP;
     RETURN v_nbRlbk;
