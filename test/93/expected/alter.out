@@ -2556,10 +2556,10 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
- ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6004, 0 tables and 4 sequences effectively processed               | postgres
- DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6004             | 0 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6004             | 4 sequences processed.                                                         | postgres
+ DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
+ ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6004, 0 tables and 4 sequences effectively processed               | postgres
  ROLLBACK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Logged rollback to mark Mk2 (timestamp)                                        | postgres
  DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                     | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                            | postgres
@@ -2575,8 +2575,6 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | RLBK_Mk2_%_DONE                                                                | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_Mk2_%_DONE                                                                | postgres
- ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6005, 1 tables and 4 sequences effectively processed               | postgres
- DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6005             | 1 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6005             | 4 sequences processed.                                                         | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6005             | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1       | postgres
@@ -2584,6 +2582,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6005             | Tables group change not rolled back: E-Maj names prefix for myschema1."myTbl3" | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6005             | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6005             | Tables group change not rolled back: log index tablespace for myschema2.mytbl6 | postgres
+ DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
+ ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6005, 1 tables and 4 sequences effectively processed               | postgres
  ROLLBACK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Unlogged rollback to mark Mk2 (timestamp)                                      | postgres
  DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                     | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                            | postgres
@@ -2605,10 +2605,10 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
- ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6006, 1 tables and 4 sequences effectively processed               | postgres
- DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6006             | 1 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6006             | 4 sequences processed.                                                         | postgres
+ DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
+ ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6006, 1 tables and 4 sequences effectively processed               | postgres
  ROLLBACK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Unlogged rollback to mark Mk1 (timestamp)                                      | postgres
  DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                     | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                            | postgres
@@ -2622,8 +2622,6 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
- ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6007, 0 tables and 4 sequences effectively processed               | postgres
- DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6007             | 0 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6007             | 4 sequences processed.                                                         | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6007             | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1       | postgres
@@ -2631,6 +2629,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6007             | Tables group change not rolled back: E-Maj names prefix for myschema1."myTbl3" | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6007             | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6007             | Tables group change not rolled back: log index tablespace for myschema2.mytbl6 | postgres
+ DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
+ ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6007, 0 tables and 4 sequences effectively processed               | postgres
  ROLLBACK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Logged rollback to mark Mk1 (timestamp)                                        | postgres
  DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                     | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                            | postgres
@@ -2646,10 +2646,10 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | RLBK_Mk1_%_DONE                                                                | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_Mk1_%_DONE                                                                | postgres
- ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6008, 0 tables and 4 sequences effectively processed               | postgres
- DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6008             | 0 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6008             | 4 sequences processed.                                                         | postgres
+ DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
+ ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6008, 0 tables and 4 sequences effectively processed               | postgres
  ROLLBACK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Unlogged rollback to mark Mk1 (timestamp)                                      | postgres
  DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                     | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                            | postgres
@@ -2662,10 +2662,10 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
- ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6009, 0 tables and 4 sequences effectively processed               | postgres
- DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6009             | 0 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6009             | 4 sequences processed.                                                         | postgres
+ DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
+ ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6009, 0 tables and 4 sequences effectively processed               | postgres
  FORCE_DROP_GROUP   | BEGIN                        | myGroup1                     |                                                                                | postgres
  FORCE_DROP_GROUP   | SCHEMA DROPPED               | emajb                        |                                                                                | postgres
  FORCE_DROP_GROUP   | END                          | myGroup1                     | 7 tables/sequences processed                                                   | postgres

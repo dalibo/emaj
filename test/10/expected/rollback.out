@@ -571,7 +571,7 @@ SQL statement "SELECT emaj._rlbk_seq(t.*, v_markTimeId)
       FROM (SELECT * FROM emaj.emaj_relation
               WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t"
-PL/pgSQL function emaj._rlbk_end(integer,boolean) line 127 at PERFORM
+PL/pgSQL function emaj._rlbk_end(integer,boolean) line 126 at PERFORM
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 28 at RETURN QUERY
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
@@ -2640,16 +2640,16 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3039 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
     3040 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
     3041 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3042 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 1, 0 tables and 2 sequences effectively processed  | postgres
-    3043 | ROLLBACK_GROUP         | NOTICE       | Rollback id 1                | 2                                                              | postgres
+    3042 | ROLLBACK_GROUP         | NOTICE       | Rollback id 1                | 2                                                              | postgres
+    3043 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 1, 0 tables and 2 sequences effectively processed  | postgres
     3092 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Different_Mark (timestamp)           | postgres
     3093 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -1                                                    | postgres
     3094 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
     3095 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
     3096 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
     3097 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3098 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 4, 0 tables and 2 sequences effectively processed  | postgres
-    3099 | ROLLBACK_GROUP         | NOTICE       | Rollback id 4                | 2                                                              | postgres
+    3098 | ROLLBACK_GROUP         | NOTICE       | Rollback id 4                | 2                                                              | postgres
+    3099 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 4, 0 tables and 2 sequences effectively processed  | postgres
     3100 | ROLLBACK_GROUP         | BEGIN        | myGroup2                     | Unlogged rollback to mark Mark21 (timestamp)                   | postgres
     3101 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -1                                                    | postgres
     3102 | LOCK_GROUP             | BEGIN        | myGroup2                     | Rollback session #1                                            | postgres
@@ -2657,8 +2657,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3104 | ROLLBACK_GROUP         | MARK DELETED | myGroup2                     | mark Different_Mark is deleted                                 | postgres
     3105 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
     3106 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
-    3107 | ROLLBACK_GROUP         | END          | myGroup2                     | Rollback_id 5, 0 tables and 2 sequences effectively processed  | postgres
-    3108 | ROLLBACK_GROUP         | NOTICE       | Rollback id 5                | 2                                                              | postgres
+    3107 | ROLLBACK_GROUP         | NOTICE       | Rollback id 5                | 2                                                              | postgres
+    3108 | ROLLBACK_GROUP         | END          | myGroup2                     | Rollback_id 5, 0 tables and 2 sequences effectively processed  | postgres
     3109 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Different_Mark (timestamp)             | postgres
     3110 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -2                                                    | postgres
     3111 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
@@ -2669,8 +2669,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3116 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
     3117 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Different_Mark_%_DONE                                     | postgres
     3118 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Different_Mark_%_DONE                                     | postgres
-    3119 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 6, 0 tables and 2 sequences effectively processed  | postgres
-    3120 | ROLLBACK_GROUP         | NOTICE       | Rollback id 6                | 2                                                              | postgres
+    3119 | ROLLBACK_GROUP         | NOTICE       | Rollback id 6                | 2                                                              | postgres
+    3120 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 6, 0 tables and 2 sequences effectively processed  | postgres
     3121 | ROLLBACK_GROUP         | BEGIN        | myGroup2                     | Logged rollback to mark Mark21 (timestamp)                     | postgres
     3122 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -2                                                    | postgres
     3123 | LOCK_GROUP             | BEGIN        | myGroup2                     | Rollback session #1                                            | postgres
@@ -2681,8 +2681,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3128 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
     3129 | SET_MARK_GROUP         | BEGIN        | myGroup2                     | RLBK_Mark21_%_DONE                                             | postgres
     3130 | SET_MARK_GROUP         | END          | myGroup2                     | RLBK_Mark21_%_DONE                                             | postgres
-    3131 | ROLLBACK_GROUP         | END          | myGroup2                     | Rollback_id 7, 0 tables and 2 sequences effectively processed  | postgres
-    3132 | ROLLBACK_GROUP         | NOTICE       | Rollback id 7                | 2                                                              | postgres
+    3131 | ROLLBACK_GROUP         | NOTICE       | Rollback id 7                | 2                                                              | postgres
+    3132 | ROLLBACK_GROUP         | END          | myGroup2                     | Rollback_id 7, 0 tables and 2 sequences effectively processed  | postgres
     3133 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Mark1B                                                         | postgres
     3134 | LOCK_GROUPS            | BEGIN        | myGroup1,myGroup2            |                                                                | postgres
     3135 | LOCK_GROUPS            | END          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                | postgres
@@ -2695,8 +2695,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3142 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
     3143 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
     3144 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
-    3145 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 8, 0 tables and 4 sequences effectively processed  | postgres
-    3146 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 8                | 4                                                              | postgres
+    3145 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 8                | 4                                                              | postgres
+    3146 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 8, 0 tables and 4 sequences effectively processed  | postgres
     3147 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Unlogged rollback to mark Mark1B (timestamp)                   | postgres
     3148 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -6                                                    | postgres
     3149 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
@@ -2705,8 +2705,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3152 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
     3153 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
     3154 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
-    3155 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 9, 0 tables and 4 sequences effectively processed  | postgres
-    3156 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 9                | 4                                                              | postgres
+    3155 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 9                | 4                                                              | postgres
+    3156 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 9, 0 tables and 4 sequences effectively processed  | postgres
     3157 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Logged rollback to mark Mark1B (timestamp)                     | postgres
     3158 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -4                                                    | postgres
     3159 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
@@ -2719,8 +2719,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3166 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
     3167 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
     3168 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
-    3169 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 10, 0 tables and 4 sequences effectively processed | postgres
-    3170 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 10               | 4                                                              | postgres
+    3169 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 10               | 4                                                              | postgres
+    3170 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 10, 0 tables and 4 sequences effectively processed | postgres
     3171 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Logged rollback to mark Mark1B (timestamp)                     | postgres
     3172 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
     3173 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
@@ -2733,9 +2733,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3180 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
     3181 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
     3182 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
-    3183 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 11, 0 tables and 4 sequences effectively processed | postgres
+    3183 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 11               | 4                                                              | postgres
     3184 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3185 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 11               | 4                                                              | postgres
+    3185 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 11, 0 tables and 4 sequences effectively processed | postgres
     3186 | STOP_GROUPS            | BEGIN        | myGroup1,myGroup2            |                                                                | postgres
     3187 | LOCK_GROUPS            | BEGIN        | myGroup1,myGroup2            |                                                                | postgres
     3188 | LOCK_GROUPS            | END          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                | postgres
@@ -2774,9 +2774,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3221 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Mark13 is deleted                                         | postgres
     3222 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" | RESTART 1                                                      | postgres
     3223 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3224 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 12, 2 tables and 2 sequences effectively processed | postgres
+    3224 | ROLLBACK_GROUP         | NOTICE       | Rollback id 12               | 4                                                              | postgres
     3225 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3226 | ROLLBACK_GROUP         | NOTICE       | Rollback id 12               | 4                                                              | postgres
+    3226 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 12, 2 tables and 2 sequences effectively processed | postgres
     3227 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark11 (timestamp)                   | postgres
     3228 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
     3229 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
@@ -2790,9 +2790,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3237 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Mark12 is deleted                                         | postgres
     3238 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
     3239 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 1                                                      | postgres
-    3240 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 13, 3 tables and 2 sequences effectively processed | postgres
+    3240 | ROLLBACK_GROUP         | NOTICE       | Rollback id 13               | 5                                                              | postgres
     3241 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3242 | ROLLBACK_GROUP         | NOTICE       | Rollback id 13               | 5                                                              | postgres
+    3242 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 13, 3 tables and 2 sequences effectively processed | postgres
     3243 | STOP_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
     3244 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
     3245 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
@@ -2829,9 +2829,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3276 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
     3277 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Mark12_%_DONE                                             | postgres
     3278 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Mark12_%_DONE                                             | postgres
-    3279 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 14, 2 tables and 2 sequences effectively processed | postgres
+    3279 | ROLLBACK_GROUP         | NOTICE       | Rollback id 14               | 4                                                              | postgres
     3280 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3281 | ROLLBACK_GROUP         | NOTICE       | Rollback id 14               | 4                                                              | postgres
+    3281 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 14, 2 tables and 2 sequences effectively processed | postgres
     3282 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Mark11 (timestamp)                     | postgres
     3283 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
     3284 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
@@ -2853,9 +2853,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3300 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 1                                                      | postgres
     3301 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Mark11_%_DONE                                             | postgres
     3302 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Mark11_%_DONE                                             | postgres
-    3303 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 15, 5 tables and 2 sequences effectively processed | postgres
+    3303 | ROLLBACK_GROUP         | NOTICE       | Rollback id 15               | 7                                                              | postgres
     3304 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3305 | ROLLBACK_GROUP         | NOTICE       | Rollback id 15               | 7                                                              | postgres
+    3305 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 15, 5 tables and 2 sequences effectively processed | postgres
     3306 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark13 (timestamp)                   | postgres
     3307 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
     3308 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
@@ -2876,16 +2876,16 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3323 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Mark11_%_DONE is deleted                             | postgres
     3324 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" | RESTART 11                                                     | postgres
     3325 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
-    3326 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 16, 5 tables and 2 sequences effectively processed | postgres
+    3326 | ROLLBACK_GROUP         | NOTICE       | Rollback id 16               | 7                                                              | postgres
     3327 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3328 | ROLLBACK_GROUP         | NOTICE       | Rollback id 16               | 7                                                              | postgres
+    3328 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 16, 5 tables and 2 sequences effectively processed | postgres
     3329 | ROLLBACK_GROUP         | BEGIN        | emptyGroup                   | Unlogged rollback to mark EGM4 (timestamp)                     | postgres
     3330 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
     3331 | LOCK_GROUP             | BEGIN        | emptyGroup                   | Rollback session #1                                            | postgres
     3332 | LOCK_GROUP             | END          | emptyGroup                   | Rollback session #1: 0 tables locked, 0 deadlock(s)            | postgres
-    3333 | ROLLBACK_GROUP         | END          | emptyGroup                   | Rollback_id 17, 0 tables and 0 sequences effectively processed | postgres
+    3333 | ROLLBACK_GROUP         | NOTICE       | Rollback id 17               | 0                                                              | postgres
     3334 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3335 | ROLLBACK_GROUP         | NOTICE       | Rollback id 17               | 0                                                              | postgres
+    3335 | ROLLBACK_GROUP         | END          | emptyGroup                   | Rollback_id 17, 0 tables and 0 sequences effectively processed | postgres
     3336 | ROLLBACK_GROUP         | BEGIN        | emptyGroup                   | Logged rollback to mark EGM3 (timestamp)                       | postgres
     3337 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
     3338 | LOCK_GROUP             | BEGIN        | emptyGroup                   | Rollback session #1                                            | postgres
@@ -2897,9 +2897,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3344 | SET_MARK_GROUP         | END          | emptyGroup                   | RLBK_EGM3_%_START                                              | postgres
     3345 | SET_MARK_GROUP         | BEGIN        | emptyGroup                   | RLBK_EGM3_%_DONE                                               | postgres
     3346 | SET_MARK_GROUP         | END          | emptyGroup                   | RLBK_EGM3_%_DONE                                               | postgres
-    3347 | ROLLBACK_GROUP         | END          | emptyGroup                   | Rollback_id 18, 0 tables and 0 sequences effectively processed | postgres
+    3347 | ROLLBACK_GROUP         | NOTICE       | Rollback id 18               | 0                                                              | postgres
     3348 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3349 | ROLLBACK_GROUP         | NOTICE       | Rollback id 18               | 0                                                              | postgres
+    3349 | ROLLBACK_GROUP         | END          | emptyGroup                   | Rollback_id 18, 0 tables and 0 sequences effectively processed | postgres
     3350 | START_GROUP            | BEGIN        | myGroup4                     | With log reset                                                 | postgres
     3351 | LOCK_GROUP             | BEGIN        | myGroup4                     |                                                                | postgres
     3352 | LOCK_GROUP             | END          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                 | postgres
@@ -2927,9 +2927,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3374 | ROLLBACK_TABLE         | END          | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
     3375 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
     3376 | SET_MARK_GROUP         | END          | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
-    3377 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 19, 4 tables and 0 sequences effectively processed | postgres
+    3377 | ROLLBACK_GROUP         | NOTICE       | Rollback id 19               | 4                                                              | postgres
     3378 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3379 | ROLLBACK_GROUP         | NOTICE       | Rollback id 19               | 4                                                              | postgres
+    3379 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 19, 4 tables and 0 sequences effectively processed | postgres
     3380 | ROLLBACK_GROUP         | BEGIN        | myGroup4                     | Unlogged rollback to mark myGroup4_start (timestamp)           | postgres
     3381 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
     3382 | LOCK_GROUP             | BEGIN        | myGroup4                     | Rollback session #1                                            | postgres
@@ -2947,9 +2947,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3394 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark mark1 is deleted                                          | postgres
     3395 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark RLBK_mark1_%_START is deleted                             | postgres
     3396 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark RLBK_mark1_%_DONE is deleted                              | postgres
-    3397 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 20, 5 tables and 0 sequences effectively processed | postgres
+    3397 | ROLLBACK_GROUP         | NOTICE       | Rollback id 20               | 5 / 5 tables effectively processed.                            | postgres
     3398 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3399 | ROLLBACK_GROUP         | NOTICE       | Rollback id 20               | 5 / 5 tables effectively processed.                            | postgres
+    3399 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 20, 5 tables and 0 sequences effectively processed | postgres
     3401 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
     3402 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
     3403 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
@@ -2966,9 +2966,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3414 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
     3415 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M1_%_DONE                                           | postgres
     3416 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M1_%_DONE                                           | postgres
-    3417 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 21, 0 tables and 2 sequences effectively processed | postgres
+    3417 | ROLLBACK_GROUP         | NOTICE       | Rollback id 21               | 2                                                              | postgres
     3418 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3419 | ROLLBACK_GROUP         | NOTICE       | Rollback id 21               | 2                                                              | postgres
+    3419 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 21, 0 tables and 2 sequences effectively processed | postgres
     3420 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Conso_M1 and RLBK_Conso_M1_%_DONE      | postgres
     3421 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted           | postgres
     3422 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
@@ -2996,9 +2996,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3444 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
     3445 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M2_%_DONE                                           | postgres
     3446 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M2_%_DONE                                           | postgres
-    3447 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 22, 3 tables and 2 sequences effectively processed | postgres
+    3447 | ROLLBACK_GROUP         | NOTICE       | Rollback id 22               | 5                                                              | postgres
     3448 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3449 | ROLLBACK_GROUP         | NOTICE       | Rollback id 22               | 5                                                              | postgres
+    3449 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 22, 3 tables and 2 sequences effectively processed | postgres
     3450 | RENAME_MARK_GROUP      | BEGIN        | myGroup1                     | Conso_M2                                                       | postgres
     3451 | RENAME_MARK_GROUP      | END          | myGroup1                     | Conso_M2 renamed Renamed_conso_M2                              | postgres
     3452 | RENAME_MARK_GROUP      | BEGIN        | myGroup1                     | EMAJ_LAST_MARK                                                 | postgres
@@ -3020,9 +3020,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3468 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Renamed_last_mark is deleted                              | postgres
     3469 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
     3470 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
-    3471 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 23, 2 tables and 2 sequences effectively processed | postgres
+    3471 | ROLLBACK_GROUP         | NOTICE       | Rollback id 23               | 4                                                              | postgres
     3472 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3473 | ROLLBACK_GROUP         | NOTICE       | Rollback id 23               | 4                                                              | postgres
+    3473 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 23, 2 tables and 2 sequences effectively processed | postgres
     3481 | CLEANUP_RLBK_STATE     |              | Rollback id 22               | set to COMMITTED                                               | postgres
     3482 | CLEANUP_RLBK_STATE     |              | Rollback id 23               | set to COMMITTED                                               | postgres
     3483 | CLEANUP_RLBK_STATE     |              | Rollback id 24               | set to ABORTED                                                 | postgres

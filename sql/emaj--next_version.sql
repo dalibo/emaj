@@ -5183,7 +5183,6 @@ $_rlbk_end$
     v_markTimeId             BIGINT;
     v_nbSeq                  INT;
     v_markName               TEXT;
-    v_histDateTime           TIMESTAMPTZ;
   BEGIN
 -- determine whether the dblink connection for this session is opened
     IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
@@ -5296,36 +5295,12 @@ $_rlbk_end$
       v_markName = 'RLBK_' || v_mark || '_' || to_char(v_rlbkDatetime, 'HH24.MI.SS.MS') || '_DONE';
       PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true, v_mark);
     END IF;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'END',
-              array_to_string(v_groupNames,','),
-              'Rollback_id ' || v_rlbkId || ', ' || v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed'
-             ) RETURNING hist_datetime INTO v_histDateTime;
--- update the emaj_rlbk table to set the real number of tables to process, adjust the rollback status and set the result message
-    IF v_isDblinkUsable THEN
--- ... either through dblink if possible
-      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMPLETED'', rlbk_end_datetime = ' ||
-               quote_literal(v_histDateTime) || ', rlbk_msg = ''Completed: ' ||
-               v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed''' ||
-               ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
-      PERFORM 0 FROM dblink('rlbk#1',v_stmt) AS (dummy INT);
---     and then close the connection
-      PERFORM emaj._dblink_close_cnx('rlbk#1');
-    ELSE
--- ... or directly (the status can be directly set to committed, the update being in the same transaction)
-      EXECUTE 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMMITTED'', rlbk_end_datetime = ' ||
-               quote_literal(v_histDateTime) || ', rlbk_msg = ''Completed: ' ||
-               v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed''' ||
-               ' WHERE rlbk_id = ' || v_rlbkId;
-    END IF;
 -- build and return the execution report
     IF v_isAlterGroupAllowed IS NULL THEN
 -- return the number of processed tables and sequences to old style calling functions
       rlbk_severity = 'Notice'; rlbk_message = (v_effNbTbl + v_nbSeq)::TEXT;
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message)
-        RETURNING hist_datetime INTO v_histDateTime;
+        VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message);
         RETURN NEXT;
     ELSE
 -- return the execution report to new style calling functions
@@ -5333,8 +5308,7 @@ $_rlbk_end$
       rlbk_severity = 'Notice';
       rlbk_message = format ('%s / %s tables effectively processed.', v_effNbTbl::TEXT, v_nbTbl::TEXT);
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message)
-        RETURNING hist_datetime INTO v_histDateTime;
+        VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message);
       RETURN NEXT;
       IF v_nbSeq > 0 THEN
         rlbk_message = format ('%s sequences processed.', v_nbSeq::TEXT);
@@ -5377,6 +5351,28 @@ $_rlbk_end$
 -- update the alter steps that have been covered by the rollback
     UPDATE emaj.emaj_alter_plan SET altr_rlbk_id = v_rlbkId
       WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_rlbk_id IS NULL;
+-- update the emaj_rlbk table to set the real number of tables to process, adjust the rollback status and set the result message
+    IF v_isDblinkUsable THEN
+-- ... either through dblink if possible
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMPLETED'', rlbk_end_datetime = clock_timestamp(),
+               rlbk_msg = ''Completed: ' || v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed''' ||
+               ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
+      PERFORM 0 FROM dblink('rlbk#1',v_stmt) AS (dummy INT);
+--     and then close the connection
+      PERFORM emaj._dblink_close_cnx('rlbk#1');
+    ELSE
+-- ... or directly (the status can be directly set to committed, the update being in the same transaction)
+      EXECUTE 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMMITTED'', rlbk_end_datetime = clock_timestamp(),
+               rlbk_msg = ''Completed: ' || v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed''' ||
+               ' WHERE rlbk_id = ' || v_rlbkId;
+    END IF;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'END',
+              array_to_string(v_groupNames,','),
+              'Rollback_id ' || v_rlbkId || ', ' || v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed'
+             );
+-- end of the function
     RETURN;
 -- trap and record exception during the rollback operation
   EXCEPTION
