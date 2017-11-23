@@ -391,7 +391,7 @@ select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartp2_
 select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false, true), false, true);
 -- and check the result
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
-       rlbk_eff_nb_table, rlbk_status, rlbk_msg
+       rlbk_eff_nb_table, rlbk_status, rlbk_messages
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
 
 -----------------------------
@@ -567,7 +567,7 @@ select emaj.emaj_cleanup_rollback_state();
 -----------------------------
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
-       case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_msg
+       case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_messages
   from emaj.emaj_rlbk order by rlbk_id;
 select rlbs_rlbk_id, rlbs_session, 
        case when rlbs_end_datetime is null then 'null' else '[ts]' end as "end_datetime"

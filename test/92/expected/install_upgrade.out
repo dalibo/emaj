@@ -107,6 +107,12 @@ drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
 drop cascades to function _gen_sql_tbl(emaj_relation,text)
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_relation_pkey" for table "emaj_relation"
 NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl" for table "emaj_relation"
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
+drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
+NOTICE:  CREATE TABLE will create implicit sequence "emaj_rlbk_rlbk_id_seq" for serial column "emaj_rlbk.rlbk_id"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_rlbk_pkey" for table "emaj_rlbk"
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------

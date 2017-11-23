@@ -340,7 +340,7 @@ CREATE TABLE emaj.emaj_rlbk (
   rlbk_is_dblink_used          BOOLEAN,                    -- boolean indicating whether dblink connection are used
   rlbk_end_datetime            TIMESTAMPTZ,                -- clock time the rollback has been completed,
                                                            --   NULL if rollback is in progress or aborted
-  rlbk_msg                     TEXT,                       -- result message
+  rlbk_messages                TEXT[],                     -- result messages array
   PRIMARY KEY (rlbk_id),
   FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp (time_id),
   FOREIGN KEY (rlbk_mark_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
@@ -5183,6 +5183,8 @@ $_rlbk_end$
     v_markTimeId             BIGINT;
     v_nbSeq                  INT;
     v_markName               TEXT;
+    v_messages               TEXT;
+    r_msg                    RECORD;
   BEGIN
 -- determine whether the dblink connection for this session is opened
     IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
@@ -5296,32 +5298,36 @@ $_rlbk_end$
       PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, true, v_mark);
     END IF;
 -- build and return the execution report
+-- start with the NOTICE messages
+    rlbk_severity = 'Notice';
+    rlbk_message = format ('%s / %s tables effectively processed.', v_effNbTbl::TEXT, v_nbTbl::TEXT);
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message);
+    v_messages = quote_literal(rlbk_severity || ': ' || rlbk_message);
     IF v_isAlterGroupAllowed IS NULL THEN
--- return the number of processed tables and sequences to old style calling functions
-      rlbk_severity = 'Notice'; rlbk_message = (v_effNbTbl + v_nbSeq)::TEXT;
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message);
-        RETURN NEXT;
+-- for old style calling functions just return the number of processed tables and sequences
+      rlbk_message = (v_effNbTbl + v_nbSeq)::TEXT;
+      RETURN NEXT;
     ELSE
+      RETURN NEXT;
+    END IF;
 -- return the execution report to new style calling functions
 -- ... the general notice messages with counters
-      rlbk_severity = 'Notice';
-      rlbk_message = format ('%s / %s tables effectively processed.', v_effNbTbl::TEXT, v_nbTbl::TEXT);
+    IF v_nbSeq > 0 THEN
+      rlbk_message = format ('%s sequences processed.', v_nbSeq::TEXT);
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message);
-      RETURN NEXT;
-      IF v_nbSeq > 0 THEN
-        rlbk_message = format ('%s sequences processed.', v_nbSeq::TEXT);
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-          VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'NOTICE', 'Rollback id ' || v_rlbkId, rlbk_message);
+      v_messages = concat(v_messages, ',', quote_literal(rlbk_severity || ': ' || rlbk_message));
+      IF v_isAlterGroupAllowed IS NOT NULL THEN
         RETURN NEXT;
       END IF;
--- ... and warning messages for any elementary action from alter group operations that has not been rolled back
+    END IF;
+-- then, for new style calling functions, return the WARNING messages for any elementary action from alter group operations that has not been rolled back
+    IF v_isAlterGroupAllowed IS NOT NULL THEN
 --TODO add missing cases
-      RETURN QUERY
-        WITH warnings AS
-          (SELECT 'Warning'::TEXT AS rlbk_severity,
-              (CASE altr_step
+      rlbk_severity = 'Warning';
+      FOR r_msg IN
+        SELECT (CASE altr_step
                   WHEN 'CHANGE_REL_PRIORITY' THEN
                     'Tables group change not rolled back: E-Maj priority for ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
                   WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN
@@ -5337,16 +5343,17 @@ $_rlbk_end$
                   WHEN 'REMOVE_TBL' THEN
                     'The table ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) || ' has been left unchanged (not in group anymore)'
                   ELSE altr_step::TEXT || ' / ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                  END)::TEXT AS rlbk_message
+                  END)::TEXT AS message
             FROM emaj.emaj_alter_plan
             WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> '' AND altr_rlbk_id IS NULL
             ORDER BY altr_time_id, altr_step, altr_schema, altr_tblseq
-          ), ins AS
-          (INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-            SELECT CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'WARNING', 'Rollback id ' || v_rlbkId, warnings.rlbk_message
-            FROM warnings
-          )
-        SELECT warnings.rlbk_severity, warnings.rlbk_message FROM warnings;
+        LOOP
+          INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+            VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'WARNING', 'Rollback id ' || v_rlbkId, r_msg.message);
+          rlbk_message = r_msg.message;
+          v_messages = concat(v_messages, ',', quote_literal(rlbk_severity || ': ' || rlbk_message));
+          RETURN NEXT;
+      END LOOP;
     END IF;
 -- update the alter steps that have been covered by the rollback
     UPDATE emaj.emaj_alter_plan SET altr_rlbk_id = v_rlbkId
@@ -5354,16 +5361,14 @@ $_rlbk_end$
 -- update the emaj_rlbk table to set the real number of tables to process, adjust the rollback status and set the result message
     IF v_isDblinkUsable THEN
 -- ... either through dblink if possible
-      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMPLETED'', rlbk_end_datetime = clock_timestamp(),
-               rlbk_msg = ''Completed: ' || v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed''' ||
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMPLETED'', rlbk_end_datetime = clock_timestamp(), rlbk_messages = ARRAY[' || v_messages || ']' ||
                ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
       PERFORM 0 FROM dblink('rlbk#1',v_stmt) AS (dummy INT);
 --     and then close the connection
       PERFORM emaj._dblink_close_cnx('rlbk#1');
     ELSE
 -- ... or directly (the status can be directly set to committed, the update being in the same transaction)
-      EXECUTE 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMMITTED'', rlbk_end_datetime = clock_timestamp(),
-               rlbk_msg = ''Completed: ' || v_effNbTbl || ' tables and ' || v_nbSeq || ' sequences effectively processed''' ||
+      EXECUTE 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''COMMITTED'', rlbk_end_datetime = clock_timestamp(), rlbk_messages = ARRAY[' || v_messages || ']' ||
                ' WHERE rlbk_id = ' || v_rlbkId;
     END IF;
 -- insert end in the history
@@ -5394,8 +5399,8 @@ $_rlbk_error$
     v_stmt                   TEXT;
   BEGIN
     IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
-      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''ABORTED'', rlbk_msg = ' || quote_literal(v_msg) ||
-               ', rlbk_end_datetime =  clock_timestamp() ' ||
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''ABORTED'', rlbk_messages = ''{"' || quote_literal(v_msg) ||
+               '"}'', rlbk_end_datetime =  clock_timestamp() ' ||
                'WHERE rlbk_id = ' || v_rlbkId || ' AND rlbk_status <> ''ABORTED'' RETURNING 1';
       PERFORM 0 FROM dblink(v_cnxName,v_stmt) AS (dummy INT);
     END IF;

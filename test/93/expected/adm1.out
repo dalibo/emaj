@@ -1879,11 +1879,11 @@ select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1,
 
 -- and check the rollback result
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
-       rlbk_eff_nb_table, rlbk_status, rlbk_msg
+       rlbk_eff_nb_table, rlbk_status, rlbk_messages
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
- rlbk_id | rlbk_groups | rlbk_mark | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status |                         rlbk_msg                          
----------+-------------+-----------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+-----------------------------------------------------------
-   10006 | {myGroup1}  | M4        |        10021 | t              | t                           |               1 |             5 |                2 |                 3 | COMPLETED   | Completed: 3 tables and 2 sequences effectively processed
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status |                                  rlbk_messages                                   
+---------+-------------+-----------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+----------------------------------------------------------------------------------
+   10006 | {myGroup1}  | M4        |        10021 | t              | t                           |               1 |             5 |                2 |                 3 | COMPLETED   | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
 (1 row)
 
 -----------------------------

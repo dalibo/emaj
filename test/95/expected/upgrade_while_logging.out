@@ -56,6 +56,10 @@ drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
 drop cascades to function _rlbk_seq(emaj_relation,bigint)
 drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
 drop cascades to function _gen_sql_tbl(emaj_relation,text)
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
+drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
 -----------------------------
 -- check installation
 -----------------------------
@@ -423,7 +427,7 @@ Tablespace: "tspemaj"
  rlbk_begin_hist_id          | bigint                   | 
  rlbk_is_dblink_used         | boolean                  | 
  rlbk_end_datetime           | timestamp with time zone | 
- rlbk_msg                    | text                     | 
+ rlbk_messages               | text[]                   | 
 Indexes:
     "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id), tablespace "tspemaj"
     "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum]), tablespace "tspemaj"
@@ -494,7 +498,7 @@ Tablespace: "tspemaj"
  max_value     | bigint  | 9223372036854775807
  min_value     | bigint  | 1
  cache_value   | bigint  | 1
- log_cnt       | bigint  | 29
+ log_cnt       | bigint  | 0
  is_cycled     | boolean | f
  is_called     | boolean | t
 Owned by: emaj.emaj_rlbk.rlbk_id

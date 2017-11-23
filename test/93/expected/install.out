@@ -368,7 +368,7 @@ gist, for table "emaj.emaj_relation"
  rlbk_begin_hist_id          | bigint                   | 
  rlbk_is_dblink_used         | boolean                  | 
  rlbk_end_datetime           | timestamp with time zone | 
- rlbk_msg                    | text                     | 
+ rlbk_messages               | text[]                   | 
 Indexes:
     "emaj_rlbk_pkey" PRIMARY KEY, btree (rlbk_id)
     "emaj_rlbk_idx1" btree (rlbk_status) WHERE rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum])
@@ -618,6 +618,6 @@ select count(*) from
     where (funcname like E'emaj\\_%' or funcname like E'\\_%')) as t;
  count 
 -------
-     0
+     1
 (1 row)
 
