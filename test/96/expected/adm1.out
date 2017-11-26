@@ -54,6 +54,12 @@ select count(*) from emaj.emaj_group;
      3
 (1 row)
 
+select count(*) from emaj.emaj_schema;
+ count 
+-------
+     3
+(1 row)
+
 select count(*) from emaj.emaj_relation;
  count 
 -------
@@ -152,6 +158,12 @@ select * from emaj.emaj_group;
  group_name | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_pg_version | group_comment 
 ------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+------------------+---------------
 (0 rows)
+
+select sch_name from emaj.emaj_schema;
+ sch_name 
+----------
+ emaj
+(1 row)
 
 select * from emaj.emaj_relation;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp | rel_log_index | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
@@ -2285,12 +2297,12 @@ ERROR:  emaj_create_group: The group "dummyGroup" is unknown in the emaj_group_d
 CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 29 at RAISE
 select emaj.emaj_drop_group('dummyGroup');
 ERROR:  _drop_group: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 17 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 select emaj.emaj_force_drop_group('dummyGroup');
 ERROR:  _drop_group: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 17 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 select emaj.emaj_get_previous_mark_group('dummyGroup', '2010-01-01');

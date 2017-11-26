@@ -40,4 +40,3 @@ select pg_sleep(0.5);
 select count(*) from 
   (select pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
     where (funcname like E'emaj\\_%' or funcname like E'\\_%')) as t;
-

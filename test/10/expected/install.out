@@ -42,11 +42,12 @@ select relname from pg_catalog.pg_class,
  emaj_rlbk_rlbk_id_seq
  emaj_rlbk_session
  emaj_rlbk_stat
+ emaj_schema
  emaj_seq_hole
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(19 rows)
+(20 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -299,6 +300,7 @@ Indexes:
     "emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl" EXCLUDE USING gist (rel_schema WITH =, rel_tblseq WITH =, rel_time_range WITH &&)
 Foreign-key constraints:
     "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
+    "emaj_relation_rel_log_schema_fkey" FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema(sch_name)
 
 Index "emaj.emaj_relation_idx1"
   Column   | Type | Definition 
@@ -474,6 +476,22 @@ primary key, btree, for table "emaj.emaj_rlbk_stat"
  rlbk_elapse                 | interval                 |           |          | 
  rlbk_remaining              | interval                 |           |          | 
  rlbk_completion_pct         | smallint                 |           |          | 
+
+                                 Table "emaj.emaj_schema"
+    Column    |           Type           | Collation | Nullable |         Default         
+--------------+--------------------------+-----------+----------+-------------------------
+ sch_name     | text                     |           | not null | 
+ sch_datetime | timestamp with time zone |           | not null | transaction_timestamp()
+Indexes:
+    "emaj_schema_pkey" PRIMARY KEY, btree (sch_name)
+Referenced by:
+    TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_log_schema_fkey" FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema(sch_name)
+
+Index "emaj.emaj_schema_pkey"
+  Column  | Type | Definition 
+----------+------+------------
+ sch_name | text | sch_name
+primary key, btree, for table "emaj.emaj_schema"
 
                   Table "emaj.emaj_seq_hole"
        Column       |  Type  | Collation | Nullable | Default 

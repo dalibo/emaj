@@ -100,6 +100,12 @@ select count(*) from emaj.emaj_group;
      3
 (1 row)
 
+select count(*) from emaj.emaj_schema;
+ count 
+-------
+     3
+(1 row)
+
 select count(*) from emaj.emaj_relation;
  count 
 -------

@@ -207,6 +207,16 @@ CREATE TABLE emaj.emaj_group (
 COMMENT ON TABLE emaj.emaj_group IS
 $$Contains created E-Maj groups.$$;
 
+-- table containing the primary and secondary E-Maj schemas
+CREATE TABLE emaj.emaj_schema (
+  sch_name                     TEXT        NOT NULL,       -- schema name
+  sch_datetime                 TIMESTAMPTZ NOT NULL DEFAULT transaction_timestamp(),
+                                                           -- insertion time
+  PRIMARY KEY (sch_name)
+  );
+COMMENT ON TABLE emaj.emaj_schema IS
+$$Contains the schemas hosting log tables, sequences and functions.$$;
+
 -- table containing the relations (tables and sequences) of created tables groups
 CREATE TABLE emaj.emaj_relation (
   rel_schema                   TEXT        NOT NULL,       -- schema name containing the relation
@@ -230,6 +240,7 @@ CREATE TABLE emaj.emaj_relation (
   rel_sql_pk_eq_conditions     TEXT,                       -- piece of sql used to rollback: equality conditions on the pk columns
   PRIMARY KEY (rel_schema, rel_tblseq, rel_time_range),
   FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name),
+  FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema (sch_name),
   EXCLUDE USING gist (rel_schema WITH =, rel_tblseq WITH =, rel_time_range WITH &&)
   );
 COMMENT ON TABLE emaj.emaj_relation IS
@@ -852,12 +863,9 @@ $_check_groups_content$
 -- check no application schema listed for the group in the emaj_group_def table is an E-Maj schema
     FOR r IN
       SELECT grpdef_schema, grpdef_tblseq
-        FROM emaj.emaj_group_def
+        FROM emaj.emaj_group_def, emaj.emaj_schema
         WHERE grpdef_group = ANY (v_groupNames)
-          AND grpdef_schema IN (
-                SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation
-                UNION
-                SELECT 'emaj')
+          AND grpdef_schema = sch_name
         ORDER BY grpdef_schema, grpdef_tblseq
     LOOP
       RAISE WARNING '_check_groups_content: Error, the table or sequence %.% belongs to an E-Maj schema.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
@@ -1086,8 +1094,8 @@ $_create_log_schemas$
         SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
           WHERE grpdef_group = ANY (v_groupNames)
             AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- secondary log schemas needed for the groups
-        EXCEPT
-        SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                            -- minus those already created
+            AND NOT EXISTS                                                                -- minus those already created
+              (SELECT 0 FROM emaj.emaj_schema WHERE sch_name = v_schemaPrefix || grpdef_log_schema_suffix)
         ORDER BY 1
       LOOP
 -- check that the schema doesn't already exist
@@ -1099,7 +1107,8 @@ $_create_log_schemas$
       EXECUTE 'CREATE SCHEMA ' || quote_ident(r_schema.log_schema);
       EXECUTE 'GRANT ALL ON SCHEMA ' || quote_ident(r_schema.log_schema) || ' TO emaj_adm';
       EXECUTE 'GRANT USAGE ON SCHEMA ' || quote_ident(r_schema.log_schema) || ' TO emaj_viewer';
--- and record the schema creation in emaj_hist table
+-- and record the schema creation into the emaj_schema and the emaj_hist tables
+      INSERT INTO emaj.emaj_schema (sch_name) VALUES (r_schema.log_schema);
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
         VALUES (v_function, 'SCHEMA CREATED', quote_ident(r_schema.log_schema));
     END LOOP;
@@ -1107,12 +1116,11 @@ $_create_log_schemas$
   END;
 $_create_log_schemas$;
 
-CREATE OR REPLACE FUNCTION emaj._drop_log_schemas(v_function TEXT, v_secondarySchemas TEXT[], v_isForced BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._drop_log_schemas(v_function TEXT, v_isForced BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_log_schemas$
 -- The function looks for secondary emaj schemas to drop. Drop them if any.
 -- Input: calling function to record into the emaj_hist table,
---        array of known schemas in emaj_relation, built by the caller before any _drop_tbl() call,
 --        boolean telling whether the schema to drop may contain residual objects
 -- The function is created as SECURITY DEFINER so that secondary schemas can be dropped in any case
   DECLARE
@@ -1120,10 +1128,12 @@ $_drop_log_schemas$
   BEGIN
 -- For each secondary index to drop,
     FOR r_schema IN
-        SELECT unnest(v_secondarySchemas) AS log_schema                               -- the existing schemas before tables drop
+        SELECT sch_name AS log_schema FROM emaj.emaj_schema                           -- the existing schemas
+          WHERE sch_name <> 'emaj'
           EXCEPT
-        SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                        -- the currently existing schemas (after tables drop)
+        SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                        -- the currently needed schemas (after tables drop)
           WHERE rel_kind = 'r' and rel_log_schema <> 'emaj'
+        ORDER BY 1
         LOOP
 -- check that the schema really exists
       PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = r_schema.log_schema;
@@ -1143,6 +1153,8 @@ $_drop_log_schemas$
               RAISE EXCEPTION '_drop_log_schemas: Cannot drop the schema "%". It probably owns unattended objects. Use the emaj_verify_all() function to get details.', r_schema.log_schema;
         END;
       END IF;
+-- remove the schema from the emaj_schema table
+      DELETE FROM emaj.emaj_schema WHERE sch_name = r_schema.log_schema;
 -- record the schema drop in emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
         VALUES (v_function,'SCHEMA DROPPED',quote_ident(r_schema.log_schema));
@@ -2439,7 +2451,6 @@ $_drop_group$
     v_groupIsLogging         BOOLEAN;
     v_eventTriggers          TEXT[];
     v_nbTb                   INT = 0;
-    v_secondarySchemas       TEXT[];
     r_rel                    emaj.emaj_relation%ROWTYPE;
   BEGIN
 -- check that the group is recorded in emaj_group table
@@ -2458,9 +2469,6 @@ $_drop_group$
 -- OK
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
--- build the list of all existing secondary schemas. It will be needed later to drop the useless schema when log tables will be dropped.
-    SELECT coalesce(array_agg(DISTINCT rel_log_schema),'{}') INTO v_secondarySchemas FROM emaj.emaj_relation
-      WHERE rel_kind = 'r' and rel_log_schema <> 'emaj';
 -- delete the emaj objets for each table of the group
     FOR r_rel IN
         SELECT * FROM emaj.emaj_relation
@@ -2476,8 +2484,7 @@ $_drop_group$
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- drop the E-Maj secondary schemas that are now useless (i.e. not used by any other created group)
-    PERFORM emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_secondarySchemas, v_isForced)
-      WHERE v_secondarySchemas IS NOT NULL;
+    PERFORM emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced);
 -- delete group row from the emaj_group table.
 --   By cascade, it also deletes rows from emaj_mark
     DELETE FROM emaj.emaj_group WHERE group_name = v_groupName;
@@ -2525,7 +2532,6 @@ $_alter_groups$
     v_loggingGroups          TEXT[];
     v_markName               TEXT;
     v_timeId                 BIGINT;
-    v_secondarySchemas       TEXT[];
     v_eventTriggers          TEXT[];
   BEGIN
 -- insert begin in the history
@@ -2563,14 +2569,10 @@ $_alter_groups$
     PERFORM emaj._alter_plan(v_groupNames, v_timeId);
 -- create the needed secondary schemas
     PERFORM emaj._create_log_schemas('ALTER_GROUP', v_groupNames);
--- build the list of all existing secondary schemas. It will be needed later to drop the useless secondary schemas, once log tables will be dropped.
-    SELECT coalesce(array_agg(DISTINCT rel_log_schema),'{}') INTO v_secondarySchemas FROM emaj.emaj_relation
-      WHERE rel_kind = 'r' and rel_log_schema <> 'emaj';
 -- execute the plan
     PERFORM emaj._alter_exec(v_timeId);
 -- drop the E-Maj secondary schemas that are now useless (i.e. not used by any created group)
-    PERFORM emaj._drop_log_schemas('ALTER_GROUP', v_secondarySchemas, FALSE)
-      WHERE v_secondarySchemas IS NOT NULL;
+    PERFORM emaj._drop_log_schemas('ALTER_GROUP', FALSE);
 -- update tables and sequences counters and the last alter timestamp in the emaj_group table
     UPDATE emaj.emaj_group
       SET group_last_alter_time_id = v_timeId,
@@ -2942,6 +2944,7 @@ $_start_groups$
     v_nbTb                   INT = 0;
     v_markName               TEXT;
     v_fullTableName          TEXT;
+    v_eventTriggers          TEXT[];
     r_tblsq                  RECORD;
   BEGIN
 -- purge the emaj history, if needed
@@ -2969,6 +2972,10 @@ $_start_groups$
 -- if requested by the user, call the emaj_reset_groups() function to erase remaining traces from previous logs
     if v_resetLog THEN
       PERFORM emaj._reset_groups(v_groupNames);
+--    drop the secondary schemas that would have been emptied by the _reset_groups() call
+      SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+      PERFORM emaj._drop_log_schemas(CASE WHEN v_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, FALSE);
+      PERFORM emaj._enable_event_triggers(v_eventTriggers);
     END IF;
 -- check and process the supplied mark name
     IF v_mark IS NULL OR v_mark = '' THEN
@@ -3741,7 +3748,6 @@ $_delete_before_marks_group$
     v_markId                 BIGINT;
     v_markGlobalSeq          BIGINT;
     v_markTimeId             BIGINT;
-    v_secondarySchemas       TEXT[];
     v_nbMark                 INT;
     r_rel                    RECORD;
   BEGIN
@@ -3751,9 +3757,6 @@ $_delete_before_marks_group$
     SELECT mark_id, time_last_emaj_gid, mark_time_id INTO v_markId, v_markGlobalSeq, v_markTimeId
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_mark;
--- build the list of all existing secondary schemas. It will be needed later to drop the useless secondary schemas, once log tables will be dropped.
-    SELECT coalesce(array_agg(DISTINCT rel_log_schema),'{}') INTO v_secondarySchemas FROM emaj.emaj_relation
-      WHERE rel_kind = 'r' and rel_log_schema <> 'emaj';
 -- drop obsolete old log tables (whose end time stamp is older than the new first mark time stamp)
     FOR r_rel IN
         SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
@@ -3766,8 +3769,7 @@ $_delete_before_marks_group$
     DELETE FROM emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper(rel_time_range) <= v_markTimeId;
 -- drop the E-Maj secondary schemas that are now useless (i.e. not used by any created group)
-    PERFORM emaj._drop_log_schemas('DELETE_BEFORE_MARK_GROUP', v_secondarySchemas, FALSE)
-      WHERE v_secondarySchemas IS NOT NULL;
+    PERFORM emaj._drop_log_schemas('DELETE_BEFORE_MARK_GROUP', FALSE);
 -- delete rows from all other log tables
     FOR r_rel IN
 --TODO ok ?
@@ -5657,6 +5659,7 @@ $emaj_reset_group$
   DECLARE
     v_groupIsLogging         BOOLEAN;
     v_nbTb                   INT = 0;
+    v_eventTriggers          TEXT[];
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
@@ -5673,6 +5676,10 @@ $emaj_reset_group$
     END IF;
 -- perform the reset operation
     SELECT emaj._reset_groups(ARRAY[v_groupName]) INTO v_nbTb;
+-- drop the secondary schemas that would have been emptied by the _reset_groups() call
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+    PERFORM emaj._drop_log_schemas('RESET_GROUP', FALSE);
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('RESET_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
@@ -5693,7 +5700,6 @@ $_reset_groups$
 -- The function is defined as SECURITY DEFINER so that an emaj_adm role can truncate log tables
   DECLARE
     v_eventTriggers          TEXT[];
-    v_secondarySchemas       TEXT[];
     r_rel                    RECORD;
   BEGIN
 -- disable event triggers that protect emaj components and keep in memory these triggers name
@@ -5712,9 +5718,6 @@ $_reset_groups$
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE rel_schema = sequ_schema AND rel_tblseq = sequ_name AND
             rel_group = ANY (v_groupNames) AND rel_kind = 'S';
--- build the list of all existing secondary schemas. It will be needed later to drop the useless secondary schemas, once log tables will be dropped.
-    SELECT coalesce(array_agg(DISTINCT rel_log_schema),'{}') INTO v_secondarySchemas FROM emaj.emaj_relation
-      WHERE rel_kind = 'r' and rel_log_schema <> 'emaj';
 --TODO: drop application table copies ?
 -- drop obsolete emaj objects for removed tables
     FOR r_rel IN
@@ -5727,9 +5730,6 @@ $_reset_groups$
 -- deletes old versions of emaj_relation rows (those with a not infinity upper bound)
     DELETE FROM emaj.emaj_relation
       WHERE rel_group = ANY (v_groupNames) AND NOT upper_inf(rel_time_range);
--- drop the E-Maj secondary schemas that are now useless (i.e. not used by any created group)
-    PERFORM emaj._drop_log_schemas('RESET_GROUP', v_secondarySchemas, FALSE)
-      WHERE v_secondarySchemas IS NOT NULL;
 -- truncate remaining log tables for application tables
     FOR r_rel IN
         SELECT rel_log_schema, rel_log_table, rel_log_sequence FROM emaj.emaj_relation
@@ -6893,98 +6893,86 @@ $_verify_all_schemas$
   BEGIN
 -- verify that the expected E-Maj schemas still exist
     RETURN QUERY
-      SELECT DISTINCT 'The E-Maj schema "' || rel_log_schema || '" does not exist any more.' AS msg
-        FROM emaj.emaj_relation
-        WHERE rel_log_schema IS NOT NULL
-          AND NOT EXISTS (SELECT NULL FROM pg_catalog.pg_namespace WHERE nspname = rel_log_schema)
+      SELECT DISTINCT 'The E-Maj schema "' || sch_name || '" does not exist any more.' AS msg
+        FROM emaj.emaj_schema
+        WHERE NOT EXISTS (SELECT NULL FROM pg_catalog.pg_namespace WHERE nspname = sch_name)
         ORDER BY msg;
 -- detect all objects that are not directly linked to a known table groups in all E-Maj schemas
 -- scan pg_class, pg_proc, pg_type, pg_conversion, pg_operator, pg_opclass
     RETURN QUERY
       SELECT msg FROM (
-        WITH cte_logschemas AS (SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation)
 -- look for unexpected tables
         SELECT nspname, 1, 'In schema "' || nspname ||
                '", the table "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
-           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-           WHERE relnamespace = pg_namespace.oid AND relkind = 'r'
+           FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_schema
+           WHERE nspname = sch_name AND relnamespace = pg_namespace.oid AND relkind = 'r'
              AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal tables
              AND NOT EXISTS                                                   -- exclude emaj log tables
                 (SELECT NULL FROM emaj.emaj_relation WHERE rel_log_schema = nspname AND rel_log_table = relname)
-             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected sequences
         SELECT nspname, 2, 'In schema "' || nspname ||
                '", the sequence "' || nspname || '"."' || relname || '" is not linked to any created tables group.' AS msg
-           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-           WHERE relnamespace = pg_namespace.oid AND relkind = 'S'
+           FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_schema
+           WHERE nspname = sch_name AND relnamespace = pg_namespace.oid AND relkind = 'S'
              AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal sequences
              AND NOT EXISTS                                                   -- exclude emaj log table sequences
                 (SELECT NULL FROM emaj.emaj_relation WHERE rel_log_schema = nspname AND rel_log_sequence = relname)
-             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected functions
         SELECT nspname, 3, 'In schema "' || nspname ||
                '", the function "' || nspname || '"."' || proname  || '" is not linked to any created tables group.' AS msg
-           FROM pg_catalog.pg_proc, pg_catalog.pg_namespace
-           WHERE pronamespace = pg_namespace.oid
+           FROM pg_catalog.pg_proc, pg_catalog.pg_namespace, emaj.emaj_schema
+           WHERE nspname = sch_name AND pronamespace = pg_namespace.oid
              AND (nspname <> v_emajSchema OR (proname NOT LIKE E'emaj\\_%' AND proname NOT LIKE E'\\_%'))
                                                                               -- exclude emaj internal functions
              AND NOT EXISTS (                                                 -- exclude emaj log functions
                SELECT NULL FROM emaj.emaj_relation WHERE rel_log_schema = nspname AND rel_log_function = proname)
-             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected composite types
         SELECT nspname, 4, 'In schema "' || nspname ||
                '", the type "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-           WHERE relnamespace = pg_namespace.oid AND relkind = 'c'
+           FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_schema
+           WHERE nspname = sch_name AND relnamespace = pg_namespace.oid AND relkind = 'c'
              AND (nspname <> v_emajSchema OR (relname NOT LIKE E'emaj\\_%' AND relname NOT LIKE E'\\_%'))
                                                                               -- exclude emaj internal types
-             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected views
         SELECT nspname, 5, 'In schema "' || nspname ||
                '", the view "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-           WHERE relnamespace = pg_namespace.oid  AND relkind = 'v'
+           FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_schema
+           WHERE nspname = sch_name AND relnamespace = pg_namespace.oid  AND relkind = 'v'
              AND (nspname <> v_emajSchema OR relname NOT LIKE E'emaj\\_%')    -- exclude emaj internal views
-             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
         UNION ALL
 -- look for unexpected foreign tables
         SELECT nspname, 6, 'In schema "' || nspname ||
                '", the foreign table "' || nspname || '"."' || relname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-           WHERE relnamespace = pg_namespace.oid  AND relkind = 'f'
-             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
+           FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_schema
+           WHERE nspname = sch_name AND relnamespace = pg_namespace.oid  AND relkind = 'f'
         UNION ALL
 -- look for unexpected domains
         SELECT nspname, 7, 'In schema "' || nspname ||
                '", the domain "' || nspname || '"."' || typname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_type, pg_catalog.pg_namespace
-           WHERE typnamespace = pg_namespace.oid AND typisdefined and typtype = 'd'
-             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
+           FROM pg_catalog.pg_type, pg_catalog.pg_namespace, emaj.emaj_schema
+           WHERE nspname = sch_name AND typnamespace = pg_namespace.oid AND typisdefined and typtype = 'd'
         UNION ALL
 -- look for unexpected conversions
         SELECT nspname, 8, 'In schema "' || nspname ||
                '", the conversion "' || nspname || '"."' || conname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_conversion, pg_catalog.pg_namespace
-           WHERE connamespace = pg_namespace.oid
-             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
+           FROM pg_catalog.pg_conversion, pg_catalog.pg_namespace, emaj.emaj_schema
+           WHERE nspname = sch_name AND connamespace = pg_namespace.oid
         UNION ALL
 -- look for unexpected operators
         SELECT nspname, 9, 'In schema "' || nspname ||
                '", the operator "' || nspname || '"."' || oprname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_operator, pg_catalog.pg_namespace
-           WHERE oprnamespace = pg_namespace.oid
-             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
+           FROM pg_catalog.pg_operator, pg_catalog.pg_namespace, emaj.emaj_schema
+           WHERE nspname = sch_name AND oprnamespace = pg_namespace.oid
         UNION ALL
 -- look for unexpected operator classes
         SELECT nspname, 10, 'In schema "' || nspname ||
                '", the operator class "' || nspname || '"."' || opcname || '" is not an E-Maj component.' AS msg
-           FROM pg_catalog.pg_opclass, pg_catalog.pg_namespace
-           WHERE opcnamespace = pg_namespace.oid
-             AND nspname IN (SELECT rel_log_schema FROM cte_logschemas)
+           FROM pg_catalog.pg_opclass, pg_catalog.pg_namespace, emaj.emaj_schema
+           WHERE nspname = sch_name AND opcnamespace = pg_namespace.oid
         ORDER BY 1, 2, 3
       ) AS t;
     RETURN;
@@ -7144,9 +7132,9 @@ $_event_trigger_sql_drop_fnct$
           IF v_groupName IS NOT NULL THEN
             RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the application schema "%". But it belongs to the active tables groups "%".', r_dropped.object_name, v_groupName;
           END IF;
---   look at the emaj_relation table to verify that the schema being dropped is not an E-Maj schema containing log tables
-          PERFORM 1 FROM emaj.emaj_relation
-            WHERE rel_log_schema = r_dropped.object_name;
+--   look at the emaj_schema table to verify that the schema being dropped is not an E-Maj schema containing log tables
+          PERFORM 1 FROM emaj.emaj_schema
+            WHERE sch_name = r_dropped.object_name;
           IF FOUND THEN
             RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the schema "%". But dropping an E-Maj schema is not allowed.', r_dropped.object_name;
           END IF;
@@ -7453,6 +7441,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_hist','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_group_def','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_time_stamp','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_schema','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
@@ -7470,8 +7459,10 @@ SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_time_stamp_time_id_seq',''
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_mark_mark_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
--- and insert the init record in the operation history
+-- insert the init record into the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSION>', 'Initialisation completed');
+-- insert the emaj schema into the emaj_schema table
+INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 
 -- Set comments for all internal functions,
 -- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment

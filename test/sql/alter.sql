@@ -294,9 +294,13 @@ update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = '
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','useless_mark_name_%');
 select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' and upper_inf(rel_time_range) group by 1 order by 1;
 
--- one group is now empty
+-- empty idle groups
 begin;
-  delete from emaj.emaj_group_def where grpdef_group = 'myGroup2';
+  delete from emaj.emaj_group_def where grpdef_group IN ('myGroup1','myGroup2');
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+-- add one table or sequence to the empty groups
+  insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
+  insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 rollback;
 
@@ -423,7 +427,7 @@ begin;
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
   rollback to svp1;
   -- testing rollback
-delete from emaj.emaj_param where param_key = 'dblink_user_password';
+  delete from emaj.emaj_param where param_key = 'dblink_user_password';
 --select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
   select * from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
   select * from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
@@ -432,6 +436,13 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
   -- testing group's reset
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_reset_group('myGroup1');
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+  select 'should not exist' from pg_namespace where nspname = 'emajb';
+  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
+  rollback to svp1;
+  -- testing group's stop and start
+  select emaj.emaj_stop_group('myGroup1');
+  select emaj.emaj_start_group('myGroup1');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select 'should not exist' from pg_namespace where nspname = 'emajb';
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
@@ -466,6 +477,18 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) or
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 
+-- empty logging groups
+begin;
+  delete from emaj.emaj_group_def where grpdef_group IN ('myGroup1','myGroup2');
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+-- add one table or sequence to the empty groups
+-- TODO: remove the stop_groups() call once it will be possible to add a table/sequence to a logging group
+  select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
+  insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
+  insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+rollback;
+
 -----------------------------
 -- test end: check and force sequences id
 -----------------------------
@@ -474,6 +497,7 @@ select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
 select emaj.emaj_force_drop_group('myGroup4');
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+select sch_name from emaj.emaj_schema order by 1;
 select hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 
        hist_user 

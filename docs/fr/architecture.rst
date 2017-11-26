@@ -57,10 +57,10 @@ Une **table de log** a la même structure que la table applicative correspondant
 
 Pour le bon fonctionnement d'E-Maj, un certain nombre d'**objets techniques** sont également créés à l'installation de cette extension :
 
-* 13 tables,
-* 5 types composites et 2 énumérations,
+* 15 tables,
+* 5 types composites et 3 énumérations,
 * 1 vue,
-* plus de 90 fonctions, dont environ la moitié directement appelables par les utilisateurs,
+* plus de 100 fonctions, dont environ la moitié directement appelables par les utilisateurs,
 * 1 séquence, nommée *emaj_global_seq*, permettant d'associer à chaque mise à jour enregistrée dans une table de log quelconque de la base de données un identifiant unique de valeur croissante au fil du temps,
 * 1 schéma spécifique, nommé *emaj*, qui contient tous ces objets,
 * 2 rôles de type groupe (sans possibilité de connexion) : *emaj_adm* pour administrer les composants E-Maj, et *emaj_viewer* pour uniquement consulter les composants E-Maj,

@@ -140,11 +140,12 @@ select relname from pg_catalog.pg_class,
  emaj_rlbk_rlbk_id_seq
  emaj_rlbk_session
  emaj_rlbk_stat
+ emaj_schema
  emaj_seq_hole
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(19 rows)
+(20 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';

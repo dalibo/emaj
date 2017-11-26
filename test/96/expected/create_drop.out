@@ -64,7 +64,7 @@ select emaj.emaj_create_group('dummyGrp1');
 WARNING:  _check_groups_content: Error, the table or sequence "dummySchema".mytbl4 does not exist.
 WARNING:  _check_groups_content: Error, the table or sequence myschema1."dummyTable" does not exist.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 -- group with a partitionned table (in PG 10+) (abort for lack of PRIMARY KEY with prior PG versions)
@@ -73,7 +73,7 @@ begin;
   select emaj.emaj_create_group('myGroup4');
 WARNING:  _check_groups_content: Error, the table myschema4.mytblp has no PRIMARY KEY.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -89,7 +89,7 @@ begin;
   select emaj.emaj_create_group('myGroup5');
 WARNING:  _check_groups_content: Error, the table pg_temp_2.mytemptbl is a TEMPORARY table.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -99,7 +99,7 @@ begin;
   select emaj.emaj_create_group('myGroup5');
 WARNING:  _check_groups_content: Error, the table myschema5.myunloggedtbl is an UNLOGGED table.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -109,7 +109,7 @@ begin;
   select emaj.emaj_create_group('myGroup5');
 WARNING:  _check_groups_content: Error, the table myschema5.myoidstbl is declared WITH OIDS.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -117,7 +117,7 @@ rollback;
 select emaj.emaj_create_group('phil''s group#3",',true);
 WARNING:  _check_groups_content: Error, the table "phil's schema3"."myTbl2\" has no PRIMARY KEY.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 -- sequence with a log schema suffix defined in the emaj_group_def table
@@ -126,7 +126,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the secondary log schema suffix is not NULL.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -136,7 +136,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the emaj names prefix is not NULL.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -147,7 +147,7 @@ begin;
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the index log tablespace is not NULL.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -179,7 +179,7 @@ begin;
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema1_mytbl4" is configured for several tables in the groups.
 WARNING:  _check_groups_content: Error, the emaj prefix "samePrefix" is configured for several tables in the groups.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -199,7 +199,7 @@ WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Ve
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema1_mytbl2" is already used.
 WARNING:  _check_groups_content: Error, the emaj prefix "samePrefix" is already used.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -216,7 +216,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the emaj names prefix is not NULL.
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -289,7 +289,7 @@ select emaj.emaj_create_group('dummyGrp2',false);
 WARNING:  _check_groups_content: Error, the table or sequence emaj.emaj_param belongs to an E-Maj schema.
 WARNING:  _check_groups_content: Error, the table or sequence "emajC"."myschema1_myTbl3_log" belongs to an E-Maj schema.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 -- create a group with a table already belonging to another group
@@ -299,7 +299,7 @@ WARNING:  _check_groups_content: Error, the table or sequence myschema2.mytbl2 b
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema1_mytbl1" is already used.
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl2" is already used.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 190 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 -- already created
@@ -371,6 +371,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emaj       | emaj_rlbk_plan                 | postgres   |            | t          | f        | t           | f
  emaj       | emaj_rlbk_session              | postgres   |            | t          | f        | t           | f
  emaj       | emaj_rlbk_stat                 | postgres   |            | t          | f        | t           | f
+ emaj       | emaj_schema                    | postgres   |            | t          | f        | t           | f
  emaj       | emaj_seq_hole                  | postgres   |            | t          | f        | t           | f
  emaj       | emaj_sequence                  | postgres   |            | t          | f        | t           | f
  emaj       | emaj_time_stamp                | postgres   |            | t          | f        | t           | f
@@ -392,7 +393,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emaj       | otherPrefix4mytbl5_log         | postgres   |            | t          | f        | f           | f
  emaj       | phil's schema3_myTbl2\_log     | postgres   |            | t          | f        | f           | f
  emaj #'3   | phil's schema3_phil's tbl1_log | postgres   |            | t          | f        | f           | f
-(32 rows)
+(33 rows)
 
 -----------------------------
 -- emaj_comment_group() tests
@@ -447,12 +448,12 @@ select group_name, group_comment from emaj.emaj_group where group_name = 'myGrou
 -- unknown group
 select emaj.emaj_drop_group(NULL);
 ERROR:  _drop_group: The group "<NULL>" does not exist.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 17 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 select emaj.emaj_drop_group('unknownGroup');
 ERROR:  _drop_group: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 17 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 -- group in logging state
@@ -464,7 +465,7 @@ select emaj.emaj_start_group('myGroup1','');
 
 select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_group: The group "myGroup1" cannot be dropped because it is in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 24 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 23 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 select emaj.emaj_stop_group('myGroup1');
@@ -478,10 +479,9 @@ begin;
   create table emajb.dummy_log (col1 int);
   select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emajb". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
-CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,text[],boolean) line 32 at RAISE
-SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_secondarySchemas, v_isForced)
-      WHERE v_secondarySchemas IS NOT NULL"
-PL/pgSQL function emaj._drop_group(text,boolean) line 48 at PERFORM
+CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 33 at RAISE
+SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
+PL/pgSQL function emaj._drop_group(text,boolean) line 44 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 rollback;
@@ -507,7 +507,7 @@ select emaj.emaj_drop_group('emptyGroup');
 -- already dropped
 select emaj.emaj_drop_group('myGroup2');
 ERROR:  _drop_group: The group "myGroup2" does not exist.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 17 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 -----------------------------
@@ -516,18 +516,18 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 -- unknown group
 select emaj.emaj_force_drop_group(NULL);
 ERROR:  _drop_group: The group "<NULL>" does not exist.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 17 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 select emaj.emaj_force_drop_group('unkownGroup');
 ERROR:  _drop_group: The group "unkownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 17 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 -- already dropped
 select emaj.emaj_force_drop_group('myGroup2');
 ERROR:  _drop_group: The group "myGroup2" does not exist.
-CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_group(text,boolean) line 17 at RAISE
 SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
 -- should be OK
@@ -569,6 +569,13 @@ select emaj.emaj_force_drop_group('myGroup2');
 -----------------------------
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  nspname  
+----------
+ emaj
+ emaj #'3
+(2 rows)
+
+select sch_name from emaj.emaj_schema order by 1;
+ sch_name 
 ----------
  emaj
  emaj #'3

@@ -27,6 +27,7 @@ select count(*) from emaj.emaj_visible_param;
 select count(*) from emaj.emaj_hist;
 select count(*) from emaj.emaj_group_def;
 select count(*) from emaj.emaj_group;
+select count(*) from emaj.emaj_schema;
 select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_mark;
 select count(*) from emaj.emaj_sequence;
@@ -49,6 +50,7 @@ select emaj.emaj_drop_group('emptyGroup');
 
 -- emaj tables
 select * from emaj.emaj_group;
+select sch_name from emaj.emaj_schema;
 select * from emaj.emaj_relation;
 select * from emaj.emaj_mark;
 select * from emaj.emaj_sequence;

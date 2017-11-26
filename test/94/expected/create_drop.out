@@ -416,6 +416,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emaj       | emaj_rlbk_plan                 | postgres   |            | t          | f        | t
  emaj       | emaj_rlbk_session              | postgres   |            | t          | f        | t
  emaj       | emaj_rlbk_stat                 | postgres   |            | t          | f        | t
+ emaj       | emaj_schema                    | postgres   |            | t          | f        | t
  emaj       | emaj_seq_hole                  | postgres   |            | t          | f        | t
  emaj       | emaj_sequence                  | postgres   |            | t          | f        | t
  emaj       | emaj_time_stamp                | postgres   |            | t          | f        | t
@@ -437,7 +438,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emaj       | otherPrefix4mytbl5_log         | postgres   |            | t          | f        | f
  emaj       | phil's schema3_myTbl2\_log     | postgres   |            | t          | f        | f
  emaj #'3   | phil's schema3_phil's tbl1_log | postgres   |            | t          | f        | f
-(32 rows)
+(33 rows)
 
 -----------------------------
 -- emaj_comment_group() tests
@@ -518,9 +519,8 @@ begin;
   create table emajb.dummy_log (col1 int);
   select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emajb". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
-CONTEXT:  SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_secondarySchemas, v_isForced)
-      WHERE v_secondarySchemas IS NOT NULL"
-PL/pgSQL function emaj._drop_group(text,boolean) line 48 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
+PL/pgSQL function emaj._drop_group(text,boolean) line 44 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
 rollback;
@@ -610,6 +610,13 @@ select emaj.emaj_force_drop_group('myGroup2');
 -----------------------------
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  nspname  
+----------
+ emaj
+ emaj #'3
+(2 rows)
+
+select sch_name from emaj.emaj_schema order by 1;
+ sch_name 
 ----------
  emaj
  emaj #'3

@@ -53,12 +53,12 @@ select emaj.emaj_disable_protection_by_event_triggers();
 -- group is unknown in emaj_group
 select emaj.emaj_start_group(NULL,NULL);
 ERROR:  _start_groups: The group "<NULL>" does not exist.
-CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at RAISE
+CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at RAISE
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
 ERROR:  _start_groups: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at RAISE
+CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at RAISE
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 -- reserved mark name
@@ -66,7 +66,7 @@ select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text,text[]) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 45 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 50 at SQL statement
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 -- detection of a missing application schema
@@ -76,7 +76,7 @@ begin;
 ERROR:  _verify_groups (1): In group "myGroup1", the table "myschema1"."mytbl1" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -87,7 +87,7 @@ begin;
 ERROR:  _verify_groups (1): In group "myGroup1", the table "myschema1"."mytbl4" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -98,7 +98,7 @@ begin;
 ERROR:  _verify_groups (1): In group "myGroup1", the sequence "myschema1"."mytbl1" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -109,7 +109,7 @@ begin;
 ERROR:  _verify_groups (2): In group "myGroup1", the log table "emajb"."myschema1_mytbl2b_log" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 52 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -120,7 +120,7 @@ begin;
 ERROR:  _verify_groups (4): In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 85 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -131,7 +131,7 @@ begin;
 ERROR:  _verify_groups (3): In group "myGroup1", the log function "emaj"."myschema1_mytbl1_log_fnct" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 68 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -142,7 +142,7 @@ begin;
 ERROR:  _verify_groups (5): In group "myGroup1", the truncate trigger "emaj_trunc_trg" on table "myschema1"."mytbl1" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 101 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -153,7 +153,7 @@ begin;
 ERROR:  _verify_groups (2): In group "myGroup1", the log table "emaj"."myschema1_mytbl1_log" is not found. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 52 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -166,7 +166,7 @@ begin;
 ERROR:  _verify_groups (6): In group "myGroup1", the structure of the application table "myschema1"."mytbl1" is not coherent with its log table ("emaj"."myschema1_mytbl1_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 142 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -178,7 +178,7 @@ begin;
 ERROR:  _verify_groups (6): In group "myGroup1", the structure of the application table "myschema1"."mytbl4" is not coherent with its log table ("emaj"."myschema1_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 142 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -189,7 +189,7 @@ begin;
 ERROR:  _verify_groups (7): In rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 161 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -200,7 +200,7 @@ begin;
 ERROR:  _verify_groups (8): In rollbackable group "myGroup1", the table "myschema1"."myTbl3" is UNLOGGED or TEMP. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 175 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -211,7 +211,7 @@ begin;
 ERROR:  _verify_groups (9): In rollbackable group "myGroup1", the table "myschema1"."myTbl3" is declared WITH OIDS. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 189 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 rollback;
@@ -287,7 +287,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 -- group already started
 select emaj.emaj_start_group('myGroup2','Mark3');
 ERROR:  _start_groups: The group "myGroup2" cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.
-CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 31 at RAISE
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 -- check how truncate reacts  - tables are empty anyway
@@ -312,7 +312,7 @@ select "phil's col11", "phil's col12", "phil\s col13",
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');
 ERROR:  _start_groups: The group "myGroup1" cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.
-CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 31 at RAISE
 SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
@@ -641,12 +641,12 @@ WARNING:  _check_names_array: No group name to process.
 select emaj.emaj_start_groups('{"unknownGroup",""}',NULL,true);
 WARNING:  _check_names_array: A group name is NULL or empty.
 ERROR:  _start_groups: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at RAISE
+CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at RAISE
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 select emaj.emaj_start_groups('{"myGroup1","unknownGroup"}',NULL,false);
 ERROR:  _start_groups: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at RAISE
+CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at RAISE
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 -- reserved mark name
@@ -654,7 +654,7 @@ select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text,text[]) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 45 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 50 at SQL statement
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 -- second group is already started
@@ -668,7 +668,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',false);
 ERROR:  _start_groups: The group "myGroup2" cannot be started because it is in LOGGING state. An emaj_stop_group function must be previously executed.
-CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 31 at RAISE
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 select emaj.emaj_stop_group('myGroup2');
@@ -684,7 +684,7 @@ begin;
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 35 at PERFORM
 SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
 rollback;

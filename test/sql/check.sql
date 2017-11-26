@@ -34,6 +34,12 @@ select pg_proc.proname
         pg_description.description = 'E-Maj internal function';
 
 -----------------------------
+-- perform various consistency checks on technical tables
+-----------------------------
+-- no row in emaj_schema not linked to a relation assigned to a group (to complement the fkey between emaj_relation and emaj_schema)
+select sch_name from emaj.emaj_schema where sch_name not in (select distinct rel_log_schema from emaj.emaj_relation);
+
+-----------------------------
 -- get test coverage data just before cleanup
 -----------------------------
 -- wait to let the statistics collector aggregate the latest stats

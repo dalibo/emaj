@@ -11,14 +11,14 @@ alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 5000;
 -- group is unknown in emaj_group_def
 select emaj.emaj_reset_group(NULL);
 ERROR:  emaj_reset_group: The group "<NULL>" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_reset_group(text) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_reset_group(text) line 19 at RAISE
 select emaj.emaj_reset_group('unknownGroup');
 ERROR:  emaj_reset_group: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_reset_group(text) line 18 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_reset_group(text) line 19 at RAISE
 -- group not in logging state
 select emaj.emaj_reset_group('myGroup1');
 ERROR:  emaj_reset_group: The group "myGroup1" cannot be reset because it is in LOGGING state. An emaj_stop_group function must be previously executed.
-CONTEXT:  PL/pgSQL function emaj.emaj_reset_group(text) line 22 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_reset_group(text) line 23 at RAISE
 -- stop group
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
@@ -1748,10 +1748,9 @@ begin;
   savepoint sp1;
     select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emajb". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
-CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,text[],boolean) line 32 at RAISE
-SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_secondarySchemas, v_isForced)
-      WHERE v_secondarySchemas IS NOT NULL"
-PL/pgSQL function emaj._drop_group(text,boolean) line 48 at PERFORM
+CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 33 at RAISE
+SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
+PL/pgSQL function emaj._drop_group(text,boolean) line 44 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
   rollback to savepoint sp1;

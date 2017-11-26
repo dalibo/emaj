@@ -24,6 +24,7 @@ select count(*) from emaj.emaj_visible_param;
 select count(*) from emaj.emaj_hist;
 select count(*) from emaj.emaj_group_def;
 select count(*) from emaj.emaj_group;
+select count(*) from emaj.emaj_schema;
 select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_mark;
 select count(*) from emaj.emaj_sequence;
