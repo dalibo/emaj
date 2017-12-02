@@ -82,9 +82,11 @@ order by 1,2;
 (2 rows)
 
 -- display the number of calls for each emaj function (
---   (_pg_version_num() is excluded as it is an sql immutable function that may thus be inlined and not always counted in statistics)
+--   (_pg_version_num() is excluded as it is an sql immutable function that may thus be inlined and not always counted in statistics
+--    _verify_groups() is also excluded as the number of call is not stable)
 select funcname, calls from pg_stat_user_functions
-  where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%') and funcname <> '_pg_version_num'
+  where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
+    and funcname <> '_pg_version_num' and funcname <> '_verify_groups'
   order by funcname, funcid;
                  funcname                  | calls 
 -------------------------------------------+-------
@@ -149,7 +151,6 @@ select funcname, calls from pg_stat_user_functions
  _sum_log_stat_group                       |   241
  _verify_all_groups                        |    33
  _verify_all_schemas                       |    33
- _verify_groups                            |   259
  emaj_alter_group                          |    43
  emaj_alter_groups                         |    16
  emaj_cleanup_rollback_state               |     6
@@ -197,7 +198,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_unprotect_group                      |     8
  emaj_unprotect_mark_group                 |     6
  emaj_verify_all                           |    33
-(109 rows)
+(108 rows)
 
 -- count the total number of user-callable function calls
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
