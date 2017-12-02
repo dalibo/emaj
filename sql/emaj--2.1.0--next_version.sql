@@ -286,6 +286,7 @@ DROP FUNCTION emaj._create_log_schema(V_LOGSCHEMANAME TEXT);
 DROP FUNCTION emaj._drop_log_schema(V_LOGSCHEMANAME TEXT,V_ISFORCED BOOLEAN);
 DROP FUNCTION emaj._create_tbl(R_GRPDEF EMAJ.EMAJ_GROUP_DEF,V_ISROLLBACKABLE BOOLEAN);
 DROP FUNCTION emaj._create_seq(GRPDEF EMAJ.EMAJ_GROUP_DEF);
+DROP FUNCTION emaj._rlbk_async(V_RLBKID INT,V_MULTIGROUP BOOLEAN,V_ISALTERGROUPALLOWED BOOLEAN,OUT RLBK_SEVERITY TEXT,OUT RLBK_MESSAGE TEXT);
 DROP FUNCTION emaj._rlbk_end(V_RLBKID INT,V_MULTIGROUP BOOLEAN,V_ISALTERGROUPALLOWED BOOLEAN,OUT RLBK_SEVERITY TEXT,OUT RLBK_MESSAGE TEXT);
 
 ------------------------------------------------------------------
@@ -2842,13 +2843,12 @@ $_rlbk_groups$
   END;
 $_rlbk_groups$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
 RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $_rlbk_async$
 -- The function calls the main rollback functions following the initialisation phase.
 -- It is only called by the phpPgAdmin plugin, in an asynchronous way, so that the rollback can be then monitored by the client.
--- Input: rollback identifier, a boolean saying if the rollback is a logged rollback
---        and a boolean saying whether the rollback may return to a mark set before an alter group operation
+-- Input: rollback identifier, and a boolean saying if the rollback is a logged rollback
 -- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
   DECLARE
   BEGIN

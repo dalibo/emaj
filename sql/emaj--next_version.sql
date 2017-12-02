@@ -4186,13 +4186,12 @@ $_rlbk_groups$
   END;
 $_rlbk_groups$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
 RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $_rlbk_async$
 -- The function calls the main rollback functions following the initialisation phase.
 -- It is only called by the phpPgAdmin plugin, in an asynchronous way, so that the rollback can be then monitored by the client.
--- Input: rollback identifier, a boolean saying if the rollback is a logged rollback
---        and a boolean saying whether the rollback may return to a mark set before an alter group operation
+-- Input: rollback identifier, and a boolean saying if the rollback is a logged rollback
 -- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
   DECLARE
   BEGIN

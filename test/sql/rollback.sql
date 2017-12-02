@@ -388,7 +388,7 @@ select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartp2_
 
 -- use the functions dedicated to the ppa plugin
 -- for an equivalent of "select * from emaj.emaj_rollback_group('myGroup4','myGroup4_start',true);"
-select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false, true), false, true);
+select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false, true), false);
 -- and check the result
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_messages
