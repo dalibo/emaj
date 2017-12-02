@@ -3070,7 +3070,7 @@ $_rlbk_planning$
   BEGIN
 -- get the rollack characteristics for the emaj_rlbk event
     SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session,
-           CASE WHEN rlbk_is_dblink_used THEN 'CTRL+DBLINK' ELSE 'CTRL-DBLINK' END
+           CASE WHEN rlbk_is_dblink_used THEN 'CTRL+DBLINK'::emaj._rlbk_step_enum ELSE 'CTRL-DBLINK'::emaj._rlbk_step_enum END
       INTO v_groupNames, v_mark, v_isLoggedRlbk, v_nbSession, v_ctrlStepName
       FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
 -- get some mark attributes from emaj_mark
@@ -3342,7 +3342,7 @@ $_rlbk_planning$
       LOOP
       IF r_fk.rlbp_estimated_quantity = 0 THEN
 -- empty table (or table not analyzed) => duration = 0
-        v_estimDuration = 0;
+        v_estimDuration = '0 SECONDS'::INTERVAL;
         v_estimMethod = 3;
       ELSE
 -- non empty table and statistics (with at least one row) are available
@@ -3399,7 +3399,7 @@ $_rlbk_planning$
 --
 --   initialisation
     FOR v_session IN 1 .. v_nbSession LOOP
-      v_sessionLoad [v_session] = 0;
+      v_sessionLoad [v_session] = '0 SECONDS'::INTERVAL;
     END LOOP;
 --   allocate tables batch to sessions, starting with the heaviest to rollback batch
     FOR r_batch IN
