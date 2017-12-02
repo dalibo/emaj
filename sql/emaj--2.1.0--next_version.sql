@@ -2191,8 +2191,8 @@ $_alter_exec$
           PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp);
 --
         WHEN 'ASSIGN_REL' THEN
+-- currently, this can only be done when the relation belongs to an IDLE group
 -- update the emaj_relation table to report the group ownership change
---TODO ?
           UPDATE emaj.emaj_relation SET rel_group = r_plan.altr_new_group
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
 --
@@ -2202,7 +2202,7 @@ $_alter_exec$
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 --
         WHEN 'ADD_TBL' THEN
---TODO ?
+-- currently, this can only be done when the relation belongs to an IDLE group
 -- get the is_rollbackable status of the related group
           SELECT group_is_rollbackable INTO v_isRollbackable
             FROM emaj.emaj_group WHERE group_name = r_plan.altr_group;
@@ -2214,7 +2214,7 @@ $_alter_exec$
           PERFORM emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable);
 --
         WHEN 'ADD_SEQ' THEN
---TODO ?
+-- currently, this can only be done when the relation belongs to an IDLE group
 -- create the sequence
           PERFORM emaj._create_seq(emaj.emaj_group_def.*, v_timeId) FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
@@ -2705,7 +2705,6 @@ $_delete_before_marks_group$
     PERFORM emaj._drop_log_schemas('DELETE_BEFORE_MARK_GROUP', FALSE);
 -- delete rows from all other log tables
     FOR r_rel IN
---TODO ok ?
         SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name FROM emaj.emaj_relation
           WHERE rel_group = v_groupName AND rel_kind = 'r' AND (upper_inf(rel_time_range) OR upper(rel_time_range) > v_markTimeId)
           ORDER BY rel_priority, rel_schema, rel_tblseq
@@ -2715,7 +2714,6 @@ $_delete_before_marks_group$
     END LOOP;
 -- process emaj_seq_hole content
 -- delete all existing holes (if any) before the mark
---TODO ok ?
     DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r'
         AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
@@ -2727,7 +2725,6 @@ $_delete_before_marks_group$
         AND sequ_schema = rel_schema AND sequ_name = rel_tblseq
         AND sequ_time_id < v_markTimeId;
 --   delete then emaj sequences related data for the group
---TODO ok ?
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r'
         AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence
@@ -2744,7 +2741,7 @@ $_delete_before_marks_group$
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id < v_markId;
     GET DIAGNOSTICS v_nbMark = ROW_COUNT;
 
---TODO: drop useless application tables
+--TODO: drop useless application tables (when a feature will need it)
 
 -- deletes obsolete versions of emaj_relation rows
     DELETE FROM emaj.emaj_relation
@@ -2773,13 +2770,11 @@ $_delete_intermediate_mark_group$
   BEGIN
 -- delete the sequences related to the mark to delete
 --   delete first data related to the application sequences currently belonging to the group
---TODO ok ?
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE sequ_time_id = v_markTimeId
         AND upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'S'
         AND sequ_schema = rel_schema AND sequ_name = rel_tblseq;
 --   delete then data related to the log sequences for tables currently belonging to the group
---TODO ok ?
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE sequ_time_id = v_markTimeId
         AND upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'r'
@@ -3091,14 +3086,12 @@ $_rlbk_planning$
                         WHERE param_key = 'fixed_dblink_rollback_duration'),'4 millisecond'::interval)
            INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_step_rlbk, v_fixed_dblink_rlbk;
 -- insert into emaj_rlbk_plan a row per table currently belonging to the tables groups to process.
---TODO ok ?
     INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey)
       SELECT v_rlbkId, 'LOCK_TABLE', rel_schema, rel_tblseq, ''
         FROM emaj.emaj_relation
         WHERE upper_inf(rel_time_range) AND rel_group = ANY(v_groupNames) AND rel_kind = 'r';
 -- insert into emaj_rlbk_plan a row per table to effectively rollback.
 -- the numbers of log rows is computed using the _log_stat_tbl() function.
---TODO ok ?
      INSERT INTO emaj.emaj_rlbk_plan
             (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_estimated_quantity)
       SELECT v_rlbkId, 'RLBK_TABLE', rel_schema, rel_tblseq, '',
@@ -3633,151 +3626,6 @@ $_rlbk_start_mark$
   END;
 $_rlbk_start_mark$;
 
-CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
-$_rlbk_session_exec$
--- This function executes the main part of a rollback operation.
--- It executes the steps identified by _rlbk_planning() and stored into emaj_rlbk_plan, for one session.
--- It updates the emaj_rlbk_plan table, using dblink connection if possible, giving a visibility of the rollback progress.
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it doesn't own the application tables.
-  DECLARE
-    v_stmt                   TEXT;
-    v_isDblinkUsable         BOOLEAN = false;
-    v_groupNames             TEXT[];
-    v_mark                   TEXT;
-    v_rlbkMarkTimeId         BIGINT;
-    v_rlbkTimeId             BIGINT;
-    v_isLoggedRlbk           BOOLEAN;
-    v_nbSession              INT;
-    v_maxGlobalSeq           BIGINT;
-    v_rlbkMarkId             BIGINT;
-    v_lastGlobalSeq          BIGINT;
-    v_nbRows                 BIGINT;
-    r_step                   RECORD;
-  BEGIN
--- determine whether the dblink connection for this session is opened
-    IF emaj._dblink_is_cnx_opened('rlbk#'||v_session) THEN
-      v_isDblinkUsable = true;
-    END IF;
--- get the rollback characteristics from the emaj_rlbk table
-    SELECT rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, time_last_emaj_gid
-      INTO v_groupNames, v_mark, v_rlbkTimeId, v_isLoggedRlbk, v_nbSession, v_maxGlobalSeq
-      FROM emaj.emaj_rlbk, emaj.emaj_time_stamp WHERE rlbk_id = v_rlbkId AND rlbk_time_id = time_id;
--- fetch the mark_id, the last global sequence at set_mark time for the first group of the groups array (they all share the same values - except for the mark_id)
-    SELECT mark_id, mark_time_id, time_last_emaj_gid
-      INTO v_rlbkMarkId, v_rlbkMarkTimeId, v_lastGlobalSeq
-      FROM emaj.emaj_mark, emaj.emaj_time_stamp
-      WHERE mark_time_id = time_id AND mark_group = v_groupNames[1] AND mark_name = v_mark;
--- scan emaj_rlbp_plan to get all steps to process that have been affected to this session, in batch_number and step order
-    FOR r_step IN
-      SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_fkey_def
-        FROM emaj.emaj_rlbk_plan,
-             (VALUES ('DIS_LOG_TRG',1),('DROP_FK',2),('SET_FK_DEF',3),('RLBK_TABLE',4),
-                     ('DELETE_LOG',5),('SET_FK_IMM',6),('ADD_FK',7),('ENA_LOG_TRG',8)) AS step(step_name, step_order)
-        WHERE rlbp_step::text = step.step_name
-          AND rlbp_rlbk_id = v_rlbkId AND rlbp_step NOT IN ('LOCK_TABLE','CTRL-DBLINK','CTRL+DBLINK')
-          AND rlbp_session = v_session
-        ORDER BY rlbp_batch_number, step_order, rlbp_table, rlbp_fkey
-      LOOP
--- update the emaj_rlbk_plan table to set the step start time
-      v_stmt = 'UPDATE emaj.emaj_rlbk_plan SET rlbp_start_datetime = clock_timestamp() ' ||
-               ' WHERE rlbp_rlbk_id = ' || v_rlbkId || 'AND rlbp_step = ' || quote_literal(r_step.rlbp_step) ||
-               ' AND rlbp_schema = ' || quote_literal(r_step.rlbp_schema) ||
-               ' AND rlbp_table = ' || quote_literal(r_step.rlbp_table) ||
-               ' AND rlbp_fkey = ' || quote_literal(r_step.rlbp_fkey) || ' RETURNING 1';
-      IF v_isDblinkUsable THEN
--- ... either through dblink if possible
-        PERFORM 0 FROM dblink('rlbk#'||v_session,v_stmt) AS (dummy INT);
-      ELSE
--- ... or directly
-        EXECUTE v_stmt;
-      END IF;
--- process the step depending on its type
-      CASE r_step.rlbp_step
-        WHEN 'DIS_LOG_TRG' THEN
--- process a log trigger disable
-          EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                  ' DISABLE TRIGGER emaj_log_trg';
-        WHEN 'DROP_FK' THEN
--- process a foreign key deletion
-          EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                  ' DROP CONSTRAINT ' || quote_ident(r_step.rlbp_fkey);
-        WHEN 'SET_FK_DEF' THEN
--- set a foreign key deferred
-          EXECUTE 'SET CONSTRAINTS ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_fkey) ||
-                  ' DEFERRED';
-        WHEN 'RLBK_TABLE' THEN
--- process a table rollback
---TODO ?
-          SELECT emaj._rlbk_tbl(emaj_relation.*, v_lastGlobalSeq, v_maxGlobalSeq, v_nbSession, v_isLoggedRlbk) INTO v_nbRows
-            FROM emaj.emaj_relation
-            WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
-        WHEN 'DELETE_LOG' THEN
--- process the deletion of log rows
---TODO ?
-          SELECT emaj._delete_log_tbl(emaj_relation.*, v_rlbkMarkTimeId, v_rlbkTimeId, v_lastGlobalSeq)
-            INTO v_nbRows
-            FROM emaj.emaj_relation
-            WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
-        WHEN 'SET_FK_IMM' THEN
--- set a foreign key immediate
-          EXECUTE 'SET CONSTRAINTS ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_fkey) ||
-                  ' IMMEDIATE';
-        WHEN 'ADD_FK' THEN
--- process a foreign key creation
-          EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                  ' ADD CONSTRAINT ' || quote_ident(r_step.rlbp_fkey) || ' ' || r_step.rlbp_fkey_def;
-        WHEN 'ENA_LOG_TRG' THEN
--- process a log trigger enable
-          EXECUTE 'ALTER TABLE ' || quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table) ||
-                  ' ENABLE TRIGGER emaj_log_trg';
-      END CASE;
--- update the emaj_rlbk_plan table to set the step duration
--- NB: the computed duration does not include the time needed to update the emaj_rlbk_plan table
-      v_stmt = 'UPDATE emaj.emaj_rlbk_plan SET rlbp_duration = ' || quote_literal(clock_timestamp()) || ' - rlbp_start_datetime';
-      IF r_step.rlbp_step = 'RLBK_TABLE' OR r_step.rlbp_step = 'DELETE_LOG' THEN
---   and the effective number of processed rows for RLBK_TABLE and DELETE_LOG steps
-        v_stmt = v_stmt || ' , rlbp_quantity = ' || v_nbRows;
-      END IF;
-      v_stmt = v_stmt ||
-               ' WHERE rlbp_rlbk_id = ' || v_rlbkId || 'AND rlbp_step = ' || quote_literal(r_step.rlbp_step) ||
-               ' AND rlbp_schema = ' || quote_literal(r_step.rlbp_schema) ||
-               ' AND rlbp_table = ' || quote_literal(r_step.rlbp_table) ||
-               ' AND rlbp_fkey = ' || quote_literal(r_step.rlbp_fkey) || ' RETURNING 1';
-      IF v_isDblinkUsable THEN
--- ... either through dblink if possible
-        PERFORM 0 FROM dblink('rlbk#'||v_session,v_stmt) AS (dummy INT);
-      ELSE
--- ... or directly
-        EXECUTE v_stmt;
-      END IF;
-    END LOOP;
--- update the emaj_rlbk_session table to set the timestamp representing the end of work for the session
-    v_stmt = 'UPDATE emaj.emaj_rlbk_session SET rlbs_end_datetime = clock_timestamp()' ||
-             ' WHERE rlbs_rlbk_id = ' || v_rlbkId || ' AND rlbs_session = ' || v_session ||
-             ' RETURNING 1';
-    IF v_isDblinkUsable THEN
--- ... either through dblink if possible
-      PERFORM 0 FROM dblink('rlbk#'||v_session,v_stmt) AS (dummy INT);
---     and then close the connection for session > 1
-      IF v_session > 1 THEN
-        PERFORM emaj._dblink_close_cnx('rlbk#'||v_session);
-      END IF;
-    ELSE
--- ... or directly
-      EXECUTE v_stmt;
-    END IF;
-    RETURN;
--- trap and record exception during the rollback operation
-  EXCEPTION
-    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
-      RAISE;
-    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
-      PERFORM emaj._rlbk_error(v_rlbkId, 'In _rlbk_session_exec() for session ' || v_session || ': ' || SQLERRM, 'rlbk#'||v_session);
-      RAISE;
-  END;
-$_rlbk_session_exec$;
-
 CREATE OR REPLACE FUNCTION emaj._rlbk_end(v_rlbkId INT, v_multiGroup BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
 RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $_rlbk_end$
@@ -3842,13 +3690,11 @@ $_rlbk_end$
                WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted GROUP BY mark_group);
 -- the sequences related to the deleted marks can be also suppressed
 --   delete first application sequences related data for the groups
---TODO ok ?
       DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
         WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
           AND sequ_schema = rel_schema AND sequ_name = rel_tblseq
           AND sequ_time_id > v_markTimeId;
 --   delete then emaj sequences related data for the groups
---TODO ok ?
       DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
         WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
           AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence
@@ -3906,7 +3752,6 @@ $_rlbk_end$
     END IF;
 -- rollback the application sequences belonging to the groups
 -- warning, this operation is not transaction safe (that's why it is placed at the end of the operation)!
---TODO ok ?
     PERFORM emaj._rlbk_seq(t.*, v_markTimeId)
       FROM (SELECT * FROM emaj.emaj_relation
               WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
@@ -3945,7 +3790,7 @@ $_rlbk_end$
     END IF;
 -- then, for new style calling functions, return the WARNING messages for any elementary action from alter group operations that has not been rolled back
     IF v_isAlterGroupAllowed IS NOT NULL THEN
---TODO add missing cases
+--TODO: add missing cases
       rlbk_severity = 'Warning';
       FOR r_msg IN
         SELECT (CASE altr_step
@@ -4285,7 +4130,6 @@ $_reset_groups$
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE rel_schema = sequ_schema AND rel_tblseq = sequ_name AND
             rel_group = ANY (v_groupNames) AND rel_kind = 'S';
---TODO: drop application table copies ?
 -- drop obsolete emaj objects for removed tables
     FOR r_rel IN
         SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
@@ -4373,7 +4217,6 @@ $emaj_log_stat_group$
       RAISE EXCEPTION 'emaj_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).', v_realFirstMark, v_firstMarkTs, v_realLastMark, v_lastMarkTs;
     END IF;
 -- for each table currently belonging to the group, get the number of log rows and return the statistic
---TODO ok ?
     RETURN QUERY
       SELECT rel_group, rel_schema, rel_tblseq,
              CASE WHEN v_firstMarkTimeId IS NULL THEN 0
@@ -4402,7 +4245,6 @@ $_sum_log_stat_group$
       RETURN 0;
     END IF;
 -- for each table currently belonging to the group, add the number of log rows and return the sum
---TODO ok ?
     RETURN sum(emaj._log_stat_tbl(emaj_relation, v_firstMarkTimeId, v_lastMarkTimeId))
       FROM emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper_inf(rel_time_range);
@@ -4466,7 +4308,6 @@ $emaj_detailed_log_stat_group$
       RAISE EXCEPTION 'emaj_detailed_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).', v_realFirstMark, v_firstMarkTs, v_realLastMark, v_lastMarkTs;
     END IF;
 -- for each table currently belonging to the group
---TODO ok ?
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_kind, rel_log_table FROM emaj.emaj_relation
           WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper_inf(rel_time_range)
@@ -4809,7 +4650,6 @@ $emaj_snap_log_group$
     END IF;
 -- process all log tables of the emaj_relation table
     FOR r_tblsq IN
---TODO ok ?
         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_table FROM emaj.emaj_relation
           WHERE upper_inf(rel_time_range) AND rel_group = v_groupName
           ORDER BY rel_priority, rel_schema, rel_tblseq
@@ -4831,7 +4671,6 @@ $emaj_snap_log_group$
 -- generate the file for sequences state at start mark
     v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_realFirstMark;
 -- and execute the COPY statement
---TODO ok ?
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_time_id = ' || quote_literal(v_firstMarkTsId) || ' AND ' ||
@@ -4848,7 +4687,6 @@ $emaj_snap_log_group$
       v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_lastMarkTs,'HH24.MI.SS.MS');
     END IF;
 -- and execute the COPY statement
---TODO ok ?
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_time_id = ' || quote_literal(v_lastMarkTsId) || ' AND ' ||
@@ -5040,7 +4878,6 @@ $_gen_sql_groups$
       v_conditions = v_conditions || ' AND o.emaj_gid <= ' || v_lastEmajGid;
     END IF;
     FOR r_rel IN
---TODO ok ?
         SELECT * FROM emaj.emaj_relation
           WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r' -- tables currently belonging to the groups
             AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))        -- filtered or not by the user
@@ -5054,7 +4891,6 @@ $_gen_sql_groups$
 -- process sequences
     v_nbSeq = 0;
     FOR r_tblsq IN
---TODO ok ?
         SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation
           WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S' -- sequences currently belonging to the groups
             AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))        -- filtered or not by the user
