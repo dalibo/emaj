@@ -40,43 +40,6 @@ Documentation
 A detailed documentation can be found [here](http://emaj.readthedocs.io) (in English and in French).
 
 
-Supplied files
---------------
-
- * README.md                                   this readme file
- * CHANGES.md                                  change log
- * LICENSE                                     license information 
- * AUTHORS                                     who is behind E-Maj
- * META.json                                   meta file for PGXN
- * emaj.control                                extension control file
- * Makefile                                    the Makefile...
-
- * sql/emaj--2.0.1.sql                         extension installation script
- * sql/emaj--2.0.0--2.0.1.sql                  extension upgrade script from 2.0.0 to 2.0.1
- * sql/emaj--1.3.1--2.0.0.sql                  extension upgrade script from 1.3.1 to 2.0.0
- * sql/emaj--unpackaged--1.3.1.sql             script to register 1.3.1 as an extension
- * sql/emaj-1.3.0-to-1.3.1.sql                 psql upgrade script from 1.3.0 to 1.3.1
- * sql/emaj-1.2.0-to-1.3.0.sql                 psql upgrade script from 1.2.0 to 1.3.0
- * sql/emaj-1.1.0-to-1.2.0.sql                 psql upgrade script from 1.1.0 to 1.2.0
- * sql/emaj-1.0.2-to-1.1.0.sql                 psql upgrade script from 1.0.2 to 1.1.0
- * sql/emaj-1.0.1-to-1.0.2.sql                 psql upgrade script from 1.0.1 to 1.0.2
- * sql/emaj-1.0.0-to-1.0.1.sql                 psql upgrade script from 1.0.0 to 1.0.1
- * sql/emaj-0.11.1-to-1.0.0.sql                psql upgrade script from 0.11.1 to 1.0.0
- * sql/emaj-0.11.0-to-0.11.1.sql               psql upgrade script from 0.11.0 to 0.11.1
- * sql/emaj_uninstall.sql                      psql uninstallation script
- * sql/emaj_demo.sql                           psql demonstration script
- * sql/emaj_prepare_parallel_rollback_test.sql psql script to prepare parallel rollback demonstration
- * sql/emaj_upgrade_after_postgres_upgrade.sql psql script that adjust the E-Maj extension after a postgres upgrade
-
- * doc/emaj.<NEXT_VERSION>_doc_en.pdf          E-Maj user's guide in English
- * doc/emaj.<NEXT_VERSION>_doc_fr.pdf          E-Maj user's guide in French
- * doc/emaj.<NEXT_VERSION>_pres_en.pdf     	   E-Maj presentation in English
- * doc/emaj.<NEXT_VERSION>_pres_fr.pdf	       E-Maj presentation in French
-
- * php/emajParallelRollback.php                external php client for parallel rollback
- * php/emajRollbackMonitor.php                 external php client to monitor in progress rollback operations
-
-
 How to install and use E-Maj
 ----------------------------
 
@@ -93,7 +56,7 @@ Two web GUI tools are available to bring a user friendly E-Maj administration:
  * a plug-in for phpPgAdmin that takes benefit from the plugin architecture brought by phpPgAdmin 5.1+,
  * a stand alone php application, named Emaj_web.
 
-Both tools share the same functionalities regarding E-MAj usage.
+Both tools share the same functionalities regarding the E-Maj usage.
 
 The **phpPgAdmin plugin** is available on [github](https://github.com/beaud76/emaj_ppa_plugin).
 
@@ -107,7 +70,6 @@ Support
 
 For additional support or bug report, please contact Philippe BEAUDOIN (phb <dot> emaj <at> free <dot> fr).
 
-Any feedback is welcome, even to just notice you use E-Maj ;-)
+Any feedback is welcome, even to just notice you use and appreciate E-Maj ;-)
 
 E-Maj is also available on github (https://github.com/beaud76/emaj)
-
