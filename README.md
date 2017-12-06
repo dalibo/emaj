@@ -37,7 +37,7 @@ In both environments, being able to examine the history of updates performed on 
 Documentation
 -------------
 
-A detailed documentation can be found [here](http://emaj.readthedocs.io) (in English and in French).
+A detailed documentation can be found [here](http://emaj.readthedocs.io) (in [English](http://emaj.readthedocs.io/en/latest/) and in [French](http://emaj.readthedocs.io/fr/latest/)).
 
 
 Supplied files
@@ -99,7 +99,7 @@ The **phpPgAdmin plugin** is available on [github](https://github.com/beaud76/em
 
 **Emaj_web** is also available on [github](https://github.com/beaud76/emaj_web).
 
-Their installation and usage are also described in the [documentation](http://emaj.readthedocs.io/en/current/webOverview.html).
+Their installation and usage are also described in the [documentation](http://emaj.readthedocs.io/en/latest/webOverview.html).
 
 
 Support
