@@ -37,15 +37,14 @@ In both environments, being able to examine the history of updates performed on 
 Documentation
 -------------
 
-A detailed documentation can be found [here](http://emaj.readthedocs.io) (in English and in French).
-
+A detailed documentation can be found here, in [English](http://emaj.readthedocs.io/en/latest/) and in [French](http://emaj.readthedocs.io/fr/latest/).
 
 How to install and use E-Maj
 ----------------------------
 
 E-Maj can be installed using the usual method for postgres extensions (ie. CREATE EXTENSION emaj;).
 
-The documentation contains all the [detailled information](http://emaj.readthedocs.io/en/stable/download.html) needed to install and use E-Maj.
+The documentation contains all the [detailled information](http://emaj.readthedocs.io/en/latest/install.html) needed to install and use E-Maj.
 
 
 E-Maj web GUI
@@ -62,7 +61,7 @@ The **phpPgAdmin plugin** is available on [github](https://github.com/beaud76/em
 
 **Emaj_web** is also available on [github](https://github.com/beaud76/emaj_web).
 
-Their installation and usage are also described in the [documentation](http://emaj.readthedocs.io/en/current/webOverview.html).
+Their installation and usage are also described in the [documentation](http://emaj.readthedocs.io/en/latest/webOverview.html).
 
 
 Support
