@@ -42,3 +42,19 @@ Declare foreign keys as *DEFERRABLE*
 
 Foreign keys can be explicitly declared as *DEFERRABLE* at creation time. If a foreign key is declared *DEFERRABLE* and no *ON DELETE* or *ON UPDATE* clause is used, this foreign key is not dropped at the beginning and recreated at the end of an E-Maj rollback operation. The foreign key checks of updated rows are just deferred to the end of the rollback function execution, once all log tables are processed. This generally greatly speeds up the rollback operation.
 
+Modify memory parameters
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Increasing the value of the *work_mem* parameter when performing an E-Maj rollback may bring some performance gains.
+
+If foreign keys have to be recreated by an E-Maj rollback operation, increasing the value of the *maintenance_work_mem* parameter may also help.
+
+If the E-Maj rollback functions are directly called in SQL, these parameters can be previously set at session level by statements like::
+
+   SET work_mem = <value>;
+   SET maintenance_work_mem = <value>;
+
+If the E-Maj rollback operations are executed by a web client, it is also possible to set these parameters at function level, as superuser::
+
+   ALTER FUNCTION emaj._rlbk_tbl(emaj.emaj_relation, BIGINT, BIGINT, INT, BOOLEAN) SET work_mem = <value>;
+   ALTER FUNCTION emaj._rlbk_session_exec(INT, INT) SET maintenance_work_mem = <value>;

@@ -44,3 +44,19 @@ Déclarer les clés étrangères DEFERRABLE
 
 Au moment de leur création, les clés étrangères (*foreign key*) peuvent être déclarées *DEFERRABLE*. Si une clé étrangère est déclarée *DEFERRABLE* et qu'aucune clause *ON DELETE* ou *ON UPDATE* n'est utilisée, elle ne sera pas supprimée en début et recréées en fin de rollback E-Maj. Les contrôles des clés étrangères pour les lignes modifiées seront simplement différés en fin de rollback, une fois toutes les tables de log traitées. En règle générale cela accélère sensiblement l'opération de rollback.
 
+Modifier les paramètres sur la mémoire
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Il peut être bénéfique pour les performances d’augmenter la valeur du paramètre *work_mem* avant d’effectuer un rollback E-Maj.
+
+Si des clés étrangères doivent être recréées par une opération de rollback E-Maj, il peut être également bénéfique d’augmenter le paramètre *maintenance_work_mem*.
+
+Si les fonctions de rollback E-Maj sont directement appelées en SQL, ces paramètres peuvent être positionnés au préalable au niveau de la session, par des requêtes du type ::
+
+   SET work_mem = <valeur>;
+   SET maintenance_work_mem = <valeur>;
+
+Si les opérations de rollback E-Maj sont exécutées depuis un client web, il est également possible de valoriser ces paramètres au niveau des fonctions, en tant que *superuser* ::
+
+   ALTER FUNCTION emaj._rlbk_tbl(emaj.emaj_relation, BIGINT, BIGINT, INT, BOOLEAN) SET work_mem = <valeur>;
+   ALTER FUNCTION emaj._rlbk_session_exec(INT, INT) SET maintenance_work_mem = <valeur>;
