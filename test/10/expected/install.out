@@ -123,12 +123,10 @@ primary key, btree, for table "emaj.emaj_alter_plan"
  stat_verb   | character varying(6)  |           |          | 
  stat_rows   | bigint                |           |          | 
 
-Sequence "emaj.emaj_global_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 1
- log_cnt    | bigint  | 0
- is_called  | boolean | f
+                       Sequence "emaj.emaj_global_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                                   Table "emaj.emaj_group"
           Column          |  Type   | Collation | Nullable |                            Default                             
@@ -202,12 +200,10 @@ primary key, btree, for table "emaj.emaj_group"
 Indexes:
     "emaj_hist_pkey" PRIMARY KEY, btree (hist_id)
 
-Sequence "emaj.emaj_hist_hist_id_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 1
- log_cnt    | bigint  | 32
- is_called  | boolean | t
+                    Sequence "emaj.emaj_hist_hist_id_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Owned by: emaj.emaj_hist.hist_id
 
   Index "emaj.emaj_hist_pkey"
@@ -242,12 +238,10 @@ Foreign-key constraints:
     "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
-Sequence "emaj.emaj_mark_mark_id_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 1
- log_cnt    | bigint  | 0
- is_called  | boolean | f
+                    Sequence "emaj.emaj_mark_mark_id_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Owned by: emaj.emaj_mark.mark_id
 
   Index "emaj.emaj_mark_pkey"
@@ -405,12 +399,10 @@ Foreign-key constraints:
  rlbp_fkey    | text                 | rlbp_fkey
 primary key, btree, for table "emaj.emaj_rlbk_plan"
 
-Sequence "emaj.emaj_rlbk_rlbk_id_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 1
- log_cnt    | bigint  | 0
- is_called  | boolean | f
+                Sequence "emaj.emaj_rlbk_rlbk_id_seq"
+  Type   | Start | Minimum |  Maximum   | Increment | Cycles? | Cache 
+---------+-------+---------+------------+-----------+---------+-------
+ integer |     1 |       1 | 2147483647 |         1 | no      |     1
 Owned by: emaj.emaj_rlbk.rlbk_id
 
                          Table "emaj.emaj_rlbk_session"
@@ -571,12 +563,10 @@ Index "emaj.emaj_time_stamp_pkey"
  time_id | bigint | time_id
 primary key, btree, for table "emaj.emaj_time_stamp"
 
-Sequence "emaj.emaj_time_stamp_time_id_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 1
- log_cnt    | bigint  | 0
- is_called  | boolean | f
+                 Sequence "emaj.emaj_time_stamp_time_id_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Owned by: emaj.emaj_time_stamp.time_id
 
                   View "emaj.emaj_visible_param"

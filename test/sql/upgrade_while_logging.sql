@@ -36,6 +36,26 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 \d emaj.*
 \d emajb.*
 
+-- check technical sequences position
+select * from emaj.emaj_global_seq;
+select * from emaj.emaj_hist_hist_id_seq;
+select * from emaj.emaj_time_stamp_time_id_seq;
+select * from emaj.emaj_mark_mark_id_seq;
+select * from emaj.emaj_rlbk_rlbk_id_seq;
+
+-- check log sequences position
+select * from emaj.myschema1_mytbl1_log_seq;
+select * from emaj.myschema1_mytbl2_log_seq;
+select * from emajb.myschema1_mytbl2b_log_seq;
+select * from emaj."myschema1_myTbl3_log_seq";
+select * from emaj.myschema1_mytbl4_log_seq;
+select * from emaj.myschema2_mytbl1_log_seq;
+select * from emaj.myschema2_mytbl2_log_seq;
+select * from emaj."myschema2_myTbl3_log_seq";
+select * from emaj.myschema2_mytbl4_log_seq;
+select * from emaj."phil's schema3_phil's tbl1_log_seq";
+select * from emaj."phil's schema3_myTbl2\_log_seq";
+
 -----------------------------
 -- Check the tables and sequences after upgrade
 -----------------------------

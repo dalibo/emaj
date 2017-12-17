@@ -166,12 +166,10 @@ Tablespace: "tspemaj"
  stat_verb   | character varying(6)  |           |          | 
  stat_rows   | bigint                |           |          | 
 
-Sequence "emaj.emaj_global_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 85
- log_cnt    | bigint  | 14
- is_called  | boolean | t
+                       Sequence "emaj.emaj_global_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                                   Table "emaj.emaj_group"
           Column          |  Type   | Collation | Nullable |                            Default                             
@@ -251,12 +249,10 @@ Indexes:
     "emaj_hist_pkey" PRIMARY KEY, btree (hist_id), tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-Sequence "emaj.emaj_hist_hist_id_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 103
- log_cnt    | bigint  | 29
- is_called  | boolean | t
+                    Sequence "emaj.emaj_hist_hist_id_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Owned by: emaj.emaj_hist.hist_id
 
   Index "emaj.emaj_hist_pkey"
@@ -293,12 +289,10 @@ Foreign-key constraints:
     "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Tablespace: "tspemaj"
 
-Sequence "emaj.emaj_mark_mark_id_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 14
- log_cnt    | bigint  | 19
- is_called  | boolean | t
+                    Sequence "emaj.emaj_mark_mark_id_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Owned by: emaj.emaj_mark.mark_id
 
   Index "emaj.emaj_mark_pkey"
@@ -469,12 +463,10 @@ Tablespace: "tspemaj"
 primary key, btree, for table "emaj.emaj_rlbk_plan"
 Tablespace: "tspemaj"
 
-Sequence "emaj.emaj_rlbk_rlbk_id_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 4
- log_cnt    | bigint  | 0
- is_called  | boolean | t
+                Sequence "emaj.emaj_rlbk_rlbk_id_seq"
+  Type   | Start | Minimum |  Maximum   | Increment | Cycles? | Cache 
+---------+-------+---------+------------+-----------+---------+-------
+ integer |     1 |       1 | 2147483647 |         1 | no      |     1
 Owned by: emaj.emaj_rlbk.rlbk_id
 
                          Table "emaj.emaj_rlbk_session"
@@ -647,12 +639,10 @@ Index "emaj.emaj_time_stamp_pkey"
 primary key, btree, for table "emaj.emaj_time_stamp"
 Tablespace: "tspemaj"
 
-Sequence "emaj.emaj_time_stamp_time_id_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 18
- log_cnt    | bigint  | 15
- is_called  | boolean | t
+                 Sequence "emaj.emaj_time_stamp_time_id_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Owned by: emaj.emaj_time_stamp.time_id
 
                   View "emaj.emaj_visible_param"
@@ -690,12 +680,10 @@ Tablespace: "tspemaj"
 unique, btree, for table "emaj.myschema1_myTbl3_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emaj.myschema1_myTbl3_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 10
- log_cnt    | bigint  | 23
- is_called  | boolean | t
+                   Sequence "emaj.myschema1_myTbl3_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                       Table "emaj.myschema1_mytbl1_log"
      Column     |           Type           | Collation | Nullable |                  Default                  
@@ -723,12 +711,10 @@ Tablespace: "tspemaj"
 unique, btree, for table "emaj.myschema1_mytbl1_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emaj.myschema1_mytbl1_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 24
- log_cnt    | bigint  | 9
- is_called  | boolean | t
+                   Sequence "emaj.myschema1_mytbl1_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                       Table "emaj.myschema1_mytbl2_log"
      Column     |           Type           | Collation | Nullable |                  Default                  
@@ -756,12 +742,10 @@ Tablespace: "tspemaj"
 unique, btree, for table "emaj.myschema1_mytbl2_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emaj.myschema1_mytbl2_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 3
- log_cnt    | bigint  | 30
- is_called  | boolean | t
+                   Sequence "emaj.myschema1_mytbl2_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                       Table "emaj.myschema1_mytbl4_log"
      Column     |           Type           | Collation | Nullable |                  Default                  
@@ -791,12 +775,10 @@ Tablespace: "tspemaj"
 unique, btree, for table "emaj.myschema1_mytbl4_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emaj.myschema1_mytbl4_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 9
- log_cnt    | bigint  | 24
- is_called  | boolean | t
+                   Sequence "emaj.myschema1_mytbl4_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                         Table "emaj.myschema2_myTbl3_log"
      Column     |            Type             | Collation | Nullable |                  Default                  
@@ -824,12 +806,10 @@ Tablespace: "tspemaj"
 unique, btree, for table "emaj.myschema2_myTbl3_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emaj.myschema2_myTbl3_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 10
- log_cnt    | bigint  | 23
- is_called  | boolean | t
+                   Sequence "emaj.myschema2_myTbl3_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                       Table "emaj.myschema2_mytbl1_log"
      Column     |           Type           | Collation | Nullable |                  Default                  
@@ -857,12 +837,10 @@ Tablespace: "tspemaj"
 unique, btree, for table "emaj.myschema2_mytbl1_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emaj.myschema2_mytbl1_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 15
- log_cnt    | bigint  | 18
- is_called  | boolean | t
+                   Sequence "emaj.myschema2_mytbl1_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                       Table "emaj.myschema2_mytbl2_log"
      Column     |           Type           | Collation | Nullable |                  Default                  
@@ -890,12 +868,10 @@ Tablespace: "tspemaj"
 unique, btree, for table "emaj.myschema2_mytbl2_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emaj.myschema2_mytbl2_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 2
- log_cnt    | bigint  | 31
- is_called  | boolean | t
+                   Sequence "emaj.myschema2_mytbl2_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                       Table "emaj.myschema2_mytbl4_log"
      Column     |           Type           | Collation | Nullable |                  Default                  
@@ -925,12 +901,10 @@ Tablespace: "tspemaj"
 unique, btree, for table "emaj.myschema2_mytbl4_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emaj.myschema2_mytbl4_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 8
- log_cnt    | bigint  | 25
- is_called  | boolean | t
+                   Sequence "emaj.myschema2_mytbl4_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                    Table "emaj.phil's schema3_myTbl2\_log"
      Column     |           Type           | Collation | Nullable |                  Default                  
@@ -958,12 +932,10 @@ Tablespace: "tspemaj"
 unique, btree, for table "emaj.phil's schema3_myTbl2\_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emaj.phil's schema3_myTbl2\_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 1
- log_cnt    | bigint  | 0
- is_called  | boolean | f
+                Sequence "emaj.phil's schema3_myTbl2\_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                  Table "emaj.phil's schema3_phil's tbl1_log"
      Column     |           Type           | Collation | Nullable |                  Default                  
@@ -991,12 +963,10 @@ Index "emaj.phil's schema3_phil's tbl1_log_idx"
 unique, btree, for table "emaj.phil's schema3_phil's tbl1_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emaj.phil's schema3_phil's tbl1_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 1
- log_cnt    | bigint  | 0
- is_called  | boolean | f
+              Sequence "emaj.phil's schema3_phil's tbl1_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
 \d emajb.*
                                      Table "emajb.myschema1_mytbl2b_log"
@@ -1024,12 +994,108 @@ Tablespace: "tspemaj"
 unique, btree, for table "emajb.myschema1_mytbl2b_log", clustered
 Tablespace: "tspemaj"
 
-Sequence "emajb.myschema1_mytbl2b_log_seq"
-   Column   |  Type   | Value 
-------------+---------+-------
- last_value | bigint  | 4
- log_cnt    | bigint  | 29
- is_called  | boolean | t
+                  Sequence "emajb.myschema1_mytbl2b_log_seq"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
+
+-- check technical sequences position
+select * from emaj.emaj_global_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+         85 |      14 | t
+(1 row)
+
+select * from emaj.emaj_hist_hist_id_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+        103 |      29 | t
+(1 row)
+
+select * from emaj.emaj_time_stamp_time_id_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+         18 |      15 | t
+(1 row)
+
+select * from emaj.emaj_mark_mark_id_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+         14 |      19 | t
+(1 row)
+
+select * from emaj.emaj_rlbk_rlbk_id_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+          4 |       0 | t
+(1 row)
+
+-- check log sequences position
+select * from emaj.myschema1_mytbl1_log_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+         24 |       9 | t
+(1 row)
+
+select * from emaj.myschema1_mytbl2_log_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+          3 |      30 | t
+(1 row)
+
+select * from emajb.myschema1_mytbl2b_log_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+          4 |      29 | t
+(1 row)
+
+select * from emaj."myschema1_myTbl3_log_seq";
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+         10 |      23 | t
+(1 row)
+
+select * from emaj.myschema1_mytbl4_log_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+          9 |      24 | t
+(1 row)
+
+select * from emaj.myschema2_mytbl1_log_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+         15 |      18 | t
+(1 row)
+
+select * from emaj.myschema2_mytbl2_log_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+          2 |      31 | t
+(1 row)
+
+select * from emaj."myschema2_myTbl3_log_seq";
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+         10 |      23 | t
+(1 row)
+
+select * from emaj.myschema2_mytbl4_log_seq;
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+          8 |      25 | t
+(1 row)
+
+select * from emaj."phil's schema3_phil's tbl1_log_seq";
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+          1 |       0 | f
+(1 row)
+
+select * from emaj."phil's schema3_myTbl2\_log_seq";
+ last_value | log_cnt | is_called 
+------------+---------+-----------
+          1 |       0 | f
+(1 row)
 
 -----------------------------
 -- Check the tables and sequences after upgrade
