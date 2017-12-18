@@ -11,7 +11,7 @@ SET default_tablespace TO tspemaj;
 select * from pg_available_extension_versions where name = 'emaj';
  name |   version    | installed | superuser | relocatable | schema |      requires       |                                            comment                                             
 ------+--------------+-----------+-----------+-------------+--------+---------------------+------------------------------------------------------------------------------------------------
- emaj | 2.1.0        | t         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+ emaj | 2.2.0        | t         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
  emaj | next_version | f         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
@@ -36,30 +36,15 @@ select relname from pg_catalog.pg_class,
  emaj_rlbk_rlbk_id_seq
  emaj_rlbk_session
  emaj_rlbk_stat
+ emaj_schema
  emaj_seq_hole
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(19 rows)
+(20 rows)
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
-NOTICE:  drop cascades to 11 other objects
-DETAIL:  drop cascades to function _change_log_schema_tbl(emaj_relation,text)
-drop cascades to function _change_emaj_names_prefix(emaj_relation,text)
-drop cascades to function _change_log_data_tsp_tbl(emaj_relation,text)
-drop cascades to function _change_log_index_tsp_tbl(emaj_relation,text)
-drop cascades to function _drop_tbl(emaj_relation)
-drop cascades to function _drop_seq(emaj_relation)
-drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean)
-drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
-drop cascades to function _rlbk_seq(emaj_relation,bigint)
-drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
-drop cascades to function _gen_sql_tbl(emaj_relation,text)
-NOTICE:  drop cascades to 3 other objects
-DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
-drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
-drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
 -----------------------------
 -- check installation
 -----------------------------
@@ -1009,7 +994,7 @@ select * from emaj.emaj_global_seq;
 select * from emaj.emaj_hist_hist_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-        103 |      29 | t
+        111 |      21 | t
 (1 row)
 
 select * from emaj.emaj_time_stamp_time_id_seq;
@@ -1027,7 +1012,7 @@ select * from emaj.emaj_mark_mark_id_seq;
 select * from emaj.emaj_rlbk_rlbk_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-          4 |       0 | t
+          4 |      29 | t
 (1 row)
 
 -- check log sequences position
@@ -1130,12 +1115,12 @@ select * from emaj.emaj_relation order by 1,2 ;
 (15 rows)
 
 select rlbk_messages from emaj.emaj_rlbk order by rlbk_id;
-                         rlbk_messages                         
----------------------------------------------------------------
- {"Completed: 1 tables and 1 sequences effectively processed"}
- {"Completed: 3 tables and 1 sequences effectively processed"}
- {"Completed: 1 tables and 2 sequences effectively processed"}
- {"Completed: 1 tables and 2 sequences effectively processed"}
+                                  rlbk_messages                                   
+----------------------------------------------------------------------------------
+ {"Notice: 1 / 5 tables effectively processed.","Notice: 1 sequences processed."}
+ {"Notice: 3 / 5 tables effectively processed.","Notice: 1 sequences processed."}
+ {"Notice: 1 / 4 tables effectively processed.","Notice: 2 sequences processed."}
+ {"Notice: 1 / 4 tables effectively processed.","Notice: 2 sequences processed."}
 (4 rows)
 
 -- log tables

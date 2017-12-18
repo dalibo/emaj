@@ -424,11 +424,10 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 (4 rows)
 
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
- altr_time_id |       altr_step       | altr_schema | altr_tblseq | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging 
---------------+-----------------------+-------------+-------------+------------+---------------+-----------------------+----------------+-------------------+---------------------------
-           18 | CREATE_LOG_SCHEMA     | emajb       |             |            |               |                       |                |                   | 
-           18 | CHANGE_TBL_LOG_SCHEMA | myschema1   | mytbl2b     | myGroup1   |               | t                     |                |                   | 
-(2 rows)
+ altr_time_id |       altr_step       | altr_schema | altr_tblseq | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging | altr_rlbk_id 
+--------------+-----------------------+-------------+-------------+------------+---------------+-----------------------+----------------+-------------------+---------------------------+--------------
+           18 | CHANGE_TBL_LOG_SCHEMA | myschema1   | mytbl2b     | myGroup1   |               | t                     |                |                   |                           |             
+(1 row)
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;

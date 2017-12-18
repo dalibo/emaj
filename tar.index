@@ -23,11 +23,11 @@ emaj-2.2.0/sql/emaj_demo.sql
 emaj-2.2.0/sql/emaj_prepare_parallel_rollback_test.sql
 emaj-2.2.0/sql/emaj_uninstall.sql
 emaj-2.2.0/sql/emaj_upgrade_after_postgres_upgrade.sql
-emaj-2.2.0/doc/Emaj.2.1.0_doc_en.pdf
-emaj-2.2.0/doc/Emaj.2.1.0_doc_fr.pdf
-emaj-2.2.0/doc/Emaj.2.1.0_pres_en.odp
-emaj-2.2.0/doc/Emaj.2.1.0_pres_fr.odp
-emaj-2.2.0/doc/Emaj.2.1.0_pres_en.pdf
-emaj-2.2.0/doc/Emaj.2.1.0_pres_fr.pdf
+emaj-2.2.0/doc/Emaj.2.2.0_doc_en.pdf
+emaj-2.2.0/doc/Emaj.2.2.0_doc_fr.pdf
+emaj-2.2.0/doc/Emaj.2.2.0_pres_en.odp
+emaj-2.2.0/doc/Emaj.2.2.0_pres_fr.odp
+emaj-2.2.0/doc/Emaj.2.2.0_pres_en.pdf
+emaj-2.2.0/doc/Emaj.2.2.0_pres_fr.pdf
 emaj-2.2.0/php/emajParallelRollback.php
 emaj-2.2.0/php/emajRollbackMonitor.php
