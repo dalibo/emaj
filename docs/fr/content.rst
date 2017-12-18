@@ -6,7 +6,9 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +---------------------------------------------+---------------------------------------------------------------------+
 | Fichiers                                    | Usage                                                               |
 +=============================================+=====================================================================+
-| sql/emaj--2.1.0.sql                         | script d’installation de l’extension                                |
+| sql/emaj--2.2.0.sql                         | script d’installation de l’extension                                |
++---------------------------------------------+---------------------------------------------------------------------+
+| sql/emaj--2.1.0--2.2.0.sql                  | script d’upgrade de l’extension de 2.1.0 vers 2.2.0                 |
 +---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj--2.0.1--2.1.0.sql                  | script d’upgrade de l’extension de 2.0.1 vers 2.1.0                 |
 +---------------------------------------------+---------------------------------------------------------------------+
@@ -42,9 +44,9 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +---------------------------------------------+---------------------------------------------------------------------+
 | CHANGES.md                                  | notes de versions                                                   |
 +---------------------------------------------+---------------------------------------------------------------------+
-| LICENSE                                     | information sur la licence utilisée pour E-Maj                      |
+| AUTHORS.md                                  | identification des auteurs                                          |
 +---------------------------------------------+---------------------------------------------------------------------+
-| AUTHORS                                     | identification des auteurs                                          |
+| LICENSE                                     | information sur la licence utilisée pour E-Maj                      |
 +---------------------------------------------+---------------------------------------------------------------------+
 | META.json                                   | données techniques destinées à PGXN                                 |
 +---------------------------------------------+---------------------------------------------------------------------+
@@ -54,12 +56,15 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +---------------------------------------------+---------------------------------------------------------------------+
 | doc/Emaj.<version>_doc_fr.pdf               | documentation en français de l'extension E-Maj                      |
 +---------------------------------------------+---------------------------------------------------------------------+
-| doc/Emaj.<version>_pres.en.pdf              | présentation en anglais de l'extension E-Maj                        |
+| doc/Emaj.<version>_pres.en.odp              | présentation en anglais de l'extension E-Maj                        |
 +---------------------------------------------+---------------------------------------------------------------------+
-| doc/Emaj.<version>_pres.fr.pdf              | présentation en français de l'extension E-Maj                       |
+| doc/Emaj.<version>_pres.fr.odp              | présentation en français de l'extension E-Maj                       |
++---------------------------------------------+---------------------------------------------------------------------+
+| doc/Emaj.<version>_pres.en.pdf              | présentation en anglais de l'extension E-Maj (version pdf)          |
++---------------------------------------------+---------------------------------------------------------------------+
+| doc/Emaj.<version>_pres.fr.pdf              | présentation en français de l'extension E-Maj (version pdf)         |
 +---------------------------------------------+---------------------------------------------------------------------+
 | php/emajParallelRollback.php                | client php pour les rollbacks parallélisés                          |
 +---------------------------------------------+---------------------------------------------------------------------+
 | php/emajRollbackMonitor.php                 | client php pour le suivi des rollbacks                              |
 +---------------------------------------------+---------------------------------------------------------------------+
-
