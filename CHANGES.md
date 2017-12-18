@@ -4,6 +4,15 @@ E-Maj - Change log
 ------
 ###Enhancements:###
 
+
+###Bug fixes:###
+
+
+
+2.2.0 (2017-Dec-18)
+------
+###Enhancements:###
+
   * Improve the documentation about the installation.
   * PostgreSQL versions prior 9.2 are not supported by E-Maj anymore.
   * A sequence can be removed from a tables group in LOGGING state. A 
