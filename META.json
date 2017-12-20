@@ -4,7 +4,7 @@
    "description": "Using triggers, E-Maj logs INSERT/UPDATE/DELETE executions in order to be able to look at the tables updates and cancel them through 'rollback operations'. It includes advanced features like statistics about updates, parallel rollbacks or 'logged rollback' allowing to ... cancel a rollback. A web GUI tool also helps in performing all E-Maj tasks.",
    "version": "<NEXT_VERSION>",
    "maintainer": "Philippe Beaudoin - phb<dot>emaj<at>free<dot>fr",
-   "license": "gpl_2",
+   "license": "gpl_3",
    "tags": [ "emaj", "table log", "audit log", "log trigger", "archive before journal", "logical rollback", "flashback" ],
    "prereqs": {
      "runtime": {
@@ -38,4 +38,3 @@
       "url": "http://pgxn.org/meta/spec.txt"
    }
 }
-
