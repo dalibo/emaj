@@ -31,10 +31,11 @@ select emaj.emaj_unprotect_group('myGroup1');
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',true) order by 1,2;
  rlbk_severity |                                rlbk_message                                 
 ---------------+-----------------------------------------------------------------------------
- Notice        | 0 / 9 tables effectively processed.
+ Notice        | 0 / 8 tables effectively processed.
  Notice        | 3 sequences processed.
  Warning       | Tables group change not rolled back: E-Maj log schema for myschema1.mytbl2b
-(3 rows)
+ Warning       | The table myschema1."myTbl3" has been left unchanged (not in group anymore)
+(4 rows)
 
 -----------------------------
 -- Step 3 : for myGroup1, update tables, then unprotect, logged_rollback, rename the end rollback mark and consolidate the rollback
@@ -62,7 +63,7 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M2',true) order by 1,2
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 1 sequences processed.
- Notice        | 3 / 5 tables effectively processed.
+ Notice        | 2 / 4 tables effectively processed.
 (2 rows)
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
@@ -76,7 +77,7 @@ select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','End_rollback_to_
 select emaj.emaj_consolidate_rollback_group('myGroup1','End_rollback_to_M2');
  emaj_consolidate_rollback_group 
 ---------------------------------
-                               4
+                               3
 (1 row)
 
 -----------------------------
@@ -86,7 +87,7 @@ update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_sche
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
-                6
+                5
 (1 row)
 
 -----------------------------
@@ -99,7 +100,7 @@ delete from myTbl1 where col11 = 1;
 select emaj.emaj_set_mark_group('myGroup1','M4');
  emaj_set_mark_group 
 ---------------------
-                   6
+                   5
 (1 row)
 
 --
@@ -108,7 +109,7 @@ update "myTbl3" set col33 = col33 / 2;
 select emaj.emaj_set_mark_group('myGroup1','M5');
  emaj_set_mark_group 
 ---------------------
-                   6
+                   5
 (1 row)
 
 --
@@ -117,7 +118,7 @@ update myTbl1 set col11 = 99 where col11 = 1;
 select emaj.emaj_set_mark_group('myGroup1','M6');
  emaj_set_mark_group 
 ---------------------
-                   6
+                   5
 (1 row)
 
 -----------------------------
@@ -152,7 +153,7 @@ select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 1 sequences processed.
- Notice        | 2 / 5 tables effectively processed.
+ Notice        | 2 / 4 tables effectively processed.
 (2 rows)
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
@@ -165,7 +166,7 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 1 sequences processed.
- Notice        | 3 / 5 tables effectively processed.
+ Notice        | 2 / 4 tables effectively processed.
 (2 rows)
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
@@ -227,18 +228,18 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       17 |                 85 | M
       18 |                 85 | A
       19 |                 85 | R
-      20 |                 95 | R
-      21 |                122 | M
-      22 |                122 | A
-      23 |                136 | M
-      24 |                146 | M
-      25 |                146 | M
-      26 |                146 | R
-      27 |                148 | M
-      28 |                148 | R
-      29 |                151 | R
-      30 |                154 | R
-      31 |                177 | M
+      20 |                 85 | R
+      21 |                 92 | M
+      22 |                 92 | A
+      23 |                106 | M
+      24 |                106 | M
+      25 |                106 | M
+      26 |                106 | R
+      27 |                108 | M
+      28 |                108 | R
+      29 |                111 | R
+      30 |                114 | R
+      31 |                117 | M
 (31 rows)
 
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
@@ -353,48 +354,48 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      106 | SET_MARK_GROUP           | BEGIN              | myGroup1                     | ALTER_%                                                                     | postgres
      107 | SET_MARK_GROUP           | END                | myGroup1                     | ALTER_%                                                                     | postgres
      108 | ALTER_GROUP              | SCHEMA CREATED     | emajb                        |                                                                             | postgres
-     109 | ALTER_GROUP              | LOG SCHEMA CHANGED | myschema1.mytbl2b            | emaj => emajb                                                               | postgres
-     110 | ALTER_GROUP              | END                | myGroup1                     | Timestamp Id : 18                                                           | postgres
-     111 | EMAJ_INSTALL             |                    | E-Maj <NEXT_VERSION>         | Upgrade from 2.2.0 completed                                                | postgres
-     112 | UNPROTECT_GROUP          |                    | myGroup1                     | Status 1                                                                    | postgres
-     113 | ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2            | Unlogged rollback to mark Common (timestamp)                                | postgres
-     114 | DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -5                                                                 | postgres
-     115 | LOCK_GROUP               | BEGIN              | myGroup1,myGroup2            | Rollback session #1                                                         | postgres
-     116 | LOCK_GROUP               | END                | myGroup1,myGroup2            | Rollback session #1: 9 tables locked, 0 deadlock(s)                         | postgres
-     117 | ROLLBACK_GROUPS          | MARK DELETED       | myGroup1                     | mark ALTER_% is deleted                                                     | postgres
-     118 | ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq" |                                                                             | postgres
-     119 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             |                                                                             | postgres
-     120 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
-     121 | ROLLBACK_GROUPS          | NOTICE             | Rollback id 5                | 0 / 9 tables effectively processed.                                         | postgres
-     122 | ROLLBACK_GROUPS          | NOTICE             | Rollback id 5                | 3 sequences processed.                                                      | postgres
-     123 | ROLLBACK_GROUPS          | WARNING            | Rollback id 5                | Tables group change not rolled back: E-Maj log schema for myschema1.mytbl2b | postgres
-     124 | ROLLBACK_GROUPS          | END                | myGroup1,myGroup2            | Rollback_id 5, 0 tables and 3 sequences effectively processed               | postgres
-     125 | UNPROTECT_MARK_GROUP     |                    | myGroup1                     | Mark M3 ; status 1                                                          | postgres
-     126 | ROLLBACK_GROUP           | BEGIN              | myGroup1                     | Logged rollback to mark M2 (timestamp)                                      | postgres
-     127 | DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -2                                                                 | postgres
-     128 | LOCK_GROUP               | BEGIN              | myGroup1                     | Rollback session #1                                                         | postgres
-     129 | LOCK_GROUP               | END                | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                         | postgres
-     130 | SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_M2_%_START                                                             | postgres
-     131 | SET_MARK_GROUP           | END                | myGroup1                     | RLBK_M2_%_START                                                             | postgres
-     132 | ROLLBACK_TABLE           | BEGIN              | myschema1."myTbl3"           | All log rows with emaj_gid > 29 and <= 95                                   | postgres
-     133 | ROLLBACK_TABLE           | END                | myschema1."myTbl3"           | 10 rolled back primary keys                                                 | postgres
-     134 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1             | All log rows with emaj_gid > 29 and <= 95                                   | postgres
+     109 | ALTER_GROUP              | TABLE REMOVED      | myschema1."myTbl3"           | From logging group myGroup1                                                 | postgres
+     110 | ALTER_GROUP              | LOG SCHEMA CHANGED | myschema1.mytbl2b            | emaj => emajb                                                               | postgres
+     111 | ALTER_GROUP              | END                | myGroup1                     | Timestamp Id : 18                                                           | postgres
+     112 | EMAJ_INSTALL             |                    | E-Maj <NEXT_VERSION>         | Upgrade from 2.2.0 completed                                                | postgres
+     113 | UNPROTECT_GROUP          |                    | myGroup1                     | Status 1                                                                    | postgres
+     114 | ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2            | Unlogged rollback to mark Common (timestamp)                                | postgres
+     115 | DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -5                                                                 | postgres
+     116 | LOCK_GROUP               | BEGIN              | myGroup1,myGroup2            | Rollback session #1                                                         | postgres
+     117 | LOCK_GROUP               | END                | myGroup1,myGroup2            | Rollback session #1: 8 tables locked, 0 deadlock(s)                         | postgres
+     118 | ROLLBACK_GROUPS          | MARK DELETED       | myGroup1                     | mark ALTER_% is deleted                                                     | postgres
+     119 | ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq" |                                                                             | postgres
+     120 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             |                                                                             | postgres
+     121 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+     122 | ROLLBACK_GROUPS          | NOTICE             | Rollback id 5                | 0 / 8 tables effectively processed.                                         | postgres
+     123 | ROLLBACK_GROUPS          | NOTICE             | Rollback id 5                | 3 sequences processed.                                                      | postgres
+     124 | ROLLBACK_GROUPS          | WARNING            | Rollback id 5                | The table myschema1."myTbl3" has been left unchanged (not in group anymore) | postgres
+     125 | ROLLBACK_GROUPS          | WARNING            | Rollback id 5                | Tables group change not rolled back: E-Maj log schema for myschema1.mytbl2b | postgres
+     126 | ROLLBACK_GROUPS          | END                | myGroup1,myGroup2            | Rollback_id 5, 0 tables and 3 sequences effectively processed               | postgres
+     127 | UNPROTECT_MARK_GROUP     |                    | myGroup1                     | Mark M3 ; status 1                                                          | postgres
+     128 | ROLLBACK_GROUP           | BEGIN              | myGroup1                     | Logged rollback to mark M2 (timestamp)                                      | postgres
+     129 | DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -2                                                                 | postgres
+     130 | LOCK_GROUP               | BEGIN              | myGroup1                     | Rollback session #1                                                         | postgres
+     131 | LOCK_GROUP               | END                | myGroup1                     | Rollback session #1: 4 tables locked, 0 deadlock(s)                         | postgres
+     132 | SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_M2_%_START                                                             | postgres
+     133 | SET_MARK_GROUP           | END                | myGroup1                     | RLBK_M2_%_START                                                             | postgres
+     134 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1             | All log rows with emaj_gid > 29 and <= 85                                   | postgres
      135 | ROLLBACK_TABLE           | END                | myschema1.mytbl1             | 5 rolled back primary keys                                                  | postgres
-     136 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4             | All log rows with emaj_gid > 29 and <= 95                                   | postgres
+     136 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4             | All log rows with emaj_gid > 29 and <= 85                                   | postgres
      137 | ROLLBACK_TABLE           | END                | myschema1.mytbl4             | 3 rolled back primary keys                                                  | postgres
      138 | ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq" |                                                                             | postgres
      139 | SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_M2_%_DONE                                                              | postgres
      140 | SET_MARK_GROUP           | END                | myGroup1                     | RLBK_M2_%_DONE                                                              | postgres
-     141 | ROLLBACK_GROUP           | NOTICE             | Rollback id 6                | 3 / 5 tables effectively processed.                                         | postgres
+     141 | ROLLBACK_GROUP           | NOTICE             | Rollback id 6                | 2 / 4 tables effectively processed.                                         | postgres
      142 | ROLLBACK_GROUP           | NOTICE             | Rollback id 6                | 1 sequences processed.                                                      | postgres
-     143 | ROLLBACK_GROUP           | END                | myGroup1                     | Rollback_id 6, 3 tables and 1 sequences effectively processed               | postgres
+     143 | ROLLBACK_GROUP           | END                | myGroup1                     | Rollback_id 6, 2 tables and 1 sequences effectively processed               | postgres
      144 | RENAME_MARK_GROUP        | BEGIN              | myGroup1                     | EMAJ_LAST_MARK                                                              | postgres
      145 | RENAME_MARK_GROUP        | END                | myGroup1                     | RLBK_M2_%_DONE renamed End_rollback_to_M2                                   | postgres
      146 | CONSOLIDATE_RLBK_GROUP   | BEGIN              | myGroup1                     | Erase all between marks M2 and End_rollback_to_M2                           | postgres
-     147 | CONSOLIDATE_RLBK_GROUP   | END                | myGroup1                     | 3 tables and 1 sequences processed ; 3 marks deleted                        | postgres
+     147 | CONSOLIDATE_RLBK_GROUP   | END                | myGroup1                     | 2 tables and 1 sequences processed ; 3 marks deleted                        | postgres
      148 | ALTER_GROUP              | BEGIN              | myGroup1                     |                                                                             | postgres
      149 | LOCK_GROUP               | BEGIN              | myGroup1                     |                                                                             | postgres
-     150 | LOCK_GROUP               | END                | myGroup1                     | 5 tables locked, 0 deadlock(s)                                              | postgres
+     150 | LOCK_GROUP               | END                | myGroup1                     | 4 tables locked, 0 deadlock(s)                                              | postgres
      151 | SET_MARK_GROUP           | BEGIN              | myGroup1                     | ALTER_%                                                                     | postgres
      152 | SET_MARK_GROUP           | END                | myGroup1                     | ALTER_%                                                                     | postgres
      153 | ALTER_GROUP              | LOG SCHEMA CHANGED | myschema1.mytbl2b            | emajb => emaj                                                               | postgres
@@ -402,15 +403,15 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      155 | ALTER_GROUP              | END                | myGroup1                     | Timestamp Id : 22                                                           | postgres
      156 | SET_MARK_GROUP           | BEGIN              | myGroup1                     |                                                                             | postgres
      157 | LOCK_GROUP               | BEGIN              | myGroup1                     |                                                                             | postgres
-     158 | LOCK_GROUP               | END                | myGroup1                     | 5 tables locked, 0 deadlock(s)                                              | postgres
+     158 | LOCK_GROUP               | END                | myGroup1                     | 4 tables locked, 0 deadlock(s)                                              | postgres
      159 | SET_MARK_GROUP           | END                | myGroup1                     | M4                                                                          | postgres
      160 | SET_MARK_GROUP           | BEGIN              | myGroup1                     |                                                                             | postgres
      161 | LOCK_GROUP               | BEGIN              | myGroup1                     |                                                                             | postgres
-     162 | LOCK_GROUP               | END                | myGroup1                     | 5 tables locked, 0 deadlock(s)                                              | postgres
+     162 | LOCK_GROUP               | END                | myGroup1                     | 4 tables locked, 0 deadlock(s)                                              | postgres
      163 | SET_MARK_GROUP           | END                | myGroup1                     | M5                                                                          | postgres
      164 | SET_MARK_GROUP           | BEGIN              | myGroup1                     |                                                                             | postgres
      165 | LOCK_GROUP               | BEGIN              | myGroup1                     |                                                                             | postgres
-     166 | LOCK_GROUP               | END                | myGroup1                     | 5 tables locked, 0 deadlock(s)                                              | postgres
+     166 | LOCK_GROUP               | END                | myGroup1                     | 4 tables locked, 0 deadlock(s)                                              | postgres
      167 | SET_MARK_GROUP           | END                | myGroup1                     | M6                                                                          | postgres
      168 | ROLLBACK_GROUP           | BEGIN              | myGroup2                     | Logged rollback to mark M2 (timestamp)                                      | postgres
      169 | DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -2                                                                 | postgres
@@ -418,7 +419,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      171 | LOCK_GROUP               | END                | myGroup2                     | Rollback session #1: 4 tables locked, 0 deadlock(s)                         | postgres
      172 | SET_MARK_GROUP           | BEGIN              | myGroup2                     | RLBK_M2_%_START                                                             | postgres
      173 | SET_MARK_GROUP           | END                | myGroup2                     | RLBK_M2_%_START                                                             | postgres
-     174 | ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4             | All log rows with emaj_gid > 77 and <= 146                                  | postgres
+     174 | ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4             | All log rows with emaj_gid > 77 and <= 106                                  | postgres
      175 | ROLLBACK_TABLE           | END                | myschema2.mytbl4             | 2 rolled back primary keys                                                  | postgres
      176 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             | RESTART 1001 MAXVALUE 2000 CYCLE                                            | postgres
      177 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
@@ -431,7 +432,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      184 | DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -2                                                                 | postgres
      185 | LOCK_GROUP               | BEGIN              | myGroup2                     | Rollback session #1                                                         | postgres
      186 | LOCK_GROUP               | END                | myGroup2                     | Rollback session #1: 4 tables locked, 0 deadlock(s)                         | postgres
-     187 | ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4             | All log rows with emaj_gid > 81 and <= 148                                  | postgres
+     187 | ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4             | All log rows with emaj_gid > 81 and <= 108                                  | postgres
      188 | ROLLBACK_TABLE           | END                | myschema2.mytbl4             | 2 rolled back primary keys                                                  | postgres
      189 | ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark RLBK_M2_%_START is deleted                                             | postgres
      190 | ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark RLBK_M2_%_DONE is deleted                                              | postgres
@@ -448,43 +449,41 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      201 | ROLLBACK_GROUP           | BEGIN              | myGroup1                     | Unlogged rollback to mark M5 (timestamp)                                    | postgres
      202 | DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -2                                                                 | postgres
      203 | LOCK_GROUP               | BEGIN              | myGroup1                     | Rollback session #1                                                         | postgres
-     204 | LOCK_GROUP               | END                | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                         | postgres
-     205 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1             | All log rows with emaj_gid > 146 and <= 151                                 | postgres
+     204 | LOCK_GROUP               | END                | myGroup1                     | Rollback session #1: 4 tables locked, 0 deadlock(s)                         | postgres
+     205 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1             | All log rows with emaj_gid > 106 and <= 111                                 | postgres
      206 | ROLLBACK_TABLE           | END                | myschema1.mytbl1             | 1 rolled back primary keys                                                  | postgres
-     207 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4             | All log rows with emaj_gid > 146 and <= 151                                 | postgres
+     207 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4             | All log rows with emaj_gid > 106 and <= 111                                 | postgres
      208 | ROLLBACK_TABLE           | END                | myschema1.mytbl4             | 2 rolled back primary keys                                                  | postgres
      209 | ROLLBACK_GROUP           | MARK DELETED       | myGroup1                     | mark M6 is deleted                                                          | postgres
      210 | ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq" |                                                                             | postgres
-     211 | ROLLBACK_GROUP           | NOTICE             | Rollback id 9                | 2 / 5 tables effectively processed.                                         | postgres
+     211 | ROLLBACK_GROUP           | NOTICE             | Rollback id 9                | 2 / 4 tables effectively processed.                                         | postgres
      212 | ROLLBACK_GROUP           | NOTICE             | Rollback id 9                | 1 sequences processed.                                                      | postgres
      213 | ROLLBACK_GROUP           | END                | myGroup1                     | Rollback_id 9, 2 tables and 1 sequences effectively processed               | postgres
      214 | ROLLBACK_GROUP           | BEGIN              | myGroup1                     | Logged rollback to mark M4 (timestamp)                                      | postgres
      215 | DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -2                                                                 | postgres
      216 | LOCK_GROUP               | BEGIN              | myGroup1                     | Rollback session #1                                                         | postgres
-     217 | LOCK_GROUP               | END                | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                         | postgres
+     217 | LOCK_GROUP               | END                | myGroup1                     | Rollback session #1: 4 tables locked, 0 deadlock(s)                         | postgres
      218 | SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_M4_%_START                                                             | postgres
      219 | SET_MARK_GROUP           | END                | myGroup1                     | RLBK_M4_%_START                                                             | postgres
-     220 | ROLLBACK_TABLE           | BEGIN              | myschema1."myTbl3"           | All log rows with emaj_gid > 136 and <= 154                                 | postgres
-     221 | ROLLBACK_TABLE           | END                | myschema1."myTbl3"           | 10 rolled back primary keys                                                 | postgres
-     222 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1             | All log rows with emaj_gid > 136 and <= 154                                 | postgres
-     223 | ROLLBACK_TABLE           | END                | myschema1.mytbl1             | 1 rolled back primary keys                                                  | postgres
-     224 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4             | All log rows with emaj_gid > 136 and <= 154                                 | postgres
-     225 | ROLLBACK_TABLE           | END                | myschema1.mytbl4             | 2 rolled back primary keys                                                  | postgres
-     226 | ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq" |                                                                             | postgres
-     227 | SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_M4_%_DONE                                                              | postgres
-     228 | SET_MARK_GROUP           | END                | myGroup1                     | RLBK_M4_%_DONE                                                              | postgres
-     229 | ROLLBACK_GROUP           | NOTICE             | Rollback id 10               | 3 / 5 tables effectively processed.                                         | postgres
-     230 | ROLLBACK_GROUP           | NOTICE             | Rollback id 10               | 1 sequences processed.                                                      | postgres
-     231 | ROLLBACK_GROUP           | END                | myGroup1                     | Rollback_id 10, 3 tables and 1 sequences effectively processed              | postgres
-     232 | RENAME_MARK_GROUP        | BEGIN              | myGroup1                     | RLBK_M4_%_START                                                             | postgres
-     233 | RENAME_MARK_GROUP        | END                | myGroup1                     | RLBK_M4_%_START renamed Before logged rollback to M4                        | postgres
-     234 | DELETE_MARK_GROUP        | BEGIN              | myGroup1                     | RLBK_M4_%_DONE                                                              | postgres
-     235 | DELETE_MARK_GROUP        | END                | myGroup1                     | RLBK_M4_%_DONE                                                              | postgres
-     236 | DELETE_MARK_GROUP        | BEGIN              | myGroup1                     | M1                                                                          | postgres
-     237 | DELETE_MARK_GROUP        | END                | myGroup1                     | M1                                                                          | postgres
-     238 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1                     | M4                                                                          | postgres
-     239 | DELETE_BEFORE_MARK_GROUP | END                | myGroup1                     | 3 marks deleted ; M4 is now the initial mark                                | postgres
-(239 rows)
+     220 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1             | All log rows with emaj_gid > 106 and <= 114                                 | postgres
+     221 | ROLLBACK_TABLE           | END                | myschema1.mytbl1             | 1 rolled back primary keys                                                  | postgres
+     222 | ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4             | All log rows with emaj_gid > 106 and <= 114                                 | postgres
+     223 | ROLLBACK_TABLE           | END                | myschema1.mytbl4             | 2 rolled back primary keys                                                  | postgres
+     224 | ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq" |                                                                             | postgres
+     225 | SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_M4_%_DONE                                                              | postgres
+     226 | SET_MARK_GROUP           | END                | myGroup1                     | RLBK_M4_%_DONE                                                              | postgres
+     227 | ROLLBACK_GROUP           | NOTICE             | Rollback id 10               | 2 / 4 tables effectively processed.                                         | postgres
+     228 | ROLLBACK_GROUP           | NOTICE             | Rollback id 10               | 1 sequences processed.                                                      | postgres
+     229 | ROLLBACK_GROUP           | END                | myGroup1                     | Rollback_id 10, 2 tables and 1 sequences effectively processed              | postgres
+     230 | RENAME_MARK_GROUP        | BEGIN              | myGroup1                     | RLBK_M4_%_START                                                             | postgres
+     231 | RENAME_MARK_GROUP        | END                | myGroup1                     | RLBK_M4_%_START renamed Before logged rollback to M4                        | postgres
+     232 | DELETE_MARK_GROUP        | BEGIN              | myGroup1                     | RLBK_M4_%_DONE                                                              | postgres
+     233 | DELETE_MARK_GROUP        | END                | myGroup1                     | RLBK_M4_%_DONE                                                              | postgres
+     234 | DELETE_MARK_GROUP        | BEGIN              | myGroup1                     | M1                                                                          | postgres
+     235 | DELETE_MARK_GROUP        | END                | myGroup1                     | M1                                                                          | postgres
+     236 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1                     | M4                                                                          | postgres
+     237 | DELETE_BEFORE_MARK_GROUP | END                | myGroup1                     | 3 marks deleted ; M4 is now the initial mark                                | postgres
+(237 rows)
 
 --
 reset role;
@@ -496,7 +495,7 @@ alter sequence emaj.emaj_hist_hist_id_seq restart 30000;
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-1');
  emaj_set_mark_groups 
 ----------------------
-                   12
+                   11
 (1 row)
 
 select count(*) from mySchema1.myTbl4;

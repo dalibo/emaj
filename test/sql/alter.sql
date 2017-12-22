@@ -392,7 +392,7 @@ begin;
   select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2;
   delete from myschema1."myTbl3" where col33 = 1.;
-  select count(*) from "emajC"."myschema1_myTbl3_log";
+  select count(*) from "emajC"."myschema1_myTbl3_log_1";
   select * from emaj.emaj_verify_all();
   -- testing log stat
   select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
@@ -421,7 +421,7 @@ begin;
   select emaj.emaj_set_mark_group('myGroup1','Mk2c');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
-  select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
+  select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log_1' and nspname = 'emajb';
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2c');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';

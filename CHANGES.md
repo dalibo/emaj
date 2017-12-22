@@ -3,10 +3,12 @@ E-Maj - Change log
 <NEXT_VERSION>
 ------
 ###Enhancements:###
-
+  * When a table is removed from a tables group while in LOGGING state, its
+    log table is renamed with a _1 suffix added to its name.
 
 ###Bug fixes:###
-
+  * When a table is removed from a tables group while in LOGGING state, the 
+    execution fails if the role is not a superuser or the table's owner.
 
 
 2.2.0 (2017-Dec-18)

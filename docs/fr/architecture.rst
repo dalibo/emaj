@@ -85,6 +85,8 @@ Les objets associés aux tables applicatives portent des noms construits en util
 
 Mais il est possible de définir, pour chaque table applicative, le **préfixe** constituant le nom des objets E-Maj associés. Ceci permet notamment de gérer des tables avec des noms très longs.
 
+Le nom des tables de log peut porter un suffixe de type « _1 », « _2 », etc. Il s’agit alors d’anciennes tables de logs qui ont été renommées lors d'une modification de groupe de tables.
+
 Le nom des autres **fonctions** E-Maj est aussi normalisé :
 
 * les fonctions dont les noms commencent par `emaj_` sont appelables par les utilisateurs,

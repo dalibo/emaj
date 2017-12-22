@@ -639,7 +639,7 @@ Owned by: emaj.emaj_time_stamp.time_id
  param_value_boolean  | boolean  |           |          | 
  param_value_interval | interval |           |          | 
 
-                                        Table "emaj.myschema1_myTbl3_log"
+                                       Table "emaj.myschema1_myTbl3_log_1"
      Column     |            Type             | Collation | Nullable |                  Default                  
 ----------------+-----------------------------+-----------+----------+-------------------------------------------
  col31          | integer                     |           |          | 
@@ -654,21 +654,16 @@ Owned by: emaj.emaj_time_stamp.time_id
  emaj_user_ip   | inet                        |           |          | inet_client_addr()
  emaj_user_port | integer                     |           |          | inet_client_port()
 Indexes:
-    "myschema1_myTbl3_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "myschema1_myTbl3_log_idx_1" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-     Index "emaj.myschema1_myTbl3_log_idx"
+    Index "emaj.myschema1_myTbl3_log_idx_1"
    Column   |         Type         | Definition 
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj.myschema1_myTbl3_log", clustered
+unique, btree, for table "emaj.myschema1_myTbl3_log_1", clustered
 Tablespace: "tspemaj"
-
-                   Sequence "emaj.myschema1_myTbl3_log_seq"
-  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
---------+-------+---------+---------------------+-----------+---------+-------
- bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
                                       Table "emaj.myschema1_mytbl1_log"
      Column     |           Type           | Collation | Nullable |                  Default                  
@@ -994,7 +989,7 @@ select * from emaj.emaj_global_seq;
 select * from emaj.emaj_hist_hist_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-        111 |      21 | t
+        112 |      20 | t
 (1 row)
 
 select * from emaj.emaj_time_stamp_time_id_seq;
@@ -1032,12 +1027,6 @@ select * from emajb.myschema1_mytbl2b_log_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
           4 |      29 | t
-(1 row)
-
-select * from emaj."myschema1_myTbl3_log_seq";
- last_value | log_cnt | is_called 
-------------+---------+-----------
-         10 |      23 | t
 (1 row)
 
 select * from emaj.myschema1_mytbl4_log_seq;
@@ -1100,7 +1089,7 @@ select * from emaj.emaj_relation order by 1,2 ;
  myschema1      | mytbl1           | [1,)           | myGroup1         | r        |           20 | emaj           | myschema1_mytbl1_log           |                 | myschema1_mytbl1_log_idx           |                 | myschema1_mytbl1_log_seq           | myschema1_mytbl1_log_fnct           | tbl.col11,tbl.col12,tbl.col13                            | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12
  myschema1      | mytbl2           | [1,)           | myGroup1         | r        |              | emaj           | myschema1_mytbl2_log           |                 | myschema1_mytbl2_log_idx           |                 | myschema1_mytbl2_log_seq           | myschema1_mytbl2_log_fnct           | tbl.col21,tbl.col22,tbl.col23                            | col21                         | tbl.col21 = keys.col21
  myschema1      | mytbl2b          | [1,)           | myGroup1         | r        |              | emajb          | myschema1_mytbl2b_log          |                 | myschema1_mytbl2b_log_idx          |                 | myschema1_mytbl2b_log_seq          | myschema1_mytbl2b_log_fnct          | tbl.col20,tbl.col21                                      | col20                         | tbl.col20 = keys.col20
- myschema1      | myTbl3           | [1,)           | myGroup1         | r        |           10 | emaj           | myschema1_myTbl3_log           |                 | myschema1_myTbl3_log_idx           |                 | myschema1_myTbl3_log_seq           | myschema1_myTbl3_log_fnct           | tbl.col31,tbl.col32,tbl.col33                            | col31                         | tbl.col31 = keys.col31
+ myschema1      | myTbl3           | [1,18)         | myGroup1         | r        |           10 | emaj           | myschema1_myTbl3_log_1         |                 | myschema1_myTbl3_log_idx_1         |                 |                                    |                                     |                                                          |                               | 
  myschema1      | myTbl3_col31_seq | [1,)           | myGroup1         | S        |            1 |                |                                |                 |                                    |                 |                                    |                                     |                                                          |                               | 
  myschema1      | mytbl4           | [1,)           | myGroup1         | r        |           20 | emaj           | myschema1_mytbl4_log           |                 | myschema1_mytbl4_log_idx           |                 | myschema1_mytbl4_log_seq           | myschema1_mytbl4_log_fnct           | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45        | col41                         | tbl.col41 = keys.col41
  myschema2      | myseq1           | [2,)           | myGroup2         | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                          |                               | 
@@ -1166,7 +1155,7 @@ select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2
      2 |     2 | INS       | NEW        |       19
 (2 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log_1" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
      1 | 10.00 | INS       | NEW        |       20

@@ -85,6 +85,8 @@ All objects associated to application tables have names built by default with th
 
 It is also possible to define for each application table the **prefix** of the associated E-Maj objects name. This allows to manage tables with very long names.
 
+A log table name may contain a suffix like “_1”, “_2”, etc. In such a case, it deals with an old log table that has been renamed by an emaj_alter_group operation.
+
 Other E-Maj **function** names are also normalised:
 
 * function names that begin with `emaj_` are functions that are callable by users,

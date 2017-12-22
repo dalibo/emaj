@@ -47,7 +47,6 @@ select * from emaj.emaj_rlbk_rlbk_id_seq;
 select * from emaj.myschema1_mytbl1_log_seq;
 select * from emaj.myschema1_mytbl2_log_seq;
 select * from emajb.myschema1_mytbl2b_log_seq;
-select * from emaj."myschema1_myTbl3_log_seq";
 select * from emaj.myschema1_mytbl4_log_seq;
 select * from emaj.myschema2_mytbl1_log_seq;
 select * from emaj.myschema2_mytbl2_log_seq;
@@ -70,7 +69,7 @@ select rlbk_messages from emaj.emaj_rlbk order by rlbk_id;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log_1" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
 --
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;

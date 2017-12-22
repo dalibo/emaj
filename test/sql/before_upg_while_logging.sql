@@ -124,10 +124,14 @@ select emaj.emaj_logged_rollback_group('myGroup2','M3');
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Common');
 
 -----------------------------
--- Step 5 : alter group myGroup1 by changing a log schema
+-- Step 5 : alter group myGroup1 by changing a log schema and removing a table
 -----------------------------
 update emaj.emaj_group_def set grpdef_log_schema_suffix = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+
+reset role;
 select emaj.emaj_alter_group('myGroup1');
+set role emaj_regression_tests_adm_user;
 
 -----------------------------
 -- Checking steps 1 to 5
