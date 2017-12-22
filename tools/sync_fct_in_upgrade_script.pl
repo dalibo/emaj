@@ -293,11 +293,13 @@ use warnings; use strict;
   print FICUPG "------------------------------------------------------------------\n";
   print FICUPG "-- create new or modified functions                             --\n";
   print FICUPG "------------------------------------------------------------------\n";
+print "tables supprimées = $droppedTablesList\n";
   foreach $fnctSignature (@currSignatures) {
 
-    if (!exists($prevFunctions{$fnctSignature}) ||                              # the function is new or
-        $prevFunctions{$fnctSignature} ne $currFunctions{$fnctSignature} ||     # the function has changed or
-        $fnctSignature =~ /$droppedTablesList/i ) {                             # the function has a parameter whose type is a recreated table
+    if (!exists($prevFunctions{$fnctSignature}) ||                               # the function is new or
+        $prevFunctions{$fnctSignature} ne $currFunctions{$fnctSignature} ||      # the function has changed or
+        ($droppedTablesList ne '' && $fnctSignature =~ /$droppedTablesList/i)) { # the function has a parameter whose type is a recreated table
+
       # write the function in the upgrade script
       print FICUPG $currFunctions{$fnctSignature};
       $nbFctUpgrade++;
