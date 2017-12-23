@@ -23,6 +23,7 @@ Welcome to the E-Maj's documentation!
    :maxdepth: 1
    :caption: How to install E-Maj:
 
+   quickStart
    install
    setup
    upgrade
