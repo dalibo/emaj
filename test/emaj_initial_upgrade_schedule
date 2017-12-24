@@ -23,8 +23,9 @@ test: rollback
 # test miscellaneous functions (statistics + reset + snap)
 test: misc
 
-# test groups alter operations
+# test groups alter functions
 test: alter
+test: alterLogging
 
 # test emaj_viewer role
 test: viewer
