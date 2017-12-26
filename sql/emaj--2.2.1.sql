@@ -1,5 +1,5 @@
 --
--- E-Maj : logs and rollbacks table updates : Version 2.2.0
+-- E-Maj : logs and rollbacks table updates : Version 2.2.1
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -497,7 +497,7 @@ $$Represents the structure of rows returned by the internal _verify_groups() fun
 -- Parameters                     --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','2.2.0');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','2.2.1');
 
 -- Other parameters are optional. They may be set by E-Maj administrators if needed.
 
@@ -1462,37 +1462,60 @@ $_change_log_index_tsp_tbl$
 $_change_log_index_tsp_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
-RETURNS VOID LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_remove_tbl$
 -- The function removes a table from a group. It is called during an alter group operation.
--- If the group is in idle state, the _drop_seq() function is called.
+-- If the group is in idle state, it simply calls the _drop_tbl() function.
 -- Otherwise, only triggers, log function and log sequence are dropped now. The other components will be dropped later (at reset_group time for instance).
 -- Required inputs: row from emaj_alter_plan corresponding to the appplication table to proccess, time stamp id of the alter group operation
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can drop triggers on application tables.
   DECLARE
-    v_fullTableName          TEXT;
     v_logSchema              TEXT;
+    v_currentLogTable        TEXT;
+    v_currentLogIndex        TEXT;
     v_logFunction            TEXT;
     v_logSequence            TEXT;
+    v_namesSuffix            TEXT;
+    v_fullTableName          TEXT;
   BEGIN
     IF NOT r_plan.altr_group_is_logging THEN
 -- if the group is in idle state, drop the table immediately
       PERFORM emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
     ELSE
--- if the group is in logging state, register the end of the relation time frame
-      UPDATE emaj.emaj_relation SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)')
+-- if the group is in logging state, ...
+-- ... get the current relation characteristics
+      SELECT rel_log_schema, rel_log_table, rel_log_index, rel_log_function, rel_log_sequence
+        INTO v_logSchema, v_currentLogTable, v_currentLogIndex, v_logFunction, v_logSequence
+        FROM emaj.emaj_relation
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- ... compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names
+      SELECT '_'|| coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
+        FROM
+          (SELECT unnest(regexp_matches(rel_log_table,'_(\d+)$'))::INT AS suffix
+             FROM emaj.emaj_relation
+             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq
+          ) AS t;
+-- ... rename the log table and its index
+      EXECUTE 'ALTER TABLE ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogTable) ||
+              ' RENAME TO '|| quote_ident(v_currentLogTable || v_namesSuffix);
+      EXECUTE 'ALTER INDEX ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogIndex) ||
+              ' RENAME TO '|| quote_ident(v_currentLogIndex || v_namesSuffix);
 --TODO: share some code with _drop_tbl() ?
 -- ... drop the log and truncate triggers (the application table is expected to exist)
       v_fullTableName  = quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq);
       EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
       EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
 -- ... drop the log function and the log sequence
-      SELECT rel_log_schema, rel_log_function, rel_log_sequence INTO v_logSchema, v_logFunction, v_logSequence
-        FROM emaj.emaj_relation
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
       EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logFunction) || '() CASCADE';
       EXECUTE 'DROP SEQUENCE IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logSequence);
+-- ... register the end of the relation time frame, the log table and index names change, and reset the content of now useless columns
+      UPDATE emaj.emaj_relation
+        SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)'),
+            rel_log_table = v_currentLogTable || v_namesSuffix , rel_log_index = v_currentLogIndex || v_namesSuffix,
+            rel_log_sequence = NULL, rel_log_function = NULL,
+            rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES ('ALTER_GROUP', 'TABLE REMOVED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
@@ -7438,7 +7461,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_mark_mark_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
 -- insert the init record into the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 2.2.0', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 2.2.1', 'Initialisation completed');
 -- insert the emaj schema into the emaj_schema table
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 

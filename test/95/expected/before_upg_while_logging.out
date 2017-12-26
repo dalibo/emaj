@@ -610,7 +610,7 @@ select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2
      2 |     2 | INS       | NEW        |       19
 (2 rows)
 
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log_1" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
      1 | 10.00 | INS       | NEW        |       20
