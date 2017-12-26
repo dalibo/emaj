@@ -78,4 +78,4 @@ permet de créer puis « démarrer » le groupe de tables, d'enregistrer les m
 
 Pour plus de précisions, les principales fonctions sont décrites :doc:`ici <mainFunctions>`.
 
-En complément, un client web peut être installé, soit :doc:`un plugin pour pgpPhAdmin <ppaPluginInstall>` soit :doc:`Emaj_web <webInstall>`.
+En complément, un client web peut être installé, soit :doc:`un plugin pour phpPhAdmin <ppaPluginInstall>` soit :doc:`Emaj_web <webInstall>`.

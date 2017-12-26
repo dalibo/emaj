@@ -54,7 +54,7 @@ knowning that tables inserted into a group must have a primary key.
 
 Then the typical sequence::
 
-  SELECT emaj.emaj_create_group('my_groupy');
+  SELECT emaj.emaj_create_group('my_group');
 
   SELECT emaj.emaj_start_group('my_group', 'Mark-1');
 
@@ -78,4 +78,4 @@ would create and start the tables group, log updates and set several intermediat
 
 For more details, main functions are described :doc:`here <mainFunctions>`.
 
-Additionally, a web client can also be installed, either :doc:`a plugin for pgpPhAdmin <ppaPluginInstall>` or :doc:`Emaj_web <webInstall>`.
+Additionally, a web client can also be installed, either :doc:`a plugin for phpPhAdmin <ppaPluginInstall>` or :doc:`Emaj_web <webInstall>`.
