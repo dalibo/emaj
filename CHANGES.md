@@ -3,6 +3,15 @@ E-Maj - Change log
 <NEXT_VERSION>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+
+
+
+2.2.1 (2017-Dec-26)
+------
+###Enhancements:###
   * When a table is removed from a tables group in LOGGING state, its log
     table is renamed with a _1 suffix added to its name.
 
