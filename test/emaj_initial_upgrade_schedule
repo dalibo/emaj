@@ -25,7 +25,7 @@ test: misc
 
 # test groups alter functions
 test: alter
-test: alterLogging
+test: alter_logging
 
 # test emaj_viewer role
 test: viewer
