@@ -5411,8 +5411,8 @@ $_rlbk_error$
     v_stmt                   TEXT;
   BEGIN
     IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
-      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''ABORTED'', rlbk_messages = ''{"' || quote_literal(v_msg) ||
-               '"}'', rlbk_end_datetime =  clock_timestamp() ' ||
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''ABORTED'', rlbk_messages = ARRAY[' || quote_literal(v_msg) ||
+                '], rlbk_end_datetime =  clock_timestamp() ' ||
                'WHERE rlbk_id = ' || v_rlbkId || ' AND rlbk_status <> ''ABORTED'' RETURNING 1';
       PERFORM 0 FROM dblink(v_cnxName,v_stmt) AS (dummy INT);
     END IF;

@@ -89,6 +89,25 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._rlbk_error(v_rlbkId INT, v_msg TEXT, v_cnxName TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_rlbk_error$
+-- This function records a rollback error into the emaj_rlbk table, but only if a dblink connection is open
+-- Input: rollback identifier, message to record and dblink connection name
+-- If the rollback operation is already in aborted state, one keeps the emaj_rlbk data unchanged
+  DECLARE
+    v_stmt                   TEXT;
+  BEGIN
+    IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''ABORTED'', rlbk_messages = ARRAY[' || quote_literal(v_msg) ||
+                '], rlbk_end_datetime =  clock_timestamp() ' ||
+               'WHERE rlbk_id = ' || v_rlbkId || ' AND rlbk_status <> ''ABORTED'' RETURNING 1';
+      PERFORM 0 FROM dblink(v_cnxName,v_stmt) AS (dummy INT);
+    END IF;
+    RETURN;
+  END;
+$_rlbk_error$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --

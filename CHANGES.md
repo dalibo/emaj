@@ -6,8 +6,8 @@ E-Maj - Change log
 
 
 ###Bug fixes:###
-
-
+  * Fix a bug in the _rlbk_error() function that processes errors in rollback
+    functions.
 
 2.2.1 (2017-Dec-26)
 ------
@@ -18,7 +18,6 @@ E-Maj - Change log
 ###Bug fixes:###
   * When a table is removed from a tables group in LOGGING state, the
     execution failed when the role was not a superuser or the table's owner.
-
 
 2.2.0 (2017-Dec-18)
 ------
