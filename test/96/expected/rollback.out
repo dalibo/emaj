@@ -2228,6 +2228,31 @@ select emaj.emaj_rollback_group('myGroup1','Conso_M1');
                    4
 (1 row)
 
+-- check that dropping the group deletes rows from emaj_sequence and emaj_seq_hole
+begin;
+  select emaj.emaj_stop_group('myGroup1');
+ emaj_stop_group 
+-----------------
+               7
+(1 row)
+
+  select emaj.emaj_drop_group('myGroup1');
+ emaj_drop_group 
+-----------------
+               7
+(1 row)
+
+  select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_time_id, sequ_schema, sequ_name;
+ sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_is_called 
+-------------+-----------+--------------+---------------+----------------
+(0 rows)
+
+  select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
+ sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
+-------------+------------+--------------------+------------------+----------------
+(0 rows)
+
+rollback;
 -----------------------------
 -- test emaj_cleanup_rollback_state()
 -----------------------------
@@ -2246,7 +2271,7 @@ select rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session from emaj.emaj_
 ---------+-------------+--------------------+-----------------
       22 | COMPLETED   |               3441 |               1
       23 | COMPLETED   |               3469 |               1
-      24 | COMPLETED   |               3486 |               1
+      24 | COMPLETED   |               3497 |               1
 (3 rows)
 
 select emaj.emaj_cleanup_rollback_state();
@@ -2285,7 +2310,7 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
       21 | {myGroup1}          | Conso_M1       |         3053 | t              |                             |               1 |             5 |                2 |                 0 | COMMITTED   |               3416 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
       22 | {myGroup1}          | Conso_M2       |         3057 | t              |                             |               1 |             5 |                2 |                 3 | COMMITTED   |               3441 | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
       23 | {myGroup1}          | Conso_M1       |         3059 | f              |                             |               1 |             5 |                2 |                 2 | COMMITTED   |               3469 | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-      24 | {myGroup4}          | myGroup4_start |         3060 | f              |                             |               1 |             5 |                0 |                 0 | ABORTED     |               3486 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed."}
+      24 | {myGroup4}          | myGroup4_start |         3061 | f              |                             |               1 |             5 |                0 |                 0 | ABORTED     |               3497 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed."}
 (22 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
@@ -2582,7 +2607,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     3057 |                122 | R
     3058 |                137 | M
     3059 |                139 | R
-    3060 |                140 | R
+    3061 |                140 | R
 (51 rows)
 
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
@@ -3013,8 +3038,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3483 | ROLLBACK_GROUP         | NOTICE       | Rollback id 23               | 2 sequences processed.                                         | postgres
     3484 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
     3485 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 23, 2 tables and 2 sequences effectively processed | postgres
-    3493 | CLEANUP_RLBK_STATE     |              | Rollback id 22               | set to COMMITTED                                               | postgres
-    3494 | CLEANUP_RLBK_STATE     |              | Rollback id 23               | set to COMMITTED                                               | postgres
-    3495 | CLEANUP_RLBK_STATE     |              | Rollback id 24               | set to ABORTED                                                 | postgres
+    3504 | CLEANUP_RLBK_STATE     |              | Rollback id 22               | set to COMMITTED                                               | postgres
+    3505 | CLEANUP_RLBK_STATE     |              | Rollback id 23               | set to COMMITTED                                               | postgres
+    3506 | CLEANUP_RLBK_STATE     |              | Rollback id 24               | set to ABORTED                                                 | postgres
 (427 rows)
 

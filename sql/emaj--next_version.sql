@@ -1553,7 +1553,7 @@ $_drop_tbl$
 -- delete rows related to the log sequence from emaj_sequence table
     DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
 -- delete rows related to the table from emaj_seq_hole table
-    DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = quote_ident(r_rel.rel_schema) AND sqhl_table = quote_ident(r_rel.rel_tblseq);
+    DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq;
 -- and finaly delete the table reference from the emaj_relation table
     DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
     RETURN;

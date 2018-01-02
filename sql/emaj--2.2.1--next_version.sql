@@ -90,6 +90,41 @@ DROP FUNCTION emaj._delete_before_marks_group(V_GROUPNAME TEXT,V_MARK TEXT);
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_drop_tbl$
+-- The function deletes all what has been created by _create_tbl function
+-- Required inputs: row from emaj_relation corresponding to the appplication table to proccess
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
+  DECLARE
+    v_fullTableName          TEXT;
+  BEGIN
+    v_fullTableName    = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
+-- check the table exists before dropping its triggers
+    PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+      WHERE relnamespace = pg_namespace.oid
+        AND nspname = r_rel.rel_schema AND relname = r_rel.rel_tblseq AND relkind = 'r';
+    IF FOUND THEN
+-- delete the log and truncate triggers on the application table
+      EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
+      EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
+    END IF;
+-- delete the log function
+    EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
+-- delete the sequence associated to the log table
+    EXECUTE 'DROP SEQUENCE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence);
+-- delete the log table
+    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' CASCADE';
+-- delete rows related to the log sequence from emaj_sequence table
+    DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
+-- delete rows related to the table from emaj_seq_hole table
+    DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq;
+-- and finaly delete the table reference from the emaj_relation table
+    DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
+    RETURN;
+  END;
+$_drop_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_delete_mark_group$

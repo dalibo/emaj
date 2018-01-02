@@ -8,6 +8,8 @@ E-Maj - Change log
 ###Bug fixes:###
   * Fix a bug in the _rlbk_error() function that processes errors in rollback
     functions.
+  * When a tables group is dropped, some rows may remain in the internal
+    emaj_seq_hole table.
 
 2.2.1 (2017-Dec-26)
 ------

@@ -551,6 +551,14 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 
 select emaj.emaj_rollback_group('myGroup1','Conso_M1');
 
+-- check that dropping the group deletes rows from emaj_sequence and emaj_seq_hole
+begin;
+  select emaj.emaj_stop_group('myGroup1');
+  select emaj.emaj_drop_group('myGroup1');
+  select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_time_id, sequ_schema, sequ_name;
+  select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
+rollback;
+
 -----------------------------
 -- test emaj_cleanup_rollback_state()
 -----------------------------
