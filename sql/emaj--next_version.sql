@@ -3697,8 +3697,8 @@ $emaj_delete_mark_group$
     SELECT mark_id, mark_name INTO v_idNewMin, v_markNewMin
       FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_realMark ORDER BY mark_id LIMIT 1;
     IF v_markId < v_idNewMin THEN
--- if the mark to delete is the first one, process its deletion with _delete_before_marks_group(), as the first rows of log tables become useless
-      PERFORM emaj._delete_before_marks_group(v_groupName, v_markNewMin);
+-- if the mark to delete is the first one, process its deletion with _delete_before_mark_group(), as the first rows of log tables become useless
+      PERFORM emaj._delete_before_mark_group(v_groupName, v_markNewMin);
     ELSE
 -- otherwise, process its deletion with _delete_intermediate_mark_group()
       PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_realMark, v_markId, v_MarkTimeId);
@@ -3745,7 +3745,7 @@ $emaj_delete_before_mark_group$
       RAISE EXCEPTION 'emaj_delete_before_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
 -- effectively delete all marks before the supplied mark
-    SELECT emaj._delete_before_marks_group(v_groupName, v_realMark) INTO v_nbMark;
+    SELECT emaj._delete_before_mark_group(v_groupName, v_realMark) INTO v_nbMark;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('DELETE_BEFORE_MARK_GROUP', 'END', v_groupName,  v_nbMark || ' marks deleted ; ' || v_realMark || ' is now the initial mark' );
@@ -3755,9 +3755,9 @@ $emaj_delete_before_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_delete_before_mark_group(TEXT,TEXT) IS
 $$Deletes all marks preceeding a given mark for an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj._delete_before_marks_group(v_groupName TEXT, v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
-$_delete_before_marks_group$
+$_delete_before_mark_group$
 -- This function deletes all logs and marks set before a given mark.
 -- The function is called by the emaj_delete_before_mark_group(), emaj_delete_mark_group() functions.
 -- It deletes rows corresponding to the marks to delete from emaj_mark and emaj_sequence.
@@ -3842,7 +3842,7 @@ $_delete_before_marks_group$
     PERFORM emaj._purge_hist();
     RETURN v_nbMark;
   END;
-$_delete_before_marks_group$;
+$_delete_before_mark_group$;
 
 CREATE OR REPLACE FUNCTION emaj._delete_intermediate_mark_group(v_groupName TEXT, v_markName TEXT, v_markId BIGINT, v_markTimeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -7324,7 +7324,7 @@ CREATE OR REPLACE FUNCTION emaj._disable_event_triggers()
 $_disable_event_triggers$
 -- This function disables all known E-Maj event triggers that are in enabled state.
 -- The function is called by functions that alter or drop E-Maj components, such as
---   _drop_groups(), _alter_groups(), _delete_before_marks_group() and _reset_groups().
+--   _drop_groups(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
 -- It is also called by the user emaj_disable_event_triggers_protection() function.
 -- Output: array of effectively disabled event trigger names. It can be reused as input when calling _enable_event_triggers()
   DECLARE
@@ -7352,7 +7352,7 @@ CREATE OR REPLACE FUNCTION emaj._enable_event_triggers(v_eventTriggers TEXT[])
 $_enable_event_triggers$
 -- This function enables all event triggers supplied as parameter
 -- The function is called by functions that alter or drop E-Maj components, such as
---   _drop_groups(), _alter_groups(), _delete_before_marks_group() and _reset_groups().
+--   _drop_groups(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
 -- It is also called by the user emaj_enable_event_triggers_protection() function.
 -- Input: array of event trigger names to enable
 -- Output: same array

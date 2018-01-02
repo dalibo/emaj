@@ -108,7 +108,7 @@ select funcname, calls from pg_stat_user_functions
  _dblink_close_cnx                         |    51
  _dblink_is_cnx_opened                     |   536
  _dblink_open_cnx                          |    66
- _delete_before_marks_group                |    17
+ _delete_before_mark_group                 |    17
  _delete_between_marks_group               |     9
  _delete_intermediate_mark_group           |    17
  _delete_log_tbl                           |    36

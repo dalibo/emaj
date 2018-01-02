@@ -3,7 +3,7 @@ E-Maj - Change log
 <NEXT_VERSION>
 ------
 ###Enhancements:###
-
+  * Various minor code changes.
 
 ###Bug fixes:###
   * Fix a bug in the _rlbk_error() function that processes errors in rollback
