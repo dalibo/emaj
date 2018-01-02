@@ -62,6 +62,9 @@ SELECT emaj._disable_event_triggers();
 --                                          --
 ----------------------------------------------
 
+-- re-set the rel_log_sequence value for tables that had been removed from their group in the previous E-Maj version
+UPDATE emaj.emaj_relation SET rel_log_sequence = substring(rel_log_table FROM '(.*_log)') || '_seq'
+WHERE rel_log_table IS NOT NULL AND rel_log_sequence IS NULL;
 
 --
 -- add created or recreated tables and sequences to the list of content to save by pg_dump
@@ -90,6 +93,71 @@ DROP FUNCTION emaj._delete_before_marks_group(V_GROUPNAME TEXT,V_MARK TEXT);
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_remove_tbl$
+-- The function removes a table from a group. It is called during an alter group operation.
+-- If the group is in idle state, it simply calls the _drop_tbl() function.
+-- Otherwise, only triggers, log function and log sequence are dropped now. The other components will be dropped later (at reset_group time for instance).
+-- Required inputs: row from emaj_alter_plan corresponding to the appplication table to proccess, time stamp id of the alter group operation
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can drop triggers on application tables.
+  DECLARE
+    v_logSchema              TEXT;
+    v_currentLogTable        TEXT;
+    v_currentLogIndex        TEXT;
+    v_logFunction            TEXT;
+    v_logSequence            TEXT;
+    v_namesSuffix            TEXT;
+    v_fullTableName          TEXT;
+  BEGIN
+    IF NOT r_plan.altr_group_is_logging THEN
+-- if the group is in idle state, drop the table immediately
+      PERFORM emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+    ELSE
+-- if the group is in logging state, ...
+-- ... get the current relation characteristics
+      SELECT rel_log_schema, rel_log_table, rel_log_index, rel_log_function, rel_log_sequence
+        INTO v_logSchema, v_currentLogTable, v_currentLogIndex, v_logFunction, v_logSequence
+        FROM emaj.emaj_relation
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- ... compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names
+      SELECT '_'|| coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
+        FROM
+          (SELECT unnest(regexp_matches(rel_log_table,'_(\d+)$'))::INT AS suffix
+             FROM emaj.emaj_relation
+             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq
+          ) AS t;
+-- ... rename the log table and its index
+      EXECUTE 'ALTER TABLE ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogTable) ||
+              ' RENAME TO '|| quote_ident(v_currentLogTable || v_namesSuffix);
+      EXECUTE 'ALTER INDEX ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogIndex) ||
+              ' RENAME TO '|| quote_ident(v_currentLogIndex || v_namesSuffix);
+--TODO: share some code with _drop_tbl() ?
+-- ... drop the log and truncate triggers (the application table is expected to exist)
+      v_fullTableName  = quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq);
+      EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
+      EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
+-- ... drop the log function and the log sequence
+-- (but we keep the sequence related data in the emaj_sequence and the emaj_seq_hole tables)
+      EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logFunction) || '() CASCADE';
+      EXECUTE 'DROP SEQUENCE IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logSequence);
+-- ... register the end of the relation time frame, the log table and index names change, and reset the content of now useless columns
+-- (but keep the rel_log_sequence value: it will be needed later for _drop_tbl() for the emaj_sequence cleanup)
+      UPDATE emaj.emaj_relation
+        SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)'),
+            rel_log_table = v_currentLogTable || v_namesSuffix , rel_log_index = v_currentLogIndex || v_namesSuffix,
+            rel_log_function = NULL, rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- ... and insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('ALTER_GROUP', 'TABLE REMOVED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
+                'From logging group ' || r_plan.altr_group);
+    END IF;
+    RETURN;
+  END;
+$_remove_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_tbl$
@@ -110,7 +178,9 @@ $_drop_tbl$
       EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
     END IF;
 -- delete the log function
-    EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
+    IF r_rel.rel_log_function IS NOT NULL THEN
+      EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
+    END IF;
 -- delete the sequence associated to the log table
     EXECUTE 'DROP SEQUENCE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence);
 -- delete the log table

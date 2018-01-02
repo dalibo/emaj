@@ -1535,7 +1535,7 @@ update emaj.emaj_group_def set grpdef_tblseq = 'table_with_very_looooooooooooooo
 select emaj.emaj_alter_group('phil''s group#3",');
 NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name
 CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS "emaj #'3"."phil's schema3_phil's tbl1_log_fnct"() CASCADE"
-PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 19 at EXECUTE statement
+PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 20 at EXECUTE statement
 SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range)"
 PL/pgSQL function emaj._remove_tbl(emaj.emaj_alter_plan,bigint) line 18 at PERFORM

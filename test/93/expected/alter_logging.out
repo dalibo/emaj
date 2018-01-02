@@ -264,10 +264,10 @@ begin;
 (1 row)
 
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2;
- rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema |      rel_log_table      | rel_log_dat_tsp |        rel_log_index        | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
-------------+------------+----------------+-----------+----------+--------------+----------------+-------------------------+-----------------+-----------------------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------
- myschema1  | mytbl2b    | [6041,6064)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       |                  |                  |                 |                    | 
- myschema1  | myTbl3     | [6041,6064)    | myGroup1  | r        |           10 | emajC          | myschema1_myTbl3_log_1  | tsplog1         | myschema1_myTbl3_log_idx_1  |                 |                  |                  |                 |                    | 
+ rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema |      rel_log_table      | rel_log_dat_tsp |        rel_log_index        | rel_log_idx_tsp |     rel_log_sequence      | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
+------------+------------+----------------+-----------+----------+--------------+----------------+-------------------------+-----------------+-----------------------------+-----------------+---------------------------+------------------+-----------------+--------------------+--------------------------
+ myschema1  | mytbl2b    | [6041,6064)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       | myschema1_mytbl2b_log_seq |                  |                 |                    | 
+ myschema1  | myTbl3     | [6041,6064)    | myGroup1  | r        |           10 | emajC          | myschema1_myTbl3_log_1  | tsplog1         | myschema1_myTbl3_log_idx_1  |                 | myschema1_myTbl3_log_seq  |                  |                 |                    | 
 (2 rows)
 
   delete from myschema1."myTbl3" where col33 = 1.;
@@ -366,10 +366,10 @@ PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at
 (1 row)
 
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
- rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema |      rel_log_table      | rel_log_dat_tsp |        rel_log_index        | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
-------------+------------+----------------+-----------+----------+--------------+----------------+-------------------------+-----------------+-----------------------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------
- myschema1  | mytbl2b    | [6041,6064)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       |                  |                  |                 |                    | 
- myschema1  | myTbl3     | [6041,6064)    | myGroup1  | r        |           10 | emajC          | myschema1_myTbl3_log_1  | tsplog1         | myschema1_myTbl3_log_idx_1  |                 |                  |                  |                 |                    | 
+ rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema |      rel_log_table      | rel_log_dat_tsp |        rel_log_index        | rel_log_idx_tsp |     rel_log_sequence      | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
+------------+------------+----------------+-----------+----------+--------------+----------------+-------------------------+-----------------+-----------------------------+-----------------+---------------------------+------------------+-----------------+--------------------+--------------------------
+ myschema1  | mytbl2b    | [6041,6064)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       | myschema1_mytbl2b_log_seq |                  |                 |                    | 
+ myschema1  | myTbl3     | [6041,6064)    | myGroup1  | r        |           10 | emajC          | myschema1_myTbl3_log_1  | tsplog1         | myschema1_myTbl3_log_idx_1  |                 | myschema1_myTbl3_log_seq  |                  |                 |                    | 
 (2 rows)
 
   select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log_1' and nspname = 'emajb';
