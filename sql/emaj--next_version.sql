@@ -3862,15 +3862,15 @@ $_delete_intermediate_mark_group$
     v_nextMarkTimeId         BIGINT;
   BEGIN
 -- delete the sequences related to the mark to delete
---   delete first data related to the application sequences currently belonging to the group
+--   delete first data related to the application sequences (those attached to the group at the set mark time)
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE sequ_time_id = v_markTimeId
-        AND upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'S'
+        AND rel_group = v_groupName AND rel_kind = 'S'
         AND sequ_schema = rel_schema AND sequ_name = rel_tblseq;
---   delete then data related to the log sequences for tables currently belonging to the group
+--   delete then data related to the log sequences for tables (those attached to the group at the set mark time)
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE sequ_time_id = v_markTimeId
-        AND upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'r'
+        AND rel_group = v_groupName AND rel_kind = 'r'
         AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence;
 -- physically delete the mark from emaj_mark
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_markName;

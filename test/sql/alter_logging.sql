@@ -7,7 +7,7 @@
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mk1');
 
 -----------------------------
--- change atributes in emaj_group_def
+-- change attributes in emaj_group_def
 -----------------------------
 
 -- change the priority
@@ -44,6 +44,7 @@ select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 --TODO: remove the transaction when adding a sequence will be possible and move the rollbacks later
 select emaj.emaj_set_mark_group('myGroup1','Mk2b');
 begin;
+  select emaj.emaj_set_mark_group('myGroup1','Mk2c');
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_alter_group('myGroup1');
   select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
@@ -59,27 +60,30 @@ begin;
   select emaj.emaj_snap_log_group('myGroup1','Mk1',NULL,'/tmp/emaj_test/alter',NULL);
 \! cat /tmp/emaj_test/alter/myGroup1_sequences_at_Mk1
 \! rm -R /tmp/emaj_test/alter/*
-  savepoint gen;
+  savepoint svp1;
     select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3_col31_seq']);
-  rollback to gen;
+  rollback to svp1;
 \! rm -R /tmp/emaj_test
+  -- testing delete a single mark set before the sequence removal
+  select emaj.emaj_delete_mark_group('myGroup1','Mk2c');
+  select * from emaj.emaj_sequence where sequ_time_id not in (select distinct mark_time_id from emaj.emaj_mark where mark_group = 'myGroup1');
   -- testing rollback
 --select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
   select * from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
   select * from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
 --select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
-  savepoint svp1;
+  savepoint svp2;
   -- testing group's reset
   select emaj.emaj_stop_group('myGroup1');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select emaj.emaj_reset_group('myGroup1');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
-  rollback to svp1;
+  rollback to svp2;
   -- testing marks deletion
-  select emaj.emaj_set_mark_group('myGroup1','Mk2c');
+  select emaj.emaj_set_mark_group('myGroup1','Mk2d');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
-  select emaj.emaj_delete_before_mark_group('myGroup1','Mk2c');
+  select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   -- testing the sequence drop
   drop sequence mySchema1."myTbl3_col31_seq" cascade;
@@ -93,6 +97,7 @@ rollback;
 --TODO: remove the transaction when adding a sequence will be possible and move the rollbacks later
 begin;
   insert into myschema1."myTbl3" (col33) values (1.);
+  select emaj.emaj_set_mark_group('myGroup1','Mk2c');
 --select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and (grpdef_tblseq = 'myTbl3' or grpdef_tblseq = 'mytbl2b');
   select emaj.emaj_alter_group('myGroup1');
@@ -114,39 +119,42 @@ begin;
   select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp/emaj_test/alter',NULL);
 \! ls /tmp/emaj_test/alter/myschema1*
 \! rm -R /tmp/emaj_test/alter/*
-  savepoint gen;
-    select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3']);
-  rollback to gen;
-\! rm -R /tmp/emaj_test
   savepoint svp1;
+    select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3']);
+  rollback to svp1;
+\! rm -R /tmp/emaj_test
+  savepoint svp2;
+  -- testing delete a single mark set before the sequence removal
+  select emaj.emaj_delete_mark_group('myGroup1','Mk2c');
+  select * from emaj.emaj_sequence where sequ_time_id not in (select distinct mark_time_id from emaj.emaj_mark where mark_group = 'myGroup1');
   -- testing marks deletion (delete all marks before the alter_group)
   select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
   select 'should not exist' from pg_namespace where nspname = 'emajb';
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
-  rollback to svp1;
+  rollback to svp2;
   -- testing marks deletion (other cases)
-  select emaj.emaj_set_mark_group('myGroup1','Mk2c');
+  select emaj.emaj_set_mark_group('myGroup1','Mk2d');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log_1' and nspname = 'emajb';
-  select emaj.emaj_delete_before_mark_group('myGroup1','Mk2c');
+  select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
-  rollback to svp1;
+  rollback to svp2;
   -- testing rollback
   delete from emaj.emaj_param where param_key = 'dblink_user_password';
 --select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
   select * from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
   select * from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
 --select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
-  savepoint svp1;
+  savepoint svp3;
   -- testing group's reset
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_reset_group('myGroup1');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select 'should not exist' from pg_namespace where nspname = 'emajb';
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
-  rollback to svp1;
+  rollback to svp3;
   -- testing group's stop and start
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_start_group('myGroup1');
@@ -156,7 +164,7 @@ begin;
   rollback to svp1;
   -- testing the table drop (remove first the sequence linked to the table, otherwise an event triger fires)
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
-  select emaj.emaj_alter_group('myGroup1');
+  select emaj.emaj_alter_group('myGroup1','alter_before_drop_mytbl3');
   drop table mySchema1."myTbl3";
 --select * from emaj.emaj_hist order by hist_id desc limit 50;
 rollback;

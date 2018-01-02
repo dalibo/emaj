@@ -388,6 +388,57 @@ $_delete_before_mark_group$
   END;
 $_delete_before_mark_group$;
 
+CREATE OR REPLACE FUNCTION emaj._delete_intermediate_mark_group(v_groupName TEXT, v_markName TEXT, v_markId BIGINT, v_markTimeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_delete_intermediate_mark_group$
+-- This function effectively deletes an intermediate mark for a group.
+-- It is called by the emaj_delete_mark_group() function.
+-- It deletes rows corresponding to the mark to delete from emaj_mark and emaj_sequence
+-- The statistical mark_log_rows_before_next column's content of the previous mark is also maintained
+-- Input: group name, mark name, mark id and mark time stamp id of the mark to delete
+  DECLARE
+    v_previousMark           TEXT;
+    v_nextMark               TEXT;
+    v_previousMarkTimeId     BIGINT;
+    v_nextMarkTimeId         BIGINT;
+  BEGIN
+-- delete the sequences related to the mark to delete
+--   delete first data related to the application sequences (those attached to the group at the set mark time)
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE sequ_time_id = v_markTimeId
+        AND rel_group = v_groupName AND rel_kind = 'S'
+        AND sequ_schema = rel_schema AND sequ_name = rel_tblseq;
+--   delete then data related to the log sequences for tables (those attached to the group at the set mark time)
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE sequ_time_id = v_markTimeId
+        AND rel_group = v_groupName AND rel_kind = 'r'
+        AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence;
+-- physically delete the mark from emaj_mark
+    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_markName;
+-- adjust the mark_log_rows_before_next column of the previous mark
+-- get the name of the mark immediately preceeding the mark to delete
+    SELECT mark_name, mark_time_id INTO v_previousMark, v_previousMarkTimeId FROM emaj.emaj_mark
+      WHERE mark_group = v_groupName AND mark_id < v_markId ORDER BY mark_id DESC LIMIT 1;
+-- get the name of the first mark succeeding the mark to delete
+    SELECT mark_name, mark_time_id INTO v_nextMark, v_nextMarkTimeId FROM emaj.emaj_mark
+      WHERE mark_group = v_groupName AND mark_id > v_markId ORDER BY mark_id LIMIT 1;
+    IF NOT FOUND THEN
+-- no next mark, so update the previous mark with NULL
+      UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
+        WHERE mark_group = v_groupName AND mark_name = v_previousMark;
+    ELSE
+-- update the previous mark with the _sum_log_stat_group() call's result
+      UPDATE emaj.emaj_mark SET mark_log_rows_before_next = emaj._sum_log_stat_group(v_groupName, v_previousMarkTimeId, v_nextMarkTimeId)
+        WHERE mark_group = v_groupName AND mark_name = v_previousMark;
+    END IF;
+-- reset the mark_logged_rlbk_target_mark column to null for other marks of the group
+--   that may have the deleted mark as target mark from a previous logged rollback operation
+    UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = NULL
+      WHERE mark_group = v_groupName AND mark_logged_rlbk_target_mark = v_markName;
+    RETURN;
+  END;
+$_delete_intermediate_mark_group$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_error(v_rlbkId INT, v_msg TEXT, v_cnxName TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_error$
