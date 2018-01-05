@@ -458,6 +458,138 @@ $_rlbk_error$
   END;
 $_rlbk_error$;
 
+CREATE OR REPLACE FUNCTION emaj._delete_between_marks_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, OUT v_nbMark INT, OUT v_nbTbl INT)
+RETURNS RECORD LANGUAGE plpgsql AS
+$_delete_between_marks_group$
+-- This function deletes all logs and intermediate marks set between two given marks.
+-- The function is called by the emaj_consolidate_rollback_group() function.
+-- It deletes rows corresponding to the marks to delete from emaj_mark and emaj_sequence.
+-- It deletes rows from emaj_relation corresponding to old versions that become unreacheable.
+-- It deletes rows from all concerned log tables.
+-- It also manages sequence holes in emaj_seq_hole.
+-- Input: group name, name of both marks that defines the range to delete.
+-- Output: number of deleted marks, number of tables effectively processed (for which at least one log row has been deleted)
+  DECLARE
+    v_firstMarkId            BIGINT;
+    v_firstMarkGlobalSeq     BIGINT;
+    v_firstMarkTimeId        BIGINT;
+    v_lastMarkId             BIGINT;
+    v_lastMarkGlobalSeq      BIGINT;
+    v_lastMarkTimeId         BIGINT;
+    v_nbUpd                  BIGINT;
+    r_rel                    RECORD;
+  BEGIN
+-- retrieve the id, the timestamp and the emaj_gid value and the time stamp id of the first mark
+    SELECT mark_id, time_last_emaj_gid, mark_time_id INTO v_firstMarkId, v_firstMarkGlobalSeq, v_firstMarkTimeId
+      FROM emaj.emaj_mark, emaj.emaj_time_stamp
+      WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_firstMark;
+-- retrieve the id, the timestamp and the emaj_gid value and the time stamp id of the last mark
+    SELECT mark_id, time_last_emaj_gid, mark_time_id INTO v_lastMarkId, v_lastMarkGlobalSeq, v_lastMarkTimeId
+      FROM emaj.emaj_mark, emaj.emaj_time_stamp
+      WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_lastMark;
+-- delete rows from all log tables (no need to try to delete if v_firstMarkGlobalSeq and v_lastMarkGlobalSeq are equal)
+    v_nbTbl = 0;
+    IF v_firstMarkGlobalSeq < v_lastMarkGlobalSeq THEN
+-- loop on all tables that belonged to the group at the end of the period
+      FOR r_rel IN
+          SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name FROM emaj.emaj_relation
+            WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_lastMarkTimeId
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+-- delete log rows
+        EXECUTE 'DELETE FROM ' || r_rel.log_table_name || ' WHERE emaj_gid > ' || v_firstMarkGlobalSeq || ' AND emaj_gid <= ' || v_lastMarkGlobalSeq;
+        GET DIAGNOSTICS v_nbUpd = ROW_COUNT;
+        IF v_nbUpd > 0 THEN
+           v_nbTbl = v_nbTbl + 1;
+        END IF;
+      END LOOP;
+    END IF;
+-- process emaj_seq_hole content
+-- delete all existing holes (if any) between both marks for tables that belonged to the group at the end of the period
+    DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_lastMarkTimeId
+        AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
+        AND sqhl_begin_time_id >= v_firstMarkTimeId AND sqhl_begin_time_id < v_lastMarkTimeId;
+-- create holes representing the deleted logs
+--   one hole for each application table for which logs have been deleted by this operation or by a previous rollback
+--   the hole sizes are computed using the sequence last values recorded into the emaj_sequence table
+    INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size)
+      SELECT rel_schema, rel_tblseq, v_firstMarkTimeId, v_lastMarkTimeId,
+             (SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM emaj.emaj_sequence
+                WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND sequ_time_id = v_lastMarkTimeId)
+             -
+             (SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM emaj.emaj_sequence
+                WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND sequ_time_id = v_firstMarkTimeId)
+        FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_lastMarkTimeId
+          AND 0 <
+             (SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM emaj.emaj_sequence
+                WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND sequ_time_id = v_lastMarkTimeId)
+             -
+             (SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM emaj.emaj_sequence
+                WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND sequ_time_id = v_firstMarkTimeId);
+-- now the sequences related to the mark to delete can be suppressed
+--   delete first application sequences related data for the group
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'S' AND rel_time_range @> v_lastMarkTimeId
+        AND sequ_schema = rel_schema AND sequ_name = rel_tblseq
+        AND sequ_time_id > v_firstMarkTimeId AND sequ_time_id < v_lastMarkTimeId;
+--   delete then emaj sequences related data for the group
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_lastMarkTimeId
+        AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence
+        AND sequ_time_id > v_firstMarkTimeId AND sequ_time_id < v_lastMarkTimeId;
+-- in emaj_mark, reset the mark_logged_rlbk_target_mark column to null for marks of the group that will remain
+--    and that may have one of the deleted marks as target mark from a previous logged rollback operation
+    UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = NULL
+      WHERE mark_group = v_groupName AND mark_id >= v_lastMarkId
+        AND mark_logged_rlbk_target_mark IN (
+            SELECT mark_name FROM emaj.emaj_mark
+              WHERE mark_group = v_groupName AND mark_id > v_firstMarkId AND mark_id < v_lastMarkId
+            );
+-- set the mark_log_rows_before_next of the first mark to 0
+    UPDATE emaj.emaj_mark SET mark_log_rows_before_next = 0
+      WHERE mark_group = v_groupName AND mark_name = v_firstMark;
+-- and finaly delete all intermediate marks
+    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id > v_firstMarkId AND mark_id < v_lastMarkId;
+    GET DIAGNOSTICS v_nbMark = ROW_COUNT;
+    RETURN;
+  END;
+$_delete_between_marks_group$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_get_consolidable_rollbacks()
+RETURNS SETOF emaj.emaj_consolidable_rollback_type LANGUAGE plpgsql AS
+$emaj_get_consolidable_rollbacks$
+-- This function returns the list of logged rollback operations that can be consolidated, defined as a marks range for a group.
+-- It doesn't need input parameter.
+-- It returns a set of emaj_consolidable_rollback_type records, sorted by ascending rollback time.
+-- The cons_group and cons_end_rlbk_mark_name returned columns can be used as input parameters for the emaj_consolidate_rollback_group() function.
+  BEGIN
+-- search and return all marks range corresponding to any logged rollback operation
+    RETURN QUERY
+      SELECT m1.mark_group AS cons_group,
+             m2.mark_name AS cons_target_rlbk_mark_name, m2.mark_id AS cons_target_rlbk_mark_id,
+             m1.mark_name AS cons_end_rlbk_mark_name, m1.mark_id AS cons_end_rlbk_mark_id,
+             cast(coalesce(
+                  (SELECT sum(emaj._log_stat_tbl(emaj_relation,
+                                                 -- the start mark = max(begin of the rollback time frame, time when the relation has been added to the group)
+                                                 CASE WHEN m2.mark_time_id > lower(rel_time_range) THEN m2.mark_time_id ELSE lower(rel_time_range) END,
+                                                 m1.mark_time_id))
+                     FROM emaj.emaj_relation
+                           -- for tables belonging to the group at the rollback time
+                     WHERE rel_group = m1.mark_group AND rel_kind = 'r' AND rel_time_range @> m1.mark_time_id)
+                          ,0) AS BIGINT) AS cons_rows,
+             cast((SELECT count(*) FROM emaj.emaj_mark m3
+                   WHERE m3.mark_group = m1.mark_group AND m3.mark_id > m2.mark_id AND m3.mark_id < m1.mark_id) AS INT) AS cons_marks
+        FROM emaj.emaj_mark m1
+          JOIN emaj.emaj_mark m2 ON (m2.mark_name = m1.mark_logged_rlbk_target_mark AND m2.mark_group = m1.mark_group)
+          WHERE m1.mark_logged_rlbk_target_mark IS NOT NULL
+          ORDER BY m1.mark_id;
+  END;
+$emaj_get_consolidable_rollbacks$;
+COMMENT ON FUNCTION emaj.emaj_get_consolidable_rollbacks() IS
+$$Returns the list of logged rollback operations that can be consolidated.$$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --

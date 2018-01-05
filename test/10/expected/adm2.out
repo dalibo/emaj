@@ -793,13 +793,20 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
  rlbt_rlbk_id |  rlbt_step  | rlbt_schema | rlbt_table |     rlbt_fkey     | rlbt_quantity 
 --------------+-------------+-------------+------------+-------------------+---------------
+         6005 | DROP_FK     |             |            |                   |             1
+         6005 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6005 | RLBK_TABLE  | myschema1   | myTbl3     |                   |             1
-         6005 | CTRL+DBLINK |             |            |                   |             1
-         6006 | DIS_LOG_TRG |             |            |                   |             1
+         6005 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             1
+         6005 | CTRL+DBLINK |             |            |                   |             4
+         6006 | DIS_LOG_TRG |             |            |                   |             2
+         6006 | DROP_FK     |             |            |                   |             1
+         6006 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6006 | RLBK_TABLE  | myschema1   | myTbl3     |                   |             1
+         6006 | DELETE_LOG  | myschema1   | mytbl1     |                   |             2
          6006 | DELETE_LOG  | myschema1   | myTbl3     |                   |             1
-         6006 | ENA_LOG_TRG |             |            |                   |             1
-         6006 | CTRL+DBLINK |             |            |                   |             4
+         6006 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             1
+         6006 | ENA_LOG_TRG |             |            |                   |             2
+         6006 | CTRL+DBLINK |             |            |                   |            10
         10000 | DROP_FK     |             |            |                   |             1
         10000 | SET_FK_DEF  |             |            |                   |             2
         10000 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             4
@@ -875,7 +882,7 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
         10006 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |             2
         10006 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             0
         10006 | CTRL+DBLINK |             |            |                   |             7
-(82 rows)
+(89 rows)
 
 -- user tables
 select * from "phil's schema3"."phil's tbl1" order by "phil's col11","phil's col12";
@@ -1021,13 +1028,20 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
  rlbt_rlbk_id |  rlbt_step  | rlbt_schema | rlbt_table |     rlbt_fkey     | rlbt_quantity 
 --------------+-------------+-------------+------------+-------------------+---------------
+         6005 | DROP_FK     |             |            |                   |             1
+         6005 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6005 | RLBK_TABLE  | myschema1   | myTbl3     |                   |             1
-         6005 | CTRL+DBLINK |             |            |                   |             1
-         6006 | DIS_LOG_TRG |             |            |                   |             1
+         6005 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             1
+         6005 | CTRL+DBLINK |             |            |                   |             4
+         6006 | DIS_LOG_TRG |             |            |                   |             2
+         6006 | DROP_FK     |             |            |                   |             1
+         6006 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6006 | RLBK_TABLE  | myschema1   | myTbl3     |                   |             1
+         6006 | DELETE_LOG  | myschema1   | mytbl1     |                   |             2
          6006 | DELETE_LOG  | myschema1   | myTbl3     |                   |             1
-         6006 | ENA_LOG_TRG |             |            |                   |             1
-         6006 | CTRL+DBLINK |             |            |                   |             4
+         6006 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             1
+         6006 | ENA_LOG_TRG |             |            |                   |             2
+         6006 | CTRL+DBLINK |             |            |                   |            10
         10000 | DROP_FK     |             |            |                   |             1
         10000 | SET_FK_DEF  |             |            |                   |             2
         10000 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             4
@@ -1110,7 +1124,7 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
         10013 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             0
         10013 | ENA_LOG_TRG |             |            |                   |             1
         10013 | CTRL+DBLINK |             |            |                   |             6
-(89 rows)
+(96 rows)
 
 -----------------------------
 -- Step 12 : tests snaps and script generation functions
@@ -1993,12 +2007,12 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
       24 | {myGroup4}            | myGroup4_start       |         3061 | f              |                             |               1 |             5 |                0 |                 0 | ABORTED     |               3503 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed."}
     6000 | {myGroup1}            | Mk2b                 |         6060 | t              | t                           |               1 |             5 |                1 |                 0 | ABORTED     |               6266 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 1 sequences processed.","Warning: The sequence myschema1.\"myTbl3_col31_seq\" has been left unchanged (not in group anymore)"}
     6001 | {myGroup1}            | Mk2b                 |         6062 | f              | t                           |               1 |             5 |                1 |                 0 | ABORTED     |               6280 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 1 sequences processed."}
-    6004 | {myGroup1,myGroup2}   | Mk3                  |         6077 | f              | f                           |               1 |            11 |                4 |                 0 | COMMITTED   |               6404 | t                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
-    6005 | {myGroup1,myGroup2}   | Mk2                  |         6078 | t              | t                           |               1 |            11 |                4 |                 1 | COMMITTED   |               6416 | t                   | [ts]         | {"Notice: 1 / 11 tables effectively processed.","Notice: 4 sequences processed.","Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1","Warning: Tables group change not rolled back: E-Maj log schema for myschema2.\"myTbl3\"","Warning: Tables group change not rolled back: E-Maj names prefix for myschema1.\"myTbl3\"","Warning: Tables group change not rolled back: log data tablespace for myschema1.mytbl2b","Warning: Tables group change not rolled back: log index tablespace for myschema2.mytbl6"}
-    6006 | {myGroup1,myGroup2}   | Mk2                  |         6080 | f              | f                           |               1 |            11 |                4 |                 1 | COMMITTED   |               6440 | t                   | [ts]         | {"Notice: 1 / 11 tables effectively processed.","Notice: 4 sequences processed."}
-    6007 | {myGroup1,myGroup2}   | Mk1                  |         6081 | f              | t                           |               1 |            11 |                4 |                 0 | COMMITTED   |               6465 | t                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed.","Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1","Warning: Tables group change not rolled back: E-Maj log schema for myschema2.\"myTbl3\"","Warning: Tables group change not rolled back: E-Maj names prefix for myschema1.\"myTbl3\"","Warning: Tables group change not rolled back: log data tablespace for myschema1.mytbl2b","Warning: Tables group change not rolled back: log index tablespace for myschema2.mytbl6"}
-    6008 | {myGroup1,myGroup2}   | Mk1                  |         6082 | t              | f                           |               1 |            11 |                4 |                 0 | ABORTED     |               6487 | t                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
-    6009 | {myGroup1,myGroup2}   | Mk1                  |         6084 | f              | f                           |               1 |            11 |                4 |                 0 | ABORTED     |               6506 | t                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
+    6004 | {myGroup1,myGroup2}   | Mk3                  |         6078 | f              | f                           |               1 |            11 |                4 |                 0 | COMMITTED   |               6416 | t                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
+    6005 | {myGroup1,myGroup2}   | Mk2                  |         6079 | t              | t                           |               1 |            11 |                4 |                 2 | COMMITTED   |               6428 | t                   | [ts]         | {"Notice: 2 / 11 tables effectively processed.","Notice: 4 sequences processed.","Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1","Warning: Tables group change not rolled back: E-Maj log schema for myschema2.\"myTbl3\"","Warning: Tables group change not rolled back: E-Maj names prefix for myschema1.\"myTbl3\"","Warning: Tables group change not rolled back: log data tablespace for myschema1.mytbl2b","Warning: Tables group change not rolled back: log index tablespace for myschema2.mytbl6"}
+    6006 | {myGroup1,myGroup2}   | Mk2                  |         6081 | f              | f                           |               1 |            11 |                4 |                 2 | COMMITTED   |               6454 | t                   | [ts]         | {"Notice: 2 / 11 tables effectively processed.","Notice: 4 sequences processed."}
+    6007 | {myGroup1,myGroup2}   | Mk1                  |         6082 | f              | t                           |               1 |            11 |                4 |                 0 | COMMITTED   |               6481 | t                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed.","Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1","Warning: Tables group change not rolled back: E-Maj log schema for myschema2.\"myTbl3\"","Warning: Tables group change not rolled back: E-Maj names prefix for myschema1.\"myTbl3\"","Warning: Tables group change not rolled back: log data tablespace for myschema1.mytbl2b","Warning: Tables group change not rolled back: log index tablespace for myschema2.mytbl6"}
+    6008 | {myGroup1,myGroup2}   | Mk1                  |         6083 | t              | f                           |               1 |            11 |                4 |                 0 | ABORTED     |               6503 | t                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
+    6009 | {myGroup1,myGroup2}   | Mk1                  |         6085 | f              | f                           |               1 |            11 |                4 |                 0 | ABORTED     |               6522 | t                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
    10000 | {myGroup2}            | M2                   |        10009 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10057 | f                   | [ts]         | {"Notice: 3 / 6 tables effectively processed.","Notice: 2 sequences processed."}
    10001 | {myGroup2}            | M3                   |        10011 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10076 | f                   | [ts]         | {"Notice: 3 / 6 tables effectively processed.","Notice: 2 sequences processed."}
    10002 | {myGroup1}            | M2                   |        10013 | f              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10095 | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
@@ -2067,7 +2081,7 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
   from emaj.emaj_rlbk_plan order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey;
  rlbp_rlbk_id |  rlbp_step  |  rlbp_schema   |                           rlbp_table                            |     rlbp_fkey     | rlbp_batch_number | rlbp_session |                                                                                        rlbp_fkey_def                                                                                        | rlbp_estimated_quantity | rlbp_estimate_method | rlbp_quantity 
 --------------+-------------+----------------+-----------------------------------------------------------------+-------------------+-------------------+--------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------+----------------------+---------------
-        10000 | DROP_FK     | myschema2      | mytbl4                                                          | mytbl4_col44_fkey |                 1 |            1 |                                                                                                                                                                                             |                         |                    3 |              
+        10000 | DROP_FK     | myschema2      | mytbl4                                                          | mytbl4_col44_fkey |                 1 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         10000 | SET_FK_DEF  | myschema2      | mytbl6                                                          | mytbl6_col61_fkey |                 2 |            1 |                                                                                                                                                                                             |                         |                    3 |              
         10000 | SET_FK_DEF  | myschema2      | mytbl8                                                          | mytbl8_col81_fkey |                 2 |            1 |                                                                                                                                                                                             |                         |                    3 |              
         10000 | RLBK_TABLE  | myschema2      | mytbl4                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                       4 |                    3 |             2
@@ -2093,9 +2107,9 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
         10002 | DIS_LOG_TRG | myschema1      | mytbl4                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         10002 | DROP_FK     | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |                 1 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         10002 | SET_FK_DEF  | myschema1      | mytbl4                                                          | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                                                                             |                         |                    2 |              
-        10002 | RLBK_TABLE  | myschema1      | mytbl1                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                       3 |                    3 |             5
+        10002 | RLBK_TABLE  | myschema1      | mytbl1                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                       3 |                    1 |             5
         10002 | RLBK_TABLE  | myschema1      | mytbl4                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                       8 |                    3 |             3
-        10002 | DELETE_LOG  | myschema1      | mytbl1                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                       3 |                    3 |             5
+        10002 | DELETE_LOG  | myschema1      | mytbl1                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                       3 |                    1 |             5
         10002 | DELETE_LOG  | myschema1      | mytbl4                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                       8 |                    3 |            12
         10002 | SET_FK_IMM  | myschema1      | mytbl4                                                          | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                                                                             |                       8 |                    3 |              
         10002 | ADD_FK      | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |                 1 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED                                                     |                       0 |                    3 |              
@@ -2265,13 +2279,20 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
   rlbt_step  |  rlbt_schema   |                           rlbt_table                            |     rlbt_fkey     | rlbt_rlbk_id | rlbt_quantity 
 -------------+----------------+-----------------------------------------------------------------+-------------------+--------------+---------------
+ DROP_FK     |                |                                                                 |                   |         6005 |             1
+ RLBK_TABLE  | myschema1      | mytbl1                                                          |                   |         6005 |             2
  RLBK_TABLE  | myschema1      | myTbl3                                                          |                   |         6005 |             1
- CTRL+DBLINK |                |                                                                 |                   |         6005 |             1
- DIS_LOG_TRG |                |                                                                 |                   |         6006 |             1
+ ADD_FK      | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |         6005 |             1
+ CTRL+DBLINK |                |                                                                 |                   |         6005 |             4
+ DIS_LOG_TRG |                |                                                                 |                   |         6006 |             2
+ DROP_FK     |                |                                                                 |                   |         6006 |             1
+ RLBK_TABLE  | myschema1      | mytbl1                                                          |                   |         6006 |             2
  RLBK_TABLE  | myschema1      | myTbl3                                                          |                   |         6006 |             1
+ DELETE_LOG  | myschema1      | mytbl1                                                          |                   |         6006 |             2
  DELETE_LOG  | myschema1      | myTbl3                                                          |                   |         6006 |             1
- ENA_LOG_TRG |                |                                                                 |                   |         6006 |             1
- CTRL+DBLINK |                |                                                                 |                   |         6006 |             4
+ ADD_FK      | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |         6006 |             1
+ ENA_LOG_TRG |                |                                                                 |                   |         6006 |             2
+ CTRL+DBLINK |                |                                                                 |                   |         6006 |            10
  DROP_FK     |                |                                                                 |                   |        10000 |             1
  SET_FK_DEF  |                |                                                                 |                   |        10000 |             2
  RLBK_TABLE  | myschema2      | mytbl4                                                          |                   |        10000 |             4
@@ -2444,7 +2465,7 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  ADD_FK      | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |        10026 |             0
  ENA_LOG_TRG |                |                                                                 |                   |        10026 |             2
  CTRL+DBLINK |                |                                                                 |                   |        10026 |            12
-(179 rows)
+(186 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
  time_id | time_last_emaj_gid | time_event 

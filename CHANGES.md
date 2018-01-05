@@ -3,6 +3,11 @@ E-Maj - Change log
 <NEXT_VERSION>
 ------
 ###Enhancements:###
+  * Adjust the behaviour of some functions that process past time frame,
+    when tables have been removed from their group. Now
+    emaj_get_consolidable_rollbacks() and emaj_consolidate_rollback_group()
+    functions take into account the real group content on the time frame
+    they process.
   * Various minor code changes.
 
 ###Bug fixes:###

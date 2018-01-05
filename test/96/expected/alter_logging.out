@@ -407,38 +407,71 @@ PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at
 (0 rows)
 
   rollback to svp2;
-  -- testing rollback
+  -- testing rollback and consolidation
   delete from emaj.emaj_param where param_key = 'dblink_user_password';
---select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
+  insert into myschema1.mytbl1 values (100, 'Alter_logg', E'\\000'::bytea);
   select * from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
  rlbk_severity |                                rlbk_message                                 
 ---------------+-----------------------------------------------------------------------------
- Notice        | 0 / 3 tables effectively processed.
+ Notice        | 1 / 3 tables effectively processed.
  Notice        | 2 sequences processed.
  Warning       | The table myschema1.mytbl2b has been left unchanged (not in group anymore)
  Warning       | The table myschema1."myTbl3" has been left unchanged (not in group anymore)
 (4 rows)
 
-  select * from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
- rlbk_severity |            rlbk_message             
----------------+-------------------------------------
- Notice        | 0 / 3 tables effectively processed.
- Notice        | 2 sequences processed.
-(2 rows)
+  select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Logged_Rlbk_End');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
 
---select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  select emaj.emaj_alter_group('myGroup1','2nd remove_tbl');
+WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" references the table "myschema1.mytbl1" that is outside the groups (myGroup1).
+ emaj_alter_group 
+------------------
+                4
+(1 row)
+
+  select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1'; -- should report 2 rows to consolidate
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_id | cons_rows | cons_marks 
+------------+----------------------------+--------------------------+-------------------------+-----------------------+-----------+------------
+ myGroup1   | Mk2b                       |                     6019 | Logged_Rlbk_End         |                  6032 |         2 |          3
+(1 row)
+
+  select * from emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
+ emaj_consolidate_rollback_group 
+---------------------------------
+                               3
+(1 row)
+
+  select count(*) from emaj.myschema1_mytbl1_log_1;   -- the log table should be empty
+ count 
+-------
+     0
+(1 row)
+
+  select * from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" references the table "myschema1.mytbl1" that is outside the groups (myGroup1).
+ rlbk_severity |                               rlbk_message                                
+---------------+---------------------------------------------------------------------------
+ Notice        | 0 / 2 tables effectively processed.
+ Notice        | 2 sequences processed.
+ Warning       | The table myschema1.mytbl1 has been left unchanged (not in group anymore)
+(3 rows)
+
   savepoint svp3;
   -- testing group's reset
   select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
-               5
+               4
 (1 row)
 
   select emaj.emaj_reset_group('myGroup1');
  emaj_reset_group 
 ------------------
-                5
+                4
 (1 row)
 
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
@@ -461,13 +494,14 @@ PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at
   select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
-               5
+               4
 (1 row)
 
   select emaj.emaj_start_group('myGroup1');
+WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" references the table "myschema1.mytbl1" that is outside the groups (myGroup1).
  emaj_start_group 
 ------------------
-                5
+                4
 (1 row)
 
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
@@ -524,16 +558,16 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
     6016 | myGroup2   | ALTER_%            |         6054 | f               | f                      |              |                         0 | 
     6017 | myGroup1   | ALTER_%            |         6055 | f               | f                      |              |                         0 | 
     6018 | myGroup2   | ALTER_%            |         6055 | f               | f                      |              |                         0 | 
-    6019 | myGroup1   | Mk2b               |         6056 | f               | f                      |              |                         1 | 
-    6037 | myGroup1   | Mk3                |         6076 | f               | f                      |              |                           | 
-    6038 | myGroup2   | Mk3                |         6076 | f               | f                      |              |                           | 
+    6019 | myGroup1   | Mk2b               |         6056 | f               | f                      |              |                         3 | 
+    6038 | myGroup1   | Mk3                |         6077 | f               | f                      |              |                           | 
+    6039 | myGroup2   | Mk3                |         6077 | f               | f                      |              |                           | 
 (14 rows)
 
 -- estimate a rollback crossing alter group operations
 select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 0.04111 secs
+ @ 0.080335 secs
 (1 row)
 
 -- execute a rollback not crossing any alter group operation
@@ -569,7 +603,7 @@ WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "my
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  rlbk_severity |                                  rlbk_message                                  
 ---------------+--------------------------------------------------------------------------------
- Notice        | 1 / 11 tables effectively processed.
+ Notice        | 2 / 11 tables effectively processed.
  Notice        | 4 sequences processed.
  Warning       | Tables group change not rolled back: E-Maj log schema for myschema2."myTbl3"
  Warning       | Tables group change not rolled back: E-Maj names prefix for myschema1."myTbl3"
@@ -583,7 +617,7 @@ WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "my
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  rlbk_severity |             rlbk_message             
 ---------------+--------------------------------------
- Notice        | 1 / 11 tables effectively processed.
+ Notice        | 2 / 11 tables effectively processed.
  Notice        | 4 sequences processed.
 (2 rows)
 
@@ -914,7 +948,9 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | RLBK_Mk2_%_START                                                               | postgres
  CLEANUP_RLBK_STATE |                              | Rollback id 6004             | set to COMMITTED                                                               | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_Mk2_%_START                                                               | postgres
- ROLLBACK_TABLE     | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11861 and <= 11862                                | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11861 and <= 11864                                | postgres
+ ROLLBACK_TABLE     | END                          | myschema1.mytbl1             | 0 rolled back primary keys                                                     | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11861 and <= 11864                                | postgres
  ROLLBACK_TABLE     | END                          | myschema1."myTbl3"           | 0 rolled back primary keys                                                     | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1."myTbl3_col31_seq" |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
@@ -922,7 +958,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | RLBK_Mk2_%_DONE                                                                | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_Mk2_%_DONE                                                                | postgres
- ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6005             | 1 / 11 tables effectively processed.                                           | postgres
+ ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6005             | 2 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6005             | 4 sequences processed.                                                         | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6005             | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1       | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6005             | Tables group change not rolled back: E-Maj log schema for myschema2."myTbl3"   | postgres
@@ -930,12 +966,14 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6005             | Tables group change not rolled back: log data tablespace for myschema1.mytbl2b | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6005             | Tables group change not rolled back: log index tablespace for myschema2.mytbl6 | postgres
  DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
- ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6005, 1 tables and 4 sequences effectively processed               | postgres
+ ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6005, 2 tables and 4 sequences effectively processed               | postgres
  ROLLBACK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Unlogged rollback to mark Mk2 (timestamp)                                      | postgres
  DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                     | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                            | postgres
  LOCK_GROUP         | END                          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                           | postgres
- ROLLBACK_TABLE     | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11861 and <= 11862                                | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11861 and <= 11864                                | postgres
+ ROLLBACK_TABLE     | END                          | myschema1.mytbl1             | 0 rolled back primary keys                                                     | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11861 and <= 11864                                | postgres
  ROLLBACK_TABLE     | END                          | myschema1."myTbl3"           | 0 rolled back primary keys                                                     | postgres
  ROLLBACK_GROUPS    | MARK DELETED                 | myGroup1                     | mark ALTER_% is deleted                                                        | postgres
  ROLLBACK_GROUPS    | MARK DELETED                 | myGroup2                     | mark ALTER_% is deleted                                                        | postgres
@@ -952,10 +990,10 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
- ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6006             | 1 / 11 tables effectively processed.                                           | postgres
+ ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6006             | 2 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6006             | 4 sequences processed.                                                         | postgres
  DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
- ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6006, 1 tables and 4 sequences effectively processed               | postgres
+ ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 6006, 2 tables and 4 sequences effectively processed               | postgres
  ROLLBACK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Unlogged rollback to mark Mk1 (timestamp)                                      | postgres
  DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                     | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                            | postgres
@@ -1021,7 +1059,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP   | END                          | myGroup2                     | 8 tables/sequences processed                                                   | postgres
  FORCE_DROP_GROUP   | BEGIN                        | myGroup4                     |                                                                                | postgres
  FORCE_DROP_GROUP   | END                          | myGroup4                     | 5 tables/sequences processed                                                   | postgres
-(332 rows)
+(336 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -1078,15 +1116,15 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     6056 |              11861 | M
     6060 |              11861 | R
     6062 |              11861 | R
-    6076 |              11862 | M
-    6077 |              11862 | R
-    6078 |              11862 | R
-    6079 |              11862 | M
-    6080 |              11862 | R
-    6081 |              11862 | R
-    6082 |              11862 | R
-    6083 |              11862 | M
-    6084 |              11862 | R
+    6077 |              11864 | M
+    6078 |              11864 | R
+    6079 |              11864 | R
+    6080 |              11864 | M
+    6081 |              11864 | R
+    6082 |              11864 | R
+    6083 |              11864 | R
+    6084 |              11864 | M
+    6085 |              11864 | R
 (61 rows)
 
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;

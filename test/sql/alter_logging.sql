@@ -141,12 +141,17 @@ begin;
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
   rollback to svp2;
-  -- testing rollback
+  -- testing rollback and consolidation
   delete from emaj.emaj_param where param_key = 'dblink_user_password';
---select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
+  insert into myschema1.mytbl1 values (100, 'Alter_logg', E'\\000'::bytea);
   select * from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+  select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Logged_Rlbk_End');
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  select emaj.emaj_alter_group('myGroup1','2nd remove_tbl');
+  select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1'; -- should report 2 rows to consolidate
+  select * from emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
+  select count(*) from emaj.myschema1_mytbl1_log_1;   -- the log table should be empty
   select * from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
---select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
   savepoint svp3;
   -- testing group's reset
   select emaj.emaj_stop_group('myGroup1');

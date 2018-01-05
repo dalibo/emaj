@@ -11,7 +11,7 @@ alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 10000;
 select * from emaj.emaj_global_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-      11868 |      12 | t
+      11870 |      10 | t
 (1 row)
 
 alter sequence emaj.emaj_global_seq restart 100000;
@@ -99,13 +99,13 @@ select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   124
+   133
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
  count 
 -------
-     7
+    14
 (1 row)
 
 select count(*) from emaj.mySchema1_myTbl1_log;
@@ -200,13 +200,13 @@ select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   124
+   133
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
  count 
 -------
-     7
+    14
 (1 row)
 
 -----------------------------

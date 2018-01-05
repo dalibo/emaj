@@ -145,13 +145,13 @@ select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   115
+   124
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
  count 
 -------
-     7
+    14
 (1 row)
 
 select count(*) from emaj.mySchema1_myTbl1_log;
