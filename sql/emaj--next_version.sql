@@ -3627,7 +3627,6 @@ $emaj_get_previous_mark_group$
 -- Output: mark name, or NULL if there is no mark before the given mark
   DECLARE
     v_realMark               TEXT;
-    v_markName               TEXT;
   BEGIN
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
@@ -3640,6 +3639,24 @@ $emaj_get_previous_mark_group$
       RAISE EXCEPTION 'emaj_get_previous_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
 -- find the requested mark
+    RETURN emaj._get_previous_mark_group(v_groupName, v_realMark);
+  END;
+$emaj_get_previous_mark_group$;
+COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TEXT) IS
+$$Returns the latest mark name preceeding a given mark for a group.$$;
+
+CREATE OR REPLACE FUNCTION emaj._get_previous_mark_group(v_groupName TEXT, v_realMark TEXT)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_get_previous_mark_group$
+-- This function returns the name of the mark that immediately precedes a given mark for a group.
+-- The function can be called by both emaj_adm and emaj_viewer roles.
+-- Input: group name, mark name
+--   The mark name has already been checked and resolved if the keyword 'EMAJ_LAST_MARK' has been used by the user.
+-- Output: mark name, or NULL if there is no mark before the given mark
+  DECLARE
+    v_markName               TEXT;
+  BEGIN
+-- find the requested mark
     SELECT mark_name INTO v_markName FROM emaj.emaj_mark
       WHERE mark_group = v_groupName AND mark_time_id <
         (SELECT mark_time_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark)
@@ -3650,9 +3667,7 @@ $emaj_get_previous_mark_group$
       RETURN v_markName;
     END IF;
   END;
-$emaj_get_previous_mark_group$;
-COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TEXT) IS
-$$Returns the latest mark name preceeding a given mark for a group.$$;
+$_get_previous_mark_group$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -3669,10 +3684,15 @@ $emaj_delete_mark_group$
   DECLARE
     v_realMark               TEXT;
     v_markId                 BIGINT;
-    v_MarkTimeId             BIGINT;
+    v_markTimeId             BIGINT;
+    v_previousMarkTimeId     BIGINT;
+    v_previousMarkName       TEXT;
+    v_previousMarkGlobalSeq  BIGINT;
     v_idNewMin               BIGINT;
     v_markNewMin             TEXT;
     v_cpt                    INT;
+    v_eventTriggers          TEXT[];
+    r_rel                    RECORD;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -3694,17 +3714,51 @@ $emaj_delete_mark_group$
       RAISE EXCEPTION 'emaj_delete_mark_group: "%" is the only mark of the group. It cannot be deleted.', v_mark;
     END IF;
 -- OK, now get the id and time stamp id of the mark to delete
-    SELECT mark_id, mark_time_id INTO v_markId, v_MarkTimeId
+    SELECT mark_id, mark_time_id INTO v_markId, v_markTimeId
       FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
 -- ... and the id and timestamp of the future first mark
     SELECT mark_id, mark_name INTO v_idNewMin, v_markNewMin
       FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_realMark ORDER BY mark_id LIMIT 1;
-    IF v_markId < v_idNewMin THEN
+-- ... and the name, the time id and the last global sequence value of the previous mark
+    SELECT emaj._get_previous_mark_group(v_groupName, v_realMark) INTO v_previousMarkName;
+    SELECT mark_time_id, time_last_emaj_gid INTO v_previousMarkTimeId, v_previousMarkGlobalSeq
+      FROM emaj.emaj_mark, emaj.emaj_time_stamp WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_previousMarkName;
+-- effectively delete the mark for the group
+    IF v_previousMarkTimeId IS NULL THEN
 -- if the mark to delete is the first one, process its deletion with _delete_before_mark_group(), as the first rows of log tables become useless
       PERFORM emaj._delete_before_mark_group(v_groupName, v_markNewMin);
     ELSE
--- otherwise, process its deletion with _delete_intermediate_mark_group()
-      PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_realMark, v_markId, v_MarkTimeId);
+-- otherwise, the mark to delete is an intermediate mark for the group
+-- process the mark deletion with _delete_intermediate_mark_group()
+      PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_realMark, v_markId, v_markTimeId);
+-- if, for any table or sequence, the mark to delete is the mark set at the time it was removed from the group,
+--   set the new end time id for them to the previous mark. If this is the only mark, remove any log traces for these tables or sequence.
+      SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+      FOR r_rel IN
+          SELECT rel_schema, rel_tblseq, rel_time_range, rel_kind, rel_log_schema, rel_log_table FROM emaj.emaj_relation
+            WHERE rel_group = v_groupName AND upper(rel_time_range) = v_markTimeId
+        LOOP
+        IF v_previousMarkTimeId > lower(r_rel.rel_time_range) THEN
+-- the previous mark is not the start of the time range for the relation
+-- for tables, the log table has to be shrinked, deleting the rows more recent than the new upper bound
+          IF r_rel.rel_kind = 'r' THEN
+            EXECUTE 'DELETE FROM ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) ||
+                    ' WHERE emaj_gid > ' || v_previousMarkGlobalSeq;
+          END IF;
+-- for tables and sequences, the time range upper bound is set to the new last mark for the relation
+          UPDATE emaj.emaj_relation SET rel_time_range = int8range(lower(rel_time_range), v_previousMarkTimeId, '[)')
+            WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+        ELSE
+-- the previous mark is the start of the time range for the relation, so simply drop it
+          EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' CASCADE';
+-- and finaly delete the relation slice from the emaj_relation table
+          DELETE FROM emaj.emaj_relation
+            WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+        END IF;
+      END LOOP;
+-- drop the secondary schemas that may have been emptied
+      PERFORM emaj._drop_log_schemas('DELETE_MARK_GROUP', FALSE);
+      PERFORM emaj._enable_event_triggers(v_eventTriggers);
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -7420,6 +7474,7 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_firstMa
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, isRollbackSimulation BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_viewer;

@@ -9,8 +9,6 @@ alter sequence emaj.emaj_hist_hist_id_seq restart 10000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 10000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 10000;
 alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 10000;
-
-select * from emaj.emaj_global_seq;
 alter sequence emaj.emaj_global_seq restart 100000;
 
 -----------------------------

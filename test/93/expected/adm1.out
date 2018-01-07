@@ -8,12 +8,6 @@ alter sequence emaj.emaj_hist_hist_id_seq restart 10000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 10000;
 alter sequence emaj.emaj_mark_mark_id_seq restart 10000;
 alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 10000;
-select * from emaj.emaj_global_seq;
-  sequence_name  | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
------------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
- emaj_global_seq |      11864 |           1 |            1 | 9223372036854775807 |         1 |           1 |      16 | f         | t
-(1 row)
-
 alter sequence emaj.emaj_global_seq restart 100000;
 -----------------------------
 -- grant emaj_adm role 

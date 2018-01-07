@@ -85,7 +85,7 @@ begin;
 (1 row)
 
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
-  select emaj.emaj_alter_group('myGroup1');
+  select emaj.emaj_alter_group('myGroup1','Sequence_removed');
  emaj_alter_group 
 ------------------
                 6
@@ -145,6 +145,33 @@ SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
   rollback to svp1;
 \! rm -R /tmp/emaj_test
+  -- testing the alter_group mark deletion (it should reduce the time range of the removed sequence)
+  select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
+ mark_id | mark_group |  regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+    6021 | myGroup1   | Sequence_removed |         6058 | f               | f                      |              |                           | 
+    6020 | myGroup1   | Mk2c             |         6057 | f               | f                      |              |                         0 | 
+(2 rows)
+
+  select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+  select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq';
+ rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp | rel_log_index | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
+------------+------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+---------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------
+ myschema1  | myTbl3_col31_seq | [6041,6057)    | myGroup1  | S        |            1 |                |               |                 |               |                 |                  |                  |                 |                    | 
+(1 row)
+
+  select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 1;
+ mark_id | mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+    6020 | myGroup1   | Mk2c           |         6057 | f               | f                      |              |                           | 
+(1 row)
+
+  rollback to svp1;
   -- testing delete a single mark set before the sequence removal
   select emaj.emaj_delete_mark_group('myGroup1','Mk2c');
  emaj_delete_mark_group 
@@ -248,7 +275,7 @@ begin;
                    7
 (1 row)
 
---select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+  insert into myschema1."myTbl3" (col33) values (1.);
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and (grpdef_tblseq = 'myTbl3' or grpdef_tblseq = 'mytbl2b');
   select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
@@ -273,7 +300,7 @@ begin;
   select count(*) from "emajC"."myschema1_myTbl3_log_1";
  count 
 -------
-     1
+     2
 (1 row)
 
   select * from emaj.emaj_verify_all();
@@ -282,6 +309,7 @@ begin;
  No error detected
 (1 row)
 
+  savepoint svp1;
   -- testing log stat
   select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
  stat_group | stat_schema | stat_table | stat_rows 
@@ -325,16 +353,14 @@ myschema1_mytbl4.snap
 /tmp/emaj_test/alter/myschema1_mytbl2_log.snap
 /tmp/emaj_test/alter/myschema1_mytbl4_log.snap
 \! rm -R /tmp/emaj_test/alter/*
-  savepoint svp1;
     select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3']);
 ERROR:  _gen_sql_groups: Some tables and/or sequences (myschema1.myTbl3) do not belong to any of the selected tables groups.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 134 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
-  rollback to svp1;
 \! rm -R /tmp/emaj_test
-  savepoint svp2;
-  -- testing delete a single mark set before the sequence removal
+  rollback to svp1;
+  -- testing delete a single mark set before the table removal
   select emaj.emaj_delete_mark_group('myGroup1','Mk2c');
  emaj_delete_mark_group 
 ------------------------
@@ -363,7 +389,41 @@ PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at
 ----------
 (0 rows)
 
-  rollback to svp2;
+  rollback to svp1;
+  -- testing the alter_group mark deletion (it should reduce the time range of the removed tables)
+  select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
+ mark_id | mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+    6028 | myGroup1   | ALTER_%        |         6066 | f               | f                      |              |                           | 
+    6027 | myGroup1   | Mk2c           |         6065 | f               | f                      |              |                         1 | 
+(2 rows)
+
+  select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+  select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
+ rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema |      rel_log_table      | rel_log_dat_tsp |        rel_log_index        | rel_log_idx_tsp |     rel_log_sequence      | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
+------------+------------+----------------+-----------+----------+--------------+----------------+-------------------------+-----------------+-----------------------------+-----------------+---------------------------+------------------+-----------------+--------------------+--------------------------
+ myschema1  | mytbl2b    | [6041,6065)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       | myschema1_mytbl2b_log_seq |                  |                 |                    | 
+ myschema1  | myTbl3     | [6041,6065)    | myGroup1  | r        |           10 | emajC          | myschema1_myTbl3_log_1  | tsplog1         | myschema1_myTbl3_log_idx_1  |                 | myschema1_myTbl3_log_seq  |                  |                 |                    | 
+(2 rows)
+
+  select count(*) from "emajC"."myschema1_myTbl3_log_1";  -- Only 1 row should remain
+ count 
+-------
+     1
+(1 row)
+
+  select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 1;
+ mark_id | mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+    6027 | myGroup1   | Mk2c           |         6065 | f               | f                      |              |                           | 
+(1 row)
+
+  rollback to svp1;
   -- testing marks deletion (other cases)
   select emaj.emaj_set_mark_group('myGroup1','Mk2d');
  emaj_set_mark_group 
@@ -406,7 +466,7 @@ PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at
 ----------
 (0 rows)
 
-  rollback to svp2;
+  rollback to svp1;
   -- testing rollback and consolidation
   delete from emaj.emaj_param where param_key = 'dblink_user_password';
   insert into myschema1.mytbl1 values (100, 'Alter_logg', E'\\000'::bytea);
@@ -529,12 +589,59 @@ WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "my
 (1 row)
 
   drop table mySchema1."myTbl3";
---select * from emaj.emaj_hist order by hist_id desc limit 50;
 rollback;
+-- testing a remove table just after a start group, and the deletion of the alter mark, resulting in the deletion of all logs for the table
+select emaj.emaj_start_group('myGroup4','g4_start');
+ emaj_start_group 
+------------------
+                5
+(1 row)
+
+-- simulate a remove_tbl and add_tbl by reducing the rel_time_range
+--TODO (to be replaced by a remove_tbl and add_tblsequence when add_tbl will be developped)
+update emaj.emaj_relation set rel_time_range = int8range((select mark_time_id from emaj.emaj_mark where mark_name = 'g4_start'),null,'[)')
+  where rel_schema = 'myschema4' and rel_tblseq = 'mytblc1';
+insert into myschema4.myTblM values ('2001-09-11',0,'abc');
+update emaj.emaj_group_def set grpdef_group = 'dummy' where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblc1';
+select emaj.emaj_alter_group('myGroup4','g4_remove_part1');
+ emaj_alter_group 
+------------------
+                4
+(1 row)
+
+select emaj.emaj_delete_mark_group('myGroup4','g4_remove_part1');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq = 'mytblc1';
+ rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp | rel_log_index | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
+------------+------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+---------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------
+(0 rows)
+
+-- reset the myGroup4 state
+select emaj.emaj_stop_group('myGroup4');
+ emaj_stop_group 
+-----------------
+               4
+(1 row)
+
+update emaj.emaj_group_def set grpdef_group = 'myGroup4' where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblc1';
+select emaj.emaj_alter_group('myGroup4','g4_reset_state');
+NOTICE:  table "myschema4_mytblc1_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
+ emaj_alter_group 
+------------------
+                5
+(1 row)
+
+--select * from emaj.emaj_hist order by hist_id desc limit 50;
 select emaj.emaj_cleanup_rollback_state();
  emaj_cleanup_rollback_state 
 -----------------------------
-                           2
+                           0
 (1 row)
 
 -- set an intermediate mark
@@ -558,16 +665,16 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
     6016 | myGroup2   | ALTER_%            |         6054 | f               | f                      |              |                         0 | 
     6017 | myGroup1   | ALTER_%            |         6055 | f               | f                      |              |                         0 | 
     6018 | myGroup2   | ALTER_%            |         6055 | f               | f                      |              |                         0 | 
-    6019 | myGroup1   | Mk2b               |         6056 | f               | f                      |              |                         3 | 
-    6038 | myGroup1   | Mk3                |         6077 | f               | f                      |              |                           | 
-    6039 | myGroup2   | Mk3                |         6077 | f               | f                      |              |                           | 
+    6019 | myGroup1   | Mk2b               |         6056 | f               | f                      |              |                         4 | 
+    6041 | myGroup1   | Mk3                |         6081 | f               | f                      |              |                           | 
+    6042 | myGroup2   | Mk3                |         6081 | f               | f                      |              |                           | 
 (14 rows)
 
 -- estimate a rollback crossing alter group operations
 select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 0.080335 secs
+ @ 0.080445 secs
 (1 row)
 
 -- execute a rollback not crossing any alter group operation
@@ -923,8 +1030,31 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP         | BEGIN                        | myGroup1                     |                                                                                | postgres
  LOCK_GROUP         | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                 | postgres
  SET_MARK_GROUP     | END                          | myGroup1                     | Mk2b                                                                           | postgres
+ START_GROUP        | BEGIN                        | myGroup4                     | With log reset                                                                 | postgres
+ LOCK_GROUP         | BEGIN                        | myGroup4                     |                                                                                | postgres
+ LOCK_GROUP         | END                          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                                 | postgres
+ SET_MARK_GROUP     | BEGIN                        | myGroup4                     | g4_start                                                                       | postgres
  CLEANUP_RLBK_STATE |                              | Rollback id 6000             | set to ABORTED                                                                 | postgres
  CLEANUP_RLBK_STATE |                              | Rollback id 6001             | set to ABORTED                                                                 | postgres
+ SET_MARK_GROUP     | END                          | myGroup4                     | g4_start                                                                       | postgres
+ START_GROUP        | END                          | myGroup4                     | 5 tables/sequences processed                                                   | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup4                     |                                                                                | postgres
+ LOCK_GROUP         | BEGIN                        | myGroup4                     |                                                                                | postgres
+ LOCK_GROUP         | END                          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                                 | postgres
+ SET_MARK_GROUP     | BEGIN                        | myGroup4                     | g4_remove_part1                                                                | postgres
+ SET_MARK_GROUP     | END                          | myGroup4                     | g4_remove_part1                                                                | postgres
+ ALTER_GROUP        | TABLE REMOVED                | myschema4.mytblc1            | From logging group myGroup4                                                    | postgres
+ ALTER_GROUP        | END                          | myGroup4                     | Timestamp Id : 6078                                                            | postgres
+ DELETE_MARK_GROUP  | BEGIN                        | myGroup4                     | g4_remove_part1                                                                | postgres
+ DELETE_MARK_GROUP  | END                          | myGroup4                     | g4_remove_part1                                                                | postgres
+ STOP_GROUP         | BEGIN                        | myGroup4                     |                                                                                | postgres
+ LOCK_GROUP         | BEGIN                        | myGroup4                     |                                                                                | postgres
+ LOCK_GROUP         | END                          | myGroup4                     | 4 tables locked, 0 deadlock(s)                                                 | postgres
+ SET_MARK_GROUP     | BEGIN                        | myGroup4                     | STOP_%                                                                         | postgres
+ SET_MARK_GROUP     | END                          | myGroup4                     | STOP_%                                                                         | postgres
+ STOP_GROUP         | END                          | myGroup4                     | 4 tables/sequences processed                                                   | postgres
+ ALTER_GROUP        | BEGIN                        | myGroup4                     |                                                                                | postgres
+ ALTER_GROUP        | END                          | myGroup4                     | Timestamp Id : 6080                                                            | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Mk3                                                                            | postgres
  LOCK_GROUPS        | BEGIN                        | myGroup1,myGroup2            |                                                                                | postgres
  LOCK_GROUPS        | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                | postgres
@@ -948,9 +1078,9 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | RLBK_Mk2_%_START                                                               | postgres
  CLEANUP_RLBK_STATE |                              | Rollback id 6004             | set to COMMITTED                                                               | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_Mk2_%_START                                                               | postgres
- ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11867 and <= 11870                                | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11867 and <= 11872                                | postgres
  ROLLBACK_TABLE     | END                          | myschema1.mytbl1             | 0 rolled back primary keys                                                     | postgres
- ROLLBACK_TABLE     | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11867 and <= 11870                                | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11867 and <= 11872                                | postgres
  ROLLBACK_TABLE     | END                          | myschema1."myTbl3"           | 0 rolled back primary keys                                                     | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1."myTbl3_col31_seq" | RESTART 11                                                                     | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
@@ -971,9 +1101,9 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                     | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                            | postgres
  LOCK_GROUP         | END                          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                           | postgres
- ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11867 and <= 11870                                | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11867 and <= 11872                                | postgres
  ROLLBACK_TABLE     | END                          | myschema1.mytbl1             | 0 rolled back primary keys                                                     | postgres
- ROLLBACK_TABLE     | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11867 and <= 11870                                | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11867 and <= 11872                                | postgres
  ROLLBACK_TABLE     | END                          | myschema1."myTbl3"           | 0 rolled back primary keys                                                     | postgres
  ROLLBACK_GROUPS    | MARK DELETED                 | myGroup1                     | mark ALTER_% is deleted                                                        | postgres
  ROLLBACK_GROUPS    | MARK DELETED                 | myGroup2                     | mark ALTER_% is deleted                                                        | postgres
@@ -1059,7 +1189,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP   | END                          | myGroup2                     | 8 tables/sequences processed                                                   | postgres
  FORCE_DROP_GROUP   | BEGIN                        | myGroup4                     |                                                                                | postgres
  FORCE_DROP_GROUP   | END                          | myGroup4                     | 5 tables/sequences processed                                                   | postgres
-(336 rows)
+(359 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -1116,16 +1246,20 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     6056 |              11867 | M
     6060 |              11867 | R
     6062 |              11867 | R
-    6077 |              11870 | M
-    6078 |              11870 | R
-    6079 |              11870 | R
-    6080 |              11870 | M
-    6081 |              11870 | R
-    6082 |              11870 | R
-    6083 |              11870 | R
-    6084 |              11870 | M
-    6085 |              11870 | R
-(61 rows)
+    6077 |              11871 | M
+    6078 |              11872 | A
+    6079 |              11872 | M
+    6080 |              11872 | A
+    6081 |              11872 | M
+    6082 |              11872 | R
+    6083 |              11872 | R
+    6084 |              11872 | M
+    6085 |              11872 | R
+    6086 |              11872 | R
+    6087 |              11872 | R
+    6088 |              11872 | M
+    6089 |              11872 | R
+(65 rows)
 
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
  altr_time_id |        altr_step         | altr_schema |   altr_tblseq    | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging | altr_rlbk_id 
@@ -1250,6 +1384,9 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
          6055 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                   |                           |         6005
          6055 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                   |                           |         6005
          6055 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | t                     |                |                   |                           |         6005
-(120 rows)
+         6078 | REMOVE_TBL               | myschema4   | mytblc1          | myGroup4   |               | t                     |                |                   |                           |             
+         6080 | RESET_GROUP              |             |                  | myGroup4   |               | f                     |                |                   |                           |             
+         6080 | ADD_TBL                  | myschema4   | mytblc1          | myGroup4   |               | f                     |                |                   |                           |             
+(123 rows)
 
 truncate emaj.emaj_hist;
