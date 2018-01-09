@@ -2228,6 +2228,42 @@ select emaj.emaj_rollback_group('myGroup1','Conso_M1');
                    4
 (1 row)
 
+-- consolidate a stopped (and empty) group
+begin;
+  select emaj.emaj_rename_mark_group('emptyGroup','EMAJ_LAST_MARK','end_rlbk_mark');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+  select emaj.emaj_stop_group('emptyGroup','stop');
+ emaj_stop_group 
+-----------------
+               0
+(1 row)
+
+  select * from emaj.emaj_get_consolidable_rollbacks();
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_id | cons_rows | cons_marks 
+------------+----------------------------+--------------------------+-------------------------+-----------------------+-----------+------------
+ emptyGroup | EGM3                       |                     2021 | end_rlbk_mark           |                  3042 |         0 |          2
+(1 row)
+
+  select emaj.emaj_consolidate_rollback_group('emptyGroup','end_rlbk_mark');
+ emaj_consolidate_rollback_group 
+---------------------------------
+                               0
+(1 row)
+
+  select * from emaj.emaj_mark where mark_group = 'emptyGroup' order by mark_id;
+ mark_group |   mark_name   | mark_id | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+---------------+---------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup | SM2           |    2006 |         2006 | t               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup | EGM3          |    2021 |         2016 | t               | f                      |                                        |                         0 | 
+ emptyGroup | end_rlbk_mark |    3042 |         3046 | t               | f                      |                                        |                         0 | EGM3
+ emptyGroup | stop          |    3054 |         3060 | t               | f                      |                                        |                         0 | 
+(4 rows)
+
+rollback;
 -- check that dropping the group deletes rows from emaj_sequence and emaj_seq_hole
 begin;
   select emaj.emaj_stop_group('myGroup1');
@@ -2271,7 +2307,7 @@ select rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session from emaj.emaj_
 ---------+-------------+--------------------+-----------------
       22 | COMPLETED   |               3441 |               1
       23 | COMPLETED   |               3469 |               1
-      24 | COMPLETED   |               3497 |               1
+      24 | COMPLETED   |               3509 |               1
 (3 rows)
 
 select emaj.emaj_cleanup_rollback_state();
@@ -2310,7 +2346,7 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
       21 | {myGroup1}          | Conso_M1       |         3053 | t              |                             |               1 |             5 |                2 |                 0 | COMMITTED   |               3416 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
       22 | {myGroup1}          | Conso_M2       |         3057 | t              |                             |               1 |             5 |                2 |                 3 | COMMITTED   |               3441 | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
       23 | {myGroup1}          | Conso_M1       |         3059 | f              |                             |               1 |             5 |                2 |                 2 | COMMITTED   |               3469 | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-      24 | {myGroup4}          | myGroup4_start |         3061 | f              |                             |               1 |             5 |                0 |                 0 | ABORTED     |               3497 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed."}
+      24 | {myGroup4}          | myGroup4_start |         3062 | f              |                             |               1 |             5 |                0 |                 0 | ABORTED     |               3509 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed."}
 (22 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
@@ -2607,7 +2643,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     3057 |                122 | R
     3058 |                137 | M
     3059 |                139 | R
-    3061 |                140 | R
+    3062 |                140 | R
 (51 rows)
 
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
@@ -3038,8 +3074,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3483 | ROLLBACK_GROUP         | NOTICE       | Rollback id 23               | 2 sequences processed.                                         | postgres
     3484 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
     3485 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 23, 2 tables and 2 sequences effectively processed | postgres
-    3504 | CLEANUP_RLBK_STATE     |              | Rollback id 22               | set to COMMITTED                                               | postgres
-    3505 | CLEANUP_RLBK_STATE     |              | Rollback id 23               | set to COMMITTED                                               | postgres
-    3506 | CLEANUP_RLBK_STATE     |              | Rollback id 24               | set to ABORTED                                                 | postgres
+    3516 | CLEANUP_RLBK_STATE     |              | Rollback id 22               | set to COMMITTED                                               | postgres
+    3517 | CLEANUP_RLBK_STATE     |              | Rollback id 23               | set to COMMITTED                                               | postgres
+    3518 | CLEANUP_RLBK_STATE     |              | Rollback id 24               | set to ABORTED                                                 | postgres
 (427 rows)
 

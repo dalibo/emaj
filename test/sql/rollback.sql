@@ -551,6 +551,16 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 
 select emaj.emaj_rollback_group('myGroup1','Conso_M1');
 
+-- consolidate a stopped (and empty) group
+begin;
+  select emaj.emaj_rename_mark_group('emptyGroup','EMAJ_LAST_MARK','end_rlbk_mark');
+  select emaj.emaj_stop_group('emptyGroup','stop');
+  select * from emaj.emaj_get_consolidable_rollbacks();
+  select emaj.emaj_consolidate_rollback_group('emptyGroup','end_rlbk_mark');
+  select * from emaj.emaj_mark where mark_group = 'emptyGroup' order by mark_id;
+rollback;
+
+
 -- check that dropping the group deletes rows from emaj_sequence and emaj_seq_hole
 begin;
   select emaj.emaj_stop_group('myGroup1');
