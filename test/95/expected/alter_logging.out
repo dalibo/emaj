@@ -396,6 +396,12 @@ PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at
 -------------+-----------+--------------+---------------+----------------+----------------+--------------+--------------+----------------+----------------+----------------
 (0 rows)
 
+  select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'Mk2b';
+ mark_group | mark_name | mark_id | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------+---------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | Mk2b      |    6019 |         6056 | f               | f                      |              |                         2 | 
+(1 row)
+
   -- testing marks deletion (delete all marks before the alter_group)
   select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_delete_before_mark_group 

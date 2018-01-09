@@ -132,6 +132,7 @@ begin;
   -- testing delete a single mark set before the table removal
   select emaj.emaj_delete_mark_group('myGroup1','Mk2c');
   select * from emaj.emaj_sequence where sequ_time_id not in (select distinct mark_time_id from emaj.emaj_mark where mark_group = 'myGroup1');
+  select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'Mk2b';
   -- testing marks deletion (delete all marks before the alter_group)
   select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
   select 'should not exist' from pg_namespace where nspname = 'emajb';

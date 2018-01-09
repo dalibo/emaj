@@ -8,7 +8,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
  count 
 -------
-   115
+   114
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
@@ -125,10 +125,10 @@ select funcname, calls from pg_stat_user_functions
  _gen_sql_tbl                              |    34
  _get_default_tablespace                   |     8
  _get_mark_name                            |   389
- _get_mark_time_id                         |   466
+ _get_mark_time_id                         |   238
  _get_previous_mark_group                  |    32
  _lock_groups                              |   194
- _log_stat_tbl                             |  2300
+ _log_stat_tbl                             |  2302
  _log_truncate_fnct                        |     2
  _purge_hist                               |    89
  _remove_seq                               |    13
@@ -151,7 +151,6 @@ select funcname, calls from pg_stat_user_functions
  _set_time_stamp                           |   348
  _start_groups                             |    48
  _stop_groups                              |    61
- _sum_log_stat_group                       |   237
  _verify_all_groups                        |    35
  _verify_all_schemas                       |    35
  emaj_alter_group                          |    46
@@ -201,7 +200,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_unprotect_group                      |     8
  emaj_unprotect_mark_group                 |     6
  emaj_verify_all                           |    35
-(111 rows)
+(110 rows)
 
 -- count the total number of user-callable function calls
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';

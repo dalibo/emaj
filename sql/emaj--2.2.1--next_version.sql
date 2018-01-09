@@ -89,6 +89,7 @@ WHERE rel_log_table IS NOT NULL AND rel_log_sequence IS NULL;
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
 DROP FUNCTION emaj._delete_before_marks_group(V_GROUPNAME TEXT,V_MARK TEXT);
+DROP FUNCTION emaj._sum_log_stat_group(V_GROUPNAME TEXT,V_FIRSTMARKTIMEID BIGINT,V_LASTMARKTIMEID BIGINT);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
@@ -194,6 +195,128 @@ $_drop_tbl$
     RETURN;
   END;
 $_drop_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._set_mark_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_eventToRecord BOOLEAN, v_loggedRlbkTargetMark TEXT DEFAULT NULL, v_timeId BIGINT DEFAULT NULL)
+RETURNS INT LANGUAGE plpgsql AS
+$_set_mark_groups$
+-- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
+-- It also updates the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into all log tables between this previous mark and the new mark.
+-- It is called by emaj_set_mark_group and emaj_set_mark_groups functions but also by other functions that set internal marks, like functions that start or rollback groups.
+-- Input: group names array, mark to set,
+--        boolean indicating whether the function is called by a multi group function
+--        boolean indicating whether the event has to be recorded into the emaj_hist table
+--        name of the rollback target mark when this mark is created by the logged_rollback functions (NULL by default)
+--        time stamp identifier to reuse (NULL by default) (this parameter is set when the mark is a rollback start mark)
+-- Output: number of processed tables and sequences
+-- The insertion of the corresponding event in the emaj_hist table is performed by callers.
+  DECLARE
+    v_nbTb                   INT = 0;
+    v_timestamp              TIMESTAMPTZ;
+    r_tblsq                  RECORD;
+  BEGIN
+-- if requested, record the set mark begin in emaj_hist
+    IF v_eventToRecord THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','), v_mark);
+    END IF;
+-- get the time stamp of the operation, if not supplied as input parameter
+    IF v_timeId IS NULL THEN
+      SELECT emaj._set_time_stamp('M') INTO v_timeId;
+    END IF;
+-- look at the clock to get the 'official' timestamp representing the mark
+    SELECT time_clock_timestamp INTO v_timestamp FROM emaj.emaj_time_stamp WHERE time_id = v_timeId;
+-- process sequences as early as possible (no lock protects them from other transactions activity)
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
+          WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+-- for each sequence of the groups, record the sequence parameters into the emaj_sequence table
+      IF emaj._pg_version_num() < 100000 THEN
+        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
+                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
+                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
+                quote_literal(r_tblsq.rel_tblseq) || ', ' || v_timeId ||
+                ', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+      ELSE
+        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
+                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
+                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                ') SELECT schemaname, sequencename, ' || v_timeId ||
+                ', rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq) ||
+                ' rel, pg_catalog.pg_sequences ' ||
+                ' WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_tblseq);
+      END IF;
+      v_nbTb = v_nbTb + 1;
+    END LOOP;
+-- record the number of log rows for the old last mark of each group
+--   the statement updates no row in case of emaj_start_group(s)
+    WITH stat_group1 AS (                                               -- for each group, the mark id and time id of the last active mark
+      SELECT mark_group, max(mark_id) as last_mark_id, max(mark_time_id) AS last_mark_time_id
+        FROM emaj.emaj_mark
+        WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted
+        GROUP BY mark_group),
+         stat_group2 AS (                                               -- compute the number of log rows for all tables currently belonging to these groups
+      SELECT mark_group, last_mark_id, coalesce(
+          (SELECT sum(emaj._log_stat_tbl(emaj_relation, last_mark_time_id, NULL))
+             FROM emaj.emaj_relation
+             WHERE rel_group = mark_group AND rel_kind = 'r' AND upper_inf(rel_time_range)), 0) AS mark_stat
+        FROM stat_group1 )
+    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = mark_stat
+      FROM stat_group2 s
+      WHERE s.mark_group = m.mark_group AND s.last_mark_id = m.mark_id;
+-- for each table currently belonging to the groups, ...
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
+          WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+-- ... record the associated sequence parameters in the emaj sequence table
+      IF emaj._pg_version_num() < 100000 THEN
+        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
+                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
+                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                ') SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(r_tblsq.rel_log_sequence) || ', ' ||
+                v_timeId || ', last_value, start_value, ' ||
+                'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence);
+      ELSE
+        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
+                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
+                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
+                ') SELECT schemaname, sequencename, ' || v_timeId ||
+                ', rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence) ||
+                ' rel, pg_catalog.pg_sequences ' ||
+                ' WHERE schemaname = '|| quote_literal(r_tblsq.rel_log_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_log_sequence);
+      END IF;
+      v_nbTb = v_nbTb + 1;
+    END LOOP;
+-- record the mark for each group into the emaj_mark table
+    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
+      SELECT group_name, v_mark, v_timeId, FALSE, FALSE, v_loggedRlbkTargetMark
+        FROM emaj.emaj_group WHERE group_name = ANY(v_groupNames) ORDER BY group_name;
+-- before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table
+    IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
+-- ... either through dblink if we are currently performing a rollback with a dblink connection already opened
+--     this is mandatory to avoid deadlock
+      PERFORM 0 FROM dblink('rlbk#1','SELECT emaj._cleanup_rollback_state()') AS (dummy INT);
+    ELSE
+-- ... or directly
+      PERFORM emaj._cleanup_rollback_state();
+    END IF;
+-- if requested, record the set mark end in emaj_hist
+    IF v_eventToRecord THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'END', array_to_string(v_groupNames,','), v_mark);
+    END IF;
+--
+    RETURN v_nbTb;
+  END;
+$_set_mark_groups$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
@@ -518,8 +641,12 @@ $_delete_intermediate_mark_group$
       UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
         WHERE mark_group = v_groupName AND mark_name = v_previousMark;
     ELSE
--- update the previous mark with the _sum_log_stat_group() call's result
-      UPDATE emaj.emaj_mark SET mark_log_rows_before_next = emaj._sum_log_stat_group(v_groupName, v_previousMarkTimeId, v_nextMarkTimeId)
+-- update the previous mark by computing the sum of _log_stat_tbl() call's result
+--   for all relations that belonged to the group at the time when the mark before the deleted mark had been set
+      UPDATE emaj.emaj_mark SET mark_log_rows_before_next =
+          (SELECT sum(emaj._log_stat_tbl(emaj_relation, v_previousMarkTimeId, v_nextMarkTimeId))
+             FROM emaj.emaj_relation
+             WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_previousMarkTimeId)
         WHERE mark_group = v_groupName AND mark_name = v_previousMark;
     END IF;
 -- reset the mark_logged_rlbk_target_mark column to null for other marks of the group

@@ -3500,12 +3500,20 @@ $_set_mark_groups$
     END LOOP;
 -- record the number of log rows for the old last mark of each group
 --   the statement updates no row in case of emaj_start_group(s)
-    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next =
-      coalesce(emaj._sum_log_stat_group(m.mark_group,emaj._get_mark_time_id(m.mark_group,'EMAJ_LAST_MARK'),NULL),0)
-      WHERE mark_group = ANY (v_groupNames)
-        AND (mark_group, mark_id) IN                   -- select only the last non deleted mark of each concerned group
-            (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
-             WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted GROUP BY mark_group);
+    WITH stat_group1 AS (                                               -- for each group, the mark id and time id of the last active mark
+      SELECT mark_group, max(mark_id) as last_mark_id, max(mark_time_id) AS last_mark_time_id
+        FROM emaj.emaj_mark
+        WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted
+        GROUP BY mark_group),
+         stat_group2 AS (                                               -- compute the number of log rows for all tables currently belonging to these groups
+      SELECT mark_group, last_mark_id, coalesce(
+          (SELECT sum(emaj._log_stat_tbl(emaj_relation, last_mark_time_id, NULL))
+             FROM emaj.emaj_relation
+             WHERE rel_group = mark_group AND rel_kind = 'r' AND upper_inf(rel_time_range)), 0) AS mark_stat
+        FROM stat_group1 )
+    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = mark_stat
+      FROM stat_group2 s
+      WHERE s.mark_group = m.mark_group AND s.last_mark_id = m.mark_id;
 -- for each table currently belonging to the groups, ...
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
@@ -3940,8 +3948,12 @@ $_delete_intermediate_mark_group$
       UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
         WHERE mark_group = v_groupName AND mark_name = v_previousMark;
     ELSE
--- update the previous mark with the _sum_log_stat_group() call's result
-      UPDATE emaj.emaj_mark SET mark_log_rows_before_next = emaj._sum_log_stat_group(v_groupName, v_previousMarkTimeId, v_nextMarkTimeId)
+-- update the previous mark by computing the sum of _log_stat_tbl() call's result
+--   for all relations that belonged to the group at the time when the mark before the deleted mark had been set
+      UPDATE emaj.emaj_mark SET mark_log_rows_before_next =
+          (SELECT sum(emaj._log_stat_tbl(emaj_relation, v_previousMarkTimeId, v_nextMarkTimeId))
+             FROM emaj.emaj_relation
+             WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_previousMarkTimeId)
         WHERE mark_group = v_groupName AND mark_name = v_previousMark;
     END IF;
 -- reset the mark_logged_rlbk_target_mark column to null for other marks of the group
@@ -5892,28 +5904,6 @@ $emaj_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_group(TEXT,TEXT,TEXT) IS
 $$Returns global statistics about logged events for an E-Maj group between 2 marks.$$;
 
-CREATE OR REPLACE FUNCTION emaj._sum_log_stat_group(v_groupName TEXT, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT)
-RETURNS BIGINT LANGUAGE plpgsql AS
-$_sum_log_stat_group$
--- This function the sum of row updates executed between 2 marks or between a mark and the current situation for a tables group.
--- It is used by several functions to set the mark_log_rows_before_next column of the emaj_mark table.
--- The sum is computed for each table of the group by calling the _log_stat_tbl() function.
--- Input: group name, the time id of both marks defining a time range
---   a NULL value as last_mark_time_id indicates the current situation
---   Checks on input values are performed in calling functions.
--- Output: sum of log rows for the group between both marks
-  BEGIN
--- Directly return 0 if the firstMarkTimeId is set to NULL (ie no mark exists for the group - just after emaj_create_group() or emaj_reset_group() functions call)
-    IF v_firstMarkTimeId IS NULL THEN
-      RETURN 0;
-    END IF;
--- for each table currently belonging to the group, add the number of log rows and return the sum
-    RETURN sum(emaj._log_stat_tbl(emaj_relation, v_firstMarkTimeId, v_lastMarkTimeId))
-      FROM emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper_inf(rel_time_range);
-  END;
-$_sum_log_stat_group$;
-
 CREATE OR REPLACE FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
 RETURNS SETOF emaj.emaj_detailed_log_stat_type LANGUAGE plpgsql AS
 $emaj_detailed_log_stat_group$
@@ -7481,7 +7471,6 @@ GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumbe
 GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._cleanup_rollback_state() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._sum_log_stat_group(v_groupName TEXT, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
