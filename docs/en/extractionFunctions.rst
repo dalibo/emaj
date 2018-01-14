@@ -62,18 +62,17 @@ The directory/folder name must be supplied as an absolute pathname and must have
 
 The fifth parameter defines the output files format. It is a character string that matches the precise syntax available for the *COPY TO* SQL statement.
 
-The function returns the number of tables and sequences contained by the group.
+The function returns the number of generated files.
 
-This *emaj_snap_log_group()* function generates one file per log table, containing the part of this table that correspond to the updates performed between both supplied marks. Created files name has the following pattern: *<schema.name>_<table/sequence.name>_log.snap*
+This *emaj_snap_log_group()* function generates one file per log table, containing the part of this table that corresponds to the updates performed between both supplied marks. Created files name has the following pattern: *<schema.name>_<table/sequence.name>_log.snap*
 
-The function also generates two files, containing the application sequences state at the time of the respective supplied marks, and named: 
-*<group.name>_sequences_at_<mark.name>*
+The function also generates two files, containing the application sequences state at the time of the respective supplied marks, and named: *<log.table.name>.snap*. So most of the time, they look like: *<group.name>_sequences_at_<mark.name>*.
 
-These files are stored in the directory or folder corresponding to the fourth parameter. New files will overwrite existing files of the same name.
+All these files are stored in the directory or folder corresponding to the fourth parameter. New files will overwrite existing files of the same name.
 
 At the end of the operation, a file named *_INFO* is created in this same directory/folder. It contains a message including the table's group name, the mark's name that defined the mark range and the date and time of the snap operation.
 
-It is not necessary that the tables group be in *IDLE* state to snap log tables.
+It is not necessary that the tables group be in *IDLE* state to snap log tables. If no end mark has been supplied, the log tables snap is bounded by a pseudo mark set at the function start. This ensures that, if the group is in logging state, output files will not contain updates recorded after the function start.
 
 As this function may generate large or very large files (of course depending on tables sizes), it is user's responsibility to provide a sufficient disk space.
 

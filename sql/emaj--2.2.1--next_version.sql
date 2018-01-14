@@ -94,6 +94,53 @@ DROP FUNCTION emaj._sum_log_stat_group(V_GROUPNAME TEXT,V_FIRSTMARKTIMEID BIGINT
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._drop_log_schemas(v_function TEXT, v_isForced BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_drop_log_schemas$
+-- The function looks for secondary emaj schemas to drop. Drop them if any.
+-- Input: calling function to record into the emaj_hist table,
+--        boolean telling whether the schema to drop may contain residual objects
+-- The function is created as SECURITY DEFINER so that secondary schemas can be dropped in any case
+  DECLARE
+    r_schema                 RECORD;
+  BEGIN
+-- For each secondary schema to drop,
+    FOR r_schema IN
+        SELECT sch_name AS log_schema FROM emaj.emaj_schema                           -- the existing schemas
+          WHERE sch_name <> 'emaj'
+          EXCEPT
+        SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                        -- the currently needed schemas (after tables drop)
+          WHERE rel_kind = 'r' and rel_log_schema <> 'emaj'
+        ORDER BY 1
+        LOOP
+-- check that the schema really exists
+      PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = r_schema.log_schema;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION '_drop_log_schemas: Internal error (the schema "%" does not exist).',r_schema.log_schema;
+      END IF;
+      IF v_isForced THEN
+-- drop cascade when called by emaj_force_xxx_group()
+        EXECUTE 'DROP SCHEMA ' || quote_ident(r_schema.log_schema) || ' CASCADE';
+      ELSE
+-- otherwise, drop restrict with a trap on the potential error
+        BEGIN
+          EXECUTE 'DROP SCHEMA ' || quote_ident(r_schema.log_schema);
+          EXCEPTION
+-- trap the 2BP01 exception to generate a more understandable error message
+            WHEN DEPENDENT_OBJECTS_STILL_EXIST THEN         -- SQLSTATE '2BP01'
+              RAISE EXCEPTION '_drop_log_schemas: Cannot drop the schema "%". It probably owns unattended objects. Use the emaj_verify_all() function to get details.', r_schema.log_schema;
+        END;
+      END IF;
+-- remove the schema from the emaj_schema table
+      DELETE FROM emaj.emaj_schema WHERE sch_name = r_schema.log_schema;
+-- record the schema drop in emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES (v_function,'SCHEMA DROPPED',quote_ident(r_schema.log_schema));
+    END LOOP;
+    RETURN;
+  END;
+$_drop_log_schemas$;
+
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_remove_tbl$
@@ -807,6 +854,175 @@ $emaj_get_consolidable_rollbacks$
 $emaj_get_consolidable_rollbacks$;
 COMMENT ON FUNCTION emaj.emaj_get_consolidable_rollbacks() IS
 $$Returns the list of logged rollback operations that can be consolidated.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT)
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+$emaj_snap_log_group$
+-- This function creates a file for each log table belonging to the group.
+-- It also creates 2 files containing the state of sequences respectively at start mark and end mark
+-- For log tables, files contain all rows related to the time frame, sorted on emaj_gid.
+-- For sequences, files are names <group>_sequences_at_<mark>, or <group>_sequences_at_<time> if no end mark is specified.
+--   They contain one row per sequence belonging to the group at the related time
+--   (a sequence may belong to a group at the start mark time and not at the end mark time for instance).
+-- To do its job, the function performs COPY TO statement, using the options provided by the caller.
+-- There is no need for the group not to be logging.
+-- As all COPY statements are executed inside a single transaction:
+--   - the function can be called while other transactions are running,
+--   - the snap files will present a coherent state of tables.
+-- It's users responsability :
+--   - to create the directory (with proper permissions allowing the cluster to write into) before emaj_snap_log_group function call, and
+--   - to maintain its content outside E-maj.
+-- Input: group name, the 2 mark names defining a range,
+--        the absolute pathname of the directory where the files are to be created,
+--        options for COPY TO statements
+--   a NULL value or an empty string as first_mark indicates the first recorded mark
+--   a NULL value or an empty string can be used as last_mark indicating the current state
+--   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
+-- Output: number of generated files (for tables and sequences, including the _INFO file)
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it.
+  DECLARE
+    v_nbFile                 INT = 3;        -- start with 3 = 2 files for sequences + _INFO
+    r_tblsq                  RECORD;
+    v_realFirstMark          TEXT;
+    v_realLastMark           TEXT;
+    v_firstMarkId            BIGINT;
+    v_lastMarkId             BIGINT;
+    v_firstEmajGid           BIGINT;
+    v_lastEmajGid            BIGINT;
+    v_firstMarkTsId          BIGINT;
+    v_lastMarkTsId           BIGINT;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
+    v_logTableName           TEXT;
+    v_fileName               TEXT;
+    v_conditions             TEXT;
+    v_stmt                   TEXT;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_LOG_GROUP', 'BEGIN', v_groupName,
+       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
+       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END || ' towards '
+       || v_dir);
+-- check that the group is recorded in emaj_group table
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: The group "%" does not exist.', v_groupName;
+    END IF;
+-- check the supplied directory is not null
+    IF v_dir IS NULL THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: The directory parameter cannot be NULL.';
+    END IF;
+-- check the copy options parameter doesn't contain unquoted ; that could be used for sql injection
+    IF regexp_replace(v_copyOptions,'''.*''','') LIKE '%;%'  THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: The COPY options parameter format is invalid.';
+    END IF;
+-- catch the global sequence value and the timestamp of the first mark
+    IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
+-- check and retrieve the global sequence value and the timestamp of the start mark for the group
+      SELECT emaj._get_mark_name(v_groupName,v_firstMark) INTO v_realFirstMark;
+      IF v_realFirstMark IS NULL THEN
+          RAISE EXCEPTION 'emaj_snap_log_group: The start mark "%" is unknown for the group "%".', v_firstMark, v_groupName;
+      END IF;
+      SELECT mark_id, time_id, time_last_emaj_gid, time_clock_timestamp
+        INTO v_firstMarkId, v_firstMarkTsId, v_firstEmajGid, v_firstMarkTs
+        FROM emaj.emaj_mark, emaj.emaj_time_stamp
+        WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_realFirstMark;
+    ELSE
+      SELECT mark_name, mark_id, time_id, time_last_emaj_gid, time_clock_timestamp
+        INTO v_realFirstMark, v_firstMarkId, v_firstMarkTsId, v_firstEmajGid, v_firstMarkTs
+        FROM emaj.emaj_mark, emaj.emaj_time_stamp
+        WHERE mark_time_id = time_id AND mark_group = v_groupName ORDER BY mark_id LIMIT 1;
+    END IF;
+    IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
+-- the end mark is supplied
+      SELECT emaj._get_mark_name(v_groupName,v_lastMark) INTO v_realLastMark;
+      IF v_realLastMark IS NULL THEN
+        RAISE EXCEPTION 'emaj_snap_log_group: The end mark "%" is unknown for the group "%".', v_lastMark, v_groupName;
+      END IF;
+    ELSE
+-- the end mark is not supplied (look for the current state)
+-- temporarily create a mark, without locking tables
+      SELECT emaj._check_new_mark('TEMP_%', ARRAY[v_groupName]) INTO v_realLastMark;
+      PERFORM emaj._set_mark_groups(ARRAY[v_groupName], v_realLastMark, false, false);
+    END IF;
+-- catch the global sequence value and timestamp of the last mark
+    SELECT mark_id, time_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkId, v_lastMarkTsId, v_lastEmajGid, v_lastMarkTs
+      FROM emaj.emaj_mark, emaj.emaj_time_stamp
+      WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_realLastMark;
+-- check that the first_mark < end_mark
+    IF v_firstMarkId > v_lastMarkId THEN
+      RAISE EXCEPTION 'emaj_snap_log_group: The start mark "%" (%) has been set after the end mark "%" (%).', v_realFirstMark, v_firstMarkTs, v_realLastMark, v_lastMarkTs;
+    END IF;
+-- build the conditions on emaj_gid corresponding to this marks frame, used for the COPY statements dumping the tables
+    v_conditions = 'TRUE';
+    IF v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
+      v_conditions = v_conditions || ' AND emaj_gid > '|| v_firstEmajGid;
+    END IF;
+    IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
+      v_conditions = v_conditions || ' AND emaj_gid <= '|| v_lastEmajGid;
+    END IF;
+-- process all log tables of the emaj_relation table that enter in the marks range
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_table FROM emaj.emaj_relation
+          WHERE rel_time_range && int8range(v_firstMarkTsId, v_lastMarkTsId,'[)') AND rel_group = v_groupName AND rel_kind = 'r'
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+--   build names
+      v_fileName = v_dir || '/' || r_tblsq.rel_log_table || '.snap';
+      v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
+--   prepare the execute the COPY statement
+      v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions
+           || ' ORDER BY emaj_gid ASC) TO ' || quote_literal(v_fileName)
+           || ' ' || coalesce (v_copyOptions, '');
+      EXECUTE v_stmt;
+      v_nbFile = v_nbFile + 1;
+    END LOOP;
+-- generate the file for sequences state at start mark
+    v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_realFirstMark;
+-- and execute the COPY statement
+    v_stmt= 'COPY (SELECT emaj_sequence.*' ||
+            ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
+            ' WHERE sequ_time_id = ' || quote_literal(v_firstMarkTsId) || ' AND ' ||
+            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+            ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
+            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
+            coalesce (v_copyOptions, '');
+    EXECUTE v_stmt;
+-- generate the full file name for sequences state at end mark
+    IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
+      v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_realLastMark;
+    ELSE
+      v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_lastMarkTs,'HH24.MI.SS.MS');
+    END IF;
+-- and execute the COPY statement
+    v_stmt= 'COPY (SELECT emaj_sequence.*' ||
+            ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
+            ' WHERE sequ_time_id = ' || quote_literal(v_lastMarkTsId) || ' AND ' ||
+            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+            ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
+            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
+            coalesce (v_copyOptions, '');
+    EXECUTE v_stmt;
+    IF v_lastMark IS NULL OR v_lastMark = '' THEN
+-- no last mark has been supplied, suppress the just created mark
+      PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_realLastMark, mark_id, mark_time_id)
+        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realLastMark;
+    END IF;
+-- create the _INFO file to keep general information about the snap operation
+    EXECUTE 'COPY (SELECT ' ||
+            quote_literal('E-Maj log tables snap of group ' || v_groupName ||
+            ' between marks ' || v_realFirstMark || ' and ' ||
+            coalesce(v_realLastMark,'current state') || ' at ' || statement_timestamp()) ||
+            ') TO ' || quote_literal(v_dir || '/_INFO') || ' ' || coalesce (v_copyOptions, '');
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_LOG_GROUP', 'END', v_groupName, v_nbFile || ' generated files');
+    RETURN v_nbFile;
+  END;
+$emaj_snap_log_group$;
+COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
+$$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------

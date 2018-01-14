@@ -1126,7 +1126,7 @@ $_drop_log_schemas$
   DECLARE
     r_schema                 RECORD;
   BEGIN
--- For each secondary index to drop,
+-- For each secondary schema to drop,
     FOR r_schema IN
         SELECT sch_name AS log_schema FROM emaj.emaj_schema                           -- the existing schemas
           WHERE sch_name <> 'emaj'
@@ -6283,8 +6283,9 @@ $emaj_snap_log_group$
 -- This function creates a file for each log table belonging to the group.
 -- It also creates 2 files containing the state of sequences respectively at start mark and end mark
 -- For log tables, files contain all rows related to the time frame, sorted on emaj_gid.
--- For sequences, files are names <group>_sequences_at_<mark>, or <group>_sequences_at_<time> if no
---   end mark is specified. They contain one row per sequence.
+-- For sequences, files are names <group>_sequences_at_<mark>, or <group>_sequences_at_<time> if no end mark is specified.
+--   They contain one row per sequence belonging to the group at the related time
+--   (a sequence may belong to a group at the start mark time and not at the end mark time for instance).
 -- To do its job, the function performs COPY TO statement, using the options provided by the caller.
 -- There is no need for the group not to be logging.
 -- As all COPY statements are executed inside a single transaction:
@@ -6299,10 +6300,10 @@ $emaj_snap_log_group$
 --   a NULL value or an empty string as first_mark indicates the first recorded mark
 --   a NULL value or an empty string can be used as last_mark indicating the current state
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
--- Output: number of processed tables and sequences
+-- Output: number of generated files (for tables and sequences, including the _INFO file)
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it.
   DECLARE
-    v_nbTb                   INT = 0;
+    v_nbFile                 INT = 3;        -- start with 3 = 2 files for sequences + _INFO
     r_tblsq                  RECORD;
     v_realFirstMark          TEXT;
     v_realLastMark           TEXT;
@@ -6383,25 +6384,21 @@ $emaj_snap_log_group$
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
       v_conditions = v_conditions || ' AND emaj_gid <= '|| v_lastEmajGid;
     END IF;
--- process all log tables of the emaj_relation table
+-- process all log tables of the emaj_relation table that enter in the marks range
     FOR r_tblsq IN
-        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_table FROM emaj.emaj_relation
-          WHERE upper_inf(rel_time_range) AND rel_group = v_groupName
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_table FROM emaj.emaj_relation
+          WHERE rel_time_range && int8range(v_firstMarkTsId, v_lastMarkTsId,'[)') AND rel_group = v_groupName AND rel_kind = 'r'
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
-      IF r_tblsq.rel_kind = 'r' THEN
--- process tables
 --   build names
-        v_fileName = v_dir || '/' || r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log.snap';
-        v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
+      v_fileName = v_dir || '/' || r_tblsq.rel_log_table || '.snap';
+      v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
 --   prepare the execute the COPY statement
-        v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions
-             || ' ORDER BY emaj_gid ASC) TO ' || quote_literal(v_fileName)
-             || ' ' || coalesce (v_copyOptions, '');
-        EXECUTE v_stmt;
-      END IF;
--- for sequences, just adjust the counter
-      v_nbTb = v_nbTb + 1;
+      v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions
+           || ' ORDER BY emaj_gid ASC) TO ' || quote_literal(v_fileName)
+           || ' ' || coalesce (v_copyOptions, '');
+      EXECUTE v_stmt;
+      v_nbFile = v_nbFile + 1;
     END LOOP;
 -- generate the file for sequences state at start mark
     v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_realFirstMark;
@@ -6409,8 +6406,7 @@ $emaj_snap_log_group$
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_time_id = ' || quote_literal(v_firstMarkTsId) || ' AND ' ||
-            ' upper_inf(rel_time_range) AND rel_kind = ''S'' AND ' ||
-            ' rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
             coalesce (v_copyOptions, '');
@@ -6425,8 +6421,7 @@ $emaj_snap_log_group$
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_time_id = ' || quote_literal(v_lastMarkTsId) || ' AND ' ||
-            ' upper_inf(rel_time_range) AND rel_kind = ''S'' AND ' ||
-            ' rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
             coalesce (v_copyOptions, '');
@@ -6444,8 +6439,8 @@ $emaj_snap_log_group$
             ') TO ' || quote_literal(v_dir || '/_INFO') || ' ' || coalesce (v_copyOptions, '');
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('SNAP_LOG_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
-    RETURN v_nbTb;
+      VALUES ('SNAP_LOG_GROUP', 'END', v_groupName, v_nbFile || ' generated files');
+    RETURN v_nbFile;
   END;
 $emaj_snap_log_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS

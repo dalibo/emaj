@@ -52,13 +52,15 @@ begin;
   select * from emaj.emaj_verify_all();
   --testing snap and sql generation
 \! mkdir -p /tmp/emaj_test/alter
-\! rm -R /tmp/emaj_test/alter
-\! mkdir /tmp/emaj_test/alter
+\! rm -Rf /tmp/emaj_test/alter/*
   select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/alter','');
 \! ls /tmp/emaj_test/alter
 \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_snap_log_group('myGroup1','Mk1',NULL,'/tmp/emaj_test/alter',NULL);
+-- sequences at begin bound
 \! cat /tmp/emaj_test/alter/myGroup1_sequences_at_Mk1
+-- sequences at end bound
+\! find /tmp/emaj_test/alter/ -regex '.*/myGroup1_sequences_at_[0123456789].*' | xargs cat
 \! rm -R /tmp/emaj_test/alter/*
   savepoint svp1;
     select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3_col31_seq']);
@@ -118,8 +120,7 @@ begin;
   select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
   --testing snap and sql generation
 \! mkdir -p /tmp/emaj_test/alter
-\! rm -R /tmp/emaj_test/alter
-\! mkdir /tmp/emaj_test/alter
+\! rm -Rf /tmp/emaj_test/alter/*
   select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/alter','');
 \! ls /tmp/emaj_test/alter
 \! rm -R /tmp/emaj_test/alter/*

@@ -289,11 +289,12 @@ use warnings; use strict;
   }
   print FICUPG "\n";
 
+#print "dropped tables = $droppedTablesList\n";
   # write the new or modified functions
   print FICUPG "------------------------------------------------------------------\n";
   print FICUPG "-- create new or modified functions                             --\n";
   print FICUPG "------------------------------------------------------------------\n";
-print "tables supprimées = $droppedTablesList\n";
+
   foreach $fnctSignature (@currSignatures) {
 
     if (!exists($prevFunctions{$fnctSignature}) ||                               # the function is new or

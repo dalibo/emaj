@@ -60,22 +60,21 @@ Le nom du répertoire fourni doit être un chemin absolu. Ce répertoire doit ex
 
 Le cinquième paramètre précise le format souhaité pour les fichiers générés. Il prend la forme d'une chaîne de caractères reprenant la syntaxe précise des options disponibles pour la commande SQL *COPY TO*.
 
-La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
+La fonction retourne le nombre de fichiers générés.
 
-Cette fonction *emaj_snap_log_group()* génère un fichier par table de log, contenant la partie de cette table correspond aux mises à jour effectuées entre les deux marques citées ou la marque de début et la situation courante. Le nom des fichiers créés pour chaque table est du type :
-*<nom.du.schema>_<nom.de.table>_log.snap* 
+Cette fonction *emaj_snap_log_group()* génère un fichier par table de log, contenant la partie de cette table correspond aux mises à jour effectuées entre les deux marques citées ou la marque de début et la situation courante. Le nom des fichiers créés pour chaque table est du type : *<nom.de.la.table.de.log>.snap*. Le plus souvent, ce nom ressemblera donc à : *<nom.du.schema>_<nom.de.table>_log.snap* 
 
 La fonction génère également deux fichiers, contenant l'état des séquences applicatives lors de la pose respective des deux marques citées, et nommés *<nom.du.groupe>_sequences_at_<nom.de.marque>*.
 
 Si la borne de fin représente la situation courante, le nom du fichier devient *<nom.du.groupe>_sequences_at_<heure>*, l'heure étant exprimée avec un format *HH.MM.SS.mmm*.
 
-Ces fichiers sont stockés dans le répertoire ou dossier correspondant au quatrième paramètre de la fonction. D'éventuels fichiers de même nom se trouveront écrasés.
+Tous ces fichiers sont stockés dans le répertoire ou dossier correspondant au quatrième paramètre de la fonction. D'éventuels fichiers de même nom se trouveront écrasés.
 
 En fin d'opération, un fichier *_INFO* est créé dans ce même répertoire. Il contient un message incluant le nom du groupe de tables, les marques qui ont servi de bornes et la date et l'heure de l'opération.
 
-Il n'est pas nécessaire que le groupe de tables soit dans un état inactif, c'est-à-dire qu'il ait été arrêté au préalable. 
+Il n'est pas nécessaire que le groupe de tables soit dans un état inactif, c'est-à-dire qu'il ait été arrêté au préalable. Si aucune marque de fin n’a été spécifiée, le vidage des tables de logs est bornée par une pseudo marque posée en début d’exécution de la fonction. Ceci garantit que, si le groupe est actif, les fichiers ne contiendront pas de mises à jour postérieures au début d’exécution de la fonction.
 
-Comme la fonction peut générer de gros voire très gros fichiers (en fonction du volume des tables), il est de la responsabilité de l'utilisateur de prévoir un espace disque suffisant.
+Comme la fonction peut générer de gros, voire très gros, fichiers (en fonction du volume des tables), il est de la responsabilité de l'utilisateur de prévoir un espace disque suffisant.
 
 Les tables de log ont une structure qui découlent directement des tables applicatives dont elles enregistrent les mises à jour. Elles contiennent les mêmes colonnes avec les mêmes types. Mais elles possèdent aussi quelques colonnes techniques complémentaires :
 

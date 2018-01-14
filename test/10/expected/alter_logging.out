@@ -111,8 +111,7 @@ begin;
 
   --testing snap and sql generation
 \! mkdir -p /tmp/emaj_test/alter
-\! rm -R /tmp/emaj_test/alter
-\! mkdir /tmp/emaj_test/alter
+\! rm -Rf /tmp/emaj_test/alter/*
   select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/alter','');
  emaj_snap_group 
 -----------------
@@ -131,11 +130,16 @@ myschema1_mytbl4.snap
   select emaj.emaj_snap_log_group('myGroup1','Mk1',NULL,'/tmp/emaj_test/alter',NULL);
  emaj_snap_log_group 
 ---------------------
-                   6
+                   8
 (1 row)
 
+-- sequences at begin bound
 \! cat /tmp/emaj_test/alter/myGroup1_sequences_at_Mk1
 myschema1	mytbl2b_col20_seq	6050	3	1	1	2147483647	1	1	f	f
+myschema1	myTbl3_col31_seq	6050	11	1	1	2147483647	1	1	f	f
+-- sequences at end bound
+\! find /tmp/emaj_test/alter/ -regex '.*/myGroup1_sequences_at_[0123456789].*' | xargs cat
+myschema1	mytbl2b_col20_seq	6059	3	1	1	2147483647	1	1	f	f
 \! rm -R /tmp/emaj_test/alter/*
   savepoint svp1;
     select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3_col31_seq']);
@@ -326,8 +330,7 @@ begin;
 
   --testing snap and sql generation
 \! mkdir -p /tmp/emaj_test/alter
-\! rm -R /tmp/emaj_test/alter
-\! mkdir /tmp/emaj_test/alter
+\! rm -Rf /tmp/emaj_test/alter/*
   select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/alter','');
  emaj_snap_group 
 -----------------
@@ -345,12 +348,14 @@ myschema1_mytbl4.snap
   select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp/emaj_test/alter',NULL);
  emaj_snap_log_group 
 ---------------------
-                   5
+                   8
 (1 row)
 
 \! ls /tmp/emaj_test/alter/myschema1*
 /tmp/emaj_test/alter/myschema1_mytbl1_log.snap
+/tmp/emaj_test/alter/myschema1_mytbl2b_log_1.snap
 /tmp/emaj_test/alter/myschema1_mytbl2_log.snap
+/tmp/emaj_test/alter/myschema1_myTbl3_log_1.snap
 /tmp/emaj_test/alter/myschema1_mytbl4_log.snap
 \! rm -R /tmp/emaj_test/alter/*
     select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3']);
