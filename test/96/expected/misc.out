@@ -112,7 +112,7 @@ select count(*) from emaj.myschema1_mytbl4_log;
 --   this test has been moved here because, the emaj_reset_group() function cannot be used into a transaction
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
 ERROR:  _gen_sql_groups: No initial mark can be found for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 74 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 75 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 -- start myGroup1
@@ -882,7 +882,7 @@ WARNING:  _check_names_array: No group name to process.
 
 select emaj.emaj_gen_sql_group('unknownGroup', NULL, NULL, NULL, NULL);
 ERROR:  _gen_sql_groups: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 56 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 57 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_groups(NULL, NULL, NULL, NULL);
@@ -894,40 +894,40 @@ WARNING:  _check_names_array: No group name to process.
 
 select emaj.emaj_gen_sql_groups('{"myGroup1","unknownGroup"}', NULL, NULL, NULL);
 ERROR:  _gen_sql_groups: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 56 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 57 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- the tables group contains a table without pkey
 select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
 ERROR:  _gen_sql_groups: The tables group "phil's group#3"," contains tables without pkey (phil's schema3.myTbl2\).
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 66 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 67 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_groups(array['myGroup1','phil''s group#3",'], NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
 ERROR:  _gen_sql_groups: The tables group "phil's group#3"," contains tables without pkey (phil's schema3.myTbl2\).
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 66 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 67 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- invalid start mark
 select emaj.emaj_gen_sql_group('myGroup2', 'unknownMark', NULL, NULL);
 ERROR:  _gen_sql_groups: The start mark "unknownMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 80 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 81 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Mark11', NULL, NULL, NULL);
 ERROR:  _gen_sql_groups: The start mark "Mark11" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 80 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 81 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- invalid end mark
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'unknownMark', NULL);
 ERROR:  _gen_sql_groups: The end mark "unknownMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 86 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 87 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', NULL, 'Mark11', NULL);
 ERROR:  _gen_sql_groups: The end mark "Mark11" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 86 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 87 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- end mark is prior start mark
@@ -941,7 +941,7 @@ begin;
     where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'Mark22';
   select emaj.emaj_gen_sql_group('myGroup2', 'Mark22', 'Mark21', NULL);
 ERROR:  _gen_sql_groups: The start mark "Mark22" (Sat Jan 01 05:00:00 2000 PST) has been set after the end mark "Mark21" (Sat Jan 01 04:00:00 2000 PST).
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 122 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 123 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 rollback;
@@ -954,65 +954,65 @@ begin;
     where time_id = mark_time_id and mark_name = 'Multi-3';
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-3', 'Multi-2', NULL);
 ERROR:  _gen_sql_groups: The start mark "Multi-3" (Sat Jan 01 05:00:00 2000 PST) has been set after the end mark "Multi-2" (Sat Jan 01 04:00:00 2000 PST).
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 122 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 123 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 rollback;
 -- start mark with the same name but that doesn't correspond to the same point in time
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Mark21', 'Multi-2', NULL);
 ERROR:  _gen_sql_groups: The start mark "Mark21" does not represent the same point in time for all groups.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 94 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 95 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, 'Multi-2', NULL, NULL);
 ERROR:  _gen_sql_groups: The start mark "Mark21" does not represent the same point in time for all groups.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 94 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 95 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- end mark with the same name but that doesn't correspond to the same point in time
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Mark21', NULL);
 ERROR:  _gen_sql_groups: The end mark "Mark21" does not represent the same point in time for all groups.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 101 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 102 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- empty table/sequence names array
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile', array['']);
 ERROR:  _gen_sql_groups: The filtered table/sequence names array cannot be empty.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 47 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 48 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 -- unknown table/sequence names in the tables filter
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile', array['foo']);
 ERROR:  _gen_sql_groups: Some tables and/or sequences (foo) do not belong to any of the selected tables groups.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 134 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 135 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl1','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
 ERROR:  _gen_sql_groups: Some tables and/or sequences (myschema1.mytbl1, phil's schema3.phil's tbl1) do not belong to any of the selected tables groups.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 134 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 135 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl1','foo','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
 ERROR:  _gen_sql_groups: Some tables and/or sequences (foo, phil's schema3.phil's tbl1) do not belong to any of the selected tables groups.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 134 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 135 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- invalid location path name
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
 ERROR:  _gen_sql_groups: The file "<NULL>" cannot be used as script output file.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 143 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 144 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/unknownDirectory/myFile');
 ERROR:  _gen_sql_groups: The file "/tmp/unknownDirectory/myFile" cannot be used as script output file.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 143 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 144 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/unknownDirectory/myFile');
 ERROR:  _gen_sql_groups: The file "/tmp/unknownDirectory/myFile" cannot be used as script output file.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 143 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 144 at RAISE
 SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
 -- should be ok (generated files content is checked later in adm2.sql scenario)

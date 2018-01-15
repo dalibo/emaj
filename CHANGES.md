@@ -6,7 +6,8 @@ E-Maj - Change log
   * Adjust the behaviour of some functions that process past time frame,
     when tables have been removed from their group. Now
     emaj_delete_mark_group(), emaj_get_consolidable_rollbacks(), 
-    emaj_consolidate_rollback_group() and emaj_snap_log_group() functions take
+    emaj_consolidate_rollback_group(), emaj_snap_log_group(),
+    emaj_gen_sql_group() and emaj_gen_sql_groups() functions take
     into account the real group content on the time frame they process.
   * The emaj_snap_log_group() function now returns the number of generated
     files, and the generated file names are directly derived from log table
