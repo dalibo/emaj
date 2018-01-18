@@ -71,6 +71,9 @@ Pour qu'il reste au moins une marque après l'exécution de la fonction, la supp
 
 Si la marque supprimée est la première marque pour le groupe, les lignes devenues inutiles dans les tables de log sont supprimées.
 
+Si une table a été :ref:`détachée d’un groupe de tables<alter_logging_group>` et que la marque supprimée correspond à la dernière marque connue pour cette table, les logs couvrant l’intervalle de temps entre cette marque et la marque précédente sont effacés.
+
+
 .. _emaj_delete_before_mark_group:
 
 Suppression des marques les plus anciennes

@@ -46,6 +46,8 @@ Cette fonction permet notamment de déplacer une table ou une séquence d’un g
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`. 
 
+.. _alter_logging_group:
+
 Modification de groupes en état *LOGGING*
 -----------------------------------------
 
@@ -98,8 +100,8 @@ Néanmoins certaines actions sont possibles sur des groupes de tables maintenus 
 | Autres formes d’ALTER SEQUENCE      | Oui            | Sans impact E-Maj         |
 +-------------------------------------+----------------+---------------------------+
 
-Méthode "Modification emaj_group_def"
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Méthode "Ajustement emaj_group_def"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 La plupart des attributs de la table :ref:`emaj_group_def <emaj_group_def>` décrivant les groupes de tables peuvent être modifiés et pris en compte en dynamique, sans que les groupes de tables ne soient arrêtés.
 
@@ -126,5 +128,5 @@ Néanmoins, l’administrateur a la possibilité d’appliquer cette même proc�
 
 .. caution::
 
-	Quand une table ou une séquence est sortie de son groupe de tables, toute opération de rollback ultérieure sur ce groupe sera sans effet sur cet objet. Une fois la table ou la séquence applicative décrochée de son groupe de tables, elle peut être modifiée (*ALTER*) ou supprimée (*DROP*). Les historiques liés à l’objet (logs, trace des marques,...) sont conservés pour examen éventuel. Ils restent néanmoins associés à l'ancien groupe d'appartenance de l'objet et ne seront supprimés que par les opérations de :ref:`réinitialisation du groupe de tables <emaj_reset_group>` ou par les :ref:`suppressions des plus anciennes marques <emaj_delete_before_mark_group>` du groupe.
+	Quand une table ou une séquence est détachée de son groupe de tables, toute opération de rollback ultérieure sur ce groupe sera sans effet sur cet objet. Une fois la table ou la séquence applicative décrochée de son groupe de tables, elle peut être modifiée (*ALTER*) ou supprimée (*DROP*). Les historiques liés à l’objet (logs, trace des marques,...) sont conservés pour examen éventuel. Ils restent néanmoins associés à l'ancien groupe d'appartenance de l'objet. Pour éviter toute confusion, les tables de log sont renommées, avec l’ajout dans le nom d’un suffixe numérique. Ces logs et traces des marques ne seront supprimés que par les opérations de :ref:`réinitialisation du groupe de tables <emaj_reset_group>` ou par les :ref:`suppressions des plus anciennes marques <emaj_delete_before_mark_group>` du groupe.
 
