@@ -3,6 +3,15 @@ E-Maj - Change log
 <NEXT_VERSION>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+
+
+
+2.2.2 (2018-Jan-24)
+------
+###Enhancements:###
   * Adjust the behaviour of some functions that process past time frame,
     when tables have been removed from their group. Now
     emaj_delete_mark_group(), emaj_get_consolidable_rollbacks(), 
