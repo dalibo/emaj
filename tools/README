@@ -6,7 +6,8 @@ The tool directory contains several tools that may be essential or useful in E-M
 - check_code.pl is a perl script that performs various checks on the script that creates the emaj extension,
 - check_error_messages.pl is a perl script that analyzes how the non regression tests cover the error or warning messages coded in the E-Maj source file,
 - sync_fct_in_upgrade_script.pl is a perl script that generates the functions part of the upgrade scripts,
-- create_cluster.sh is a shell script that ... creates a postgres cluster
+- create_cluster.sh is a shell script that ... creates a postgres cluster,
+- create_version.sh helps in creating a new E-Maj version.
 
 regress.sh
 ----------
@@ -72,4 +73,12 @@ The create_cluster.sh shell script ... creates a postgres cluster. It drops a pr
 Customization:
 Line 5 to 10, five variables set the major and minor postgres version, the PGDATA directory, the directory containing the postgres binary files and the directory containting the current E-Maj components.
 Some SQL commands or postgresql.conf parameters may need to be adjusted.
+
+create_version.sh
+-----------------
+The create_version.sh shell script materializes a new E-Maj version. It takes a snapshot of the main emaj directory, by creating a parallel ne emaj-<version> directory that will be used to create the tar file of the version. The script has to be run with a bash command from the directory holding the main emaj directory.
+A single argument has to be supplied: the name of the new version to create (for instance: 3.1.0). In the new version directory, all components mentioning the <NEXT_VERSION> string are adapted to report the proper version identifier.
+
+Customization:
+No customization is needed for this script.
 

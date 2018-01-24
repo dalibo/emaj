@@ -1,9 +1,9 @@
 #! /bin/sh
 # create_version.sh 
 # Tool to create a new version from the un-versionned emaj environment
-# Usage:
-# 		cd ~/proj
-# 		bash emaj/tools/create_version <new_version>
+# Usage: (assuming the E-Maj project root directory is ~/proj/emaj)
+# 	cd ~/proj
+# 	bash emaj/tools/create_version <new_version> (where <new_version> is for instance: 3.1.0)
 #
 # If the operation has to be reverted:
 #   rm -Rf ~/proj/<new directory>
@@ -121,4 +121,3 @@
 # -----------------
 	echo "--> New version $NEW is ready."
 	echo "Don't forget to: git commit -am 'Setup the new $NEW version' on both environments..."
-
