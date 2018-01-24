@@ -111,10 +111,8 @@
 # Add a new entry in CHANGES.md
 	sed -i "3i<NEXT_VERSION>\n------\n###Enhancements:###\n\n\n###Bug fixes:###\n\n\n" CHANGES.md
 
-# create a new empty migration script
-	echo "--" >sql/emaj--$NEW--next_version.sql
-	echo "-- E-Maj: migration from $NEW to <NEXT_VERSION>" >>sql/emaj--$NEW--next_version.sql
-	echo "--" >>sql/emaj--$NEW--next_version.sql
+# create a new empty migration script, by copying and adjusting the upgrade script template
+    sed "s/<PREVIOUS_VERSION>/${NEW}/g" tools/emaj_upgrade.template >sql/emaj--$NEW--next_version.sql
 	git add sql/emaj--$NEW--next_version.sql
 
 	cd ..

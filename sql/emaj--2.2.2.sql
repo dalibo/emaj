@@ -1,5 +1,5 @@
 --
--- E-Maj : logs and rollbacks table updates : Version 2.2.1
+-- E-Maj : logs and rollbacks table updates : Version 2.2.2
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -497,7 +497,7 @@ $$Represents the structure of rows returned by the internal _verify_groups() fun
 -- Parameters                     --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','2.2.1');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','2.2.2');
 
 -- Other parameters are optional. They may be set by E-Maj administrators if needed.
 
@@ -1126,7 +1126,7 @@ $_drop_log_schemas$
   DECLARE
     r_schema                 RECORD;
   BEGIN
--- For each secondary index to drop,
+-- For each secondary schema to drop,
     FOR r_schema IN
         SELECT sch_name AS log_schema FROM emaj.emaj_schema                           -- the existing schemas
           WHERE sch_name <> 'emaj'
@@ -1507,14 +1507,15 @@ $_remove_tbl$
       EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
       EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
 -- ... drop the log function and the log sequence
+-- (but we keep the sequence related data in the emaj_sequence and the emaj_seq_hole tables)
       EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logFunction) || '() CASCADE';
       EXECUTE 'DROP SEQUENCE IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logSequence);
 -- ... register the end of the relation time frame, the log table and index names change, and reset the content of now useless columns
+-- (but keep the rel_log_sequence value: it will be needed later for _drop_tbl() for the emaj_sequence cleanup)
       UPDATE emaj.emaj_relation
         SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)'),
             rel_log_table = v_currentLogTable || v_namesSuffix , rel_log_index = v_currentLogIndex || v_namesSuffix,
-            rel_log_sequence = NULL, rel_log_function = NULL,
-            rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL
+            rel_log_function = NULL, rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -1545,7 +1546,9 @@ $_drop_tbl$
       EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
     END IF;
 -- delete the log function
-    EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
+    IF r_rel.rel_log_function IS NOT NULL THEN
+      EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
+    END IF;
 -- delete the sequence associated to the log table
     EXECUTE 'DROP SEQUENCE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence);
 -- delete the log table
@@ -1553,7 +1556,7 @@ $_drop_tbl$
 -- delete rows related to the log sequence from emaj_sequence table
     DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
 -- delete rows related to the table from emaj_seq_hole table
-    DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = quote_ident(r_rel.rel_schema) AND sqhl_table = quote_ident(r_rel.rel_tblseq);
+    DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq;
 -- and finaly delete the table reference from the emaj_relation table
     DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
     RETURN;
@@ -3497,12 +3500,20 @@ $_set_mark_groups$
     END LOOP;
 -- record the number of log rows for the old last mark of each group
 --   the statement updates no row in case of emaj_start_group(s)
-    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next =
-      coalesce(emaj._sum_log_stat_group(m.mark_group,emaj._get_mark_time_id(m.mark_group,'EMAJ_LAST_MARK'),NULL),0)
-      WHERE mark_group = ANY (v_groupNames)
-        AND (mark_group, mark_id) IN                   -- select only the last non deleted mark of each concerned group
-            (SELECT mark_group, MAX(mark_id) FROM emaj.emaj_mark
-             WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted GROUP BY mark_group);
+    WITH stat_group1 AS (                                               -- for each group, the mark id and time id of the last active mark
+      SELECT mark_group, max(mark_id) as last_mark_id, max(mark_time_id) AS last_mark_time_id
+        FROM emaj.emaj_mark
+        WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted
+        GROUP BY mark_group),
+         stat_group2 AS (                                               -- compute the number of log rows for all tables currently belonging to these groups
+      SELECT mark_group, last_mark_id, coalesce(
+          (SELECT sum(emaj._log_stat_tbl(emaj_relation, last_mark_time_id, NULL))
+             FROM emaj.emaj_relation
+             WHERE rel_group = mark_group AND rel_kind = 'r' AND upper_inf(rel_time_range)), 0) AS mark_stat
+        FROM stat_group1 )
+    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = mark_stat
+      FROM stat_group2 s
+      WHERE s.mark_group = m.mark_group AND s.last_mark_id = m.mark_id;
 -- for each table currently belonging to the groups, ...
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
@@ -3624,7 +3635,6 @@ $emaj_get_previous_mark_group$
 -- Output: mark name, or NULL if there is no mark before the given mark
   DECLARE
     v_realMark               TEXT;
-    v_markName               TEXT;
   BEGIN
 -- check that the group is recorded in emaj_group table
     PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
@@ -3637,6 +3647,24 @@ $emaj_get_previous_mark_group$
       RAISE EXCEPTION 'emaj_get_previous_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
 -- find the requested mark
+    RETURN emaj._get_previous_mark_group(v_groupName, v_realMark);
+  END;
+$emaj_get_previous_mark_group$;
+COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TEXT) IS
+$$Returns the latest mark name preceeding a given mark for a group.$$;
+
+CREATE OR REPLACE FUNCTION emaj._get_previous_mark_group(v_groupName TEXT, v_realMark TEXT)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_get_previous_mark_group$
+-- This function returns the name of the mark that immediately precedes a given mark for a group.
+-- The function can be called by both emaj_adm and emaj_viewer roles.
+-- Input: group name, mark name
+--   The mark name has already been checked and resolved if the keyword 'EMAJ_LAST_MARK' has been used by the user.
+-- Output: mark name, or NULL if there is no mark before the given mark
+  DECLARE
+    v_markName               TEXT;
+  BEGIN
+-- find the requested mark
     SELECT mark_name INTO v_markName FROM emaj.emaj_mark
       WHERE mark_group = v_groupName AND mark_time_id <
         (SELECT mark_time_id FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark)
@@ -3647,9 +3675,7 @@ $emaj_get_previous_mark_group$
       RETURN v_markName;
     END IF;
   END;
-$emaj_get_previous_mark_group$;
-COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TEXT) IS
-$$Returns the latest mark name preceeding a given mark for a group.$$;
+$_get_previous_mark_group$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_delete_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -3666,10 +3692,15 @@ $emaj_delete_mark_group$
   DECLARE
     v_realMark               TEXT;
     v_markId                 BIGINT;
-    v_MarkTimeId             BIGINT;
+    v_markTimeId             BIGINT;
+    v_previousMarkTimeId     BIGINT;
+    v_previousMarkName       TEXT;
+    v_previousMarkGlobalSeq  BIGINT;
     v_idNewMin               BIGINT;
     v_markNewMin             TEXT;
     v_cpt                    INT;
+    v_eventTriggers          TEXT[];
+    r_rel                    RECORD;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -3691,17 +3722,51 @@ $emaj_delete_mark_group$
       RAISE EXCEPTION 'emaj_delete_mark_group: "%" is the only mark of the group. It cannot be deleted.', v_mark;
     END IF;
 -- OK, now get the id and time stamp id of the mark to delete
-    SELECT mark_id, mark_time_id INTO v_markId, v_MarkTimeId
+    SELECT mark_id, mark_time_id INTO v_markId, v_markTimeId
       FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
 -- ... and the id and timestamp of the future first mark
     SELECT mark_id, mark_name INTO v_idNewMin, v_markNewMin
       FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_realMark ORDER BY mark_id LIMIT 1;
-    IF v_markId < v_idNewMin THEN
--- if the mark to delete is the first one, process its deletion with _delete_before_marks_group(), as the first rows of log tables become useless
-      PERFORM emaj._delete_before_marks_group(v_groupName, v_markNewMin);
+-- ... and the name, the time id and the last global sequence value of the previous mark
+    SELECT emaj._get_previous_mark_group(v_groupName, v_realMark) INTO v_previousMarkName;
+    SELECT mark_time_id, time_last_emaj_gid INTO v_previousMarkTimeId, v_previousMarkGlobalSeq
+      FROM emaj.emaj_mark, emaj.emaj_time_stamp WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_previousMarkName;
+-- effectively delete the mark for the group
+    IF v_previousMarkTimeId IS NULL THEN
+-- if the mark to delete is the first one, process its deletion with _delete_before_mark_group(), as the first rows of log tables become useless
+      PERFORM emaj._delete_before_mark_group(v_groupName, v_markNewMin);
     ELSE
--- otherwise, process its deletion with _delete_intermediate_mark_group()
-      PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_realMark, v_markId, v_MarkTimeId);
+-- otherwise, the mark to delete is an intermediate mark for the group
+-- process the mark deletion with _delete_intermediate_mark_group()
+      PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_realMark, v_markId, v_markTimeId);
+-- if, for any table or sequence, the mark to delete is the mark set at the time it was removed from the group,
+--   set the new end time id for them to the previous mark. If this is the only mark, remove any log traces for these tables or sequence.
+      SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+      FOR r_rel IN
+          SELECT rel_schema, rel_tblseq, rel_time_range, rel_kind, rel_log_schema, rel_log_table FROM emaj.emaj_relation
+            WHERE rel_group = v_groupName AND upper(rel_time_range) = v_markTimeId
+        LOOP
+        IF v_previousMarkTimeId > lower(r_rel.rel_time_range) THEN
+-- the previous mark is not the start of the time range for the relation
+-- for tables, the log table has to be shrinked, deleting the rows more recent than the new upper bound
+          IF r_rel.rel_kind = 'r' THEN
+            EXECUTE 'DELETE FROM ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) ||
+                    ' WHERE emaj_gid > ' || v_previousMarkGlobalSeq;
+          END IF;
+-- for tables and sequences, the time range upper bound is set to the new last mark for the relation
+          UPDATE emaj.emaj_relation SET rel_time_range = int8range(lower(rel_time_range), v_previousMarkTimeId, '[)')
+            WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+        ELSE
+-- the previous mark is the start of the time range for the relation, so simply drop it
+          EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' CASCADE';
+-- and finaly delete the relation slice from the emaj_relation table
+          DELETE FROM emaj.emaj_relation
+            WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+        END IF;
+      END LOOP;
+-- drop the secondary schemas that may have been emptied
+      PERFORM emaj._drop_log_schemas('DELETE_MARK_GROUP', FALSE);
+      PERFORM emaj._enable_event_triggers(v_eventTriggers);
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -3745,7 +3810,7 @@ $emaj_delete_before_mark_group$
       RAISE EXCEPTION 'emaj_delete_before_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
     END IF;
 -- effectively delete all marks before the supplied mark
-    SELECT emaj._delete_before_marks_group(v_groupName, v_realMark) INTO v_nbMark;
+    SELECT emaj._delete_before_mark_group(v_groupName, v_realMark) INTO v_nbMark;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('DELETE_BEFORE_MARK_GROUP', 'END', v_groupName,  v_nbMark || ' marks deleted ; ' || v_realMark || ' is now the initial mark' );
@@ -3755,9 +3820,9 @@ $emaj_delete_before_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_delete_before_mark_group(TEXT,TEXT) IS
 $$Deletes all marks preceeding a given mark for an E-Maj group.$$;
 
-CREATE OR REPLACE FUNCTION emaj._delete_before_marks_group(v_groupName TEXT, v_mark TEXT)
+CREATE OR REPLACE FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
-$_delete_before_marks_group$
+$_delete_before_mark_group$
 -- This function deletes all logs and marks set before a given mark.
 -- The function is called by the emaj_delete_before_mark_group(), emaj_delete_mark_group() functions.
 -- It deletes rows corresponding to the marks to delete from emaj_mark and emaj_sequence.
@@ -3842,7 +3907,7 @@ $_delete_before_marks_group$
     PERFORM emaj._purge_hist();
     RETURN v_nbMark;
   END;
-$_delete_before_marks_group$;
+$_delete_before_mark_group$;
 
 CREATE OR REPLACE FUNCTION emaj._delete_intermediate_mark_group(v_groupName TEXT, v_markName TEXT, v_markId BIGINT, v_markTimeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -3859,15 +3924,15 @@ $_delete_intermediate_mark_group$
     v_nextMarkTimeId         BIGINT;
   BEGIN
 -- delete the sequences related to the mark to delete
---   delete first data related to the application sequences currently belonging to the group
+--   delete first data related to the application sequences (those attached to the group at the set mark time)
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE sequ_time_id = v_markTimeId
-        AND upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'S'
+        AND rel_group = v_groupName AND rel_kind = 'S'
         AND sequ_schema = rel_schema AND sequ_name = rel_tblseq;
---   delete then data related to the log sequences for tables currently belonging to the group
+--   delete then data related to the log sequences for tables (those attached to the group at the set mark time)
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE sequ_time_id = v_markTimeId
-        AND upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'r'
+        AND rel_group = v_groupName AND rel_kind = 'r'
         AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence;
 -- physically delete the mark from emaj_mark
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_markName;
@@ -3883,8 +3948,12 @@ $_delete_intermediate_mark_group$
       UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
         WHERE mark_group = v_groupName AND mark_name = v_previousMark;
     ELSE
--- update the previous mark with the _sum_log_stat_group() call's result
-      UPDATE emaj.emaj_mark SET mark_log_rows_before_next = emaj._sum_log_stat_group(v_groupName, v_previousMarkTimeId, v_nextMarkTimeId)
+-- update the previous mark by computing the sum of _log_stat_tbl() call's result
+--   for all relations that belonged to the group at the time when the mark before the deleted mark had been set
+      UPDATE emaj.emaj_mark SET mark_log_rows_before_next =
+          (SELECT sum(emaj._log_stat_tbl(emaj_relation, v_previousMarkTimeId, v_nextMarkTimeId))
+             FROM emaj.emaj_relation
+             WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_previousMarkTimeId)
         WHERE mark_group = v_groupName AND mark_name = v_previousMark;
     END IF;
 -- reset the mark_logged_rlbk_target_mark column to null for other marks of the group
@@ -5411,8 +5480,8 @@ $_rlbk_error$
     v_stmt                   TEXT;
   BEGIN
     IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
-      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''ABORTED'', rlbk_messages = ''{"' || quote_literal(v_msg) ||
-               '"}'', rlbk_end_datetime =  clock_timestamp() ' ||
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = ''ABORTED'', rlbk_messages = ARRAY[' || quote_literal(v_msg) ||
+                '], rlbk_end_datetime =  clock_timestamp() ' ||
                'WHERE rlbk_id = ' || v_rlbkId || ' AND rlbk_status <> ''ABORTED'' RETURNING 1';
       PERFORM 0 FROM dblink(v_cnxName,v_stmt) AS (dummy INT);
     END IF;
@@ -5566,10 +5635,10 @@ $_delete_between_marks_group$
 -- delete rows from all log tables (no need to try to delete if v_firstMarkGlobalSeq and v_lastMarkGlobalSeq are equal)
     v_nbTbl = 0;
     IF v_firstMarkGlobalSeq < v_lastMarkGlobalSeq THEN
--- loop on all tables of the group
+-- loop on all tables that belonged to the group at the end of the period
       FOR r_rel IN
           SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name FROM emaj.emaj_relation
-            WHERE upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'r'
+            WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_lastMarkTimeId
             ORDER BY rel_priority, rel_schema, rel_tblseq
       LOOP
 -- delete log rows
@@ -5581,9 +5650,9 @@ $_delete_between_marks_group$
       END LOOP;
     END IF;
 -- process emaj_seq_hole content
--- delete all existing holes (if any) between both marks
+-- delete all existing holes (if any) between both marks for tables that belonged to the group at the end of the period
     DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
-      WHERE upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'r'
+      WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_lastMarkTimeId
         AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
         AND sqhl_begin_time_id >= v_firstMarkTimeId AND sqhl_begin_time_id < v_lastMarkTimeId;
 -- create holes representing the deleted logs
@@ -5597,7 +5666,7 @@ $_delete_between_marks_group$
              (SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM emaj.emaj_sequence
                 WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND sequ_time_id = v_firstMarkTimeId)
         FROM emaj.emaj_relation
-        WHERE upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'r'
+        WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_lastMarkTimeId
           AND 0 <
              (SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM emaj.emaj_sequence
                 WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND sequ_time_id = v_lastMarkTimeId)
@@ -5607,12 +5676,12 @@ $_delete_between_marks_group$
 -- now the sequences related to the mark to delete can be suppressed
 --   delete first application sequences related data for the group
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
-      WHERE upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'S'
+      WHERE rel_group = v_groupName AND rel_kind = 'S' AND rel_time_range @> v_lastMarkTimeId
         AND sequ_schema = rel_schema AND sequ_name = rel_tblseq
         AND sequ_time_id > v_firstMarkTimeId AND sequ_time_id < v_lastMarkTimeId;
 --   delete then emaj sequences related data for the group
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
-      WHERE upper_inf(rel_time_range) AND rel_group = v_groupName AND rel_kind = 'r'
+      WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_lastMarkTimeId
         AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence
         AND sequ_time_id > v_firstMarkTimeId AND sequ_time_id < v_lastMarkTimeId;
 -- in emaj_mark, reset the mark_logged_rlbk_target_mark column to null for marks of the group that will remain
@@ -5646,7 +5715,15 @@ $emaj_get_consolidable_rollbacks$
       SELECT m1.mark_group AS cons_group,
              m2.mark_name AS cons_target_rlbk_mark_name, m2.mark_id AS cons_target_rlbk_mark_id,
              m1.mark_name AS cons_end_rlbk_mark_name, m1.mark_id AS cons_end_rlbk_mark_id,
-             cast(coalesce(emaj._sum_log_stat_group(m1.mark_group, m2.mark_time_id, m1.mark_time_id),0) AS BIGINT) AS cons_rows,
+             cast(coalesce(
+                  (SELECT sum(emaj._log_stat_tbl(emaj_relation,
+                                                 -- the start mark = max(begin of the rollback time frame, time when the relation has been added to the group)
+                                                 CASE WHEN m2.mark_time_id > lower(rel_time_range) THEN m2.mark_time_id ELSE lower(rel_time_range) END,
+                                                 m1.mark_time_id))
+                     FROM emaj.emaj_relation
+                           -- for tables belonging to the group at the rollback time
+                     WHERE rel_group = m1.mark_group AND rel_kind = 'r' AND rel_time_range @> m1.mark_time_id)
+                          ,0) AS BIGINT) AS cons_rows,
              cast((SELECT count(*) FROM emaj.emaj_mark m3
                    WHERE m3.mark_group = m1.mark_group AND m3.mark_id > m2.mark_id AND m3.mark_id < m1.mark_id) AS INT) AS cons_marks
         FROM emaj.emaj_mark m1
@@ -5826,28 +5903,6 @@ $emaj_log_stat_group$
 $emaj_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_group(TEXT,TEXT,TEXT) IS
 $$Returns global statistics about logged events for an E-Maj group between 2 marks.$$;
-
-CREATE OR REPLACE FUNCTION emaj._sum_log_stat_group(v_groupName TEXT, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT)
-RETURNS BIGINT LANGUAGE plpgsql AS
-$_sum_log_stat_group$
--- This function the sum of row updates executed between 2 marks or between a mark and the current situation for a tables group.
--- It is used by several functions to set the mark_log_rows_before_next column of the emaj_mark table.
--- The sum is computed for each table of the group by calling the _log_stat_tbl() function.
--- Input: group name, the time id of both marks defining a time range
---   a NULL value as last_mark_time_id indicates the current situation
---   Checks on input values are performed in calling functions.
--- Output: sum of log rows for the group between both marks
-  BEGIN
--- Directly return 0 if the firstMarkTimeId is set to NULL (ie no mark exists for the group - just after emaj_create_group() or emaj_reset_group() functions call)
-    IF v_firstMarkTimeId IS NULL THEN
-      RETURN 0;
-    END IF;
--- for each table currently belonging to the group, add the number of log rows and return the sum
-    RETURN sum(emaj._log_stat_tbl(emaj_relation, v_firstMarkTimeId, v_lastMarkTimeId))
-      FROM emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper_inf(rel_time_range);
-  END;
-$_sum_log_stat_group$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
 RETURNS SETOF emaj.emaj_detailed_log_stat_type LANGUAGE plpgsql AS
@@ -6228,8 +6283,9 @@ $emaj_snap_log_group$
 -- This function creates a file for each log table belonging to the group.
 -- It also creates 2 files containing the state of sequences respectively at start mark and end mark
 -- For log tables, files contain all rows related to the time frame, sorted on emaj_gid.
--- For sequences, files are names <group>_sequences_at_<mark>, or <group>_sequences_at_<time> if no
---   end mark is specified. They contain one row per sequence.
+-- For sequences, files are names <group>_sequences_at_<mark>, or <group>_sequences_at_<time> if no end mark is specified.
+--   They contain one row per sequence belonging to the group at the related time
+--   (a sequence may belong to a group at the start mark time and not at the end mark time for instance).
 -- To do its job, the function performs COPY TO statement, using the options provided by the caller.
 -- There is no need for the group not to be logging.
 -- As all COPY statements are executed inside a single transaction:
@@ -6244,10 +6300,10 @@ $emaj_snap_log_group$
 --   a NULL value or an empty string as first_mark indicates the first recorded mark
 --   a NULL value or an empty string can be used as last_mark indicating the current state
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
--- Output: number of processed tables and sequences
+-- Output: number of generated files (for tables and sequences, including the _INFO file)
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it.
   DECLARE
-    v_nbTb                   INT = 0;
+    v_nbFile                 INT = 3;        -- start with 3 = 2 files for sequences + _INFO
     r_tblsq                  RECORD;
     v_realFirstMark          TEXT;
     v_realLastMark           TEXT;
@@ -6328,25 +6384,21 @@ $emaj_snap_log_group$
     IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
       v_conditions = v_conditions || ' AND emaj_gid <= '|| v_lastEmajGid;
     END IF;
--- process all log tables of the emaj_relation table
+-- process all log tables of the emaj_relation table that enter in the marks range
     FOR r_tblsq IN
-        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind, rel_log_schema, rel_log_table FROM emaj.emaj_relation
-          WHERE upper_inf(rel_time_range) AND rel_group = v_groupName
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_table FROM emaj.emaj_relation
+          WHERE rel_time_range && int8range(v_firstMarkTsId, v_lastMarkTsId,'[)') AND rel_group = v_groupName AND rel_kind = 'r'
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
-      IF r_tblsq.rel_kind = 'r' THEN
--- process tables
 --   build names
-        v_fileName = v_dir || '/' || r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '_log.snap';
-        v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
+      v_fileName = v_dir || '/' || r_tblsq.rel_log_table || '.snap';
+      v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
 --   prepare the execute the COPY statement
-        v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions
-             || ' ORDER BY emaj_gid ASC) TO ' || quote_literal(v_fileName)
-             || ' ' || coalesce (v_copyOptions, '');
-        EXECUTE v_stmt;
-      END IF;
--- for sequences, just adjust the counter
-      v_nbTb = v_nbTb + 1;
+      v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions
+           || ' ORDER BY emaj_gid ASC) TO ' || quote_literal(v_fileName)
+           || ' ' || coalesce (v_copyOptions, '');
+      EXECUTE v_stmt;
+      v_nbFile = v_nbFile + 1;
     END LOOP;
 -- generate the file for sequences state at start mark
     v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_realFirstMark;
@@ -6354,8 +6406,7 @@ $emaj_snap_log_group$
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_time_id = ' || quote_literal(v_firstMarkTsId) || ' AND ' ||
-            ' upper_inf(rel_time_range) AND rel_kind = ''S'' AND ' ||
-            ' rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
             coalesce (v_copyOptions, '');
@@ -6370,8 +6421,7 @@ $emaj_snap_log_group$
     v_stmt= 'COPY (SELECT emaj_sequence.*' ||
             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
             ' WHERE sequ_time_id = ' || quote_literal(v_lastMarkTsId) || ' AND ' ||
-            ' upper_inf(rel_time_range) AND rel_kind = ''S'' AND ' ||
-            ' rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
             ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
             coalesce (v_copyOptions, '');
@@ -6389,8 +6439,8 @@ $emaj_snap_log_group$
             ') TO ' || quote_literal(v_dir || '/_INFO') || ' ' || coalesce (v_copyOptions, '');
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('SNAP_LOG_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
-    RETURN v_nbTb;
+      VALUES ('SNAP_LOG_GROUP', 'END', v_groupName, v_nbFile || ' generated files');
+    RETURN v_nbFile;
   END;
 $emaj_snap_log_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
@@ -6499,6 +6549,7 @@ $_gen_sql_groups$
     v_fullSeqName            TEXT;
     v_endComment             TEXT;
     v_conditions             TEXT;
+    v_endTimeId              BIGINT;
     v_rqSeq                  TEXT;
     r_tblsq                  RECORD;
     r_rel                    emaj.emaj_relation%ROWTYPE;
@@ -6595,7 +6646,7 @@ $_gen_sql_groups$
         SELECT t FROM unnest(v_tblseqs) AS t
           EXCEPT
         SELECT rel_schema || '.' || rel_tblseq FROM emaj.emaj_relation
-          WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames)
+          WHERE rel_time_range @> v_firstMarkTimeId AND rel_group = ANY (v_groupNames)    -- tables/sequences that belong to their group at the start mark time
         ) AS t2;
       IF v_tblseqErr IS NOT NULL THEN
         RAISE EXCEPTION '_gen_sql_groups: Some tables and/or sequences (%) do not belong to any of the selected tables groups.', v_tblseqErr;
@@ -6626,9 +6677,11 @@ $_gen_sql_groups$
     END IF;
     FOR r_rel IN
         SELECT * FROM emaj.emaj_relation
-          WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r' -- tables currently belonging to the groups
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                               -- tables belonging to the groups
+            AND rel_time_range @> v_firstMarkTimeId                                             --   at the first mark time
             AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))        -- filtered or not by the user
-            AND emaj._log_stat_tbl(emaj_relation, v_firstMarkTimeId, v_lastMarkTimeId) > 0      -- only tables having updates to process
+           AND emaj._log_stat_tbl(emaj_relation, v_firstMarkTimeId,                             -- only tables having updates to process
+                                  CASE WHEN v_lastMarkTimeId < upper(rel_time_range) THEN v_lastMarkTimeId ELSE upper(rel_time_range) END) > 0
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 -- process the application table, by calling the _gen_sql_tbl function
@@ -6638,14 +6691,15 @@ $_gen_sql_groups$
 -- process sequences
     v_nbSeq = 0;
     FOR r_tblsq IN
-        SELECT rel_priority, rel_schema, rel_tblseq FROM emaj.emaj_relation
-          WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S' -- sequences currently belonging to the groups
-            AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))        -- filtered or not by the user
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_time_range FROM emaj.emaj_relation
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
+            AND rel_time_range @> v_firstMarkTimeId                                              -- sequences belonging to the groups at the start mark
+            AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))         -- filtered or not by the user
           ORDER BY rel_priority DESC, rel_schema DESC, rel_tblseq DESC
         LOOP
       v_fullSeqName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-      IF v_lastMarkTimeId IS NULL THEN
--- no supplied last mark, so get current sequence characteritics
+      IF v_lastMarkTimeId IS NULL AND upper_inf(r_tblsq.rel_time_range) THEN
+-- no supplied last mark and the sequence currently belongs to its group, so get current sequence characteritics
         IF emaj._pg_version_num() < 100000 THEN
           EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
                   || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
@@ -6655,15 +6709,17 @@ $_gen_sql_groups$
                   || ''' || '' RESTART '' || CASE WHEN rel.is_called THEN rel.last_value + increment_by ELSE rel.last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_size || CASE WHEN NOT cycle THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
                  || 'FROM ' || v_fullSeqName  || ' rel, pg_catalog.pg_sequences ' ||
                 ' WHERE schemaname = ' || quote_literal(r_tblsq.rel_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_tblseq) INTO v_rqSeq;
-      END IF;
+        END IF;
       ELSE
--- a last mark is supplied, so get sequence characteristics from emaj_sequence table
+-- a last mark is supplied, or the sequence does not belong to its groupe anymore, so get sequence characteristics from the emaj_sequence table
+        v_endTimeId = CASE WHEN upper_inf(r_tblsq.rel_time_range) OR v_lastMarkTimeId < upper(r_tblsq.rel_time_range) THEN v_lastMarkTimeId
+                           ELSE upper(r_tblsq.rel_time_range) END;
         EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
                || ''' || '' RESTART '' || CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END || '' START '' || sequ_start_val || '' INCREMENT '' || sequ_increment  || '' MAXVALUE '' || sequ_max_val  || '' MINVALUE '' || sequ_min_val || '' CACHE '' || sequ_cache_val || CASE WHEN NOT sequ_is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
                || 'FROM emaj.emaj_sequence '
                || 'WHERE sequ_schema = ' || quote_literal(r_tblsq.rel_schema)
                || '  AND sequ_name = ' || quote_literal(r_tblsq.rel_tblseq)
-               || '  AND sequ_time_id = ' || v_lastMarkTimeId INTO v_rqSeq;
+               || '  AND sequ_time_id = ' || v_endTimeId INTO v_rqSeq;
       END IF;
 -- insert into temp table
       v_nbSeq = v_nbSeq + 1;
@@ -7324,7 +7380,7 @@ CREATE OR REPLACE FUNCTION emaj._disable_event_triggers()
 $_disable_event_triggers$
 -- This function disables all known E-Maj event triggers that are in enabled state.
 -- The function is called by functions that alter or drop E-Maj components, such as
---   _drop_groups(), _alter_groups(), _delete_before_marks_group() and _reset_groups().
+--   _drop_groups(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
 -- It is also called by the user emaj_disable_event_triggers_protection() function.
 -- Output: array of effectively disabled event trigger names. It can be reused as input when calling _enable_event_triggers()
   DECLARE
@@ -7352,7 +7408,7 @@ CREATE OR REPLACE FUNCTION emaj._enable_event_triggers(v_eventTriggers TEXT[])
 $_enable_event_triggers$
 -- This function enables all event triggers supplied as parameter
 -- The function is called by functions that alter or drop E-Maj components, such as
---   _drop_groups(), _alter_groups(), _delete_before_marks_group() and _reset_groups().
+--   _drop_groups(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
 -- It is also called by the user emaj_enable_event_triggers_protection() function.
 -- Input: array of event trigger names to enable
 -- Output: same array
@@ -7409,13 +7465,13 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_firstMa
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._get_previous_mark_group(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_check(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN, isRollbackSimulation BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_planning(v_rlbkId INT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rlbk_set_batch_number(v_rlbkId INT, v_batchNumber INT, v_schema TEXT, v_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_cleanup_rollback_state() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._cleanup_rollback_state() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._sum_log_stat_group(v_groupName TEXT, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(v_groupName TEXT, v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;
@@ -7461,7 +7517,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_mark_mark_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
 -- insert the init record into the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 2.2.1', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 2.2.2', 'Initialisation completed');
 -- insert the emaj schema into the emaj_schema table
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 

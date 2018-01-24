@@ -1,5 +1,5 @@
 --
--- E-Maj: migration from 2.2.2 to <NEXT_VERSON>
+-- E-Maj: migration from <PREVIOUS_VERSION> to <NEXT_VERSON>
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -29,10 +29,10 @@ $do$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current user (%) is not a superuser.', current_user;
     END IF;
--- the emaj version registered in emaj_param must be '2.2.2'
+-- the emaj version registered in emaj_param must be '<PREVIOUS_VERSION>'
     SELECT param_value_text INTO v_emajVersion FROM emaj.emaj_param WHERE param_key = 'emaj_version';
-    IF v_emajVersion <> '2.2.2' THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not 2.2.2',v_emajVersion;
+    IF v_emajVersion <> '<PREVIOUS_VERSION>' THEN
+      RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not <PREVIOUS_VERSION>',v_emajVersion;
     END IF;
 -- the installed postgres version must be at least 9.2
     IF current_setting('server_version_num')::int < 90200 THEN
@@ -82,13 +82,7 @@ SELECT emaj._disable_event_triggers();
 
 
 --<begin_functions>                              pattern used by the tool that extracts and insert the functions definition
-------------------------------------------------------------------
--- drop obsolete functions or functions with modified interface --
-------------------------------------------------------------------
 
-------------------------------------------------------------------
--- create new or modified functions                             --
-------------------------------------------------------------------
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --
@@ -155,7 +149,7 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
 UPDATE emaj.emaj_param SET param_value_text = '<NEXT_VERSON>' WHERE param_key = 'emaj_version';
 
 -- insert the upgrade record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSON>', 'Upgrade from 2.2.2 completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSON>', 'Upgrade from <PREVIOUS_VERSION> completed');
 
 -- post installation checks
 DO
