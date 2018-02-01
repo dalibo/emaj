@@ -113,15 +113,19 @@ primary key, btree, for table "emaj.emaj_alter_plan"
  cons_rows                  | bigint  |           |          | 
  cons_marks                 | integer |           |          | 
 
-          Composite type "emaj.emaj_detailed_log_stat_type"
-   Column    |         Type          | Collation | Nullable | Default 
--------------+-----------------------+-----------+----------+---------
- stat_group  | text                  |           |          | 
- stat_schema | text                  |           |          | 
- stat_table  | text                  |           |          | 
- stat_role   | character varying(32) |           |          | 
- stat_verb   | character varying(6)  |           |          | 
- stat_rows   | bigint                |           |          | 
+                  Composite type "emaj.emaj_detailed_log_stat_type"
+          Column          |           Type           | Collation | Nullable | Default 
+--------------------------+--------------------------+-----------+----------+---------
+ stat_group               | text                     |           |          | 
+ stat_schema              | text                     |           |          | 
+ stat_table               | text                     |           |          | 
+ stat_first_mark          | text                     |           |          | 
+ stat_first_mark_datetime | timestamp with time zone |           |          | 
+ stat_last_mark           | text                     |           |          | 
+ stat_last_mark_datetime  | timestamp with time zone |           |          | 
+ stat_role                | character varying(32)    |           |          | 
+ stat_verb                | character varying(6)     |           |          | 
+ stat_rows                | bigint                   |           |          | 
 
                        Sequence "emaj.emaj_global_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -212,13 +216,17 @@ Owned by: emaj.emaj_hist.hist_id
  hist_id | bigint | hist_id
 primary key, btree, for table "emaj.emaj_hist"
 
-       Composite type "emaj.emaj_log_stat_type"
-   Column    |  Type  | Collation | Nullable | Default 
--------------+--------+-----------+----------+---------
- stat_group  | text   |           |          | 
- stat_schema | text   |           |          | 
- stat_table  | text   |           |          | 
- stat_rows   | bigint |           |          | 
+                       Composite type "emaj.emaj_log_stat_type"
+          Column          |           Type           | Collation | Nullable | Default 
+--------------------------+--------------------------+-----------+----------+---------
+ stat_group               | text                     |           |          | 
+ stat_schema              | text                     |           |          | 
+ stat_table               | text                     |           |          | 
+ stat_first_mark          | text                     |           |          | 
+ stat_first_mark_datetime | timestamp with time zone |           |          | 
+ stat_last_mark           | text                     |           |          | 
+ stat_last_mark_datetime  | timestamp with time zone |           |          | 
+ stat_rows                | bigint                   |           |          | 
 
                                              Table "emaj.emaj_mark"
             Column            |  Type   | Collation | Nullable |                     Default                     
@@ -234,9 +242,16 @@ primary key, btree, for table "emaj.emaj_hist"
  mark_logged_rlbk_target_mark | text    |           |          | 
 Indexes:
     "emaj_mark_pkey" PRIMARY KEY, btree (mark_group, mark_name)
+    "emaj_mark_idx1" btree (mark_time_id)
 Foreign-key constraints:
     "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+
+     Index "emaj.emaj_mark_idx1"
+    Column    |  Type  |  Definition  
+--------------+--------+--------------
+ mark_time_id | bigint | mark_time_id
+btree, for table "emaj.emaj_mark"
 
                     Sequence "emaj.emaj_mark_mark_id_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 

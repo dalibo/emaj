@@ -179,25 +179,25 @@ ERROR:  emaj_log_stat_group: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 22 at RAISE
 select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
 ERROR:  emaj_detailed_log_stat_group: The group "<NULL>" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 27 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 32 at RAISE
 select * from emaj.emaj_detailed_log_stat_group('unknownGroup',NULL,NULL);
 ERROR:  emaj_detailed_log_stat_group: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 27 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 32 at RAISE
 -- invalid marks
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  emaj_log_stat_group: The start mark "dummyStartMark" is unknown for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 36 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 35 at RAISE
 select * from emaj.emaj_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  emaj_log_stat_group: The end mark "dummyEndMark" is unknown for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 46 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 45 at RAISE
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  emaj_detailed_log_stat_group: The start mark "dummyStartMark" is unknown for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 34 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 45 at RAISE
 select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  emaj_detailed_log_stat_group: The end mark "dummyEndMark" is unknown for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 61 at RAISE
 -- start mark > end mark
--- just check the error is trapped, because the error message contents timestamps
+-- just check the error is trapped, because the error message contains timestamps
 create function test_log(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) returns void language plpgsql as 
 $$
 begin
@@ -234,189 +234,197 @@ NOTICE:  Error trapped on emaj_detailed_log_stat_group() call
 
 drop function test_log(text,text,text);
 -- should be ok
-select * from emaj.emaj_log_stat_group('myGroup2',NULL,NULL)
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2',NULL,NULL)
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
- myGroup2   | myschema2   | mytbl1     |     10700
- myGroup2   | myschema2   | mytbl2     |       900
- myGroup2   | myschema2   | myTbl3     |        10
- myGroup2   | myschema2   | mytbl4     |       100
- myGroup2   | myschema2   | mytbl5     |         0
- myGroup2   | myschema2   | mytbl6     |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                |     10700
+ myGroup2   | myschema2   | mytbl2     | Mark21          |                |       900
+ myGroup2   | myschema2   | myTbl3     | Mark21          |                |        10
+ myGroup2   | myschema2   | mytbl4     | Mark21          |                |       100
+ myGroup2   | myschema2   | mytbl5     | Mark21          |                |         0
+ myGroup2   | myschema2   | mytbl6     | Mark21          |                |         0
 (6 rows)
 
-select * from emaj.emaj_log_stat_group('myGroup2','','')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','','')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
- myGroup2   | myschema2   | mytbl1     |     10700
- myGroup2   | myschema2   | mytbl2     |       900
- myGroup2   | myschema2   | myTbl3     |        10
- myGroup2   | myschema2   | mytbl4     |       100
- myGroup2   | myschema2   | mytbl5     |         0
- myGroup2   | myschema2   | mytbl6     |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                |     10700
+ myGroup2   | myschema2   | mytbl2     | Mark21          |                |       900
+ myGroup2   | myschema2   | myTbl3     | Mark21          |                |        10
+ myGroup2   | myschema2   | mytbl4     | Mark21          |                |       100
+ myGroup2   | myschema2   | mytbl5     | Mark21          |                |         0
+ myGroup2   | myschema2   | mytbl6     | Mark21          |                |         0
 (6 rows)
 
-select * from emaj.emaj_log_stat_group('myGroup2','Mark21',NULL)
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark21',NULL)
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
- myGroup2   | myschema2   | mytbl1     |     10700
- myGroup2   | myschema2   | mytbl2     |       900
- myGroup2   | myschema2   | myTbl3     |        10
- myGroup2   | myschema2   | mytbl4     |       100
- myGroup2   | myschema2   | mytbl5     |         0
- myGroup2   | myschema2   | mytbl6     |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                |     10700
+ myGroup2   | myschema2   | mytbl2     | Mark21          |                |       900
+ myGroup2   | myschema2   | myTbl3     | Mark21          |                |        10
+ myGroup2   | myschema2   | mytbl4     | Mark21          |                |       100
+ myGroup2   | myschema2   | mytbl5     | Mark21          |                |         0
+ myGroup2   | myschema2   | mytbl6     | Mark21          |                |         0
 (6 rows)
 
-select * from emaj.emaj_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
- myGroup2   | myschema2   | mytbl1     |     10700
- myGroup2   | myschema2   | mytbl2     |       900
- myGroup2   | myschema2   | myTbl3     |        10
- myGroup2   | myschema2   | mytbl4     |       100
- myGroup2   | myschema2   | mytbl5     |         0
- myGroup2   | myschema2   | mytbl6     |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Multi-3        |     10700
+ myGroup2   | myschema2   | mytbl2     | Mark21          | Multi-3        |       900
+ myGroup2   | myschema2   | myTbl3     | Mark21          | Multi-3        |        10
+ myGroup2   | myschema2   | mytbl4     | Mark21          | Multi-3        |       100
+ myGroup2   | myschema2   | mytbl5     | Mark21          | Multi-3        |         0
+ myGroup2   | myschema2   | mytbl6     | Mark21          | Multi-3        |         0
 (6 rows)
 
-select * from emaj.emaj_log_stat_group('myGroup2',NULL,'Mark22')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2',NULL,'Mark22')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
- myGroup2   | myschema2   | mytbl1     |     10700
- myGroup2   | myschema2   | mytbl2     |       900
- myGroup2   | myschema2   | myTbl3     |         0
- myGroup2   | myschema2   | mytbl4     |         0
- myGroup2   | myschema2   | mytbl5     |         0
- myGroup2   | myschema2   | mytbl6     |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Mark22         |     10700
+ myGroup2   | myschema2   | mytbl2     | Mark21          | Mark22         |       900
+ myGroup2   | myschema2   | myTbl3     | Mark21          | Mark22         |         0
+ myGroup2   | myschema2   | mytbl4     | Mark21          | Mark22         |         0
+ myGroup2   | myschema2   | mytbl5     | Mark21          | Mark22         |         0
+ myGroup2   | myschema2   | mytbl6     | Mark21          | Mark22         |         0
 (6 rows)
 
-select * from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark22')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark22')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
- myGroup2   | myschema2   | mytbl1     |         0
- myGroup2   | myschema2   | mytbl2     |         0
- myGroup2   | myschema2   | myTbl3     |         0
- myGroup2   | myschema2   | mytbl4     |         0
- myGroup2   | myschema2   | mytbl5     |         0
- myGroup2   | myschema2   | mytbl6     |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark22          | Mark22         |         0
+ myGroup2   | myschema2   | mytbl2     | Mark22          | Mark22         |         0
+ myGroup2   | myschema2   | myTbl3     | Mark22          | Mark22         |         0
+ myGroup2   | myschema2   | mytbl4     | Mark22          | Mark22         |         0
+ myGroup2   | myschema2   | mytbl5     | Mark22          | Mark22         |         0
+ myGroup2   | myschema2   | mytbl6     | Mark22          | Mark22         |         0
 (6 rows)
 
-select * from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark23')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark23')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
- myGroup2   | myschema2   | mytbl1     |         0
- myGroup2   | myschema2   | mytbl2     |         0
- myGroup2   | myschema2   | myTbl3     |        10
- myGroup2   | myschema2   | mytbl4     |       100
- myGroup2   | myschema2   | mytbl5     |         0
- myGroup2   | myschema2   | mytbl6     |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark22          | Mark23         |         0
+ myGroup2   | myschema2   | mytbl2     | Mark22          | Mark23         |         0
+ myGroup2   | myschema2   | myTbl3     | Mark22          | Mark23         |        10
+ myGroup2   | myschema2   | mytbl4     | Mark22          | Mark23         |       100
+ myGroup2   | myschema2   | mytbl5     | Mark22          | Mark23         |         0
+ myGroup2   | myschema2   | mytbl6     | Mark22          | Mark23         |         0
 (6 rows)
 
-select * from emaj.emaj_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
- myGroup2   | myschema2   | mytbl1     |         0
- myGroup2   | myschema2   | mytbl2     |         0
- myGroup2   | myschema2   | myTbl3     |         0
- myGroup2   | myschema2   | mytbl4     |         0
- myGroup2   | myschema2   | mytbl5     |         0
- myGroup2   | myschema2   | mytbl6     |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup2   | myschema2   | mytbl1     | Multi-3         |                |         0
+ myGroup2   | myschema2   | mytbl2     | Multi-3         |                |         0
+ myGroup2   | myschema2   | myTbl3     | Multi-3         |                |         0
+ myGroup2   | myschema2   | mytbl4     | Multi-3         |                |         0
+ myGroup2   | myschema2   | mytbl5     | Multi-3         |                |         0
+ myGroup2   | myschema2   | mytbl6     | Multi-3         |                |         0
 (6 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL)
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL)
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl1     | postgres  | DELETE    |       100
- myGroup2   | myschema2   | mytbl1     | postgres  | INSERT    |     10100
- myGroup2   | myschema2   | mytbl1     | postgres  | UPDATE    |       500
- myGroup2   | myschema2   | mytbl2     | postgres  | INSERT    |       900
- myGroup2   | myschema2   | myTbl3     | postgres  | INSERT    |        10
- myGroup2   | myschema2   | mytbl4     | postgres  | INSERT    |       100
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                | postgres  | DELETE    |       100
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                | postgres  | INSERT    |     10100
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                | postgres  | UPDATE    |       500
+ myGroup2   | myschema2   | mytbl2     | Mark21          |                | postgres  | INSERT    |       900
+ myGroup2   | myschema2   | myTbl3     | Mark21          |                | postgres  | INSERT    |        10
+ myGroup2   | myschema2   | mytbl4     | Mark21          |                | postgres  | INSERT    |       100
 (6 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','','')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','','')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl1     | postgres  | DELETE    |       100
- myGroup2   | myschema2   | mytbl1     | postgres  | INSERT    |     10100
- myGroup2   | myschema2   | mytbl1     | postgres  | UPDATE    |       500
- myGroup2   | myschema2   | mytbl2     | postgres  | INSERT    |       900
- myGroup2   | myschema2   | myTbl3     | postgres  | INSERT    |        10
- myGroup2   | myschema2   | mytbl4     | postgres  | INSERT    |       100
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                | postgres  | DELETE    |       100
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                | postgres  | INSERT    |     10100
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                | postgres  | UPDATE    |       500
+ myGroup2   | myschema2   | mytbl2     | Mark21          |                | postgres  | INSERT    |       900
+ myGroup2   | myschema2   | myTbl3     | Mark21          |                | postgres  | INSERT    |        10
+ myGroup2   | myschema2   | mytbl4     | Mark21          |                | postgres  | INSERT    |       100
 (6 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',NULL)
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',NULL)
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl1     | postgres  | DELETE    |       100
- myGroup2   | myschema2   | mytbl1     | postgres  | INSERT    |     10100
- myGroup2   | myschema2   | mytbl1     | postgres  | UPDATE    |       500
- myGroup2   | myschema2   | mytbl2     | postgres  | INSERT    |       900
- myGroup2   | myschema2   | myTbl3     | postgres  | INSERT    |        10
- myGroup2   | myschema2   | mytbl4     | postgres  | INSERT    |       100
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                | postgres  | DELETE    |       100
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                | postgres  | INSERT    |     10100
+ myGroup2   | myschema2   | mytbl1     | Mark21          |                | postgres  | UPDATE    |       500
+ myGroup2   | myschema2   | mytbl2     | Mark21          |                | postgres  | INSERT    |       900
+ myGroup2   | myschema2   | myTbl3     | Mark21          |                | postgres  | INSERT    |        10
+ myGroup2   | myschema2   | mytbl4     | Mark21          |                | postgres  | INSERT    |       100
 (6 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl1     | postgres  | DELETE    |       100
- myGroup2   | myschema2   | mytbl1     | postgres  | INSERT    |     10100
- myGroup2   | myschema2   | mytbl1     | postgres  | UPDATE    |       500
- myGroup2   | myschema2   | mytbl2     | postgres  | INSERT    |       900
- myGroup2   | myschema2   | myTbl3     | postgres  | INSERT    |        10
- myGroup2   | myschema2   | mytbl4     | postgres  | INSERT    |       100
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Multi-3        | postgres  | DELETE    |       100
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Multi-3        | postgres  | INSERT    |     10100
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Multi-3        | postgres  | UPDATE    |       500
+ myGroup2   | myschema2   | mytbl2     | Mark21          | Multi-3        | postgres  | INSERT    |       900
+ myGroup2   | myschema2   | myTbl3     | Mark21          | Multi-3        | postgres  | INSERT    |        10
+ myGroup2   | myschema2   | mytbl4     | Mark21          | Multi-3        | postgres  | INSERT    |       100
 (6 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'Mark22')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'Mark22')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl1     | postgres  | DELETE    |       100
- myGroup2   | myschema2   | mytbl1     | postgres  | INSERT    |     10100
- myGroup2   | myschema2   | mytbl1     | postgres  | UPDATE    |       500
- myGroup2   | myschema2   | mytbl2     | postgres  | INSERT    |       900
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Mark22         | postgres  | DELETE    |       100
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Mark22         | postgres  | INSERT    |     10100
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Mark22         | postgres  | UPDATE    |       500
+ myGroup2   | myschema2   | mytbl2     | Mark21          | Mark22         | postgres  | INSERT    |       900
 (4 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark22')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark22')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
 (0 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark23')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark23')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup2   | myschema2   | myTbl3     | postgres  | INSERT    |        10
- myGroup2   | myschema2   | mytbl4     | postgres  | INSERT    |       100
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | myTbl3     | Mark22          | Mark23         | postgres  | INSERT    |        10
+ myGroup2   | myschema2   | mytbl4     | Mark22          | Mark23         | postgres  | INSERT    |       100
 (2 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
   order by stat_group, stat_schema, stat_table;
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
 (0 rows)
 
 -- empty group
 select * from emaj.emaj_log_stat_group('emptyGroup',NULL,NULL);
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_datetime | stat_last_mark | stat_last_mark_datetime | stat_rows 
+------------+-------------+------------+-----------------+--------------------------+----------------+-------------------------+-----------
 (0 rows)
 
 select * from emaj.emaj_detailed_log_stat_group('emptyGroup',NULL,NULL);
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_datetime | stat_last_mark | stat_last_mark_datetime | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+--------------------------+----------------+-------------------------+-----------+-----------+-----------
 (0 rows)
 
 -- groups without any mark
@@ -434,18 +442,18 @@ begin;
 (1 row)
 
   select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
- myGroup1   | myschema1   | myTbl3     |         0
- myGroup1   | myschema1   | mytbl1     |         0
- myGroup1   | myschema1   | mytbl4     |         0
- myGroup1   | myschema1   | mytbl2     |         0
- myGroup1   | myschema1   | mytbl2b    |         0
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_datetime | stat_last_mark | stat_last_mark_datetime | stat_rows 
+------------+-------------+------------+-----------------+--------------------------+----------------+-------------------------+-----------
+ myGroup1   | myschema1   | mytbl1     |                 |                          |                |                         |         0
+ myGroup1   | myschema1   | mytbl2     |                 |                          |                |                         |         0
+ myGroup1   | myschema1   | mytbl2b    |                 |                          |                |                         |         0
+ myGroup1   | myschema1   | myTbl3     |                 |                          |                |                         |         0
+ myGroup1   | myschema1   | mytbl4     |                 |                          |                |                         |         0
 (5 rows)
 
   select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_datetime | stat_last_mark | stat_last_mark_datetime | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+--------------------------+----------------+-------------------------+-----------+-----------+-----------
 (0 rows)
 
 rollback;
@@ -1084,15 +1092,16 @@ select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup
 (1 row)
 
 -- should be ok, with tables and sequences filtering
-select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl1     | postgres  | DELETE    |       100
- myGroup2   | myschema2   | mytbl1     | postgres  | INSERT    |     10100
- myGroup2   | myschema2   | mytbl1     | postgres  | UPDATE    |       500
- myGroup2   | myschema2   | mytbl2     | postgres  | INSERT    |       900
- myGroup2   | myschema2   | myTbl3     | postgres  | INSERT    |        10
- myGroup2   | myschema2   | mytbl4     | postgres  | INSERT    |       100
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Multi-3        | postgres  | DELETE    |       100
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Multi-3        | postgres  | INSERT    |     10100
+ myGroup2   | myschema2   | mytbl1     | Mark21          | Multi-3        | postgres  | UPDATE    |       500
+ myGroup2   | myschema2   | mytbl2     | Mark21          | Multi-3        | postgres  | INSERT    |       900
+ myGroup2   | myschema2   | myTbl3     | Mark21          | Multi-3        | postgres  | INSERT    |        10
+ myGroup2   | myschema2   | mytbl4     | Mark21          | Multi-3        | postgres  | INSERT    |       100
 (6 rows)
 
 -- all tables and sequences

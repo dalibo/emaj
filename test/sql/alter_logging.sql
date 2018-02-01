@@ -110,7 +110,7 @@ begin;
   select emaj.emaj_set_mark_group('myGroup1','Mk2c');
   insert into myschema1."myTbl3" (col33) values (1.);
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and (grpdef_tblseq = 'myTbl3' or grpdef_tblseq = 'mytbl2b');
-  select emaj.emaj_alter_group('myGroup1');
+  select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
   select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2;
   delete from myschema1."myTbl3" where col33 = 1.;
@@ -118,8 +118,9 @@ begin;
   select * from emaj.emaj_verify_all();
   savepoint svp1;
   -- testing log stat
-  select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
-  select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+    from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
   --testing snap and sql generation
 \! mkdir -p /tmp/emaj_test/alter
 \! rm -Rf /tmp/emaj_test/alter/*
@@ -142,7 +143,7 @@ begin;
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
   rollback to svp1;
   -- testing the alter_group mark deletion (it should reduce the time range of the removed tables)
-  select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
+  select mark_id, mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
   select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
   select count(*) from "emajC"."myschema1_myTbl3_log_1";  -- Only 1 row should remain

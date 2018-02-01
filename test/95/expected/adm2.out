@@ -152,8 +152,8 @@ select emaj.emaj_delete_mark_group('myGroup1','Multi-2');
 
 -- use this mark for the other group before delete it
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_datetime | stat_last_mark | stat_last_mark_datetime | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+--------------------------+----------------+-------------------------+-----------+-----------+-----------
 (0 rows)
 
 select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
@@ -182,18 +182,19 @@ select emaj.emaj_delete_mark_group('myGroup2','Multi-2');
 (1 row)
 
 -- get statistics using deleted marks
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','M1','M2');
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl1     | postgres  | DELETE    |         1
- myGroup2   | myschema2   | mytbl1     | postgres  | INSERT    |        11
- myGroup2   | myschema2   | mytbl1     | postgres  | UPDATE    |         3
- myGroup2   | myschema2   | mytbl2     | postgres  | INSERT    |         2
- myGroup2   | myschema2   | myTbl3     | postgres  | INSERT    |        10
- myGroup2   | myschema2   | mytbl5     | postgres  | INSERT    |         2
- myGroup2   | myschema2   | mytbl5     | postgres  | UPDATE    |         1
- myGroup2   | myschema2   | mytbl6     | postgres  | INSERT    |         8
- myGroup2   | myschema2   | mytbl6     | postgres  | UPDATE    |         3
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','M1','M2');
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | mytbl1     | M1              | M2             | postgres  | DELETE    |         1
+ myGroup2   | myschema2   | mytbl1     | M1              | M2             | postgres  | INSERT    |        11
+ myGroup2   | myschema2   | mytbl1     | M1              | M2             | postgres  | UPDATE    |         3
+ myGroup2   | myschema2   | mytbl2     | M1              | M2             | postgres  | INSERT    |         2
+ myGroup2   | myschema2   | myTbl3     | M1              | M2             | postgres  | INSERT    |        10
+ myGroup2   | myschema2   | mytbl5     | M1              | M2             | postgres  | INSERT    |         2
+ myGroup2   | myschema2   | mytbl5     | M1              | M2             | postgres  | UPDATE    |         1
+ myGroup2   | myschema2   | mytbl6     | M1              | M2             | postgres  | INSERT    |         8
+ myGroup2   | myschema2   | mytbl6     | M1              | M2             | postgres  | UPDATE    |         3
 (9 rows)
 
 -- delete intermediate deleted marks
@@ -860,16 +861,17 @@ select emaj.emaj_delete_mark_group('phil''s group#3",','M2_again!');
 (1 row)
 
 --
-select * from emaj.emaj_log_stat_group('phil''s group#3",','','');
-    stat_group    |  stat_schema   | stat_table  | stat_rows 
-------------------+----------------+-------------+-----------
- phil's group#3", | phil's schema3 | myTbl2\     |         2
- phil's group#3", | phil's schema3 | phil's tbl1 |        53
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('phil''s group#3",','','');
+    stat_group    |  stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_rows 
+------------------+----------------+-------------+-----------------+----------------+-----------
+ phil's group#3", | phil's schema3 | myTbl2\     | M1_rollbackable |                |         2
+ phil's group#3", | phil's schema3 | phil's tbl1 | M1_rollbackable |                |        53
 (2 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mark #3','');
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mark #3','');
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
 (0 rows)
 
 --
@@ -1792,10 +1794,11 @@ select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d
  myGroup1   | RLBK_MC3_%_DONE | MC3                        |                 10055 |                    10051 |         0 |          0
 (2 rows)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup1   | myschema1   | mytbl2     | postgres  | INSERT    |         1
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup1   | myschema1   | mytbl2     | Multi-1         |                | postgres  | INSERT    |         1
 (1 row)
 
 -- 2 consolidations of 2 nested logged rollbacks
@@ -1862,10 +1865,11 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
                                6
 (1 row)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup1   | myschema1   | mytbl2     | postgres  | INSERT    |         1
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup1   | myschema1   | mytbl2     | Multi-1         |                | postgres  | INSERT    |         1
 (1 row)
 
 -- consolidation of 2 logged rollbacks referencing the same mark
@@ -1910,10 +1914,11 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
                                4
 (1 row)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup1   | myschema1   | mytbl2     | postgres  | INSERT    |         1
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup1   | myschema1   | mytbl2     | Multi-1         |                | postgres  | INSERT    |         1
 (1 row)
 
 -- consolidation of 1 from 2 overlapping logged rollbacks
@@ -1970,12 +1975,13 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC15_DONE');
                                4
 (1 row)
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
- myGroup1   | myschema1   | mytbl1     | postgres  | INSERT    |        11
- myGroup1   | myschema1   | mytbl2     | postgres  | DELETE    |         1
- myGroup1   | myschema1   | mytbl2     | postgres  | INSERT    |         3
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup1   | myschema1   | mytbl1     | Multi-1         |                | postgres  | INSERT    |        11
+ myGroup1   | myschema1   | mytbl2     | Multi-1         |                | postgres  | DELETE    |         1
+ myGroup1   | myschema1   | mytbl2     | Multi-1         |                | postgres  | INSERT    |         3
 (3 rows)
 
 select * from myTbl1 order by col11;

@@ -323,7 +323,7 @@ begin;
 
   insert into myschema1."myTbl3" (col33) values (1.);
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and (grpdef_tblseq = 'myTbl3' or grpdef_tblseq = 'mytbl2b');
-  select emaj.emaj_alter_group('myGroup1');
+  select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
  emaj_alter_group 
 ------------------
                 5
@@ -357,18 +357,22 @@ begin;
 
   savepoint svp1;
   -- testing log stat
-  select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
- stat_group | stat_schema | stat_table | stat_rows 
-------------+-------------+------------+-----------
- myGroup1   | myschema1   | mytbl1     |         0
- myGroup1   | myschema1   | mytbl4     |         0
- myGroup1   | myschema1   | mytbl2     |         0
-(3 rows)
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark |         stat_last_mark         | stat_rows 
+------------+-------------+------------+-----------------+--------------------------------+-----------
+ myGroup1   | myschema1   | mytbl1     | Mk1             |                                |         0
+ myGroup1   | myschema1   | mytbl2     | Mk1             |                                |         0
+ myGroup1   | myschema1   | mytbl2b    | Mk1             | 2 tables removed from myGroup1 |         0
+ myGroup1   | myschema1   | myTbl3     | Mk1             | 2 tables removed from myGroup1 |         2
+ myGroup1   | myschema1   | mytbl4     | Mk1             |                                |         0
+(5 rows)
 
-  select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
- stat_group | stat_schema | stat_table | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------+-----------+-----------
-(0 rows)
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+    from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark |         stat_last_mark         | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+--------------------------------+-----------+-----------+-----------
+ myGroup1   | myschema1   | myTbl3     | Mk1             | 2 tables removed from myGroup1 | postgres  | INSERT    |         2
+(1 row)
 
   --testing snap and sql generation
 \! mkdir -p /tmp/emaj_test/alter
@@ -445,11 +449,11 @@ myschema1_mytbl4.snap
 
   rollback to svp1;
   -- testing the alter_group mark deletion (it should reduce the time range of the removed tables)
-  select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
- mark_id | mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    6029 | myGroup1   | ALTER_%        |         6067 | f               | f                      |              |                           | 
-    6028 | myGroup1   | Mk2c           |         6066 | f               | f                      |              |                         1 | 
+  select mark_id, mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
+ mark_id | mark_group |           mark_name            | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+---------+------------+--------------------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+    6029 | myGroup1   | 2 tables removed from myGroup1 |         6067 | f               | f                      |              |                           | 
+    6028 | myGroup1   | Mk2c                           |         6066 | f               | f                      |              |                         1 | 
 (2 rows)
 
   select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');

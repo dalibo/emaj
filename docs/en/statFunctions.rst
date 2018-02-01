@@ -21,17 +21,25 @@ Full global statistics about logs content are available with this SQL statement:
 
 The function returns a set of rows, whose type is named *emaj.emaj_log_stat_type*, and contains the following columns:
 
-+--------------+--------+-------------------------------------------------------+
-| Column       | Type   | Description                                           |
-+==============+========+=======================================================+ 
-| stat_group   | TEXT   | tables group name                                     |
-+--------------+--------+-------------------------------------------------------+
-| stat_schema  | TEXT   | schema name                                           |
-+--------------+--------+-------------------------------------------------------+
-| stat_table   | TEXT   | table name                                            |
-+--------------+--------+-------------------------------------------------------+
-| stat_rows    | BIGINT | number of updates recorded into the related log table |
-+--------------+--------+-------------------------------------------------------+
++--------------------------+-------------+-------------------------------------------------------+
+| Column                   | Type        | Description                                           |
++==========================+=============+=======================================================+ 
+| stat_group               | TEXT        | tables group name                                     |
++--------------------------+-------------+-------------------------------------------------------+
+| stat_schema              | TEXT        | schema name                                           |
++--------------------------+-------------+-------------------------------------------------------+
+| stat_table               | TEXT        | table name                                            |
++--------------------------+-------------+-------------------------------------------------------+
+| stat_first_mark          | TEXT        | mark name of the period start                         |
++--------------------------+-------------+-------------------------------------------------------+
+| stat_first_mark_datetime | TIMESTAMPTZ | mark timestamp of the period start                    |
++--------------------------+-------------+-------------------------------------------------------+
+| stat_last_mark           | TEXT        | mark name of the period end                           |
++--------------------------+-------------+-------------------------------------------------------+
+| stat_last_mark_datetime  | TIMESTAMPTZ | mark timestamp of the period end                      |
++--------------------------+-------------+-------------------------------------------------------+
+| stat_rows                | BIGINT      | number of updates recorded into the related log table |
++--------------------------+-------------+-------------------------------------------------------+
 
 A *NULL* value or an empty string ('') supplied as start mark represents the oldest mark.
 
@@ -40,6 +48,8 @@ A *NULL* value supplied as end mark represents the current situation.
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the last set mark.
 
 The function returns one row per table, even if there is no logged update for this table. In this case, stat_rows columns value is 0.
+
+Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the tables group during the requested time interval.
 
 It is possible to easily execute more precise requests on these statistics. For instance, it is possible to get the number of database updates by application schema, with a statement like:
 
@@ -68,21 +78,29 @@ Scanning log tables brings a more detailed information, at a higher response tim
 
 The function returns a set of rows, whose type is named *emaj.emaj_detailed_log_stat_type*, and contains the following columns:
 
-+--------------+-------------+--------------------------------------------------------------------------------------------------+
-| Column       | Type        | Description                                                                                      |
-+==============+=============+==================================================================================================+
-| stat_group   | TEXT        | tables group name                                                                                |
-+--------------+-------------+--------------------------------------------------------------------------------------------------+
-| stat_schema  | TEXT        | schema name                                                                                      |
-+--------------+-------------+--------------------------------------------------------------------------------------------------+
-| stat_table   | TEXT        | table name                                                                                       |
-+--------------+-------------+--------------------------------------------------------------------------------------------------+
-| stat_role    | VARCHAR(32) | connection role                                                                                  |
-+--------------+-------------+--------------------------------------------------------------------------------------------------+
-| stat_verb    | VARCHAR(6)  | type of the SQL verb that has performed the update, with values: *INSERT* / *UPDATE* / *DELETE*) |
-+--------------+-------------+--------------------------------------------------------------------------------------------------+
-| stat_rows    | BIGINT      | number of updates recorded into the related log table                                            |
-+--------------+-------------+--------------------------------------------------------------------------------------------------+
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| Column                   | Type        | Description                                                                                      |
++==========================+=============+==================================================================================================+
+| stat_group               | TEXT        | tables group name                                                                                |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_schema              | TEXT        | schema name                                                                                      |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_table               | TEXT        | table name                                                                                       |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_first_mark          | TEXT        | mark name of the period start                                                                    |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_first_mark_datetime | TIMESTAMPTZ | mark timestamp of the period start                                                               |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_last_mark           | TEXT        | mark name of the period end                                                                      |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_last_mark_datetime  | TIMESTAMPTZ | mark timestamp of the period end                                                                 |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_role                | VARCHAR(32) | connection role                                                                                  |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_verb                | VARCHAR(6)  | type of the SQL verb that has performed the update, with values: *INSERT* / *UPDATE* / *DELETE*) |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| stat_rows                | BIGINT      | number of updates recorded into the related log table                                            |
++--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 
 A *NULL* value or an empty string ('') supplied as start mark represents the oldest mark.
 
@@ -92,19 +110,7 @@ The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the 
 
 Unlike :ref:`emaj_log_stat_group() <emaj_log_stat_group>`, the *emaj_detailed_log_stat_group()* function doesn't return any rows for tables having no logged updates inside the requested marks range. So *stat_rows* column never contains 0.
 
-It is possible to easily execute more precise requests on these statistics. For instance, it is possible to get the number of  updates for a given table, here *mytbl1*, per SQL verb, using a statement like:
-
-.. code-block:: sql
-
-   postgres=# SELECT stat_table, stat_verb, stat_rows 
-   FROM emaj.emaj_detailed_log_stat_group('myAppl1', NULL, NULL)
-   WHERE stat_table='mytbl1';
-    stat_table | stat_verb | stat_rows 
-   ------------+-----------+-----------
-    mytbl1     | DELETE    |         1
-    mytbl1     | INSERT    |         6
-    mytbl1     | UPDATE    |         2
-   (3 rows)
+Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the tables group during the requested time interval.
 
 .. _emaj_estimate_rollback_group:
 

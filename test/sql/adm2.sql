@@ -42,7 +42,8 @@ select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
 select emaj.emaj_delete_mark_group('myGroup2','Multi-2');
 
 -- get statistics using deleted marks
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','M1','M2');
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','M1','M2');
 
 -- delete intermediate deleted marks
 select emaj.emaj_delete_mark_group('myGroup1','Multi-1');
@@ -168,8 +169,9 @@ select emaj.emaj_rename_mark_group('phil''s group#3",','phil''s mark #1','phil''
 -- 
 select emaj.emaj_delete_mark_group('phil''s group#3",','M2_again!');
 --
-select * from emaj.emaj_log_stat_group('phil''s group#3",','','');
-select * from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mark #3','');
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('phil''s group#3",','','');
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mark #3','');
 --
 select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
 select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
@@ -370,7 +372,8 @@ select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d
        cons_target_rlbk_mark_name, cons_end_rlbk_mark_id, cons_target_rlbk_mark_id, cons_rows, cons_marks
   from emaj.emaj_get_consolidable_rollbacks();
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
 
 -- 2 consolidations of 2 nested logged rollbacks
 -- MC6 MC7 MC8  RMC8S RMC8D M9 RMC6S RMC6D
@@ -401,7 +404,8 @@ update myTbl4 set col43 = NULL where col41 = 2000;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
 
 -- consolidation of 2 logged rollbacks referencing the same mark
 -- MC10  RMC10S RMC10D M11 RMC10S RMC10D
@@ -423,7 +427,8 @@ update myTbl4 set col43 = NULL where col41 = 3000;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
 
 -- consolidation of 1 from 2 overlapping logged rollbacks
 -- MC15 MC16 RMC15S RMC15D MC17 RMC16S RMC16D
@@ -448,7 +453,8 @@ insert into myTbl2 values (4001,'TC15',NULL);
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC16',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','RLBK_MC15_DONE');
 
-select * from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup1','Multi-1',NULL);
 select * from myTbl1 order by col11;
 select * from myTbl2 order by col21;
 

@@ -84,7 +84,7 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',NULL
 select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'dummyEndMark');
 
 -- start mark > end mark
--- just check the error is trapped, because the error message contents timestamps
+-- just check the error is trapped, because the error message contains timestamps
 create function test_log(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) returns void language plpgsql as 
 $$
 begin
@@ -108,37 +108,46 @@ select test_log('myGroup2','EMAJ_LAST_MARK','Mark22');
 drop function test_log(text,text,text);
 
 -- should be ok
-select * from emaj.emaj_log_stat_group('myGroup2',NULL,NULL)
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2',NULL,NULL)
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_log_stat_group('myGroup2','','')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','','')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_log_stat_group('myGroup2','Mark21',NULL)
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark21',NULL)
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_log_stat_group('myGroup2',NULL,'Mark22')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2',NULL,'Mark22')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark22')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark22')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark23')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark23')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL)
+
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL)
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','','')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','','')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',NULL)
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',NULL)
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'Mark22')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'Mark22')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark22')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark22')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark23')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark23')
   order by stat_group, stat_schema, stat_table;
-select * from emaj.emaj_detailed_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
   order by stat_group, stat_schema, stat_table;
 
 -- empty group
@@ -457,7 +466,8 @@ select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_te
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
 
 -- should be ok, with tables and sequences filtering
-select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
 -- all tables and sequences
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',

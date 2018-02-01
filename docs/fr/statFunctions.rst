@@ -21,17 +21,25 @@ On peut obtenir les statistiques globales complètes à l'aide de la requête SQ
 
 La fonction retourne un ensemble de lignes, de type *emaj.emaj_log_stat_type* et comportant les colonnes suivantes :
 
-+--------------+--------+-----------------------------------------------------------------------------------------+
-| Column       | Type   | Description                                                                             |
-+==============+========+=========================================================================================+
-| stat_group   | TEXT   | nom du groupe de tables                                                                 |
-+--------------+--------+-----------------------------------------------------------------------------------------+
-| stat_schema  | TEXT   | nom du schéma                                                                           |
-+--------------+--------+-----------------------------------------------------------------------------------------+
-| stat_table   | TEXT   | nom de la table                                                                         |
-+--------------+--------+-----------------------------------------------------------------------------------------+
-| stat_rows    | BIGINT | nombre de modifications de lignes enregistrées dans la table de log associée à la table |
-+--------------+--------+-----------------------------------------------------------------------------------------+
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| Column                   | Type        | Description                                                                             |
++==========================+=============+=========================================================================================+
+| stat_group               | TEXT        | nom du groupe de tables                                                                 |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_schema              | TEXT        | nom du schéma                                                                           |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_table               | TEXT        | nom de la table                                                                         |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_first_mark          | TEXT        | nom de la marque de début de période                                                    |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_first_mark_datetime | TIMESTAMPTZ | date et heure de la marque de début de période                                          |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_last_mark           | TEXT        | nom de la marque de fin de période                                                      |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_last_mark_datetime  | TIMESTAMPTZ | date et heure de la marque de fin de période                                            |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
+| stat_rows                | BIGINT      | nombre de modifications de lignes enregistrées dans la table de log associée à la table |
++--------------------------+-------------+-----------------------------------------------------------------------------------------+
 
 Une valeur *NULL* ou une chaîne vide (''), fournie comme marque de début, représente la plus ancienne marque accessible.
 
@@ -40,6 +48,8 @@ Une valeur *NULL* fournie comme marque de fin représente la situation courante.
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme nom de marque. Il représente alors la dernière marque posée.
 
 La fonction retourne une ligne par table, même si aucune mise à jour n'est enregistrée pour la table entre les deux marques. Dans ce cas, la colonne *stat_rows* contient la valeur 0.
+
+La plupart du temps, les colonnes *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* et *stat_last_mark_datetime* référencent les marques de début et de fin de période demandée. Mais elles peuvent contenir des valeurs différentes si une table a été ajoutée ou supprimée du groupe de tables pendant l’intervalle de temps demandé.
 
 Il est possible aisément d'exécuter des requêtes plus précises sur ces statistiques. Ainsi par exemple, on peut obtenir le nombre de mises à jour par schéma applicatif avec une requête du type :
 
@@ -68,21 +78,29 @@ Le parcours des tables de log permet d'obtenir des informations plus détaillée
 
 La fonction retourne un ensemble de lignes, de type *emaj.emaj_detailed_log_stat_type* et comportant les colonnes suivantes :
 
-+--------------+-------------+-------------------------------------------------------------------------------------------+
-| Column       | Type        | Description                                                                               |
-+==============+=============+===========================================================================================+
-| stat_group   | TEXT        | nom du groupe de tables                                                                   |
-+--------------+-------------+-------------------------------------------------------------------------------------------+
-| stat_schema  | TEXT        | nom du schéma                                                                             |
-+--------------+-------------+-------------------------------------------------------------------------------------------+
-| stat_table   | TEXT        | nom de la table                                                                           |
-+--------------+-------------+-------------------------------------------------------------------------------------------+
-| stat_role    | VARCHAR(32) | rôle de connexion                                                                         |
-+--------------+-------------+-------------------------------------------------------------------------------------------+
-| stat_verb    | VARCHAR(6)  | verbe SQL à l'origine de la mise à jour (avec les valeurs *INSERT* / *UPDATE* / *DELETE*) |
-+--------------+-------------+-------------------------------------------------------------------------------------------+
-| stat_rows    | BIGINT      | nombre de modifications de lignes enregistrées dans la table de log associée à la table   |
-+--------------+-------------+-------------------------------------------------------------------------------------------+
++--------------------------+-------------+------------------------------------------------------------------------------------------+
+| Column                   | Type        | Description                                                                              |
++==========================+=============+==========================================================================================+
+| stat_group               | TEXT        | nom du groupe de tables                                                                  |
++--------------------------+-------------+------------------------------------------------------------------------------------------+
+| stat_schema              | TEXT        | nom du schéma                                                                            |
++--------------------------+-------------+------------------------------------------------------------------------------------------+
+| stat_table               | TEXT        | nom de la table                                                                          |
++--------------------------+-------------+------------------------------------------------------------------------------------------+
+| stat_first_mark          | TEXT        | nom de la marque de début de période                                                     |
++--------------------------+-------------+------------------------------------------------------------------------------------------+
+| stat_first_mark_datetime | TIMESTAMPTZ | date et heure de la marque de début de période                                           |
++--------------------------+-------------+------------------------------------------------------------------------------------------+
+| stat_last_mark           | TEXT        | nom de la marque de fin de période                                                       |
++--------------------------+-------------+------------------------------------------------------------------------------------------+
+| stat_last_mark_datetime  | TIMESTAMPTZ | date et heure de la marque de fin de période                                             |
++--------------------------+-------------+------------------------------------------------------------------------------------------+
+| stat_role                | VARCHAR(32) | rôle de connexion                                                                        |
++--------------------------+-------------+------------------------------------------------------------------------------------------+
+| stat_verb                | VARCHAR(6)  | verbe SQL à l'origine de la mise à jour (avec les valeurs *INSERT* / *UPDATE* / *DELETE*)|
++--------------------------+-------------+------------------------------------------------------------------------------------------+
+| stat_rows                | BIGINT      | nombre de modifications de lignes enregistrées dans la table de log associée à la table  |
++--------------------------+-------------+------------------------------------------------------------------------------------------+
 
 Une valeur *NULL* ou une chaîne vide (''), fournie comme marque de début représente la plus ancienne marque accessible.
 
@@ -92,19 +110,7 @@ Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme nom de marque. Il repr�
 
 Contrairement à la fonction :ref:`emaj_log_stat_group() <emaj_log_stat_group>`, *emaj_detailed_log_stat_group()* ne retourne aucune ligne pour les tables sans mise à jour enregistrée sur l'intervalle de marques demandées. La colonne *stat_rows* ne contient donc jamais de valeur 0. 
 
-Il est possible aisément d'exécuter des requêtes plus précises sur ces statistiques. Ainsi par exemple, on peut obtenir le nombre de mises à jour pour une table donnée, ici mytbl1, par type de verbe exécuté, avec une requête du type :
-
-.. code-block:: sql
-
-   postgres=# SELECT stat_table, stat_verb, stat_rows 
-   FROM emaj.emaj_detailed_log_stat_group('myAppl1', NULL, NULL)
-   WHERE stat_table='mytbl1';
-    stat_table | stat_verb | stat_rows 
-   ------------+-----------+-----------
-    mytbl1     | DELETE    |         1
-    mytbl1     | INSERT    |         6
-    mytbl1     | UPDATE    |         2
-   (3 rows)
+La plupart du temps, les colonnes *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* et *stat_last_mark_datetime* référencent les marques de début et de fin de période demandée. Mais elles peuvent contenir des valeurs différentes si une table a été ajoutée ou supprimée du groupe de tables pendant l’intervalle de temps demandé.
 
 .. _emaj_estimate_rollback_group:
 

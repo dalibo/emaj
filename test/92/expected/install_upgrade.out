@@ -136,6 +136,8 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
+NOTICE:  drop cascades to function emaj_log_stat_group(text,text,text)
+NOTICE:  drop cascades to function emaj_detailed_log_stat_group(text,text,text)
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------

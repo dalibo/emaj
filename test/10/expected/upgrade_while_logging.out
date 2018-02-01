@@ -45,6 +45,8 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'next_version';
+NOTICE:  drop cascades to function emaj_log_stat_group(text,text,text)
+NOTICE:  drop cascades to function emaj_detailed_log_stat_group(text,text,text)
 -----------------------------
 -- check installation
 -----------------------------
@@ -141,15 +143,19 @@ Tablespace: "tspemaj"
  cons_rows                  | bigint  |           |          | 
  cons_marks                 | integer |           |          | 
 
-          Composite type "emaj.emaj_detailed_log_stat_type"
-   Column    |         Type          | Collation | Nullable | Default 
--------------+-----------------------+-----------+----------+---------
- stat_group  | text                  |           |          | 
- stat_schema | text                  |           |          | 
- stat_table  | text                  |           |          | 
- stat_role   | character varying(32) |           |          | 
- stat_verb   | character varying(6)  |           |          | 
- stat_rows   | bigint                |           |          | 
+                  Composite type "emaj.emaj_detailed_log_stat_type"
+          Column          |           Type           | Collation | Nullable | Default 
+--------------------------+--------------------------+-----------+----------+---------
+ stat_group               | text                     |           |          | 
+ stat_schema              | text                     |           |          | 
+ stat_table               | text                     |           |          | 
+ stat_first_mark          | text                     |           |          | 
+ stat_first_mark_datetime | timestamp with time zone |           |          | 
+ stat_last_mark           | text                     |           |          | 
+ stat_last_mark_datetime  | timestamp with time zone |           |          | 
+ stat_role                | character varying(32)    |           |          | 
+ stat_verb                | character varying(6)     |           |          | 
+ stat_rows                | bigint                   |           |          | 
 
                        Sequence "emaj.emaj_global_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -247,13 +253,17 @@ Owned by: emaj.emaj_hist.hist_id
 primary key, btree, for table "emaj.emaj_hist"
 Tablespace: "tspemaj"
 
-       Composite type "emaj.emaj_log_stat_type"
-   Column    |  Type  | Collation | Nullable | Default 
--------------+--------+-----------+----------+---------
- stat_group  | text   |           |          | 
- stat_schema | text   |           |          | 
- stat_table  | text   |           |          | 
- stat_rows   | bigint |           |          | 
+                       Composite type "emaj.emaj_log_stat_type"
+          Column          |           Type           | Collation | Nullable | Default 
+--------------------------+--------------------------+-----------+----------+---------
+ stat_group               | text                     |           |          | 
+ stat_schema              | text                     |           |          | 
+ stat_table               | text                     |           |          | 
+ stat_first_mark          | text                     |           |          | 
+ stat_first_mark_datetime | timestamp with time zone |           |          | 
+ stat_last_mark           | text                     |           |          | 
+ stat_last_mark_datetime  | timestamp with time zone |           |          | 
+ stat_rows                | bigint                   |           |          | 
 
                                              Table "emaj.emaj_mark"
             Column            |  Type   | Collation | Nullable |                     Default                     
@@ -269,9 +279,17 @@ Tablespace: "tspemaj"
  mark_logged_rlbk_target_mark | text    |           |          | 
 Indexes:
     "emaj_mark_pkey" PRIMARY KEY, btree (mark_group, mark_name), tablespace "tspemaj"
+    "emaj_mark_idx1" btree (mark_time_id), tablespace "tspemaj"
 Foreign-key constraints:
     "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+Tablespace: "tspemaj"
+
+     Index "emaj.emaj_mark_idx1"
+    Column    |  Type  |  Definition  
+--------------+--------+--------------
+ mark_time_id | bigint | mark_time_id
+btree, for table "emaj.emaj_mark"
 Tablespace: "tspemaj"
 
                     Sequence "emaj.emaj_mark_mark_id_seq"

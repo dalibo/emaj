@@ -3,7 +3,11 @@ E-Maj - Change log
 <NEXT_VERSION>
 ------
 ###Enhancements:###
-
+  * Change the behaviour of the statistics functions. emaj_log_stat_group()
+    and emaj_detailed_log_stat_group() now return begin and end marks name
+    and timestamp. They also filter tables that belonged to the group during
+    the period framed by the supplied first and last marks (and not only 
+    tables belonging to the group at the function execution time).
 
 ###Bug fixes:###
 
