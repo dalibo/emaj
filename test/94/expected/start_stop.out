@@ -75,7 +75,7 @@ PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- reserved mark name
 select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 40 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 -- detection of a missing application schema
@@ -464,13 +464,13 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- invalid mark
 select emaj.emaj_stop_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
 PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 39 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- already existing mark
 select emaj.emaj_stop_group('phil''s group#3",','Mark3');
 ERROR:  _check_new_mark: The group "phil's group#3"," already contains a mark named "Mark3".
-CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
 PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 39 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- missing application table
@@ -662,7 +662,7 @@ PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- reserved mark name
 select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 40 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- 2 groups already started

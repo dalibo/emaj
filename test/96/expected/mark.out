@@ -43,8 +43,8 @@ PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 15 at PERFORM
 -- reserved mark name
 select emaj.emaj_set_mark_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text,text[]) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_mark, array[v_groupName])"
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
+SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 19 at SQL statement
 -- should be OK
 select emaj.emaj_set_mark_group('myGroup1','SM1');
@@ -74,8 +74,8 @@ select emaj.emaj_set_mark_group('emptyGroup','SM1');
 -- duplicate mark name
 select emaj.emaj_set_mark_group('myGroup1','SM1');
 ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "SM1".
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text,text[]) line 30 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_mark, array[v_groupName])"
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 27 at RAISE
+SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 19 at SQL statement
 -- mark with generated name and in a single transaction
 begin transaction;
@@ -139,8 +139,8 @@ PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 15 at SQL statemen
 -- reserved mark name
 select emaj.emaj_set_mark_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text,text[]) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
+SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
 PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 21 at SQL statement
 -- should be OK
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
@@ -151,9 +151,9 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
 
 -- duplicate mark name and warning on group names array content
 select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','emptyGroup','myGroup2','myGroup1'],'SM3');
-ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "SM3".
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text,text[]) line 30 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
+ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "SM3".
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
+SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
 PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 21 at SQL statement
 -- generated mark name
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','');

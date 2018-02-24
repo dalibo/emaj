@@ -1075,18 +1075,18 @@ $_check_groups_content$
   END;
 $_check_groups_content$;
 
-CREATE OR REPLACE FUNCTION emaj._check_new_mark(v_mark TEXT, v_groupNames TEXT[])
+CREATE OR REPLACE FUNCTION emaj._check_new_mark(v_groupNames TEXT[], v_mark TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_new_mark$
 -- This function verifies that a new mark name supplied the user is valid.
 -- It processes the possible NULL mark value and the replacement of % wild characters.
 -- It also checks that the mark name do not already exist for any group.
--- Input: name of the mark to set, array of group names
---        The array of group names may be NULL to avoid the check against groups
+-- Input: array of group names, name of the mark to set
 -- Output: internal name of the mark
   DECLARE
     v_markName               TEXT = v_mark;
-    v_aGroupName             TEXT;
+    v_groupList              TEXT;
+    v_count                  INTEGER;
   BEGIN
 -- check the mark name is not 'EMAJ_LAST_MARK'
     IF v_mark = 'EMAJ_LAST_MARK' THEN
@@ -1098,17 +1098,15 @@ $_check_new_mark$
     END IF;
 -- process % wild characters in mark name
     v_markName = replace(v_markName, '%', to_char(current_timestamp, 'HH24.MI.SS.MS'));
--- if requested, check the existence of the mark in groups
-    IF v_groupNames IS NOT NULL THEN
--- for each group of the array,
-      FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
--- ... if a mark with the same name already exists for the group, stop
-        PERFORM 0 FROM emaj.emaj_mark
-          WHERE mark_group = v_aGroupName AND mark_name = v_markName;
-        IF FOUND THEN
-           RAISE EXCEPTION '_check_new_mark: The group "%" already contains a mark named "%".', v_aGroupName, v_markName;
-        END IF;
-      END LOOP;
+-- check that the mark does not exist for any groups
+    SELECT string_agg(mark_group,', '), count(*) INTO v_groupList, v_count
+      FROM emaj.emaj_mark WHERE mark_name = v_markName AND mark_group = ANY(v_groupNames);
+    IF v_count > 0 THEN
+      IF v_count = 1 THEN
+        RAISE EXCEPTION '_check_new_mark: The group "%" already contains a mark named "%".', v_groupList, v_markName;
+      ELSE
+        RAISE EXCEPTION '_check_new_mark: The groups "%" already contain a mark named "%".', v_groupList, v_markName;
+      END IF;
     END IF;
     RETURN v_markName;
   END;
@@ -2623,7 +2621,7 @@ $_alter_groups$
         WHERE group_name = ANY(v_groupNames) AND group_is_logging;
 -- check and process the supplied mark name, if it is worth to be done
        IF v_loggingGroups IS NOT NULL THEN
-         SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
+         SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
        END IF;
 -- OK
 -- get the time stamp of the operation
@@ -3026,7 +3024,7 @@ $_start_groups$
       IF v_mark IS NULL OR v_mark = '' THEN
         v_mark = 'START_%';
       END IF;
-      SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
+      SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
 -- OK, lock all tables to get a stable point
 --   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
 --   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
@@ -3152,7 +3150,7 @@ $_stop_groups$
         v_mark = 'STOP_%';
       END IF;
       IF NOT v_isForced THEN
-        SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
+        SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
       END IF;
 -- OK (no error detected and at least one group in logging state)
 -- lock all tables to get a stable point
@@ -3316,7 +3314,7 @@ $emaj_set_mark_group$
 -- check if the emaj group is OK
     PERFORM 0 FROM emaj._verify_groups(array[v_groupName], true);
 -- check and process the supplied mark name
-    SELECT emaj._check_new_mark(v_mark, array[v_groupName]) INTO v_markName;
+    SELECT emaj._check_new_mark(array[v_groupName], v_mark) INTO v_markName;
 -- OK, lock all tables to get a stable point ...
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
     PERFORM emaj._lock_groups(array[v_groupName],'ROW EXCLUSIVE',false);
@@ -3354,7 +3352,7 @@ $emaj_set_mark_groups$
 -- check that no group is damaged
       PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
 -- check and process the supplied mark name
-      SELECT emaj._check_new_mark(v_mark, v_groupNames) INTO v_markName;
+      SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
 -- OK, lock all tables to get a stable point ...
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
       PERFORM emaj._lock_groups(v_groupNames,'ROW EXCLUSIVE',true);
@@ -6304,7 +6302,7 @@ $emaj_snap_log_group$
     ELSE
 -- the end mark is not supplied (look for the current state)
 -- temporarily create a mark, without locking tables
-      SELECT emaj._check_new_mark('TEMP_%', ARRAY[v_groupName]) INTO v_realLastMark;
+      SELECT emaj._check_new_mark(ARRAY[v_groupName], 'TEMP_%') INTO v_realLastMark;
       PERFORM emaj._set_mark_groups(ARRAY[v_groupName], v_realLastMark, false, false);
     END IF;
 -- catch the global sequence value and timestamp of the last mark

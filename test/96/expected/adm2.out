@@ -68,9 +68,9 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback')
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
-ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "Multi-1".
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text,text[]) line 30 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_mark, v_groupNames)"
+ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "Multi-1".
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
+SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 40 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- really start both groups
