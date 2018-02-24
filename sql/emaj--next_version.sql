@@ -19,7 +19,6 @@ $$Contains all E-Maj related objects.$$;
 -- perform some checks and create emaj roles
 DO LANGUAGE plpgsql
 $do$
-  DECLARE
   BEGIN
 -- check the current role is a superuser
     PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
@@ -664,7 +663,6 @@ $_dblink_is_cnx_opened$
 -- This function examines if a named dblink connection is opened.
 -- Input:  connection name
 -- Output: boolean indicating whether the dblink connection is opened.
-  DECLARE
   BEGIN
 -- test if dblink is installed and usable by the current user
     IF (SELECT count(*) FROM pg_catalog.pg_proc WHERE proname = 'dblink_connect' AND pg_function_is_visible(oid)) > 0
@@ -683,7 +681,6 @@ RETURNS VOID LANGUAGE plpgsql AS
 $_dblink_close_cnx$
 -- This function closes a named dblink connection.
 -- Input:  connection name
-  DECLARE
   BEGIN
     IF emaj._dblink_is_cnx_opened(v_cnxName) THEN
 -- the emaj connection exists, so disconnect
@@ -2501,7 +2498,6 @@ $emaj_comment_group$
 -- This function sets or modifies a comment on a group by updating the group_comment of the emaj_group table.
 -- Input: group name, comment
 --   To reset an existing comment for a group, the supplied comment can be NULL.
-  DECLARE
   BEGIN
 -- check the group name
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '');
@@ -4214,7 +4210,6 @@ $_rlbk_async$
 -- It is only called by the phpPgAdmin plugin, in an asynchronous way, so that the rollback can be then monitored by the client.
 -- Input: rollback identifier, and a boolean saying if the rollback is a logged rollback
 -- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
-  DECLARE
   BEGIN
 -- simply chain the internal functions
     PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
@@ -5988,7 +5983,6 @@ $emaj_estimate_rollback_group$
 -- It uses the _estimate_rollback_group() function to effectively compute this estimate
 -- Input: group name, the mark name of the rollback operation, the rollback type.
 -- Output: the approximate duration that the rollback would need as time interval
-  DECLARE
   BEGIN
     RETURN emaj._estimate_rollback_groups(ARRAY[v_groupName], FALSE, v_mark, v_isLoggedRlbk);
   END;
@@ -6003,7 +5997,6 @@ $emaj_estimate_rollback_groups$
 -- It uses the _estimate_rollback_group() function to effectively compute this estimate
 -- Input: a group names array, the mark name of the rollback operation, the rollback type.
 -- Output: the approximate duration that the rollback would need as time interval
-  DECLARE
   BEGIN
     RETURN emaj._estimate_rollback_groups(v_groupNames, TRUE, v_mark, v_isLoggedRlbk);
   END;
@@ -6727,7 +6720,6 @@ RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_all_groups$
 -- The function verifies the consistency of all E-Maj groups.
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
-  DECLARE
   BEGIN
 -- check the postgres version at groups creation time is compatible (i.e. >= 8.4)
     RETURN QUERY
@@ -7503,7 +7495,6 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
 -- check the current max_prepared_transactions setting and report a warning if its value is too low for parallel rollback
 DO LANGUAGE plpgsql
 $do$
-  DECLARE
   BEGIN
 -- check the max_prepared_transactions GUC value
     IF current_setting('max_prepared_transactions')::int <= 1 THEN

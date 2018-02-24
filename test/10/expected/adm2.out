@@ -188,7 +188,7 @@ ERROR:  _rlbk_check: The mark "M3" for the group "myGroup2" is not usable for ro
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 31 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 23 at SQL statement
-PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
+PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 7 at RETURN
 -- try to rollback on a deleted mark
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 ERROR:  _rlbk_check: The mark "M3" for the group "myGroup2" is not usable for rollback.
