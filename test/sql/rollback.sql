@@ -88,9 +88,11 @@ select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark11');
 -- mark name referencing different points in time
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Different_Mark');
 
--- attempt to rollback an 'audit_only' group
+-- attempt to rollback 'audit_only' groups
+select emaj.emaj_create_group('auditOnlyEmptyGroup',false,true);
 select emaj.emaj_rollback_group('phil''s group#3",','EMAJ_LAST_MARK');
-select emaj.emaj_logged_rollback_group('phil''s group#3",','M1_audit_only');
+select emaj.emaj_logged_rollback_groups(array['phil''s group#3",','auditOnlyEmptyGroup'],'M1_audit_only');
+select emaj.emaj_drop_group('auditOnlyEmptyGroup');
 
 -- attempt to rollback to a stop mark
 begin;

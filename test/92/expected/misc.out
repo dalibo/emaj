@@ -10,12 +10,18 @@ alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 5000;
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_reset_group(NULL);
-ERROR:  emaj_reset_group: The group "<NULL>" does not exist.
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+PL/pgSQL function emaj.emaj_reset_group(text) line 15 at PERFORM
 select emaj.emaj_reset_group('unknownGroup');
-ERROR:  emaj_reset_group: The group "unknownGroup" does not exist.
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+PL/pgSQL function emaj.emaj_reset_group(text) line 15 at PERFORM
 -- group not in logging state
 select emaj.emaj_reset_group('myGroup1');
-ERROR:  emaj_reset_group: The group "myGroup1" cannot be reset because it is in LOGGING state. An emaj_stop_group function must be previously executed.
+ERROR:  _check_group_names: The group "myGroup1" is not in IDLE state.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+PL/pgSQL function emaj.emaj_reset_group(text) line 15 at PERFORM
 -- stop group
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
@@ -109,8 +115,7 @@ select count(*) from emaj.myschema1_mytbl4_log;
 --   this test has been moved here because, the emaj_reset_group() function cannot be used into a transaction
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
 ERROR:  _gen_sql_groups: No initial mark can be found for the group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 -- start myGroup1
 select emaj.emaj_start_group('myGroup1','Mark21');
  emaj_start_group 
@@ -168,13 +173,21 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
 -----------------------------
 -- group is unknown in emaj_group_def
 select * from emaj.emaj_log_stat_group(NULL,NULL,NULL);
-ERROR:  emaj_log_stat_group: The group "<NULL>" does not exist.
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 20 at PERFORM
 select * from emaj.emaj_log_stat_group('unknownGroup',NULL,NULL);
-ERROR:  emaj_log_stat_group: The group "unknownGroup" does not exist.
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 20 at PERFORM
 select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
-ERROR:  emaj_detailed_log_stat_group: The group "<NULL>" does not exist.
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 30 at PERFORM
 select * from emaj.emaj_detailed_log_stat_group('unknownGroup',NULL,NULL);
-ERROR:  emaj_detailed_log_stat_group: The group "unknownGroup" does not exist.
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 30 at PERFORM
 -- invalid marks
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  emaj_log_stat_group: The start mark "dummyStartMark" is unknown for the group "myGroup2".
@@ -450,30 +463,30 @@ rollback;
 -----------------------------
 -- group is unknown in emaj_group_def
 select emaj.emaj_estimate_rollback_group(NULL,NULL,FALSE);
-ERROR:  _rlbk_check: The group "<NULL>" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 17 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_group('unknownGroup',NULL,TRUE);
-ERROR:  _rlbk_check: The group "unknownGroup" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 17 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups('{"myGroup2","unknownGroup"}',NULL,TRUE);
-ERROR:  _rlbk_check: The mark "<NULL>" does not exist for the group "myGroup2".
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 17 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 8 at RETURN
 -- invalid marks
 select emaj.emaj_estimate_rollback_group('myGroup2','dummyMark',TRUE);
 ERROR:  _rlbk_check: The mark "dummyMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 select emaj.emaj_estimate_rollback_groups(array['myGroup1','myGroup2'],'Mark21',TRUE);
 ERROR:  _rlbk_check: The mark "Mark21" does not represent the same point in time for all groups.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 8 at RETURN
 -- group not in logging state
 begin;
@@ -484,9 +497,11 @@ begin;
 (1 row)
 
   select emaj.emaj_estimate_rollback_group('myGroup1','Mark11',FALSE);
-ERROR:  _rlbk_check: The group "myGroup1" is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],text,boolean) line 16 at SQL statement
+ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE')"
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
+PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 8 at RETURN
 rollback;
 -- estimate a rollback of an empty group
@@ -670,27 +685,31 @@ alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.e
 \! mkdir /tmp/emaj_test/snaps
 -- group is unknown in emaj_group_def
 select emaj.emaj_snap_group(NULL,NULL,NULL);
-ERROR:  emaj_snap_group: The group "<NULL>" does not exist.
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 30 at PERFORM
 select emaj.emaj_snap_group('unknownGroup',NULL,NULL);
-ERROR:  emaj_snap_group: The group "unknownGroup" does not exist.
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 30 at PERFORM
 -- invalid directory
 select emaj.emaj_snap_group('myGroup1',NULL,NULL);
 ERROR:  emaj_snap_group: The directory parameter cannot be NULL.
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO 'unknown_directory/myschema1_myTbl3_col31_seq.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 90 at EXECUTE statement
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 87 at EXECUTE statement
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3_col31_seq.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/unknown_directory/myschema1_myTbl3_col31_seq.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 90 at EXECUTE statement
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 87 at EXECUTE statement
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','dummy_option');
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: .../emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/tmp/emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 90 at EXECUTE statement
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 87 at EXECUTE statement
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_group: The COPY options parameter format is invalid.
@@ -730,20 +749,24 @@ myschema1_mytbl4.snap
 \! mkdir /tmp/emaj_test/log_snaps
 -- group is unknown in emaj_group_def
 select emaj.emaj_snap_log_group(NULL,NULL,NULL,NULL,NULL);
-ERROR:  emaj_snap_log_group: The group "<NULL>" does not exist.
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 49 at PERFORM
 select emaj.emaj_snap_log_group('unknownGroup',NULL,NULL,NULL,NULL);
-ERROR:  emaj_snap_log_group: The group "unknownGroup" does not exist.
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 49 at PERFORM
 -- invalid directory
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',NULL,NULL);
 ERROR:  emaj_snap_log_group: The directory parameter cannot be NULL.
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11850 ORDER BY emaj_gid ASC) TO 'unknown_directory/myschema2_mytbl1_log.snap' "
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 119 at EXECUTE statement
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 116 at EXECUTE statement
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema2_mytbl1_log.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11850 ORDER BY emaj_gid ASC) TO '/unknown_directory/myschema2_mytbl1_log.snap' "
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 119 at EXECUTE statement
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 116 at EXECUTE statement
 -- invalid start mark
 select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps',NULL);
 ERROR:  emaj_snap_log_group: The start mark "unknownMark" is unknown for the group "myGroup2".
@@ -785,7 +808,7 @@ ERROR:  syntax error at or near "dummy_option"
 LINE 1: ...mp/emaj_test/log_snaps/myschema2_mytbl1_log.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM emaj.myschema2_mytbl1_log WHERE TRUE AND emaj_gid <= 11850 ORDER BY emaj_gid ASC) TO '/tmp/emaj_test/log_snaps/myschema2_mytbl1_log.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 119 at EXECUTE statement
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 116 at EXECUTE statement
 -- SQL injection attempt
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_log_group: The COPY options parameter format is invalid.
@@ -854,60 +877,51 @@ otherPrefix4mytbl5_log.snap
 \! mkdir /tmp/emaj_test/sql_scripts
 -- group is unknown in emaj_group_def
 select emaj.emaj_gen_sql_group(NULL, NULL, NULL, NULL);
-WARNING:  _check_names_array: No group name to process.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 41 at assignment
-SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
- emaj_gen_sql_group 
---------------------
-                  0
-(1 row)
-
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 48 at SQL statement
+PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_group('unknownGroup', NULL, NULL, NULL, NULL);
-ERROR:  _gen_sql_groups: The group "unknownGroup" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 48 at SQL statement
+PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups(NULL, NULL, NULL, NULL);
-WARNING:  _check_names_array: No group name to process.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 41 at assignment
-SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+WARNING:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 48 at SQL statement
+PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
  emaj_gen_sql_groups 
 ---------------------
                    0
 (1 row)
 
 select emaj.emaj_gen_sql_groups('{"myGroup1","unknownGroup"}', NULL, NULL, NULL);
-ERROR:  _gen_sql_groups: The group "unknownGroup" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 48 at SQL statement
+PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- the tables group contains a table without pkey
 select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
 ERROR:  _gen_sql_groups: The tables group "phil's group#3"," contains tables without pkey (phil's schema3.myTbl2\).
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups(array['myGroup1','phil''s group#3",'], NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
 ERROR:  _gen_sql_groups: The tables group "phil's group#3"," contains tables without pkey (phil's schema3.myTbl2\).
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- invalid start mark
 select emaj.emaj_gen_sql_group('myGroup2', 'unknownMark', NULL, NULL);
 ERROR:  _gen_sql_groups: The start mark "unknownMark" does not exist for the group "myGroup2".
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Mark11', NULL, NULL, NULL);
 ERROR:  _gen_sql_groups: The start mark "Mark11" does not exist for the group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- invalid end mark
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'unknownMark', NULL);
 ERROR:  _gen_sql_groups: The end mark "unknownMark" does not exist for the group "myGroup2".
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', NULL, 'Mark11', NULL);
 ERROR:  _gen_sql_groups: The end mark "Mark11" does not exist for the group "myGroup1".
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- end mark is prior start mark
 -- (mark timestamps are temporarily changed so that regression test can return a stable error message)
 begin;
@@ -919,8 +933,7 @@ begin;
     where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'Mark22';
   select emaj.emaj_gen_sql_group('myGroup2', 'Mark22', 'Mark21', NULL);
 ERROR:  _gen_sql_groups: The start mark "Mark22" (Sat Jan 01 05:00:00 2000 PST) has been set after the end mark "Mark21" (Sat Jan 01 04:00:00 2000 PST).
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 rollback;
 begin;
   update emaj.emaj_time_stamp set time_clock_timestamp = '2000-01-01 12:00:00+00'
@@ -931,56 +944,45 @@ begin;
     where time_id = mark_time_id and mark_name = 'Multi-3';
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-3', 'Multi-2', NULL);
 ERROR:  _gen_sql_groups: The start mark "Multi-3" (Sat Jan 01 05:00:00 2000 PST) has been set after the end mark "Multi-2" (Sat Jan 01 04:00:00 2000 PST).
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 rollback;
 -- start mark with the same name but that doesn't correspond to the same point in time
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Mark21', 'Multi-2', NULL);
 ERROR:  _gen_sql_groups: The start mark "Mark21" does not represent the same point in time for all groups.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, 'Multi-2', NULL, NULL);
 ERROR:  _gen_sql_groups: The start mark "Mark21" does not represent the same point in time for all groups.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- end mark with the same name but that doesn't correspond to the same point in time
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Mark21', NULL);
 ERROR:  _gen_sql_groups: The end mark "Mark21" does not represent the same point in time for all groups.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- empty table/sequence names array
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile', array['']);
 ERROR:  _gen_sql_groups: The filtered table/sequence names array cannot be empty.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 -- unknown table/sequence names in the tables filter
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile', array['foo']);
 ERROR:  _gen_sql_groups: Some tables and/or sequences (foo) do not belong to any of the selected tables groups.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl1','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
 ERROR:  _gen_sql_groups: Some tables and/or sequences (myschema1.mytbl1, phil's schema3.phil's tbl1) do not belong to any of the selected tables groups.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl1','foo','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
 ERROR:  _gen_sql_groups: Some tables and/or sequences (foo, phil's schema3.phil's tbl1) do not belong to any of the selected tables groups.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- invalid location path name
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
 ERROR:  _gen_sql_groups: The file "<NULL>" cannot be used as script output file.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/unknownDirectory/myFile');
 ERROR:  _gen_sql_groups: The file "/tmp/unknownDirectory/myFile" cannot be used as script output file.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(CASE WHEN v_groupName IS NOT NULL THEN array[v_groupName] ELSE NULL END, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/unknownDirectory/myFile');
 ERROR:  _gen_sql_groups: The file "/tmp/unknownDirectory/myFile" cannot be used as script output file.
-CONTEXT:  SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- should be ok (generated files content is checked later in adm2.sql scenario)
 -- (getting counters from detailed log statistics + the number of sequences included in the group allows a comparison with the result of emaj_gen_sql_group function)
 select emaj.emaj_gen_sql_group('emptyGroup', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
@@ -1109,13 +1111,11 @@ select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_te
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Multi-3', '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl4','myschema2.mytbl4','myschema1.mytbl4','myschema2.mytbl4']);
 WARNING:  _check_names_array: Duplicate table/sequence name "myschema1.mytbl4".
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 50 at assignment
-SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 56 at assignment
+PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 WARNING:  _check_names_array: Duplicate table/sequence name "myschema2.mytbl4".
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],text,text,text,text[]) line 50 at assignment
-SQL statement "SELECT emaj._gen_sql_groups(v_groupNames, v_firstMark, v_lastMark, v_location, v_tblseqs)"
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 22 at SQL statement
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 56 at assignment
+PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
  emaj_gen_sql_groups 
 ---------------------
                  100
@@ -1447,14 +1447,14 @@ begin;
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(array[v_groupName], true)"
-PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 27 at PERFORM
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 17 at PERFORM
   rollback to savepoint sp1;
     select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
   rollback to savepoint sp1;
@@ -1489,11 +1489,11 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 75 at PERFOR
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1508,15 +1508,13 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
   select emaj.emaj_force_stop_group('myGroup2');
 WARNING:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
  emaj_force_stop_group 
 -----------------------
                      8
@@ -1555,15 +1553,13 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
   select emaj.emaj_force_stop_group('myGroup2');
 WARNING:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
  emaj_force_stop_group 
 -----------------------
                      8
@@ -1572,19 +1568,19 @@ PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1606,15 +1602,13 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
   select emaj.emaj_force_stop_group('myGroup2');
 WARNING:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
  emaj_force_stop_group 
 -----------------------
                      8
@@ -1623,19 +1617,19 @@ PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1665,11 +1659,11 @@ begin;
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1691,32 +1685,24 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The schema "myschema2" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], v_mark, false, false)"
-PL/pgSQL function emaj.emaj_stop_group(text,text) line 16 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to force the group's stop and drop the group
   select emaj.emaj_force_stop_group('myGroup2');
 WARNING:  _stop_groups: The schema "myschema2" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 WARNING:  _stop_groups: The table "myschema2.mytbl1" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 WARNING:  _stop_groups: The table "myschema2.mytbl2" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 WARNING:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 WARNING:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 WARNING:  _stop_groups: The table "myschema2.mytbl5" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 WARNING:  _stop_groups: The table "myschema2.mytbl6" does not exist any more.
-CONTEXT:  SQL statement "SELECT emaj._stop_groups(array[v_groupName], NULL, false, true)"
-PL/pgSQL function emaj.emaj_force_stop_group(text) line 15 at SQL statement
+CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
  emaj_force_stop_group 
 -----------------------
                      8
@@ -1750,9 +1736,9 @@ begin;
     select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emajb". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 44 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 29 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
-PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
   rollback to savepoint sp1;
 -- use emaj_verify_all() to understand the problem
   select * from emaj.emaj_verify_all();
@@ -1936,38 +1922,36 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     5097 | SNAP_LOG_GROUP     | END                     | myGroup2          | 3 generated files                                                                                                  | postgres
     5098 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From mark Mark21 to mark Mark23 towards /tmp/emaj_test/log_snaps                                                   | postgres
     5099 | SNAP_LOG_GROUP     | END                     | myGroup2          | 9 generated files                                                                                                  | postgres
-    5100 | GEN_SQL_GROUP      | BEGIN                   |                   |                                                                                                                    | postgres
-    5101 | GEN_SQL_GROUP      | END                     |                   | 0 generated statements                                                                                             | postgres
-    5103 | GEN_SQL_GROUPS     | BEGIN                   |                   |                                                                                                                    | postgres
-    5104 | GEN_SQL_GROUPS     | END                     |                   | 0 generated statements                                                                                             | postgres
-    5124 | GEN_SQL_GROUP      | BEGIN                   | emptyGroup        | From initial mark to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
-    5125 | GEN_SQL_GROUP      | END                     | emptyGroup        | 0 generated statements                                                                                             | postgres
-    5126 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
-    5127 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5128 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From mark Mark21 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                    | postgres
-    5129 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5130 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark Mark22 towards /tmp/emaj_test/sql_scripts/myFile                                         | postgres
-    5131 | GEN_SQL_GROUP      | END                     | myGroup2          | 11602 generated statements                                                                                         | postgres
-    5132 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
-    5133 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 11714 generated statements                                                                                         | postgres
-    5134 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-2 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile                                        | postgres
-    5135 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 114 generated statements                                                                                           | postgres
-    5136 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile                                 | postgres
-    5137 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5138 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5139 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5140 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5141 | GEN_SQL_GROUP      | END                     | myGroup2          | 11711 generated statements                                                                                         | postgres
-    5142 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5143 | GEN_SQL_GROUP      | END                     | myGroup2          | 11611 generated statements                                                                                         | postgres
-    5144 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5145 | GEN_SQL_GROUP      | END                     | myGroup2          | 1 generated statements                                                                                             | postgres
-    5146 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5147 | GEN_SQL_GROUP      | END                     | myGroup2          | 100 generated statements                                                                                           | postgres
-    5148 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering        | postgres
-    5149 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 100 generated statements                                                                                           | postgres
-    5217 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |                   | <none>                                                                                                             | postgres
+    5102 | GEN_SQL_GROUPS     | BEGIN                   |                   |                                                                                                                    | postgres
+    5103 | GEN_SQL_GROUPS     | END                     |                   | 0 generated statements                                                                                             | postgres
+    5123 | GEN_SQL_GROUP      | BEGIN                   | emptyGroup        | From initial mark to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
+    5124 | GEN_SQL_GROUP      | END                     | emptyGroup        | 0 generated statements                                                                                             | postgres
+    5125 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
+    5126 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
+    5127 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From mark Mark21 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                    | postgres
+    5128 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
+    5129 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark Mark22 towards /tmp/emaj_test/sql_scripts/myFile                                         | postgres
+    5130 | GEN_SQL_GROUP      | END                     | myGroup2          | 11602 generated statements                                                                                         | postgres
+    5131 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
+    5132 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 11714 generated statements                                                                                         | postgres
+    5133 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-2 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile                                        | postgres
+    5134 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 114 generated statements                                                                                           | postgres
+    5135 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile                                 | postgres
+    5136 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
+    5137 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5138 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
+    5139 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5140 | GEN_SQL_GROUP      | END                     | myGroup2          | 11711 generated statements                                                                                         | postgres
+    5141 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5142 | GEN_SQL_GROUP      | END                     | myGroup2          | 11611 generated statements                                                                                         | postgres
+    5143 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5144 | GEN_SQL_GROUP      | END                     | myGroup2          | 1 generated statements                                                                                             | postgres
+    5145 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5146 | GEN_SQL_GROUP      | END                     | myGroup2          | 100 generated statements                                                                                           | postgres
+    5147 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering        | postgres
+    5148 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 100 generated statements                                                                                           | postgres
+    5216 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |                   | <none>                                                                                                             | postgres
+    5217 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
     5218 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
-    5219 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
-(85 rows)
+(83 rows)
 

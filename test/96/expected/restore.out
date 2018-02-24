@@ -27,6 +27,8 @@ CREATE EXTENSION
 COMMENT
 CREATE EXTENSION
 COMMENT
+CREATE EXTENSION
+COMMENT
 SET
 CREATE FUNCTION
 ALTER FUNCTION
@@ -198,19 +200,19 @@ ALTER TABLE
 SET
 ALTER TABLE
 SET
-COPY 283
-COPY 17
+COPY 295
+COPY 16
  setval 
 --------
- 100640
+ 100565
 (1 row)
 
 COPY 2
 COPY 30
-COPY 65
+COPY 70
  setval 
 --------
-  20066
+  20071
 (1 row)
 
 COPY 12
@@ -220,8 +222,12 @@ COPY 12
 (1 row)
 
 COPY 2
-COPY 15
-COPY 59
+ERROR:  duplicate key value violates unique constraint "emaj_schema_pkey"
+DETAIL:  Key (sch_name)=(emaj) already exists.
+CONTEXT:  COPY emaj_schema, line 1
+ERROR:  insert or update on table "emaj_relation" violates foreign key constraint "emaj_relation_rel_log_schema_fkey"
+DETAIL:  Key (rel_log_schema)=(emajC) is not present in table "emaj_schema".
+COPY 62
 COPY 239
  setval 
 --------
@@ -229,8 +235,8 @@ COPY 239
 (1 row)
 
 COPY 31
-COPY 203
-COPY 12
+COPY 217
+COPY 11
 COPY 90
  setval 
 --------
@@ -276,13 +282,13 @@ COPY 4
 COPY 46
  setval 
 --------
-     77
+     60
 (1 row)
 
 COPY 8
  setval 
 --------
-     17
+     14
 (1 row)
 
 SET
@@ -325,7 +331,7 @@ SET
 COPY 10
  setval 
 --------
-     21
+     20
 (1 row)
 
  setval 
@@ -360,7 +366,7 @@ COPY 2
 COPY 2
  setval 
 --------
-   1002
+   1000
 (1 row)
 
 COPY 19
@@ -467,6 +473,7 @@ SET
 ALTER TABLE
 ALTER TABLE
 ERROR:  event trigger "emaj_protection_trg" already exists
+ALTER EVENT TRIGGER
 COMMENT
 REVOKE
 REVOKE

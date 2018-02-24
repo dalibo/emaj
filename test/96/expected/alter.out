@@ -149,12 +149,16 @@ WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_
 
 -- unknown group
 select emaj.emaj_alter_group(NULL);
-ERROR:  _alter_groups: The group "<NULL>" does not exist.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 20 at RAISE
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 select emaj.emaj_alter_group('unknownGroup');
-ERROR:  _alter_groups: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 20 at RAISE
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 -- group in logging state (2 tables need to be repaired)
 begin;
@@ -182,7 +186,7 @@ begin;
 ERROR:  _alter_plan: The groups "myGroup1" cannot be altered because they are in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._alter_plan(text[],bigint) line 131 at RAISE
 SQL statement "SELECT emaj._alter_plan(v_groupNames, v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 rollback;
 -- alter a group with a table now already belonging to another group
@@ -194,7 +198,7 @@ WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl1" is al
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 24 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 rollback;
 -- schema suffix cannot be changed for sequence
@@ -205,7 +209,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 24 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 rollback;
 -- object names prefix cannot be changed for sequence
@@ -216,7 +220,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 24 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 rollback;
 -- log tablespace cannot be changed for sequence
@@ -227,7 +231,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 24 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 rollback;
 begin;
@@ -237,7 +241,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 24 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 rollback;
 -- dropped application table
@@ -261,7 +265,7 @@ WARNING:  _check_groups_content: Error, the table or sequence myschema1.mytbl2b_
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 24 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 rollback;
 -- should be OK
@@ -701,14 +705,20 @@ select emaj.emaj_enable_protection_by_event_triggers();
 -- emaj_alter_groups() tests on IDLE groups
 -----------------------------
 -- unknown groups
-select emaj.emaj_alter_groups('{NULL,"unknownGroup"}');
-ERROR:  _alter_groups: The group "<NULL>" does not exist.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 20 at RAISE
-PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 select emaj.emaj_alter_groups('{"myGroup1","unknownGroup"}');
-ERROR:  _alter_groups: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 20 at RAISE
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 16 at SQL statement
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
+-- no group at all
+select emaj.emaj_alter_groups('{NULL,""}');
+WARNING:  _check_group_names: No group to process.
+ emaj_alter_groups 
+-------------------
+                  
+(1 row)
+
 -- groups in logging state
 begin;
   select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','');
@@ -737,7 +747,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 ERROR:  _alter_plan: The groups "myGroup1, myGroup2" cannot be altered because they are in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._alter_plan(text[],bigint) line 131 at RAISE
 SQL statement "SELECT emaj._alter_plan(v_groupNames, v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 40 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 rollback;
 -- alter groups with a table now already belonging to another group
@@ -748,7 +758,7 @@ WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl1" is co
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 24 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 rollback;
 -- schema suffix cannot be changed for sequence (this covers other cases of forbidden changes for sequences)
@@ -759,7 +769,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 24 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 rollback;
 -- a PRIMARY KEY is missing
@@ -770,7 +780,7 @@ WARNING:  _check_groups_content: Error, the table myschema1.mytbl4 has no PRIMAR
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
 SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 24 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 rollback;
 -- should be OK

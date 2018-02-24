@@ -6,14 +6,12 @@
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mk1');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 37 at PERFORM
-SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
-PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 37 at PERFORM
-SQL statement "SELECT emaj._start_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, true, v_resetLog)"
-PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
  emaj_start_groups 
 -------------------
                 15
@@ -39,11 +37,11 @@ set default_tablespace = tspemaj_renamed;
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','Attributes_changed');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -63,11 +61,11 @@ update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'mysch
 select emaj.emaj_alter_groups(array['myGroup1','myGroup2']);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -82,11 +80,11 @@ update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = '
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -547,7 +545,7 @@ myschema1_mytbl4.snap
   select emaj.emaj_alter_group('myGroup1','2nd remove_tbl');
 WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" references the table "myschema1.mytbl1" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -575,9 +573,9 @@ PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
   select * from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" references the table "myschema1.mytbl1" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
  rlbk_severity |                               rlbk_message                                
 ---------------+---------------------------------------------------------------------------
@@ -626,9 +624,8 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN Q
   select emaj.emaj_start_group('myGroup1');
 WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" references the table "myschema1.mytbl1" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 37 at PERFORM
-SQL statement "SELECT emaj._start_groups(array[v_groupName], v_mark, false, v_resetLog)"
-PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 17 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
  emaj_start_group 
 ------------------
                 4
@@ -705,7 +702,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 49 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema4.mytblc1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc1"
@@ -713,7 +710,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 49 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for table "myschema4.mytblc1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc1"
@@ -721,7 +718,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 49 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -772,15 +769,15 @@ select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false)
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
  rlbk_severity |             rlbk_message             
 ---------------+--------------------------------------
@@ -792,30 +789,30 @@ PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETUR
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
-SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(emaj._check_names_array(v_groupNames,'group'), v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
+SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text) line 11 at RETURN
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 at RETURN QUERY
  rlbk_severity |                                  rlbk_message                                  
 ---------------+--------------------------------------------------------------------------------
@@ -831,15 +828,15 @@ PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
  rlbk_severity |             rlbk_message             
 ---------------+--------------------------------------
@@ -850,15 +847,15 @@ PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETUR
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
  rlbk_severity |                                  rlbk_message                                  
 ---------------+--------------------------------------------------------------------------------
@@ -875,15 +872,15 @@ PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETUR
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 at RETURN QUERY
  rlbk_severity |             rlbk_message             
 ---------------+--------------------------------------
@@ -894,15 +891,15 @@ PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
  rlbk_severity |             rlbk_message             
 ---------------+--------------------------------------
@@ -936,7 +933,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 49 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
@@ -944,7 +941,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 49 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
@@ -952,11 +949,11 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 49 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -1129,6 +1126,8 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUP        | BEGIN                        | myGroup1                     |                                                                                | postgres
  ALTER_GROUP        | END                          | myGroup1                     | Timestamp Id : 6037                                                            | postgres
  ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED       |                              | emaj_protection_trg, emaj_sql_drop_trg                                         | postgres
+ ALTER_GROUPS       | BEGIN                        |                              |                                                                                | postgres
+ ALTER_GROUPS       | END                          |                              |                                                                                | postgres
  ALTER_GROUPS       | BEGIN                        | myGroup1,myGroup2            |                                                                                | postgres
  ALTER_GROUP        | SCHEMA DROPPED               | emajb                        |                                                                                | postgres
  ALTER_GROUPS       | END                          | myGroup1,myGroup2            | Timestamp Id : 6040                                                            | postgres
@@ -1362,7 +1361,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP   | END                          | myGroup2                     | 8 tables/sequences processed                                                   | postgres
  FORCE_DROP_GROUP   | BEGIN                        | myGroup4                     |                                                                                | postgres
  FORCE_DROP_GROUP   | END                          | myGroup4                     | 5 tables/sequences processed                                                   | postgres
-(359 rows)
+(361 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
  time_id | time_last_emaj_gid | time_event 

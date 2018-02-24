@@ -64,7 +64,7 @@ The order of the groups in the groups list is not meaningful. During the E-Maj o
 
 It is possible to call a multi-groups function to process a list of … one group, or even an empty list. This may allows a set oriented build of this list, using for instance the *array_agg()* function.
 
-A tables groups list may contain duplicate values, *NULL* values or empty strings. These *NULL* values or empty strings are simply ignored. If a tables group name is listed several times, only one occurrence is kept. In all these cases, and when the tables groups list is empty, a warning message is generated.
+A tables groups list may contain duplicate values, *NULL* values or empty strings. These *NULL* values or empty strings are simply ignored. If a tables group name is listed several times, only one occurrence is kept.
 
 Format and usage of these functions are strictly equivalent to those of their twin-functions.
 

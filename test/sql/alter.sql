@@ -203,8 +203,9 @@ select emaj.emaj_enable_protection_by_event_triggers();
 -----------------------------
 
 -- unknown groups
-select emaj.emaj_alter_groups('{NULL,"unknownGroup"}');
 select emaj.emaj_alter_groups('{"myGroup1","unknownGroup"}');
+-- no group at all
+select emaj.emaj_alter_groups('{NULL,""}');
 -- groups in logging state
 begin;
   select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','');

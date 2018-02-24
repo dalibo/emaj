@@ -8,6 +8,7 @@ E-Maj - Change log
     and timestamp. They also filter tables that belonged to the group during
     the period framed by the supplied first and last marks (and not only 
     tables belonging to the group at the function execution time).
+  * Some internal code changes. This may change some error messages.
 
 ###Bug fixes:###
 

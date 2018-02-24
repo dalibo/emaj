@@ -64,7 +64,7 @@ L'ordre dans lequel les groupes sont listés n'a pas d'importance. L'ordre de tr
 
 Il est possible d'appeler une fonction multi-groupes pour traiter une liste … d'un seul groupe, voire une liste vide. Ceci peut permettre une construction ensembliste de la liste, en utilisant par exemple la fonction *array_agg()*.
 
-Les listes de groupes de tables peuvent contenir des doublons, des valeurs *NULL* ou des chaînes vides. Ces valeurs *NULL* et ces chaînes vides sont simplement ignorées. Si un nom de groupe de tables est présent plusieurs fois, une seule occurrence du nom est retenue. Dans tous ces cas, et dans le cas où la liste est vide, un message d'avertissement est généré.
+Les listes de groupes de tables peuvent contenir des doublons, des valeurs *NULL* ou des chaînes vides. Ces valeurs *NULL* et ces chaînes vides sont simplement ignorées. Si un nom de groupe de tables est présent plusieurs fois, une seule occurrence du nom est retenue.
 
 Le formalisme et l'usage des autres paramètres éventuels des fonctions est strictement le même que pour les fonctions jumelles mono-groupes.
 

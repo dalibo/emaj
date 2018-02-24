@@ -30,6 +30,7 @@ select emaj.emaj_disable_protection_by_event_triggers();
 -- group is unknown in emaj_group
 select emaj.emaj_start_group(NULL,NULL);
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
+select emaj.emaj_start_groups(array['unknownGroup1','unknownGroup2'],NULL,NULL);
 -- reserved mark name
 select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
 -- detection of a missing application schema
@@ -169,9 +170,9 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 -----------------------------
 -- unknown group
 select emaj.emaj_stop_group(NULL);
-select emaj.emaj_stop_group('unkownGroup');
+select emaj.emaj_stop_group('unknownGroup');
 select emaj.emaj_stop_group(NULL,NULL);
-select emaj.emaj_stop_group('unkownGroup',NULL);
+select emaj.emaj_stop_group('unknownGroup',NULL);
 -- invalid mark
 select emaj.emaj_stop_group('myGroup1','EMAJ_LAST_MARK');
 -- already existing mark
@@ -236,10 +237,10 @@ select emaj.emaj_start_groups('{"myGroup1","unknownGroup"}',NULL,false);
 -- reserved mark name
 select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 
--- second group is already started
-select emaj.emaj_start_group('myGroup2','Mark1',true);
+-- 2 groups already started
+select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',true);
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',false);
-select emaj.emaj_stop_group('myGroup2');
+select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
 
 -- missing application table
 begin;
@@ -293,7 +294,7 @@ select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myG
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
 -- unknown group
 select emaj.emaj_force_stop_group(NULL);
-select emaj.emaj_force_stop_group('unkownGroup');
+select emaj.emaj_force_stop_group('unknownGroup');
 
 -- should be OK
 -- missing application schema

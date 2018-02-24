@@ -445,9 +445,13 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
 -----------------------------
 -- unknown group
 select emaj.emaj_comment_group(NULL,NULL);
-ERROR:  emaj_comment_group: The group "<NULL>" does not exist.
-select emaj.emaj_comment_group('unkownGroup',NULL);
-ERROR:  emaj_comment_group: The group "unkownGroup" does not exist.
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_comment_group(text,text) line 8 at PERFORM
+select emaj.emaj_comment_group('unknownGroup',NULL);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_comment_group(text,text) line 8 at PERFORM
 -- should be OK
 select emaj.emaj_comment_group('myGroup1','a first comment for group #1');
  emaj_comment_group 
@@ -490,13 +494,13 @@ select group_name, group_comment from emaj.emaj_group where group_name = 'myGrou
 -----------------------------
 -- unknown group
 select emaj.emaj_drop_group(NULL);
-ERROR:  _drop_group: The group "<NULL>" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
-PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+PL/pgSQL function emaj.emaj_drop_group(text) line 12 at PERFORM
 select emaj.emaj_drop_group('unknownGroup');
-ERROR:  _drop_group: The group "unknownGroup" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
-PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+PL/pgSQL function emaj.emaj_drop_group(text) line 12 at PERFORM
 -- group in logging state
 select emaj.emaj_start_group('myGroup1','');
  emaj_start_group 
@@ -505,9 +509,9 @@ select emaj.emaj_start_group('myGroup1','');
 (1 row)
 
 select emaj.emaj_drop_group('myGroup1');
-ERROR:  _drop_group: The group "myGroup1" cannot be dropped because it is in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
-PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+ERROR:  _check_group_names: The group "myGroup1" is not in IDLE state.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+PL/pgSQL function emaj.emaj_drop_group(text) line 12 at PERFORM
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
@@ -520,9 +524,9 @@ begin;
   select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emajb". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 44 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 29 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
-PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
 rollback;
 -- should be OK
 select emaj.emaj_drop_group('myGroup1');
@@ -545,26 +549,26 @@ select emaj.emaj_drop_group('emptyGroup');
 
 -- already dropped
 select emaj.emaj_drop_group('myGroup2');
-ERROR:  _drop_group: The group "myGroup2" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
-PL/pgSQL function emaj.emaj_drop_group(text) line 12 at SQL statement
+ERROR:  _check_group_names: The group "myGroup2" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+PL/pgSQL function emaj.emaj_drop_group(text) line 12 at PERFORM
 -----------------------------
 -- emaj_force_drop_group() tests
 -----------------------------
 -- unknown group
 select emaj.emaj_force_drop_group(NULL);
-ERROR:  _drop_group: The group "<NULL>" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
-PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
-select emaj.emaj_force_drop_group('unkownGroup');
-ERROR:  _drop_group: The group "unkownGroup" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
-PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at PERFORM
+select emaj.emaj_force_drop_group('unknownGroup');
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at PERFORM
 -- already dropped
 select emaj.emaj_force_drop_group('myGroup2');
-ERROR:  _drop_group: The group "myGroup2" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
-PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at SQL statement
+ERROR:  _check_group_names: The group "myGroup2" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at PERFORM
 -- should be OK
 select emaj.emaj_create_group('myGroup1',false);
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.

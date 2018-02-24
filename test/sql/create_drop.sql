@@ -185,7 +185,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
 
 -- unknown group
 select emaj.emaj_comment_group(NULL,NULL);
-select emaj.emaj_comment_group('unkownGroup',NULL);
+select emaj.emaj_comment_group('unknownGroup',NULL);
 
 -- should be OK
 select emaj.emaj_comment_group('myGroup1','a first comment for group #1');
@@ -226,7 +226,7 @@ select emaj.emaj_drop_group('myGroup2');
 
 -- unknown group
 select emaj.emaj_force_drop_group(NULL);
-select emaj.emaj_force_drop_group('unkownGroup');
+select emaj.emaj_force_drop_group('unknownGroup');
 -- already dropped
 select emaj.emaj_force_drop_group('myGroup2');
 -- should be OK
