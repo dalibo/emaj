@@ -786,42 +786,6 @@ $_purge_hist$
   END;
 $_purge_hist$;
 
-CREATE OR REPLACE FUNCTION emaj._check_names_array(v_names TEXT[], v_type TEXT)
-RETURNS TEXT[] LANGUAGE plpgsql AS
-$_check_names_array$
--- This function build a array of names similar to the supplied array, except that NULL
--- values, empty string and duplicate names are suppressed. Issue a warning if the result array is NULL.
--- The function is used to validate group names array or table and sequence names array.
--- Input: names array
---        type of element, used to format warning messages
--- Output: validated names array
-  DECLARE
-    v_outputNames            TEXT[];
-    v_aName                  TEXT;
-  BEGIN
-    IF v_names IS NOT NULL AND array_upper(v_names,1) >= 1 THEN
--- if there are elements, build the result array
-      FOREACH v_aName IN ARRAY v_names LOOP
--- look for not NULL & not empty name
-        IF v_aName IS NULL OR v_aName = '' THEN
-          RAISE WARNING '_check_names_array: A % name is NULL or empty.', v_type;
--- look for duplicate name
-        ELSEIF v_outputNames IS NOT NULL AND v_aName = ANY (v_outputNames) THEN
-          RAISE WARNING '_check_names_array: Duplicate % name "%".', v_type, v_aName;
-        ELSE
--- OK, keep the name
-          v_outputNames = v_outputNames || v_aName;
-        END IF;
-      END LOOP;
-    END IF;
--- check for NULL result
-    IF v_outputNames IS NULL THEN
-      RAISE WARNING '_check_names_array: No % name to process.', v_type;
-    END IF;
-    RETURN v_outputNames;
-  END;
-$_check_names_array$;
-
 CREATE OR REPLACE FUNCTION emaj._check_group_names(v_groupNames TEXT[], v_mayBeNull BOOLEAN, v_lockGroups BOOLEAN, v_checkList TEXT)
 RETURNS TEXT[] LANGUAGE plpgsql AS
 $_check_group_names$
@@ -6515,10 +6479,12 @@ $_gen_sql_groups$
     IF v_groupNames IS NOT NULL THEN
 -- if table/sequence names are supplied, check them
       IF v_tblseqs IS NOT NULL THEN
-        IF v_tblseqs = array[''] THEN
+-- remove duplicates values, NULL and empty strings from the supplied tables/sequences names array
+        SELECT array_agg(DISTINCT table_seq_name) INTO v_tblseqs FROM unnest(v_tblseqs) AS table_seq_name
+          WHERE table_seq_name IS NOT NULL AND table_seq_name <> '';
+        IF v_tblseqs IS NULL THEN
           RAISE EXCEPTION '_gen_sql_groups: The filtered table/sequence names array cannot be empty.';
         END IF;
-        v_tblseqs = emaj._check_names_array(v_tblseqs,'table/sequence');
       END IF;
 -- check that each group ...
       FOREACH v_aGroupName IN ARRAY v_groupNames LOOP

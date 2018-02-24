@@ -117,6 +117,7 @@ $$Represents the structure of rows returned by the emaj_detailed_log_stat_group(
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION emaj._check_names_array(V_NAMES TEXT[],V_TYPE TEXT);
 DROP FUNCTION emaj._estimate_rollback_groups(V_GROUPNAMES TEXT[],V_MARK TEXT,V_ISLOGGEDRLBK BOOLEAN);
 DROP FUNCTION emaj._gen_sql_groups(V_GROUPNAMES TEXT[],V_FIRSTMARK TEXT,V_LASTMARK TEXT,V_LOCATION TEXT,V_TBLSEQS TEXT[]);
 
@@ -2249,10 +2250,12 @@ $_gen_sql_groups$
     IF v_groupNames IS NOT NULL THEN
 -- if table/sequence names are supplied, check them
       IF v_tblseqs IS NOT NULL THEN
-        IF v_tblseqs = array[''] THEN
+-- remove duplicates values, NULL and empty strings from the supplied tables/sequences names array
+        SELECT array_agg(DISTINCT table_seq_name) INTO v_tblseqs FROM unnest(v_tblseqs) AS table_seq_name
+          WHERE table_seq_name IS NOT NULL AND table_seq_name <> '';
+        IF v_tblseqs IS NULL THEN
           RAISE EXCEPTION '_gen_sql_groups: The filtered table/sequence names array cannot be empty.';
         END IF;
-        v_tblseqs = emaj._check_names_array(v_tblseqs,'table/sequence');
       END IF;
 -- check that each group ...
       FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
