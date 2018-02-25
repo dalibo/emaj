@@ -1,18 +1,26 @@
-#!/bin/sh
-# E-Maj
-# Create a postgres cluster
+#!/bin/bash
+# create_cluster.sh
+# E-Maj tool, distributed under GPL3 licence
+# Create a postgres cluster suitable to run the E-Maj regression tests
+# Syntax: create_cluster <minor postgres version>
 
-export PGMAJORVERSION=96
-export PGVERSION=960
+if [[ $# -lt 1 || ! "${1}" =~ ^[0-9]{3}$ ]]; then
+    echo "Usage: $0 <minor postgres version>"
+	echo "for instance: '$0 102' for version 10.2"
+    exit 1
+fi
+
+export PGVERSION=$1
+export PGMAJORVERSION=`echo $PGVERSION | cut -c1-2`
 
 export PGDATA=/home/postgres/db$PGMAJORVERSION
 export PGDIR=/usr/local/pg$PGVERSION/bin
 export EMAJDIR=/home/postgres/proj/emaj
 
 echo
-echo "*********************************************"
+echo "**************************************************"
 echo "*     Create the cluster for version $PGMAJORVERSION     *"
-echo "*********************************************"
+echo "**************************************************"
 echo
 
 # Trying to stop the cluster if it already exists and is up
@@ -26,8 +34,7 @@ mkdir $PGDATA
 cd $PGDATA
 
 # Initialize the cluster
-#$PGDIR/initdb -D .   # pg 9.2-
-$PGDIR/initdb -k -D .
+$PGDIR/initdb -D .
 if [ -f "PG_VERSION" ]; then
     echo "Initdb OK"
 else
@@ -35,7 +42,7 @@ else
     exit 1
 fi
 
-# Cluster configuration change
+# Cluster configuration changes
 
 cat <<EOF1 >specif.conf
 listen_addresses = '*'
@@ -61,23 +68,21 @@ mkdir emaj_tblsp
 mkdir tsplog1
 mkdir tsplog2
 
-# Copy and adjust the emaj.control file                    # if pg 9.1+
+# Copy and adjust the emaj.control file
 sudo cp $EMAJDIR/emaj.control /usr/local/pg$PGVERSION/share/postgresql/extension/emaj.control
 sudo bash -c "echo \"directory = '$EMAJDIR/sql'\" >>/usr/local/pg$PGVERSION/share/postgresql/extension/emaj.control"
 
 # Create all what is needed inside the cluster (tablespaces, roles, extensions,...)
 $PGDIR/psql -p 54$PGMAJORVERSION postgres -a <<EOF2
 \set ON_ERROR_STOP
---create language plpgsql;                                 -- if pg 8.4-
 create tablespace tspemaj location '/home/postgres/db$PGMAJORVERSION/emaj_tblsp';
 create tablespace tsplog1 location '/home/postgres/db$PGMAJORVERSION/tsplog1';
 create tablespace "tsp log'2" location '/home/postgres/db$PGMAJORVERSION/tsplog2';
 create role myUser login password '';
 grant all on database postgres to myUser;
---\i ~/pg/postgresql-9.0.23/contrib/dblink/dblink.sql      -- if pg 9.0-
-create extension dblink;                                   -- if pg 9.1+
---\i $EMAJDIR/sql/emaj.sql                                 -- if pg 9.0-
-create extension emaj;                                     -- if pg 9.1+
+create extension dblink;
+create extension btree_gist;
+create extension emaj;
 EOF2
 if [ $? != 0 ]
 then
@@ -86,4 +91,3 @@ then
 fi
 
 echo "Cluster successfuly initialized !!!"
-
