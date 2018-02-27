@@ -257,6 +257,75 @@ $_check_group_names$
   END;
 $_check_group_names$;
 
+CREATE OR REPLACE FUNCTION emaj._check_mark_name(v_groupNames TEXT[], v_mark TEXT, v_checkList TEXT)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_check_mark_name$
+-- This function verifies that a mark name exists for one or several groups
+-- It processes the EMAJ_LAST_MARK keyword.
+-- When several groups are supplied, it checks that the mark represents the same point in time for all groups.
+-- Input: array of group names, name of the mark to check, list of checks to perform (currently only 'ACTIVE')
+-- Output: internal name of the mark
+  DECLARE
+    v_markName               TEXT = v_mark;
+    v_groupList              TEXT;
+    v_count                  INTEGER;
+  BEGIN
+-- process the 'EMAJ_LAST_MARK' keyword, if needed
+    IF v_mark = 'EMAJ_LAST_MARK' THEN
+-- detect groups that have no recorded mark
+      SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM
+        (SELECT unnest(v_groupNames) EXCEPT SELECT mark_group FROM emaj.emaj_mark) AS t(group_name);
+      IF v_count > 0 THEN
+        IF v_count = 1 THEN
+          RAISE EXCEPTION '_check_mark_name: The group "%" has no mark.', v_groupList;
+        ELSE
+          RAISE EXCEPTION '_check_mark_name: The groups "%" have no mark.', v_groupList;
+        END IF;
+      END IF;
+-- count the number of distinct lastest mark_time_id for all concerned groups
+      SELECT count(DISTINCT mark_time_id) INTO v_count FROM
+        (SELECT mark_group, max(mark_time_id) AS mark_time_id FROM emaj.emaj_mark
+           WHERE mark_group = ANY (v_groupNames) GROUP BY 1) AS t;
+      IF v_count > 1 THEN
+        RAISE EXCEPTION '_check_mark_name: The EMAJ_LAST_MARK does not represent the same point in time for all groups.';
+      END IF;
+-- get the name of the last mark for the first group in the array, as we now know that all groups share the same last mark
+      SELECT mark_name INTO v_markName FROM emaj.emaj_mark
+        WHERE mark_group = v_groupNames[1] ORDER BY mark_id DESC LIMIT 1;
+    ELSE
+-- for usual mark name (i.e. not EMAJ_LAST_MARK)
+-- check that the mark exists for all groups
+      SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM
+        (SELECT unnest(v_groupNames) EXCEPT SELECT mark_group FROM emaj.emaj_mark WHERE mark_name = v_markName) AS t(group_name);
+      IF v_count > 0 THEN
+        IF v_count = 1 THEN
+          RAISE EXCEPTION '_check_mark_name: The mark "%" does not exist for the group "%".', v_markName, v_groupList;
+        ELSE
+          RAISE EXCEPTION '_check_mark_name: The mark "%" does not exist for the groups "%".', v_markName, v_groupList;
+        END IF;
+      END IF;
+-- check that the mark represents the same point in time for all groups
+      SELECT count(DISTINCT mark_time_id) INTO v_count FROM emaj.emaj_mark
+        WHERE mark_name = v_markName AND mark_group = ANY (v_groupNames);
+      IF v_count > 1 THEN
+        RAISE EXCEPTION '_check_mark_name: The mark "%" does not represent the same point in time for all groups.', v_markName;
+      END IF;
+    END IF;
+-- if requested, check the mark is active for all groups
+    IF strpos(v_checkList,'ACTIVE') > 0 THEN
+      SELECT string_agg(mark_group,', '), count(*) INTO v_groupList, v_count FROM emaj.emaj_mark
+        WHERE mark_name = v_markName AND mark_group = ANY(v_groupNames) AND mark_is_deleted;
+      IF v_count = 1 THEN
+        RAISE EXCEPTION '_check_mark_name: For the group "%", the mark "%" is DELETED.', v_groupList, v_markName;
+      END IF;
+      IF v_count > 1 THEN
+        RAISE EXCEPTION '_check_mark_name: For the groups "%", the mark "%" is DELETED.', v_groupList, v_markName;
+      END IF;
+    END IF;
+    RETURN v_markName;
+  END;
+$_check_mark_name$;
+
 CREATE OR REPLACE FUNCTION emaj._check_new_mark(v_groupNames TEXT[], v_mark TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_new_mark$
@@ -907,21 +976,16 @@ $emaj_comment_mark_group$
 -- Input: group name, mark to comment, comment
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark to delete to specify the last set mark.
 --   To reset an existing comment for a mark, the supplied comment can be NULL.
-  DECLARE
-    v_realMark               TEXT;
   BEGIN
 -- check the group name
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '');
--- retrieve and check the mark name
-    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
-    IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_comment_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
-    END IF;
+-- check the mark name
+    SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '') INTO v_mark;
 -- OK, update the mark_comment from emaj_mark table
-    UPDATE emaj.emaj_mark SET mark_comment = v_comment WHERE mark_group = v_groupName AND mark_name = v_realMark;
+    UPDATE emaj.emaj_mark SET mark_comment = v_comment WHERE mark_group = v_groupName AND mark_name = v_mark;
 -- insert event in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-      VALUES ('COMMENT_MARK_GROUP', v_groupName, 'Mark ' || v_realMark);
+      VALUES ('COMMENT_MARK_GROUP', v_groupName, 'Mark ' || v_mark);
     RETURN;
   END;
 $emaj_comment_mark_group$;
@@ -963,18 +1027,13 @@ $emaj_get_previous_mark_group$
 -- Input: group name, mark name
 --   The keyword 'EMAJ_LAST_MARK' can be used to specify the last set mark.
 -- Output: mark name, or NULL if there is no mark before the given mark
-  DECLARE
-    v_realMark               TEXT;
   BEGIN
 -- check the group name
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '');
--- retrieve and check the given mark name
-    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
-    IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_get_previous_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
-    END IF;
+-- check the mark name
+    SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '') INTO v_mark;
 -- find the requested mark
-    RETURN emaj._get_previous_mark_group(v_groupName, v_realMark);
+    RETURN emaj._get_previous_mark_group(v_groupName, v_mark);
   END;
 $emaj_get_previous_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TEXT) IS
@@ -993,7 +1052,6 @@ $emaj_delete_mark_group$
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark to delete to specify the last set mark.
 -- Output: number of deleted marks, i.e. 1
   DECLARE
-    v_realMark               TEXT;
     v_markId                 BIGINT;
     v_markTimeId             BIGINT;
     v_previousMarkTimeId     BIGINT;
@@ -1010,11 +1068,8 @@ $emaj_delete_mark_group$
       VALUES ('DELETE_MARK_GROUP', 'BEGIN', v_groupName, v_mark);
 -- check the group name
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '');
--- retrieve and check the mark name
-    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
-    IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_delete_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
-    END IF;
+-- check the mark name
+    SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '') INTO v_mark;
 -- count the number of marks in the group
     SELECT count(*) INTO v_cpt FROM emaj.emaj_mark WHERE mark_group = v_groupName;
 -- and check there are at least 2 marks for the group
@@ -1023,12 +1078,12 @@ $emaj_delete_mark_group$
     END IF;
 -- OK, now get the id and time stamp id of the mark to delete
     SELECT mark_id, mark_time_id INTO v_markId, v_markTimeId
-      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_realMark;
+      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_mark;
 -- ... and the id and timestamp of the future first mark
     SELECT mark_id, mark_name INTO v_idNewMin, v_markNewMin
-      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_realMark ORDER BY mark_id LIMIT 1;
+      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_mark ORDER BY mark_id LIMIT 1;
 -- ... and the name, the time id and the last global sequence value of the previous mark
-    SELECT emaj._get_previous_mark_group(v_groupName, v_realMark) INTO v_previousMarkName;
+    SELECT emaj._get_previous_mark_group(v_groupName, v_mark) INTO v_previousMarkName;
     SELECT mark_time_id, time_last_emaj_gid INTO v_previousMarkTimeId, v_previousMarkGlobalSeq
       FROM emaj.emaj_mark, emaj.emaj_time_stamp WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_previousMarkName;
 -- effectively delete the mark for the group
@@ -1038,7 +1093,7 @@ $emaj_delete_mark_group$
     ELSE
 -- otherwise, the mark to delete is an intermediate mark for the group
 -- process the mark deletion with _delete_intermediate_mark_group()
-      PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_realMark, v_markId, v_markTimeId);
+      PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_mark, v_markId, v_markTimeId);
 -- if, for any table or sequence, the mark to delete is the mark set at the time it was removed from the group,
 --   set the new end time id for them to the previous mark. If this is the only mark, remove any log traces for these tables or sequence.
       SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
@@ -1070,7 +1125,7 @@ $emaj_delete_mark_group$
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('DELETE_MARK_GROUP', 'END', v_groupName, v_realMark);
+      VALUES ('DELETE_MARK_GROUP', 'END', v_groupName, v_mark);
     RETURN 1;
   END;
 $emaj_delete_mark_group$;
@@ -1089,7 +1144,6 @@ $emaj_delete_before_mark_group$
 -- Output: number of deleted marks
 --   or NULL if the provided mark name is NULL
   DECLARE
-    v_realMark               TEXT;
     v_nbMark                 INT;
   BEGIN
 -- insert begin in the history
@@ -1101,16 +1155,13 @@ $emaj_delete_before_mark_group$
     IF v_mark IS NULL THEN
       RETURN NULL;
     END IF;
--- retrieve and check the mark name
-    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
-    IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_delete_before_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
-    END IF;
+-- check the mark name
+    SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '') INTO v_mark;
 -- effectively delete all marks before the supplied mark
-    SELECT emaj._delete_before_mark_group(v_groupName, v_realMark) INTO v_nbMark;
+    SELECT emaj._delete_before_mark_group(v_groupName, v_mark) INTO v_nbMark;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('DELETE_BEFORE_MARK_GROUP', 'END', v_groupName,  v_nbMark || ' marks deleted ; ' || v_realMark || ' is now the initial mark' );
+      VALUES ('DELETE_BEFORE_MARK_GROUP', 'END', v_groupName,  v_nbMark || ' marks deleted ; ' || v_mark || ' is now the initial mark' );
     RETURN v_nbMark;
   END;
 $emaj_delete_before_mark_group$;
@@ -1125,38 +1176,25 @@ $emaj_rename_mark_group$
 -- Rows from emaj_mark and emaj_sequence tables are updated accordingly.
 -- Input: group name, mark to rename, new name for the mark
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark to rename to specify the last set mark.
-  DECLARE
-    v_realMark               TEXT;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('RENAME_MARK_GROUP', 'BEGIN', v_groupName, v_mark);
 -- check the group name
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '');
--- retrieve and check the mark name
-    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
-    IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_rename_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
-    END IF;
--- check the new mark name is not 'EMAJ_LAST_MARK' or NULL
-    IF v_newName = 'EMAJ_LAST_MARK' OR v_newName IS NULL THEN
-       RAISE EXCEPTION 'emaj_rename_mark_group: "%" is not an allowed name for a new mark.', v_newName;
-    END IF;
--- check if the new mark name doesn't exist for the group
-    PERFORM 0 FROM emaj.emaj_mark
-      WHERE mark_group = v_groupName AND mark_name = v_newName;
-    IF FOUND THEN
-       RAISE EXCEPTION 'emaj_rename_mark_group: A mark "%" already exists for the group "%".', v_newName, v_groupName;
-    END IF;
+-- check the mark name
+    SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '') INTO v_mark;
+-- check the new mark name
+    SELECT emaj._check_new_mark(ARRAY[v_groupName], v_newName) INTO v_newName;
 -- OK, update the emaj_mark table
     UPDATE emaj.emaj_mark SET mark_name = v_newName
-      WHERE mark_group = v_groupName AND mark_name = v_realMark;
+      WHERE mark_group = v_groupName AND mark_name = v_mark;
 -- also rename mark names recorded in the mark_logged_rlbk_target_mark column if needed
     UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = v_newName
-      WHERE mark_group = v_groupName AND mark_logged_rlbk_target_mark = v_realMark;
+      WHERE mark_group = v_groupName AND mark_logged_rlbk_target_mark = v_mark;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('RENAME_MARK_GROUP', 'END', v_groupName, v_realMark || ' renamed ' || v_newName);
+      VALUES ('RENAME_MARK_GROUP', 'END', v_groupName, v_mark || ' renamed ' || v_newName);
     RETURN;
   END;
 $emaj_rename_mark_group$;
@@ -1172,34 +1210,18 @@ $emaj_protect_mark_group$
 -- Output: 1 if successful, 0 if the mark was already in protected state
 -- The group must be ROLLBACKABLE and in LOGGING state.
   DECLARE
-    v_realMark               TEXT;
-    v_markIsProtected        BOOLEAN;
-    v_markIsDeleted          BOOLEAN;
     v_status                 INT;
   BEGIN
 -- check the group name
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE');
--- retrieve and check that the mark name exists
-    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
-    IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_protect_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
-    END IF;
--- check that the mark is not logicaly deleted
-    SELECT mark_is_deleted, mark_is_rlbk_protected INTO v_markIsDeleted, v_markIsProtected FROM emaj.emaj_mark
-      WHERE mark_group = v_groupName AND mark_name = v_realMark;
-    IF v_markIsDeleted THEN
-      RAISE EXCEPTION 'emaj_protect_mark_group: The mark "%" for the group "%" is logicaly deleted and thus cannot be protected.', v_mark, v_groupName;
-    END IF;
--- OK, set the protection, if not already set
-    IF v_markIsProtected THEN
-      v_status = 0;
-    ELSE
-      UPDATE emaj.emaj_mark SET mark_is_rlbk_protected = TRUE WHERE mark_group = v_groupName AND mark_name = v_realMark;
-      v_status = 1;
-    END IF;
+-- check the mark name
+    SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := 'ACTIVE') INTO v_mark;
+-- OK, set the protection, if not already set, and return 1, or 0 if the mark was already protected
+    UPDATE emaj.emaj_mark SET mark_is_rlbk_protected = TRUE WHERE mark_group = v_groupName AND mark_name = v_mark AND NOT mark_is_rlbk_protected;
+    GET DIAGNOSTICS v_status = ROW_COUNT;
 -- insert event in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-      VALUES ('PROTECT_MARK_GROUP', v_groupName, 'Mark ' || v_realMark || ' ; status ' || v_status);
+      VALUES ('PROTECT_MARK_GROUP', v_groupName, 'Mark ' || v_mark || ' ; status ' || v_status);
     RETURN v_status;
   END;
 $emaj_protect_mark_group$;
@@ -1214,29 +1236,18 @@ $emaj_unprotect_mark_group$
 -- Output: 1 if successful, 0 if the mark was already in unprotected state
 -- The group must be ROLLBACKABLE and in LOGGING state.
   DECLARE
-    v_realMark               TEXT;
-    v_markIsProtected        BOOLEAN;
     v_status                 INT;
   BEGIN
 -- check the group name
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE');
--- retrieve and check the mark name
-    SELECT emaj._get_mark_name(v_groupName,v_mark) INTO v_realMark;
-    IF v_realMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_unprotect_mark_group: The mark "%" does not exist for the group "%".', v_mark, v_groupName;
-    END IF;
--- OK, set the protection
-    SELECT mark_is_rlbk_protected INTO v_markIsProtected FROM emaj.emaj_mark
-      WHERE mark_group = v_groupName AND mark_name = v_realMark;
-    IF NOT v_markIsProtected THEN
-      v_status = 0;
-    ELSE
-      UPDATE emaj.emaj_mark SET mark_is_rlbk_protected = FALSE WHERE mark_group = v_groupName AND mark_name = v_realMark;
-      v_status = 1;
-    END IF;
+-- check the mark name
+    SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '') INTO v_mark;
+-- OK, unset the protection, and return 1, or 0 if the mark was already unprotected
+    UPDATE emaj.emaj_mark SET mark_is_rlbk_protected = FALSE WHERE mark_group = v_groupName AND mark_name = v_mark AND mark_is_rlbk_protected;
+    GET DIAGNOSTICS v_status = ROW_COUNT;
 -- insert event in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-      VALUES ('UNPROTECT_MARK_GROUP', v_groupName, 'Mark ' || v_realMark || ' ; status ' || v_status);
+      VALUES ('UNPROTECT_MARK_GROUP', v_groupName, 'Mark ' || v_mark || ' ; status ' || v_status);
     RETURN v_status;
   END;
 $emaj_unprotect_mark_group$;
@@ -1457,13 +1468,11 @@ $_rlbk_check$
 -- and emaj_estimate_rollback_groups() functions.
 -- It returns the real mark name.
   DECLARE
-    v_aGroupName             TEXT;
     v_markName               TEXT;
+    v_aGroupName             TEXT;
     v_markId                 BIGINT;
     v_markTimeId             BIGINT;
-    v_markIsDeleted          BOOLEAN;
     v_protectedMarkList      TEXT;
-    v_cpt                    INT;
   BEGIN
 -- check the group names and states (the group names have already been checked in _rlbk_init() so the groups array cannot be NULL)
     IF isRollbackSimulation THEN
@@ -1471,39 +1480,29 @@ $_rlbk_check$
     ELSE
       SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED') INTO v_groupNames;
     END IF;
--- check that each group ...
-    FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
--- ... owns the requested mark
-      SELECT emaj._get_mark_name(v_aGroupName,v_mark) INTO v_markName;
-      IF NOT FOUND OR v_markName IS NULL THEN
-        RAISE EXCEPTION '_rlbk_check: The mark "%" does not exist for the group "%".', v_mark, v_aGroupName;
-      END IF;
--- ... and this mark can be used as target for a rollback
-      SELECT mark_id, mark_time_id, mark_is_deleted INTO v_markId, v_markTimeId, v_markIsDeleted FROM emaj.emaj_mark
-        WHERE mark_group = v_aGroupName AND mark_name = v_markName;
-      IF v_markIsDeleted THEN
-        RAISE EXCEPTION '_rlbk_check: The mark "%" for the group "%" is not usable for rollback.', v_markName, v_aGroupName;
-      END IF;
--- ... and the rollback wouldn't delete protected marks (check disabled for rollback simulation)
-      IF NOT isRollbackSimulation THEN
+-- check the mark name
+    SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE') INTO v_markName;
+    IF NOT isRollbackSimulation THEN
+-- check that for each group that the rollback wouldn't delete protected marks (check disabled for rollback simulation)
+      FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
+--   get the target mark id
+        SELECT mark_id INTO v_markId FROM emaj.emaj_mark
+          WHERE mark_group = v_aGroupName AND mark_name = v_markName;
+--   and look at the protected mark
         SELECT string_agg(mark_name,', ') INTO v_protectedMarkList FROM (
           SELECT mark_name FROM emaj.emaj_mark
             WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
             ORDER BY mark_id) AS t;
         IF v_protectedMarkList IS NOT NULL THEN
-          RAISE EXCEPTION '_rlbk_check: Protected marks (%) for group "%" block the rollback to the mark "%".', v_protectedMarkList, v_aGroupName, v_markName;
+          RAISE EXCEPTION '_rlbk_check: Protected marks (%) for the group "%" block the rollback to the mark "%".', v_protectedMarkList, v_aGroupName, v_markName;
         END IF;
-      END IF;
-    END LOOP;
--- get the mark timestamp and check it is the same for all groups of the array
-    SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_mark)) INTO v_cpt FROM emaj.emaj_group
-      WHERE group_name = ANY (v_groupNames);
-    IF v_cpt > 1 THEN
-      RAISE EXCEPTION '_rlbk_check: The mark "%" does not represent the same point in time for all groups.', v_mark;
+      END LOOP;
     END IF;
 -- if the isAlterGroupAllowed flag is not explicitely set to true, check that the rollback would not cross any alter group operation for the groups
     IF v_isAlterGroupAllowed IS NULL OR NOT v_isAlterGroupAllowed THEN
-       PERFORM 0 FROM emaj.emaj_alter_plan WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_rlbk_id IS NULL;
+       SELECT emaj._get_mark_time_id(v_groupNames[1], v_markName) INTO v_markTimeId;
+       PERFORM 0 FROM emaj.emaj_alter_plan
+         WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_rlbk_id IS NULL;
        IF FOUND THEN
          RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.';
        END IF;
@@ -1529,11 +1528,8 @@ $emaj_consolidate_rollback_group$
   BEGIN
 -- check the group name
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '');
--- retrieve and check the mark name
-    SELECT emaj._get_mark_name(v_groupName,v_endRlbkMark) INTO v_lastMark;
-    IF v_lastMark IS NULL THEN
-      RAISE EXCEPTION 'emaj_consolidate_rollback_group: The mark "%" does not exist for the group "%".', v_endRlbkMark, v_groupName;
-    END IF;
+-- check the supplied end rollback mark name
+    SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_endRlbkMark, v_checkList := '') INTO v_lastMark;
 -- check that no group is damaged
     PERFORM 0 FROM emaj._verify_groups(ARRAY[v_groupName], true);
 -- check the supplied mark is known as an end rollback mark
@@ -2685,6 +2681,7 @@ GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
 GRANT EXECUTE ON FUNCTION emaj._check_group_names(v_groupNames TEXT[], v_mayBeNull BOOLEAN, v_lockGroups BOOLEAN, v_checkList TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._check_mark_name(v_groupNames TEXT[], v_mark TEXT, v_checkList TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_detailed_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT, v_isLoggedRlbk BOOLEAN) TO emaj_viewer;

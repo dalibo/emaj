@@ -143,13 +143,16 @@ use warnings; use strict;
                             # internal errors (errors that should never appear and that would due to coding error)
        && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schemas: Internal error (the schema "%" does not exist).'
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: Internal error (group "%" is empty).'
-#       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_tbl: internal error (at least one list is NULL (columns list = %, pk columns list = %, conditions list = %).'
+                            # error messages that can in fact not be encountered in the current version
+       && $msgs{$fnctId} ne 'EXCEPTION:_check_mark_name: The groups "%" have no mark.'
+       && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Cannot repair the sequence %.%. Its group % is in LOGGING state.'
+       && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Cannot repair the table %.%. Its group % is in LOGGING state.'
                             # execution conditions that cannot be reproduced without parallelism
        && $msgs{$fnctId} ne 'EXCEPTION:_lock_groups: Too many (5) deadlocks encountered while locking tables of group "%".'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables for groups "%".'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_start_mark: % Please retry.'
-                            # cases that are tested in the misc.sql script but without displaying the error messages 
-                            # because they contain timestamp fields that are not stable though test executions
+                            # error messages containing timestamp.
+                            # (as they are not stable though test executions, these cases are tested in the misc.sql script but without displaying the error messages)
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).'
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_detailed_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).'
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_snap_log_group: The start mark "%" (%) has been set after the end mark "%" (%).'

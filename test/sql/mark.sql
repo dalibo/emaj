@@ -137,12 +137,12 @@ select emaj.emaj_rename_mark_group('myGroup1','DummyMark','new mark');
 
 -- invalid new mark name
 select emaj.emaj_rename_mark_group('myGroup1','Mark1','EMAJ_LAST_MARK');
-select emaj.emaj_rename_mark_group('myGroup1','Mark1',NULL);
 
 -- new mark name already exists
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM1');
 
 -- should be OK
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK',NULL);
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM2');
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','SM2');
 select emaj.emaj_rename_mark_group('myGroup2','phil''s mark #1','john''s mark #1');
@@ -277,7 +277,8 @@ select emaj.emaj_stop_group('myGroup2');
 
 select emaj.emaj_set_mark_group('myGroup1','SM1');
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'SM1');
-select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RENAMED');
+select emaj.emaj_protect_mark_group('myGroup1','RENAMED');
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 
 -- check marks state

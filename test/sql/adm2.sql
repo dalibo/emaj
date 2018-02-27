@@ -30,6 +30,9 @@ select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 -- really start both groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1b', false);
 
+-- try to rollback several groups to a deleted common mark
+select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1', false);
+
 -- set again a mark for both groups
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
 
