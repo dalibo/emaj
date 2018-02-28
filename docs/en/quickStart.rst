@@ -6,15 +6,15 @@ The E-Maj installation is described in detail later. But the few following comma
 Software install
 ^^^^^^^^^^^^^^^^
 
-To download and install E-Maj, log on your postgres (or another) account and type::
-
-  pgxn download E-Maj
+To install E-Maj, log on your postgres (or another) account, download E-Maj from PGXN (https://pgxn.org/dist/e-maj/) and type::
 
   unzip e-maj-<version>.zip
 
   cd e-maj-<version>/
 
-  sudo make install
+  sudo cp emaj.control $(pg_config --sharedir)/extension/.
+
+  sudo cp sql/emaj* $(pg_config --sharedir)/extension/.
 
 For more details, or in case of problem, look at :doc:`there <install>`.
 

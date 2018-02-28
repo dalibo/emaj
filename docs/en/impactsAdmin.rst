@@ -109,7 +109,7 @@ Starting with version 10, PostgreSQL includes logical replication mechanisms. Th
 .. image:: images/logical_repl1.png
    :align: center
 
-An application table that belongs to a tables group can be replicated, without any particular condition. The effect of any rollback operation that may occur would be simply replicated on *subscriber* side.
+An application table that belongs to a tables group can be replicated. The effect of any rollback operation that may occur would be simply replicated on *subscriber* side, as long as no filter has been applied on replicated SQL verbs types.
 
 **Replication of application tables with E-Maj activated on subscriber side**
 

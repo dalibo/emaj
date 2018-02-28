@@ -4,7 +4,7 @@ Installation du logiciel E-Maj
 Source de téléchargement
 ************************
 
-E-Maj est disponible en téléchargement sur le site Internet **PGXN** (http://pgxn.org).
+E-Maj est disponible en téléchargement sur le site Internet **PGXN** (https://pgxn.org/dist/e-maj/).
 
 E-Maj et ses compléments sont également disponibles sur le site Internet **github.org** :
 
@@ -24,14 +24,15 @@ Télécharger la dernière version d’E-Maj par un moyen à votre convenance. S
 Puis décompresser l’archive et exécuter la procédure d’installation, en enchaînant les commandes suivantes ::
 
 	unzip e-maj-<version>.zip
+
 	cd e-maj-<version>/
-	sudo make install
+
+	sudo cp emaj.control $(pg_config --sharedir)/extension/.
+
+	sudo cp sql/emaj* $(pg_config --sharedir)/extension/.
 
 La dernière version d’E-Maj est maintenant installée et référencée par PostgreSQL. Le répertoire e-maj-<version> contient l’arborescence :doc:`décrite ici <content>`.
 
-NB : La commande *sudo make uninstall* permet d’annuler la dernière commande.
-
-NB : Il n’est pas recommandé de faire l’installation complète d’E-Maj en une seule commande *pgxn install E-Maj*. En effet, bien que cette commande installe correctement les fichiers nécessaires à la :doc:`création ultérieure de l’EXTENSION emaj<setup>` dans une base de données, elle ne permet pas d’obtenir tous les autres fichiers de la distribution (clients php, autres scripts sql, documentation,…).
 
 Installation sous Windows
 *************************
@@ -45,14 +46,14 @@ Pour installer E-Maj sous Windows, il faut :
 Localisation alternative des scripts SQL d’installation
 *******************************************************
 
-Le fichier *emaj.control*, positionné dans le répertoire *SHAREDIR* de la version de PostgreSQL, peut contenir une directive indiquant à PostgreSQL le répertoire dans lequel sont localisés les scripts SQL d’installation ou d’upgrade.
+Le fichier *emaj.control*, positionné dans le répertoire *SHAREDIR/extension* de la version de PostgreSQL, peut contenir une directive indiquant à PostgreSQL le répertoire dans lequel sont localisés les scripts SQL d’installation ou d’upgrade.
 
-Il est donc possible de ne mettre dans ce répertoire *SHAREDIR* que le seul fichier *emaj.control* en créant ce pointeur vers le répertoire de scripts. Pour ce faire, il faut :
+Il est donc possible de ne mettre dans ce répertoire *SHAREDIR/extension* que le seul fichier *emaj.control* en créant ce pointeur vers le répertoire de scripts. Pour ce faire, il faut :
 
 * Identifier l’emplacement précis du répertoire *SHAREDIR* de l'installation en utilisant la commande shell ::
 
-   pg_config --sharedir
+	pg_config --sharedir
 
-* Copier le fichier *emaj.control* fourni dans le répertoire racine de la version décompressée vers le répertoire *SHAREDIR*,
+* Copier le fichier *emaj.control* fourni dans le répertoire racine de la version décompressée vers le répertoire *SHAREDIR/extension*,
 * Adapter la directive *directory* du fichier *emaj.control* pour spécifier le répertoire sql contenant les scripts d’installation d’E-Maj.
 

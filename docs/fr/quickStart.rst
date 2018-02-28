@@ -6,15 +6,15 @@ L’installation d’E-Maj est présentée plus loin en détail. Mais les quelqu
 Installation du logiciel
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Pour télécharger et installer le logiciel E-Maj, connectez-vous à votre compte postgres (ou un autre) et tapez ::
-
-  pgxn download E-Maj
+Pour installer le logiciel E-Maj, connectez-vous à votre compte postgres (ou un autre), téléchargez E-Maj depuis PGXN (https://pgxn.org/dist/e-maj/) et tapez ::
 
   unzip e-maj-<version>.zip
 
   cd e-maj-<version>/
 
-  sudo make install
+  sudo cp emaj.control $(pg_config --sharedir)/extension/.
+
+  sudo cp sql/emaj* $(pg_config --sharedir)/extension/.
 
 Pour plus de détails, ou en cas de problème, allez :doc:`ici <install>`.
 

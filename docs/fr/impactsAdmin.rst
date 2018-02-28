@@ -112,7 +112,7 @@ Les versions 10 et suivantes de PostgreSQL intègrent des mécanismes de réplic
 .. image:: images/logical_repl1.png
    :align: center
 
-Une table applicative appartenant à un groupe de tables E-Maj peut être également mise en réplication, sans condition particulière. Les éventuels rollbacks E-Maj se répliqueront naturellement côté *subscriber*.
+Une table applicative appartenant à un groupe de tables E-Maj peut être mise en réplication. Les éventuels rollbacks E-Maj se répliqueront naturellement côté *subscriber*, à condition qu’aucun filtre ne soit appliqué sur les types de verbes SQL répliqués.
 
 **Réplication de tables applicatives avec gestion par E-Maj côté subscriber**
 
