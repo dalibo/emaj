@@ -3674,7 +3674,7 @@ $emaj_delete_mark_group$
     v_previousMarkGlobalSeq  BIGINT;
     v_idNewMin               BIGINT;
     v_markNewMin             TEXT;
-    v_cpt                    INT;
+    v_count                  INT;
     v_eventTriggers          TEXT[];
     r_rel                    RECORD;
   BEGIN
@@ -3686,9 +3686,9 @@ $emaj_delete_mark_group$
 -- check the mark name
     SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '') INTO v_mark;
 -- count the number of marks in the group
-    SELECT count(*) INTO v_cpt FROM emaj.emaj_mark WHERE mark_group = v_groupName;
+    SELECT count(*) INTO v_count FROM emaj.emaj_mark WHERE mark_group = v_groupName;
 -- and check there are at least 2 marks for the group
-    IF v_cpt < 2 THEN
+    IF v_count < 2 THEN
       RAISE EXCEPTION 'emaj_delete_mark_group: "%" is the only mark of the group. It cannot be deleted.', v_mark;
     END IF;
 -- OK, now get the id and time stamp id of the mark to delete
@@ -6438,7 +6438,7 @@ $_gen_sql_groups$
   DECLARE
     v_aGroupName             TEXT;
     v_tblList                TEXT;
-    v_cpt                    INT;
+    v_count                  INT;
     v_firstMarkCopy          TEXT = v_firstMark;
     v_realFirstMark          TEXT;
     v_realLastMark           TEXT;
@@ -6515,16 +6515,16 @@ $_gen_sql_groups$
         END IF;
       END LOOP;
 -- check that the first mark timestamp is the same for all groups of the array
-      SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_firstMarkCopy)) INTO v_cpt FROM emaj.emaj_group
+      SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_firstMarkCopy)) INTO v_count FROM emaj.emaj_group
         WHERE group_name = ANY (v_groupNames);
-      IF v_cpt > 1 THEN
+      IF v_count > 1 THEN
         RAISE EXCEPTION '_gen_sql_groups: The start mark "%" does not represent the same point in time for all groups.', v_firstMarkCopy;
       END IF;
 -- check that the last mark timestamp, if supplied, is the same for all groups of the array
       IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
-        SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_lastMark)) INTO v_cpt FROM emaj.emaj_group
+        SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_lastMark)) INTO v_count FROM emaj.emaj_group
           WHERE group_name = ANY (v_groupNames);
-        IF v_cpt > 1 THEN
+        IF v_count > 1 THEN
           RAISE EXCEPTION '_gen_sql_groups: The end mark "%" does not represent the same point in time for all groups.', v_lastMark;
         END IF;
       END IF;

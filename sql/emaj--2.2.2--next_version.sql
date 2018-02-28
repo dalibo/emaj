@@ -546,6 +546,150 @@ $_alter_groups$
   END;
 $_alter_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._alter_exec(v_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_alter_exec$
+-- This function executes the alter groups operation that has been planned by the _alter_plan() function.
+-- It looks at the emaj_alter_plan table and executes elementary step in proper order.
+-- Input: timestamp id of the operation
+  DECLARE
+    v_logSchemaSuffix        TEXT;
+    v_emajNamesPrefix        TEXT;
+    v_logDatTsp              TEXT;
+    v_logIdxTsp              TEXT;
+    v_isRollbackable         BOOLEAN;
+    r_plan                   emaj.emaj_alter_plan%ROWTYPE;
+    r_rel                    emaj.emaj_relation%ROWTYPE;
+    r_grpdef                 emaj.emaj_group_def%ROWTYPE;
+  BEGIN
+-- scan the emaj_alter_plan table and execute each elementary item in the proper order
+    FOR r_plan IN
+      SELECT *
+        FROM emaj.emaj_alter_plan
+        WHERE altr_time_id = v_timeId
+        ORDER BY altr_step, altr_priority, altr_schema, altr_tblseq, altr_group
+      LOOP
+      CASE r_plan.altr_step
+        WHEN 'REMOVE_TBL' THEN
+-- remove a table from its group
+          PERFORM emaj._remove_tbl(r_plan, v_timeId);
+--
+        WHEN 'REMOVE_SEQ' THEN
+-- remove a sequence from its group
+          PERFORM emaj._remove_seq(r_plan, v_timeId);
+--
+        WHEN 'RESET_GROUP' THEN
+-- reset a group
+          PERFORM emaj._reset_groups(ARRAY[r_plan.altr_group]);
+--
+        WHEN 'REPAIR_TBL' THEN
+          IF r_plan.altr_group_is_logging THEN
+            RAISE EXCEPTION 'alter_exec: Cannot repair the table %.%. Its group % is in LOGGING state.', r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
+          ELSE
+-- get the is_rollbackable status of the related group
+            SELECT group_is_rollbackable INTO v_isRollbackable
+              FROM emaj.emaj_group WHERE group_name = r_plan.altr_group;
+-- get the table description from emaj_group_def
+            SELECT * INTO r_grpdef
+              FROM emaj.emaj_group_def
+             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- remove the table from its group
+            PERFORM emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
+              WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- and recreate it
+            PERFORM emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable);
+          END IF;
+--
+        WHEN 'REPAIR_SEQ' THEN
+          IF r_plan.altr_group_is_logging THEN
+            RAISE EXCEPTION 'alter_exec: Cannot repair the sequence %.%. Its group % is in LOGGING state.', r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
+          ELSE
+-- get the sequence description from emaj_group_def
+            SELECT * INTO r_grpdef
+              FROM emaj.emaj_group_def
+             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- remove the sequence from its group
+            PERFORM emaj._drop_seq(emaj.emaj_relation.*) FROM emaj.emaj_relation
+              WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- and recreate it
+            PERFORM emaj._create_seq(r_grpdef, v_timeId);
+          END IF;
+--
+        WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- get the table description from emaj_group_def
+          SELECT grpdef_log_schema_suffix INTO v_logSchemaSuffix FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix);
+--
+        WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- get the table description from emaj_group_def
+          SELECT grpdef_emaj_names_prefix INTO v_emajNamesPrefix FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix);
+--
+        WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- get the table description from emaj_group_def
+          SELECT grpdef_log_dat_tsp INTO v_logDatTsp FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp);
+--
+        WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- get the table description from emaj_group_def
+          SELECT grpdef_log_idx_tsp INTO v_logIdxTsp FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- then alter the relation, depending on the changes
+          PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp);
+--
+        WHEN 'ASSIGN_REL' THEN
+-- currently, this can only be done when the relation belongs to an IDLE group
+-- update the emaj_relation table to report the group ownership change
+          UPDATE emaj.emaj_relation SET rel_group = r_plan.altr_new_group
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+--
+        WHEN 'CHANGE_REL_PRIORITY' THEN
+-- update the emaj_relation table to report the priority change
+          UPDATE emaj.emaj_relation SET rel_priority = r_plan.altr_new_priority
+            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+--
+        WHEN 'ADD_TBL' THEN
+-- currently, this can only be done when the relation belongs to an IDLE group
+-- get the is_rollbackable status of the related group
+          SELECT group_is_rollbackable INTO v_isRollbackable
+            FROM emaj.emaj_group WHERE group_name = r_plan.altr_group;
+-- get the table description from emaj_group_def
+          SELECT * INTO r_grpdef
+            FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- create the table
+          PERFORM emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable);
+--
+        WHEN 'ADD_SEQ' THEN
+-- currently, this can only be done when the relation belongs to an IDLE group
+-- create the sequence
+          PERFORM emaj._create_seq(emaj.emaj_group_def.*, v_timeId) FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+--
+      END CASE;
+    END LOOP;
+    RETURN;
+  END;
+$_alter_exec$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT DEFAULT 'START_%', v_resetLog BOOLEAN DEFAULT true)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_start_group$
@@ -620,7 +764,7 @@ $_start_groups$
         PERFORM emaj._drop_log_schemas(CASE WHEN v_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, FALSE);
         PERFORM emaj._enable_event_triggers(v_eventTriggers);
       END IF;
--- check and process the supplied mark name
+-- check the supplied mark name (the check must be performed after the _reset_groups() call to allow to reuse an old mark name that is being deleted
       IF v_mark IS NULL OR v_mark = '' THEN
         v_mark = 'START_%';
       END IF;
@@ -1059,7 +1203,7 @@ $emaj_delete_mark_group$
     v_previousMarkGlobalSeq  BIGINT;
     v_idNewMin               BIGINT;
     v_markNewMin             TEXT;
-    v_cpt                    INT;
+    v_count                  INT;
     v_eventTriggers          TEXT[];
     r_rel                    RECORD;
   BEGIN
@@ -1071,9 +1215,9 @@ $emaj_delete_mark_group$
 -- check the mark name
     SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '') INTO v_mark;
 -- count the number of marks in the group
-    SELECT count(*) INTO v_cpt FROM emaj.emaj_mark WHERE mark_group = v_groupName;
+    SELECT count(*) INTO v_count FROM emaj.emaj_mark WHERE mark_group = v_groupName;
 -- and check there are at least 2 marks for the group
-    IF v_cpt < 2 THEN
+    IF v_count < 2 THEN
       RAISE EXCEPTION 'emaj_delete_mark_group: "%" is the only mark of the group. It cannot be deleted.', v_mark;
     END IF;
 -- OK, now get the id and time stamp id of the mark to delete
@@ -2249,7 +2393,7 @@ $_gen_sql_groups$
   DECLARE
     v_aGroupName             TEXT;
     v_tblList                TEXT;
-    v_cpt                    INT;
+    v_count                  INT;
     v_firstMarkCopy          TEXT = v_firstMark;
     v_realFirstMark          TEXT;
     v_realLastMark           TEXT;
@@ -2326,16 +2470,16 @@ $_gen_sql_groups$
         END IF;
       END LOOP;
 -- check that the first mark timestamp is the same for all groups of the array
-      SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_firstMarkCopy)) INTO v_cpt FROM emaj.emaj_group
+      SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_firstMarkCopy)) INTO v_count FROM emaj.emaj_group
         WHERE group_name = ANY (v_groupNames);
-      IF v_cpt > 1 THEN
+      IF v_count > 1 THEN
         RAISE EXCEPTION '_gen_sql_groups: The start mark "%" does not represent the same point in time for all groups.', v_firstMarkCopy;
       END IF;
 -- check that the last mark timestamp, if supplied, is the same for all groups of the array
       IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
-        SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_lastMark)) INTO v_cpt FROM emaj.emaj_group
+        SELECT count(DISTINCT emaj._get_mark_time_id(group_name,v_lastMark)) INTO v_count FROM emaj.emaj_group
           WHERE group_name = ANY (v_groupNames);
-        IF v_cpt > 1 THEN
+        IF v_count > 1 THEN
           RAISE EXCEPTION '_gen_sql_groups: The end mark "%" does not represent the same point in time for all groups.', v_lastMark;
         END IF;
       END IF;
