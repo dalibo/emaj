@@ -82,6 +82,7 @@ set role emaj_regression_tests_adm_user;
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_comment_group('myGroup1','This is group #1');
 select emaj.emaj_create_group('myGroup2',true);
+select emaj.emaj_create_group('emptyGroup',true,true);
 
 -- try to rename the last mark for a group that has no mark
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','new_mark_name');
@@ -92,7 +93,13 @@ select pg_sleep(1);
 select emaj.emaj_start_group('myGroup1','M1');
 delete from emaj.emaj_param where param_key = 'history_retention';
 
+-- try to generate a sql script for 2 and 3 groups with a mix of groups with or without marks
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'],NULL,'EMAJ_LAST_MARK','/tmp/tmp');
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2','emptyGroup'],NULL,'EMAJ_LAST_MARK','/tmp/tmp');
+
 select emaj.emaj_start_group('myGroup2','M1');
+----  select * from emaj.emaj_mark;
+  select * from emaj.emaj_group;
 
 -----------------------------
 -- Step 1 : for myGroup1, update tables and set 2 marks

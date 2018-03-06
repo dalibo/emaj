@@ -413,6 +413,12 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 75 at PERFOR
                  8
 (1 row)
 
+select emaj.emaj_create_group('emptyGroup',true,true);
+ emaj_create_group 
+-------------------
+                 0
+(1 row)
+
 -- try to rename the last mark for a group that has no mark
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','new_mark_name');
 ERROR:  _check_mark_name: The group "myGroup2" has no mark.
@@ -433,6 +439,17 @@ select emaj.emaj_start_group('myGroup1','M1');
 (1 row)
 
 delete from emaj.emaj_param where param_key = 'history_retention';
+-- try to generate a sql script for 2 and 3 groups with a mix of groups with or without marks
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'],NULL,'EMAJ_LAST_MARK','/tmp/tmp');
+ERROR:  _check_marks_range: The group "myGroup2" has no mark.
+CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
+PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2','emptyGroup'],NULL,'EMAJ_LAST_MARK','/tmp/tmp');
+ERROR:  _check_marks_range: The groups "emptyGroup, myGroup2" have no mark.
+CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
+PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_start_group('myGroup2','M1');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
@@ -446,6 +463,15 @@ PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 ------------------
                 8
 (1 row)
+
+----  select * from emaj.emaj_mark;
+  select * from emaj.emaj_group;
+ group_name | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_pg_version |  group_comment   
+------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+------------------+------------------
+ emptyGroup | f                | f                       |              0 |                 0 | t                     |                  10003 |                          | 9.5.10           | 
+ myGroup1   | t                | f                       |              5 |                 2 | t                     |                  10001 |                          | 9.5.10           | This is group #1
+ myGroup2   | t                | f                       |              6 |                 2 | t                     |                  10002 |                          | 9.5.10           | 
+(3 rows)
 
 -----------------------------
 -- Step 1 : for myGroup1, update tables and set 2 marks
@@ -500,51 +526,52 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
   from emaj.emaj_group order by group_name;
  group_name | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id |  group_comment   
 ------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+------------------
+ emptyGroup | f                | f                       |              0 |                 0 | t                     |                  10003 |                          | 
  myGroup1   | t                | f                       |              5 |                 2 | t                     |                  10001 |                          | This is group #1
  myGroup2   | t                | f                       |              6 |                 2 | t                     |                  10002 |                          | 
-(2 rows)
+(3 rows)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
  mark_id | mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+----------------+--------------+-----------------+------------------------+------------------------+----------------+---------------------------+------------------------------
-   10001 | myGroup1   | M1             |        10003 | f               | f                      | f                      |                |                        27 | 
-   10002 | myGroup2   | M1             |        10004 | f               | f                      | f                      |                |                           | 
-   10003 | myGroup1   | M2             |        10005 | f               | f                      | f                      |                |                        11 | 
-   10004 | myGroup1   | M3             |        10006 | f               | f                      | f                      | Third mark set |                           | 
+   10001 | myGroup1   | M1             |        10004 | f               | f                      | f                      |                |                        27 | 
+   10002 | myGroup2   | M1             |        10005 | f               | f                      | f                      |                |                           | 
+   10003 | myGroup1   | M2             |        10006 | f               | f                      | f                      |                |                        11 | 
+   10004 | myGroup1   | M3             |        10007 | f               | f                      | f                      | Third mark set |                           | 
 (4 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |         sequ_name          | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+----------------------------+--------------+---------------+----------------
- emaj        | myschema1_mytbl1_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl2_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl4_log_seq   |        10003 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10003 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10003 |             1 | f
- myschema1   | mytbl2b_col20_seq          |        10003 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10003 |            11 | f
- emaj        | myschema2_mytbl1_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl2_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl4_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10004 |             1 | f
- emaj        | otherPrefix4mytbl5_log_seq |        10004 |             1 | f
- emajC       | myschema2_myTbl3_log_seq   |        10004 |             1 | f
- myschema2   | myseq1                     |        10004 |          1000 | f
- myschema2   | myTbl3_col31_seq           |        10004 |            10 | t
- emaj        | myschema1_mytbl1_log_seq   |        10005 |            15 | t
- emaj        | myschema1_mytbl2_log_seq   |        10005 |             2 | t
- emaj        | myschema1_mytbl4_log_seq   |        10005 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10005 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10005 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10005 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10005 |            20 | t
- emaj        | myschema1_mytbl1_log_seq   |        10006 |            18 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl2_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl4_log_seq   |        10004 |             1 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10004 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10004 |             1 | f
+ myschema1   | mytbl2b_col20_seq          |        10004 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10004 |            11 | f
+ emaj        | myschema2_mytbl1_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl2_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl4_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10005 |             1 | f
+ emaj        | otherPrefix4mytbl5_log_seq |        10005 |             1 | f
+ emajC       | myschema2_myTbl3_log_seq   |        10005 |             1 | f
+ myschema2   | myseq1                     |        10005 |          1000 | f
+ myschema2   | myTbl3_col31_seq           |        10005 |            10 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10006 |            15 | t
  emaj        | myschema1_mytbl2_log_seq   |        10006 |             2 | t
- emaj        | myschema1_mytbl4_log_seq   |        10006 |             8 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10006 |             1 | f
  emajb       | myschema1_mytbl2b_log_seq  |        10006 |             1 | f
  emajC       | myschema1_myTbl3_log_seq   |        10006 |            10 | t
  myschema1   | mytbl2b_col20_seq          |        10006 |             3 | f
  myschema1   | myTbl3_col31_seq           |        10006 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10007 |            18 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10007 |             2 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10007 |             8 | t
+ emajb       | myschema1_mytbl2b_log_seq  |        10007 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10007 |            10 | t
+ myschema1   | mytbl2b_col20_seq          |        10007 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10007 |            20 | t
 (29 rows)
 
 -- user tables
@@ -746,62 +773,62 @@ select emaj.emaj_set_mark_group('myGroup2','M3');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
  mark_id | mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+----------------+--------------+-----------------+------------------------+----------------+---------------------------+------------------------------
-   10001 | myGroup1   | M1             |        10003 | f               | f                      |                |                        27 | 
-   10002 | myGroup2   | M1             |        10004 | f               | f                      |                |                        41 | 
-   10003 | myGroup1   | M2             |        10005 | f               | f                      |                |                        11 | 
-   10004 | myGroup1   | M3             |        10006 | f               | f                      | Third mark set |                           | 
-   10005 | myGroup2   | M2             |        10007 | f               | f                      |                |                         8 | 
-   10006 | myGroup2   | M3             |        10008 | f               | f                      |                |                           | 
+   10001 | myGroup1   | M1             |        10004 | f               | f                      |                |                        27 | 
+   10002 | myGroup2   | M1             |        10005 | f               | f                      |                |                        41 | 
+   10003 | myGroup1   | M2             |        10006 | f               | f                      |                |                        11 | 
+   10004 | myGroup1   | M3             |        10007 | f               | f                      | Third mark set |                           | 
+   10005 | myGroup2   | M2             |        10008 | f               | f                      |                |                         8 | 
+   10006 | myGroup2   | M3             |        10009 | f               | f                      |                |                           | 
 (6 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |         sequ_name          | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+----------------------------+--------------+---------------+----------------
- emaj        | myschema1_mytbl1_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl2_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl4_log_seq   |        10003 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10003 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10003 |             1 | f
- myschema1   | mytbl2b_col20_seq          |        10003 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10003 |            11 | f
- emaj        | myschema2_mytbl1_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl2_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl4_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10004 |             1 | f
- emaj        | otherPrefix4mytbl5_log_seq |        10004 |             1 | f
- emajC       | myschema2_myTbl3_log_seq   |        10004 |             1 | f
- myschema2   | myseq1                     |        10004 |          1000 | f
- myschema2   | myTbl3_col31_seq           |        10004 |            10 | t
- emaj        | myschema1_mytbl1_log_seq   |        10005 |            15 | t
- emaj        | myschema1_mytbl2_log_seq   |        10005 |             2 | t
- emaj        | myschema1_mytbl4_log_seq   |        10005 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10005 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10005 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10005 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10005 |            20 | t
- emaj        | myschema1_mytbl1_log_seq   |        10006 |            18 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl2_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl4_log_seq   |        10004 |             1 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10004 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10004 |             1 | f
+ myschema1   | mytbl2b_col20_seq          |        10004 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10004 |            11 | f
+ emaj        | myschema2_mytbl1_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl2_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl4_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10005 |             1 | f
+ emaj        | otherPrefix4mytbl5_log_seq |        10005 |             1 | f
+ emajC       | myschema2_myTbl3_log_seq   |        10005 |             1 | f
+ myschema2   | myseq1                     |        10005 |          1000 | f
+ myschema2   | myTbl3_col31_seq           |        10005 |            10 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10006 |            15 | t
  emaj        | myschema1_mytbl2_log_seq   |        10006 |             2 | t
- emaj        | myschema1_mytbl4_log_seq   |        10006 |             8 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10006 |             1 | f
  emajb       | myschema1_mytbl2b_log_seq  |        10006 |             1 | f
  emajC       | myschema1_myTbl3_log_seq   |        10006 |            10 | t
  myschema1   | mytbl2b_col20_seq          |        10006 |             3 | f
  myschema1   | myTbl3_col31_seq           |        10006 |            20 | t
- emaj        | myschema2_mytbl1_log_seq   |        10007 |            15 | t
- emaj        | myschema2_mytbl2_log_seq   |        10007 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10007 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10007 |            11 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10007 |             3 | t
- emajC       | myschema2_myTbl3_log_seq   |        10007 |            10 | t
- myschema2   | myseq1                     |        10007 |          1000 | t
- myschema2   | myTbl3_col31_seq           |        10007 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10007 |            18 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10007 |             2 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10007 |             8 | t
+ emajb       | myschema1_mytbl2b_log_seq  |        10007 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10007 |            10 | t
+ myschema1   | mytbl2b_col20_seq          |        10007 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10007 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10008 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10008 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10008 |             4 | t
- emaj        | myschema2_mytbl6_log_seq   |        10008 |            14 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10008 |             4 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10008 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10008 |            11 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10008 |             3 | t
  emajC       | myschema2_myTbl3_log_seq   |        10008 |            10 | t
- myschema2   | myseq1                     |        10008 |          1003 | t
+ myschema2   | myseq1                     |        10008 |          1000 | t
  myschema2   | myTbl3_col31_seq           |        10008 |            20 | t
+ emaj        | myschema2_mytbl1_log_seq   |        10009 |            15 | t
+ emaj        | myschema2_mytbl2_log_seq   |        10009 |             2 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10009 |             4 | t
+ emaj        | myschema2_mytbl6_log_seq   |        10009 |            14 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10009 |             4 | t
+ emajC       | myschema2_myTbl3_log_seq   |        10009 |            10 | t
+ myschema2   | myseq1                     |        10009 |          1003 | t
+ myschema2   | myTbl3_col31_seq           |        10009 |            20 | t
 (45 rows)
 
 -- user tables
@@ -1011,65 +1038,57 @@ set role emaj_regression_tests_adm_user;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
  mark_id | mark_group | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+-----------------+--------------+-----------------+------------------------+----------------+---------------------------+------------------------------
-   10001 | myGroup1   | M1              |        10003 | f               | f                      |                |                        27 | 
-   10002 | myGroup2   | M1              |        10004 | f               | f                      |                |                        41 | 
-   10003 | myGroup1   | M2              |        10005 | f               | f                      |                |                        11 | 
-   10004 | myGroup1   | M3              |        10006 | f               | f                      | Third mark set |                           | 
-   10005 | myGroup2   | M2              |        10007 | f               | f                      |                |                         8 | 
-   10006 | myGroup2   | M3              |        10008 | f               | f                      |                |                         0 | 
-   10007 | myGroup2   | RLBK_M2_%_START |        10009 | f               | f                      |                |                         6 | 
-   10008 | myGroup2   | RLBK_M2_%_DONE  |        10010 | f               | f                      |                |                         0 | M2
-   10009 | myGroup2   | RLBK_M3_%_START |        10011 | f               | f                      |                |                         6 | 
-   10010 | myGroup2   | RLBK_M3_%_DONE  |        10012 | f               | f                      |                |                           | M3
+   10001 | myGroup1   | M1              |        10004 | f               | f                      |                |                        27 | 
+   10002 | myGroup2   | M1              |        10005 | f               | f                      |                |                        41 | 
+   10003 | myGroup1   | M2              |        10006 | f               | f                      |                |                        11 | 
+   10004 | myGroup1   | M3              |        10007 | f               | f                      | Third mark set |                           | 
+   10005 | myGroup2   | M2              |        10008 | f               | f                      |                |                         8 | 
+   10006 | myGroup2   | M3              |        10009 | f               | f                      |                |                         0 | 
+   10007 | myGroup2   | RLBK_M2_%_START |        10010 | f               | f                      |                |                         6 | 
+   10008 | myGroup2   | RLBK_M2_%_DONE  |        10011 | f               | f                      |                |                         0 | M2
+   10009 | myGroup2   | RLBK_M3_%_START |        10012 | f               | f                      |                |                         6 | 
+   10010 | myGroup2   | RLBK_M3_%_DONE  |        10013 | f               | f                      |                |                           | M3
 (10 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |         sequ_name          | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+----------------------------+--------------+---------------+----------------
- emaj        | myschema1_mytbl1_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl2_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl4_log_seq   |        10003 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10003 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10003 |             1 | f
- myschema1   | mytbl2b_col20_seq          |        10003 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10003 |            11 | f
- emaj        | myschema2_mytbl1_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl2_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl4_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10004 |             1 | f
- emaj        | otherPrefix4mytbl5_log_seq |        10004 |             1 | f
- emajC       | myschema2_myTbl3_log_seq   |        10004 |             1 | f
- myschema2   | myseq1                     |        10004 |          1000 | f
- myschema2   | myTbl3_col31_seq           |        10004 |            10 | t
- emaj        | myschema1_mytbl1_log_seq   |        10005 |            15 | t
- emaj        | myschema1_mytbl2_log_seq   |        10005 |             2 | t
- emaj        | myschema1_mytbl4_log_seq   |        10005 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10005 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10005 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10005 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10005 |            20 | t
- emaj        | myschema1_mytbl1_log_seq   |        10006 |            18 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl2_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl4_log_seq   |        10004 |             1 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10004 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10004 |             1 | f
+ myschema1   | mytbl2b_col20_seq          |        10004 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10004 |            11 | f
+ emaj        | myschema2_mytbl1_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl2_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl4_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10005 |             1 | f
+ emaj        | otherPrefix4mytbl5_log_seq |        10005 |             1 | f
+ emajC       | myschema2_myTbl3_log_seq   |        10005 |             1 | f
+ myschema2   | myseq1                     |        10005 |          1000 | f
+ myschema2   | myTbl3_col31_seq           |        10005 |            10 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10006 |            15 | t
  emaj        | myschema1_mytbl2_log_seq   |        10006 |             2 | t
- emaj        | myschema1_mytbl4_log_seq   |        10006 |             8 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10006 |             1 | f
  emajb       | myschema1_mytbl2b_log_seq  |        10006 |             1 | f
  emajC       | myschema1_myTbl3_log_seq   |        10006 |            10 | t
  myschema1   | mytbl2b_col20_seq          |        10006 |             3 | f
  myschema1   | myTbl3_col31_seq           |        10006 |            20 | t
- emaj        | myschema2_mytbl1_log_seq   |        10007 |            15 | t
- emaj        | myschema2_mytbl2_log_seq   |        10007 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10007 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10007 |            11 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10007 |             3 | t
- emajC       | myschema2_myTbl3_log_seq   |        10007 |            10 | t
- myschema2   | myseq1                     |        10007 |          1000 | t
- myschema2   | myTbl3_col31_seq           |        10007 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10007 |            18 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10007 |             2 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10007 |             8 | t
+ emajb       | myschema1_mytbl2b_log_seq  |        10007 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10007 |            10 | t
+ myschema1   | mytbl2b_col20_seq          |        10007 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10007 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10008 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10008 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10008 |             4 | t
- emaj        | myschema2_mytbl6_log_seq   |        10008 |            14 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10008 |             4 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10008 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10008 |            11 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10008 |             3 | t
  emajC       | myschema2_myTbl3_log_seq   |        10008 |            10 | t
- myschema2   | myseq1                     |        10008 |          1003 | t
+ myschema2   | myseq1                     |        10008 |          1000 | t
  myschema2   | myTbl3_col31_seq           |        10008 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10009 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10009 |             2 | t
@@ -1081,11 +1100,11 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2   | myTbl3_col31_seq           |        10009 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10010 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10010 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10010 |             6 | t
- emaj        | myschema2_mytbl6_log_seq   |        10010 |            17 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10010 |             5 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10010 |             4 | t
+ emaj        | myschema2_mytbl6_log_seq   |        10010 |            14 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10010 |             4 | t
  emajC       | myschema2_myTbl3_log_seq   |        10010 |            10 | t
- myschema2   | myseq1                     |        10010 |          1001 | f
+ myschema2   | myseq1                     |        10010 |          1003 | t
  myschema2   | myTbl3_col31_seq           |        10010 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10011 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10011 |             2 | t
@@ -1097,12 +1116,20 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2   | myTbl3_col31_seq           |        10011 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10012 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10012 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10012 |             8 | t
- emaj        | myschema2_mytbl6_log_seq   |        10012 |            20 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10012 |             6 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10012 |             6 | t
+ emaj        | myschema2_mytbl6_log_seq   |        10012 |            17 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10012 |             5 | t
  emajC       | myschema2_myTbl3_log_seq   |        10012 |            10 | t
- myschema2   | myseq1                     |        10012 |          1004 | f
+ myschema2   | myseq1                     |        10012 |          1001 | f
  myschema2   | myTbl3_col31_seq           |        10012 |            20 | t
+ emaj        | myschema2_mytbl1_log_seq   |        10013 |            15 | t
+ emaj        | myschema2_mytbl2_log_seq   |        10013 |             2 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10013 |             8 | t
+ emaj        | myschema2_mytbl6_log_seq   |        10013 |            20 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10013 |             6 | t
+ emajC       | myschema2_myTbl3_log_seq   |        10013 |            10 | t
+ myschema2   | myseq1                     |        10013 |          1004 | f
+ myschema2   | myTbl3_col31_seq           |        10013 |            20 | t
 (77 rows)
 
 -- user tables
@@ -1315,60 +1342,52 @@ select emaj.emaj_set_mark_group('myGroup1','M6');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
  mark_id | mark_group | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+-----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-   10001 | myGroup1   | M1              |        10003 | f               | f                      |              |                        27 | 
-   10002 | myGroup2   | M1              |        10004 | f               | f                      |              |                        41 | 
-   10003 | myGroup1   | M2              |        10005 | f               | f                      |              |                        13 | 
-   10005 | myGroup2   | M2              |        10007 | f               | f                      |              |                         8 | 
-   10006 | myGroup2   | M3              |        10008 | f               | f                      |              |                         0 | 
-   10007 | myGroup2   | RLBK_M2_%_START |        10009 | f               | f                      |              |                         6 | 
-   10008 | myGroup2   | RLBK_M2_%_DONE  |        10010 | f               | f                      |              |                         0 | M2
-   10009 | myGroup2   | RLBK_M3_%_START |        10011 | f               | f                      |              |                         6 | 
-   10010 | myGroup2   | RLBK_M3_%_DONE  |        10012 | f               | f                      |              |                           | M3
-   10011 | myGroup1   | M4              |        10014 | f               | f                      |              |                        10 | 
-   10012 | myGroup1   | M5              |        10015 | f               | f                      |              |                         0 | 
-   10013 | myGroup1   | M6              |        10016 | f               | f                      |              |                           | 
+   10001 | myGroup1   | M1              |        10004 | f               | f                      |              |                        27 | 
+   10002 | myGroup2   | M1              |        10005 | f               | f                      |              |                        41 | 
+   10003 | myGroup1   | M2              |        10006 | f               | f                      |              |                        13 | 
+   10005 | myGroup2   | M2              |        10008 | f               | f                      |              |                         8 | 
+   10006 | myGroup2   | M3              |        10009 | f               | f                      |              |                         0 | 
+   10007 | myGroup2   | RLBK_M2_%_START |        10010 | f               | f                      |              |                         6 | 
+   10008 | myGroup2   | RLBK_M2_%_DONE  |        10011 | f               | f                      |              |                         0 | M2
+   10009 | myGroup2   | RLBK_M3_%_START |        10012 | f               | f                      |              |                         6 | 
+   10010 | myGroup2   | RLBK_M3_%_DONE  |        10013 | f               | f                      |              |                           | M3
+   10011 | myGroup1   | M4              |        10015 | f               | f                      |              |                        10 | 
+   10012 | myGroup1   | M5              |        10016 | f               | f                      |              |                         0 | 
+   10013 | myGroup1   | M6              |        10017 | f               | f                      |              |                           | 
 (12 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |         sequ_name          | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+----------------------------+--------------+---------------+----------------
- emaj        | myschema1_mytbl1_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl2_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl4_log_seq   |        10003 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10003 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10003 |             1 | f
- myschema1   | mytbl2b_col20_seq          |        10003 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10003 |            11 | f
- emaj        | myschema2_mytbl1_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl2_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl4_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10004 |             1 | f
- emaj        | otherPrefix4mytbl5_log_seq |        10004 |             1 | f
- emajC       | myschema2_myTbl3_log_seq   |        10004 |             1 | f
- myschema2   | myseq1                     |        10004 |          1000 | f
- myschema2   | myTbl3_col31_seq           |        10004 |            10 | t
- emaj        | myschema1_mytbl1_log_seq   |        10005 |            15 | t
- emaj        | myschema1_mytbl2_log_seq   |        10005 |             2 | t
- emaj        | myschema1_mytbl4_log_seq   |        10005 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10005 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10005 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10005 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10005 |            20 | t
- emaj        | myschema2_mytbl1_log_seq   |        10007 |            15 | t
- emaj        | myschema2_mytbl2_log_seq   |        10007 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10007 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10007 |            11 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10007 |             3 | t
- emajC       | myschema2_myTbl3_log_seq   |        10007 |            10 | t
- myschema2   | myseq1                     |        10007 |          1000 | t
- myschema2   | myTbl3_col31_seq           |        10007 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl2_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl4_log_seq   |        10004 |             1 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10004 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10004 |             1 | f
+ myschema1   | mytbl2b_col20_seq          |        10004 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10004 |            11 | f
+ emaj        | myschema2_mytbl1_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl2_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl4_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10005 |             1 | f
+ emaj        | otherPrefix4mytbl5_log_seq |        10005 |             1 | f
+ emajC       | myschema2_myTbl3_log_seq   |        10005 |             1 | f
+ myschema2   | myseq1                     |        10005 |          1000 | f
+ myschema2   | myTbl3_col31_seq           |        10005 |            10 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10006 |            15 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10006 |             2 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10006 |             1 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10006 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10006 |            10 | t
+ myschema1   | mytbl2b_col20_seq          |        10006 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10006 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10008 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10008 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10008 |             4 | t
- emaj        | myschema2_mytbl6_log_seq   |        10008 |            14 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10008 |             4 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10008 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10008 |            11 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10008 |             3 | t
  emajC       | myschema2_myTbl3_log_seq   |        10008 |            10 | t
- myschema2   | myseq1                     |        10008 |          1003 | t
+ myschema2   | myseq1                     |        10008 |          1000 | t
  myschema2   | myTbl3_col31_seq           |        10008 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10009 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10009 |             2 | t
@@ -1380,11 +1399,11 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2   | myTbl3_col31_seq           |        10009 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10010 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10010 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10010 |             6 | t
- emaj        | myschema2_mytbl6_log_seq   |        10010 |            17 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10010 |             5 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10010 |             4 | t
+ emaj        | myschema2_mytbl6_log_seq   |        10010 |            14 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10010 |             4 | t
  emajC       | myschema2_myTbl3_log_seq   |        10010 |            10 | t
- myschema2   | myseq1                     |        10010 |          1001 | f
+ myschema2   | myseq1                     |        10010 |          1003 | t
  myschema2   | myTbl3_col31_seq           |        10010 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10011 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10011 |             2 | t
@@ -1396,24 +1415,25 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2   | myTbl3_col31_seq           |        10011 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10012 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10012 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10012 |             8 | t
- emaj        | myschema2_mytbl6_log_seq   |        10012 |            20 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10012 |             6 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10012 |             6 | t
+ emaj        | myschema2_mytbl6_log_seq   |        10012 |            17 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10012 |             5 | t
  emajC       | myschema2_myTbl3_log_seq   |        10012 |            10 | t
- myschema2   | myseq1                     |        10012 |          1004 | f
+ myschema2   | myseq1                     |        10012 |          1001 | f
  myschema2   | myTbl3_col31_seq           |        10012 |            20 | t
- emaj        | myschema1_mytbl1_log_seq   |        10014 |            30 | t
- emaj        | myschema1_mytbl2_log_seq   |        10014 |             3 | t
- emaj        | myschema1_mytbl4_log_seq   |        10014 |             8 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10014 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10014 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10014 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10014 |            20 | t
+ emaj        | myschema2_mytbl1_log_seq   |        10013 |            15 | t
+ emaj        | myschema2_mytbl2_log_seq   |        10013 |             2 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10013 |             8 | t
+ emaj        | myschema2_mytbl6_log_seq   |        10013 |            20 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10013 |             6 | t
+ emajC       | myschema2_myTbl3_log_seq   |        10013 |            10 | t
+ myschema2   | myseq1                     |        10013 |          1004 | f
+ myschema2   | myTbl3_col31_seq           |        10013 |            20 | t
  emaj        | myschema1_mytbl1_log_seq   |        10015 |            30 | t
  emaj        | myschema1_mytbl2_log_seq   |        10015 |             3 | t
  emaj        | myschema1_mytbl4_log_seq   |        10015 |             8 | t
  emajb       | myschema1_mytbl2b_log_seq  |        10015 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10015 |            20 | t
+ emajC       | myschema1_myTbl3_log_seq   |        10015 |            10 | t
  myschema1   | mytbl2b_col20_seq          |        10015 |             3 | f
  myschema1   | myTbl3_col31_seq           |        10015 |            20 | t
  emaj        | myschema1_mytbl1_log_seq   |        10016 |            30 | t
@@ -1423,6 +1443,13 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC       | myschema1_myTbl3_log_seq   |        10016 |            20 | t
  myschema1   | mytbl2b_col20_seq          |        10016 |             3 | f
  myschema1   | myTbl3_col31_seq           |        10016 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10017 |            30 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10017 |             3 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10017 |             8 | t
+ emajb       | myschema1_mytbl2b_log_seq  |        10017 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10017 |            20 | t
+ myschema1   | mytbl2b_col20_seq          |        10017 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10017 |            20 | t
 (91 rows)
 
 -- user tables
@@ -1622,69 +1649,62 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN Q
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
  mark_id | mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-   10001 | myGroup1   | M1             |        10003 | f               | f                      |              |                        27 | 
-   10002 | myGroup2   | M1             |        10004 | f               | f                      |              |                        41 | 
-   10003 | myGroup1   | M2             |        10005 | f               | f                      |              |                        13 | 
-   10005 | myGroup2   | M2             |        10007 | f               | f                      |              |                         8 | 
-   10006 | myGroup2   | M3             |        10008 | f               | f                      |              |                           | 
-   10011 | myGroup1   | M4             |        10014 | f               | f                      |              |                        10 | 
-   10012 | myGroup1   | M5             |        10015 | f               | f                      |              |                         0 | 
-   10013 | myGroup1   | M6             |        10016 | f               | f                      |              |                           | 
+   10001 | myGroup1   | M1             |        10004 | f               | f                      |              |                        27 | 
+   10002 | myGroup2   | M1             |        10005 | f               | f                      |              |                        41 | 
+   10003 | myGroup1   | M2             |        10006 | f               | f                      |              |                        13 | 
+   10005 | myGroup2   | M2             |        10008 | f               | f                      |              |                         8 | 
+   10006 | myGroup2   | M3             |        10009 | f               | f                      |              |                           | 
+   10011 | myGroup1   | M4             |        10015 | f               | f                      |              |                        10 | 
+   10012 | myGroup1   | M5             |        10016 | f               | f                      |              |                         0 | 
+   10013 | myGroup1   | M6             |        10017 | f               | f                      |              |                           | 
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |         sequ_name          | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+----------------------------+--------------+---------------+----------------
- emaj        | myschema1_mytbl1_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl2_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl4_log_seq   |        10003 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10003 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10003 |             1 | f
- myschema1   | mytbl2b_col20_seq          |        10003 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10003 |            11 | f
- emaj        | myschema2_mytbl1_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl2_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl4_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10004 |             1 | f
- emaj        | otherPrefix4mytbl5_log_seq |        10004 |             1 | f
- emajC       | myschema2_myTbl3_log_seq   |        10004 |             1 | f
- myschema2   | myseq1                     |        10004 |          1000 | f
- myschema2   | myTbl3_col31_seq           |        10004 |            10 | t
- emaj        | myschema1_mytbl1_log_seq   |        10005 |            15 | t
- emaj        | myschema1_mytbl2_log_seq   |        10005 |             2 | t
- emaj        | myschema1_mytbl4_log_seq   |        10005 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10005 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10005 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10005 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10005 |            20 | t
- emaj        | myschema2_mytbl1_log_seq   |        10007 |            15 | t
- emaj        | myschema2_mytbl2_log_seq   |        10007 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10007 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10007 |            11 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10007 |             3 | t
- emajC       | myschema2_myTbl3_log_seq   |        10007 |            10 | t
- myschema2   | myseq1                     |        10007 |          1000 | t
- myschema2   | myTbl3_col31_seq           |        10007 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl2_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl4_log_seq   |        10004 |             1 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10004 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10004 |             1 | f
+ myschema1   | mytbl2b_col20_seq          |        10004 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10004 |            11 | f
+ emaj        | myschema2_mytbl1_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl2_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl4_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10005 |             1 | f
+ emaj        | otherPrefix4mytbl5_log_seq |        10005 |             1 | f
+ emajC       | myschema2_myTbl3_log_seq   |        10005 |             1 | f
+ myschema2   | myseq1                     |        10005 |          1000 | f
+ myschema2   | myTbl3_col31_seq           |        10005 |            10 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10006 |            15 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10006 |             2 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10006 |             1 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10006 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10006 |            10 | t
+ myschema1   | mytbl2b_col20_seq          |        10006 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10006 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10008 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10008 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10008 |             4 | t
- emaj        | myschema2_mytbl6_log_seq   |        10008 |            14 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10008 |             4 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10008 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10008 |            11 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10008 |             3 | t
  emajC       | myschema2_myTbl3_log_seq   |        10008 |            10 | t
- myschema2   | myseq1                     |        10008 |          1003 | t
+ myschema2   | myseq1                     |        10008 |          1000 | t
  myschema2   | myTbl3_col31_seq           |        10008 |            20 | t
- emaj        | myschema1_mytbl1_log_seq   |        10014 |            30 | t
- emaj        | myschema1_mytbl2_log_seq   |        10014 |             3 | t
- emaj        | myschema1_mytbl4_log_seq   |        10014 |             8 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10014 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10014 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10014 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10014 |            20 | t
+ emaj        | myschema2_mytbl1_log_seq   |        10009 |            15 | t
+ emaj        | myschema2_mytbl2_log_seq   |        10009 |             2 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10009 |             4 | t
+ emaj        | myschema2_mytbl6_log_seq   |        10009 |            14 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10009 |             4 | t
+ emajC       | myschema2_myTbl3_log_seq   |        10009 |            10 | t
+ myschema2   | myseq1                     |        10009 |          1003 | t
+ myschema2   | myTbl3_col31_seq           |        10009 |            20 | t
  emaj        | myschema1_mytbl1_log_seq   |        10015 |            30 | t
  emaj        | myschema1_mytbl2_log_seq   |        10015 |             3 | t
  emaj        | myschema1_mytbl4_log_seq   |        10015 |             8 | t
  emajb       | myschema1_mytbl2b_log_seq  |        10015 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10015 |            20 | t
+ emajC       | myschema1_myTbl3_log_seq   |        10015 |            10 | t
  myschema1   | mytbl2b_col20_seq          |        10015 |             3 | f
  myschema1   | myTbl3_col31_seq           |        10015 |            20 | t
  emaj        | myschema1_mytbl1_log_seq   |        10016 |            30 | t
@@ -1694,16 +1714,23 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC       | myschema1_myTbl3_log_seq   |        10016 |            20 | t
  myschema1   | mytbl2b_col20_seq          |        10016 |             3 | f
  myschema1   | myTbl3_col31_seq           |        10016 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10017 |            30 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10017 |             3 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10017 |             8 | t
+ emajb       | myschema1_mytbl2b_log_seq  |        10017 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10017 |            20 | t
+ myschema1   | mytbl2b_col20_seq          |        10017 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10017 |            20 | t
 (59 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | mytbl1     |              10005 |            10013 |              3
- myschema1   | mytbl4     |              10005 |            10013 |              8
- myschema2   | mytbl4     |              10008 |            10019 |              6
- myschema2   | mytbl5     |              10008 |            10019 |              3
- myschema2   | mytbl6     |              10008 |            10019 |              9
+ myschema1   | mytbl1     |              10006 |            10014 |              3
+ myschema1   | mytbl4     |              10006 |            10014 |              8
+ myschema2   | mytbl4     |              10009 |            10020 |              6
+ myschema2   | mytbl5     |              10009 |            10020 |              3
+ myschema2   | mytbl6     |              10009 |            10020 |              9
 (5 rows)
 
 -- user tables
@@ -1892,7 +1919,7 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
  rlbk_id | rlbk_groups | rlbk_mark | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status |                                  rlbk_messages                                   
 ---------+-------------+-----------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+----------------------------------------------------------------------------------
-   10006 | {myGroup1}  | M4        |        10021 | t              | t                           |               1 |             5 |                2 |                 3 | COMPLETED   | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+   10006 | {myGroup1}  | M4        |        10022 | t              | t                           |               1 |             5 |                2 |                 3 | COMPLETED   | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
 (1 row)
 
 -----------------------------
@@ -1902,86 +1929,86 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
  mark_id | mark_group | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+-----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-   10001 | myGroup1   | M1              |        10003 | f               | f                      |              |                        27 | 
-   10002 | myGroup2   | M1              |        10004 | f               | f                      |              |                        41 | 
-   10003 | myGroup1   | M2              |        10005 | f               | f                      |              |                        13 | 
-   10005 | myGroup2   | M2              |        10007 | f               | f                      |              |                         8 | 
-   10006 | myGroup2   | M3              |        10008 | f               | f                      |              |                           | 
-   10011 | myGroup1   | M4              |        10014 | f               | f                      |              |                        10 | 
-   10012 | myGroup1   | M5              |        10015 | f               | f                      |              |                         3 | 
-   10016 | myGroup1   | RLBK_M4_%_START |        10021 | f               | f                      |              |                        23 | 
-   10017 | myGroup1   | RLBK_M4_%_DONE  |        10022 | f               | f                      |              |                           | M4
+   10001 | myGroup1   | M1              |        10004 | f               | f                      |              |                        27 | 
+   10002 | myGroup2   | M1              |        10005 | f               | f                      |              |                        41 | 
+   10003 | myGroup1   | M2              |        10006 | f               | f                      |              |                        13 | 
+   10005 | myGroup2   | M2              |        10008 | f               | f                      |              |                         8 | 
+   10006 | myGroup2   | M3              |        10009 | f               | f                      |              |                           | 
+   10011 | myGroup1   | M4              |        10015 | f               | f                      |              |                        10 | 
+   10012 | myGroup1   | M5              |        10016 | f               | f                      |              |                         3 | 
+   10016 | myGroup1   | RLBK_M4_%_START |        10022 | f               | f                      |              |                        23 | 
+   10017 | myGroup1   | RLBK_M4_%_DONE  |        10023 | f               | f                      |              |                           | M4
 (9 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |         sequ_name          | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+----------------------------+--------------+---------------+----------------
- emaj        | myschema1_mytbl1_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl2_log_seq   |        10003 |             1 | f
- emaj        | myschema1_mytbl4_log_seq   |        10003 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10003 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10003 |             1 | f
- myschema1   | mytbl2b_col20_seq          |        10003 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10003 |            11 | f
- emaj        | myschema2_mytbl1_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl2_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl4_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10004 |             1 | f
- emaj        | otherPrefix4mytbl5_log_seq |        10004 |             1 | f
- emajC       | myschema2_myTbl3_log_seq   |        10004 |             1 | f
- myschema2   | myseq1                     |        10004 |          1000 | f
- myschema2   | myTbl3_col31_seq           |        10004 |            10 | t
- emaj        | myschema1_mytbl1_log_seq   |        10005 |            15 | t
- emaj        | myschema1_mytbl2_log_seq   |        10005 |             2 | t
- emaj        | myschema1_mytbl4_log_seq   |        10005 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq  |        10005 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10005 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10005 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10005 |            20 | t
- emaj        | myschema2_mytbl1_log_seq   |        10007 |            15 | t
- emaj        | myschema2_mytbl2_log_seq   |        10007 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10007 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10007 |            11 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10007 |             3 | t
- emajC       | myschema2_myTbl3_log_seq   |        10007 |            10 | t
- myschema2   | myseq1                     |        10007 |          1000 | t
- myschema2   | myTbl3_col31_seq           |        10007 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl2_log_seq   |        10004 |             1 | f
+ emaj        | myschema1_mytbl4_log_seq   |        10004 |             1 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10004 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10004 |             1 | f
+ myschema1   | mytbl2b_col20_seq          |        10004 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10004 |            11 | f
+ emaj        | myschema2_mytbl1_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl2_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl4_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10005 |             1 | f
+ emaj        | otherPrefix4mytbl5_log_seq |        10005 |             1 | f
+ emajC       | myschema2_myTbl3_log_seq   |        10005 |             1 | f
+ myschema2   | myseq1                     |        10005 |          1000 | f
+ myschema2   | myTbl3_col31_seq           |        10005 |            10 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10006 |            15 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10006 |             2 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10006 |             1 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10006 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10006 |            10 | t
+ myschema1   | mytbl2b_col20_seq          |        10006 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10006 |            20 | t
  emaj        | myschema2_mytbl1_log_seq   |        10008 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10008 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10008 |             4 | t
- emaj        | myschema2_mytbl6_log_seq   |        10008 |            14 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10008 |             4 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10008 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10008 |            11 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10008 |             3 | t
  emajC       | myschema2_myTbl3_log_seq   |        10008 |            10 | t
- myschema2   | myseq1                     |        10008 |          1003 | t
+ myschema2   | myseq1                     |        10008 |          1000 | t
  myschema2   | myTbl3_col31_seq           |        10008 |            20 | t
- emaj        | myschema1_mytbl1_log_seq   |        10014 |            30 | t
- emaj        | myschema1_mytbl2_log_seq   |        10014 |             3 | t
- emaj        | myschema1_mytbl4_log_seq   |        10014 |             8 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10014 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10014 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10014 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10014 |            20 | t
+ emaj        | myschema2_mytbl1_log_seq   |        10009 |            15 | t
+ emaj        | myschema2_mytbl2_log_seq   |        10009 |             2 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10009 |             4 | t
+ emaj        | myschema2_mytbl6_log_seq   |        10009 |            14 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10009 |             4 | t
+ emajC       | myschema2_myTbl3_log_seq   |        10009 |            10 | t
+ myschema2   | myseq1                     |        10009 |          1003 | t
+ myschema2   | myTbl3_col31_seq           |        10009 |            20 | t
  emaj        | myschema1_mytbl1_log_seq   |        10015 |            30 | t
  emaj        | myschema1_mytbl2_log_seq   |        10015 |             3 | t
  emaj        | myschema1_mytbl4_log_seq   |        10015 |             8 | t
  emajb       | myschema1_mytbl2b_log_seq  |        10015 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10015 |            20 | t
+ emajC       | myschema1_myTbl3_log_seq   |        10015 |            10 | t
  myschema1   | mytbl2b_col20_seq          |        10015 |             3 | f
  myschema1   | myTbl3_col31_seq           |        10015 |            20 | t
- emaj        | myschema1_mytbl1_log_seq   |        10021 |            32 | t
- emaj        | myschema1_mytbl2_log_seq   |        10021 |             3 | t
- emaj        | myschema1_mytbl4_log_seq   |        10021 |            12 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10021 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10021 |            20 | t
- myschema1   | mytbl2b_col20_seq          |        10021 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10021 |            20 | t
- emaj        | myschema1_mytbl1_log_seq   |        10022 |            33 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10016 |            30 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10016 |             3 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10016 |             8 | t
+ emajb       | myschema1_mytbl2b_log_seq  |        10016 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10016 |            20 | t
+ myschema1   | mytbl2b_col20_seq          |        10016 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10016 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10022 |            32 | t
  emaj        | myschema1_mytbl2_log_seq   |        10022 |             3 | t
- emaj        | myschema1_mytbl4_log_seq   |        10022 |            14 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10022 |            12 | t
  emajb       | myschema1_mytbl2b_log_seq  |        10022 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10022 |            40 | t
+ emajC       | myschema1_myTbl3_log_seq   |        10022 |            20 | t
  myschema1   | mytbl2b_col20_seq          |        10022 |             3 | f
  myschema1   | myTbl3_col31_seq           |        10022 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10023 |            33 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10023 |             3 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10023 |            14 | t
+ emajb       | myschema1_mytbl2b_log_seq  |        10023 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10023 |            40 | t
+ myschema1   | mytbl2b_col20_seq          |        10023 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10023 |            20 | t
 (66 rows)
 
 -- check that mark_log_stat_before_next column is always equal to either NULL or the emaj_log_stat_rows() function's result
@@ -2001,13 +2028,13 @@ select * from
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | mytbl1     |              10005 |            10013 |              3
- myschema1   | mytbl1     |              10015 |            10020 |              1
- myschema1   | mytbl4     |              10005 |            10013 |              8
- myschema1   | mytbl4     |              10015 |            10020 |              2
- myschema2   | mytbl4     |              10008 |            10019 |              6
- myschema2   | mytbl5     |              10008 |            10019 |              3
- myschema2   | mytbl6     |              10008 |            10019 |              9
+ myschema1   | mytbl1     |              10006 |            10014 |              3
+ myschema1   | mytbl1     |              10016 |            10021 |              1
+ myschema1   | mytbl4     |              10006 |            10014 |              8
+ myschema1   | mytbl4     |              10016 |            10021 |              2
+ myschema2   | mytbl4     |              10009 |            10020 |              6
+ myschema2   | mytbl5     |              10009 |            10020 |              3
+ myschema2   | mytbl6     |              10009 |            10020 |              9
 (7 rows)
 
 -- user tables
@@ -2228,12 +2255,12 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
  mark_id | mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+------------------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-   10002 | myGroup2   | M1                           |        10004 | f               | f                      |              |                        41 | 
-   10005 | myGroup2   | M2                           |        10007 | f               | f                      |              |                         8 | 
-   10006 | myGroup2   | M3                           |        10008 | f               | f                      |              |                           | 
-   10011 | myGroup1   | M4                           |        10014 | f               | f                      |              |                        10 | 
-   10012 | myGroup1   | M5                           |        10015 | f               | f                      |              |                         3 | 
-   10016 | myGroup1   | Before logged rollback to M4 |        10021 | f               | f                      |              |                           | 
+   10002 | myGroup2   | M1                           |        10005 | f               | f                      |              |                        41 | 
+   10005 | myGroup2   | M2                           |        10008 | f               | f                      |              |                         8 | 
+   10006 | myGroup2   | M3                           |        10009 | f               | f                      |              |                           | 
+   10011 | myGroup1   | M4                           |        10015 | f               | f                      |              |                        10 | 
+   10012 | myGroup1   | M5                           |        10016 | f               | f                      |              |                         3 | 
+   10016 | myGroup1   | Before logged rollback to M4 |        10022 | f               | f                      |              |                           | 
 (6 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
@@ -2242,86 +2269,87 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10000 |              99999 | M
    10001 |              99999 | C
    10002 |              99999 | C
-   10003 |              99999 | M
+   10003 |              99999 | C
    10004 |              99999 | M
-   10005 |             100026 | M
-   10006 |             100037 | M
-   10007 |             100078 | M
-   10008 |             100086 | M
-   10009 |             100086 | R
-   10010 |             100092 | M
-   10011 |             100092 | R
-   10012 |             100098 | M
-   10013 |             100098 | R
-   10014 |             100111 | M
-   10015 |             100121 | M
+   10005 |              99999 | M
+   10006 |             100026 | M
+   10007 |             100037 | M
+   10008 |             100078 | M
+   10009 |             100086 | M
+   10010 |             100086 | R
+   10011 |             100092 | M
+   10012 |             100092 | R
+   10013 |             100098 | M
+   10014 |             100098 | R
+   10015 |             100111 | M
    10016 |             100121 | M
-   10017 |             100121 | R
-   10018 |             100127 | M
-   10019 |             100127 | R
-   10020 |             100130 | R
-   10021 |             100133 | R
-   10022 |             100156 | M
-(23 rows)
+   10017 |             100121 | M
+   10018 |             100121 | R
+   10019 |             100127 | M
+   10020 |             100127 | R
+   10021 |             100130 | R
+   10022 |             100133 | R
+   10023 |             100156 | M
+(24 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |         sequ_name          | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+----------------------------+--------------+---------------+----------------
- emaj        | myschema2_mytbl1_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl2_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl4_log_seq   |        10004 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10004 |             1 | f
- emaj        | otherPrefix4mytbl5_log_seq |        10004 |             1 | f
- emajC       | myschema2_myTbl3_log_seq   |        10004 |             1 | f
- myschema2   | myseq1                     |        10004 |          1000 | f
- myschema2   | myTbl3_col31_seq           |        10004 |            10 | t
- emaj        | myschema2_mytbl1_log_seq   |        10007 |            15 | t
- emaj        | myschema2_mytbl2_log_seq   |        10007 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10007 |             1 | f
- emaj        | myschema2_mytbl6_log_seq   |        10007 |            11 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10007 |             3 | t
- emajC       | myschema2_myTbl3_log_seq   |        10007 |            10 | t
- myschema2   | myseq1                     |        10007 |          1000 | t
- myschema2   | myTbl3_col31_seq           |        10007 |            20 | t
+ emaj        | myschema2_mytbl1_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl2_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl4_log_seq   |        10005 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10005 |             1 | f
+ emaj        | otherPrefix4mytbl5_log_seq |        10005 |             1 | f
+ emajC       | myschema2_myTbl3_log_seq   |        10005 |             1 | f
+ myschema2   | myseq1                     |        10005 |          1000 | f
+ myschema2   | myTbl3_col31_seq           |        10005 |            10 | t
  emaj        | myschema2_mytbl1_log_seq   |        10008 |            15 | t
  emaj        | myschema2_mytbl2_log_seq   |        10008 |             2 | t
- emaj        | myschema2_mytbl4_log_seq   |        10008 |             4 | t
- emaj        | myschema2_mytbl6_log_seq   |        10008 |            14 | t
- emaj        | otherPrefix4mytbl5_log_seq |        10008 |             4 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10008 |             1 | f
+ emaj        | myschema2_mytbl6_log_seq   |        10008 |            11 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10008 |             3 | t
  emajC       | myschema2_myTbl3_log_seq   |        10008 |            10 | t
- myschema2   | myseq1                     |        10008 |          1003 | t
+ myschema2   | myseq1                     |        10008 |          1000 | t
  myschema2   | myTbl3_col31_seq           |        10008 |            20 | t
- emaj        | myschema1_mytbl1_log_seq   |        10014 |            30 | t
- emaj        | myschema1_mytbl2_log_seq   |        10014 |             3 | t
- emaj        | myschema1_mytbl4_log_seq   |        10014 |             8 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10014 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10014 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10014 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10014 |            20 | t
+ emaj        | myschema2_mytbl1_log_seq   |        10009 |            15 | t
+ emaj        | myschema2_mytbl2_log_seq   |        10009 |             2 | t
+ emaj        | myschema2_mytbl4_log_seq   |        10009 |             4 | t
+ emaj        | myschema2_mytbl6_log_seq   |        10009 |            14 | t
+ emaj        | otherPrefix4mytbl5_log_seq |        10009 |             4 | t
+ emajC       | myschema2_myTbl3_log_seq   |        10009 |            10 | t
+ myschema2   | myseq1                     |        10009 |          1003 | t
+ myschema2   | myTbl3_col31_seq           |        10009 |            20 | t
  emaj        | myschema1_mytbl1_log_seq   |        10015 |            30 | t
  emaj        | myschema1_mytbl2_log_seq   |        10015 |             3 | t
  emaj        | myschema1_mytbl4_log_seq   |        10015 |             8 | t
  emajb       | myschema1_mytbl2b_log_seq  |        10015 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10015 |            20 | t
+ emajC       | myschema1_myTbl3_log_seq   |        10015 |            10 | t
  myschema1   | mytbl2b_col20_seq          |        10015 |             3 | f
  myschema1   | myTbl3_col31_seq           |        10015 |            20 | t
- emaj        | myschema1_mytbl1_log_seq   |        10021 |            32 | t
- emaj        | myschema1_mytbl2_log_seq   |        10021 |             3 | t
- emaj        | myschema1_mytbl4_log_seq   |        10021 |            12 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10021 |             1 | f
- emajC       | myschema1_myTbl3_log_seq   |        10021 |            20 | t
- myschema1   | mytbl2b_col20_seq          |        10021 |             3 | f
- myschema1   | myTbl3_col31_seq           |        10021 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10016 |            30 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10016 |             3 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10016 |             8 | t
+ emajb       | myschema1_mytbl2b_log_seq  |        10016 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10016 |            20 | t
+ myschema1   | mytbl2b_col20_seq          |        10016 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10016 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq   |        10022 |            32 | t
+ emaj        | myschema1_mytbl2_log_seq   |        10022 |             3 | t
+ emaj        | myschema1_mytbl4_log_seq   |        10022 |            12 | t
+ emajb       | myschema1_mytbl2b_log_seq  |        10022 |             1 | f
+ emajC       | myschema1_myTbl3_log_seq   |        10022 |            20 | t
+ myschema1   | mytbl2b_col20_seq          |        10022 |             3 | f
+ myschema1   | myTbl3_col31_seq           |        10022 |            20 | t
 (45 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | mytbl1     |              10015 |            10020 |              1
- myschema1   | mytbl4     |              10015 |            10020 |              2
- myschema2   | mytbl4     |              10008 |            10019 |              6
- myschema2   | mytbl5     |              10008 |            10019 |              3
- myschema2   | mytbl6     |              10008 |            10019 |              9
+ myschema1   | mytbl1     |              10016 |            10021 |              1
+ myschema1   | mytbl4     |              10016 |            10021 |              2
+ myschema2   | mytbl4     |              10009 |            10020 |              6
+ myschema2   | mytbl5     |              10009 |            10020 |              3
+ myschema2   | mytbl6     |              10009 |            10020 |              9
 (5 rows)
 
 -- user tables
@@ -2495,11 +2523,11 @@ PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 9 at PERFORM
 select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL); 
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 20 at PERFORM
+PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 18 at PERFORM
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 30 at PERFORM
+PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 28 at PERFORM
 select emaj.emaj_estimate_rollback_group('dummyGroup', 'dummyMark', TRUE);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"

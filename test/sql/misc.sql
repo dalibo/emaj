@@ -84,6 +84,10 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',NULL
 select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'dummyEndMark');
 
 -- start mark > end mark
+-- original test (uncomment for unit test)
+--  select * from emaj.emaj_log_stat_group('myGroup2','Mark23','Mark22');
+--  select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark23','Mark22');
+
 -- just check the error is trapped, because the error message contains timestamps
 create function test_log(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) returns void language plpgsql as 
 $$
@@ -399,7 +403,10 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","unknownGroup"}', NULL, NULL, NULL)
 
 -- the tables group contains a table without pkey
 select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
-select emaj.emaj_gen_sql_groups(array['myGroup1','phil''s group#3",'], NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
+begin;
+  alter table myschema1."myTbl3" drop constraint "myTbl3_pkey";
+  select emaj.emaj_gen_sql_groups(array['myGroup1','phil''s group#3",'], NULL, NULL, '/tmp/emaj_test/sql_scripts/Group3');
+rollback;
 
 -- invalid start mark
 select emaj.emaj_gen_sql_group('myGroup2', 'unknownMark', NULL, NULL);
@@ -407,7 +414,7 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Mark11', NULL, NULL,
 
 -- invalid end mark
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'unknownMark', NULL);
-select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', NULL, 'Mark11', NULL);
+select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Multi-1', 'Mark11', NULL);
 
 -- end mark is prior start mark
 -- (mark timestamps are temporarily changed so that regression test can return a stable error message)
@@ -433,6 +440,15 @@ rollback;
 -- start mark with the same name but that doesn't correspond to the same point in time
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Mark21', 'Multi-2', NULL);
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, 'Multi-2', NULL, NULL);
+
+-- start mark with the same point in time but not with the same name
+--TODO: uncomment once the bug with the group start resetting the log sequences will be solved
+----begin;
+----  select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
+----  select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Common_mark_name');
+----  select emaj.emaj_rename_mark_group('myGroup1', 'Common_mark_name', 'Renamed');
+----  select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, NULL, NULL);
+----rollback;
 
 -- end mark with the same name but that doesn't correspond to the same point in time
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Mark21', NULL);

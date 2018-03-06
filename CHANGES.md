@@ -11,7 +11,9 @@ E-Maj - Change log
   * Some internal code changes. This may change some error messages.
 
 ###Bug fixes:###
-
+  * Fix a minor bug in emaj_gen_sql_group() and emaj_gen_sql_groups() 
+    function. If the primary key of a table has been dropped, the lack of
+    pkey was not properly detected.
 
 
 2.2.2 (2018-Jan-24)
