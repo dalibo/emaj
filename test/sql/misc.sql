@@ -300,7 +300,7 @@ vacuum emaj.emaj_rlbk_stat;
 alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id);
 
 -----------------------------
--- emaj_snap_group() and  emaj_snap_log_group() test
+-- emaj_snap_group() test
 -----------------------------
 -- set/reset directory for snaps
 \! mkdir -p /tmp/emaj_test/snaps
@@ -329,6 +329,9 @@ select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','');
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','CSV HEADER DELIMITER '';'' ');
 \! ls /tmp/emaj_test/snaps
 
+-----------------------------
+-- emaj_snap_log_group() test
+-----------------------------
 -- set/reset directory for log snaps
 \! mkdir -p /tmp/emaj_test/log_snaps
 \! rm -R /tmp/emaj_test/log_snaps

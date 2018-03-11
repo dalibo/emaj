@@ -175,7 +175,7 @@ CREATE TABLE emaj.emaj_time_stamp (
                                DEFAULT txid_current(),
   time_last_emaj_gid           BIGINT,                     -- last value of the E-Maj global sequence
   time_event                   CHAR(1),                    -- event type that has generated the time stamp
-                                                           --   C(reate group), A(lter group) , M(ark setting), R(ollback)
+                                                           --   C(reate group), A(lter group) , M(ark setting), R(ollback), S(imple)
   PRIMARY KEY (time_id)
   );
 COMMENT ON TABLE emaj.emaj_time_stamp IS
@@ -2193,6 +2193,51 @@ $_gen_sql_tbl$
   END;
 $_gen_sql_tbl$;
 
+CREATE OR REPLACE FUNCTION emaj._get_current_sequences_state(v_groupNames TEXT[], v_relKind TEXT, v_timeId BIGINT)
+RETURNS SETOF emaj.emaj_sequence LANGUAGE plpgsql AS
+$_get_current_sequences_state$
+-- The function returns the current state of all log or application sequences for a tables groups array
+-- Input: group names array,
+--        kind of relations ('r' for log sequences, 'S' for application sequences),
+--        time_id to set the sequ_time_id (if the time id is NULL, get the greatest BIGINT value, i.e. 9223372036854775807)
+-- Output: a set of records of type emaj_sequence, with a sequ_time_id set to the supplied v_timeId value
+  DECLARE
+    v_schema                 TEXT;
+    v_sequence               TEXT;
+    r_tblsq                  RECORD;
+    r_sequ                   emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
+          WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = v_relKind
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+      IF v_relKind = 'r' THEN
+        v_schema = r_tblsq.rel_log_schema;
+        v_sequence = r_tblsq.rel_log_sequence;
+      ELSE
+        v_schema = r_tblsq.rel_schema;
+        v_sequence = r_tblsq.rel_tblseq;
+      END IF;
+      IF emaj._pg_version_num() < 100000 THEN
+        EXECUTE 'SELECT '|| quote_literal(v_schema) || ', ' || quote_literal(v_sequence) || ', ' ||
+                 v_timeId || ', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+                'FROM ' || quote_ident(v_schema) || '.' || quote_ident(v_sequence)
+          INTO STRICT r_sequ;
+      ELSE
+        EXECUTE 'SELECT schemaname, sequencename, ' ||
+                 v_timeId || ', rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called ' ||
+                'FROM ' || quote_ident(v_schema) || '.' || quote_ident(v_sequence) ||
+                ' rel, pg_catalog.pg_sequences ' ||
+                ' WHERE schemaname = '|| quote_literal(v_schema) || ' AND sequencename = ' || quote_literal(v_sequence)
+          INTO STRICT r_sequ;
+      END IF;
+      RETURN NEXT r_sequ;
+    END LOOP;
+    RETURN;
+  END;
+$_get_current_sequences_state$;
+
 --------------------------------------------
 --                                        --
 --       Functions to manage groups       --
@@ -3520,9 +3565,8 @@ $_set_mark_groups$
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
-    v_nbTb                   INT = 0;
-    v_timestamp              TIMESTAMPTZ;
-    r_tblsq                  RECORD;
+    v_nbTbl                  INT;
+    v_nbSeq                  INT;
   BEGIN
 -- if requested, record the set mark begin in emaj_hist
     IF v_eventToRecord THEN
@@ -3533,35 +3577,11 @@ $_set_mark_groups$
     IF v_timeId IS NULL THEN
       SELECT emaj._set_time_stamp('M') INTO v_timeId;
     END IF;
--- look at the clock to get the 'official' timestamp representing the mark
-    SELECT time_clock_timestamp INTO v_timestamp FROM emaj.emaj_time_stamp WHERE time_id = v_timeId;
--- process sequences as early as possible (no lock protects them from other transactions activity)
-    FOR r_tblsq IN
-        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema FROM emaj.emaj_relation
-          WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
-          ORDER BY rel_priority, rel_schema, rel_tblseq
-      LOOP
--- for each sequence of the groups, record the sequence parameters into the emaj_sequence table
-      IF emaj._pg_version_num() < 100000 THEN
-        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
-                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
-                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                ') SELECT ' || quote_literal(r_tblsq.rel_schema) || ', ' ||
-                quote_literal(r_tblsq.rel_tblseq) || ', ' || v_timeId ||
-                ', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-                'FROM ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-      ELSE
-        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
-                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
-                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                ') SELECT schemaname, sequencename, ' || v_timeId ||
-                ', rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called ' ||
-                'FROM ' || quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq) ||
-                ' rel, pg_catalog.pg_sequences ' ||
-                ' WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_tblseq);
-      END IF;
-      v_nbTb = v_nbTb + 1;
-    END LOOP;
+-- record sequences state as early as possible (no lock protects them from other transactions activity)
+    INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
+                sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
+      SELECT * FROM emaj._get_current_sequences_state(v_groupNames, 'S', v_timeId);
+    GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
 -- record the number of log rows for the old last mark of each group
 --   the statement updates no row in case of emaj_start_group(s)
     WITH stat_group1 AS (                                               -- for each group, the mark id and time id of the last active mark
@@ -3578,33 +3598,11 @@ $_set_mark_groups$
     UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = mark_stat
       FROM stat_group2 s
       WHERE s.mark_group = m.mark_group AND s.last_mark_id = m.mark_id;
--- for each table currently belonging to the groups, ...
-    FOR r_tblsq IN
-        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
-          WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
-          ORDER BY rel_priority, rel_schema, rel_tblseq
-      LOOP
--- ... record the associated sequence parameters in the emaj sequence table
-      IF emaj._pg_version_num() < 100000 THEN
-        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
-                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
-                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                ') SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(r_tblsq.rel_log_sequence) || ', ' ||
-                v_timeId || ', last_value, start_value, ' ||
-                'increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence);
-      ELSE
-        EXECUTE 'INSERT INTO emaj.emaj_sequence (' ||
-                'sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val, ' ||
-                'sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called ' ||
-                ') SELECT schemaname, sequencename, ' || v_timeId ||
-                ', rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called ' ||
-                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence) ||
-                ' rel, pg_catalog.pg_sequences ' ||
-                ' WHERE schemaname = '|| quote_literal(r_tblsq.rel_log_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_log_sequence);
-      END IF;
-      v_nbTb = v_nbTb + 1;
-    END LOOP;
+-- for tables currently belonging to the groups, record the associated log sequence state into the emaj sequence table
+    INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
+                sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
+      SELECT * FROM emaj._get_current_sequences_state(v_groupNames, 'r', v_timeId);
+    GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
 -- record the mark for each group into the emaj_mark table
     INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
       SELECT group_name, v_mark, v_timeId, FALSE, FALSE, v_loggedRlbkTargetMark
@@ -3624,7 +3622,7 @@ $_set_mark_groups$
         VALUES (CASE WHEN v_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'END', array_to_string(v_groupNames,','), v_mark);
     END IF;
 --
-    RETURN v_nbTb;
+    RETURN v_nbSeq + v_nbTbl;
   END;
 $_set_mark_groups$;
 
@@ -6294,14 +6292,18 @@ $emaj_snap_log_group$
     SELECT time_last_emaj_gid, time_clock_timestamp INTO v_firstEmajGid, v_firstMarkTs
       FROM emaj.emaj_time_stamp WHERE time_id = v_firstMarkTimeId;
     IF v_noSuppliedLastMark THEN
--- the end mark is not supplied (look for the current state), so temporarily create a mark, without locking tables
-      SELECT emaj._check_new_mark(ARRAY[v_groupName], 'TEMP_%') INTO v_lastMark;
-      PERFORM emaj._set_mark_groups(ARRAY[v_groupName], v_lastMark, false, false);
+-- the end mark is not supplied (look for the current state)
+-- get a simple time stamp and its attributes
+      SELECT emaj._set_time_stamp('S') INTO v_lastMarkTimeId;
+      SELECT time_last_emaj_gid, time_clock_timestamp INTO v_lastEmajGid, v_lastMarkTs
+        FROM emaj.emaj_time_stamp
+        WHERE time_id = v_lastMarkTimeId;
+    ELSE
+-- the end mark is supplied, get additional data for the last mark
+      SELECT mark_time_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkTimeId, v_lastEmajGid, v_lastMarkTs
+        FROM emaj.emaj_mark, emaj.emaj_time_stamp
+        WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_lastMark;
     END IF;
--- get additional data for the last mark
-    SELECT mark_time_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkTimeId, v_lastEmajGid, v_lastMarkTs
-      FROM emaj.emaj_mark, emaj.emaj_time_stamp
-      WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_lastMark;
 -- build the conditions on emaj_gid corresponding to this marks frame, used for the COPY statements dumping the tables
     v_conditions = 'TRUE';
     IF NOT v_firstMark IS NOT NULL AND v_firstMark <> '' THEN
@@ -6337,26 +6339,23 @@ $emaj_snap_log_group$
             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
             coalesce (v_copyOptions, '');
     EXECUTE v_stmt;
--- generate the full file name for sequences state at end mark
+-- prepare the file for sequences state at end mark
+-- generate the full file name and the COPY statement
     IF v_noSuppliedLastMark THEN
       v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_lastMarkTs,'HH24.MI.SS.MS');
+      v_stmt = 'SELECT * FROM ' ||
+               'emaj._get_current_sequences_state(ARRAY[' || quote_literal(v_groupName) || '], ''S'', ' || quote_literal(v_lastMarkTimeId) || ')';
     ELSE
       v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_lastMark;
+      v_stmt = 'SELECT emaj_sequence.*' ||
+               ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
+               ' WHERE sequ_time_id = ' || quote_literal(v_lastMarkTimeId) || ' AND ' ||
+               ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
+               ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
+               ' ORDER BY sequ_schema, sequ_name';
     END IF;
--- and execute the COPY statement
-    v_stmt= 'COPY (SELECT emaj_sequence.*' ||
-            ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
-            ' WHERE sequ_time_id = ' || quote_literal(v_lastMarkTimeId) || ' AND ' ||
-            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
-            ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
-            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
-            coalesce (v_copyOptions, '');
-    EXECUTE v_stmt;
-    IF v_noSuppliedLastMark THEN
--- no last mark has been supplied, suppress the just created mark
-      PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_lastMark, mark_id, mark_time_id)
-        FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_lastMark;
-    END IF;
+-- and create the file
+    EXECUTE 'COPY (' || v_stmt || ') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
 -- create the _INFO file to keep general information about the snap operation
     EXECUTE 'COPY (SELECT ' ||
             quote_literal('E-Maj log tables snap of group ' || v_groupName ||
@@ -6459,7 +6458,7 @@ $_gen_sql_groups$
 -- if there is at least 1 group to process, go on
     IF v_groupNames IS NOT NULL THEN
 -- check that there is no tables without pkey
-      SELECT string_agg(rel_schema || '.' || rel_tblseq,', '), count(*) INTO v_tblList, v_count
+      SELECT string_agg(rel_schema || '.' || rel_tblseq,', ' ORDER BY rel_schema || '.' || rel_tblseq), count(*) INTO v_tblList, v_count
         FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
         WHERE relnamespace = pg_namespace.oid
           AND nspname = rel_schema AND relname = rel_tblseq
@@ -7426,3 +7425,4 @@ $do$
     RETURN;
   END;
 $do$;
+

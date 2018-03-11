@@ -450,8 +450,8 @@ myschema1_mytbl4.snap
   select mark_id, mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
  mark_id | mark_group |           mark_name            | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+--------------------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    6029 | myGroup1   | 2 tables removed from myGroup1 |         6067 | f               | f                      |              |                           | 
-    6028 | myGroup1   | Mk2c                           |         6066 | f               | f                      |              |                         1 | 
+    6028 | myGroup1   | 2 tables removed from myGroup1 |         6067 | f               | f                      |              |                           | 
+    6027 | myGroup1   | Mk2c                           |         6066 | f               | f                      |              |                         1 | 
 (2 rows)
 
   select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
@@ -476,7 +476,7 @@ myschema1_mytbl4.snap
   select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 1;
  mark_id | mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ---------+------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    6028 | myGroup1   | Mk2c           |         6066 | f               | f                      |              |                           | 
+    6027 | myGroup1   | Mk2c           |         6066 | f               | f                      |              |                           | 
 (1 row)
 
   rollback to svp1;
@@ -555,7 +555,7 @@ PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
   select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1'; -- should report 2 rows to consolidate
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_id | cons_rows | cons_marks 
 ------------+----------------------------+--------------------------+-------------------------+-----------------------+-----------+------------
- myGroup1   | Mk2b                       |                     6019 | Logged_Rlbk_End         |                  6033 |         2 |          3
+ myGroup1   | Mk2b                       |                     6019 | Logged_Rlbk_End         |                  6031 |         2 |          3
 (1 row)
 
   select * from emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
@@ -754,8 +754,8 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
     6017 | myGroup1   | ALTER_%            |         6055 | f               | f                      |              |                         0 | 
     6018 | myGroup2   | ALTER_%            |         6055 | f               | f                      |              |                         0 | 
     6019 | myGroup1   | Mk2b               |         6056 | f               | f                      |              |                         4 | 
-    6042 | myGroup1   | Mk3                |         6082 | f               | f                      |              |                           | 
-    6043 | myGroup2   | Mk3                |         6082 | f               | f                      |              |                           | 
+    6040 | myGroup1   | Mk3                |         6082 | f               | f                      |              |                           | 
+    6041 | myGroup2   | Mk3                |         6082 | f               | f                      |              |                           | 
 (14 rows)
 
 -- estimate a rollback crossing alter group operations
