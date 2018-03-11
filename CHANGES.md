@@ -11,10 +11,16 @@ E-Maj - Change log
   * Some internal code changes. This may change some error messages.
 
 ###Bug fixes:###
+  * Fix a serious bug that may corrupt the database under some rare
+    conditions. If a single transaction contains calls to emaj_stop_group(),
+    and then emaj_start_group() and if this transaction aborts, any further
+    attempt to rollback the group to a mark set before the aborted transaction
+    would probably miss some tables, leading to corrupted table contents.
+    Statistics and sql script generation on time ranges including the faulting
+    transaction would also miss some tables.
   * Fix a minor bug in emaj_gen_sql_group() and emaj_gen_sql_groups() 
     function. If the primary key of a table has been dropped, the lack of
     pkey was not properly detected.
-
 
 2.2.2 (2018-Jan-24)
 ------

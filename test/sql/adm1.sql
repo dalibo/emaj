@@ -98,8 +98,6 @@ select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'],NULL,'EMAJ_LAST_MAR
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2','emptyGroup'],NULL,'EMAJ_LAST_MARK','/tmp/tmp');
 
 select emaj.emaj_start_group('myGroup2','M1');
-----  select * from emaj.emaj_mark;
-  select * from emaj.emaj_group;
 
 -----------------------------
 -- Step 1 : for myGroup1, update tables and set 2 marks

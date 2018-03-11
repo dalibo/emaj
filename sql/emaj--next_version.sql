@@ -5707,7 +5707,7 @@ $$Resets all log tables content of a stopped E-Maj group.$$;
 CREATE OR REPLACE FUNCTION emaj._reset_groups(v_groupNames TEXT[])
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_reset_groups$
--- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences saves
+-- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences images
 -- It is called by emaj_reset_group(), emaj_start_group() and emaj_alter_group() functions
 -- Input: group names array
 -- Output: number of processed tables and sequences
@@ -5752,8 +5752,6 @@ $_reset_groups$
         LOOP
 --   truncate the log table
       EXECUTE 'TRUNCATE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
---   and reset the log sequence
-      PERFORM setval(quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence), 1, false);
     END LOOP;
 -- enable previously disabled event triggers
     PERFORM emaj._enable_event_triggers(v_eventTriggers);

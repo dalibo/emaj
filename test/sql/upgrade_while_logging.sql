@@ -5,6 +5,13 @@
 -----------------------------
 SET default_tablespace TO tspemaj;
 
+-- specific to 2.2.2 to 2.2.3 upgrade
+-- uncomment to let the risky sequence values check fail
+--begin;
+--  select emaj.emaj_stop_group('myGroup1');
+--  select emaj.emaj_start_group('myGroup1','%');
+--rollback;
+
 -----------------------------
 -- emaj update to next_version
 -----------------------------

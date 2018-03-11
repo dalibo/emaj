@@ -323,15 +323,6 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                 8
 (1 row)
 
-----  select * from emaj.emaj_mark;
-  select * from emaj.emaj_group;
- group_name | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_pg_version |  group_comment   
-------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+------------------+------------------
- emptyGroup | f                | f                       |              0 |                 0 | t                     |                  10003 |                          | 9.6.6            | 
- myGroup1   | t                | f                       |              5 |                 2 | t                     |                  10001 |                          | 9.6.6            | This is group #1
- myGroup2   | t                | f                       |              6 |                 2 | t                     |                  10002 |                          | 9.6.6            | 
-(3 rows)
-
 -----------------------------
 -- Step 1 : for myGroup1, update tables and set 2 marks
 -----------------------------

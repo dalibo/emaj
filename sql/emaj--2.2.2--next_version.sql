@@ -17,7 +17,7 @@ SET client_min_messages TO NOTICE;
 -- checks                         --
 --                                --
 ------------------------------------
--- Check that the upgrade conditions are met.
+-- Check that the usual upgrade conditions are met.
 DO
 $do$
   DECLARE
@@ -47,6 +47,72 @@ $do$
     END IF;
   END;
 $do$;
+
+-- check that upgrade conditions specific to this version are met
+
+-- create a function to help the check
+CREATE OR REPLACE FUNCTION emaj.tmp_get_current_sequences_state()
+RETURNS SETOF emaj.emaj_sequence LANGUAGE plpgsql AS
+$tmp_get_current_sequences_state$
+-- The function returns the current state of all log sequences for all tables groups
+-- Input: group names array, time_id to set the sequ_time_id (if the time id is NULL, get the greatest BIGINT value, i.e. 9223372036854775807)
+-- Output: a set of records of type emaj_sequence, with a sequ_time_id set to NULL
+  DECLARE
+    r_tblsq                  RECORD;
+    r_sequ                   emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
+          WHERE upper_inf(rel_time_range) AND rel_kind = 'r'
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+      IF emaj._pg_version_num() < 100000 THEN
+        EXECUTE 'SELECT '|| quote_literal(r_tblsq.rel_log_schema) || ', ' || quote_literal(r_tblsq.rel_log_sequence) || ', ' ||
+                 '9223372036854775807, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence)
+          INTO STRICT r_sequ;
+      ELSE
+        EXECUTE 'SELECT schemaname, sequencename, ' || 
+                 '9223372036854775807, rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called ' ||
+                'FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_sequence) ||
+                ' rel, pg_catalog.pg_sequences ' ||
+                ' WHERE schemaname = '|| quote_literal(r_tblsq.rel_log_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_log_sequence)
+          INTO STRICT r_sequ;
+      END IF;
+      RETURN NEXT r_sequ;
+    END LOOP;
+    RETURN;
+  END;
+$tmp_get_current_sequences_state$;
+
+DO
+$do$
+  DECLARE
+    v_groupList              TEXT;
+  BEGIN
+-- check that no recorded log sequence values are risky.
+-- this is the case now fixed when a rolled back transaction has attempted to stop and restart a tables group.
+    WITH
+      t1 AS (                                    -- the recorded log sequences states + the current sequences state for all groups
+        SELECT * FROM emaj.emaj_sequence
+          UNION
+        SELECT * FROM emaj.tmp_get_current_sequences_state()),
+      t2 AS (                                    -- the same data with the last_val decremented if the sequence has not yet been called
+        SELECT rel_schema, rel_tblseq, rel_group, sequ_schema, sequ_name, sequ_time_id,
+               CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - 1 END AS last_val
+          FROM t1, emaj.emaj_relation
+          WHERE rel_log_schema = sequ_schema AND rel_log_sequence = sequ_name),
+      t3 AS (                                    -- the same data with the computation of the next sequence value
+        SELECT *, lag(last_val,1) OVER (PARTITION BY sequ_schema, sequ_name ORDER BY sequ_time_id) AS prev_val
+          FROM t2)
+    SELECT string_agg(distinct rel_group,', ') INTO v_groupList
+      FROM t3 WHERE prev_val > last_val;         -- filter only sequences states for which the next value is less than the previous
+    IF v_groupList IS NOT NULL THEN
+      RAISE EXCEPTION 'E-Maj upgrade: groups "%" contain log sequences with risky values. These groups must be at least reset with the emaj_reset_group() function before upgrading. ',v_groupList;
+    END IF;
+  END;
+$do$;
+DROP FUNCTION emaj.tmp_get_current_sequences_state();
 
 -- OK, the upgrade operation can start...
 
@@ -1816,6 +1882,61 @@ $emaj_reset_group$
 $emaj_reset_group$;
 COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS
 $$Resets all log tables content of a stopped E-Maj group.$$;
+
+CREATE OR REPLACE FUNCTION emaj._reset_groups(v_groupNames TEXT[])
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+$_reset_groups$
+-- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences images
+-- It is called by emaj_reset_group(), emaj_start_group() and emaj_alter_group() functions
+-- Input: group names array
+-- Output: number of processed tables and sequences
+-- There is no check of the groups state (this is done by callers)
+-- The function is defined as SECURITY DEFINER so that an emaj_adm role can truncate log tables
+  DECLARE
+    v_eventTriggers          TEXT[];
+    r_rel                    RECORD;
+  BEGIN
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- delete all marks for the groups from the emaj_mark table
+    DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames);
+-- delete emaj_sequence rows related to the tables of the groups
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence
+        AND rel_group = ANY (v_groupNames) AND rel_kind = 'r';
+-- delete all sequence holes for the tables of the groups
+    DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
+      WHERE rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
+        AND rel_group = ANY (v_groupNames) AND rel_kind = 'r';
+-- delete emaj_sequence rows related to the sequences of the groups
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE rel_schema = sequ_schema AND rel_tblseq = sequ_name AND
+            rel_group = ANY (v_groupNames) AND rel_kind = 'S';
+-- drop obsolete emaj objects for removed tables
+    FOR r_rel IN
+        SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' AND NOT upper_inf(rel_time_range)
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+      EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' CASCADE';
+    END LOOP;
+-- deletes old versions of emaj_relation rows (those with a not infinity upper bound)
+    DELETE FROM emaj.emaj_relation
+      WHERE rel_group = ANY (v_groupNames) AND NOT upper_inf(rel_time_range);
+-- truncate remaining log tables for application tables
+    FOR r_rel IN
+        SELECT rel_log_schema, rel_log_table, rel_log_sequence FROM emaj.emaj_relation
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+--   truncate the log table
+      EXECUTE 'TRUNCATE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
+    END LOOP;
+-- enable previously disabled event triggers
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+    RETURN sum(group_nb_table)+sum(group_nb_sequence) FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames);
+  END;
+$_reset_groups$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS

@@ -139,3 +139,4 @@ Version specific details:
 
 * The procedure that upgrades a version 2.0.1 into 2.1.0, may modify the :ref:`emaj_group_def <emaj_group_def>` table in order to reflect the fact that the *tspemaj* tablespace is not automaticaly considered as a default tablespace anymore. If *tspemaj* was effectively used as default tablespace for created tables groups, the related *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns content of the *emaj_group_def* table is automatically adjusted so that a future drop and recreate operation would store the log tables and indexes in the same tablespace. The administrator may review these changes to be sure they correspond to his expectations.
 
+* The  procedure that upgrades a version 2.2.0 into 2.3.0 checks the recorded log sequences values. In some cases, it may ask for a preliminary reset of some tables groups.
