@@ -560,22 +560,6 @@ INSERT INTO emaj.emaj_time_stamp (time_last_emaj_gid, time_event)
   RETURNING time_id;
 $$;
 
-CREATE OR REPLACE FUNCTION emaj._get_mark_time_id(v_groupName TEXT, v_mark TEXT)
-RETURNS BIGINT LANGUAGE sql AS
-$$
--- This function returns the time stamp id of a mark, if exists, for a group,
---   processing the EMAJ_LAST_MARK keyword.
--- input: group name and mark name
--- output: mark time stamp id or NULL
-SELECT CASE
-         WHEN v_mark = 'EMAJ_LAST_MARK' THEN
-              (SELECT time_id FROM emaj.emaj_mark, emaj.emaj_time_stamp
-                 WHERE time_id = mark_time_id AND mark_group = v_groupName ORDER BY time_id DESC LIMIT 1)
-         ELSE (SELECT time_id FROM emaj.emaj_mark, emaj.emaj_time_stamp
-                 WHERE time_id = mark_time_id AND mark_group = v_groupName AND mark_name = v_mark)
-       END
-$$;
-
 CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(v_cnxName TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $_dblink_open_cnx$
@@ -4265,7 +4249,7 @@ $_rlbk_init$
 -- It tests the environment, the supplied parameters and the foreign key constraints.
 -- By calling the _rlbk_planning() function, it defines the different elementary steps needed for the operation,
 -- and spread the load on the requested number of sessions.
--- It returns a rollback id that will be needed by next steps.
+-- It returns a rollback id that will be needed by next steps (or NULL if there are some NULL input).
   DECLARE
     v_markName               TEXT;
     v_markTimeId             BIGINT;
@@ -4282,69 +4266,71 @@ $_rlbk_init$
   BEGIN
 -- check supplied group names and mark parameters
     SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE) INTO v_markName;
+    IF v_markName IS NOT NULL THEN
 -- check that no group is damaged
-    PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
--- get the time stamp id and its clock timestamp for the 1st group (as we know this time stamp is the same for all groups of the array)
-    SELECT emaj._get_mark_time_id(v_groupNames[1], v_mark) INTO v_markTimeId;
-    SELECT time_clock_timestamp INTO v_markTimestamp
-      FROM emaj.emaj_time_stamp WHERE time_id = v_markTimeId;
+      PERFORM 0 FROM emaj._verify_groups(v_groupNames, true);
+-- get the time stamp id and its clock timestamp for the first group (as we know this time stamp is the same for all groups of the array)
+      SELECT time_id, time_clock_timestamp INTO v_markTimeId, v_markTimestamp
+        FROM emaj.emaj_mark, emaj.emaj_time_stamp
+        WHERE time_id = mark_time_id AND mark_group = v_groupNames[1] AND mark_name = v_markName;
 -- insert begin in the history
-    IF v_isLoggedRlbk THEN
-      v_msg = 'Logged';
-    ELSE
-      v_msg = 'Unlogged';
-    END IF;
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'BEGIN',
-              array_to_string(v_groupNames,','),
-              v_msg || ' rollback to mark ' || v_markName || ' [' || v_markTimestamp || ']'
-             ) RETURNING hist_id INTO v_histId;
+      IF v_isLoggedRlbk THEN
+        v_msg = 'Logged';
+      ELSE
+        v_msg = 'Unlogged';
+      END IF;
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'BEGIN',
+                array_to_string(v_groupNames,','),
+                v_msg || ' rollback to mark ' || v_markName || ' [' || v_markTimestamp || ']'
+               ) RETURNING hist_id INTO v_histId;
 -- get the total number of tables for these groups
-    SELECT sum(group_nb_table), sum(group_nb_sequence) INTO v_nbTblInGroups, v_nbSeqInGroups
-      FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames) ;
+      SELECT sum(group_nb_table), sum(group_nb_sequence) INTO v_nbTblInGroups, v_nbSeqInGroups
+        FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames) ;
 -- first try to open a dblink connection
-    SELECT emaj._dblink_open_cnx('rlbk#1') INTO v_dbLinkCnxStatus;
-    v_isDblinkUsable = (v_dbLinkCnxStatus >= 0);
+      SELECT emaj._dblink_open_cnx('rlbk#1') INTO v_dbLinkCnxStatus;
+      v_isDblinkUsable = (v_dbLinkCnxStatus >= 0);
 -- for parallel rollback (nb sessions > 1) the dblink connection must be ok
-    IF v_nbSession > 1 AND NOT v_isDblinkUsable THEN
-      RAISE EXCEPTION '_rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = % - see E-Maj documentation)', v_dbLinkCnxStatus;
-    END IF;
+      IF v_nbSession > 1 AND NOT v_isDblinkUsable THEN
+        RAISE EXCEPTION '_rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = % - see E-Maj documentation)', v_dbLinkCnxStatus;
+      END IF;
 -- create the row representing the rollback event in the emaj_rlbk table and get the rollback id back
-    v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, ' ||
-             'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
-             'rlbk_is_dblink_used) ' ||
-             'VALUES (' || quote_literal(v_groupNames) || ',' || quote_literal(v_markName) || ',' ||
-             v_markTimeId || ',' || v_isLoggedRlbk || ',' || quote_nullable(v_isAlterGroupAllowed) || ',' ||
-             v_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
-             v_isDblinkUsable || ') RETURNING rlbk_id';
-    IF v_isDblinkUsable THEN
+      v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, ' ||
+               'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
+               'rlbk_is_dblink_used) ' ||
+               'VALUES (' || quote_literal(v_groupNames) || ',' || quote_literal(v_markName) || ',' ||
+               v_markTimeId || ',' || v_isLoggedRlbk || ',' || quote_nullable(v_isAlterGroupAllowed) || ',' ||
+               v_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
+               v_isDblinkUsable || ') RETURNING rlbk_id';
+      IF v_isDblinkUsable THEN
 -- insert a rollback event into the emaj_rlbk table ... either through dblink if possible
-      SELECT rlbk_id INTO v_rlbkId FROM dblink('rlbk#1',v_stmt) AS (rlbk_id INT);
-    ELSE
+        SELECT rlbk_id INTO v_rlbkId FROM dblink('rlbk#1',v_stmt) AS (rlbk_id INT);
+      ELSE
 -- ... or directly
-      EXECUTE v_stmt INTO v_rlbkId;
-    END IF;
+        EXECUTE v_stmt INTO v_rlbkId;
+      END IF;
 -- issue warnings in case of foreign keys with tables outside the groups
-    PERFORM emaj._check_fk_groups(v_groupNames);
+      PERFORM emaj._check_fk_groups(v_groupNames);
 -- call the rollback planning function to define all the elementary steps to perform,
 -- compute their estimated duration and attribute steps to sessions
-    v_stmt = 'SELECT emaj._rlbk_planning(' || v_rlbkId || ')';
-    IF v_isDblinkUsable THEN
+      v_stmt = 'SELECT emaj._rlbk_planning(' || v_rlbkId || ')';
+      IF v_isDblinkUsable THEN
 -- ... either through dblink if possible (do not try to open a connection, it has already been attempted)
-      SELECT eff_nb_table FROM dblink('rlbk#1',v_stmt) AS (eff_nb_table INT) INTO v_effNbTable;
-    ELSE
+        SELECT eff_nb_table FROM dblink('rlbk#1',v_stmt) AS (eff_nb_table INT) INTO v_effNbTable;
+      ELSE
 -- ... or directly
-      EXECUTE v_stmt INTO v_effNbTable;
-    END IF;
+        EXECUTE v_stmt INTO v_effNbTable;
+      END IF;
 -- update the emaj_rlbk table to set the real number of tables to process and adjust the rollback status
-    v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_eff_nb_table = ' || v_effNbTable ||
-             ', rlbk_status = ''LOCKING'' ' || ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
-    IF v_isDblinkUsable THEN
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_eff_nb_table = ' || v_effNbTable ||
+               ', rlbk_status = ''LOCKING'' ' || ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
+      IF v_isDblinkUsable THEN
 -- ... either through dblink if possible
-      PERFORM 0 FROM dblink('rlbk#1',v_stmt) AS (dummy INT);
-    ELSE
+        PERFORM 0 FROM dblink('rlbk#1',v_stmt) AS (dummy INT);
+      ELSE
 -- ... or directly
-      EXECUTE v_stmt;
+        EXECUTE v_stmt;
+      END IF;
     END IF;
     RETURN v_rlbkId;
   END;
@@ -4355,7 +4341,7 @@ RETURNS TEXT LANGUAGE plpgsql AS
 $_rlbk_check$
 -- This functions performs checks on group names and mark names supplied as parameter for the emaj_rollback_groups()
 -- and emaj_estimate_rollback_groups() functions.
--- It returns the real mark name.
+-- It returns the real mark name, or NULL if the groups array is NULL or empty.
   DECLARE
     v_markName               TEXT;
     v_aGroupName             TEXT;
@@ -4363,38 +4349,41 @@ $_rlbk_check$
     v_markTimeId             BIGINT;
     v_protectedMarkList      TEXT;
   BEGIN
--- check the group names and states (the group names have already been checked in _rlbk_init() so the groups array cannot be NULL)
+-- check the group names and states
     IF isRollbackSimulation THEN
       SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE') INTO v_groupNames;
     ELSE
       SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED') INTO v_groupNames;
     END IF;
+    IF v_groupNames IS NOT NULL THEN
 -- check the mark name
-    SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE') INTO v_markName;
-    IF NOT isRollbackSimulation THEN
+      SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE') INTO v_markName;
+      IF NOT isRollbackSimulation THEN
 -- check that for each group that the rollback wouldn't delete protected marks (check disabled for rollback simulation)
-      FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
+        FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
 --   get the target mark id
-        SELECT mark_id INTO v_markId FROM emaj.emaj_mark
-          WHERE mark_group = v_aGroupName AND mark_name = v_markName;
+          SELECT mark_id INTO v_markId FROM emaj.emaj_mark
+            WHERE mark_group = v_aGroupName AND mark_name = v_markName;
 --   and look at the protected mark
-        SELECT string_agg(mark_name,', ') INTO v_protectedMarkList FROM (
-          SELECT mark_name FROM emaj.emaj_mark
-            WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
-            ORDER BY mark_id) AS t;
-        IF v_protectedMarkList IS NOT NULL THEN
-          RAISE EXCEPTION '_rlbk_check: Protected marks (%) for the group "%" block the rollback to the mark "%".', v_protectedMarkList, v_aGroupName, v_markName;
-        END IF;
-      END LOOP;
-    END IF;
+          SELECT string_agg(mark_name,', ') INTO v_protectedMarkList FROM (
+            SELECT mark_name FROM emaj.emaj_mark
+              WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
+              ORDER BY mark_id) AS t;
+          IF v_protectedMarkList IS NOT NULL THEN
+            RAISE EXCEPTION '_rlbk_check: Protected marks (%) for the group "%" block the rollback to the mark "%".', v_protectedMarkList, v_aGroupName, v_markName;
+          END IF;
+        END LOOP;
+      END IF;
 -- if the isAlterGroupAllowed flag is not explicitely set to true, check that the rollback would not cross any alter group operation for the groups
-    IF v_isAlterGroupAllowed IS NULL OR NOT v_isAlterGroupAllowed THEN
-       SELECT emaj._get_mark_time_id(v_groupNames[1], v_markName) INTO v_markTimeId;
-       PERFORM 0 FROM emaj.emaj_alter_plan
-         WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_rlbk_id IS NULL;
-       IF FOUND THEN
-         RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.';
-       END IF;
+      IF v_isAlterGroupAllowed IS NULL OR NOT v_isAlterGroupAllowed THEN
+        SELECT mark_time_id INTO v_markTimeId
+          FROM emaj.emaj_mark WHERE mark_group = v_groupNames[1] AND mark_name = v_markName;
+        PERFORM 0 FROM emaj.emaj_alter_plan
+          WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_rlbk_id IS NULL;
+        IF FOUND THEN
+          RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.';
+        END IF;
+      END IF;
     END IF;
     RETURN v_markName;
   END;
@@ -6010,7 +5999,8 @@ $_estimate_rollback_groups$
     BEGIN
 -- insert a row into the emaj_rlbk table for this simulated rollback operation
       INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session)
-        VALUES (v_rlbkId, v_groupNames, v_mark, emaj._get_mark_time_id(v_groupNames[1], v_markName), v_isLoggedRlbk, false, 1);
+        SELECT v_rlbkId, v_groupNames, v_mark, mark_time_id, v_isLoggedRlbk, false, 1
+          FROM emaj.emaj_mark WHERE mark_group = v_groupNames[1] AND mark_name = v_markName;
 -- call the _rlbk_planning function
       PERFORM emaj._rlbk_planning(v_rlbkId);
 -- compute the sum of the duration estimates of all elementary steps (except LOCK_TABLE)
@@ -7336,7 +7326,6 @@ GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_group_names(v_groupNames TEXT[], v_mayBeNull BOOLEAN, v_lockGroups BOOLEAN, v_checkList TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_mark_name(v_groupNames TEXT[], v_mark TEXT, v_checkList TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_marks_range(v_groupNames TEXT[], INOUT v_firstMark TEXT, INOUT v_lastMark TEXT, OUT v_firstMarkTimeId BIGINT, OUT v_lastMarkTimeId BIGINT) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._get_mark_time_id(v_groupName TEXT, v_mark TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;
