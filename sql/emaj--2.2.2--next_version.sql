@@ -4443,27 +4443,27 @@ $emaj_snap_log_group$
 -- generate the file for sequences state at start mark
     v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_firstMark;
 -- and execute the COPY statement
-    v_stmt= 'COPY (SELECT emaj_sequence.*' ||
-            ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
-            ' WHERE sequ_time_id = ' || quote_literal(v_firstMarkTimeId) || ' AND ' ||
-            ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
-            ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
-            ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
-            coalesce (v_copyOptions, '');
+    v_stmt = 'COPY (SELECT emaj_sequence.*' ||
+             ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
+             ' WHERE sequ_time_id = ' || v_firstMarkTimeId ||
+             '   AND rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) ||
+             '   AND sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
+             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
+             coalesce (v_copyOptions, '');
     EXECUTE v_stmt;
 -- prepare the file for sequences state at end mark
 -- generate the full file name and the COPY statement
     IF v_noSuppliedLastMark THEN
       v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_lastMarkTs,'HH24.MI.SS.MS');
       v_stmt = 'SELECT * FROM ' ||
-               'emaj._get_current_sequences_state(ARRAY[' || quote_literal(v_groupName) || '], ''S'', ' || quote_literal(v_lastMarkTimeId) || ')';
+               'emaj._get_current_sequences_state(ARRAY[' || quote_literal(v_groupName) || '], ''S'', ' || v_lastMarkTimeId || ')';
     ELSE
       v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_lastMark;
       v_stmt = 'SELECT emaj_sequence.*' ||
                ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
-               ' WHERE sequ_time_id = ' || quote_literal(v_lastMarkTimeId) || ' AND ' ||
-               ' rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) || ' AND' ||
-               ' sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
+               ' WHERE sequ_time_id = ' || v_lastMarkTimeId ||
+               '   AND rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) ||
+               '   AND sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
                ' ORDER BY sequ_schema, sequ_name';
     END IF;
 -- and create the file
