@@ -134,7 +134,7 @@ WARNING:  _check_group_names: No group to process.
 select emaj.emaj_set_mark_groups('{"unknownGroup",""}',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := true, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := TRUE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
 PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 15 at SQL statement
 -- reserved mark name
 select emaj.emaj_set_mark_groups('{"myGroup1"}','EMAJ_LAST_MARK');
@@ -1120,7 +1120,7 @@ PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 15 at PERFORM
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'SM1');
 ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are not in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 75 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := true, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := TRUE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
 PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 15 at SQL statement
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RENAMED');
  emaj_rename_mark_group 
