@@ -790,7 +790,7 @@ $_check_group_names$
       END IF;
     END IF;
 -- check that all groups exist
-    SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM
+    SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count FROM
       (SELECT unnest(v_groupNames) EXCEPT SELECT group_name FROM emaj.emaj_group) AS t(group_name);
     IF v_count > 0 THEN
       IF v_count = 1 THEN
@@ -805,7 +805,7 @@ $_check_group_names$
     END IF;
 -- checks ROLLBACKABLE type, if requested
     IF strpos(v_checkList,'ROLLBACKABLE') > 0 THEN
-      SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM emaj.emaj_group
+      SELECT string_agg(group_name,', '  ORDER BY group_name), count(*) INTO v_groupList, v_count FROM emaj.emaj_group
         WHERE group_name = ANY(v_groupNames) AND NOT group_is_rollbackable;
       IF v_count = 1 THEN
         RAISE EXCEPTION '_check_group_names: The group "%" has been created as AUDIT_ONLY.', v_groupList;
@@ -816,7 +816,7 @@ $_check_group_names$
     END IF;
 -- checks IDLE state, if requested
     IF strpos(v_checkList,'IDLE') > 0 THEN
-      SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM emaj.emaj_group
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count FROM emaj.emaj_group
         WHERE group_name = ANY(v_groupNames) AND group_is_logging;
       IF v_count = 1 THEN
         RAISE EXCEPTION '_check_group_names: The group "%" is not in IDLE state.', v_groupList;
@@ -827,7 +827,7 @@ $_check_group_names$
     END IF;
 -- checks LOGGING state, if requested
     IF strpos(v_checkList,'LOGGING') > 0 THEN
-      SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM emaj.emaj_group
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count FROM emaj.emaj_group
         WHERE group_name = ANY(v_groupNames) AND NOT group_is_logging;
       IF v_count = 1 THEN
         RAISE EXCEPTION '_check_group_names: The group "%" is not in LOGGING state.', v_groupList;
@@ -838,7 +838,7 @@ $_check_group_names$
     END IF;
 -- checks UNPROTECTED type, if requested
     IF strpos(v_checkList,'UNPROTECTED') > 0 THEN
-      SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM emaj.emaj_group
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count FROM emaj.emaj_group
         WHERE group_name = ANY(v_groupNames) AND group_is_rlbk_protected;
       IF v_count = 1 THEN
         RAISE EXCEPTION '_check_group_names: The group "%" is currently protected against rollback operations.', v_groupList;
@@ -1062,7 +1062,7 @@ $_check_mark_name$
 -- process the 'EMAJ_LAST_MARK' keyword, if needed
     IF v_mark = 'EMAJ_LAST_MARK' THEN
 -- detect groups that have no recorded mark
-      SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count FROM
         (SELECT unnest(v_groupNames) EXCEPT SELECT mark_group FROM emaj.emaj_mark) AS t(group_name);
       IF v_count > 0 THEN
         IF v_count = 1 THEN
@@ -1084,7 +1084,7 @@ $_check_mark_name$
     ELSE
 -- for usual mark name (i.e. not EMAJ_LAST_MARK)
 -- check that the mark exists for all groups
-      SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count FROM
         (SELECT unnest(v_groupNames) EXCEPT SELECT mark_group FROM emaj.emaj_mark WHERE mark_name = v_markName) AS t(group_name);
       IF v_count > 0 THEN
         IF v_count = 1 THEN
@@ -1102,7 +1102,7 @@ $_check_mark_name$
     END IF;
 -- if requested, check the mark is active for all groups
     IF strpos(v_checkList,'ACTIVE') > 0 THEN
-      SELECT string_agg(mark_group,', '), count(*) INTO v_groupList, v_count FROM emaj.emaj_mark
+      SELECT string_agg(mark_group,', ' ORDER BY mark_group), count(*) INTO v_groupList, v_count FROM emaj.emaj_mark
         WHERE mark_name = v_markName AND mark_group = ANY(v_groupNames) AND mark_is_deleted;
       IF v_count = 1 THEN
         RAISE EXCEPTION '_check_mark_name: For the group "%", the mark "%" is DELETED.', v_groupList, v_markName;
@@ -1139,7 +1139,7 @@ $_check_new_mark$
 -- process % wild characters in mark name
     v_markName = replace(v_markName, '%', to_char(current_timestamp, 'HH24.MI.SS.MS'));
 -- check that the mark does not exist for any groups
-    SELECT string_agg(mark_group,', '), count(*) INTO v_groupList, v_count
+    SELECT string_agg(mark_group,', ' ORDER BY mark_group), count(*) INTO v_groupList, v_count
       FROM emaj.emaj_mark WHERE mark_name = v_markName AND mark_group = ANY(v_groupNames);
     IF v_count > 0 THEN
       IF v_count = 1 THEN
@@ -1172,7 +1172,7 @@ $_check_marks_range$
 -- if the first mark is NULL or empty, look for the first known mark for the group
     IF v_firstMark IS NULL OR v_firstMark = '' THEN
 -- detect groups that have no recorded mark
-      SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count FROM
         (SELECT unnest(v_groupNames) EXCEPT SELECT mark_group FROM emaj.emaj_mark) AS t(group_name);
       IF v_count > 0 THEN
         IF v_count <> array_length(v_groupNames, 1) THEN
@@ -1506,7 +1506,7 @@ $_create_tbl$
                 v_colList, v_pkColList, v_pkCondList);
 --
 -- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
-    SELECT string_agg(tgname, ', ') INTO v_triggerList FROM (
+    SELECT string_agg(tgname, ', ' ORDER BY tgname) INTO v_triggerList FROM (
       SELECT tgname FROM pg_catalog.pg_trigger
         WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'emaj\\_%\\_trg') AS t;
 -- if yes, issue a warning (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
@@ -2955,7 +2955,7 @@ $_alter_plan$
       WHERE altr_new_group = group_name
         AND altr_time_id = v_timeId AND altr_new_group IS NOT NULL;
 -- check groups LOGGING state, depending on the steps to perform
-    SELECT string_agg(DISTINCT altr_group, ', ') INTO v_groups
+    SELECT string_agg(DISTINCT altr_group, ', ' ORDER BY altr_group) INTO v_groups
       FROM emaj.emaj_alter_plan
       WHERE altr_time_id = v_timeId
         AND altr_step IN ('RESET_GROUP', 'REPAIR_TBL', 'ASSIGN_REL', 'ADD_TBL', 'ADD_SEQ')
@@ -3299,7 +3299,7 @@ $_stop_groups$
 -- check the group names
     SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '') INTO v_groupNames;
 -- for all groups already IDLE, generate a warning message and remove them from the list of the groups to process
-    SELECT string_agg(group_name,', '), count(*) INTO v_groupList, v_count FROM emaj.emaj_group
+    SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count FROM emaj.emaj_group
       WHERE group_name = ANY(v_groupNames) AND NOT group_is_logging;
     IF v_count = 1 THEN
       RAISE WARNING '_stop_groups: The group "%" is already in IDLE state.', v_groupList;
@@ -4365,7 +4365,7 @@ $_rlbk_check$
           SELECT mark_id INTO v_markId FROM emaj.emaj_mark
             WHERE mark_group = v_aGroupName AND mark_name = v_markName;
 --   and look at the protected mark
-          SELECT string_agg(mark_name,', ') INTO v_protectedMarkList FROM (
+          SELECT string_agg(mark_name,', ' ORDER BY mark_name) INTO v_protectedMarkList FROM (
             SELECT mark_name FROM emaj.emaj_mark
               WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
               ORDER BY mark_id) AS t;
@@ -6489,7 +6489,7 @@ $_gen_sql_groups$
 -- check the array of tables and sequences to filter, if supplied.
 -- each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups
       IF v_tblseqs IS NOT NULL THEN
-        SELECT string_agg(t,', '), count(*) INTO v_tblseqErr, v_count FROM (
+        SELECT string_agg(t,', ' ORDER BY t), count(*) INTO v_tblseqErr, v_count FROM (
           SELECT t FROM unnest(v_tblseqs) AS t
             EXCEPT
           SELECT rel_schema || '.' || rel_tblseq FROM emaj.emaj_relation
@@ -7047,7 +7047,7 @@ $_event_trigger_sql_drop_fnct$
         WHEN r_dropped.object_type = 'schema' THEN
 -- the object is a schema
 --   look at the emaj_relation table to verify that the schema being dropped does not belong to any active (not stopped) group
-          SELECT string_agg(DISTINCT rel_group, ', ') INTO v_groupName FROM emaj.emaj_relation, emaj.emaj_group
+          SELECT string_agg(DISTINCT rel_group, ', ' ORDER BY rel_group) INTO v_groupName FROM emaj.emaj_relation, emaj.emaj_group
             WHERE rel_schema = r_dropped.object_name AND upper_inf(rel_time_range)
               AND group_name = rel_group AND group_is_logging;
           IF v_groupName IS NOT NULL THEN

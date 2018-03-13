@@ -339,7 +339,7 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 11 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",""}',NULL);
-ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup2, myGroup1".
+ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
@@ -350,7 +350,7 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text) line 7 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",NULL}',NULL);
-ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup2, myGroup1".
+ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
@@ -361,7 +361,7 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text) line 7 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','DummyMark');
-ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the groups "myGroup2, myGroup1".
+ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
@@ -372,7 +372,7 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text) line 7 at RETURN
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2","myGroup2"}',NULL);
-ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup2, myGroup1".
+ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
@@ -435,7 +435,7 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 select emaj.emaj_logged_rollback_groups(array['phil''s group#3",','auditOnlyEmptyGroup'],'M1_audit_only');
-ERROR:  _check_group_names: The groups "phil's group#3",, auditOnlyEmptyGroup" have been created as AUDIT_ONLY.
+ERROR:  _check_group_names: The groups "auditOnlyEmptyGroup, phil's group#3"," have been created as AUDIT_ONLY.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 53 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement

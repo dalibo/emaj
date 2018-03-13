@@ -64,7 +64,7 @@ SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_ma
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 19 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 select emaj.emaj_start_groups(array['unknownGroup1','unknownGroup2'],NULL,NULL);
-ERROR:  _check_group_names: The groups "unknownGroup2, unknownGroup1" do not exist.
+ERROR:  _check_group_names: The groups "unknownGroup1, unknownGroup2" do not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 38 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := 'IDLE')"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 19 at SQL statement
