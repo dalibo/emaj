@@ -3,7 +3,6 @@ emaj-2.2.3/CHANGES.md
 emaj-2.2.3/AUTHORS.md
 emaj-2.2.3/LICENSE
 emaj-2.2.3/META.json
-emaj-2.2.3/Makefile
 emaj-2.2.3/emaj.control
 emaj-2.2.3/sql/emaj--2.2.3.sql
 emaj-2.2.3/sql/emaj--2.2.2--2.2.3.sql
