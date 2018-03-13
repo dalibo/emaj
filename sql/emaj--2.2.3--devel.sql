@@ -82,7 +82,13 @@ SELECT emaj._disable_event_triggers();
 
 
 --<begin_functions>                              pattern used by the tool that extracts and insert the functions definition
+------------------------------------------------------------------
+-- drop obsolete functions or functions with modified interface --
+------------------------------------------------------------------
 
+------------------------------------------------------------------
+-- create new or modified functions                             --
+------------------------------------------------------------------
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --
