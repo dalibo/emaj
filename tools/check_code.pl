@@ -2,7 +2,7 @@
 #
 # check_code.pl
 #
-# This perl script processes the emaj--next_version.sql source file.
+# This perl script processes the emaj--devel.sql source file.
 # It performs various checks on the script format.
 # It detects unused variables declared in functions.
 # It also verifies that lines do not contains tab char or trailing spaces.
@@ -11,7 +11,7 @@ use warnings; use strict;
 
 # The 2 variables below are to be customized
   my $dir = "/home/postgres/proj/emaj";
-  my $fic_src = $dir."/sql/emaj--next_version.sql";
+  my $fic_src = $dir."/sql/emaj--devel.sql";
 
   our $fnctName;
   our @varNames;    # array of variable names for the current function

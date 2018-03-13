@@ -1,5 +1,5 @@
 --
--- E-Maj : logs and rollbacks table updates : Version <NEXT_VERSION>
+-- E-Maj : logs and rollbacks table updates : Version <devel>
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -506,7 +506,7 @@ $$Represents the structure of rows returned by the internal _verify_groups() fun
 -- Parameters                     --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','<NEXT_VERSION>');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','<devel>');
 
 -- Other parameters are optional. They may be set by E-Maj administrators if needed.
 
@@ -7382,7 +7382,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_mark_mark_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
 -- insert the init record into the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSION>', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Initialisation completed');
 -- insert the emaj schema into the emaj_schema table
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 

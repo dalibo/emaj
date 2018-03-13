@@ -1,5 +1,5 @@
 --
--- E-Maj: migration from 2.2.2 to <NEXT_VERSON>
+-- E-Maj: migration from 2.2.2 to <devel>
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -4989,10 +4989,10 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
        );
 
 -- update the version id in the emaj_param table
-UPDATE emaj.emaj_param SET param_value_text = '<NEXT_VERSON>' WHERE param_key = 'emaj_version';
+UPDATE emaj.emaj_param SET param_value_text = '<devel>' WHERE param_key = 'emaj_version';
 
 -- insert the upgrade record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <NEXT_VERSON>', 'Upgrade from 2.2.2 completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Upgrade from 2.2.2 completed');
 
 -- post installation checks
 DO

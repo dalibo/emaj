@@ -1,6 +1,6 @@
 E-Maj - Change log
 ==================
-<NEXT_VERSION>
+<devel>
 ------
 ###Enhancements:###
   * Change the behaviour of the statistics functions. emaj_log_stat_group()

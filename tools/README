@@ -77,7 +77,7 @@ Some SQL commands or postgresql.conf parameters may need to be adjusted.
 create_version.sh
 -----------------
 The create_version.sh shell script materializes a new E-Maj version. It takes a snapshot of the main emaj directory, by creating a parallel ne emaj-<version> directory that will be used to create the tar file of the version. The script has to be run with a bash command from the directory holding the main emaj directory.
-A single argument has to be supplied: the name of the new version to create (for instance: 3.1.0). In the new version directory, all components mentioning the <NEXT_VERSION> string are adapted to report the proper version identifier.
+A single argument has to be supplied: the name of the new version to create (for instance: 3.1.0). In the new version directory, all components mentioning the <devel> string are adapted to report the proper version identifier.
 
 Customization:
 No customization is needed for this script.

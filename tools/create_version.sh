@@ -10,7 +10,7 @@
 # and on ~/proj/emaj:
 #   git reset HEAD
 #   git checkout *
-#   rm sql/emaj--<new_vers>--next_version.sql
+#   rm sql/emaj--<new_vers>--devel.sql
 #   rm sql/emaj--<old_vers>--<new_vers>.sql
 
 # Checks
@@ -41,12 +41,12 @@
 	cd $OLDDIR
 
 # Stamp the CHANGES.md file
-	sed -i "s/<NEXT_VERSION>/${NEW}/" CHANGES.md
+	sed -i "s/<devel>/${NEW}/" CHANGES.md
 
 # Adapt and rename the migration script
-	sed -i "s/<NEXT_VERSION>/${NEW}/g" sql/emaj--*--next_version.sql
-	for file in sql/emaj--*-next_version.sql; do
-		git mv $file $(echo $file | sed -r "s/next_version/${NEW}/")
+	sed -i "s/<devel>/${NEW}/g" sql/emaj--*--devel.sql
+	for file in sql/emaj--*-devel.sql; do
+		git mv $file $(echo $file | sed -r "s/devel/${NEW}/")
 	done
 
 # Delete potential remaining temp files
@@ -67,31 +67,27 @@
 # Delete tar files if exist
 	rm *.tar*
 
-# Process doc directory: rename *NEXT_VERSION* with *<new version>*
-	for file in doc/*NEXT_VERSION*; do
-		mv $file $(echo $file | sed -r "s/NEXT_VERSION/${NEW}/")
+# Process doc directory: rename *devel* with *<new version>*
+	for file in doc/*devel*; do
+		mv $file $(echo $file | sed -r "s/devel/${NEW}/")
 	done 
 
 # Process sql directory: change version identifiers inside the right files (excluding migration scripts)
 	for file in sql/*; do
 		if [[ ! $file =~ "(--|-to-)" ]]; then
-			sed -i "s/<NEXT_VERSION>/${NEW}/g" $file
-			sed -i "s/next_version/${NEW}/g" $file
+			sed -i "s/<devel>/${NEW}/g" $file
 		fi
 	done
-	git mv sql/emaj--next_version.sql sql/emaj--${NEW}.sql
+	git mv sql/emaj--devel.sql sql/emaj--${NEW}.sql
 
 # Change version identifiers inside files from /php + /tools + META.json README.md
-	find php tools META.json README.md -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
+	find php tools META.json README.md -type f -exec sed -i "s/<devel>/${NEW}/g" '{}' \;
 
 # Change version identifiers inside emaj.control
-	sed -i "s/next_version/${NEW}/g" emaj.control
+	sed -i "s/devel/${NEW}/g" emaj.control
 
 # Change version identifiers inside files from /test/sql
-	find test/sql -type f -exec sed -i "s/<NEXT_VERSION>/${NEW}/g" '{}' \;
-# Next line to check at next execution
-	find test/sql -type f -exec sed -i "s/'next_version'/'${NEW}'/g" '{}' \;
-	find test/sql -type f -exec sed -i "s/-to-next.sql/-to-${NEW}.sql/g" '{}' \;
+	find test/sql -type f -exec sed -i "s/'devel'/'${NEW}'/g" '{}' \;
 
 # Change environment directories and files into tools
 	sed -i "s/\/emaj/\/emaj-${NEW}/" tools/copy2Expected.sh
@@ -100,8 +96,8 @@
 	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/check_code.pl
 	sed -i "s/\/proj\/emaj/\/proj\/emaj-${NEW}/" tools/check_error_messages.pl
 
-	sed -i "s/emaj--next_version.sql/emaj--${NEW}.sql/g" tools/check_code.pl
-	sed -i "s/emaj--next_version.sql/emaj--${NEW}.sql/g" tools/check_error_messages.pl
+	sed -i "s/emaj--devel.sql/emaj--${NEW}.sql/g" tools/check_code.pl
+	sed -i "s/emaj--devel.sql/emaj--${NEW}.sql/g" tools/check_error_messages.pl
 
 	cd ..
 
@@ -109,11 +105,11 @@
 # ---------------------------------
 	cd $OLDDIR
 # Add a new entry in CHANGES.md
-	sed -i "3i<NEXT_VERSION>\n------\n###Enhancements:###\n\n\n###Bug fixes:###\n\n\n" CHANGES.md
+	sed -i "3i<devel>\n------\n###Enhancements:###\n\n\n###Bug fixes:###\n\n\n" CHANGES.md
 
 # create a new empty migration script, by copying and adjusting the upgrade script template
-    sed "s/<PREVIOUS_VERSION>/${NEW}/g" tools/emaj_upgrade.template >sql/emaj--$NEW--next_version.sql
-	git add sql/emaj--$NEW--next_version.sql
+    sed "s/<PREVIOUS_VERSION>/${NEW}/g" tools/emaj_upgrade.template >sql/emaj--$NEW--devel.sql
+	git add sql/emaj--$NEW--devel.sql
 
 	cd ..
 

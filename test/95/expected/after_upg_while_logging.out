@@ -357,7 +357,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      109 | ALTER_GROUP              | TABLE REMOVED      | myschema1."myTbl3"           | From logging group myGroup1                                                 | postgres
      110 | ALTER_GROUP              | LOG SCHEMA CHANGED | myschema1.mytbl2b            | emaj => emajb                                                               | postgres
      111 | ALTER_GROUP              | END                | myGroup1                     | Timestamp Id : 18                                                           | postgres
-     112 | EMAJ_INSTALL             |                    | E-Maj <NEXT_VERSON>          | Upgrade from 2.2.2 completed                                                | postgres
+     112 | EMAJ_INSTALL             |                    | E-Maj <devel>                | Upgrade from 2.2.2 completed                                                | postgres
      113 | UNPROTECT_GROUP          |                    | myGroup1                     | Status 1                                                                    | postgres
      114 | ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2            | Unlogged rollback to mark Common (timestamp)                                | postgres
      115 | DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -5                                                                 | postgres
