@@ -174,17 +174,19 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
 (1 row)
 
 -----------------------------
--- emaj_log_stat_group() and emaj_detailled_log_stat_group() test
+-- emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups() test
 -----------------------------
 -- group is unknown in emaj_group_def
 select * from emaj.emaj_log_stat_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
-CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 18 at PERFORM
-select * from emaj.emaj_log_stat_group('unknownGroup',NULL,NULL);
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 17 at SQL statement
+PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
+select * from emaj.emaj_log_stat_groups(array['unknownGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 18 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 17 at SQL statement
+PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
@@ -198,14 +200,16 @@ select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 56 at SQL statement
-SQL statement "SELECT * FROM emaj._check_marks_range(ARRAY[v_groupName], v_firstMark, v_lastMark)"
-PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 20 at SQL statement
+SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
-SQL statement "SELECT * FROM emaj._check_marks_range(ARRAY[v_groupName], v_firstMark, v_lastMark)"
-PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 20 at SQL statement
+SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
@@ -218,6 +222,18 @@ CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNa
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(ARRAY[v_groupName], v_firstMark, v_lastMark)"
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 30 at SQL statement
+select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],NULL,NULL);
+ERROR:  _check_marks_range: The oldest marks of each group do not represent the same point in time.
+CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
+select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
+ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
+CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
+PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
+SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 -- start mark > end mark
 -- original test (uncomment for unit test)
 --  select * from emaj.emaj_log_stat_group('myGroup2','Mark23','Mark22');
@@ -355,6 +371,42 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl6     | Multi-3         |                |         0
 (6 rows)
 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1',NULL)
+  order by stat_group, stat_schema, stat_table;
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup1   | myschema1   | mytbl1     | Multi-1         |                |         0
+ myGroup1   | myschema1   | mytbl2     | Multi-1         |                |         0
+ myGroup1   | myschema1   | mytbl2b    | Multi-1         |                |         0
+ myGroup1   | myschema1   | myTbl3     | Multi-1         |                |         0
+ myGroup1   | myschema1   | mytbl4     | Multi-1         |                |         0
+ myGroup2   | myschema2   | mytbl1     | Multi-1         |                |     10700
+ myGroup2   | myschema2   | mytbl2     | Multi-1         |                |       900
+ myGroup2   | myschema2   | myTbl3     | Multi-1         |                |        10
+ myGroup2   | myschema2   | mytbl4     | Multi-1         |                |       100
+ myGroup2   | myschema2   | mytbl5     | Multi-1         |                |         0
+ myGroup2   | myschema2   | mytbl6     | Multi-1         |                |         0
+(11 rows)
+
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','Multi-3')
+  order by stat_group, stat_schema, stat_table;
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup1   | myschema1   | mytbl1     | Multi-1         | Multi-3        |         0
+ myGroup1   | myschema1   | mytbl2     | Multi-1         | Multi-3        |         0
+ myGroup1   | myschema1   | mytbl2b    | Multi-1         | Multi-3        |         0
+ myGroup1   | myschema1   | myTbl3     | Multi-1         | Multi-3        |         0
+ myGroup1   | myschema1   | mytbl4     | Multi-1         | Multi-3        |         0
+ myGroup2   | myschema2   | mytbl1     | Multi-1         | Multi-3        |     10700
+ myGroup2   | myschema2   | mytbl2     | Multi-1         | Multi-3        |       900
+ myGroup2   | myschema2   | myTbl3     | Multi-1         | Multi-3        |        10
+ myGroup2   | myschema2   | mytbl4     | Multi-1         | Multi-3        |       100
+ myGroup2   | myschema2   | mytbl5     | Multi-1         | Multi-3        |         0
+ myGroup2   | myschema2   | mytbl6     | Multi-1         | Multi-3        |         0
+(11 rows)
+
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL)
   order by stat_group, stat_schema, stat_table;
@@ -466,7 +518,7 @@ begin;
                 7
 (1 row)
 
-  select * from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
+  select * from emaj.emaj_log_stat_groups(array['myGroup1'],NULL,NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_datetime | stat_last_mark | stat_last_mark_datetime | stat_rows 
 ------------+-------------+------------+-----------------+--------------------------+----------------+-------------------------+-----------
  myGroup1   | myschema1   | mytbl1     |                 |                          |                |                         |         0

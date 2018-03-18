@@ -85,6 +85,10 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | <emaj_log_stat_group>` (V)                       | | start.mark TEXT,            |                                       |
 |                                                  | | end.mark TEXT               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :doc:`emaj_log_stat_groups                       | | groups.array TEXT[],        | SETOF emaj_log_stat_type              |
+| <multiGroupsFunctions>` (V)                      | | start.mark TEXT,            |                                       |
+|                                                  | | end.mark TEXT               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_logged_rollback_group                 | | group TEXT,                 | SETOF (severity TEXT, message TEXT)   |
 | <emaj_logged_rollback_group>`                    | | mark TEXT,                  |                                       |
 |                                                  | | is_alter_group_allowed      |                                       |

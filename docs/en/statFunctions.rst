@@ -67,6 +67,12 @@ There is no need for log table scans to get these statistics. For this reason, t
 
 But returned values may be approximative (in fact over-estimated). This occurs in particular when transactions executed between both requested marks have performed table updates before being cancelled.
 
+Using the *emaj_log_stat_groups()* function, log statistics can be obtained for several groups at once::
+
+   SELECT emaj.emaj_log_stat_groups('<group.names.array>', '<start.mark>', '<end.mark>');
+
+More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
+
 .. _emaj_detailed_log_stat_group:
 
 Detailed statistics about logs

@@ -67,6 +67,12 @@ L'obtention de ces statistiques ne nécessite pas le parcours des tables de log.
 
 Mais, les valeurs retournées peuvent être approximatives (en fait surestimées). C'est en particulier le cas si, entre les deux marques citées, des transactions ont mis à jour des tables avant d'être annulées.
 
+Des statistiques peuvent être obtenues sur plusieurs groupes de tables même temps, en utilisant la fonction *emaj_log_stat_groups()* ::
+
+   SELECT emaj.emaj_log_stat_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>');
+
+Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
+
 .. _emaj_detailed_log_stat_group:
 
 Statistiques détaillées sur les logs

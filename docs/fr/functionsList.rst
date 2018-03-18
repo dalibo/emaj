@@ -85,6 +85,10 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 | <emaj_log_stat_group>` (V)                       | | marque.début TEXT,          |                                       |
 |                                                  | | marque.fin TEXT             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :doc:`emaj_log_stat_groups                       | | tableau.groupes TEXT[],     | SETOF emaj_log_stat_type              |
+| <multiGroupsFunctions>` (V)                      | | marque.début TEXT,          |                                       |
+|                                                  | | marque.fin TEXT             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_logged_rollback_group                 | | groupe TEXT,                | SETOF (sévérité TEXT, message TEXT)   |
 | <emaj_logged_rollback_group>`                    | | marque TEXT,                |                                       |
 |                                                  | | est_modif_groupe_autorisé   |                                       |

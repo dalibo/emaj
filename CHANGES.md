@@ -3,7 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-
+  * A new emaj_log_stat_groups() function produces log statistics for several
+    tables groups.
 
 ###Bug fixes:###
 

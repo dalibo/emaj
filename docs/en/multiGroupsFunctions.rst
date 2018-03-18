@@ -35,6 +35,8 @@ The following table lists the multi-groups functions, with their relative mono-g
 +------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_estimate_rollback_groups()** | :ref:`emaj.emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` |
 +------------------------------------------+---------------------------------------------------------------------------+
+| **emaj.emaj_log_stat_groups()**          | :ref:`emaj.emaj_log_stat_group() <emaj_log_stat_group>`                   |
++------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_gen_sql_groups()**           | :ref:`emaj.emaj_gen_sql_group() <emaj_gen_sql_group>`                     |
 +------------------------------------------+---------------------------------------------------------------------------+
 

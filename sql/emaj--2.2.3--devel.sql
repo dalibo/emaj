@@ -89,6 +89,108 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
+RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
+$emaj_log_stat_group$
+-- This function returns statistics on row updates executed between 2 marks or between a mark and the current situation for a single group.
+-- It is used to quickly get simple statistics of updates logged between 2 marks (i.e. for one or several processing)
+-- Input: group name, the 2 mark names defining a range
+-- Output: set of log rows by table (including tables with 0 rows to rollback)
+  BEGIN
+    RETURN QUERY SELECT * FROM emaj._log_stat_groups(ARRAY[v_groupName], FALSE, v_firstMark, v_lastMark);
+  END;
+$emaj_log_stat_group$;
+COMMENT ON FUNCTION emaj.emaj_log_stat_group(TEXT,TEXT,TEXT) IS
+$$Returns global statistics about logged events for an E-Maj group between 2 marks for a single group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT)
+RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
+$emaj_log_stat_groups$
+-- This function returns statistics on row updates executed between 2 marks or between a mark and the current situation for a groups array.
+-- It is used to quickly get simple statistics of updates logged between 2 marks (i.e. for one or several processing)
+-- Input: group names array, the 2 mark names defining a range
+-- Output: set of log rows by table (including tables with 0 rows to rollback)
+  BEGIN
+    RETURN QUERY SELECT * FROM emaj._log_stat_groups(v_groupNames, TRUE, v_firstMark, v_lastMark);
+  END;
+$emaj_log_stat_groups$;
+COMMENT ON FUNCTION emaj.emaj_log_stat_groups(TEXT[],TEXT,TEXT) IS
+$$Returns global statistics about logged events for an E-Maj group between 2 marks for a groups array.$$;
+
+CREATE OR REPLACE FUNCTION emaj._log_stat_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_firstMark TEXT, v_lastMark TEXT)
+RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
+$_log_stat_groups$
+-- This function effectively returns statistics on row updates executed between 2 marks or between a mark and the current situation for 1 or several groups.
+-- These statistics are computed using the serial id of log tables and holes is sequences recorded into emaj_seq_hole at rollback time
+-- Input: groups name array, a boolean indicating whether the calling function is a multi_groups function, the 2 mark names defining a range
+--   a NULL value or an empty string as first_mark indicates the first recorded mark
+--   a NULL value or an empty string as last_mark indicates the current situation
+--   Use a NULL or an empty string as last_mark to know the number of rows to rollback to reach the mark specified by the first_mark parameter.
+--   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark for the groups.
+-- Output: set of log rows by table (including tables with 0 rows to rollback)
+  DECLARE
+    v_firstMarkTimeId        BIGINT;
+    v_lastMarkTimeId         BIGINT;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
+  BEGIN
+-- check the groups name
+    SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '') INTO v_groupNames;
+    IF v_groupNames IS NOT NULL THEN
+-- check the marks range
+      SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)
+        INTO v_firstMark, v_lastMark, v_firstMarkTimeId, v_lastMarkTimeId;
+-- get additional data for both mark timestamps (in some cases, v_firstMarkTimeId may be NULL)
+      SELECT time_clock_timestamp INTO v_firstMarkTs
+        FROM emaj.emaj_time_stamp WHERE time_id = v_firstMarkTimeId;
+      IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
+        SELECT time_clock_timestamp INTO v_lastMarkTs
+          FROM emaj.emaj_time_stamp WHERE time_id = v_lastMarkTimeId;
+      END IF;
+-- for each table of the group, get the number of log rows and return the statistics
+-- shorten the timeframe if the table did not belong to the group on the entire requested time frame
+      RETURN QUERY
+        SELECT rel_group, rel_schema, rel_tblseq,
+               CASE WHEN v_firstMarkTimeId IS NULL THEN NULL
+                    WHEN v_firstMarkTimeId >= lower(rel_time_range) THEN v_firstMark
+                    ELSE (SELECT mark_name FROM emaj.emaj_mark
+                            WHERE mark_time_id = lower(rel_time_range) AND mark_group = rel_group)
+                 END AS stat_first_mark,
+               CASE WHEN v_firstMarkTimeId IS NULL THEN NULL
+                    WHEN v_firstMarkTimeId >= lower(rel_time_range) THEN v_firstMarkTs
+                    ELSE (SELECT time_clock_timestamp FROM emaj.emaj_time_stamp
+                            WHERE time_id = lower(rel_time_range))
+                 END AS stat_first_mark_datetime,
+               CASE WHEN v_lastMarkTimeId IS NULL AND upper_inf(rel_time_range) THEN NULL
+                    WHEN NOT upper_inf(rel_time_range) AND (v_lastMarkTimeId IS NULL OR upper(rel_time_range) < v_lastMarkTimeId)
+                         THEN (SELECT mark_name FROM emaj.emaj_mark
+                                 WHERE mark_time_id = upper(rel_time_range) AND mark_group = rel_group)
+                    ELSE v_lastMark
+                 END AS stat_last_mark,
+               CASE WHEN v_lastMarkTimeId IS NULL AND upper_inf(rel_time_range) THEN NULL
+                    WHEN NOT upper_inf(rel_time_range) AND (v_lastMarkTimeId IS NULL OR upper(rel_time_range) < v_lastMarkTimeId)
+                         THEN (SELECT time_clock_timestamp FROM emaj.emaj_time_stamp
+                                 WHERE time_id = upper(rel_time_range))
+                    ELSE v_lastMarkTs
+                 END AS stat_last_mark_datetime,
+               CASE WHEN v_firstMarkTimeId IS NULL THEN 0                                              -- group just created but without any mark
+                    ELSE emaj._log_stat_tbl(emaj_relation,
+                                            CASE WHEN v_firstMarkTimeId >= lower(rel_time_range)
+                                                   THEN v_firstMarkTimeId ELSE lower(rel_time_range) END,
+                                            CASE WHEN NOT upper_inf(rel_time_range) AND (v_lastMarkTimeId IS NULL OR upper(rel_time_range) < v_lastMarkTimeId)
+                                                   THEN upper(rel_time_range) ELSE v_lastMarkTimeId END)
+                 END AS nb_rows
+          FROM emaj.emaj_relation
+          WHERE rel_group = ANY(v_groupNames) AND rel_kind = 'r'                                       -- tables belonging to the groups
+            AND (upper_inf(rel_time_range) OR upper(rel_time_range) > v_firstMarkTimeId)               --   at the requested time frame
+            AND (v_lastMarkTimeId IS NULL OR lower(rel_time_range) < v_lastMarkTimeId)
+          ORDER BY rel_schema, rel_tblseq, rel_time_range;
+    ELSE
+      RETURN;
+    END IF;
+  END;
+$_log_stat_groups$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --
@@ -111,6 +213,8 @@ GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
+GRANT EXECUTE ON FUNCTION emaj.emaj_log_stat_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._log_stat_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_firstMark TEXT, v_lastMark TEXT) TO emaj_viewer;
 
 ------------------------------------
 --                                --

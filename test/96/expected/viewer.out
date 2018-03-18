@@ -193,6 +193,12 @@ select count(*) from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
      5
 (1 row)
 
+select count(*) from emaj.emaj_log_stat_groups(array['myGroup1'],NULL,NULL);
+ count 
+-------
+     5
+(1 row)
+
 select count(*) from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
  count 
 -------
