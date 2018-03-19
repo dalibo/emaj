@@ -39,6 +39,10 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 | <emaj_detailed_log_stat_group>` (V)              | | marque.début TEXT,          |                                       |
 |                                                  | | marque.fin TEXT             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :doc:`emaj_detailed_log_stat_groups              | | tableau.groupes TEXT[],     | SETOF emaj_detailed_log_stat_type     |
+| <multiGroupsFunctions>` (V)                      | | marque.début TEXT,          |                                       |
+|                                                  | | marque.fin TEXT             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_disable_protection_by_event_triggers  |                               | nb.triggers INT                       |
 | <emaj_disable_protection_by_event_triggers>`     |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

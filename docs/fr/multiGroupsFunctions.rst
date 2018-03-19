@@ -37,6 +37,8 @@ Le tableau suivant liste les fonctions multi-groupes existantes et leur fonction
 +------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_log_stat_groups()**          | :ref:`emaj.emaj_log_stat_group() <emaj_log_stat_group>`                   |
 +------------------------------------------+---------------------------------------------------------------------------+
+| **emaj.emaj_detailed_log_stat_groups()** | :ref:`emaj.emaj_detailed_log_stat_group() <emaj_detailed_log_stat_group>` |
++------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_gen_sql_groups()**           | :ref:`emaj.emaj_gen_sql_group() <emaj_gen_sql_group>`                     |
 +------------------------------------------+---------------------------------------------------------------------------+
 

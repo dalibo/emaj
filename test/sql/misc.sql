@@ -75,7 +75,7 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
 select * from emaj.emaj_log_stat_group(NULL,NULL,NULL);
 select * from emaj.emaj_log_stat_groups(array['unknownGroup'],NULL,NULL);
 select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
-select * from emaj.emaj_detailed_log_stat_group('unknownGroup',NULL,NULL);
+select * from emaj.emaj_detailed_log_stat_groups(array['unknownGroup'],NULL,NULL);
 
 -- invalid marks
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
@@ -85,6 +85,8 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'dummyEndMark');
 
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],NULL,NULL);
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
+select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],NULL,NULL);
+select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
 
 -- start mark > end mark
 -- original test (uncomment for unit test)
@@ -164,6 +166,13 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
   from emaj.emaj_detailed_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
   order by stat_group, stat_schema, stat_table;
 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1',NULL)
+  order by stat_group, stat_schema, stat_table;
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','Multi-3')
+  order by stat_group, stat_schema, stat_table;
+
 -- empty group
 select * from emaj.emaj_log_stat_group('emptyGroup',NULL,NULL);
 select * from emaj.emaj_detailed_log_stat_group('emptyGroup',NULL,NULL);
@@ -173,7 +182,7 @@ begin;
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_reset_group('myGroup1');
   select * from emaj.emaj_log_stat_groups(array['myGroup1'],NULL,NULL);
-  select * from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
+  select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1'],NULL,NULL);
 rollback;
 
 -----------------------------

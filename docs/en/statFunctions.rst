@@ -118,6 +118,12 @@ Unlike :ref:`emaj_log_stat_group() <emaj_log_stat_group>`, the *emaj_detailed_lo
 
 Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the tables group during the requested time interval.
 
+Using the *emaj_detailed_log_stat_groups()* function, detailed log statistics can be obtained for several groups at once::
+
+   SELECT emaj.emaj_detailed_log_stat_groups('<group.names.array>', '<start.mark>', '<end.mark>');
+
+More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
+
 .. _emaj_estimate_rollback_group:
 
 Estimate the rollback duration

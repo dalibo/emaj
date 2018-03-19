@@ -39,6 +39,10 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | <emaj_detailed_log_stat_group>` (V)              | | start.mark TEXT,            |                                       |
 |                                                  | | end.mark TEXT               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :doc:`emaj_detailed_log_stat_groups              | | groups.array TEXT[],        | SETOF emaj_detailed_log_stat_type     |
+| <multiGroupsFunctions>` (V)                      | | start.mark TEXT,            |                                       |
+|                                                  | | end.mark TEXT               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_disable_protection_by_event_triggers  |                               | #.triggers INT                        |
 | <emaj_disable_protection_by_event_triggers>`     |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

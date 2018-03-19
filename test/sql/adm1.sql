@@ -416,6 +416,7 @@ select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
 select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL); 
 select * from emaj.emaj_log_stat_groups(array['dummyGroup'], 'dummyMark', NULL); 
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);
+select * from emaj.emaj_detailed_log_stat_groups(array['dummyGroup'],NULL,NULL);
 select emaj.emaj_estimate_rollback_group('dummyGroup', 'dummyMark', TRUE);
 select emaj.emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
 select * from emaj.emaj_rollback_activity();
