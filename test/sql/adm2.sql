@@ -115,6 +115,7 @@ alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char
 
 set role emaj_regression_tests_adm_user;
 
+select emaj.emaj_enable_protection_by_event_triggers();
 select emaj.emaj_create_group('myGroup4');
 
 update emaj.emaj_group_def set grpdef_priority = NULL, grpdef_log_schema_suffix = NULL, grpdef_emaj_names_prefix = NULL
@@ -126,8 +127,6 @@ select emaj.emaj_alter_groups('{"phil''s group#3\",","myGroup4"}');
 
 select emaj.emaj_drop_group('phil''s group#3",');
 select emaj.emaj_drop_group('myGroup4');
-
-select emaj.emaj_enable_protection_by_event_triggers();
 -----------------------------
 -- Checking step 9
 -----------------------------

@@ -88,8 +88,8 @@ select emaj.emaj_create_group('emptyGroup',true,true);
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','new_mark_name');
 
 -- force a purge of the history, the alter and the rollback tables
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 second'::interval);
-select pg_sleep(1);
+INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','0.1 second'::interval);
+select pg_sleep(0.2);
 select emaj.emaj_start_group('myGroup1','M1');
 delete from emaj.emaj_param where param_key = 'history_retention';
 

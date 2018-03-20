@@ -120,7 +120,7 @@ select funcname, calls from pg_stat_user_functions
  _drop_log_schemas                         |   173
  _drop_seq                                 |    47
  _drop_tbl                                 |   152
- _emaj_event_trigger_table_rewrite_fnct    |    98
+ _emaj_event_trigger_table_rewrite_fnct    |   103
  _enable_event_triggers                    |   291
  _estimate_rollback_groups                 |    11
  _event_trigger_sql_drop_fnct              |    66
