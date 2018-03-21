@@ -82,15 +82,20 @@ set role emaj_regression_tests_adm_user;
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_comment_group('myGroup1','This is group #1');
 select emaj.emaj_create_group('myGroup2',true);
+select emaj.emaj_create_group('emptyGroup',true,true);
 
 -- try to rename the last mark for a group that has no mark
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','new_mark_name');
 
 -- force a purge of the history, the alter and the rollback tables
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 second'::interval);
-select pg_sleep(1);
+INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','0.1 second'::interval);
+select pg_sleep(0.2);
 select emaj.emaj_start_group('myGroup1','M1');
 delete from emaj.emaj_param where param_key = 'history_retention';
+
+-- try to generate a sql script for 2 and 3 groups with a mix of groups with or without marks
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'],NULL,'EMAJ_LAST_MARK','/tmp/tmp');
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2','emptyGroup'],NULL,'EMAJ_LAST_MARK','/tmp/tmp');
 
 select emaj.emaj_start_group('myGroup2','M1');
 
@@ -409,7 +414,9 @@ select emaj.emaj_force_drop_group('dummyGroup');
 select emaj.emaj_get_previous_mark_group('dummyGroup', '2010-01-01');
 select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
 select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL); 
+select * from emaj.emaj_log_stat_groups(array['dummyGroup'], 'dummyMark', NULL); 
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);
+select * from emaj.emaj_detailed_log_stat_groups(array['dummyGroup'],NULL,NULL);
 select emaj.emaj_estimate_rollback_group('dummyGroup', 'dummyMark', TRUE);
 select emaj.emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
 select * from emaj.emaj_rollback_activity();

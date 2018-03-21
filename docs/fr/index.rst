@@ -70,6 +70,12 @@ Bienvenue dans la documentation E-Maj !
 
 .. toctree::
    :maxdepth: 1
+   :caption: Contribuer :
+
+   contributing
+
+.. toctree::
+   :maxdepth: 1
    :caption: Annexes :
 
    functionsList

@@ -14,7 +14,7 @@ Pour installer le logiciel E-Maj, connectez-vous à votre compte postgres (ou un
 
   sudo cp emaj.control $(pg_config --sharedir)/extension/.
 
-  sudo cp sql/emaj* $(pg_config --sharedir)/extension/.
+  sudo cp sql/emaj--* $(pg_config --sharedir)/extension/.
 
 Pour plus de détails, ou en cas de problème, allez :doc:`ici <install>`.
 

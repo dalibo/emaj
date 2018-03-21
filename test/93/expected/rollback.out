@@ -296,7 +296,7 @@ select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_rollback_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -306,7 +306,7 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 select emaj.emaj_rollback_group('myGroup1','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -316,7 +316,7 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 select emaj.emaj_logged_rollback_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -326,7 +326,7 @@ PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 11 at RETURN
 select emaj.emaj_logged_rollback_group('myGroup1','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -336,7 +336,7 @@ PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 11 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",""}',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -346,7 +346,7 @@ PL/pgSQL function emaj.emaj_rollback_groups(text[],text) line 7 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",NULL}',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -356,7 +356,7 @@ PL/pgSQL function emaj.emaj_rollback_groups(text[],text) line 7 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -366,7 +366,7 @@ PL/pgSQL function emaj.emaj_rollback_groups(text[],text) line 7 at RETURN
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2","myGroup2"}',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -376,7 +376,7 @@ PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text) line 11 at RETUR
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark11');
 ERROR:  _check_mark_name: The mark "Mark11" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -387,7 +387,7 @@ PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text) line 11 at RETUR
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Different_Mark');
 ERROR:  _check_mark_name: The mark "Different_Mark" does not represent the same point in time for all groups.
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -397,7 +397,7 @@ PL/pgSQL function emaj.emaj_rollback_groups(text[],text) line 7 at RETURN
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 ERROR:  _check_mark_name: The EMAJ_LAST_MARK does not represent the same point in time for all groups.
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -422,7 +422,7 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 select emaj.emaj_logged_rollback_groups(array['phil''s group#3",','auditOnlyEmptyGroup'],'M1_audit_only');
-ERROR:  _check_group_names: The groups "phil's group#3",, auditOnlyEmptyGroup" have been created as AUDIT_ONLY.
+ERROR:  _check_group_names: The groups "auditOnlyEmptyGroup, phil's group#3"," have been created as AUDIT_ONLY.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
@@ -460,7 +460,7 @@ begin;
   select emaj.emaj_rollback_group('myGroup1','GeneratedStopMark');
 ERROR:  _check_mark_name: For the group "myGroup1", the mark "GeneratedStopMark" is DELETED.
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -569,8 +569,8 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_rollback_group('myGroup2','Mark21');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at PERFORM
+CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -580,8 +580,8 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at PERFORM
+CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -593,14 +593,14 @@ begin;
   select emaj.emaj_rollback_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -628,14 +628,14 @@ select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_rollback_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -658,14 +658,14 @@ select emaj.emaj_logged_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text) line 11 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -686,14 +686,14 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mark1B');
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -709,14 +709,14 @@ insert into emaj.emaj_param (param_key, param_value_text)
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -732,14 +732,14 @@ begin;
   select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text) line 11 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -756,14 +756,14 @@ update emaj.emaj_param set param_value_text = 'user=postgres password=postgres'
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text) line 11 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 66 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 67 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -778,8 +778,8 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at PERFORM
+CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -789,8 +789,8 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, true)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 24 at PERFORM
+CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -1368,25 +1368,25 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
  myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3037 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |         3037 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |         3037 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3037 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |         3037 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |         3037 |            15 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3037 |             6 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3037 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3037 |            10 | t
  myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         3037 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3038 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3038 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3038 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3038 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3038 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |         3038 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3038 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3038 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3038 |            10 | t
  myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3038 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3039 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3039 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3039 |             1 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3039 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3039 |            10 | t
+ emaj           | myschema1_mytbl1_log_seq           |         3039 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3039 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3039 |             3 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3039 |            20 | t
  myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3039 |            10 | t
 (33 rows)
@@ -1489,39 +1489,39 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
  myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3037 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |         3037 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |         3037 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3037 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |         3037 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |         3037 |            15 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3037 |             6 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3037 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3037 |            10 | t
  myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         3037 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3038 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3038 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3038 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3038 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3038 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |         3038 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3038 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3038 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3038 |            10 | t
  myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3038 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3039 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3039 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3039 |             1 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3039 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3039 |            10 | t
+ emaj           | myschema1_mytbl1_log_seq           |         3039 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3039 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3039 |             3 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3039 |            20 | t
  myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3039 |            10 | t
- emaj           | myschema1_mytbl1_log_seq           |         3040 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3040 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3040 |             1 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3040 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3040 |            10 | t
+ emaj           | myschema1_mytbl1_log_seq           |         3040 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3040 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3040 |             3 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3040 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3040 |            20 | t
  myschema1      | mytbl2b_col20_seq                  |         3040 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3040 |            10 | t
- emaj           | myschema1_mytbl1_log_seq           |         3041 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3041 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3041 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3041 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3041 |            20 | t
+ emaj           | myschema1_mytbl1_log_seq           |         3041 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3041 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3041 |             4 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3041 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3041 |            30 | t
  myschema1      | mytbl2b_col20_seq                  |         3041 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3041 |             1 | f
 (47 rows)
@@ -1615,53 +1615,53 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
  myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3037 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |         3037 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |         3037 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3037 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |         3037 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |         3037 |            15 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3037 |             6 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3037 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3037 |            10 | t
  myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         3037 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3038 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3038 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3038 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3038 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3038 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |         3038 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3038 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3038 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3038 |            10 | t
  myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3038 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3039 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3039 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3039 |             1 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3039 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3039 |            10 | t
+ emaj           | myschema1_mytbl1_log_seq           |         3039 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3039 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3039 |             3 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3039 |            20 | t
  myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3039 |            10 | t
- emaj           | myschema1_mytbl1_log_seq           |         3040 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3040 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3040 |             1 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3040 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3040 |            10 | t
+ emaj           | myschema1_mytbl1_log_seq           |         3040 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3040 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3040 |             3 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3040 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3040 |            20 | t
  myschema1      | mytbl2b_col20_seq                  |         3040 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3040 |            10 | t
- emaj           | myschema1_mytbl1_log_seq           |         3041 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3041 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3041 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3041 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3041 |            20 | t
+ emaj           | myschema1_mytbl1_log_seq           |         3041 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3041 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3041 |             4 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3041 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3041 |            30 | t
  myschema1      | mytbl2b_col20_seq                  |         3041 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3041 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3042 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3042 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3042 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3042 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3042 |            20 | t
+ emaj           | myschema1_mytbl1_log_seq           |         3042 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3042 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3042 |             4 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3042 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3042 |            30 | t
  myschema1      | mytbl2b_col20_seq                  |         3042 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3042 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3043 |            25 | t
- emaj           | myschema1_mytbl2_log_seq           |         3043 |             4 | t
- emaj           | myschema1_mytbl4_log_seq           |         3043 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3043 |             4 | t
- emajC          | myschema1_myTbl3_log_seq           |         3043 |            20 | t
+ emaj           | myschema1_mytbl1_log_seq           |         3043 |            40 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3043 |            10 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3043 |             4 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3043 |            10 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3043 |            30 | t
  myschema1      | mytbl2b_col20_seq                  |         3043 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         3043 |             1 | f
 (61 rows)
@@ -1777,25 +1777,25 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
  myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3037 |             1 | f
- emaj           | myschema1_mytbl2_log_seq           |         3037 |             1 | f
- emaj           | myschema1_mytbl4_log_seq           |         3037 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3037 |             1 | f
- emajC          | myschema1_myTbl3_log_seq           |         3037 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |         3037 |            15 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3037 |             6 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3037 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3037 |            10 | t
  myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         3037 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3038 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3038 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3038 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3038 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3038 |             1 | f
+ emaj           | myschema1_mytbl1_log_seq           |         3038 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3038 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3038 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3038 |            10 | t
  myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3038 |             1 | f
- emaj           | myschema1_mytbl1_log_seq           |         3039 |            15 | t
- emaj           | myschema1_mytbl2_log_seq           |         3039 |             2 | t
- emaj           | myschema1_mytbl4_log_seq           |         3039 |             1 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3039 |             2 | t
- emajC          | myschema1_myTbl3_log_seq           |         3039 |            10 | t
+ emaj           | myschema1_mytbl1_log_seq           |         3039 |            30 | t
+ emaj           | myschema1_mytbl2_log_seq           |         3039 |             8 | t
+ emaj           | myschema1_mytbl4_log_seq           |         3039 |             3 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
+ emajC          | myschema1_myTbl3_log_seq           |         3039 |            20 | t
  myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
  myschema1      | myTbl3_col31_seq                   |         3039 |            10 | t
 (33 rows)
@@ -2289,41 +2289,41 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |         sequ_name         | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+---------------------------+--------------+---------------+----------------
- emaj        | myschema1_mytbl1_log_seq  |         3037 |             1 | f
- emaj        | myschema1_mytbl2_log_seq  |         3037 |             1 | f
- emaj        | myschema1_mytbl4_log_seq  |         3037 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq |         3037 |             1 | f
- emajC       | myschema1_myTbl3_log_seq  |         3037 |             1 | f
- emaj        | myschema1_mytbl1_log_seq  |         3038 |            15 | t
- emaj        | myschema1_mytbl2_log_seq  |         3038 |             2 | t
- emaj        | myschema1_mytbl4_log_seq  |         3038 |             1 | f
- emajb       | myschema1_mytbl2b_log_seq |         3038 |             2 | t
- emajC       | myschema1_myTbl3_log_seq  |         3038 |             1 | f
- emaj        | myschema1_mytbl1_log_seq  |         3039 |            15 | t
- emaj        | myschema1_mytbl2_log_seq  |         3039 |             2 | t
- emaj        | myschema1_mytbl4_log_seq  |         3039 |             1 | t
- emajb       | myschema1_mytbl2b_log_seq |         3039 |             2 | t
- emajC       | myschema1_myTbl3_log_seq  |         3039 |            10 | t
- emaj        | myschema1_mytbl1_log_seq  |         3053 |            25 | t
- emaj        | myschema1_mytbl2_log_seq  |         3053 |             4 | t
- emaj        | myschema1_mytbl4_log_seq  |         3053 |             2 | t
- emajb       | myschema1_mytbl2b_log_seq |         3053 |             4 | t
- emajC       | myschema1_myTbl3_log_seq  |         3053 |            20 | t
- emaj        | myschema1_mytbl1_log_seq  |         3055 |            25 | t
- emaj        | myschema1_mytbl2_log_seq  |         3055 |             4 | t
- emaj        | myschema1_mytbl4_log_seq  |         3055 |             2 | t
- emajb       | myschema1_mytbl2b_log_seq |         3055 |             4 | t
- emajC       | myschema1_myTbl3_log_seq  |         3055 |            20 | t
- emaj        | myschema1_mytbl1_log_seq  |         3056 |            25 | t
- emaj        | myschema1_mytbl2_log_seq  |         3056 |             4 | t
- emaj        | myschema1_mytbl4_log_seq  |         3056 |             2 | t
- emajb       | myschema1_mytbl2b_log_seq |         3056 |             4 | t
- emajC       | myschema1_myTbl3_log_seq  |         3056 |            20 | t
- emaj        | myschema1_mytbl1_log_seq  |         3059 |            49 | t
- emaj        | myschema1_mytbl2_log_seq  |         3059 |             7 | t
- emaj        | myschema1_mytbl4_log_seq  |         3059 |             2 | t
- emajb       | myschema1_mytbl2b_log_seq |         3059 |             9 | t
- emajC       | myschema1_myTbl3_log_seq  |         3059 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq  |         3037 |            15 | t
+ emaj        | myschema1_mytbl2_log_seq  |         3037 |             6 | t
+ emaj        | myschema1_mytbl4_log_seq  |         3037 |             2 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3037 |             6 | t
+ emajC       | myschema1_myTbl3_log_seq  |         3037 |            10 | t
+ emaj        | myschema1_mytbl1_log_seq  |         3038 |            30 | t
+ emaj        | myschema1_mytbl2_log_seq  |         3038 |             8 | t
+ emaj        | myschema1_mytbl4_log_seq  |         3038 |             2 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3038 |             8 | t
+ emajC       | myschema1_myTbl3_log_seq  |         3038 |            10 | t
+ emaj        | myschema1_mytbl1_log_seq  |         3039 |            30 | t
+ emaj        | myschema1_mytbl2_log_seq  |         3039 |             8 | t
+ emaj        | myschema1_mytbl4_log_seq  |         3039 |             3 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3039 |             8 | t
+ emajC       | myschema1_myTbl3_log_seq  |         3039 |            20 | t
+ emaj        | myschema1_mytbl1_log_seq  |         3053 |            40 | t
+ emaj        | myschema1_mytbl2_log_seq  |         3053 |            10 | t
+ emaj        | myschema1_mytbl4_log_seq  |         3053 |             4 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3053 |            10 | t
+ emajC       | myschema1_myTbl3_log_seq  |         3053 |            30 | t
+ emaj        | myschema1_mytbl1_log_seq  |         3055 |            40 | t
+ emaj        | myschema1_mytbl2_log_seq  |         3055 |            10 | t
+ emaj        | myschema1_mytbl4_log_seq  |         3055 |             4 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3055 |            10 | t
+ emajC       | myschema1_myTbl3_log_seq  |         3055 |            30 | t
+ emaj        | myschema1_mytbl1_log_seq  |         3056 |            40 | t
+ emaj        | myschema1_mytbl2_log_seq  |         3056 |            10 | t
+ emaj        | myschema1_mytbl4_log_seq  |         3056 |             4 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3056 |            10 | t
+ emajC       | myschema1_myTbl3_log_seq  |         3056 |            30 | t
+ emaj        | myschema1_mytbl1_log_seq  |         3059 |            64 | t
+ emaj        | myschema1_mytbl2_log_seq  |         3059 |            13 | t
+ emaj        | myschema1_mytbl4_log_seq  |         3059 |             4 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3059 |            15 | t
+ emajC       | myschema1_myTbl3_log_seq  |         3059 |            30 | t
 (35 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;

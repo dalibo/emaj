@@ -1,0 +1,230 @@
+Contribuer au développement d'E-Maj
+===================================
+
+Toute contribution au développement et à l’amélioration de l’extension E-Maj est la bienvenue. Cette page fournit quelques informations pour faciliter ces contributions.
+
+Bâtir l’environnement E-Maj
+---------------------------
+
+Le référentiel de l’extension E-Maj est hébergé sur le site *github* : https://github.com/beaud76/emaj
+
+Cloner le dépôt E-Maj
+^^^^^^^^^^^^^^^^^^^^^
+La première opération à réaliser consiste donc à cloner ce dépôt en local sur son serveur/poste. Pour ce faire, utiliser les fonctionnalités de l’interface web de *github* ou taper la commande *shell* ::
+
+   git clone https://github.com/beaud76/emaj.git
+
+Description de l’arborescence E-Maj
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On dispose alors d’une arborescence complète (hors clients web). Elle comprend tous les répertoires et fichiers décrits en :doc:`annexe <content>`, à l’exception du contenu du répertoire *doc* maintenu séparément (voir plus bas).
+
+L’arborescence comprend les éléments complémentaires suivants :
+
+* le fichier *tar.index* qui permet de créer le fichier contenant la version E-Maj distribuée sur *pgxn.org*
+* un répertoire *docs* avec tous les sources de la :ref:`documentation <documenting>` en ligne
+* dans le répertoire *sql* :
+
+  * le fichier *emaj- -devel.sql*, source de l’extension dans sa version courante
+  * le source de la version précédente *emaj- -<version_précédente>.sql*
+  * un script *ppa.sql* qui permet de préparer un environnement E-Maj pour les tests du plugin pour *phpPgAdmin* ou pour le client *Emaj_web*
+
+* un répertoire *test* contenant tous les éléments permettant de :ref:`tester l’extension<testing>`
+* un répertoire *tools* contenant un certain nombre d’outils.
+
+
+Paramétrer les outils
+^^^^^^^^^^^^^^^^^^^^^
+Les outils présents dans le répertoire tools nécessitent d’être paramétrés en fonction de l’environnement de chacun. Le fichier *tools/README* détaille les adaptations à réaliser.
+
+Coder
+-----
+
+Versionning
+^^^^^^^^^^^
+
+La version en cours de développement est nommée *devel*.
+
+Régulièrement, et lorsque cela se justifie, une nouvelle version est créée. Elle porte un nom au format X.Y.Z.
+
+L’outil *tools/create_version.sh* aide à la création de cette version. Il est utilisé uniquement par les mainteneurs d’E-Maj. Son utilisation n’est donc pas décrite ici.
+
+
+Règles de codage
+^^^^^^^^^^^^^^^^
+
+Le codage du script emaj- -devel.sql respecte les règles suivantes :
+
+* structure du script : après quelques contrôles vérifiant que les conditions d’exécution du script sont respectées, les objets sont créés dans l’ordre suivant : rôles, types énumérations, séquences, tables (avec leurs index et leurs contraintes), types composites, paramètres E-Maj, fonctions de bas niveau, fonctions élémentaires de gestion des tables et séquences, fonctions de gestion des groupes de tables, fonctions d’ordre général, triggers sur événements, droits, compléments pour les extensions. Le script se termine par quelques opérations finales.
+* tous les objets sont créés dans le schéma *emaj*, à l’exception de la fonction *_emaj_protection_event_trigger_fnct()*, créée dans le schéma *public*,
+* les noms des tables, séquences sont préfixés par *emaj_*,
+* les noms des fonctions sont préfixés par *emaj_* lorsqu’elles ont une visibilité utilisateur, ou par *_* pour les fonctions internes,
+* les tables internes et les fonctions appelables par les utilisateurs doivent avoir un commentaire,
+* les mots-clé du langage sont mis en majuscule, les noms d'objets sont en minuscule,
+* l’indentation est de 2 caractères espace,
+* les lignes ne doivent pas comporter de caractère de tabulation et ne doivent pas se terminer par des espaces,
+* dans la structure des fonctions, les délimiteurs du code doivent reprendre le nom de la fonction entouré par un caractère $ (ou *$do$* pour les blocs de code)
+* les noms de variables sont préfixés par *v_* pour les variables simples ou *r_* pour les variables de type *RECORD*,
+* le code doit être compatible avec toutes les versions de PostgreSQL supportées par la version E-Maj courante. Quand cela s’avére strictement nécessaire, le code peut être différencié en fonction de la version de PostgreSQL.
+
+Un script perl, *tools/check_code.pl* permet d’effectuer quelques contrôles sur le formatage du script de création de l’extension. Il permet aussi de détecter les variables inutilisées. Ce script est appelé directement dans les scénarios de tests de non régression.
+
+Script d’upgrade de version
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+E-Maj s’installe dans une database comme une extension. L’administrateur E-Maj doit pouvoir facilement :ref:`mettre à jour la version de l’extension<extension_upgrade>`. Un script d’upgrade de l’extension est donc fourni pour chaque version, permettant de passer de la version précédente installée à la version suivante. Le script d’upgrade se nomme *emaj- -<version_précédente>- -devel.sql*.
+
+Quelques règles guident les développements de ce script :
+
+* Développer/maintenir le script d’*upgrade* en même temps que le script principal *emaj- -devel.sql*., de sorte que les tests d’une évolution incluent les cas de changement de version,
+* Appliquer les mêmes règles de codage que pour le script principal,
+* Autant que faire ce peut, faire en sorte que l’*upgrade* puisse être réalisé sur des groupes de tables actifs (en cours d’enregistrement) sans entamer la capacité à exécuter un *rollback E-Maj* sur une marque antérieure au changement de version.
+
+En début de version, le script d’*upgrade* est bâti à partir d’un squelette (le fichier *tools/emaj_upgrade.template*).
+
+Au fur et à mesure des développements, un script perl permet de synchroniser la création, la modification ou la suppression des fonctions. Il compare le script *emaj- -devel.sql* et le script de création de la version précédente et met à jour le script *emaj- -<version_précédente>- -devel.sql*. Pour son bon fonctionnement, il est essentiel de conserver les 2 balises qui délimitent le début et la fin de la partie de script qui décrit les fonctions.
+
+Après adaptation du paramétrage (voir le fichier *TOOLS/README*), il faut simplement exécuter ::
+
+   perl tools/sync_fct_in_upgrade_script.pl
+
+Les autres parties du script doivent être codées manuellement. Si la structure d’une table interne est modifiée, le contenu de la table doit être migré (les scripts pour les versions antérieures peuvent servir d’exemple).
+
+.. _testing:
+
+Tester
+------
+
+L’extension E-Maj, par les fonctions de *rollback*, modifie le contenu des bases de données. La fiabilité du code est donc une caractéristique essentielle. L’attention à porter aux tests est donc tout aussi essentielle.
+
+Créer des instances PostgreSQL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+L’idéal est de pouvoir tester E-Maj avec toutes les versions PostgreSQL supportées par l’extension (actuellement de la version 9.2 à la version 10).
+
+Le script *tools/create_cluster.sh* est une aide à la création des instances de test. On peut s’inspirer de son contenu pour voir les caractéristiques des instances à créer. On peut aussi l’exécuter (après paramétrage comme indiqué dans *tools/README*) ::
+
+   sh tools/create_cluster.sh <version_majeure_PostgreSQL>
+
+Exécuter les tests de non régression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Un solide environnement de test est fourni dans le dépôt. Il contient :
+
+* un outil de test,
+* des scénarios de tests,
+* des résultats attendus.
+
+Les scénarios de test
+'''''''''''''''''''''
+
+Le système de test comprend 3 scénarios de test :
+
+* *test/emaj_standart_schedule* : scénario standard complet,
+* *test/emaj_initial_upgrade_schedule* : le même scénario mais en installant l’extension  à partir de la version précédente puis *upgrade* dans la version courante,
+* *test/emaj_upgrade_while_loging_schedule* : scénario réduit mais avec un *upgrade* dans la version courante alors que des groupes de tables sont actifs.
+
+Les 3 scénarios font appel à des scripts *psql*, tous localisés dans *test/sql*. Les scripts enchaînent dans différents contextes des séquences d’appels de fonctions E-Maj et de requêtes SQL de préparation et de contrôle des résultats obtenus.
+
+Généralement, en fin de script, des séquences internes sont réinitialisées pour qu’un simple ajout d’un appel de fonction dans le script ne génère pas d’impact dans le résultat des scripts suivants.
+
+Les scripts *psql* de test doivent être maintenus en même temps que le code de l’extension.
+
+Les résultats attendus
+''''''''''''''''''''''
+
+Pour chaque script *psql*, l’outil de test génère un fichier résultat. Ces fichiers sont différenciés en fonction de la version de PostgreSQL. Ils sont localisés dans le répertoire *test/<version_postgres>/results*.
+
+En fin d’exécution, l’outil de test compare ces fichiers avec une référence située dans *test/<version_postgres>/expected*. 
+
+Contrairement aux fichiers du répertoire *test/<version_postgres>/results*, les fichiers du répertoire *test/<version_postgres>/expected* font partie du dépôt *git*. Ils doivent être maintenus en cohérence avec le source de l’extension et les scripts *psql*.
+
+L’outil de test
+'''''''''''''''
+
+L’outil de test, *regress.sh*, regroupe l’ensemble des fonctions de test. 
+
+Avant de pouvoir l’utiliser, il faut :
+
+* le paramétrer (voir le fichier *tools/README*),
+* créer manuellement les répertoires *test/<version_postgres>/results*
+
+L’outil de test se lance avec la commande ::
+
+   sh tools/regress.sh
+
+Comme il commence par copier le fichier *emaj.control* dans les répertoires *SHAREDIR/extension* des versions de PostgreSQL configurées, il peut demander le mot de passe du compte Linux pour exécuter des commandes *sudo*.
+
+Il affiche ensuite la liste des fonctions de test dans un menu. Il suffit d’indiquer la lettre correspondant au test souhaité.
+
+On trouve :
+
+* les tests standards pour chaque version de PostgreSQL configurée (scénario *emaj_standart_schedule*),
+* les tests avec installation de la version précédente puis upgrade (scénario *emaj_initial_upgrade_schedule*),
+* les tests avec *upgrade* de version E-Maj sur des groupes actifs (scénario *emaj_upgrade_while_loging_schedule*),
+* un test de *pgdump/pg_restore* de la base avec des versions de PostgreSQL différentes,
+* un test d’*upgrade* de version de PostgreSQL par *pg_upgrade* avec une base contenant l’extension E-Maj.
+
+Les trois premiers tests font appel à l’outil *regress* présent dans les distributions de développement de PostgreSQL. Il est important d’exécuter ces trois séries de test pour chaque évolution E-Maj.
+
+Les deux derniers tests déroulent du code *shell* directement intégré dans *regress.sh*.
+
+Valider les résultats
+'''''''''''''''''''''
+
+Après avoir exécuté un script *psql*, *regress* compare le résultat obtenu avec le résultat attendu et affiche le résultat de la comparaison sous la forme *'ok'* ou *'failed'*.
+
+Dans le cas où au moins un script ressort en différence, il convient d’analyser scrupuleusement le contenu du fichier *test/<version_postgres>/regression.diff* pour vérifier si les écarts sont bien liés aux modifications apportées dans le code source de l’extension ou dans les scripts de test.
+
+Une fois que les écarts relevés sont tous jugés valides, il faut copier le contenu des répertoires *test/<version_postgres>/result* dans *test/<version_postgres>/expected*. Un script *shell* permet de traiter toutes les versions PostgreSQL en une seule commande ::
+
+   sh tools/copy2Expected.sh
+
+Il peut arriver que certains résultats soient en écart à cause d’une différence de fonctionnement de PostgreSQL d’une exécution à une autre. La répétition du test permet alors de détecter ces cas.
+
+Couverture des tests
+^^^^^^^^^^^^^^^^^^^^
+
+Couverture de test des fonctions
+''''''''''''''''''''''''''''''''
+
+Les clusters PostgreSQL de test sont configurés pour compter les exécutions des fonctions. Le script de test *check.sql* affiche les compteurs d’exécution des fonctions. Il liste aussi les fonctions E-Maj qui n’ont été exécutées dans aucun script.
+
+Couverture de test des messages d’erreur
+''''''''''''''''''''''''''''''''''''''''
+
+Un script *perl* extrait les messages d’erreur et de *warning* codés dans le fichier *sql/emaj- -devel.sql*. Il extrait ensuite les messages présents dans les fichiers du répertoire *test/10/expected*. Ceci lui permet d’afficher les cas d’erreur ou de *warning* non couverts par les tests.
+
+Le script s’exécute avec la commande ::
+
+   perl tools/check_error_messages.pl
+
+Certains messages sont connus pour ne pas être couverts (cas d’erreurs difficilement reproductibles par exemple). Ces messages, codés dans le script *perl*, sont exclus de l’affichage final.
+
+.. _documenting:
+
+Documenter
+----------
+
+Une documentation au format *LibreOffice* est encore gérée par les mainteneurs. Elle dispose de son propre dépôt *github* : *emaj_doc*. De ce fait, le dossier *doc* du dépôt principal reste vide.
+
+La documentation en ligne est gérée avec *sphinx*. Elle est localiséeœ dans le répertoire *docs*.
+
+Pour installer *sphinx*, se référer au fichier *docs/README.rst*.
+
+La documentation existe en deux langues, l’anglais et le français. En fonction de la langue, les sources des documents sont localisés dans */docs/en* et */docs/fr*. Ces documents sont au format *ReStructured Text*.
+
+Pour compiler la documentation dans une langue, se placer dans le répertoire *docs/<langue>* et lancer la commande ::
+
+   make html
+
+Quand il n’y a plus d’erreur de compilation, la documentation peut être visualisée en local sur un navigateur, en ouvrant le fichier *docs/<langue>/_build/html/index.html*.
+
+La mise à jour de la documentation présente sur le site *readthedocs.org* est automatique dès que le dépôt présent sur *github* est mis à jour.
+
+Soumettre un patch
+------------------
+
+Tout patch peut être proposé aux mainteneurs d’E-Maj au travers d’un *Pull Request* sur le site *github*.
+
+Avant de soumettre un patch, il peut être utile d’ouvrir une « *issue* » sur *github*, afin d’engager un dialogue avec les mainteneurs et ainsi avancer au mieux dans la réalisation du patch.

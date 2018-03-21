@@ -17,9 +17,9 @@
 use warnings; use strict;
 
 # The 3 variables below are to be customized
-  my $ficCurrSrc = "/home/postgres/proj/emaj/sql/emaj--next_version.sql";
-  my $ficPrevSrc = "/home/postgres/proj/emaj-2.2.2/sql/emaj--2.2.2.sql";
-  my $ficUpgrade = "/home/postgres/proj/emaj/sql/emaj--2.2.2--next_version.sql";
+  my $ficCurrSrc = "/home/postgres/proj/emaj/sql/emaj--devel.sql";
+  my $ficPrevSrc = "/home/postgres/proj/emaj/sql/emaj--2.2.3.sql";
+  my $ficUpgrade = "/home/postgres/proj/emaj/sql/emaj--2.2.3--devel.sql";
 
   my $upgradeScriptHeader = '';  # existing code from the upgrade script before the functions definition
   my $upgradeScriptFooter = '';  # existing code from the upgrade script after the functions definition
@@ -93,12 +93,31 @@ use warnings; use strict;
 # function getReturnType(): extract and return the function's return type of a CREATE FUNCTION STATEMENT
   sub getReturnType {
     my ($code) = @_;
-    my $returnType;
+    my $returnType = '';
+    my $parameters;
+    my @parameters;
+    my $parameter;
 
     $code = uc $code;
+# detect common function format
     if ($code =~ /RETURNS\s+(.*?)\s+(LANGUAGE|AS|WINDOW|IMMUTABLE|STABLE|VOLATILE|CALLED|SECURITY|NULL|COST|ROWS|SET|WITH)\s/) {
       $returnType = $1;
     } else {
+# detect function format with INOUT or OUT parameters
+      if ($code =~ /\((.*?)\)/) {
+        $parameters = $1;
+        @parameters = split(/,/, $parameters);
+# analyze each parameter in the function parenthesis
+        foreach $parameter (@parameters) {
+          if ($parameter =~ /\s*(INOUT|OUT)\s+.*?\s+(.*?)\s*$/) {
+            $returnType .= $2 . ',';
+          }
+        }
+      } else {
+        die "Error while decoding the function parameters for $code\n";
+      }
+    }
+    if ($returnType eq '') {
       die "In function $code, the return type has not been found\n";
     }
 #print "$returnType\n";
@@ -325,4 +344,3 @@ use warnings; use strict;
 
 # complete the processing
   print ("  -> $nbDropUpgrade functions dropped, $nbFctUpgrade functions and $nbCommentUpgrade comments copied.\n\n");
-

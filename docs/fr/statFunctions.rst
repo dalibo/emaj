@@ -67,6 +67,12 @@ L'obtention de ces statistiques ne nécessite pas le parcours des tables de log.
 
 Mais, les valeurs retournées peuvent être approximatives (en fait surestimées). C'est en particulier le cas si, entre les deux marques citées, des transactions ont mis à jour des tables avant d'être annulées.
 
+Des statistiques peuvent être obtenues sur plusieurs groupes de tables en même temps, en utilisant la fonction *emaj_log_stat_groups()* ::
+
+   SELECT emaj.emaj_log_stat_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>');
+
+Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
+
 .. _emaj_detailed_log_stat_group:
 
 Statistiques détaillées sur les logs
@@ -111,6 +117,12 @@ Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme nom de marque. Il repr�
 Contrairement à la fonction :ref:`emaj_log_stat_group() <emaj_log_stat_group>`, *emaj_detailed_log_stat_group()* ne retourne aucune ligne pour les tables sans mise à jour enregistrée sur l'intervalle de marques demandées. La colonne *stat_rows* ne contient donc jamais de valeur 0. 
 
 La plupart du temps, les colonnes *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* et *stat_last_mark_datetime* référencent les marques de début et de fin de période demandée. Mais elles peuvent contenir des valeurs différentes si une table a été ajoutée ou supprimée du groupe de tables pendant l’intervalle de temps demandé.
+
+Des statistiques détaillées peuvent être obtenues sur plusieurs groupes de tables en même temps, en utilisant la fonction *emaj_detailed_log_stat_groups()* ::
+
+   SELECT emaj.emaj_detailed_log_stat_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>');
+
+Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
 
 .. _emaj_estimate_rollback_group:
 

@@ -2,7 +2,7 @@
 #
 # check_error_messages.pl
 #
-# This perl script extracts error or warning messages from the emaj--next_version.sql source file.
+# This perl script extracts error or warning messages from the emaj--devel.sql source file.
 # It then extracts the error or warning messages from the regression tests result files,
 # and finaly displays the messages from the source file that are not covered by the regression tests.
 
@@ -10,7 +10,7 @@ use warnings; use strict;
 
 # The 3 variables below are to be customized
   my $dir = "/home/postgres/proj/emaj";
-  my $ficSrc = $dir."/sql/emaj--next_version.sql";
+  my $ficSrc = $dir."/sql/emaj--devel.sql";
   my $dirOut = $dir."/test/10/results";
 
 # Variables used to process the source code

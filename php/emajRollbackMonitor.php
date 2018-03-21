@@ -7,7 +7,7 @@
 //
 // It monitors E-Maj rollback operations in progress or recently completed.
 
-  $EmajVersion = '<NEXT_VERSION>';
+  $EmajVersion = '<devel>';
   $progName = 'emajRollbackMonitor';
 
 // Just asking for help

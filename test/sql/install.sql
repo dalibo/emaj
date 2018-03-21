@@ -12,7 +12,7 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 -----------------------------
 -- emaj installation as extension
 -----------------------------
-CREATE EXTENSION emaj VERSION 'next_version';
+CREATE EXTENSION emaj VERSION 'devel';
 
 -----------------------------
 -- check installation

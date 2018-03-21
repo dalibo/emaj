@@ -15,7 +15,7 @@ SET default_tablespace TO tspemaj;
 ------------------------------------------------------------
 -- emaj installation in its previous version as an extension
 ------------------------------------------------------------
-CREATE EXTENSION emaj VERSION '2.2.2';
+CREATE EXTENSION emaj VERSION '2.2.3';
 
 ------------------------------------------------------------
 -- check installation

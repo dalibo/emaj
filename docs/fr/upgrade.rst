@@ -123,6 +123,7 @@ C’est le gestionnaire d’extension de PostgreSQL qui détermine le ou les scr
 
 Cette mise à jour ne peut néanmoins pas traiter le cas où au moins un groupe de tables a été créé avec une version de PostgreSQL antérieure à 8.4. Dans ce cas le ou les groupes de tables concernés doivent être supprimés au préalable puis recréés par la suite.
 
+.. _extension_upgrade:
 
 Mise à jour d’une version déjà installée comme extension
 --------------------------------------------------------
@@ -142,3 +143,4 @@ Spécificités liées aux versions :
 
 * La procédure de mise à jour d’une version 2.0.1 en version 2.1.0 peut modifier la table :ref:`emaj_group_def <emaj_group_def>` pour refléter le fait que le tablespace tspemaj n’est plus automatiquement considéré comme un tablespace par défaut. Si *tspemaj* est effectivement utilisé comme tablespace par défaut pour des groupes de tables créés, le contenu des colonnes *grpdef_log_dat_tsp* et *grpdef_log_idx_tsp* de la table *emaj_group_def* est automatiquement ajusté afin qu’une future opération de suppression puis recréation d’un groupe de tables puisse stocker les tables et index de log dans les mêmes tablespaces. L’administrateur peut revoir ces changements pour être sûr qu’ils correspondent bien à ses souhaits.
 
+* La procédure de mise à jour d’une version 2.2.2 en version 2.2.3 vérifie les valeurs des séquences de log enregistrées. Dans certains cas, elle peut demander une ré-initialisation préalable de certains groupes de tables.

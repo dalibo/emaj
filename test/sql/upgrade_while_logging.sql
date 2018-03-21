@@ -1,12 +1,19 @@
--- upgrade_while_logging.sql : Upgrade from E-Maj 1.3. to next_version while groups are in logging state.
+-- upgrade_while_logging.sql : Upgrade from the previous to the next version while groups are in logging state.
 --
 -----------------------------
 -- set the default_tablespace parameter to tspemaj to store new technical tables into this tablespace
 -----------------------------
 SET default_tablespace TO tspemaj;
 
+-- specific to 2.2.2 to 2.2.3 upgrade
+-- uncomment to let the risky sequence values check fail
+--begin;
+--  select emaj.emaj_stop_group('myGroup1');
+--  select emaj.emaj_start_group('myGroup1','%');
+--rollback;
+
 -----------------------------
--- emaj update to next_version
+-- emaj update to the next version
 -----------------------------
 
 -- check the extension is available
@@ -17,7 +24,7 @@ select relname from pg_catalog.pg_class,
   order by 1;
 
 -- process the extension upgrade
-ALTER EXTENSION emaj UPDATE TO 'next_version';
+ALTER EXTENSION emaj UPDATE TO 'devel';
 
 -----------------------------
 -- check installation

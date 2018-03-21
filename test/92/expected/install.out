@@ -10,15 +10,15 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 -----------------------------
 -- emaj installation as extension
 -----------------------------
-CREATE EXTENSION emaj VERSION 'next_version';
+CREATE EXTENSION emaj VERSION 'devel';
 -----------------------------
 -- check installation
 -----------------------------
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
- extname |  extversion  
----------+--------------
- emaj    | next_version
+ extname | extversion 
+---------+------------
+ emaj    | devel
 (1 row)
 
 select relname from pg_catalog.pg_class, 
@@ -53,14 +53,14 @@ select relname from pg_catalog.pg_class,
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- <NEXT_VERSION>
+ <devel>
 (1 row)
 
 -- check history
 select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
- hist_id | hist_function | hist_event |     hist_object      |       hist_wording       | hist_user 
----------+---------------+------------+----------------------+--------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj <NEXT_VERSION> | Initialisation completed | postgres
+ hist_id | hist_function | hist_event |  hist_object  |       hist_wording       | hist_user 
+---------+---------------+------------+---------------+--------------------------+-----------
+       1 | EMAJ_INSTALL  |            | E-Maj <devel> | Initialisation completed | postgres
 (1 row)
 
 delete from emaj.emaj_hist;
@@ -651,6 +651,6 @@ select count(*) from
     where (funcname like E'emaj\\_%' or funcname like E'\\_%')) as t;
  count 
 -------
-     1
+     0
 (1 row)
 

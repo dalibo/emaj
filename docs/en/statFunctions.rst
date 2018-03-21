@@ -67,6 +67,12 @@ There is no need for log table scans to get these statistics. For this reason, t
 
 But returned values may be approximative (in fact over-estimated). This occurs in particular when transactions executed between both requested marks have performed table updates before being cancelled.
 
+Using the *emaj_log_stat_groups()* function, log statistics can be obtained for several groups at once::
+
+   SELECT emaj.emaj_log_stat_groups('<group.names.array>', '<start.mark>', '<end.mark>');
+
+More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
+
 .. _emaj_detailed_log_stat_group:
 
 Detailed statistics about logs
@@ -111,6 +117,12 @@ The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the 
 Unlike :ref:`emaj_log_stat_group() <emaj_log_stat_group>`, the *emaj_detailed_log_stat_group()* function doesn't return any rows for tables having no logged updates inside the requested marks range. So *stat_rows* column never contains 0.
 
 Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the tables group during the requested time interval.
+
+Using the *emaj_detailed_log_stat_groups()* function, detailed log statistics can be obtained for several groups at once::
+
+   SELECT emaj.emaj_detailed_log_stat_groups('<group.names.array>', '<start.mark>', '<end.mark>');
+
+More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
 .. _emaj_estimate_rollback_group:
 

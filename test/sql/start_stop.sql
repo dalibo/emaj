@@ -14,9 +14,6 @@ select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2');
 select emaj.emaj_create_group('emptyGroup',true,true);
 
-INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 second'::interval);
-select pg_sleep(1);
-
 -----------------------------
 -- disable event triggers 
 -----------------------------
@@ -103,7 +100,19 @@ begin;
 rollback;
 
 -- should be OK
+
+-- use the first correct emaj_start_group() function call to test the emaj_hist purge
+INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','0.1 second'::interval);
+select pg_sleep(0.2);
+
 select emaj.emaj_start_group('myGroup1','Mark1');
+-- check old events are deleted
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
+       hist_user
+  from emaj.emaj_hist order by hist_id;
+delete from emaj.emaj_param where param_key = 'history_retention';
+
 select emaj.emaj_start_group('myGroup2','Mark2',true);
 select emaj.emaj_start_group('phil''s group#3",','Mark3',false);
 select emaj.emaj_start_group('emptyGroup','Mark1');
@@ -158,12 +167,6 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 1000 order by time_id;
 
--- check old events are deleted
-select hist_function, hist_event, hist_object,
-       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
-       hist_user
-  from emaj.emaj_hist order by hist_id;
-delete from emaj.emaj_param where param_key = 'history_retention';
 
 -----------------------------
 -- emaj_stop_group() tests
