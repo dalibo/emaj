@@ -1,37 +1,24 @@
-#!/bin/sh
+#!/bin/bash
 # E-Maj
 # Regression tests
 
 #---------------------------------------------#
 #            Parameters definition            #
 #---------------------------------------------#
-EMAJ_HOME="/home/postgres/proj/emaj"
-DB_HOME="/home/postgres"
-PG_HOME="/home/postgres/pg"
 
-PGPORT92="5492"
-PGDIR92="$PG_HOME/pg92"
-PGREG92="$PG_HOME/postgresql-9.2/src/test/regress"
+# Source emaj_postgresql.profile
+. ./emaj_postgresql.profile
 
-PGPORT93="5493"
-PGDIR93="$PG_HOME/pg93"
-PGREG93="$PG_HOME/postgresql-9.3/src/test/regress"
-
-PGPORT94="5494"
-PGDIR94="$PG_HOME/pg94"
-PGREG94="$PG_HOME/postgresql-9.4/src/test/regress"
-
-PGPORT95="5495"
-PGDIR95="$PG_HOME/pg95"
-PGREG95="$PG_HOME/postgresql-9.5/src/test/regress"
-
-PGPORT96="5496"
-PGDIR96="$PG_HOME/pg96"
-PGREG96="$PG_HOME/postgresql-9.6/src/test/regress"
-
-PGPORT10="5410"
-PGDIR10="$PG_HOME/pg10"
-PGREG10="$PG_HOME/postgresql-10/src/test/regress"
+typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
+typeset -r EMAJ_REGTEST_STANDART_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
+typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER='9.3!9.6'
+#typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('9.3!9.6' '9.5!10')
+typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='9.2!10'
+typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
+typeset -r EMAJ_REGTEST_UPGRADE_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
+typeset -r EMAJ_REGTEST_MIXED=('install_previous' 'setup' 'before_upg_while_logging' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
+typeset -r EMAJ_REGTEST_MIXED_PGVER=(9.3 9.5 10)
+declare -A EMAJ_REGTEST_MENU
 
 #---------------------------------------------#
 #            Functions definition             #
@@ -43,23 +30,61 @@ PGREG10="$PG_HOME/postgresql-10/src/test/regress"
 reg_test_version()
 {
 # initialisation
-	eval RTVBIN=\${PGDIR$1}/bin
-	eval RTVPORT=\${PGPORT$1}
-	eval RTVREG=\${PGREG$1}
-	export PGPORT=$RTVPORT
-	cd $EMAJ_HOME/test/$1
-# symbolic link will be used to call pgdump in client.sql script
-	ln -s $RTVBIN RTVBIN.lnk
-	echo ""
+  pg_getvars ${1}
+  # symbolic link will be used to call pgdump in cleanup.sql script
+  ln -sfT ${PGBIN} ${EMAJ_DIR}/test/${1}/bin
 
+# Totally inspired by pg_regress.c (in the PostgreSQL sources)
 # regression test by itself
-	echo "Run regression test"
-	$RTVREG/pg_regress --schedule=../emaj_$2_schedule
+  echo
+  echo "Run regression test"
+  echo '============== dropping database "regression"         =============='
+  ${PGBIN}/psql -c "DROP DATABASE IF EXISTS regression;"
+  echo '============== creating database "regression"         =============='
+  ${PGBIN}/psql -c "CREATE DATABASE regression TEMPLATE=template0 LC_COLLATE='C' LC_CTYPE='C';"
+  ${PGBIN}/psql -c "ALTER DATABASE regression SET lc_messages TO 'C';\
+  ALTER DATABASE regression SET lc_monetary TO 'C';                  \
+  ALTER DATABASE regression SET lc_numeric TO 'C';                   \
+  ALTER DATABASE regression SET lc_time TO 'C';                      \
+  ALTER DATABASE regression SET bytea_output TO 'hex';               \
+  ALTER DATABASE regression SET timezone_abbreviations TO 'Default';"
+  echo '============== running regression test queries        =============='
+  DIFF_FILE="${EMAJ_DIR}/test/${1}/regression.diffs"
+  OUT_FILE="${EMAJ_DIR}/test/${1}/regression.out"
+  >${DIFF_FILE}
+  >${OUT_FILE}
+  CMP_FAILED=0
+  CMP_REGTEST=0
+  eval EMAJ_REGTESTS='${EMAJ_REGTEST_'${2^^}'[@]}'
+  for REGTEST in ${EMAJ_REGTESTS}; do
+    REGTEST_FILE="${EMAJ_DIR}/test/${1}/sql/${REGTEST}.sql"
+    RESULTS_FILE="${EMAJ_DIR}/test/${1}/results/${REGTEST}.out"
+    EXPECTED_FILE="${EMAJ_DIR}/test/${1}/expected/${REGTEST}.out"
+    ALIGN="printf ' %.0s' {1.."$((25-${#REGTEST}))"}"
+    echo -n "test ${REGTEST}$(eval ${ALIGN})... " | tee -a ${OUT_FILE}
+    LC_MESSAGES='C' PGTZ='PST8PDT' PGDATESTYLE='Postgres, MDY' ${PGBIN}/psql regression -X --echo-all -c 'set intervalstyle=postgres_verbose' -f ${REGTEST_FILE} >${RESULTS_FILE} 2>&1
+    let CMP_REGTEST++
+    diff -C3 ${EXPECTED_FILE} ${RESULTS_FILE} >> ${DIFF_FILE}
+    if [ $? -ne 0 ]; then
+      REGTEST_STATUS='FAILED'
+      let CMP_FAILED++
+    else
+      REGTEST_STATUS='ok'
+    fi
+    echo ${REGTEST_STATUS} | tee -a ${OUT_FILE}
+  done
+  echo
+  echo '======================='
+  echo " ${CMP_FAILED} of ${CMP_FAILED} tests failed."
+  echo '======================='
+  echo
+  echo "The differences that caused some tests to fail can be viewed in the"
+  echo "file \"${DIFF_FILE}\".  A copy of the test summary that you see"
+  echo "above is saved in the file \"${OUT_FILE}\"."
 
 # end of the regression test
-	rm RTVBIN.lnk
-	cd ../..
-    return
+  rm ${EMAJ_DIR}/test/${1}/bin
+  return 0
 }
 
 # Function migrat_test(): test of a dump compatibility accross a postgres version migration
@@ -67,98 +92,93 @@ reg_test_version()
 #            $2 pg major version for source dump
 migrat_test()
 {
-	echo "Reload $1 regression database from $2 dump"
-	eval RTVBIN=\${PGDIR$1}/bin
-	eval RTVPORT=\${PGPORT$1}
-	eval RTVREG=\${PGREG$1}
-	cd $EMAJ_HOME/test/$1
-	$RTVBIN/dropdb -p $RTVPORT regression
-	$RTVBIN/createdb -p $RTVPORT regression
-	echo "  --> checking db restore..."
-	$RTVBIN/psql -p $RTVPORT regression <../$2/results/regression.dump >results/restore.out 2>&1
-	diff expected/restore.out results/restore.out
-	echo "  --> checking use of the restored db..." 
-	$RTVBIN/psql -p $RTVPORT -a regression <../sql/after_restore.sql >results/after_restore.out 2>&1
-	diff expected/after_restore.out results/after_restore.out
-	cd ../..
-	return
+  echo "Reload $1 regression database from $2 dump"
+  ${PGBIN}/dropdb -p ${PGPORT} regression
+  ${PGBIN}/createdb -p ${PGPORT} regression
+  echo "  --> checking db restore..."
+  ${PGBIN}/psql -p ${PGPORT} regression <${EMAJ_DIR}/test/${2}/results/regression.dump >${EMAJ_DIR}/test/${1}/results/restore.out 2>&1
+  diff expected/restore.out results/restore.out
+  echo "  --> checking use of the restored db..." 
+  ${PGBIN}/psql -p ${PGPORT} -a regression <${EMAJ_DIR}/test/sql/after_restore.sql >${EMAJ_DIR}/test/${1}/results/after_restore.out 2>&1
+  diff ${EMAJ_DIR}/test/${1}/expected/after_restore.out ${EMAJ_DIR}/test/${1}/results/after_restore.out
+  return 0
 }
 # Function pg_upgrade_test(): test of a postgres version change
 # arguments: $1 pg major version for source cluster
 #            $2 pg major version for target cluster
-#			 $3 pgdata subdirectory in PG_HOME of the target cluster
+#            $3 suffix for $PGDATA of the target cluster
 pg_upgrade_test()
 {
-	echo "pg_upgrade the $1 version cluster to a second $2 version cluster"
-    echo "----------------------------------------------------------------"
-	eval RTVBIN1=\${PGDIR$1}/bin
-	eval RTVPORT=\${PGPORT$1}
-	eval RTVBIN2=\${PGDIR$2}/bin
-	eval RTVREG=\${PGREG$2}
-    echo " "
-	echo "--> initializing the new cluster..."
-    echo " "
-	cd $DB_HOME
-	rm -Rf $3
+  echo "pg_upgrade the $1 version cluster to a second $2 version cluster"
+  echo "----------------------------------------------------------------"
+ 
+  pg_getvars ${1} 'old'
+  pg_getvars ${2} 'new'
+  let newPGPORT=${oldPGPORT}%16384+49152     # Port Number between 49152 and 66535
+  newPGDATA=${newPGDATA}${3}
+  echo " "
+  echo "--> initializing the new cluster..."
+  echo " "
+  rm -Rf ${newPGDATA}
 # remove tablespace structures that remain because the tablespaces are located inside the $PGDATA structure of the source cluster
-#	C1=`echo $2|cut -c 1`
-#	C2=`echo $2|cut -c 2`
-#	TSPDIRPREFIX="PG_$C1.$C2"                # ex: PG_9.6 if $2=96
-	TSPDIRPREFIX="PG_$2"                     # ex: PG_10 if $2=10
-	rm -Rf $DB_HOME/db$1/tsplog1/$TSPDIRPREFIX*
-	rm -Rf $DB_HOME/db$1/tsplog2/$TSPDIRPREFIX*
-	rm -Rf $DB_HOME/db$1/emaj_tblsp/$TSPDIRPREFIX*
-	mkdir $3
-	$RTVBIN2/initdb -D $3
-	sed -i "s/#port = 5432/port = 154$2/" $3/postgresql.conf
-    echo " "
-	echo "--> stopping the old cluster..."
-    echo " "
-	$RTVBIN1/pg_ctl -D $DB_HOME/db$1 stop
-    echo " "
-	echo "--> upgrading the cluster..."
-    echo " "
-	$RTVBIN2/pg_upgrade -b $RTVBIN1 -B $RTVBIN2 -d $DB_HOME/db$1 -D $DB_HOME/$3 -p $RTVPORT -P 154$2
-    echo " "
-	echo "--> starting the new cluster..."
-    echo " "
-	$RTVBIN2/pg_ctl -D $DB_HOME/$3 start
-	sleep 2
-    echo " "
-	echo "--> upgrading and checking the E-Maj environment"
-    echo " "
-	$RTVBIN2/psql -p 154$2 regression <<END_PSQL >$EMAJ_HOME/test/$2/results/pgUpgrade.out 2>&1
-select emaj.emaj_verify_all();
-\i $EMAJ_HOME/sql/emaj_upgrade_after_postgres_upgrade.sql
-select emaj.emaj_verify_all();
-END_PSQL
-    echo " "
-	echo "--> stopping the new cluster..."
-    echo " "
-	$RTVBIN2/pg_ctl -D $DB_HOME/$3 stop
-	sleep 2
-    echo " "
-	echo "--> restarting the old cluster..."
-    echo " "
-	$RTVBIN1/pg_ctl -D $DB_HOME/db$1 start
-    echo " "
-	echo "--> compare the emaj_upgrade_after_postgres_upgrade.sql output with expected results (should not return anything)"
-    echo " "
-	diff $EMAJ_HOME/test/$2/expected/pgUpgrade.out $EMAJ_HOME/test/$2/results/pgUpgrade.out
-	return
+# C1=`echo $2|cut -c 1`
+# C2=`echo $2|cut -c 2`
+# TSPDIRPREFIX="PG_$C1.$C2"                # ex: PG_9.6 if $2=96
+  TSPDIRPREFIX="PG_${2}"                   # ex: PG_10 if $2=10
+  rm -Rf ${oldPGDATA}/tsplog1/${TSPDIRPREFIX}*
+  rm -Rf ${oldPGDATA}/tsplog2/${TSPDIRPREFIX}*
+  rm -Rf ${oldPGDATA}/emaj_tblsp/${TSPDIRPREFIX}*
+  mkdir ${newPGDATA}
+  ${newPGBIN}/initdb -D ${newPGDATA} -U ${newPGUSER}
+  sed -i "s/#port = 5432/port = ${newPGPORT}/" ${newPGDATA}/postgresql.conf
+  echo " "
+  echo "--> stopping the old cluster..."
+  echo " "
+  ${oldPGBIN}/pg_ctl -D ${oldPGDATA} stop
+  echo " "
+  echo "--> upgrading the cluster..."
+  echo " "
+  ${newPGBIN}/pg_upgrade -U ${newPGUSER} -b ${oldPGBIN} -B ${newPGBIN} -d ${oldPGDATA} -D ${newPGDATA} -p ${oldPGPORT} -P ${newPGPORT}
+  echo " "
+  echo "--> starting the new cluster..."
+  echo " "
+  ${newPGBIN}/pg_ctl -D ${newPGDATA} start
+  sleep 2
+  echo " "
+  echo "--> upgrading and checking the E-Maj environment"
+  echo " "
+  ${newPGBIN}/psql -p ${newPGPORT} -U ${newPGUSER} regression <<-END_PSQL >${EMAJ_DIR}/test/${2}/results/pgUpgrade.out 2>&1
+	select emaj.emaj_verify_all();
+	\i ${EMAJ_DIR}/sql/emaj_upgrade_after_postgres_upgrade.sql
+	select emaj.emaj_verify_all();
+	END_PSQL
+  echo " "
+  echo "--> stopping the new cluster..."
+  echo " "
+  ${newPGBIN}/pg_ctl -D ${newPGDATA} stop
+  sleep 2
+  echo " "
+  echo "--> restarting the old cluster..."
+  echo " "
+  ${oldPGBIN}/pg_ctl -D ${oldPGDATA} start
+  echo " "
+  echo "--> compare the emaj_upgrade_after_postgres_upgrade.sql output with expected results (should not return anything)"
+  echo " "
+  diff ${EMAJ_DIR}/test/${2}/expected/pgUpgrade.out ${EMAJ_DIR}/test/${2}/results/pgUpgrade.out
+  return 0
 }
 
 #---------------------------------------------#
 #                  Script body                #
 #---------------------------------------------#
 
-cd $EMAJ_HOME
-
 # update the emaj.control files with the proper emaj version
 echo "Customizing emaj.control files..."
-for dir in $PGDIR92 $PGDIR93 $PGDIR94 $PGDIR95 $PGDIR96 $PGDIR10 ; do
-	sudo cp emaj.control $dir/share/postgresql/extension/emaj.control
-	sudo sed -ri "s/^#directory\s+= .*$/directory = '\/home\/postgres\/proj\/emaj\/sql\/'/" $dir/share/postgresql/extension/emaj.control
+
+for PGSUPVER in ${EMAJ_SUPPORTED_PGVER[@]//.}; do
+  pg_getvars ${PGSUPVER}
+  sudo cp ${EMAJ_DIR}/emaj.control ${PGSHARE}/extension/emaj.control
+  sudo sed -ri "s|^#directory\s+= .*$|directory = '${EMAJ_DIR}/sql/'|" ${PGSHARE}/extension/emaj.control
 done
 
 # choose a test
@@ -167,64 +187,109 @@ echo "--- E-Maj regression tests ---"
 echo " "
 echo "Available tests:"
 echo "----------------"
-echo "	a- pg 9.2 (port $PGPORT92) standart test"
-echo "	b- pg 9.3 (port $PGPORT93) standart test"
-echo "	c- pg 9.4 (port $PGPORT94) standart test"
-echo "	d- pg 9.5 (port $PGPORT95) standart test"
-echo "	e- pg 9.6 (port $PGPORT96) standart test"
-echo "	f- pg 10 (port $PGPORT10) standart test"
-echo "	m- pg 9.3 dump and 9.6 restore"
-echo "	t- all tests, from a to f"
-echo "	u- pg 9.2 upgraded to pg 10"
-echo "	A- pg 9.2 (port $PGPORT92) starting with E-Maj upgrade"
-echo "	B- pg 9.3 (port $PGPORT93) starting with E-Maj upgrade"
-echo "	C- pg 9.4 (port $PGPORT94) starting with E-Maj upgrade"
-echo "	D- pg 9.5 (port $PGPORT95) starting with E-Maj upgrade"
-echo "	E- pg 9.6 (port $PGPORT96) starting with E-Maj upgrade"
-echo "	F- pg 10 (port $PGPORT10) starting with E-Maj upgrade"
-echo "	T- all tests with E-Maj upgrade, from A to F"
-echo "	V- pg 9.3 (port $PGPORT93) mixed with E-Maj upgrade"
-echo "	W- pg 9.5 (port $PGPORT95) mixed with E-Maj upgrade"
-echo "	X- pg 10 (port $PGPORT10) mixed with E-Maj upgrade"
+
+#---------------------#
+# BUILD THE TEST MENU # 
+#---------------------#
+
+# STANDART TEST
+CHAR='a'
+nCHAR=`printf '%d' \'${CHAR}`
+sCHAR=${nCHAR}
+for PGMENUVER in ${EMAJ_REGTEST_STANDART_PGVER[@]}; do
+  MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+  printf "  ${MENU_KEY}- pg %s (port %d) standart test\n" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT)
+  EMAJ_REGTEST_MENU[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} standart"
+  EMAJ_REGTEST_MENU['t']+=${EMAJ_REGTEST_MENU[${MENU_KEY}]}'!'
+  let nCHAR++
+done
+eCHAR=$((${nCHAR}-1))
+
+# DUMP AND RESTORE
+CHAR='m'
+nCHAR=`printf '%d' \'${CHAR}`
+for PGMENUVER in ${EMAJ_REGTEST_DUMP_RESTORE_PGVER[@]}; do
+  MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+  PGVERINIT=${PGMENUVER%%'!'*}
+  PGVERTRGT=${PGMENUVER##*'!'}
+  printf "  ${MENU_KEY}- pg %s dump and %s restore\n" ${PGVERINIT} ${PGVERTRGT}
+  EMAJ_REGTEST_MENU[${MENU_KEY}]="migrat_test  ${PGVERTRGT} ${PGVERINIT}"
+  let nCHAR++
+done
+
+# ALL STANDART TESTS
+MENU_KEY='t'
+printf "  ${MENU_KEY}- all tests, from \\$(printf '%03o' ${sCHAR}) to \\$(printf '%03o' ${eCHAR})\n"
+
+# PG UPGRADE TEST
+CHAR='u'
+nCHAR=`printf '%d' \'${CHAR}`
+for PGMENUVER in ${EMAJ_REGTEST_PGUPGRADE_PGVER[@]}; do
+  MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+  PGVERINIT=${PGMENUVER%%'!'*}
+  PGVERTRGT=${PGMENUVER##*'!'}
+  printf "  ${MENU_KEY}- pg %s upgraded to pg %s\n" ${PGVERINIT} ${PGVERTRGT}
+  EMAJ_REGTEST_MENU[${MENU_KEY}]="pg_upgrade_test ${PGVERINIT} ${PGVERTRGT} PGUPGRADE"
+  let nCHAR++
+done
+
+# E-MAJ UPGRADE
+CHAR='A'
+nCHAR=`printf '%d' \'${CHAR}`
+sCHAR=${nCHAR}
+for PGMENUVER in ${EMAJ_REGTEST_UPGRADE_PGVER[@]}; do
+  MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+  printf "  ${MENU_KEY}- pg %s (port %d) starting with E-Maj upgrade\n" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT)
+  EMAJ_REGTEST_MENU[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} upgrade"
+  EMAJ_REGTEST_MENU['T']+=${EMAJ_REGTEST_MENU[${MENU_KEY}]}'!'
+  let nCHAR++
+done
+eCHAR=$((${nCHAR}-1))
+
+# ALL TESTS WITH E-MAJ UPGRADE 
+MENU_KEY='T'
+printf "  ${MENU_KEY}- all tests with E-Maj upgrade, from \\$(printf '%03o' ${sCHAR}) to \\$(printf '%03o' ${eCHAR})\n"
+
+# MIXED WITH E-MAJ UPGRADE
+CHAR='V'
+nCHAR=`printf '%d' \'${CHAR}`
+for PGMENUVER in ${EMAJ_REGTEST_MIXED_PGVER[@]}; do
+  MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+  printf "  ${MENU_KEY}- pg %s (port %d) mixed with E-Maj upgrade\n" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT)
+  EMAJ_REGTEST_MENU[${MENU_KEY}]="reg_test_version ${PGMENUVER} mixed"
+  let nCHAR++
+done
+
 echo " "
 echo "Test to run ?"
+
 read ANSWER
 
-# execute the test
-case $ANSWER in
-	a) reg_test_version "92" "standart";;
-	b) reg_test_version "93" "standart";;
-	c) reg_test_version "94" "standart";;
-	d) reg_test_version "95" "standart";;
-	e) reg_test_version "96" "standart";;
-	f) reg_test_version "10" "standart";;
-	m) migrat_test "96" "93";;
-	t)
-		reg_test_version "92" "standart"
-		reg_test_version "93" "standart"
-		reg_test_version "94" "standart"
-		reg_test_version "95" "standart"
-		reg_test_version "96" "standart"
-		reg_test_version "10" "standart"
-		;;
-	u) pg_upgrade_test "92" "10" "db10b";;
-	A) reg_test_version "92" "initial_upgrade";;
-	B) reg_test_version "93" "initial_upgrade";;
-	C) reg_test_version "94" "initial_upgrade";;
-	D) reg_test_version "95" "initial_upgrade";;
-	E) reg_test_version "96" "initial_upgrade";;
-	F) reg_test_version "10" "initial_upgrade";;
-	T)
-		reg_test_version "92" "initial_upgrade"
-		reg_test_version "93" "initial_upgrade"
-		reg_test_version "94" "initial_upgrade"
-		reg_test_version "95" "initial_upgrade"
-		reg_test_version "96" "initial_upgrade"
-		reg_test_version "10" "initial_upgrade"
-		;;
-	V|v) reg_test_version "93" "upgrade_while_loging";;
-	W|w) reg_test_version "95" "upgrade_while_loging";;
-	X|x) reg_test_version "10" "upgrade_while_loging";;
-	*) echo "Bad answer..." && exit 2 ;;
-esac
+#---------------------#
+# CHECK ANSWER        #
+#  AND                #
+# EXECUTE FONCTION(S) #
+#---------------------#
+ANSWERISVALID=0
+for KEY in "${!EMAJ_REGTEST_MENU[@]}"; do 
+  if [ "${ANSWER}" == "${KEY}" ]; then
+    ANSWERISVALID=1
+    if [ "${KEY,,}" == 't' ]; then
+      oIFS="${IFS}"
+      IFS=!
+      for FUNCREGTEST in ${EMAJ_REGTEST_MENU[$KEY]}; do
+        IFS=' ' eval ${FUNCREGTEST}
+      done
+      IFS="${oIFS}"
+    else
+      ${EMAJ_REGTEST_MENU[$KEY]}
+    fi
+    break
+  fi
+done
+if [ ${ANSWERISVALID} -ne 1 ]; then
+  echo "Bad answer..."
+  exit 2
+fi
 
+exit 0

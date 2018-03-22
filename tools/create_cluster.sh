@@ -4,28 +4,24 @@
 # Create a postgres cluster suitable to run the E-Maj regression tests
 # Syntax: create_cluster <minor postgres version>
 
-if [[ $# -lt 1 || ! "${1}" =~ ^[0-9]{3}$ ]]; then
-  echo "Usage: $0 <minor postgres version>"
-  echo "for instance: '$0 102' for version 10.2"
-  exit 1
+if [ ${#} -lt 1 ]; then
+    echo "Usage: ${0} <minor postgres version>"
+    echo "for instance: '${0} 102 (or 10.2)' for version 10.2"
+    exit 1
 fi
 
-export PGVERSION=$1
-export PGMAJORVERSION=${PGVERSION:0:2}
+# Source emaj_postgresql.profile
+. ./emaj_postgresql.profile
 
-export PGDATA=/home/postgres/db${PGMAJORVERSION}
-export PGPORT=54${PGMAJORVERSION}
-
-export PGDIR=/usr/local/pg${PGVERSION}
-export PGBIN=${PGDIR}/bin
-export PGSHARE=${PGDIR}/share/postgresql
-export EMAJDIR=/home/postgres/proj/emaj
+# Get vars for a specific version of PostgreSQL and its cluster (with some upstream checks).
+pg_getvars $1
 
 echo
 echo "**************************************************"
 echo "*     Create the cluster for version ${PGMAJORVERSION}     *"
 echo "**************************************************"
 echo
+
 
 if [ -d "${PGDATA}" ]; then
   # Trying to stop the cluster if it already exists and is up
@@ -37,7 +33,7 @@ fi
 mkdir ${PGDATA}
 
 # Initialize the cluster
-${PGBIN}/initdb -D ${PGDATA}
+${PGBIN}/initdb -D ${PGDATA} -U ${PGUSER}
 if [ -f "${PGDATA}/PG_VERSION" ]; then
   echo "Initdb OK"
 else
@@ -70,8 +66,8 @@ mkdir ${PGDATA}/tsplog1
 mkdir ${PGDATA}/tsplog2
 
 # Copy and adjust the emaj.control file
-sudo cp ${EMAJDIR}/emaj.control ${PGSHARE}/extension/emaj.control
-sudo bash -c "echo \"directory = '${EMAJDIR}/sql'\" >>${PGSHARE}/extension/emaj.control"
+sudo cp ${EMAJ_DIR}/emaj.control ${PGSHARE}/extension/emaj.control
+sudo bash -c "echo \"directory = '${EMAJ_DIR}/sql'\" >>${PGSHARE}/extension/emaj.control"
 
 # Create all what is needed inside the cluster (tablespaces, roles, extensions,...)
 ${PGBIN}/psql -p ${PGPORT} postgres -a <<-EOF2

@@ -71,5 +71,5 @@ select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
 -- execute the perl script that checks the code
 -----------------------------
 
-\! perl ../../tools/check_code.pl | grep -P '^WARNING:|^ERROR:'
+\! perl ${EMAJ_DIR}/tools/check_code.pl | grep -P '^WARNING:|^ERROR:'
 

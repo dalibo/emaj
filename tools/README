@@ -2,6 +2,8 @@ tools/README
 
 The tool directory contains several tools that may be essential or useful in E-Maj development:
 - regress.sh is a shell script that selects and executes regression tests,
+- contributor_postgresql.env contain all vars you should customize for yours PostgreSQL's environments,
+- emaj_postgresql.profile contain vars and functions, it's loaded in some scripts,
 - copy2Expected.sh is a shell script that copys the result files of regression tests environment to the reference directory,
 - check_code.pl is a perl script that performs various checks on the script that creates the emaj extension,
 - check_error_messages.pl is a perl script that analyzes how the non regression tests cover the error or warning messages coded in the E-Maj source file,
@@ -25,13 +27,26 @@ First, some symbolic links must be created so that the unique test/sql directory
 Similarly, a symbolic link has to be created to reach the emaj.sql script:
     ln -s sql/emaj.sql test/sql/emaj.sql
 Then the regress.sh script must be adapted.
-At the beginning of the script (near line 8), the variable EMAJ_HOME is initialized with the emaj project root directory. Then, for each installed postgres version, 3 variables are initialized:
-- PGBIN<version> is the postgres binary path
-- PGPORT<version> is the ip port of the cluster running this postgres version
-- PGREG<version> points to the directory that hosts the standart regress tool
-You must adapt these values to fit your installation.
-At the end of the script, a menu is displayed to propose all available tests. You must adapt it to your environment.
+For PostgreSQL binaries and DATA you sould look in  contributor_postgresql.env
+At the end of the script, a menu is displayed to propose all available tests. You can adapt it to your environment by modify values in the arrays EMAJ_REGTEST_*_PGVER.
 
+contributor_postgresql.env
+--------------------------
+It contain vars about yours PostgreSQL's Environments.
+The vars for one version of PostgreSQL are : 
+  PG<ver>_DIR
+  PG<ver>_BIN
+  PG<ver>_SHARE
+... and for a cluster (only one cluster for a major version) :
+  PG<ver>_USER
+  PG<ver>_DATA
+  PG<ver>_PORT
+This file is read by emaj_postgresql.profile. 
+
+emaj_postgresql.profile
+-----------------------
+It contain some functions to check and get vars about PostgreSQL Environments (binaries &  datas).
+This file is loaded by regress.sh, create_cluster.sh and all_cluster.sh.
 
 copy2Expected.sh
 ----------------
