@@ -9,6 +9,30 @@ The tool directory contains several tools that may be essential or useful in E-M
 - create_cluster.sh is a shell script that ... creates a postgres cluster,
 - create_version.sh helps in creating a new E-Maj version.
 
+It also contains some parameter files loaded by various tools:
+- emaj_tools.env-dist is a template used to create the emaj_tools.env file that contains all vars you should customize for your E-Maj tools environment,
+- emaj_tools.profile contains variables and functions, it is loaded in some scripts,
+
+emaj_tools.env-dist (and emaj_tools.env)
+----------------------------------------
+It contains vars about yours E-Maj tools environments.
+The variable containing the list of versions that you will use in your regression tests is:
+  EMAJ_USER_PGVER
+The vars for one version of PostgreSQL are:
+  PG<version_pg>_DIR
+  PG<version_pg>_BIN
+  PG<version_pg>_SHARE
+... and for a cluster (only one cluster for a major version):
+  PG<version_pg>_USER
+  PG<version_pg>_DATA
+  PG<version_pg>_PORT
+This file is read by emaj_postgresql.profile.
+
+emaj_tools.profile
+------------------
+It contains some functions that checks and gets variables about the E-Maj tools environment (for example: PostgreSQL's binaries &  datas).
+This file is loaded by regress.sh, create_cluster.sh and all_cluster.sh.
+
 regress.sh
 ----------
 The regress.sh script is the key tool to perform regression tests. It executes scenarios located into the test directory. These scenarios use sql scripts located into the test/sql directory. The output files are stored into the test/<pg_version>/results directory and compared with reference files located into the test/<pg_version>/expected directory.
@@ -24,14 +48,8 @@ First, some symbolic links must be created so that the unique test/sql directory
     ln -s test/sql test/<pg_version>/sql
 Similarly, a symbolic link has to be created to reach the emaj.sql script:
     ln -s sql/emaj.sql test/sql/emaj.sql
-Then the regress.sh script must be adapted.
-At the beginning of the script (near line 8), the variable EMAJ_HOME is initialized with the emaj project root directory. Then, for each installed postgres version, 3 variables are initialized:
-- PGBIN<version> is the postgres binary path
-- PGPORT<version> is the ip port of the cluster running this postgres version
-- PGREG<version> points to the directory that hosts the standart regress tool
-You must adapt these values to fit your installation.
-At the end of the script, a menu is displayed to propose all available tests. You must adapt it to your environment.
-
+Then the regress.sh script may be adapted.
+At the end of the script, a menu is displayed to propose all available tests. You can adapt it to your environment by modifing values in the arrays EMAJ_REGTEST_*_PGVER.
 
 copy2Expected.sh
 ----------------
@@ -66,13 +84,15 @@ The sync_fct_in_upgrade_script.pl perl script generates the functions part of th
 Customisation:
 Line 19 to 21, three variables set the absolute pathname of the scripts to process: the script of the current version (variable $ficCurrSrc), the script of the previous version ($ficPrevSrc) and the already existing upgrade script (variable $ficUpgrade). The script has to be adjusted at each upgrade.
 
+
 create_cluster.sh
 -----------------
 The create_cluster.sh shell script ... creates a postgres cluster. It drops a previous installation if it exists. Then, it performs the initdb, customizes the parameters, starts the cluster and executes a psql session to setup the needed objects - tablespaces, roles, extensions.
 
 Customization:
-Line 5 to 10, five variables set the major and minor postgres version, the PGDATA directory, the directory containing the postgres binary files and the directory containting the current E-Maj components.
-Some SQL commands or postgresql.conf parameters may need to be adjusted.
+No additional customization is required.
+But some SQL commands or postgresql.conf parameters may need to be adjusted.
+
 
 create_version.sh
 -----------------
@@ -81,4 +101,3 @@ A single argument has to be supplied: the name of the new version to create (for
 
 Customization:
 No customization is needed for this script.
-

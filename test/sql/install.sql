@@ -2,7 +2,6 @@
 --               First install with psql script and then transform emaj objects as extension
 --               Then directly install as extension
 --
-
 -----------------------------
 -- install dblink and btree_gist
 -----------------------------
@@ -37,6 +36,5 @@ delete from emaj.emaj_hist;
 -- reset function calls statistics (so the check.sql output is stable with all installation paths)
 -- wait during half a second to let the statistics collector aggregate the latest stats
 select pg_sleep(0.5);
-select count(*) from 
-  (select pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
-    where (funcname like E'emaj\\_%' or funcname like E'\\_%')) as t;
+select pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
+    where (funcname like E'emaj\\_%' or funcname like E'\\_%');

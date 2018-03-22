@@ -36,15 +36,15 @@ select emaj.emaj_start_group('myGroup1','Start');
 (1 row)
 
 select emaj.emaj_create_group('myGroup2');
+NOTICE:  table "myschema2_myTbl3_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
 NOTICE:  table "myschema2_mytbl1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
 NOTICE:  table "myschema2_mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
-NOTICE:  table "myschema2_myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
 NOTICE:  table "myschema2_mytbl4_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl4" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl4" does not exist, skipping

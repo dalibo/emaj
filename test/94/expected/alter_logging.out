@@ -144,11 +144,11 @@ begin;
 
   \! ls /tmp/emaj_test/alter
 _INFO
-myschema1_mytbl1.snap
-myschema1_mytbl2b_col20_seq.snap
-myschema1_mytbl2b.snap
-myschema1_mytbl2.snap
 myschema1_myTbl3.snap
+myschema1_mytbl1.snap
+myschema1_mytbl2.snap
+myschema1_mytbl2b.snap
+myschema1_mytbl2b_col20_seq.snap
 myschema1_mytbl4.snap
   \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_snap_log_group('myGroup1','Mk1',NULL,'/tmp/emaj_test/alter',NULL);
@@ -159,8 +159,8 @@ myschema1_mytbl4.snap
 
 -- sequences at begin bound
   \! cat /tmp/emaj_test/alter/myGroup1_sequences_at_Mk1
-myschema1	mytbl2b_col20_seq	6050	3	1	1	9223372036854775807	1	1	f	f
 myschema1	myTbl3_col31_seq	6050	11	1	1	9223372036854775807	1	1	f	f
+myschema1	mytbl2b_col20_seq	6050	3	1	1	9223372036854775807	1	1	f	f
 -- sequences at end bound
   \! find /tmp/emaj_test/alter/ -regex '.*/myGroup1_sequences_at_[0123456789].*' | xargs cat
 myschema1	mytbl2b_col20_seq	6059	3	1	1	9223372036854775807	1	1	f	f
@@ -336,8 +336,8 @@ begin;
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema |      rel_log_table      | rel_log_dat_tsp |        rel_log_index        | rel_log_idx_tsp |     rel_log_sequence      | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
 ------------+------------+----------------+-----------+----------+--------------+----------------+-------------------------+-----------------+-----------------------------+-----------------+---------------------------+------------------+-----------------+--------------------+--------------------------
- myschema1  | mytbl2b    | [6041,6067)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       | myschema1_mytbl2b_log_seq |                  |                 |                    | 
  myschema1  | myTbl3     | [6041,6067)    | myGroup1  | r        |           10 | emajC          | myschema1_myTbl3_log_1  | tsplog1         | myschema1_myTbl3_log_idx_1  |                 | myschema1_myTbl3_log_seq  |                  |                 |                    | 
+ myschema1  | mytbl2b    | [6041,6067)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       | myschema1_mytbl2b_log_seq |                  |                 |                    | 
 (2 rows)
 
   delete from myschema1."myTbl3" where col33 = 1.;
@@ -358,10 +358,10 @@ begin;
   select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
  stat_group | stat_schema | stat_table | stat_first_mark |         stat_last_mark         | stat_rows 
 ------------+-------------+------------+-----------------+--------------------------------+-----------
+ myGroup1   | myschema1   | myTbl3     | Mk1             | 2 tables removed from myGroup1 |         2
  myGroup1   | myschema1   | mytbl1     | Mk1             |                                |         0
  myGroup1   | myschema1   | mytbl2     | Mk1             |                                |         0
  myGroup1   | myschema1   | mytbl2b    | Mk1             | 2 tables removed from myGroup1 |         0
- myGroup1   | myschema1   | myTbl3     | Mk1             | 2 tables removed from myGroup1 |         2
  myGroup1   | myschema1   | mytbl4     | Mk1             |                                |         0
 (5 rows)
 
@@ -383,10 +383,10 @@ begin;
 
 \! ls /tmp/emaj_test/alter
 _INFO
-myschema1_mytbl1.snap
-myschema1_mytbl2b_col20_seq.snap
-myschema1_mytbl2.snap
 myschema1_myTbl3_col31_seq.snap
+myschema1_mytbl1.snap
+myschema1_mytbl2.snap
+myschema1_mytbl2b_col20_seq.snap
 myschema1_mytbl4.snap
 \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp/emaj_test/alter',NULL);
@@ -396,10 +396,10 @@ myschema1_mytbl4.snap
 (1 row)
 
 \! ls /tmp/emaj_test/alter/myschema1*
-/tmp/emaj_test/alter/myschema1_mytbl1_log.snap
-/tmp/emaj_test/alter/myschema1_mytbl2b_log_1.snap
-/tmp/emaj_test/alter/myschema1_mytbl2_log.snap
 /tmp/emaj_test/alter/myschema1_myTbl3_log_1.snap
+/tmp/emaj_test/alter/myschema1_mytbl1_log.snap
+/tmp/emaj_test/alter/myschema1_mytbl2_log.snap
+/tmp/emaj_test/alter/myschema1_mytbl2b_log_1.snap
 /tmp/emaj_test/alter/myschema1_mytbl4_log.snap
 \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3']);
@@ -463,8 +463,8 @@ myschema1_mytbl4.snap
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema |      rel_log_table      | rel_log_dat_tsp |        rel_log_index        | rel_log_idx_tsp |     rel_log_sequence      | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
 ------------+------------+----------------+-----------+----------+--------------+----------------+-------------------------+-----------------+-----------------------------+-----------------+---------------------------+------------------+-----------------+--------------------+--------------------------
- myschema1  | mytbl2b    | [6041,6066)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       | myschema1_mytbl2b_log_seq |                  |                 |                    | 
  myschema1  | myTbl3     | [6041,6066)    | myGroup1  | r        |           10 | emajC          | myschema1_myTbl3_log_1  | tsplog1         | myschema1_myTbl3_log_idx_1  |                 | myschema1_myTbl3_log_seq  |                  |                 |                    | 
+ myschema1  | mytbl2b    | [6041,6066)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       | myschema1_mytbl2b_log_seq |                  |                 |                    | 
 (2 rows)
 
   select count(*) from "emajC"."myschema1_myTbl3_log_1";  -- Only 1 row should remain
@@ -496,8 +496,8 @@ myschema1_mytbl4.snap
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema |      rel_log_table      | rel_log_dat_tsp |        rel_log_index        | rel_log_idx_tsp |     rel_log_sequence      | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions 
 ------------+------------+----------------+-----------+----------+--------------+----------------+-------------------------+-----------------+-----------------------------+-----------------+---------------------------+------------------+-----------------+--------------------+--------------------------
- myschema1  | mytbl2b    | [6041,6067)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       | myschema1_mytbl2b_log_seq |                  |                 |                    | 
  myschema1  | myTbl3     | [6041,6067)    | myGroup1  | r        |           10 | emajC          | myschema1_myTbl3_log_1  | tsplog1         | myschema1_myTbl3_log_idx_1  |                 | myschema1_myTbl3_log_seq  |                  |                 |                    | 
+ myschema1  | mytbl2b    | [6041,6067)    | myGroup1  | r        |              | emajb          | myschema1_mytbl2b_log_1 | tsp log'2       | myschema1_mytbl2b_log_idx_1 | tsp log'2       | myschema1_mytbl2b_log_seq |                  |                 |                    | 
 (2 rows)
 
   select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log_1' and nspname = 'emajb';
@@ -531,8 +531,8 @@ myschema1_mytbl4.snap
 ---------------+-----------------------------------------------------------------------------
  Notice        | 1 / 3 tables effectively processed.
  Notice        | 2 sequences processed.
- Warning       | The table myschema1.mytbl2b has been left unchanged (not in group anymore)
  Warning       | The table myschema1."myTbl3" has been left unchanged (not in group anymore)
+ Warning       | The table myschema1.mytbl2b has been left unchanged (not in group anymore)
 (4 rows)
 
   select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Logged_Rlbk_End');
@@ -1035,8 +1035,8 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP         | BEGIN                        | emptyGroup                   |                                                                                | postgres
  DROP_GROUP         | END                          | emptyGroup                   | 0 tables/sequences processed                                                   | postgres
  CREATE_GROUP       | BEGIN                        | myGroup1                     | rollbackable                                                                   | postgres
- CREATE_GROUP       | SCHEMA CREATED               | emajb                        |                                                                                | postgres
  CREATE_GROUP       | SCHEMA CREATED               | "emajC"                      |                                                                                | postgres
+ CREATE_GROUP       | SCHEMA CREATED               | emajb                        |                                                                                | postgres
  CREATE_GROUP       | END                          | myGroup1                     | 7 tables/sequences processed                                                   | postgres
  CREATE_GROUP       | BEGIN                        | myGroup2                     | rollbackable                                                                   | postgres
  CREATE_GROUP       | END                          | myGroup2                     | 8 tables/sequences processed                                                   | postgres
@@ -1237,8 +1237,8 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP         | END                          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                           | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1."myTbl3_col31_seq" |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
- ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6004             | 0 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6004             | 4 sequences processed.                                                         | postgres
  DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
@@ -1250,14 +1250,14 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | RLBK_Mk2_%_START                                                               | postgres
  CLEANUP_RLBK_STATE |                              | Rollback id 6004             | set to COMMITTED                                                               | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_Mk2_%_START                                                               | postgres
- ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11861 and <= 11866                                | postgres
- ROLLBACK_TABLE     | END                          | myschema1.mytbl1             | 0 rolled back primary keys                                                     | postgres
  ROLLBACK_TABLE     | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11861 and <= 11866                                | postgres
  ROLLBACK_TABLE     | END                          | myschema1."myTbl3"           | 0 rolled back primary keys                                                     | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11861 and <= 11866                                | postgres
+ ROLLBACK_TABLE     | END                          | myschema1.mytbl1             | 0 rolled back primary keys                                                     | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1."myTbl3_col31_seq" |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
- ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | RLBK_Mk2_%_DONE                                                                | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_Mk2_%_DONE                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6005             | 2 / 11 tables effectively processed.                                           | postgres
@@ -1273,10 +1273,10 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                     | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                            | postgres
  LOCK_GROUP         | END                          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                           | postgres
- ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11861 and <= 11866                                | postgres
- ROLLBACK_TABLE     | END                          | myschema1.mytbl1             | 0 rolled back primary keys                                                     | postgres
  ROLLBACK_TABLE     | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11861 and <= 11866                                | postgres
  ROLLBACK_TABLE     | END                          | myschema1."myTbl3"           | 0 rolled back primary keys                                                     | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11861 and <= 11866                                | postgres
+ ROLLBACK_TABLE     | END                          | myschema1.mytbl1             | 0 rolled back primary keys                                                     | postgres
  ROLLBACK_GROUPS    | MARK DELETED                 | myGroup1                     | mark ALTER_% is deleted                                                        | postgres
  ROLLBACK_GROUPS    | MARK DELETED                 | myGroup2                     | mark ALTER_% is deleted                                                        | postgres
  ROLLBACK_GROUPS    | MARK DELETED                 | myGroup1                     | mark ALTER_% is deleted                                                        | postgres
@@ -1290,8 +1290,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS    | MARK DELETED                 | myGroup2                     | mark RLBK_Mk2_%_DONE is deleted                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1."myTbl3_col31_seq" |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
- ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6006             | 2 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6006             | 4 sequences processed.                                                         | postgres
  DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
@@ -1307,8 +1307,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS    | MARK DELETED                 | myGroup2                     | mark Mk2 is deleted                                                            | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1."myTbl3_col31_seq" |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
- ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6007             | 0 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6007             | 4 sequences processed.                                                         | postgres
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 6007             | Tables group change not rolled back: E-Maj priority for myschema1.mytbl1       | postgres
@@ -1329,8 +1329,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_Mk1_%_START                                                               | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1."myTbl3_col31_seq" |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
- ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | RLBK_Mk1_%_DONE                                                                | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_Mk1_%_DONE                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6008             | 0 / 11 tables effectively processed.                                           | postgres
@@ -1347,8 +1347,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS    | MARK DELETED                 | myGroup2                     | mark RLBK_Mk1_%_DONE is deleted                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1."myTbl3_col31_seq" |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  |                                                                                | postgres
- ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_SEQUENCE  |                              | myschema2."myTbl3_col31_seq" |                                                                                | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema2.myseq1             |                                                                                | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6009             | 0 / 11 tables effectively processed.                                           | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 6009             | 4 sequences processed.                                                         | postgres
  DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                | postgres
@@ -1438,15 +1438,15 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
 --------------+--------------------------+-------------+------------------+------------+---------------+-----------------------+----------------+-------------------+---------------------------+--------------
          6008 | RESET_GROUP              |             |                  | emptyGroup |               | f                     |                |                   |                           |             
          6009 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6010 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
          6010 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
+         6010 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
          6010 | REMOVE_TBL               | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   |                           |             
          6010 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
          6011 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   |                           |             
          6011 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
          6012 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6012 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
          6012 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
+         6012 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
          6012 | ADD_TBL                  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   |                           |             
          6013 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
          6013 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   |                           |             
@@ -1463,16 +1463,16 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
          6019 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
          6019 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
          6020 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
          6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
          6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2           | myGroup1   |               | f                     |                |                   |                           |             
          6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
          6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   |                           |             
          6021 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
+         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
          6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
          6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2           | myGroup1   |               | f                     |                |                   |                           |             
          6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
          6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   |                           |             
          6022 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
          6022 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
@@ -1508,16 +1508,16 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
          6036 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
          6037 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
          6037 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6040 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
          6040 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
+         6040 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
          6040 | REMOVE_TBL               | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                   |                           |             
          6040 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   |                           |             
          6040 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
          6040 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
          6041 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
          6041 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6041 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
          6041 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
+         6041 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
          6041 | ADD_TBL                  | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                   |                           |             
          6041 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   |                           |             
          6042 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             

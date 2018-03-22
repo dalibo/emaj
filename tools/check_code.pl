@@ -10,7 +10,7 @@
 use warnings; use strict;
 
 # The 2 variables below are to be customized
-  my $dir = "/home/postgres/proj/emaj";
+  my $dir = $ENV{EMAJ_DIR};
   my $fic_src = $dir."/sql/emaj--devel.sql";
 
   our $fnctName;
