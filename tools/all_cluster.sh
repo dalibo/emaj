@@ -15,7 +15,7 @@ case "${1}" in
 esac
 
 # Source emaj_postgresql.profile
-. ./emaj_postgresql.profile
+. `dirname ${0}`/emaj_postgresql.profile
 
 for PGSUPVER in ${EMAJ_SUPPORTED_PGVER[@]//.}; do
   pg_getvars ${PGSUPVER}

@@ -11,7 +11,7 @@ if [ ${#} -lt 1 ]; then
 fi
 
 # Source emaj_postgresql.profile
-. ./emaj_postgresql.profile
+. `dirname ${0}`/emaj_postgresql.profile
 
 # Get vars for a specific version of PostgreSQL and its cluster (with some upstream checks).
 pg_getvars $1
