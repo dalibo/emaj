@@ -18,6 +18,7 @@ typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_
 typeset -r EMAJ_REGTEST_UPGRADE_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
 typeset -r EMAJ_REGTEST_MIXED=('install_previous' 'setup' 'before_upg_while_logging' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
 typeset -r EMAJ_REGTEST_MIXED_PGVER=(9.3 9.5 10)
+declare -A EMAJ_REGTEST_MENU_ACTIONS
 declare -A EMAJ_REGTEST_MENU
 
 #---------------------------------------------#
@@ -198,76 +199,93 @@ echo "----------------"
 # BUILD THE TEST MENU # 
 #---------------------#
 # There is no control over the possibility of an overlap of MENU_KEY*
-
-# Letter attributed in the menu for execute the "standart" test foreach PostgreSQL versions
+# MENU_KEY_1STREGTEST_STANDART     : 1st letter attributed in the menu for execute a "standart" test for a specific PostgreSQL version
+# MENU_KEY_ALLREGTEST_STANDART     : Letter attributed in the menu for execute the "standart" test foreach PostgreSQL versions
+# MENU_KEY_1STREGTEST_DUMP_RESTORE : 1st letter attributed in the menu for execute a "dump and restore" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_PGUPGRADE    : 1st letter attributed in the menu for execute a "pg_upgrade" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_UPGRADE      : 1st letter attributed in the menu for execute an "E-Maj upgrade" test for a specific PostgreSQL version
+# MENU_KEY_ALLREGTEST_UPGRADE      : Letter attributed in the menu for execute the "E-Maj upgrade" test foreach PostgreSQL versions
+# MENU_KEY_1STREGTEST_MIXED        : 1st letter attributed in the menu for execute an "mixed with E-Maj upgrade" test for a specific PostgreSQL version
+MENU_KEY_1STREGTEST_STANDART='a'
 MENU_KEY_ALLREGTEST_STANDART='t'
-#Letter attributed in the menu for execute the "E-Maj upgrade" test foreach PostgreSQL versions
+MENU_KEY_1STREGTEST_DUMP_RESTORE='m'
+MENU_KEY_1STREGTEST_PGUPGRADE='u'
+MENU_KEY_1STREGTEST_UPGRADE='A'
 MENU_KEY_ALLREGTEST_UPGRADE='T'
+MENU_KEY_1STREGTEST_MIXED='V'
 
 # STANDART TEST
-CHAR='a'
-nCHAR=`printf '%d' \'${CHAR}`
-sCHAR=${nCHAR}
+nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_STANDART}`
 for PGMENUVER in ${EMAJ_REGTEST_STANDART_PGVER[@]}; do
   MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
-  printf "  ${MENU_KEY}- pg %s (port %d) standart test\n" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT)
-  EMAJ_REGTEST_MENU[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} standart"
-  EMAJ_REGTEST_MENU[${MENU_KEY_ALLREGTEST_STANDART}]+=${EMAJ_REGTEST_MENU[${MENU_KEY}]}'!'
+  EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) standart test" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
+  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} standart"
+  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY_ALLREGTEST_STANDART}]+=${EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]}'!'
   let nCHAR++
 done
-eCHAR=$((${nCHAR}-1))
+MENU_KEY_LSTREGTEST_STANDART=`printf '\'$(printf '%03o' $((${nCHAR}-1)))`
 
 # DUMP AND RESTORE
-CHAR='m'
-nCHAR=`printf '%d' \'${CHAR}`
+nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_DUMP_RESTORE}`
 for PGMENUVER in ${EMAJ_REGTEST_DUMP_RESTORE_PGVER[@]}; do
   MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
   PGVERINIT=${PGMENUVER%%'!'*}
   PGVERTRGT=${PGMENUVER##*'!'}
-  printf "  ${MENU_KEY}- pg %s dump and %s restore\n" ${PGVERINIT} ${PGVERTRGT}
-  EMAJ_REGTEST_MENU[${MENU_KEY}]="migrat_test  ${PGVERINIT//.} ${PGVERTRGT//.}"
+  EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s dump and %s restore" ${PGVERINIT} ${PGVERTRGT})
+  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="migrat_test  ${PGVERINIT//.} ${PGVERTRGT//.}"
   let nCHAR++
 done
 
 # ALL STANDART TESTS
-printf "  ${MENU_KEY_ALLREGTEST_STANDART}- all tests, from \\$(printf '%03o' ${sCHAR}) to \\$(printf '%03o' ${eCHAR})\n"
+EMAJ_REGTEST_MENU[${MENU_KEY_ALLREGTEST_STANDART}]=$(printf "all tests, from %s to %s" ${MENU_KEY_1STREGTEST_STANDART} ${MENU_KEY_LSTREGTEST_STANDART})
 
 # PG UPGRADE TEST
-CHAR='u'
-nCHAR=`printf '%d' \'${CHAR}`
+nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_PGUPGRADE}`
 for PGMENUVER in ${EMAJ_REGTEST_PGUPGRADE_PGVER[@]}; do
   MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
   PGVERINIT=${PGMENUVER%%'!'*}
   PGVERTRGT=${PGMENUVER##*'!'}
-  printf "  ${MENU_KEY}- pg %s upgraded to pg %s\n" ${PGVERINIT} ${PGVERTRGT}
-  EMAJ_REGTEST_MENU[${MENU_KEY}]="pg_upgrade_test ${PGVERINIT//.} ${PGVERTRGT//.} PGUPGRADE"
+  EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s upgraded to pg %s" ${PGVERINIT} ${PGVERTRGT})
+  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="pg_upgrade_test ${PGVERINIT//.} ${PGVERTRGT//.} PGUPGRADE"
   let nCHAR++
 done
 
 # E-MAJ UPGRADE
-CHAR='A'
-nCHAR=`printf '%d' \'${CHAR}`
-sCHAR=${nCHAR}
+nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_UPGRADE}`
 for PGMENUVER in ${EMAJ_REGTEST_UPGRADE_PGVER[@]}; do
   MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
-  printf "  ${MENU_KEY}- pg %s (port %d) starting with E-Maj upgrade\n" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT)
-  EMAJ_REGTEST_MENU[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} upgrade"
-  EMAJ_REGTEST_MENU[${MENU_KEY_ALLREGTEST_UPGRADE}]+=${EMAJ_REGTEST_MENU[${MENU_KEY}]}'!'
+  EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) starting with E-Maj upgrade" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
+  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} upgrade"
+  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY_ALLREGTEST_UPGRADE}]+=${EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]}'!'
   let nCHAR++
 done
-eCHAR=$((${nCHAR}-1))
+MENU_KEY_LSTREGTEST_UPGRADE=`printf '\'$(printf '%03o' $((${nCHAR}-1)))`
 
 # ALL TESTS WITH E-MAJ UPGRADE 
-printf "  ${MENU_KEY_ALLREGTEST_UPGRADE}- all tests with E-Maj upgrade, from \\$(printf '%03o' ${sCHAR}) to \\$(printf '%03o' ${eCHAR})\n"
+EMAJ_REGTEST_MENU[${MENU_KEY_ALLREGTEST_UPGRADE}]=$(printf "all tests with E-Maj upgrade, from %s to %s" ${MENU_KEY_1STREGTEST_UPGRADE} ${MENU_KEY_LSTREGTEST_UPGRADE})
 
 # MIXED WITH E-MAJ UPGRADE
-CHAR='V'
-nCHAR=`printf '%d' \'${CHAR}`
+nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_MIXED}`
 for PGMENUVER in ${EMAJ_REGTEST_MIXED_PGVER[@]}; do
   MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
-  printf "  ${MENU_KEY}- pg %s (port %d) mixed with E-Maj upgrade\n" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT)
-  EMAJ_REGTEST_MENU[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} mixed"
+  EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) mixed with E-Maj upgrade" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
+  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} mixed"
   let nCHAR++
+done
+
+# Tries to respect the order of appearance of the keys of the original menu
+for ENTRY in "${!EMAJ_REGTEST_MENU[@]}"; do 
+  nCHAR=`printf '%d' \'${ENTRY}`
+  if [ ${nCHAR} -lt 97 ]; then
+    # Here it should be an upper character
+    EMAJ_REGTEST_MENU_SORTED[$((${nCHAR}%32+32))]="${ENTRY}- ${EMAJ_REGTEST_MENU[${ENTRY}]}"
+  else
+    # and here a lower character
+    EMAJ_REGTEST_MENU_SORTED[$((${nCHAR}%32))]="${ENTRY}- ${EMAJ_REGTEST_MENU[${ENTRY}]}"
+  fi
+done
+for ENTRY in ${!EMAJ_REGTEST_MENU_SORTED[@]}; do
+  echo "  ${EMAJ_REGTEST_MENU_SORTED[${ENTRY}]}"
 done
 
 echo " "
@@ -280,8 +298,9 @@ read ANSWER
 #  AND                #
 # EXECUTE FUNCTION(S) #
 #---------------------#
+
 ANSWERISVALID=0
-for KEY in "${!EMAJ_REGTEST_MENU[@]}"; do 
+for KEY in "${!EMAJ_REGTEST_MENU_ACTIONS[@]}"; do
   if [ "${ANSWER}" == "${KEY}" ]; then
     ANSWERISVALID=1
     case ${KEY,,} in
@@ -289,13 +308,13 @@ for KEY in "${!EMAJ_REGTEST_MENU[@]}"; do
         # RUNNING A SPECIFIC TEST FOREACH PG VERSIONS
         oIFS="${IFS}"
         IFS=!
-        for FUNCREGTEST in ${EMAJ_REGTEST_MENU[$KEY]}; do
+        for FUNCREGTEST in ${EMAJ_REGTEST_MENU_ACTIONS[$KEY]}; do
           IFS=' ' eval ${FUNCREGTEST}
         done
         IFS="${oIFS}"
         ;;
       *) # RUNNING A SPECIFIC TEST FOR ONE PG VERSION
-        ${EMAJ_REGTEST_MENU[$KEY]}
+        ${EMAJ_REGTEST_MENU_ACTIONS[$KEY]}
         ;;
     esac
     break
