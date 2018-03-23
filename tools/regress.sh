@@ -197,6 +197,12 @@ echo "----------------"
 #---------------------#
 # BUILD THE TEST MENU # 
 #---------------------#
+# There is no control over the possibility of an overlap of MENU_KEY*
+
+# Letter attributed in the menu for execute the "standart" test foreach PostgreSQL versions
+MENU_KEY_ALLREGTEST_STANDART='t'
+#Letter attributed in the menu for execute the "E-Maj upgrade" test foreach PostgreSQL versions
+MENU_KEY_ALLREGTEST_UPGRADE='T'
 
 # STANDART TEST
 CHAR='a'
@@ -206,7 +212,7 @@ for PGMENUVER in ${EMAJ_REGTEST_STANDART_PGVER[@]}; do
   MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
   printf "  ${MENU_KEY}- pg %s (port %d) standart test\n" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT)
   EMAJ_REGTEST_MENU[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} standart"
-  EMAJ_REGTEST_MENU['t']+=${EMAJ_REGTEST_MENU[${MENU_KEY}]}'!'
+  EMAJ_REGTEST_MENU[${MENU_KEY_ALLREGTEST_STANDART}]+=${EMAJ_REGTEST_MENU[${MENU_KEY}]}'!'
   let nCHAR++
 done
 eCHAR=$((${nCHAR}-1))
@@ -224,8 +230,7 @@ for PGMENUVER in ${EMAJ_REGTEST_DUMP_RESTORE_PGVER[@]}; do
 done
 
 # ALL STANDART TESTS
-MENU_KEY='t'
-printf "  ${MENU_KEY}- all tests, from \\$(printf '%03o' ${sCHAR}) to \\$(printf '%03o' ${eCHAR})\n"
+printf "  ${MENU_KEY_ALLREGTEST_STANDART}- all tests, from \\$(printf '%03o' ${sCHAR}) to \\$(printf '%03o' ${eCHAR})\n"
 
 # PG UPGRADE TEST
 CHAR='u'
@@ -247,14 +252,13 @@ for PGMENUVER in ${EMAJ_REGTEST_UPGRADE_PGVER[@]}; do
   MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
   printf "  ${MENU_KEY}- pg %s (port %d) starting with E-Maj upgrade\n" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT)
   EMAJ_REGTEST_MENU[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} upgrade"
-  EMAJ_REGTEST_MENU['T']+=${EMAJ_REGTEST_MENU[${MENU_KEY}]}'!'
+  EMAJ_REGTEST_MENU[${MENU_KEY_ALLREGTEST_UPGRADE}]+=${EMAJ_REGTEST_MENU[${MENU_KEY}]}'!'
   let nCHAR++
 done
 eCHAR=$((${nCHAR}-1))
 
 # ALL TESTS WITH E-MAJ UPGRADE 
-MENU_KEY='T'
-printf "  ${MENU_KEY}- all tests with E-Maj upgrade, from \\$(printf '%03o' ${sCHAR}) to \\$(printf '%03o' ${eCHAR})\n"
+printf "  ${MENU_KEY_ALLREGTEST_UPGRADE}- all tests with E-Maj upgrade, from \\$(printf '%03o' ${sCHAR}) to \\$(printf '%03o' ${eCHAR})\n"
 
 # MIXED WITH E-MAJ UPGRADE
 CHAR='V'
@@ -274,22 +278,26 @@ read ANSWER
 #---------------------#
 # CHECK ANSWER        #
 #  AND                #
-# EXECUTE FONCTION(S) #
+# EXECUTE FUNCTION(S) #
 #---------------------#
 ANSWERISVALID=0
 for KEY in "${!EMAJ_REGTEST_MENU[@]}"; do 
   if [ "${ANSWER}" == "${KEY}" ]; then
     ANSWERISVALID=1
-    if [ "${KEY,,}" == 't' ]; then
-      oIFS="${IFS}"
-      IFS=!
-      for FUNCREGTEST in ${EMAJ_REGTEST_MENU[$KEY]}; do
-        IFS=' ' eval ${FUNCREGTEST}
-      done
-      IFS="${oIFS}"
-    else
-      ${EMAJ_REGTEST_MENU[$KEY]}
-    fi
+    case ${KEY,,} in
+      ${MENU_KEY_ALLREGTEST_STANDART}|${MENU_KEY_ALLREGTEST_UPGRADE})
+        # RUNNING A SPECIFIC TEST FOREACH PG VERSIONS
+        oIFS="${IFS}"
+        IFS=!
+        for FUNCREGTEST in ${EMAJ_REGTEST_MENU[$KEY]}; do
+          IFS=' ' eval ${FUNCREGTEST}
+        done
+        IFS="${oIFS}"
+        ;;
+      *) # RUNNING A SPECIFIC TEST FOR ONE PG VERSION
+        ${EMAJ_REGTEST_MENU[$KEY]}
+        ;;
+    esac
     break
   fi
 done

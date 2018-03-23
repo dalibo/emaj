@@ -68,27 +68,20 @@ pg_check_version() {
 # Check if all required variables have an assigned value
 pg_check_vars() {
   pg_check_version $1
-  FILLED=0
-  VARSNOTFILLED=''
+  unset VARSNOTFILLED
   for PGVAR in ${EMAJ_PGVARS[@]}; do
     eval _PGVAR='${PG'${PGVER}'_'${PGVAR}'}'
-    if [ ! -n "${_PGVAR}" ]; then
-      FILLED=0
+    if [ -z "${_PGVAR}" ]; then
       VARSNOTFILLED+=" \$PG${PGVER}_${PGVAR}"
-    else
-      FILLED=1
     fi
   done
   for PGVAR in ${EMAJ_PGENVARS[@]}; do
     eval _PGVAR='${PG'${PGVER}'_'${PGVAR}'}'
-    if [ ! -n "${_PGVAR}" ]; then
-      FILLED=0
+    if [ -z "${_PGVAR}" ]; then
       VARSNOTFILLED+=" \$PG${PGVER}_${PGVAR}"
-    else
-      FILLED=1
     fi
   done
-  if [ ${FILLED} -ne 1 ]; then
+  if [ -n "${VARSNOTFILLED}" ]; then
     echo "Error: var(s)${VARSNOTFILLED} must be filled in your environment or in the '${EMAJ_CONTRIBUTOR_PGENV_FILE}' file"!
     exit 1
   fi
@@ -99,7 +92,7 @@ pg_check_vars() {
 pg_check_var() {
   pg_check_version $1
   eval _PGVAR='${PG'${PGVER}'_'${2#PG}'}'
-  if [ ! -n "${_PGVAR}" ]; then 
+  if [ -z "${_PGVAR}" ]; then 
     echo "Error: var \${PG${PGVER}_${2#PG}} must be filled in your environment or in the '${EMAJ_CONTRIBUTOR_PGENV_FILE}' file "!
     exit 1
   fi
