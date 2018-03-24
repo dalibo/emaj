@@ -335,12 +335,12 @@ for KEY in "${!EMAJ_REGTEST_MENU_ACTIONS[@]}"; do
         oIFS="${IFS}"
         IFS=!
         for FUNCREGTEST in ${EMAJ_REGTEST_MENU_ACTIONS[$KEY]}; do
-          echo IFS=' ' eval ${FUNCREGTEST}
+          IFS=' ' eval ${FUNCREGTEST}
         done
         IFS="${oIFS}"
         ;;
       *) # RUNNING A SPECIFIC TEST FOR ONE PG VERSION
-        echo ${EMAJ_REGTEST_MENU_ACTIONS[$KEY]}
+        ${EMAJ_REGTEST_MENU_ACTIONS[$KEY]}
         ;;
     esac
     break
