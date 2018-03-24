@@ -9,6 +9,16 @@
 # Source emaj_postgresql.profile
 . `dirname ${0}`/emaj_postgresql.profile
 
+# EMAJ_REGTEST_STANDART            : Contains the sequence of sql scripts of the regression test "standart"
+# EMAJ_REGTEST_STANDART_PGVER      : Contains the versions of PostgreSQL on which the regression test "standart" can be run
+# EMAJ_REGTEST_DUMP_RESTORE_PGVER  : Contains the versions of PostgreSQL on which the regression test "dump and restore" can be run
+# EMAJ_REGTEST_PGUPGRADE_PGVER     : Contains the versions of PostgreSQL on which the regression test "pg_upgrade" can be run
+# EMAJ_REGTEST_UPGRADE             : Contains the sequence of sql scripts of the regression test "E-Maj upgrade"
+# EMAJ_REGTEST_UPGRADE_PGVER       : Contains the versions of PostgreSQL on which the regression test "E-Maj upgrade" can be run
+# EMAJ_REGTEST_MIXED               : Contains the sequence of sql scripts of the regression test "mixed with E-Maj upgrade"
+# EMAJ_REGTEST_MIXED_PGVER         : Contains the versions of PostgreSQL on which the regression test "mixed with E-Maj upgrade" can be run
+# EMAJ_REGTEST_MENU_ACTIONS        : Contains the functions to be performed according to the regression test and the PostgreSQL version (do not fill this array)
+# EMAJ_REGTEST_MENU                : Contains the menu's entries (do not fill this array)
 typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_STANDART_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
 typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER='9.3!9.6'
@@ -30,13 +40,12 @@ declare -A EMAJ_REGTEST_MENU
 #            $2 emaj_sched suffix
 reg_test_version()
 {
-# initialisation
+# Get vars for a specific version of PostgreSQL and its cluster
   pg_getvars ${1}
-  # symbolic link will be used to call pgdump in cleanup.sql script
+# symbolic link will be used to call pgdump in cleanup.sql script
   ln -sfT ${PGBIN} ${EMAJ_DIR}/test/${1}/bin
 
-# Totally inspired by pg_regress.c (in the PostgreSQL sources)
-# regression test by itself
+# Regression test by itself - Fully inspired by pg_regress.c (in the PostgreSQL sources)
   echo
   echo "Run regression test"
   echo '============== dropping database "regression"         =============='
@@ -93,7 +102,9 @@ reg_test_version()
 #            $2 pg major version for target database
 migrat_test()
 {
+# Get vars (and prefixed by 'old') for the database to dump
   pg_getvars ${1} 'old'
+# Get vars (and prefixed by 'new') for the target database
   pg_getvars ${2} 'new'
   echo "Dump regression database from ${1} with pg_dump ${2}"
   ${newPGBIN}/pg_dump -p ${oldPGPORT} -U ${oldPGUSER} regression -f ${EMAJ_DIR}/test/${1}/results/regression.dump
@@ -116,10 +127,14 @@ pg_upgrade_test()
 {
   echo "pg_upgrade the ${1} version cluster to a second ${2} version cluster"
   echo "----------------------------------------------------------------"
- 
+# Get vars (and prefixed by 'old') for the source cluster
   pg_getvars ${1} 'old'
+# Get vars (and prefixed by 'new') for the target cluster
   pg_getvars ${2} 'new'
-  let newPGPORT=${oldPGPORT}%16384+49152     # Port Number between 49152 and 66535
+# We don't want destroy the cluster which is configured for the target version,
+# but we want to get a new temporary cluster in this target version to test the update.
+# To do this, the directories of the data and the port must be modified
+  let newPGPORT=(${newPGPORT}+${RANDOM})%16384+49152     # Port Number between 49152 and 66535
   newPGDATA=${newPGDATA}${3}
   echo " "
   echo "--> initializing the new cluster..."
@@ -183,6 +198,7 @@ pg_upgrade_test()
 echo "Customizing emaj.control files..."
 
 for PGSUPVER in ${EMAJ_SUPPORTED_PGVER[@]//.}; do
+# Get PGSHARE for a specific version
   pg_getvar ${PGSUPVER} PGSHARE
   sudo cp ${EMAJ_DIR}/emaj.control ${PGSHARE}/extension/emaj.control
   sudo sed -ri "s|^#directory\s+= .*$|directory = '${EMAJ_DIR}/sql/'|" ${PGSHARE}/extension/emaj.control
@@ -198,7 +214,7 @@ echo "----------------"
 #---------------------#
 # BUILD THE TEST MENU # 
 #---------------------#
-# There is no control over the possibility of an overlap of MENU_KEY*
+# Overlap of NENU_KEY* values are not controlled
 # MENU_KEY_1STREGTEST_STANDART     : 1st letter attributed in the menu for execute a "standart" test for a specific PostgreSQL version
 # MENU_KEY_ALLREGTEST_STANDART     : Letter attributed in the menu for execute the "standart" test foreach PostgreSQL versions
 # MENU_KEY_1STREGTEST_DUMP_RESTORE : 1st letter attributed in the menu for execute a "dump and restore" test for a specific PostgreSQL version
@@ -215,15 +231,40 @@ MENU_KEY_ALLREGTEST_UPGRADE='T'
 MENU_KEY_1STREGTEST_MIXED='V'
 
 # STANDART TEST
+# Convertion of the first letter in decimal number to facilitate the incrementations.
 nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_STANDART}`
 for PGMENUVER in ${EMAJ_REGTEST_STANDART_PGVER[@]}; do
+  # decimal to ASCII char
   MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+  # store the menu's entry
   EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) standart test" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
+  # store the function associated to execute
   EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} standart"
+  # the same thing for the "all tests" menu's entry
   EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY_ALLREGTEST_STANDART}]+=${EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]}'!'
+  # the next decimal ASCII char
   let nCHAR++
 done
+# Keep the last char attributed for a standard test
 MENU_KEY_LSTREGTEST_STANDART=`printf '\'$(printf '%03o' $((${nCHAR}-1)))`
+
+# ALL STANDART TESTS
+# store the menu's entry
+EMAJ_REGTEST_MENU[${MENU_KEY_ALLREGTEST_STANDART}]=$(printf "all tests, from %s to %s" ${MENU_KEY_1STREGTEST_STANDART} ${MENU_KEY_LSTREGTEST_STANDART})
+
+# E-MAJ UPGRADE
+nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_UPGRADE}`
+for PGMENUVER in ${EMAJ_REGTEST_UPGRADE_PGVER[@]}; do
+  MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+  EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) starting with E-Maj upgrade" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
+  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} upgrade"
+  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY_ALLREGTEST_UPGRADE}]+=${EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]}'!'
+  let nCHAR++
+done
+MENU_KEY_LSTREGTEST_UPGRADE=`printf '\'$(printf '%03o' $((${nCHAR}-1)))`
+# ALL TESTS WITH E-MAJ UPGRADE 
+EMAJ_REGTEST_MENU[${MENU_KEY_ALLREGTEST_UPGRADE}]=$(printf "all tests with E-Maj upgrade, from %s to %s" ${MENU_KEY_1STREGTEST_UPGRADE} ${MENU_KEY_LSTREGTEST_UPGRADE})
+
 
 # DUMP AND RESTORE
 nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_DUMP_RESTORE}`
@@ -236,9 +277,6 @@ for PGMENUVER in ${EMAJ_REGTEST_DUMP_RESTORE_PGVER[@]}; do
   let nCHAR++
 done
 
-# ALL STANDART TESTS
-EMAJ_REGTEST_MENU[${MENU_KEY_ALLREGTEST_STANDART}]=$(printf "all tests, from %s to %s" ${MENU_KEY_1STREGTEST_STANDART} ${MENU_KEY_LSTREGTEST_STANDART})
-
 # PG UPGRADE TEST
 nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_PGUPGRADE}`
 for PGMENUVER in ${EMAJ_REGTEST_PGUPGRADE_PGVER[@]}; do
@@ -250,20 +288,6 @@ for PGMENUVER in ${EMAJ_REGTEST_PGUPGRADE_PGVER[@]}; do
   let nCHAR++
 done
 
-# E-MAJ UPGRADE
-nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_UPGRADE}`
-for PGMENUVER in ${EMAJ_REGTEST_UPGRADE_PGVER[@]}; do
-  MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
-  EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) starting with E-Maj upgrade" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
-  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} upgrade"
-  EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY_ALLREGTEST_UPGRADE}]+=${EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]}'!'
-  let nCHAR++
-done
-MENU_KEY_LSTREGTEST_UPGRADE=`printf '\'$(printf '%03o' $((${nCHAR}-1)))`
-
-# ALL TESTS WITH E-MAJ UPGRADE 
-EMAJ_REGTEST_MENU[${MENU_KEY_ALLREGTEST_UPGRADE}]=$(printf "all tests with E-Maj upgrade, from %s to %s" ${MENU_KEY_1STREGTEST_UPGRADE} ${MENU_KEY_LSTREGTEST_UPGRADE})
-
 # MIXED WITH E-MAJ UPGRADE
 nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_MIXED}`
 for PGMENUVER in ${EMAJ_REGTEST_MIXED_PGVER[@]}; do
@@ -273,7 +297,7 @@ for PGMENUVER in ${EMAJ_REGTEST_MIXED_PGVER[@]}; do
   let nCHAR++
 done
 
-# Tries to respect the order of appearance of the keys of the original menu
+# Tries to respect the order of appearance of the keys of the original menu (not an ASCII sort)
 for ENTRY in "${!EMAJ_REGTEST_MENU[@]}"; do 
   nCHAR=`printf '%d' \'${ENTRY}`
   if [ ${nCHAR} -lt 97 ]; then
@@ -284,6 +308,8 @@ for ENTRY in "${!EMAJ_REGTEST_MENU[@]}"; do
     EMAJ_REGTEST_MENU_SORTED[$((${nCHAR}%32))]="${ENTRY}- ${EMAJ_REGTEST_MENU[${ENTRY}]}"
   fi
 done
+
+# Display the menu's entries
 for ENTRY in ${!EMAJ_REGTEST_MENU_SORTED[@]}; do
   echo "  ${EMAJ_REGTEST_MENU_SORTED[${ENTRY}]}"
 done
@@ -309,12 +335,12 @@ for KEY in "${!EMAJ_REGTEST_MENU_ACTIONS[@]}"; do
         oIFS="${IFS}"
         IFS=!
         for FUNCREGTEST in ${EMAJ_REGTEST_MENU_ACTIONS[$KEY]}; do
-          IFS=' ' eval ${FUNCREGTEST}
+          echo IFS=' ' eval ${FUNCREGTEST}
         done
         IFS="${oIFS}"
         ;;
       *) # RUNNING A SPECIFIC TEST FOR ONE PG VERSION
-        ${EMAJ_REGTEST_MENU_ACTIONS[$KEY]}
+        echo ${EMAJ_REGTEST_MENU_ACTIONS[$KEY]}
         ;;
     esac
     break

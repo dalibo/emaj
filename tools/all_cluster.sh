@@ -18,9 +18,10 @@ esac
 . `dirname ${0}`/emaj_postgresql.profile
 
 for PGSUPVER in ${EMAJ_SUPPORTED_PGVER[@]//.}; do
+  # Get vars for a specific version of PostgreSQL and its cluster
   pg_getvars ${PGSUPVER}
-  echo "==> Cluster ${PGSUPVER} (PORT: ${PGPORT}) :"
-  ${PGBIN}/pg_ctl -D ${PGDATA} ${ACTION}
+  echo "==> Cluster ${PGSUPVER} (PGDATA: ${PGDATA}, PORT: ${PGPORT}) :"
+  ${PGBIN}/pg_ctl ${ACTION}
 done
 
 exit 0

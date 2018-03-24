@@ -25,7 +25,7 @@ echo
 
 if [ -d "${PGDATA}" ]; then
   # Trying to stop the cluster if it already exists and is up
-  ${PGBIN}/pg_ctl -D ${PGDATA} stop -m i
+  ${PGBIN}/pg_ctl stop -m i
   rm -Rf ${PGDATA}
 fi
 
@@ -33,7 +33,7 @@ fi
 mkdir ${PGDATA}
 
 # Initialize the cluster
-${PGBIN}/initdb -D ${PGDATA} -U ${PGUSER}
+${PGBIN}/initdb -U ${PGUSER}
 if [ -f "${PGDATA}/PG_VERSION" ]; then
   echo "Initdb OK"
 else
@@ -52,7 +52,7 @@ cat <<-EOF1 >${PGDATA}/specif.conf
 echo "include 'specif.conf'" >> ${PGDATA}/postgresql.conf
 
 # Start cluster
-${PGBIN}/pg_ctl -D ${PGDATA} start
+${PGBIN}/pg_ctl start
 if [ $? != 0 ]; then
   echo "Error while starting the cluster..."
   exit 1
@@ -70,7 +70,7 @@ sudo cp ${EMAJ_DIR}/emaj.control ${PGSHARE}/extension/emaj.control
 sudo bash -c "echo \"directory = '${EMAJ_DIR}/sql'\" >>${PGSHARE}/extension/emaj.control"
 
 # Create all what is needed inside the cluster (tablespaces, roles, extensions,...)
-${PGBIN}/psql -p ${PGPORT} postgres -a <<-EOF2
+${PGBIN}/psql -a <<-EOF2
 	\set ON_ERROR_STOP
 	create tablespace tspemaj location '${PGDATA}/emaj_tblsp';
 	create tablespace tsplog1 location '${PGDATA}/tsplog1';

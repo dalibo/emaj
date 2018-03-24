@@ -8,14 +8,15 @@
 # Array containing the PostgreSQL's versions supported by this release of E-MAJ
 typeset -r EMAJ_SUPPORTED_PGVER=(9.{2..6} 10)
 
-# Arrays of pseudo-vars used by scripts
+# Array of pseudo-vars used by scripts
 typeset -r EMAJ_PGVARS=('DIR' 'BIN' 'SHARE')
 
-# Arrays of pseudo-envars
+# Array of pseudo-envars
 typeset -r EMAJ_PGENVARS=('DATA' 'PORT' 'USER')
 
 # EMAJ_DIR is the root directory of E-Maj
 _FULLPATH=`readlink -f ${0}`
+# building an absolute path, unless the $EMAJ_DIR is already defined in the user environment
 typeset -r EMAJ_DIR="${EMAJ_DIR:-${_FULLPATH/'/tools/'`basename ${0}`/}}"
 export EMAJ_DIR
 
@@ -25,6 +26,7 @@ typeset -i PGVER
 # EMAJ_CONTRIBUTOR_PGENV_FILE is the file that contain vars about PostgreSQL's environments
 typeset -r EMAJ_CONTRIBUTOR_PGENV_FILE="${EMAJ_DIR}/tools/contributor_postgresql.env"
 
+# Load of the ${EMAJ_CONTRIBUTOR_PGENV_FILE} file
 if [ -f ${EMAJ_CONTRIBUTOR_PGENV_FILE} ]; then
   . ${EMAJ_CONTRIBUTOR_PGENV_FILE}
 fi
@@ -33,7 +35,8 @@ fi
 #            Functions definition             #
 #---------------------------------------------#
 
-# Check the version passed in argument
+# Function pg_check_format(): check the version passed in argument
+# argument: $1 pg major version
 pg_check_format() {
   unset PGVER
   if [[ $# -ne 1 || ! "${1//.}" =~ ^[0-9]{2}$ ]]; then
@@ -46,8 +49,10 @@ pg_check_format() {
   return 0
 }
 
-# Check if the version's supported by E-MAJ
+# Function pg_check_version(): check if the version's supported by E-MAJ
+# argument: $1 pg major version
 pg_check_version() {
+  # Check the version passed in argument
   pg_check_format $1
   SUPPORTED=0 
   for PGSUPVER in ${EMAJ_SUPPORTED_PGVER[@]//.}; do
@@ -65,8 +70,10 @@ pg_check_version() {
   return 0
 }
 
-# Check if all required variables have an assigned value
+# Function pg_check_vars(): check if all required variables have an assigned value
+# argument: $1 pg major version
 pg_check_vars() {
+  # Check if the version is supported by E-MAJ
   pg_check_version $1
   unset VARSNOTFILLED
   for PGVAR in ${EMAJ_PGVARS[@]}; do
@@ -88,8 +95,11 @@ pg_check_vars() {
   return 0
 }
 
-# Check if a required variable have an assigned value
+# Function pg_check_var(): check if a required variable have an assigned value
+# arguments: $1 pg major version
+#            $2 var to check
 pg_check_var() {
+  # Check if the version is supported by E-MAJ
   pg_check_version $1
   eval _PGVAR='${PG'${PGVER}'_'${2#PG}'}'
   if [ -z "${_PGVAR}" ]; then 
@@ -99,8 +109,11 @@ pg_check_var() {
   return 0
 }
 
-# Gat all variables necessary for use PostgreSQL cluster in E-Maj's scripts
+# Function pg_getvars(): get all variables necessary for use PostgreSQL cluster in E-Maj's scripts
+# arguments: $1 pg major version
+#            $2 prefix added to the obtained variables
 pg_getvars() {
+  # Check if all required variables have an assigned value
   pg_check_vars $1
   if [ -n "${2}" ]; then
     PFX=${2}
@@ -118,8 +131,12 @@ pg_getvars() {
   return 0
 }
 
-# Get a variable on demand
+# Function pg_getvar(): get a specific variable
+# arguments: $1 pg major version
+#            $2 var to get
+#            $3 prefix added to the obtained variables
 pg_getvar() {
+  # Check if a required variable have an assigned value
   pg_check_var $1 $2
   VAREXISTS=0
   if [ -n "${3}" ]; then
@@ -152,7 +169,9 @@ pg_getvar() {
   return 0
 }
 
-# Displays the value that a variable would contain based on the PostgreSQL environment
+# Function pg_dspvar(): just display the value that a variable would contain based on the PostgreSQL environment
+# arguments: $1 pg major version
+#            $2 var to get
 pg_dspvar() {
   pg_check_var $1 $2
   VAREXISTS=0
@@ -164,10 +183,12 @@ pg_dspvar() {
   done
   if [ ${VAREXISTS} -ne 1 ]; then
     echo "Error: var ${2} is not an expected variable name "!
+    unset PGVAR
     exit 1
   else
     eval PGVAR='${PG'${PGVER}'_'${2#PG}'}'
     echo ${PGVAR}
+    unset PGVAR
   fi
   return 0
 }
