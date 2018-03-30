@@ -10,8 +10,8 @@ if [ ${#} -lt 1 ]; then
     exit 1
 fi
 
-# Source emaj_postgresql.profile
-. `dirname ${0}`/emaj_postgresql.profile
+# Source emaj_tools.profile
+. `dirname ${0}`/emaj_tools.profile
 
 # Get vars for a specific version of PostgreSQL and its cluster (with some upstream checks).
 pg_getvars $1

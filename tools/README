@@ -2,8 +2,8 @@ tools/README
 
 The tool directory contains several tools that may be essential or useful in E-Maj development:
 - regress.sh is a shell script that selects and executes regression tests,
-- contributor_postgresql.env contain all vars you should customize for yours PostgreSQL's environments,
-- emaj_postgresql.profile contain vars and functions, it's loaded in some scripts,
+- emaj_tools.env-dist is a template for create the emaj_tools.env file that contain all vars you should customize for yours E-MAJ Tools environments
+- emaj_tools.profile contain vars and functions, it's loaded in some scripts,
 - copy2Expected.sh is a shell script that copys the result files of regression tests environment to the reference directory,
 - check_code.pl is a perl script that performs various checks on the script that creates the emaj extension,
 - check_error_messages.pl is a perl script that analyzes how the non regression tests cover the error or warning messages coded in the E-Maj source file,
@@ -30,22 +30,22 @@ Then the regress.sh script must be adapted.
 For PostgreSQL binaries and DATA you sould look in  contributor_postgresql.env
 At the end of the script, a menu is displayed to propose all available tests. You can adapt it to your environment by modify values in the arrays EMAJ_REGTEST_*_PGVER.
 
-contributor_postgresql.env
+emaj_tools.env-dist (and emaj_tools.env)
 --------------------------
-It contain vars about yours PostgreSQL's Environments.
+It contain vars about yours E-MAJ Tools' Environments.
 The vars for one version of PostgreSQL are : 
-  PG<ver>_DIR
-  PG<ver>_BIN
-  PG<ver>_SHARE
+  PG<version_pg>_DIR
+  PG<version_pg>_BIN
+  PG<version_pg>_SHARE
 ... and for a cluster (only one cluster for a major version) :
-  PG<ver>_USER
-  PG<ver>_DATA
-  PG<ver>_PORT
+  PG<version_pg>_USER
+  PG<version_pg>_DATA
+  PG<version_pg>_PORT
 This file is read by emaj_postgresql.profile. 
 
-emaj_postgresql.profile
+emaj_tools.profile
 -----------------------
-It contain some functions to check and get vars about PostgreSQL Environments (binaries &  datas).
+It contain some functions to check and get vars about EMAJ Tools Environments (for example: PostgreSQL's binaries &  datas).
 This file is loaded by regress.sh, create_cluster.sh and all_cluster.sh.
 
 copy2Expected.sh

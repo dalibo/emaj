@@ -6,8 +6,8 @@
 #            Parameters definition            #
 #---------------------------------------------#
 
-# Source emaj_postgresql.profile
-. `dirname ${0}`/emaj_postgresql.profile
+# Source emaj_tools.profile
+. `dirname ${0}`/emaj_tools.profile
 
 # EMAJ_REGTEST_STANDART            : Contains the sequence of sql scripts of the regression test "standart"
 # EMAJ_REGTEST_STANDART_PGVER      : Contains the versions of PostgreSQL on which the regression test "standart" can be run
@@ -65,6 +65,9 @@ reg_test_version()
   >${OUT_FILE}
   CMP_FAILED=0
   CMP_REGTEST=0
+  if [ ! -d "${EMAJ_DIR}/test/${1}/results" ]; then
+    mkdir "${EMAJ_DIR}/test/${1}/results"
+  fi
   eval EMAJ_REGTESTS='${EMAJ_REGTEST_'${2^^}'[@]}'
   for REGTEST in ${EMAJ_REGTESTS}; do
     REGTEST_FILE="${EMAJ_DIR}/test/${1}/sql/${REGTEST}.sql"
@@ -72,7 +75,7 @@ reg_test_version()
     EXPECTED_FILE="${EMAJ_DIR}/test/${1}/expected/${REGTEST}.out"
     ALIGN="printf ' %.0s' {1.."$((25-${#REGTEST}))"}"
     echo -n "test ${REGTEST}$(eval ${ALIGN})... " | tee -a ${OUT_FILE}
-    LC_MESSAGES='C' PGTZ='PST8PDT' PGDATESTYLE='Postgres, MDY' ${PGBIN}/psql regression -X --echo-all -c 'set intervalstyle=postgres_verbose' -f ${REGTEST_FILE} >${RESULTS_FILE} 2>&1
+    PGOPTIONS="-c intervalstyle=postgres_verbose" LC_MESSAGES='C' PGTZ='PST8PDT' PGDATESTYLE='Postgres, MDY' ${PGBIN}/psql regression -X -q --echo-all -f ${REGTEST_FILE} >${RESULTS_FILE} 2>&1
     let CMP_REGTEST++
     diff -C3 ${EXPECTED_FILE} ${RESULTS_FILE} >> ${DIFF_FILE}
     if [ $? -ne 0 ]; then
@@ -85,7 +88,7 @@ reg_test_version()
   done
   echo
   echo '======================='
-  echo " ${CMP_FAILED} of ${CMP_FAILED} tests failed."
+  echo " ${CMP_FAILED} of ${CMP_REGTEST} tests failed."
   echo '======================='
   echo
   echo "The differences that caused some tests to fail can be viewed in the"
@@ -329,7 +332,7 @@ ANSWERISVALID=0
 for KEY in "${!EMAJ_REGTEST_MENU_ACTIONS[@]}"; do
   if [ "${ANSWER}" == "${KEY}" ]; then
     ANSWERISVALID=1
-    case ${KEY,,} in
+    case ${KEY} in
       ${MENU_KEY_ALLREGTEST_STANDART}|${MENU_KEY_ALLREGTEST_UPGRADE})
         # RUNNING A SPECIFIC TEST FOREACH PG VERSIONS
         oIFS="${IFS}"

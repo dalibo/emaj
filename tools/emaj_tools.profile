@@ -1,4 +1,4 @@
-# emaj_postgresql.profile
+# emaj_tools.profile
 # E-Maj tool, distributed under GPL3 licence
 
 #---------------------------------------------#
@@ -23,12 +23,16 @@ export EMAJ_DIR
 # PGVER is used to store the MAJOR version of PostgreSQL, it must be a integer
 typeset -i PGVER
 
-# EMAJ_CONTRIBUTOR_PGENV_FILE is the file that contain vars about PostgreSQL's environments
-typeset -r EMAJ_CONTRIBUTOR_PGENV_FILE="${EMAJ_DIR}/tools/contributor_postgresql.env"
+# EMAJ_TOOLSENV_FILE is the file that contain vars about E-MAJ Tools' environments
+typeset -r EMAJ_TOOLSENV_FILE="${EMAJ_DIR}/tools/emaj_tools.env"
 
-# Load of the ${EMAJ_CONTRIBUTOR_PGENV_FILE} file
-if [ -f ${EMAJ_CONTRIBUTOR_PGENV_FILE} ]; then
-  . ${EMAJ_CONTRIBUTOR_PGENV_FILE}
+# Load of the ${EMAJ_TOOLSENV_FILE} file
+if [ -f ${EMAJ_TOOLSENV_FILE} ]; then
+  . ${EMAJ_TOOLSENV_FILE}
+else
+  echo "Error: E-MAJ Tools need the ${EMAJ_TOOLSENV_FILE} file"
+  echo "  You can create it from a copy of the \"${EMAJ_TOOLSENV_FILE}-dist\" file"
+  exit 1
 fi
 
 #---------------------------------------------#
@@ -76,20 +80,14 @@ pg_check_vars() {
   # Check if the version is supported by E-MAJ
   pg_check_version $1
   unset VARSNOTFILLED
-  for PGVAR in ${EMAJ_PGVARS[@]}; do
-    eval _PGVAR='${PG'${PGVER}'_'${PGVAR}'}'
-    if [ -z "${_PGVAR}" ]; then
-      VARSNOTFILLED+=" \$PG${PGVER}_${PGVAR}"
-    fi
-  done
-  for PGVAR in ${EMAJ_PGENVARS[@]}; do
+  for PGVAR in ${EMAJ_PGENVARS[@]} ${EMAJ_PGVARS[@]}; do
     eval _PGVAR='${PG'${PGVER}'_'${PGVAR}'}'
     if [ -z "${_PGVAR}" ]; then
       VARSNOTFILLED+=" \$PG${PGVER}_${PGVAR}"
     fi
   done
   if [ -n "${VARSNOTFILLED}" ]; then
-    echo "Error: var(s)${VARSNOTFILLED} must be filled in your environment or in the '${EMAJ_CONTRIBUTOR_PGENV_FILE}' file"!
+    echo "Error: var(s)${VARSNOTFILLED} must be filled in your environment or in the '${EMAJ_TOOLSENV_FILE}' file"!
     exit 1
   fi
   return 0
@@ -103,7 +101,7 @@ pg_check_var() {
   pg_check_version $1
   eval _PGVAR='${PG'${PGVER}'_'${2#PG}'}'
   if [ -z "${_PGVAR}" ]; then 
-    echo "Error: var \${PG${PGVER}_${2#PG}} must be filled in your environment or in the '${EMAJ_CONTRIBUTOR_PGENV_FILE}' file "!
+    echo "Error: var \${PG${PGVER}_${2#PG}} must be filled in your environment or in the '${EMAJ_TOOLSENV_FILE}' file "!
     exit 1
   fi
   return 0

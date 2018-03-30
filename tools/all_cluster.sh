@@ -14,8 +14,8 @@ case "${1}" in
     ;;
 esac
 
-# Source emaj_postgresql.profile
-. `dirname ${0}`/emaj_postgresql.profile
+# Source emaj_tools.profile
+. `dirname ${0}`/emaj_tools.profile
 
 for PGSUPVER in ${EMAJ_SUPPORTED_PGVER[@]//.}; do
   # Get vars for a specific version of PostgreSQL and its cluster
