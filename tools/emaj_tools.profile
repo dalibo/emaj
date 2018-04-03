@@ -5,7 +5,7 @@
 #            Parameters definition            #
 #---------------------------------------------#
 
-# Array containing the PostgreSQL's versions supported by this release of E-MAJ
+# Array containing the PostgreSQL's versions supported by this E-Maj release
 typeset -r EMAJ_SUPPORTED_PGVER=(9.{2..6} 10)
 
 # Array of pseudo-vars used by scripts
@@ -29,6 +29,25 @@ typeset -r EMAJ_TOOLSENV_FILE="${EMAJ_DIR}/tools/emaj_tools.env"
 # Load of the ${EMAJ_TOOLSENV_FILE} file
 if [ -f ${EMAJ_TOOLSENV_FILE} ]; then
   . ${EMAJ_TOOLSENV_FILE}
+  # Check if the versions set by user are supported by E-Maj
+  if [ -z "${EMAJ_USER_PGVER}" ]; then
+    echo "Error: var EMAJ_USER_PGVER must be set in the '${EMAJ_TOOLSENV_FILE}' file"!
+    exit 1
+  fi
+  unset PGVERNOTSUPPORTED
+  for PGUSERVER in ${EMAJ_USER_PGVER[@]}; do
+    for PGSUPVER in ${EMAJ_SUPPORTED_PGVER[@]//.}; do
+      if [ "${PGUSERVER//.}" == "${PGSUPVER}" ]; then
+        continue 2
+      fi
+    done
+    PGVERNOTSUPPORTED+=" ${PGUSERVER}"
+  done
+  if [ -n "${PGVERNOTSUPPORTED}" ]; then
+    echo "Error: PostgreSQL${PGVERNOTSUPPORTED} is/are not supported by this E-Maj release"
+    echo "  check EMAJ_USER_PGVER var in the '${EMAJ_TOOLSENV_FILE}' file"!
+    exit 1
+  fi
 else
   echo "Error: E-MAJ Tools need the ${EMAJ_TOOLSENV_FILE} file"
   echo "  You can create it from a copy of the \"${EMAJ_TOOLSENV_FILE}-dist\" file"
@@ -39,26 +58,26 @@ fi
 #            Functions definition             #
 #---------------------------------------------#
 
-# Function pg_check_format(): check the version passed in argument
+# Function pg_check_format(): check the version passed as argument
 # argument: $1 pg major version
 pg_check_format() {
   unset PGVER
   if [[ $# -ne 1 || ! "${1//.}" =~ ^[0-9]{2}$ ]]; then
-    echo "Error: Incorrect version format for a PostgreSQL major version"
-    echo "  must be 10 for version 10"
-    echo "  must be 96 or 9.6 for version 9.6"
+    echo "Error: Incorrect value for a PostgreSQL major version"
+    echo "  must be for instance 10 for version 10"
+    echo "  or 96 or 9.6 for version 9.6"
     exit 1
   fi
   export PGVER=${1//.}
   return 0
 }
 
-# Function pg_check_version(): check if the version's supported by E-MAJ
+# Function pg_check_version(): check if the version is supported by E-Maj
 # argument: $1 pg major version
 pg_check_version() {
-  # Check the version passed in argument
+  # Check the version passed as argument
   pg_check_format $1
-  SUPPORTED=0 
+  SUPPORTED=0
   for PGSUPVER in ${EMAJ_SUPPORTED_PGVER[@]//.}; do
     if [ ${PGVER} -eq ${PGSUPVER} ]; then
       SUPPORTED=1
@@ -68,7 +87,7 @@ pg_check_version() {
     fi
   done
   if [ ${SUPPORTED} -ne 1 ]; then
-    echo "Error: PostgreSQL $1 is not supported by this release of E-MAJ"!
+    echo "Error: PostgreSQL $1 is not supported by this E-Maj release"!
     exit 1
   fi
   return 0
@@ -77,7 +96,7 @@ pg_check_version() {
 # Function pg_check_vars(): check if all required variables have an assigned value
 # argument: $1 pg major version
 pg_check_vars() {
-  # Check if the version is supported by E-MAJ
+  # Check if the version is supported by E-Maj
   pg_check_version $1
   unset VARSNOTFILLED
   for PGVAR in ${EMAJ_PGENVARS[@]} ${EMAJ_PGVARS[@]}; do
@@ -87,7 +106,7 @@ pg_check_vars() {
     fi
   done
   if [ -n "${VARSNOTFILLED}" ]; then
-    echo "Error: var(s)${VARSNOTFILLED} must be filled in your environment or in the '${EMAJ_TOOLSENV_FILE}' file"!
+    echo "Error: var(s)${VARSNOTFILLED} must be set in your environment or in the '${EMAJ_TOOLSENV_FILE}' file"!
     exit 1
   fi
   return 0
@@ -131,10 +150,10 @@ pg_getvars() {
 
 # Function pg_getvar(): get a specific variable
 # arguments: $1 pg major version
-#            $2 var to get
+#            $2 variable to get
 #            $3 prefix added to the obtained variables
 pg_getvar() {
-  # Check if a required variable have an assigned value
+  # Check if a required variable has an assigned value
   pg_check_var $1 $2
   VAREXISTS=0
   if [ -n "${3}" ]; then
@@ -167,9 +186,9 @@ pg_getvar() {
   return 0
 }
 
-# Function pg_dspvar(): just display the value that a variable would contain based on the PostgreSQL environment
+# Function pg_dspvar(): just display a variable content based on the PostgreSQL environment
 # arguments: $1 pg major version
-#            $2 var to get
+#            $2 variable to get
 pg_dspvar() {
   pg_check_var $1 $2
   VAREXISTS=0

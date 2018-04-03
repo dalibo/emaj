@@ -2,14 +2,36 @@ tools/README
 
 The tool directory contains several tools that may be essential or useful in E-Maj development:
 - regress.sh is a shell script that selects and executes regression tests,
-- emaj_tools.env-dist is a template for create the emaj_tools.env file that contain all vars you should customize for yours E-MAJ Tools environments
-- emaj_tools.profile contain vars and functions, it's loaded in some scripts,
 - copy2Expected.sh is a shell script that copys the result files of regression tests environment to the reference directory,
 - check_code.pl is a perl script that performs various checks on the script that creates the emaj extension,
 - check_error_messages.pl is a perl script that analyzes how the non regression tests cover the error or warning messages coded in the E-Maj source file,
 - sync_fct_in_upgrade_script.pl is a perl script that generates the functions part of the upgrade scripts,
 - create_cluster.sh is a shell script that ... creates a postgres cluster,
 - create_version.sh helps in creating a new E-Maj version.
+
+It also contains some parameter files loaded by various tools:
+- emaj_tools.env-dist is a template used to create the emaj_tools.env file that contains all vars you should customize for your E-Maj tools environment,
+- emaj_tools.profile contains variables and functions, it is loaded in some scripts,
+
+emaj_tools.env-dist (and emaj_tools.env)
+----------------------------------------
+It contains vars about yours E-Maj tools environments.
+The variable containing the list of versions that you will use in your regression tests is:
+  EMAJ_USER_PGVER
+The vars for one version of PostgreSQL are:
+  PG<version_pg>_DIR
+  PG<version_pg>_BIN
+  PG<version_pg>_SHARE
+... and for a cluster (only one cluster for a major version):
+  PG<version_pg>_USER
+  PG<version_pg>_DATA
+  PG<version_pg>_PORT
+This file is read by emaj_postgresql.profile.
+
+emaj_tools.profile
+------------------
+It contains some functions that checks and gets variables about the E-Maj tools environment (for example: PostgreSQL's binaries &  datas).
+This file is loaded by regress.sh, create_cluster.sh and all_cluster.sh.
 
 regress.sh
 ----------
@@ -26,27 +48,8 @@ First, some symbolic links must be created so that the unique test/sql directory
     ln -s test/sql test/<pg_version>/sql
 Similarly, a symbolic link has to be created to reach the emaj.sql script:
     ln -s sql/emaj.sql test/sql/emaj.sql
-Then the regress.sh script must be adapted.
-For PostgreSQL binaries and DATA you sould look in  contributor_postgresql.env
-At the end of the script, a menu is displayed to propose all available tests. You can adapt it to your environment by modify values in the arrays EMAJ_REGTEST_*_PGVER.
-
-emaj_tools.env-dist (and emaj_tools.env)
---------------------------
-It contain vars about yours E-MAJ Tools' Environments.
-The vars for one version of PostgreSQL are : 
-  PG<version_pg>_DIR
-  PG<version_pg>_BIN
-  PG<version_pg>_SHARE
-... and for a cluster (only one cluster for a major version) :
-  PG<version_pg>_USER
-  PG<version_pg>_DATA
-  PG<version_pg>_PORT
-This file is read by emaj_postgresql.profile. 
-
-emaj_tools.profile
------------------------
-It contain some functions to check and get vars about EMAJ Tools Environments (for example: PostgreSQL's binaries &  datas).
-This file is loaded by regress.sh, create_cluster.sh and all_cluster.sh.
+Then the regress.sh script may be adapted.
+At the end of the script, a menu is displayed to propose all available tests. You can adapt it to your environment by modifing values in the arrays EMAJ_REGTEST_*_PGVER.
 
 copy2Expected.sh
 ----------------
@@ -81,13 +84,15 @@ The sync_fct_in_upgrade_script.pl perl script generates the functions part of th
 Customisation:
 Line 19 to 21, three variables set the absolute pathname of the scripts to process: the script of the current version (variable $ficCurrSrc), the script of the previous version ($ficPrevSrc) and the already existing upgrade script (variable $ficUpgrade). The script has to be adjusted at each upgrade.
 
+
 create_cluster.sh
 -----------------
 The create_cluster.sh shell script ... creates a postgres cluster. It drops a previous installation if it exists. Then, it performs the initdb, customizes the parameters, starts the cluster and executes a psql session to setup the needed objects - tablespaces, roles, extensions.
 
 Customization:
-Line 5 to 10, five variables set the major and minor postgres version, the PGDATA directory, the directory containing the postgres binary files and the directory containting the current E-Maj components.
-Some SQL commands or postgresql.conf parameters may need to be adjusted.
+No additional customization is required.
+But some SQL commands or postgresql.conf parameters may need to be adjusted.
+
 
 create_version.sh
 -----------------
@@ -96,4 +101,3 @@ A single argument has to be supplied: the name of the new version to create (for
 
 Customization:
 No customization is needed for this script.
-
