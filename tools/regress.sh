@@ -21,8 +21,8 @@
 # EMAJ_REGTEST_MENU                : Contains the menu's entries (do not fill this array)
 typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_STANDART_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
-#typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER='9.3!9.6'
-typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('9.3!9.6' '9.5!10')
+typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER='9.3!9.6'
+#typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('9.3!9.6' '9.5!10')
 typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='9.2!10'
 typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_UPGRADE_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
@@ -286,8 +286,8 @@ fi
 
 # DUMP AND RESTORE
 nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_DUMP_RESTORE}`
-TODISPLAY=0
 for PGMENUVER in ${EMAJ_REGTEST_DUMP_RESTORE_PGVER[@]}; do
+  TODISPLAY=0
   PGVERINIT=${PGMENUVER%%'!'*}
   PGVERTRGT=${PGMENUVER##*'!'}
   for PGUSERVER in ${EMAJ_USER_PGVER[@]//.}; do
@@ -306,8 +306,8 @@ done
 
 # PG UPGRADE TEST
 nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_PGUPGRADE}`
-TODISPLAY=0
 for PGMENUVER in ${EMAJ_REGTEST_PGUPGRADE_PGVER[@]}; do
+  TODISPLAY=0
   PGVERINIT=${PGMENUVER%%'!'*}
   PGVERTRGT=${PGMENUVER##*'!'}
   for PGUSERVER in ${EMAJ_USER_PGVER[@]//.}; do
