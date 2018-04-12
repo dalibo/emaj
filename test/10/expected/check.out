@@ -143,7 +143,7 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_groups                              |    60
  _rlbk_init                                |    63
  _rlbk_planning                            |    74
- _rlbk_seq                                 |   140
+ _rlbk_seq                                 |   141
  _rlbk_session_exec                        |    65
  _rlbk_session_lock                        |    65
  _rlbk_set_batch_number                    |   162
@@ -217,4 +217,4 @@ select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
 -----------------------------
 -- execute the perl script that checks the code
 -----------------------------
-\! perl ../../tools/check_code.pl | grep -P '^WARNING:|^ERROR:'
+\! perl ${EMAJ_DIR}/tools/check_code.pl | grep -P '^WARNING:|^ERROR:'

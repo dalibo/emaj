@@ -338,11 +338,11 @@ select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, r
  myschema1      | mytbl2            | [4,)           | myGroup1         | r        |              | emaj           | myschema1_mytbl2_log           | tsplog1         | myschema1_mytbl2_log_idx           | tsplog1         | myschema1_mytbl2_log_seq           | myschema1_mytbl2_log_fnct           | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21
  myschema1      | mytbl2b           | [4,)           | myGroup1         | r        |              | emajb          | myschema1_mytbl2b_log          | tsp log'2       | myschema1_mytbl2b_log_idx          | tsp log'2       | myschema1_mytbl2b_log_seq          | myschema1_mytbl2b_log_fnct          | tbl.col20,tbl.col21                                         | col20                         | tbl.col20 = keys.col20
  myschema1      | mytbl2b_col20_seq | [4,)           | myGroup1         | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
+ myschema2      | myTbl3            | [6,)           | myGroup2         | r        |              | emajC          | myschema2_myTbl3_log           |                 | myschema2_myTbl3_log_idx           |                 | myschema2_myTbl3_log_seq           | myschema2_myTbl3_log_fnct           | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31
+ myschema2      | myTbl3_col31_seq  | [6,)           | myGroup2         | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
  myschema2      | myseq1            | [6,)           | myGroup2         | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
  myschema2      | mytbl1            | [6,)           | myGroup2         | r        |              | emaj           | myschema2_mytbl1_log           |                 | myschema2_mytbl1_log_idx           |                 | myschema2_mytbl1_log_seq           | myschema2_mytbl1_log_fnct           | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12
  myschema2      | mytbl2            | [6,)           | myGroup2         | r        |              | emaj           | myschema2_mytbl2_log           |                 | myschema2_mytbl2_log_idx           |                 | myschema2_mytbl2_log_seq           | myschema2_mytbl2_log_fnct           | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21
- myschema2      | myTbl3            | [6,)           | myGroup2         | r        |              | emajC          | myschema2_myTbl3_log           |                 | myschema2_myTbl3_log_idx           |                 | myschema2_myTbl3_log_seq           | myschema2_myTbl3_log_fnct           | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31
- myschema2      | myTbl3_col31_seq  | [6,)           | myGroup2         | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               | 
  myschema2      | mytbl4            | [6,)           | myGroup2         | r        |              | emaj           | myschema2_mytbl4_log           |                 | myschema2_mytbl4_log_idx           |                 | myschema2_mytbl4_log_seq           | myschema2_mytbl4_log_fnct           | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45           | col41                         | tbl.col41 = keys.col41
  myschema2      | mytbl5            | [6,)           | myGroup2         | r        |              | emaj           | otherPrefix4mytbl5_log         |                 | otherPrefix4mytbl5_log_idx         |                 | otherPrefix4mytbl5_log_seq         | otherPrefix4mytbl5_log_fnct         | tbl.col51,tbl.col52,tbl.col53,tbl.col54,tbl.col55           | col51                         | tbl.col51 = keys.col51
  myschema2      | mytbl6            | [6,)           | myGroup2         | r        |              | emaj           | myschema2_mytbl6_log           |                 | myschema2_mytbl6_log_idx           |                 | myschema2_mytbl6_log_seq           | myschema2_mytbl6_log_fnct           | tbl.col61,tbl.col62,tbl.col63,tbl.col64,tbl.col65,tbl.col66 | col61                         | tbl.col61 = keys.col61
@@ -592,8 +592,8 @@ select hist_function, hist_event, hist_object,
   hist_function   |   hist_event   |   hist_object    |         regexp_replace         | hist_user 
 ------------------+----------------+------------------+--------------------------------+-----------
  CREATE_GROUP     | BEGIN          | myGroup1         | rollbackable                   | postgres
- CREATE_GROUP     | SCHEMA CREATED | emajb            |                                | postgres
  CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                | postgres
+ CREATE_GROUP     | SCHEMA CREATED | emajb            |                                | postgres
  CREATE_GROUP     | END            | myGroup1         | 7 tables/sequences processed   | postgres
  CREATE_GROUP     | BEGIN          | emptyGroup       | audit_only                     | postgres
  CREATE_GROUP     | END            | emptyGroup       | 0 tables/sequences processed   | postgres
@@ -629,8 +629,8 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP       | BEGIN          | emptyGroup       |                                | postgres
  DROP_GROUP       | END            | emptyGroup       | 0 tables/sequences processed   | postgres
  CREATE_GROUP     | BEGIN          | myGroup1         | audit_only                     | postgres
- CREATE_GROUP     | SCHEMA CREATED | emajb            |                                | postgres
  CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                | postgres
+ CREATE_GROUP     | SCHEMA CREATED | emajb            |                                | postgres
  CREATE_GROUP     | END            | myGroup1         | 7 tables/sequences processed   | postgres
  START_GROUP      | BEGIN          | myGroup1         | With log reset                 | postgres
  LOCK_GROUP       | BEGIN          | myGroup1         |                                | postgres
@@ -639,8 +639,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP   | END            | myGroup1         | START_%                        | postgres
  START_GROUP      | END            | myGroup1         | 7 tables/sequences processed   | postgres
  FORCE_DROP_GROUP | BEGIN          | myGroup1         |                                | postgres
- FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                | postgres
  FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                | postgres
+ FORCE_DROP_GROUP | SCHEMA DROPPED | emajb            |                                | postgres
  FORCE_DROP_GROUP | END            | myGroup1         | 7 tables/sequences processed   | postgres
  CREATE_GROUP     | BEGIN          | myGroup2         | rollbackable                   | postgres
  CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                | postgres

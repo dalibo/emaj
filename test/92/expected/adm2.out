@@ -189,11 +189,11 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
   from emaj.emaj_detailed_log_stat_group('myGroup2','M1','M2');
  stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | myTbl3     | M1              | M2             | postgres  | INSERT    |        10
  myGroup2   | myschema2   | mytbl1     | M1              | M2             | postgres  | DELETE    |         1
  myGroup2   | myschema2   | mytbl1     | M1              | M2             | postgres  | INSERT    |        11
  myGroup2   | myschema2   | mytbl1     | M1              | M2             | postgres  | UPDATE    |         3
  myGroup2   | myschema2   | mytbl2     | M1              | M2             | postgres  | INSERT    |         2
- myGroup2   | myschema2   | myTbl3     | M1              | M2             | postgres  | INSERT    |        10
  myGroup2   | myschema2   | mytbl5     | M1              | M2             | postgres  | INSERT    |         2
  myGroup2   | myschema2   | mytbl5     | M1              | M2             | postgres  | UPDATE    |         1
  myGroup2   | myschema2   | mytbl6     | M1              | M2             | postgres  | INSERT    |         8
@@ -295,29 +295,29 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj        | myschema2_mytbl6_log_seq   |        10009 |            14 | t
  emaj        | otherPrefix4mytbl5_log_seq |        10009 |             4 | t
  emajC       | myschema2_myTbl3_log_seq   |        10009 |            10 | t
- myschema2   | myseq1                     |        10009 |          1003 | t
  myschema2   | myTbl3_col31_seq           |        10009 |            20 | t
+ myschema2   | myseq1                     |        10009 |          1003 | t
  emaj        | myschema1_mytbl1_log_seq   |        10015 |            30 | t
  emaj        | myschema1_mytbl2_log_seq   |        10015 |             3 | t
  emaj        | myschema1_mytbl4_log_seq   |        10015 |             8 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10015 |             1 | f
  emajC       | myschema1_myTbl3_log_seq   |        10015 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10015 |             3 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10015 |             1 | f
  myschema1   | myTbl3_col31_seq           |        10015 |            20 | t
+ myschema1   | mytbl2b_col20_seq          |        10015 |             3 | f
  emaj        | myschema1_mytbl1_log_seq   |        10016 |            30 | t
  emaj        | myschema1_mytbl2_log_seq   |        10016 |             3 | t
  emaj        | myschema1_mytbl4_log_seq   |        10016 |             8 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10016 |             1 | f
  emajC       | myschema1_myTbl3_log_seq   |        10016 |            20 | t
- myschema1   | mytbl2b_col20_seq          |        10016 |             3 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10016 |             1 | f
  myschema1   | myTbl3_col31_seq           |        10016 |            20 | t
+ myschema1   | mytbl2b_col20_seq          |        10016 |             3 | f
  emaj        | myschema1_mytbl1_log_seq   |        10022 |            32 | t
  emaj        | myschema1_mytbl2_log_seq   |        10022 |             3 | t
  emaj        | myschema1_mytbl4_log_seq   |        10022 |            12 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10022 |             1 | f
  emajC       | myschema1_myTbl3_log_seq   |        10022 |            20 | t
- myschema1   | mytbl2b_col20_seq          |        10022 |             3 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10022 |             1 | f
  myschema1   | myTbl3_col31_seq           |        10022 |            20 | t
+ myschema1   | mytbl2b_col20_seq          |        10022 |             3 | f
  emaj        | myschema1_mytbl1_log_seq   |        10024 |            33 | t
  emaj        | myschema1_mytbl2_log_seq   |        10024 |             3 | t
  emaj        | myschema1_mytbl4_log_seq   |        10024 |            14 | t
@@ -326,13 +326,13 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj        | myschema2_mytbl4_log_seq   |        10024 |            10 | t
  emaj        | myschema2_mytbl6_log_seq   |        10024 |            23 | t
  emaj        | otherPrefix4mytbl5_log_seq |        10024 |             7 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10024 |             1 | f
  emajC       | myschema1_myTbl3_log_seq   |        10024 |            45 | t
  emajC       | myschema2_myTbl3_log_seq   |        10024 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10024 |             3 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10024 |             1 | f
  myschema1   | myTbl3_col31_seq           |        10024 |            20 | t
- myschema2   | myseq1                     |        10024 |          1004 | f
+ myschema1   | mytbl2b_col20_seq          |        10024 |             3 | f
  myschema2   | myTbl3_col31_seq           |        10024 |            20 | t
+ myschema2   | myseq1                     |        10024 |          1004 | f
  emaj        | myschema1_mytbl1_log_seq   |        10031 |            33 | t
  emaj        | myschema1_mytbl2_log_seq   |        10031 |             3 | t
  emaj        | myschema1_mytbl4_log_seq   |        10031 |            14 | t
@@ -341,13 +341,13 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj        | myschema2_mytbl4_log_seq   |        10031 |            10 | t
  emaj        | myschema2_mytbl6_log_seq   |        10031 |            23 | t
  emaj        | otherPrefix4mytbl5_log_seq |        10031 |             7 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10031 |             1 | f
  emajC       | myschema1_myTbl3_log_seq   |        10031 |            45 | t
  emajC       | myschema2_myTbl3_log_seq   |        10031 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10031 |             3 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10031 |             1 | f
  myschema1   | myTbl3_col31_seq           |        10031 |            20 | t
- myschema2   | myseq1                     |        10031 |          1004 | f
+ myschema1   | mytbl2b_col20_seq          |        10031 |             3 | f
  myschema2   | myTbl3_col31_seq           |        10031 |            20 | t
+ myschema2   | myseq1                     |        10031 |          1004 | f
  emaj        | myschema1_mytbl1_log_seq   |        10032 |            33 | t
  emaj        | myschema1_mytbl2_log_seq   |        10032 |             3 | t
  emaj        | myschema1_mytbl4_log_seq   |        10032 |            14 | t
@@ -356,13 +356,13 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj        | myschema2_mytbl4_log_seq   |        10032 |            10 | t
  emaj        | myschema2_mytbl6_log_seq   |        10032 |            23 | t
  emaj        | otherPrefix4mytbl5_log_seq |        10032 |             7 | t
- emajb       | myschema1_mytbl2b_log_seq  |        10032 |             1 | f
  emajC       | myschema1_myTbl3_log_seq   |        10032 |            45 | t
  emajC       | myschema2_myTbl3_log_seq   |        10032 |            10 | t
- myschema1   | mytbl2b_col20_seq          |        10032 |             3 | f
+ emajb       | myschema1_mytbl2b_log_seq  |        10032 |             1 | f
  myschema1   | myTbl3_col31_seq           |        10032 |            20 | t
- myschema2   | myseq1                     |        10032 |          1004 | f
+ myschema1   | mytbl2b_col20_seq          |        10032 |             3 | f
  myschema2   | myTbl3_col31_seq           |        10032 |            20 | t
+ myschema2   | myseq1                     |        10032 |          1004 | f
 (74 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -950,29 +950,29 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema2_mytbl6_log_seq           |        10009 |            14 | t
  emaj           | otherPrefix4mytbl5_log_seq         |        10009 |             4 | t
  emajC          | myschema2_myTbl3_log_seq           |        10009 |            10 | t
- myschema2      | myseq1                             |        10009 |          1003 | t
  myschema2      | myTbl3_col31_seq                   |        10009 |            20 | t
+ myschema2      | myseq1                             |        10009 |          1003 | t
  emaj           | myschema1_mytbl1_log_seq           |        10015 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |        10015 |             3 | t
  emaj           | myschema1_mytbl4_log_seq           |        10015 |             8 | t
- emajb          | myschema1_mytbl2b_log_seq          |        10015 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |        10015 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |        10015 |             3 | f
+ emajb          | myschema1_mytbl2b_log_seq          |        10015 |             1 | f
  myschema1      | myTbl3_col31_seq                   |        10015 |            20 | t
+ myschema1      | mytbl2b_col20_seq                  |        10015 |             3 | f
  emaj           | myschema1_mytbl1_log_seq           |        10016 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |        10016 |             3 | t
  emaj           | myschema1_mytbl4_log_seq           |        10016 |             8 | t
- emajb          | myschema1_mytbl2b_log_seq          |        10016 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |        10016 |            20 | t
- myschema1      | mytbl2b_col20_seq                  |        10016 |             3 | f
+ emajb          | myschema1_mytbl2b_log_seq          |        10016 |             1 | f
  myschema1      | myTbl3_col31_seq                   |        10016 |            20 | t
+ myschema1      | mytbl2b_col20_seq                  |        10016 |             3 | f
  emaj           | myschema1_mytbl1_log_seq           |        10022 |            32 | t
  emaj           | myschema1_mytbl2_log_seq           |        10022 |             3 | t
  emaj           | myschema1_mytbl4_log_seq           |        10022 |            12 | t
- emajb          | myschema1_mytbl2b_log_seq          |        10022 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |        10022 |            20 | t
- myschema1      | mytbl2b_col20_seq                  |        10022 |             3 | f
+ emajb          | myschema1_mytbl2b_log_seq          |        10022 |             1 | f
  myschema1      | myTbl3_col31_seq                   |        10022 |            20 | t
+ myschema1      | mytbl2b_col20_seq                  |        10022 |             3 | f
  emaj           | myschema1_mytbl1_log_seq           |        10024 |            33 | t
  emaj           | myschema1_mytbl2_log_seq           |        10024 |             3 | t
  emaj           | myschema1_mytbl4_log_seq           |        10024 |            14 | t
@@ -981,13 +981,13 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema2_mytbl4_log_seq           |        10024 |            10 | t
  emaj           | myschema2_mytbl6_log_seq           |        10024 |            23 | t
  emaj           | otherPrefix4mytbl5_log_seq         |        10024 |             7 | t
- emajb          | myschema1_mytbl2b_log_seq          |        10024 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |        10024 |            45 | t
  emajC          | myschema2_myTbl3_log_seq           |        10024 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |        10024 |             3 | f
+ emajb          | myschema1_mytbl2b_log_seq          |        10024 |             1 | f
  myschema1      | myTbl3_col31_seq                   |        10024 |            20 | t
- myschema2      | myseq1                             |        10024 |          1004 | f
+ myschema1      | mytbl2b_col20_seq                  |        10024 |             3 | f
  myschema2      | myTbl3_col31_seq                   |        10024 |            20 | t
+ myschema2      | myseq1                             |        10024 |          1004 | f
  emaj           | myschema1_mytbl1_log_seq           |        10031 |            33 | t
  emaj           | myschema1_mytbl2_log_seq           |        10031 |             3 | t
  emaj           | myschema1_mytbl4_log_seq           |        10031 |            14 | t
@@ -996,13 +996,13 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema2_mytbl4_log_seq           |        10031 |            10 | t
  emaj           | myschema2_mytbl6_log_seq           |        10031 |            23 | t
  emaj           | otherPrefix4mytbl5_log_seq         |        10031 |             7 | t
- emajb          | myschema1_mytbl2b_log_seq          |        10031 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |        10031 |            45 | t
  emajC          | myschema2_myTbl3_log_seq           |        10031 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |        10031 |             3 | f
+ emajb          | myschema1_mytbl2b_log_seq          |        10031 |             1 | f
  myschema1      | myTbl3_col31_seq                   |        10031 |            20 | t
- myschema2      | myseq1                             |        10031 |          1004 | f
+ myschema1      | mytbl2b_col20_seq                  |        10031 |             3 | f
  myschema2      | myTbl3_col31_seq                   |        10031 |            20 | t
+ myschema2      | myseq1                             |        10031 |          1004 | f
  emaj           | myschema1_mytbl1_log_seq           |        10032 |            33 | t
  emaj           | myschema1_mytbl2_log_seq           |        10032 |             3 | t
  emaj           | myschema1_mytbl4_log_seq           |        10032 |            14 | t
@@ -1011,13 +1011,13 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema2_mytbl4_log_seq           |        10032 |            10 | t
  emaj           | myschema2_mytbl6_log_seq           |        10032 |            23 | t
  emaj           | otherPrefix4mytbl5_log_seq         |        10032 |             7 | t
- emajb          | myschema1_mytbl2b_log_seq          |        10032 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |        10032 |            45 | t
  emajC          | myschema2_myTbl3_log_seq           |        10032 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |        10032 |             3 | f
+ emajb          | myschema1_mytbl2b_log_seq          |        10032 |             1 | f
  myschema1      | myTbl3_col31_seq                   |        10032 |            20 | t
- myschema2      | myseq1                             |        10032 |          1004 | f
+ myschema1      | mytbl2b_col20_seq                  |        10032 |             3 | f
  myschema2      | myTbl3_col31_seq                   |        10032 |            20 | t
+ myschema2      | myseq1                             |        10032 |          1004 | f
  emaj           | phil's schema3_myTbl2\_log_seq     |        10042 |             1 | f
  emaj #'3       | phil's schema3_phil's tbl1_log_seq |        10042 |             1 | f
  phil's schema3 | myTbl2\_col21_seq                  |        10042 |             1 | f
@@ -1047,16 +1047,16 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
  rlbt_rlbk_id |  rlbt_step  | rlbt_schema | rlbt_table |     rlbt_fkey     | rlbt_quantity 
 --------------+-------------+-------------+------------+-------------------+---------------
          6005 | DROP_FK     |             |            |                   |             1
-         6005 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6005 | RLBK_TABLE  | myschema1   | myTbl3     |                   |             2
+         6005 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6005 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             1
          6005 | CTRL+DBLINK |             |            |                   |             4
          6006 | DIS_LOG_TRG |             |            |                   |             2
          6006 | DROP_FK     |             |            |                   |             1
-         6006 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6006 | RLBK_TABLE  | myschema1   | myTbl3     |                   |             2
-         6006 | DELETE_LOG  | myschema1   | mytbl1     |                   |             2
+         6006 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6006 | DELETE_LOG  | myschema1   | myTbl3     |                   |             2
+         6006 | DELETE_LOG  | myschema1   | mytbl1     |                   |             2
          6006 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             1
          6006 | ENA_LOG_TRG |             |            |                   |             2
          6006 | CTRL+DBLINK |             |            |                   |            10
@@ -1129,8 +1129,8 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
         10005 | CTRL+DBLINK |             |            |                   |            12
         10006 | DROP_FK     |             |            |                   |             1
         10006 | SET_FK_DEF  |             |            |                   |             1
-        10006 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             1
         10006 | RLBK_TABLE  | myschema1   | myTbl3     |                   |            10
+        10006 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             1
         10006 | RLBK_TABLE  | myschema1   | mytbl4     |                   |             2
         10006 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |             2
         10006 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             0
@@ -1282,16 +1282,16 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
  rlbt_rlbk_id |  rlbt_step  | rlbt_schema | rlbt_table |     rlbt_fkey     | rlbt_quantity 
 --------------+-------------+-------------+------------+-------------------+---------------
          6005 | DROP_FK     |             |            |                   |             1
-         6005 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6005 | RLBK_TABLE  | myschema1   | myTbl3     |                   |             2
+         6005 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6005 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             1
          6005 | CTRL+DBLINK |             |            |                   |             4
          6006 | DIS_LOG_TRG |             |            |                   |             2
          6006 | DROP_FK     |             |            |                   |             1
-         6006 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6006 | RLBK_TABLE  | myschema1   | myTbl3     |                   |             2
-         6006 | DELETE_LOG  | myschema1   | mytbl1     |                   |             2
+         6006 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             2
          6006 | DELETE_LOG  | myschema1   | myTbl3     |                   |             2
+         6006 | DELETE_LOG  | myschema1   | mytbl1     |                   |             2
          6006 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             1
          6006 | ENA_LOG_TRG |             |            |                   |             2
          6006 | CTRL+DBLINK |             |            |                   |            10
@@ -1364,8 +1364,8 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
         10005 | CTRL+DBLINK |             |            |                   |            12
         10006 | DROP_FK     |             |            |                   |             1
         10006 | SET_FK_DEF  |             |            |                   |             1
-        10006 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             1
         10006 | RLBK_TABLE  | myschema1   | myTbl3     |                   |            10
+        10006 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             1
         10006 | RLBK_TABLE  | myschema1   | mytbl4     |                   |             2
         10006 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |             2
         10006 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |             0
@@ -1392,15 +1392,15 @@ update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 <= 13;
 -- reset directory for snaps
 \! rm -Rf /tmp/emaj_test/snaps
 \! mkdir /tmp/emaj_test/snaps
-mkdir: cannot create directory ‘/tmp/emaj_test/snaps’: No such file or directory
+mkdir: cannot create directory '/tmp/emaj_test/snaps': No such file or directory
 -- ... and snap the all groups
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','CSV HEADER');
 ERROR:  could not open file "/tmp/emaj_test/snaps/myschema1_myTbl3_col31_seq.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema1."myTbl3_col31_seq") TO '/tmp/emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' CSV HEADER"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 87 at EXECUTE statement
 select emaj.emaj_snap_group('myGroup2','/tmp/emaj_test/snaps','CSV HEADER');
-ERROR:  could not open file "/tmp/emaj_test/snaps/myschema2_myseq1.snap" for writing: No such file or directory
-CONTEXT:  SQL statement "COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM myschema2.myseq1) TO '/tmp/emaj_test/snaps/myschema2_myseq1.snap' CSV HEADER"
+ERROR:  could not open file "/tmp/emaj_test/snaps/myschema2_myTbl3.snap" for writing: No such file or directory
+CONTEXT:  SQL statement "COPY (SELECT * FROM myschema2."myTbl3" ORDER BY col31) TO '/tmp/emaj_test/snaps/myschema2_myTbl3.snap' CSV HEADER"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 87 at EXECUTE statement
 select emaj.emaj_snap_group('phil''s group#3",','/tmp/emaj_test/snaps','CSV HEADER');
 ERROR:  could not open file "/tmp/emaj_test/snaps/phil's schema3_myTbl2\.snap" for writing: No such file or directory
@@ -1411,7 +1411,7 @@ ls: cannot access '/tmp/emaj_test/snaps': No such file or directory
 -- reset directory for emaj_gen_sql_group tests
 \! rm -Rf /tmp/emaj_test/sql_scripts
 \! mkdir /tmp/emaj_test/sql_scripts
-mkdir: cannot create directory ‘/tmp/emaj_test/sql_scripts’: No such file or directory
+mkdir: cannot create directory '/tmp/emaj_test/sql_scripts': No such file or directory
 -- generate sql script for each active group (and check the result with detailed log statistics + number of sequences)
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
 ERROR:  _gen_sql_groups: The file "/tmp/emaj_test/sql_scripts/myGroup1.sql" cannot be used as script output file.
@@ -1444,22 +1444,22 @@ select sum(stat_rows) + 1 as check from emaj.emaj_detailed_log_stat_group('phil'
 
 -- process \\ in script files
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i_s -s 's/\\\\/\\/g'
-find: ‘/tmp/emaj_test/sql_scripts’: No such file or directory
+find: '/tmp/emaj_test/sql_scripts': No such file or directory
 sed: no input files
 -- comment transaction commands for the need of the current test
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/^BEGIN/--BEGIN/;s/^COMMIT/--COMMIT/'
-find: ‘/tmp/emaj_test/sql_scripts’: No such file or directory
+find: '/tmp/emaj_test/sql_scripts': No such file or directory
 sed: no input files
 -- mask timestamp in initial comment
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
-find: ‘/tmp/emaj_test/sql_scripts’: No such file or directory
+find: '/tmp/emaj_test/sql_scripts': No such file or directory
 sed: no input files
 \! ls /tmp/emaj_test/sql_scripts
 ls: cannot access '/tmp/emaj_test/sql_scripts': No such file or directory
 -- reset directory for second set of snaps
 \! rm -Rf /tmp/emaj_test/snaps2
 \! mkdir /tmp/emaj_test/snaps2
-mkdir: cannot create directory ‘/tmp/emaj_test/snaps2’: No such file or directory
+mkdir: cannot create directory '/tmp/emaj_test/snaps2': No such file or directory
 -- in a single transaction and as superuser:
 --   rollback groups, replay updates with generated scripts, snap groups again and cancel the transaction
 reset role;
@@ -2063,103 +2063,105 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj        | myschema1_mytbl1_log_seq  |        10015 |            30 | t
  emaj        | myschema1_mytbl2_log_seq  |        10015 |             3 | t
  emaj        | myschema1_mytbl4_log_seq  |        10015 |             8 | t
- emajb       | myschema1_mytbl2b_log_seq |        10015 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10015 |            10 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10015 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10016 |            30 | t
  emaj        | myschema1_mytbl2_log_seq  |        10016 |             3 | t
  emaj        | myschema1_mytbl4_log_seq  |        10016 |             8 | t
- emajb       | myschema1_mytbl2b_log_seq |        10016 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10016 |            20 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10016 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10022 |            32 | t
  emaj        | myschema1_mytbl2_log_seq  |        10022 |             3 | t
  emaj        | myschema1_mytbl4_log_seq  |        10022 |            12 | t
- emajb       | myschema1_mytbl2b_log_seq |        10022 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10022 |            20 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10022 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10024 |            33 | t
  emaj        | myschema1_mytbl2_log_seq  |        10024 |             3 | t
  emaj        | myschema1_mytbl4_log_seq  |        10024 |            14 | t
- emajb       | myschema1_mytbl2b_log_seq |        10024 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10024 |            45 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10024 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10031 |            33 | t
  emaj        | myschema1_mytbl2_log_seq  |        10031 |             3 | t
  emaj        | myschema1_mytbl4_log_seq  |        10031 |            14 | t
- emajb       | myschema1_mytbl2b_log_seq |        10031 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10031 |            45 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10031 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10032 |            33 | t
  emaj        | myschema1_mytbl2_log_seq  |        10032 |             3 | t
  emaj        | myschema1_mytbl4_log_seq  |        10032 |            14 | t
- emajb       | myschema1_mytbl2b_log_seq |        10032 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10032 |            45 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10032 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10060 |            53 | t
  emaj        | myschema1_mytbl2_log_seq  |        10060 |             3 | t
  emaj        | myschema1_mytbl4_log_seq  |        10060 |            14 | t
- emajb       | myschema1_mytbl2b_log_seq |        10060 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10060 |            45 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10060 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10063 |            79 | t
  emaj        | myschema1_mytbl2_log_seq  |        10063 |             6 | t
  emaj        | myschema1_mytbl4_log_seq  |        10063 |            14 | t
- emajb       | myschema1_mytbl2b_log_seq |        10063 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10063 |            45 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10063 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10064 |            79 | t
  emaj        | myschema1_mytbl2_log_seq  |        10064 |             7 | t
  emaj        | myschema1_mytbl4_log_seq  |        10064 |            14 | t
- emajb       | myschema1_mytbl2b_log_seq |        10064 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10064 |            45 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10064 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10068 |            79 | t
  emaj        | myschema1_mytbl2_log_seq  |        10068 |             7 | t
  emaj        | myschema1_mytbl4_log_seq  |        10068 |            17 | t
- emajb       | myschema1_mytbl2b_log_seq |        10068 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10068 |            65 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10068 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10069 |            79 | t
  emaj        | myschema1_mytbl2_log_seq  |        10069 |             7 | t
  emaj        | myschema1_mytbl4_log_seq  |        10069 |            17 | t
- emajb       | myschema1_mytbl2b_log_seq |        10069 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10069 |            65 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10069 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10076 |           105 | t
  emaj        | myschema1_mytbl2_log_seq  |        10076 |            12 | t
  emaj        | myschema1_mytbl4_log_seq  |        10076 |            20 | t
- emajb       | myschema1_mytbl2b_log_seq |        10076 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10076 |            85 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10076 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10077 |           105 | t
  emaj        | myschema1_mytbl2_log_seq  |        10077 |            12 | t
  emaj        | myschema1_mytbl4_log_seq  |        10077 |            20 | t
- emajb       | myschema1_mytbl2b_log_seq |        10077 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10077 |            85 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10077 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10082 |           127 | t
  emaj        | myschema1_mytbl2_log_seq  |        10082 |            12 | t
  emaj        | myschema1_mytbl4_log_seq  |        10082 |            23 | t
- emajb       | myschema1_mytbl2b_log_seq |        10082 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10082 |            85 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10082 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10083 |           127 | t
  emaj        | myschema1_mytbl2_log_seq  |        10083 |            12 | t
  emaj        | myschema1_mytbl4_log_seq  |        10083 |            23 | t
- emajb       | myschema1_mytbl2b_log_seq |        10083 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10083 |            85 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10083 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10086 |           153 | t
  emaj        | myschema1_mytbl2_log_seq  |        10086 |            15 | t
  emaj        | myschema1_mytbl4_log_seq  |        10086 |            23 | t
- emajb       | myschema1_mytbl2b_log_seq |        10086 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10086 |            85 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10086 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10087 |           153 | t
  emaj        | myschema1_mytbl2_log_seq  |        10087 |            15 | t
  emaj        | myschema1_mytbl4_log_seq  |        10087 |            23 | t
- emajb       | myschema1_mytbl2b_log_seq |        10087 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10087 |            85 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10087 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10088 |           153 | t
  emaj        | myschema1_mytbl2_log_seq  |        10088 |            16 | t
  emaj        | myschema1_mytbl4_log_seq  |        10088 |            23 | t
- emajb       | myschema1_mytbl2b_log_seq |        10088 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10088 |            85 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10088 |             1 | f
  emaj        | myschema1_mytbl1_log_seq  |        10089 |           164 | t
  emaj        | myschema1_mytbl2_log_seq  |        10089 |            18 | t
  emaj        | myschema1_mytbl4_log_seq  |        10089 |            23 | t
- emajb       | myschema1_mytbl2b_log_seq |        10089 |             1 | f
  emajC       | myschema1_myTbl3_log_seq  |        10089 |            85 | t
+ emajb       | myschema1_mytbl2b_log_seq |        10089 |             1 | f
 (95 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
+ myschema1   | myTbl3     |              10064 |            10068 |             20
+ myschema1   | myTbl3     |              10069 |            10076 |             20
  myschema1   | mytbl1     |              10016 |            10021 |              1
  myschema1   | mytbl1     |              10032 |            10049 |             20
  myschema1   | mytbl1     |              10060 |            10063 |             26
@@ -2169,8 +2171,6 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
  myschema1   | mytbl2     |              10060 |            10063 |              3
  myschema1   | mytbl2     |              10069 |            10076 |              5
  myschema1   | mytbl2     |              10083 |            10086 |              3
- myschema1   | myTbl3     |              10064 |            10068 |             20
- myschema1   | myTbl3     |              10069 |            10076 |             20
  myschema1   | mytbl4     |              10016 |            10021 |              2
  myschema1   | mytbl4     |              10064 |            10068 |              3
  myschema1   | mytbl4     |              10069 |            10076 |              3
@@ -2507,8 +2507,8 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
         10005 | CTRL+DBLINK |                |                                                                 |                   |                   |              |                                                                                                                                                                                             |                      12 |                    2 |              
         10006 | DROP_FK     | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |                 2 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         10006 | SET_FK_DEF  | myschema1      | mytbl4                                                          | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                                                                             |                         |                    2 |              
-        10006 | RLBK_TABLE  | myschema1      | mytbl1                                                          |                   |                 2 |            1 |                                                                                                                                                                                             |                       1 |                    1 |             1
         10006 | RLBK_TABLE  | myschema1      | myTbl3                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                      10 |                    1 |            10
+        10006 | RLBK_TABLE  | myschema1      | mytbl1                                                          |                   |                 2 |            1 |                                                                                                                                                                                             |                       1 |                    1 |             1
         10006 | RLBK_TABLE  | myschema1      | mytbl4                                                          |                   |                 2 |            1 |                                                                                                                                                                                             |                       2 |                    1 |             2
         10006 | SET_FK_IMM  | myschema1      | mytbl4                                                          | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                                                                             |                       2 |                    2 |              
         10006 | ADD_FK      | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED                                                     |                       0 |                    3 |              
@@ -2573,9 +2573,9 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
         10020 | CTRL+DBLINK |                |                                                                 |                   |                   |              |                                                                                                                                                                                             |                       3 |                    2 |              
         10021 | DROP_FK     | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |                 1 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         10021 | SET_FK_DEF  | myschema1      | mytbl4                                                          | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                                                                             |                         |                    2 |              
+        10021 | RLBK_TABLE  | myschema1      | myTbl3                                                          |                   |                 2 |            1 |                                                                                                                                                                                             |                      10 |                    1 |            10
         10021 | RLBK_TABLE  | myschema1      | mytbl1                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                      15 |                    1 |            13
         10021 | RLBK_TABLE  | myschema1      | mytbl2                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                       2 |                    1 |             1
-        10021 | RLBK_TABLE  | myschema1      | myTbl3                                                          |                   |                 2 |            1 |                                                                                                                                                                                             |                      10 |                    1 |            10
         10021 | RLBK_TABLE  | myschema1      | mytbl4                                                          |                   |                 1 |            1 |                                                                                                                                                                                             |                       2 |                    1 |             1
         10021 | SET_FK_IMM  | myschema1      | mytbl4                                                          | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                                                                             |                       4 |                    2 |              
         10021 | ADD_FK      | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |                 1 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED                                                     |                       0 |                    3 |              
@@ -2693,8 +2693,8 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  CTRL+DBLINK |                |                                                                 |                   |        10005 |            12
  DROP_FK     |                |                                                                 |                   |        10006 |             1
  SET_FK_DEF  |                |                                                                 |                   |        10006 |             1
- RLBK_TABLE  | myschema1      | mytbl1                                                          |                   |        10006 |             1
  RLBK_TABLE  | myschema1      | myTbl3                                                          |                   |        10006 |            10
+ RLBK_TABLE  | myschema1      | mytbl1                                                          |                   |        10006 |             1
  RLBK_TABLE  | myschema1      | mytbl4                                                          |                   |        10006 |             2
  SET_FK_IMM  | myschema1      | mytbl4                                                          | mytbl4_col43_fkey |        10006 |             2
  ADD_FK      | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |        10006 |             0
@@ -2753,9 +2753,9 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  CTRL+DBLINK |                |                                                                 |                   |        10020 |             3
  DROP_FK     |                |                                                                 |                   |        10021 |             1
  SET_FK_DEF  |                |                                                                 |                   |        10021 |             1
+ RLBK_TABLE  | myschema1      | myTbl3                                                          |                   |        10021 |            10
  RLBK_TABLE  | myschema1      | mytbl1                                                          |                   |        10021 |            15
  RLBK_TABLE  | myschema1      | mytbl2                                                          |                   |        10021 |             2
- RLBK_TABLE  | myschema1      | myTbl3                                                          |                   |        10021 |            10
  RLBK_TABLE  | myschema1      | mytbl4                                                          |                   |        10021 |             2
  SET_FK_IMM  | myschema1      | mytbl4                                                          | mytbl4_col43_fkey |        10021 |             4
  ADD_FK      | myschema1      | mytbl4                                                          | mytbl4_col44_fkey |        10021 |             0
@@ -2948,8 +2948,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10071 | ROLLBACK_TABLE           | END                     | myschema2.mytbl6                                                                 | 3 rolled back primary keys                                                              | postgres
    10072 | ROLLBACK_TABLE           | BEGIN                   | myschema2.mytbl5                                                                 | All log rows with emaj_gid > 100078 and <= 100086                                       | postgres
    10073 | ROLLBACK_TABLE           | END                     | myschema2.mytbl5                                                                 | 1 rolled back primary keys                                                              | postgres
-   10074 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 | RESTART 1001 MAXVALUE 2000 CYCLE                                                        | postgres
-   10075 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10074 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10075 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 | RESTART 1001 MAXVALUE 2000 CYCLE                                                        | postgres
    10076 | SET_MARK_GROUP           | BEGIN                   | myGroup2                                                                         | RLBK_M2_%_DONE                                                                          | postgres
    10077 | SET_MARK_GROUP           | END                     | myGroup2                                                                         | RLBK_M2_%_DONE                                                                          | postgres
    10078 | ROLLBACK_GROUP           | NOTICE                  | Rollback id 10000                                                                | 3 / 6 tables effectively processed.                                                     | postgres
@@ -2967,8 +2967,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10090 | ROLLBACK_TABLE           | END                     | myschema2.mytbl4                                                                 | 2 rolled back primary keys                                                              | postgres
    10091 | ROLLBACK_TABLE           | BEGIN                   | myschema2.mytbl5                                                                 | All log rows with emaj_gid > 100086 and <= 100092                                       | postgres
    10092 | ROLLBACK_TABLE           | END                     | myschema2.mytbl5                                                                 | 1 rolled back primary keys                                                              | postgres
-   10093 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                                     | postgres
-   10094 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10093 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10094 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                                     | postgres
    10095 | SET_MARK_GROUP           | BEGIN                   | myGroup2                                                                         | RLBK_M3_%_DONE                                                                          | postgres
    10096 | SET_MARK_GROUP           | END                     | myGroup2                                                                         | RLBK_M3_%_DONE                                                                          | postgres
    10097 | ROLLBACK_GROUP           | NOTICE                  | Rollback id 10001                                                                | 3 / 6 tables effectively processed.                                                     | postgres
@@ -3014,8 +3014,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10137 | ROLLBACK_TABLE           | END                     | myschema2.mytbl4                                                                 | 2 rolled back primary keys                                                              | postgres
    10138 | ROLLBACK_TABLE           | BEGIN                   | myschema2.mytbl5                                                                 | All log rows with emaj_gid > 100078 and <= 100121                                       | postgres
    10139 | ROLLBACK_TABLE           | END                     | myschema2.mytbl5                                                                 | 1 rolled back primary keys                                                              | postgres
-   10140 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 | RESTART 1001 MAXVALUE 2000 CYCLE                                                        | postgres
-   10141 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10140 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10141 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 | RESTART 1001 MAXVALUE 2000 CYCLE                                                        | postgres
    10142 | SET_MARK_GROUP           | BEGIN                   | myGroup2                                                                         | RLBK_M2_%_DONE                                                                          | postgres
    10143 | SET_MARK_GROUP           | END                     | myGroup2                                                                         | RLBK_M2_%_DONE                                                                          | postgres
    10144 | ROLLBACK_GROUP           | NOTICE                  | Rollback id 10003                                                                | 3 / 6 tables effectively processed.                                                     | postgres
@@ -3038,8 +3038,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10161 | ROLLBACK_GROUP           | MARK DELETED            | myGroup2                                                                         | mark RLBK_M3_%_DONE is deleted                                                          | postgres
    10162 | ROLLBACK_GROUP           | MARK DELETED            | myGroup2                                                                         | mark RLBK_M2_%_START is deleted                                                         | postgres
    10163 | ROLLBACK_GROUP           | MARK DELETED            | myGroup2                                                                         | mark RLBK_M2_%_DONE is deleted                                                          | postgres
-   10164 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                                     | postgres
-   10165 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10164 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10165 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                                     | postgres
    10166 | ROLLBACK_GROUP           | NOTICE                  | Rollback id 10004                                                                | 3 / 6 tables effectively processed.                                                     | postgres
    10167 | ROLLBACK_GROUP           | NOTICE                  | Rollback id 10004                                                                | 2 sequences processed.                                                                  | postgres
    10168 | DBLINK_CLOSE_CNX         |                         | rlbk#1                                                                           |                                                                                         | postgres
@@ -3115,8 +3115,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10241 | SET_MARK_GROUPS          | END                     | myGroup1,myGroup2                                                                | RLBK_Multi-1_%_START                                                                    | postgres
    10242 | ROLLBACK_SEQUENCE        |                         | myschema1."myTbl3_col31_seq"                                                     |                                                                                         | postgres
    10243 | ROLLBACK_SEQUENCE        |                         | myschema1.mytbl2b_col20_seq                                                      |                                                                                         | postgres
-   10244 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 |                                                                                         | postgres
-   10245 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10244 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10245 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 |                                                                                         | postgres
    10246 | SET_MARK_GROUPS          | BEGIN                   | myGroup1,myGroup2                                                                | RLBK_Multi-1_%_DONE                                                                     | postgres
    10247 | SET_MARK_GROUPS          | END                     | myGroup1,myGroup2                                                                | RLBK_Multi-1_%_DONE                                                                     | postgres
    10248 | ROLLBACK_GROUPS          | NOTICE                  | Rollback id 10007                                                                | 0 / 11 tables effectively processed.                                                    | postgres
@@ -3133,8 +3133,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10259 | ROLLBACK_GROUPS          | MARK DELETED            | myGroup2                                                                         | mark RLBK_Multi-1_%_DONE is deleted                                                     | postgres
    10260 | ROLLBACK_SEQUENCE        |                         | myschema1."myTbl3_col31_seq"                                                     |                                                                                         | postgres
    10261 | ROLLBACK_SEQUENCE        |                         | myschema1.mytbl2b_col20_seq                                                      |                                                                                         | postgres
-   10262 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 |                                                                                         | postgres
-   10263 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10262 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10263 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 |                                                                                         | postgres
    10264 | ROLLBACK_GROUPS          | NOTICE                  | Rollback id 10008                                                                | 0 / 11 tables effectively processed.                                                    | postgres
    10265 | ROLLBACK_GROUPS          | NOTICE                  | Rollback id 10008                                                                | 4 sequences processed.                                                                  | postgres
    10266 | DBLINK_CLOSE_CNX         |                         | rlbk#1                                                                           |                                                                                         | postgres
@@ -3147,8 +3147,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10273 | ROLLBACK_GROUPS          | MARK DELETED            | myGroup2                                                                         | mark Multi-2 is deleted                                                                 | postgres
    10274 | ROLLBACK_SEQUENCE        |                         | myschema1."myTbl3_col31_seq"                                                     |                                                                                         | postgres
    10275 | ROLLBACK_SEQUENCE        |                         | myschema1.mytbl2b_col20_seq                                                      |                                                                                         | postgres
-   10276 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 |                                                                                         | postgres
-   10277 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10276 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10277 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 |                                                                                         | postgres
    10278 | ROLLBACK_GROUPS          | NOTICE                  | Rollback id 10009                                                                | 0 / 11 tables effectively processed.                                                    | postgres
    10279 | ROLLBACK_GROUPS          | NOTICE                  | Rollback id 10009                                                                | 4 sequences processed.                                                                  | postgres
    10280 | DBLINK_CLOSE_CNX         |                         | rlbk#1                                                                           |                                                                                         | postgres
@@ -3178,8 +3178,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
    10305 | DBLINK_OPEN_CNX          |                         | rlbk#1                                                                           | Status = 1                                                                              | postgres
    10306 | LOCK_GROUP               | BEGIN                   | myGroup2                                                                         | Rollback session #1                                                                     | postgres
    10307 | LOCK_GROUP               | END                     | myGroup2                                                                         | Rollback session #1: 6 tables locked, 0 deadlock(s)                                     | postgres
-   10308 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 |                                                                                         | postgres
-   10309 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10308 | ROLLBACK_SEQUENCE        |                         | myschema2."myTbl3_col31_seq"                                                     |                                                                                         | postgres
+   10309 | ROLLBACK_SEQUENCE        |                         | myschema2.myseq1                                                                 |                                                                                         | postgres
    10310 | ROLLBACK_GROUP           | NOTICE                  | Rollback id 10010                                                                | 0 / 6 tables effectively processed.                                                     | postgres
    10311 | ROLLBACK_GROUP           | NOTICE                  | Rollback id 10010                                                                | 2 sequences processed.                                                                  | postgres
    10312 | DBLINK_CLOSE_CNX         |                         | rlbk#1                                                                           |                                                                                         | postgres

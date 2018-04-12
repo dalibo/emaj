@@ -46,4 +46,4 @@ $$;
 --------------------------------------------
 -- Dump the regression database (once the test roles have been dropped)
 --------------------------------------------
-\! RTVBIN.lnk/pg_dump regression >results/regression.dump
+\! ${EMAJ_DIR}/test/${PGVER}/bin/pg_dump regression >${EMAJ_DIR}/test/${PGVER}/results/regression.dump

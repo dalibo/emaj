@@ -898,25 +898,25 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl1_log_seq           |         3030 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |         3030 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |         3030 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3030 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         3030 |             1 | f
- myschema1      | mytbl2b_col20_seq                  |         3030 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         3030 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         3030 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3030 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl6_log_seq           |         3031 |             1 | f
  emaj           | otherPrefix4mytbl5_log_seq         |         3031 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
- myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
+ myschema2      | myseq1                             |         3031 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3032 |            15 | t
  emaj           | myschema1_mytbl2_log_seq           |         3032 |             6 | t
  emaj           | myschema1_mytbl4_log_seq           |         3032 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3032 |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |         3032 |             1 | f
- myschema1      | mytbl2b_col20_seq                  |         3032 |             6 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3032 |             6 | t
  myschema1      | myTbl3_col31_seq                   |         3032 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3032 |             6 | t
 (26 rows)
 
 -- inserts/updates/deletes in myTbl3 and myTbl4
@@ -965,32 +965,32 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl1_log_seq           |         3030 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |         3030 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |         3030 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3030 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         3030 |             1 | f
- myschema1      | mytbl2b_col20_seq                  |         3030 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         3030 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         3030 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3030 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl6_log_seq           |         3031 |             1 | f
  emaj           | otherPrefix4mytbl5_log_seq         |         3031 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
- myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
+ myschema2      | myseq1                             |         3031 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3032 |            15 | t
  emaj           | myschema1_mytbl2_log_seq           |         3032 |             6 | t
  emaj           | myschema1_mytbl4_log_seq           |         3032 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3032 |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |         3032 |             1 | f
- myschema1      | mytbl2b_col20_seq                  |         3032 |             6 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3032 |             6 | t
  myschema1      | myTbl3_col31_seq                   |         3032 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3032 |             6 | t
  emaj           | myschema1_mytbl1_log_seq           |         3033 |            15 | t
  emaj           | myschema1_mytbl2_log_seq           |         3033 |             6 | t
  emaj           | myschema1_mytbl4_log_seq           |         3033 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3033 |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |         3033 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |         3033 |             6 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3033 |             6 | t
  myschema1      | myTbl3_col31_seq                   |         3033 |            10 | t
+ myschema1      | mytbl2b_col20_seq                  |         3033 |             6 | t
 (33 rows)
 
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl1_log order by emaj_gid, emaj_tuple desc;
@@ -1095,25 +1095,25 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl1_log_seq           |         3030 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |         3030 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |         3030 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3030 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         3030 |             1 | f
- myschema1      | mytbl2b_col20_seq                  |         3030 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         3030 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         3030 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3030 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl6_log_seq           |         3031 |             1 | f
  emaj           | otherPrefix4mytbl5_log_seq         |         3031 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
- myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
+ myschema2      | myseq1                             |         3031 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3032 |            15 | t
  emaj           | myschema1_mytbl2_log_seq           |         3032 |             6 | t
  emaj           | myschema1_mytbl4_log_seq           |         3032 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3032 |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |         3032 |             1 | f
- myschema1      | mytbl2b_col20_seq                  |         3032 |             6 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3032 |             6 | t
  myschema1      | myTbl3_col31_seq                   |         3032 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3032 |             6 | t
 (26 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1181,34 +1181,34 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema1_mytbl1_log_seq           |         3030 |             1 | f
  emaj           | myschema1_mytbl2_log_seq           |         3030 |             1 | f
  emaj           | myschema1_mytbl4_log_seq           |         3030 |             1 | f
- emajb          | myschema1_mytbl2b_log_seq          |         3030 |             1 | f
  emajC          | myschema1_myTbl3_log_seq           |         3030 |             1 | f
- myschema1      | mytbl2b_col20_seq                  |         3030 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         3030 |             1 | f
  myschema1      | myTbl3_col31_seq                   |         3030 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3030 |             1 | f
  emaj           | myschema2_mytbl1_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl2_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl4_log_seq           |         3031 |             1 | f
  emaj           | myschema2_mytbl6_log_seq           |         3031 |             1 | f
  emaj           | otherPrefix4mytbl5_log_seq         |         3031 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
- myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
+ myschema2      | myseq1                             |         3031 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3036 |            15 | t
  emaj           | myschema1_mytbl2_log_seq           |         3036 |             6 | t
  emaj           | myschema1_mytbl4_log_seq           |         3036 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3036 |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |         3036 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |         3036 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         3036 |             6 | t
  myschema1      | myTbl3_col31_seq                   |         3036 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3036 |             1 | f
 (26 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
+ myschema1   | myTbl3     |               3032 |             3034 |             10
  myschema1   | mytbl1     |               3030 |             3035 |             15
  myschema1   | mytbl2     |               3030 |             3035 |              6
  myschema1   | mytbl2b    |               3030 |             3035 |              6
- myschema1   | myTbl3     |               3032 |             3034 |             10
  myschema1   | mytbl4     |               3032 |             3034 |              2
 (5 rows)
 
@@ -1366,29 +1366,29 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema2_mytbl6_log_seq           |         3031 |             1 | f
  emaj           | otherPrefix4mytbl5_log_seq         |         3031 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
- myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
+ myschema2      | myseq1                             |         3031 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3037 |            15 | t
  emaj           | myschema1_mytbl2_log_seq           |         3037 |             6 | t
  emaj           | myschema1_mytbl4_log_seq           |         3037 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |         3037 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
  myschema1      | myTbl3_col31_seq                   |         3037 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |         3038 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3038 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3038 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3038 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3038 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
  emaj           | myschema1_mytbl1_log_seq           |         3039 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3039 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3039 |             3 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3039 |            20 | t
- myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3039 |            10 | t
+ myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
 (33 rows)
 
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema1_mytbl1_log order by emaj_gid, emaj_tuple desc;
@@ -1487,43 +1487,43 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema2_mytbl6_log_seq           |         3031 |             1 | f
  emaj           | otherPrefix4mytbl5_log_seq         |         3031 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
- myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
+ myschema2      | myseq1                             |         3031 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3037 |            15 | t
  emaj           | myschema1_mytbl2_log_seq           |         3037 |             6 | t
  emaj           | myschema1_mytbl4_log_seq           |         3037 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |         3037 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
  myschema1      | myTbl3_col31_seq                   |         3037 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |         3038 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3038 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3038 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3038 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3038 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
  emaj           | myschema1_mytbl1_log_seq           |         3039 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3039 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3039 |             3 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3039 |            20 | t
- myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3039 |            10 | t
+ myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
  emaj           | myschema1_mytbl1_log_seq           |         3040 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3040 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3040 |             3 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3040 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3040 |            20 | t
- myschema1      | mytbl2b_col20_seq                  |         3040 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3040 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3040 |            10 | t
+ myschema1      | mytbl2b_col20_seq                  |         3040 |             2 | t
  emaj           | myschema1_mytbl1_log_seq           |         3041 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3041 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3041 |             4 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3041 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3041 |            30 | t
- myschema1      | mytbl2b_col20_seq                  |         3041 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3041 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3041 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3041 |             2 | t
 (47 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1613,57 +1613,57 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema2_mytbl6_log_seq           |         3031 |             1 | f
  emaj           | otherPrefix4mytbl5_log_seq         |         3031 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
- myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
+ myschema2      | myseq1                             |         3031 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3037 |            15 | t
  emaj           | myschema1_mytbl2_log_seq           |         3037 |             6 | t
  emaj           | myschema1_mytbl4_log_seq           |         3037 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |         3037 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
  myschema1      | myTbl3_col31_seq                   |         3037 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |         3038 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3038 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3038 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3038 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3038 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
  emaj           | myschema1_mytbl1_log_seq           |         3039 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3039 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3039 |             3 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3039 |            20 | t
- myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3039 |            10 | t
+ myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
  emaj           | myschema1_mytbl1_log_seq           |         3040 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3040 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3040 |             3 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3040 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3040 |            20 | t
- myschema1      | mytbl2b_col20_seq                  |         3040 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3040 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3040 |            10 | t
+ myschema1      | mytbl2b_col20_seq                  |         3040 |             2 | t
  emaj           | myschema1_mytbl1_log_seq           |         3041 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3041 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3041 |             4 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3041 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3041 |            30 | t
- myschema1      | mytbl2b_col20_seq                  |         3041 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3041 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3041 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3041 |             2 | t
  emaj           | myschema1_mytbl1_log_seq           |         3042 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3042 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3042 |             4 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3042 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3042 |            30 | t
- myschema1      | mytbl2b_col20_seq                  |         3042 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3042 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3042 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3042 |             2 | t
  emaj           | myschema1_mytbl1_log_seq           |         3043 |            40 | t
  emaj           | myschema1_mytbl2_log_seq           |         3043 |            10 | t
  emaj           | myschema1_mytbl4_log_seq           |         3043 |             4 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3043 |            10 | t
  emajC          | myschema1_myTbl3_log_seq           |         3043 |            30 | t
- myschema1      | mytbl2b_col20_seq                  |         3043 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         3043 |            10 | t
  myschema1      | myTbl3_col31_seq                   |         3043 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3043 |             1 | f
 (61 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1775,38 +1775,38 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj           | myschema2_mytbl6_log_seq           |         3031 |             1 | f
  emaj           | otherPrefix4mytbl5_log_seq         |         3031 |             1 | f
  emajC          | myschema2_myTbl3_log_seq           |         3031 |             1 | f
- myschema2      | myseq1                             |         3031 |          1000 | f
  myschema2      | myTbl3_col31_seq                   |         3031 |             1 | f
+ myschema2      | myseq1                             |         3031 |          1000 | f
  emaj           | myschema1_mytbl1_log_seq           |         3037 |            15 | t
  emaj           | myschema1_mytbl2_log_seq           |         3037 |             6 | t
  emaj           | myschema1_mytbl4_log_seq           |         3037 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
  emajC          | myschema1_myTbl3_log_seq           |         3037 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
+ emajb          | myschema1_mytbl2b_log_seq          |         3037 |             6 | t
  myschema1      | myTbl3_col31_seq                   |         3037 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3037 |             1 | f
  emaj           | myschema1_mytbl1_log_seq           |         3038 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3038 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3038 |             2 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3038 |            10 | t
- myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3038 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3038 |             1 | f
+ myschema1      | mytbl2b_col20_seq                  |         3038 |             2 | t
  emaj           | myschema1_mytbl1_log_seq           |         3039 |            30 | t
  emaj           | myschema1_mytbl2_log_seq           |         3039 |             8 | t
  emaj           | myschema1_mytbl4_log_seq           |         3039 |             3 | t
- emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
  emajC          | myschema1_myTbl3_log_seq           |         3039 |            20 | t
- myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
+ emajb          | myschema1_mytbl2b_log_seq          |         3039 |             8 | t
  myschema1      | myTbl3_col31_seq                   |         3039 |            10 | t
+ myschema1      | mytbl2b_col20_seq                  |         3039 |             2 | t
 (33 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
+ myschema1   | myTbl3     |               3039 |             3044 |             10
  myschema1   | mytbl1     |               3039 |             3044 |             10
  myschema1   | mytbl2     |               3039 |             3044 |              2
  myschema1   | mytbl2b    |               3039 |             3044 |              2
- myschema1   | myTbl3     |               3039 |             3044 |             10
  myschema1   | mytbl4     |               3039 |             3044 |              1
 (5 rows)
 
@@ -2292,50 +2292,50 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj        | myschema1_mytbl1_log_seq  |         3037 |            15 | t
  emaj        | myschema1_mytbl2_log_seq  |         3037 |             6 | t
  emaj        | myschema1_mytbl4_log_seq  |         3037 |             2 | t
- emajb       | myschema1_mytbl2b_log_seq |         3037 |             6 | t
  emajC       | myschema1_myTbl3_log_seq  |         3037 |            10 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3037 |             6 | t
  emaj        | myschema1_mytbl1_log_seq  |         3038 |            30 | t
  emaj        | myschema1_mytbl2_log_seq  |         3038 |             8 | t
  emaj        | myschema1_mytbl4_log_seq  |         3038 |             2 | t
- emajb       | myschema1_mytbl2b_log_seq |         3038 |             8 | t
  emajC       | myschema1_myTbl3_log_seq  |         3038 |            10 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3038 |             8 | t
  emaj        | myschema1_mytbl1_log_seq  |         3039 |            30 | t
  emaj        | myschema1_mytbl2_log_seq  |         3039 |             8 | t
  emaj        | myschema1_mytbl4_log_seq  |         3039 |             3 | t
- emajb       | myschema1_mytbl2b_log_seq |         3039 |             8 | t
  emajC       | myschema1_myTbl3_log_seq  |         3039 |            20 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3039 |             8 | t
  emaj        | myschema1_mytbl1_log_seq  |         3053 |            40 | t
  emaj        | myschema1_mytbl2_log_seq  |         3053 |            10 | t
  emaj        | myschema1_mytbl4_log_seq  |         3053 |             4 | t
- emajb       | myschema1_mytbl2b_log_seq |         3053 |            10 | t
  emajC       | myschema1_myTbl3_log_seq  |         3053 |            30 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3053 |            10 | t
  emaj        | myschema1_mytbl1_log_seq  |         3055 |            40 | t
  emaj        | myschema1_mytbl2_log_seq  |         3055 |            10 | t
  emaj        | myschema1_mytbl4_log_seq  |         3055 |             4 | t
- emajb       | myschema1_mytbl2b_log_seq |         3055 |            10 | t
  emajC       | myschema1_myTbl3_log_seq  |         3055 |            30 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3055 |            10 | t
  emaj        | myschema1_mytbl1_log_seq  |         3056 |            40 | t
  emaj        | myschema1_mytbl2_log_seq  |         3056 |            10 | t
  emaj        | myschema1_mytbl4_log_seq  |         3056 |             4 | t
- emajb       | myschema1_mytbl2b_log_seq |         3056 |            10 | t
  emajC       | myschema1_myTbl3_log_seq  |         3056 |            30 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3056 |            10 | t
  emaj        | myschema1_mytbl1_log_seq  |         3059 |            64 | t
  emaj        | myschema1_mytbl2_log_seq  |         3059 |            13 | t
  emaj        | myschema1_mytbl4_log_seq  |         3059 |             4 | t
- emajb       | myschema1_mytbl2b_log_seq |         3059 |            15 | t
  emajC       | myschema1_myTbl3_log_seq  |         3059 |            30 | t
+ emajb       | myschema1_mytbl2b_log_seq |         3059 |            15 | t
 (35 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
+ myschema1   | myTbl3     |               3039 |             3044 |             10
  myschema1   | mytbl1     |               3039 |             3044 |             10
  myschema1   | mytbl1     |               3056 |             3059 |             24
  myschema1   | mytbl2     |               3039 |             3044 |              2
  myschema1   | mytbl2     |               3056 |             3059 |              3
  myschema1   | mytbl2b    |               3039 |             3044 |              2
  myschema1   | mytbl2b    |               3056 |             3059 |              5
- myschema1   | myTbl3     |               3039 |             3044 |             10
  myschema1   | mytbl4     |               3039 |             3044 |              1
 (8 rows)
 
@@ -2422,9 +2422,9 @@ select rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session from emaj.emaj_
   where rlbk_status in ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED') order by rlbk_id;
  rlbk_id | rlbk_status | rlbk_begin_hist_id | rlbk_nb_session 
 ---------+-------------+--------------------+-----------------
-      22 | COMPLETED   |               3445 |               1
-      23 | COMPLETED   |               3473 |               1
-      24 | COMPLETED   |               3513 |               1
+      22 | COMPLETED   |               3446 |               1
+      23 | COMPLETED   |               3474 |               1
+      24 | COMPLETED   |               3514 |               1
 (3 rows)
 
 select emaj.emaj_cleanup_rollback_state();
@@ -2443,27 +2443,27 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
  rlbk_id |     rlbk_groups     |   rlbk_mark    | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_is_dblink_used | end_datetime |                                   rlbk_messages                                   
 ---------+---------------------+----------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+---------------------+--------------+-----------------------------------------------------------------------------------
        1 | {myGroup1}          | Different_Mark |         3006 | f              |                             |               1 |             5 |                2 |                 0 | COMMITTED   |               3036 | f                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-       4 | {myGroup1}          | Different_Mark |         3016 | f              |                             |               1 |             5 |                2 |                 0 | COMMITTED   |               3098 | f                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-       5 | {myGroup2}          | Mark21         |         3017 | f              |                             |               1 |             6 |                2 |                 0 | COMMITTED   |               3107 | f                   | [ts]         | {"Notice: 0 / 6 tables effectively processed.","Notice: 2 sequences processed."}
-       6 | {myGroup1}          | Different_Mark |         3018 | t              |                             |               1 |             5 |                2 |                 0 | COMMITTED   |               3117 | f                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-       7 | {myGroup2}          | Mark21         |         3020 | t              |                             |               1 |             6 |                2 |                 0 | COMMITTED   |               3130 | f                   | [ts]         | {"Notice: 0 / 6 tables effectively processed.","Notice: 2 sequences processed."}
-       8 | {myGroup1,myGroup2} | Mark1B         |         3023 | f              |                             |               1 |            11 |                4 |                 0 | COMMITTED   |               3147 | f                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
-       9 | {myGroup1,myGroup2} | Mark1B         |         3024 | f              |                             |               1 |            11 |                4 |                 0 | COMMITTED   |               3158 | f                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
-      10 | {myGroup1,myGroup2} | Mark1B         |         3025 | t              |                             |               1 |            11 |                4 |                 0 | COMMITTED   |               3169 | f                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
-      11 | {myGroup1,myGroup2} | Mark1B         |         3027 | t              |                             |               1 |            11 |                4 |                 0 | COMMITTED   |               3184 | t                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
-      12 | {myGroup1}          | Mark12         |         3034 | f              |                             |               1 |             5 |                2 |                 2 | COMMITTED   |               3227 | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-      13 | {myGroup1}          | Mark11         |         3035 | f              |                             |               1 |             5 |                2 |                 3 | COMMITTED   |               3242 | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-      14 | {myGroup1}          | Mark12         |         3040 | t              |                             |               1 |             5 |                2 |                 2 | COMMITTED   |               3281 | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-      15 | {myGroup1}          | Mark11         |         3042 | t              |                             |               1 |             5 |                2 |                 5 | COMMITTED   |               3299 | t                   | [ts]         | {"Notice: 5 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-      16 | {myGroup1}          | Mark13         |         3044 | f              |                             |               1 |             5 |                2 |                 5 | COMMITTED   |               3324 | t                   | [ts]         | {"Notice: 5 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-      17 | {emptyGroup}        | EGM4           |         3045 | f              |                             |               1 |             0 |                0 |                 0 | COMMITTED   |               3348 | t                   | [ts]         | {"Notice: 0 / 0 tables effectively processed."}
-      18 | {emptyGroup}        | EGM3           |         3046 | t              |                             |               1 |             0 |                0 |                 0 | COMMITTED   |               3355 | t                   | [ts]         | {"Notice: 0 / 0 tables effectively processed."}
-      19 | {myGroup4}          | mark1          |         3050 | t              |                             |               1 |             5 |                0 |                 3 | COMMITTED   |               3380 | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed."}
-      20 | {myGroup4}          | myGroup4_start |         3052 | f              | t                           |               1 |             5 |                0 |                 3 | COMMITTED   |               3397 | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed."}
-      21 | {myGroup1}          | Conso_M1       |         3054 | t              |                             |               1 |             5 |                2 |                 0 | COMMITTED   |               3420 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-      22 | {myGroup1}          | Conso_M2       |         3058 | t              |                             |               1 |             5 |                2 |                 3 | COMMITTED   |               3445 | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-      23 | {myGroup1}          | Conso_M1       |         3060 | f              |                             |               1 |             5 |                2 |                 2 | COMMITTED   |               3473 | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-      24 | {myGroup4}          | myGroup4_start |         3063 | f              |                             |               1 |             5 |                0 |                 0 | ABORTED     |               3513 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed."}
+       4 | {myGroup1}          | Different_Mark |         3016 | f              |                             |               1 |             5 |                2 |                 0 | COMMITTED   |               3099 | f                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+       5 | {myGroup2}          | Mark21         |         3017 | f              |                             |               1 |             6 |                2 |                 0 | COMMITTED   |               3108 | f                   | [ts]         | {"Notice: 0 / 6 tables effectively processed.","Notice: 2 sequences processed."}
+       6 | {myGroup1}          | Different_Mark |         3018 | t              |                             |               1 |             5 |                2 |                 0 | COMMITTED   |               3118 | f                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+       7 | {myGroup2}          | Mark21         |         3020 | t              |                             |               1 |             6 |                2 |                 0 | COMMITTED   |               3131 | f                   | [ts]         | {"Notice: 0 / 6 tables effectively processed.","Notice: 2 sequences processed."}
+       8 | {myGroup1,myGroup2} | Mark1B         |         3023 | f              |                             |               1 |            11 |                4 |                 0 | COMMITTED   |               3148 | f                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
+       9 | {myGroup1,myGroup2} | Mark1B         |         3024 | f              |                             |               1 |            11 |                4 |                 0 | COMMITTED   |               3159 | f                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
+      10 | {myGroup1,myGroup2} | Mark1B         |         3025 | t              |                             |               1 |            11 |                4 |                 0 | COMMITTED   |               3170 | f                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
+      11 | {myGroup1,myGroup2} | Mark1B         |         3027 | t              |                             |               1 |            11 |                4 |                 0 | COMMITTED   |               3185 | t                   | [ts]         | {"Notice: 0 / 11 tables effectively processed.","Notice: 4 sequences processed."}
+      12 | {myGroup1}          | Mark12         |         3034 | f              |                             |               1 |             5 |                2 |                 2 | COMMITTED   |               3228 | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+      13 | {myGroup1}          | Mark11         |         3035 | f              |                             |               1 |             5 |                2 |                 3 | COMMITTED   |               3243 | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+      14 | {myGroup1}          | Mark12         |         3040 | t              |                             |               1 |             5 |                2 |                 2 | COMMITTED   |               3282 | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+      15 | {myGroup1}          | Mark11         |         3042 | t              |                             |               1 |             5 |                2 |                 5 | COMMITTED   |               3300 | t                   | [ts]         | {"Notice: 5 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+      16 | {myGroup1}          | Mark13         |         3044 | f              |                             |               1 |             5 |                2 |                 5 | COMMITTED   |               3325 | t                   | [ts]         | {"Notice: 5 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+      17 | {emptyGroup}        | EGM4           |         3045 | f              |                             |               1 |             0 |                0 |                 0 | COMMITTED   |               3349 | t                   | [ts]         | {"Notice: 0 / 0 tables effectively processed."}
+      18 | {emptyGroup}        | EGM3           |         3046 | t              |                             |               1 |             0 |                0 |                 0 | COMMITTED   |               3356 | t                   | [ts]         | {"Notice: 0 / 0 tables effectively processed."}
+      19 | {myGroup4}          | mark1          |         3050 | t              |                             |               1 |             5 |                0 |                 3 | COMMITTED   |               3381 | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed."}
+      20 | {myGroup4}          | myGroup4_start |         3052 | f              | t                           |               1 |             5 |                0 |                 3 | COMMITTED   |               3398 | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed."}
+      21 | {myGroup1}          | Conso_M1       |         3054 | t              |                             |               1 |             5 |                2 |                 0 | COMMITTED   |               3421 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+      22 | {myGroup1}          | Conso_M2       |         3058 | t              |                             |               1 |             5 |                2 |                 3 | COMMITTED   |               3446 | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+      23 | {myGroup1}          | Conso_M1       |         3060 | f              |                             |               1 |             5 |                2 |                 2 | COMMITTED   |               3474 | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+      24 | {myGroup4}          | myGroup4_start |         3063 | f              |                             |               1 |             5 |                0 |                 0 | ABORTED     |               3514 | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed."}
 (22 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
@@ -2539,38 +2539,38 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_n
            14 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       6 |                    2 |              
            15 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            15 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           15 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      20 |                    1 |            10
            15 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                      15 |                    1 |            11
            15 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
            15 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           15 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      20 |                    1 |            10
            15 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             1
            15 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                       4 |                    2 |              
            15 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
            15 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       9 |                    2 |              
-           16 | DIS_LOG_TRG | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | DIS_LOG_TRG | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | DIS_LOG_TRG | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            16 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | DIS_LOG_TRG | myschema1   | myTbl3     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | DIS_LOG_TRG | myschema1   | mytbl4     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
-           16 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       2 |                    1 |             2
+           16 | DIS_LOG_TRG | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
+           16 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                      10 |                    1 |            10
+           16 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
            16 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           16 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                 2 |            1 |                                                                                                                                         |                      10 |                    1 |            10
-           16 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           16 | DELETE_LOG  | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
-           16 | DELETE_LOG  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       2 |                    1 |             2
+           16 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           16 | DELETE_LOG  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
+           16 | DELETE_LOG  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                      10 |                    1 |            10
+           16 | DELETE_LOG  | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
            16 | DELETE_LOG  | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           16 | DELETE_LOG  | myschema1   | myTbl3     |                   |                 2 |            1 |                                                                                                                                         |                      10 |                    1 |            10
-           16 | DELETE_LOG  | myschema1   | mytbl4     |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           16 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                       3 |                    2 |              
-           16 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 1 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
-           16 | ENA_LOG_TRG | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | DELETE_LOG  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           16 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                       3 |                    2 |              
+           16 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
+           16 | ENA_LOG_TRG | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | ENA_LOG_TRG | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            16 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | ENA_LOG_TRG | myschema1   | myTbl3     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | ENA_LOG_TRG | myschema1   | mytbl4     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | ENA_LOG_TRG | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
            16 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      24 |                    2 |              
            19 | RLBK_TABLE  | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    3 |             1
            19 | RLBK_TABLE  | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    3 |             1
@@ -2647,10 +2647,10 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  CTRL+DBLINK |             |            |                   |           14 |             6
  DROP_FK     |             |            |                   |           15 |             1
  SET_FK_DEF  |             |            |                   |           15 |             1
+ RLBK_TABLE  | myschema1   | myTbl3     |                   |           15 |            20
  RLBK_TABLE  | myschema1   | mytbl1     |                   |           15 |            15
  RLBK_TABLE  | myschema1   | mytbl2     |                   |           15 |             2
  RLBK_TABLE  | myschema1   | mytbl2b    |                   |           15 |             2
- RLBK_TABLE  | myschema1   | myTbl3     |                   |           15 |            20
  RLBK_TABLE  | myschema1   | mytbl4     |                   |           15 |             2
  SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |           15 |             4
  ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |           15 |             0
@@ -2658,15 +2658,15 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantit
  DIS_LOG_TRG |             |            |                   |           16 |             5
  DROP_FK     |             |            |                   |           16 |             1
  SET_FK_DEF  |             |            |                   |           16 |             1
+ RLBK_TABLE  | myschema1   | myTbl3     |                   |           16 |            10
  RLBK_TABLE  | myschema1   | mytbl1     |                   |           16 |            10
  RLBK_TABLE  | myschema1   | mytbl2     |                   |           16 |             2
  RLBK_TABLE  | myschema1   | mytbl2b    |                   |           16 |             2
- RLBK_TABLE  | myschema1   | myTbl3     |                   |           16 |            10
  RLBK_TABLE  | myschema1   | mytbl4     |                   |           16 |             1
+ DELETE_LOG  | myschema1   | myTbl3     |                   |           16 |            10
  DELETE_LOG  | myschema1   | mytbl1     |                   |           16 |            10
  DELETE_LOG  | myschema1   | mytbl2     |                   |           16 |             2
  DELETE_LOG  | myschema1   | mytbl2b    |                   |           16 |             2
- DELETE_LOG  | myschema1   | myTbl3     |                   |           16 |            10
  DELETE_LOG  | myschema1   | mytbl4     |                   |           16 |             1
  SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |           16 |             3
  ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |           16 |             0
@@ -2805,399 +2805,399 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3046 | CREATE_GROUP           | END          | auditOnlyEmptyGroup          | 0 tables/sequences processed                                   | postgres
     3047 | DROP_GROUP             | BEGIN        | auditOnlyEmptyGroup          |                                                                | postgres
     3048 | DROP_GROUP             | END          | auditOnlyEmptyGroup          | 0 tables/sequences processed                                   | postgres
-    3098 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Different_Mark (timestamp)           | postgres
-    3099 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -1                                                    | postgres
-    3100 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3101 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3102 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3103 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3104 | ROLLBACK_GROUP         | NOTICE       | Rollback id 4                | 0 / 5 tables effectively processed.                            | postgres
-    3105 | ROLLBACK_GROUP         | NOTICE       | Rollback id 4                | 2 sequences processed.                                         | postgres
-    3106 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 4, 0 tables and 2 sequences effectively processed  | postgres
-    3107 | ROLLBACK_GROUP         | BEGIN        | myGroup2                     | Unlogged rollback to mark Mark21 (timestamp)                   | postgres
-    3108 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -1                                                    | postgres
-    3109 | LOCK_GROUP             | BEGIN        | myGroup2                     | Rollback session #1                                            | postgres
-    3110 | LOCK_GROUP             | END          | myGroup2                     | Rollback session #1: 6 tables locked, 0 deadlock(s)            | postgres
-    3111 | ROLLBACK_GROUP         | MARK DELETED | myGroup2                     | mark Different_Mark is deleted                                 | postgres
-    3112 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3099 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Different_Mark (timestamp)           | postgres
+    3100 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -1                                                    | postgres
+    3101 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3102 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3103 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3104 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
+    3105 | ROLLBACK_GROUP         | NOTICE       | Rollback id 4                | 0 / 5 tables effectively processed.                            | postgres
+    3106 | ROLLBACK_GROUP         | NOTICE       | Rollback id 4                | 2 sequences processed.                                         | postgres
+    3107 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 4, 0 tables and 2 sequences effectively processed  | postgres
+    3108 | ROLLBACK_GROUP         | BEGIN        | myGroup2                     | Unlogged rollback to mark Mark21 (timestamp)                   | postgres
+    3109 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -1                                                    | postgres
+    3110 | LOCK_GROUP             | BEGIN        | myGroup2                     | Rollback session #1                                            | postgres
+    3111 | LOCK_GROUP             | END          | myGroup2                     | Rollback session #1: 6 tables locked, 0 deadlock(s)            | postgres
+    3112 | ROLLBACK_GROUP         | MARK DELETED | myGroup2                     | mark Different_Mark is deleted                                 | postgres
     3113 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
-    3114 | ROLLBACK_GROUP         | NOTICE       | Rollback id 5                | 0 / 6 tables effectively processed.                            | postgres
-    3115 | ROLLBACK_GROUP         | NOTICE       | Rollback id 5                | 2 sequences processed.                                         | postgres
-    3116 | ROLLBACK_GROUP         | END          | myGroup2                     | Rollback_id 5, 0 tables and 2 sequences effectively processed  | postgres
-    3117 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Different_Mark (timestamp)             | postgres
-    3118 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -2                                                    | postgres
-    3119 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3120 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3121 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Different_Mark_%_START                                    | postgres
-    3122 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Different_Mark_%_START                                    | postgres
-    3123 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3124 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3125 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Different_Mark_%_DONE                                     | postgres
-    3126 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Different_Mark_%_DONE                                     | postgres
-    3127 | ROLLBACK_GROUP         | NOTICE       | Rollback id 6                | 0 / 5 tables effectively processed.                            | postgres
-    3128 | ROLLBACK_GROUP         | NOTICE       | Rollback id 6                | 2 sequences processed.                                         | postgres
-    3129 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 6, 0 tables and 2 sequences effectively processed  | postgres
-    3130 | ROLLBACK_GROUP         | BEGIN        | myGroup2                     | Logged rollback to mark Mark21 (timestamp)                     | postgres
-    3131 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -2                                                    | postgres
-    3132 | LOCK_GROUP             | BEGIN        | myGroup2                     | Rollback session #1                                            | postgres
-    3133 | LOCK_GROUP             | END          | myGroup2                     | Rollback session #1: 6 tables locked, 0 deadlock(s)            | postgres
-    3134 | SET_MARK_GROUP         | BEGIN        | myGroup2                     | RLBK_Mark21_%_START                                            | postgres
-    3135 | SET_MARK_GROUP         | END          | myGroup2                     | RLBK_Mark21_%_START                                            | postgres
-    3136 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3114 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3115 | ROLLBACK_GROUP         | NOTICE       | Rollback id 5                | 0 / 6 tables effectively processed.                            | postgres
+    3116 | ROLLBACK_GROUP         | NOTICE       | Rollback id 5                | 2 sequences processed.                                         | postgres
+    3117 | ROLLBACK_GROUP         | END          | myGroup2                     | Rollback_id 5, 0 tables and 2 sequences effectively processed  | postgres
+    3118 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Different_Mark (timestamp)             | postgres
+    3119 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -2                                                    | postgres
+    3120 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3121 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3122 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Different_Mark_%_START                                    | postgres
+    3123 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Different_Mark_%_START                                    | postgres
+    3124 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3125 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
+    3126 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Different_Mark_%_DONE                                     | postgres
+    3127 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Different_Mark_%_DONE                                     | postgres
+    3128 | ROLLBACK_GROUP         | NOTICE       | Rollback id 6                | 0 / 5 tables effectively processed.                            | postgres
+    3129 | ROLLBACK_GROUP         | NOTICE       | Rollback id 6                | 2 sequences processed.                                         | postgres
+    3130 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 6, 0 tables and 2 sequences effectively processed  | postgres
+    3131 | ROLLBACK_GROUP         | BEGIN        | myGroup2                     | Logged rollback to mark Mark21 (timestamp)                     | postgres
+    3132 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -2                                                    | postgres
+    3133 | LOCK_GROUP             | BEGIN        | myGroup2                     | Rollback session #1                                            | postgres
+    3134 | LOCK_GROUP             | END          | myGroup2                     | Rollback session #1: 6 tables locked, 0 deadlock(s)            | postgres
+    3135 | SET_MARK_GROUP         | BEGIN        | myGroup2                     | RLBK_Mark21_%_START                                            | postgres
+    3136 | SET_MARK_GROUP         | END          | myGroup2                     | RLBK_Mark21_%_START                                            | postgres
     3137 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
-    3138 | SET_MARK_GROUP         | BEGIN        | myGroup2                     | RLBK_Mark21_%_DONE                                             | postgres
-    3139 | SET_MARK_GROUP         | END          | myGroup2                     | RLBK_Mark21_%_DONE                                             | postgres
-    3140 | ROLLBACK_GROUP         | NOTICE       | Rollback id 7                | 0 / 6 tables effectively processed.                            | postgres
-    3141 | ROLLBACK_GROUP         | NOTICE       | Rollback id 7                | 2 sequences processed.                                         | postgres
-    3142 | ROLLBACK_GROUP         | END          | myGroup2                     | Rollback_id 7, 0 tables and 2 sequences effectively processed  | postgres
-    3143 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Mark1B                                                         | postgres
-    3144 | LOCK_GROUPS            | BEGIN        | myGroup1,myGroup2            |                                                                | postgres
-    3145 | LOCK_GROUPS            | END          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                | postgres
-    3146 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | Mark1B                                                         | postgres
-    3147 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Unlogged rollback to mark Mark1B (timestamp)                   | postgres
-    3148 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -5                                                    | postgres
-    3149 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
-    3150 | LOCK_GROUP             | END          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)           | postgres
-    3151 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3152 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3153 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3138 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3139 | SET_MARK_GROUP         | BEGIN        | myGroup2                     | RLBK_Mark21_%_DONE                                             | postgres
+    3140 | SET_MARK_GROUP         | END          | myGroup2                     | RLBK_Mark21_%_DONE                                             | postgres
+    3141 | ROLLBACK_GROUP         | NOTICE       | Rollback id 7                | 0 / 6 tables effectively processed.                            | postgres
+    3142 | ROLLBACK_GROUP         | NOTICE       | Rollback id 7                | 2 sequences processed.                                         | postgres
+    3143 | ROLLBACK_GROUP         | END          | myGroup2                     | Rollback_id 7, 0 tables and 2 sequences effectively processed  | postgres
+    3144 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Mark1B                                                         | postgres
+    3145 | LOCK_GROUPS            | BEGIN        | myGroup1,myGroup2            |                                                                | postgres
+    3146 | LOCK_GROUPS            | END          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                | postgres
+    3147 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | Mark1B                                                         | postgres
+    3148 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Unlogged rollback to mark Mark1B (timestamp)                   | postgres
+    3149 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -5                                                    | postgres
+    3150 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
+    3151 | LOCK_GROUP             | END          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)           | postgres
+    3152 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3153 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
     3154 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
-    3155 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 8                | 0 / 11 tables effectively processed.                           | postgres
-    3156 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 8                | 4 sequences processed.                                         | postgres
-    3157 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 8, 0 tables and 4 sequences effectively processed  | postgres
-    3158 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Unlogged rollback to mark Mark1B (timestamp)                   | postgres
-    3159 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -6                                                    | postgres
-    3160 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
-    3161 | LOCK_GROUP             | END          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)           | postgres
-    3162 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3163 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3164 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3155 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3156 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 8                | 0 / 11 tables effectively processed.                           | postgres
+    3157 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 8                | 4 sequences processed.                                         | postgres
+    3158 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 8, 0 tables and 4 sequences effectively processed  | postgres
+    3159 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Unlogged rollback to mark Mark1B (timestamp)                   | postgres
+    3160 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -6                                                    | postgres
+    3161 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
+    3162 | LOCK_GROUP             | END          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)           | postgres
+    3163 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3164 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
     3165 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
-    3166 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 9                | 0 / 11 tables effectively processed.                           | postgres
-    3167 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 9                | 4 sequences processed.                                         | postgres
-    3168 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 9, 0 tables and 4 sequences effectively processed  | postgres
-    3169 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Logged rollback to mark Mark1B (timestamp)                     | postgres
-    3170 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -4                                                    | postgres
-    3171 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
-    3172 | LOCK_GROUP             | END          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)           | postgres
-    3173 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                            | postgres
-    3174 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                            | postgres
-    3175 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3176 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3177 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3166 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3167 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 9                | 0 / 11 tables effectively processed.                           | postgres
+    3168 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 9                | 4 sequences processed.                                         | postgres
+    3169 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 9, 0 tables and 4 sequences effectively processed  | postgres
+    3170 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Logged rollback to mark Mark1B (timestamp)                     | postgres
+    3171 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = -4                                                    | postgres
+    3172 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
+    3173 | LOCK_GROUP             | END          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)           | postgres
+    3174 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                            | postgres
+    3175 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                            | postgres
+    3176 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3177 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
     3178 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
-    3179 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
-    3180 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
-    3181 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 10               | 0 / 11 tables effectively processed.                           | postgres
-    3182 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 10               | 4 sequences processed.                                         | postgres
-    3183 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 10, 0 tables and 4 sequences effectively processed | postgres
-    3184 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Logged rollback to mark Mark1B (timestamp)                     | postgres
-    3185 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3186 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
-    3187 | LOCK_GROUP             | END          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)           | postgres
-    3188 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                            | postgres
-    3189 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                            | postgres
-    3190 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3191 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3192 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3179 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3180 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
+    3181 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
+    3182 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 10               | 0 / 11 tables effectively processed.                           | postgres
+    3183 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 10               | 4 sequences processed.                                         | postgres
+    3184 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 10, 0 tables and 4 sequences effectively processed | postgres
+    3185 | ROLLBACK_GROUPS        | BEGIN        | myGroup1,myGroup2            | Logged rollback to mark Mark1B (timestamp)                     | postgres
+    3186 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3187 | LOCK_GROUP             | BEGIN        | myGroup1,myGroup2            | Rollback session #1                                            | postgres
+    3188 | LOCK_GROUP             | END          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)           | postgres
+    3189 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                            | postgres
+    3190 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                            | postgres
+    3191 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3192 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
     3193 | ROLLBACK_SEQUENCE      |              | myschema2."myTbl3_col31_seq" |                                                                | postgres
-    3194 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
-    3195 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
-    3196 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 11               | 0 / 11 tables effectively processed.                           | postgres
-    3197 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 11               | 4 sequences processed.                                         | postgres
-    3198 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3199 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 11, 0 tables and 4 sequences effectively processed | postgres
-    3200 | STOP_GROUPS            | BEGIN        | myGroup1,myGroup2            |                                                                | postgres
-    3201 | LOCK_GROUPS            | BEGIN        | myGroup1,myGroup2            |                                                                | postgres
-    3202 | LOCK_GROUPS            | END          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                | postgres
-    3203 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | STOP_%                                                         | postgres
-    3204 | CLEANUP_RLBK_STATE     |              | Rollback id 11               | set to COMMITTED                                               | postgres
-    3205 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | STOP_%                                                         | postgres
-    3206 | STOP_GROUPS            | END          | myGroup1,myGroup2            | 15 tables/sequences processed                                  | postgres
-    3207 | START_GROUP            | BEGIN        | myGroup1                     | With log reset                                                 | postgres
-    3208 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3209 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3210 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | Mark11                                                         | postgres
-    3211 | SET_MARK_GROUP         | END          | myGroup1                     | Mark11                                                         | postgres
-    3212 | START_GROUP            | END          | myGroup1                     | 7 tables/sequences processed                                   | postgres
-    3213 | START_GROUP            | BEGIN        | myGroup2                     | With log reset                                                 | postgres
-    3214 | LOCK_GROUP             | BEGIN        | myGroup2                     |                                                                | postgres
-    3215 | LOCK_GROUP             | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                 | postgres
-    3216 | SET_MARK_GROUP         | BEGIN        | myGroup2                     | Mark21                                                         | postgres
-    3217 | SET_MARK_GROUP         | END          | myGroup2                     | Mark21                                                         | postgres
-    3218 | START_GROUP            | END          | myGroup2                     | 8 tables/sequences processed                                   | postgres
-    3219 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
-    3220 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3221 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3222 | SET_MARK_GROUP         | END          | myGroup1                     | Mark12                                                         | postgres
-    3223 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
-    3224 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3225 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3226 | SET_MARK_GROUP         | END          | myGroup1                     | Mark13                                                         | postgres
-    3227 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark12 (timestamp)                   | postgres
-    3228 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3229 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3230 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3231 | ROLLBACK_TABLE         | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 29 and <= 41                      | postgres
-    3232 | ROLLBACK_TABLE         | END          | myschema1."myTbl3"           | 10 rolled back primary keys                                    | postgres
-    3233 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 29 and <= 41                      | postgres
-    3234 | ROLLBACK_TABLE         | END          | myschema1.mytbl4             | 1 rolled back primary keys                                     | postgres
-    3235 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Mark13 is deleted                                         | postgres
-    3236 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" | RESTART 1                                                      | postgres
-    3237 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3238 | ROLLBACK_GROUP         | NOTICE       | Rollback id 12               | 2 / 5 tables effectively processed.                            | postgres
-    3239 | ROLLBACK_GROUP         | NOTICE       | Rollback id 12               | 2 sequences processed.                                         | postgres
-    3240 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3241 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 12, 2 tables and 2 sequences effectively processed | postgres
-    3242 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark11 (timestamp)                   | postgres
-    3243 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3244 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3245 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3246 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 2 and <= 41                       | postgres
-    3247 | ROLLBACK_TABLE         | END          | myschema1.mytbl1             | 11 rolled back primary keys                                    | postgres
-    3248 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 2 and <= 41                       | postgres
-    3249 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 3 rolled back primary keys                                     | postgres
-    3250 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 2 and <= 41                       | postgres
-    3251 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 6 rolled back primary keys                                     | postgres
-    3252 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Mark12 is deleted                                         | postgres
-    3253 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3254 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 1                                                      | postgres
-    3255 | ROLLBACK_GROUP         | NOTICE       | Rollback id 13               | 3 / 5 tables effectively processed.                            | postgres
-    3256 | ROLLBACK_GROUP         | NOTICE       | Rollback id 13               | 2 sequences processed.                                         | postgres
-    3257 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3258 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 13, 3 tables and 2 sequences effectively processed | postgres
-    3259 | STOP_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3260 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3261 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3262 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | STOP_%                                                         | postgres
-    3263 | CLEANUP_RLBK_STATE     |              | Rollback id 12               | set to COMMITTED                                               | postgres
-    3264 | CLEANUP_RLBK_STATE     |              | Rollback id 13               | set to COMMITTED                                               | postgres
-    3265 | SET_MARK_GROUP         | END          | myGroup1                     | STOP_%                                                         | postgres
-    3266 | STOP_GROUP             | END          | myGroup1                     | 7 tables/sequences processed                                   | postgres
-    3267 | START_GROUP            | BEGIN        | myGroup1                     | With log reset                                                 | postgres
-    3268 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3269 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3270 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | Mark11                                                         | postgres
-    3271 | SET_MARK_GROUP         | END          | myGroup1                     | Mark11                                                         | postgres
-    3272 | START_GROUP            | END          | myGroup1                     | 7 tables/sequences processed                                   | postgres
-    3273 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
-    3274 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3275 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3276 | SET_MARK_GROUP         | END          | myGroup1                     | Mark12                                                         | postgres
-    3277 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
-    3278 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3279 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3280 | SET_MARK_GROUP         | END          | myGroup1                     | Mark13                                                         | postgres
-    3281 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Mark12 (timestamp)                     | postgres
-    3282 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3283 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3284 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3285 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Mark12_%_START                                            | postgres
-    3286 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Mark12_%_START                                            | postgres
-    3287 | ROLLBACK_TABLE         | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 60 and <= 71                      | postgres
-    3288 | ROLLBACK_TABLE         | END          | myschema1."myTbl3"           | 10 rolled back primary keys                                    | postgres
-    3289 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 60 and <= 71                      | postgres
-    3290 | ROLLBACK_TABLE         | END          | myschema1.mytbl4             | 1 rolled back primary keys                                     | postgres
-    3291 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" | RESTART 1                                                      | postgres
-    3292 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3293 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Mark12_%_DONE                                             | postgres
-    3294 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Mark12_%_DONE                                             | postgres
-    3295 | ROLLBACK_GROUP         | NOTICE       | Rollback id 14               | 2 / 5 tables effectively processed.                            | postgres
-    3296 | ROLLBACK_GROUP         | NOTICE       | Rollback id 14               | 2 sequences processed.                                         | postgres
-    3297 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3298 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 14, 2 tables and 2 sequences effectively processed | postgres
-    3299 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Mark11 (timestamp)                     | postgres
-    3300 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3301 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3302 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3303 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Mark11_%_START                                            | postgres
-    3304 | CLEANUP_RLBK_STATE     |              | Rollback id 14               | set to COMMITTED                                               | postgres
-    3305 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Mark11_%_START                                            | postgres
-    3306 | ROLLBACK_TABLE         | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 41 and <= 82                      | postgres
-    3307 | ROLLBACK_TABLE         | END          | myschema1."myTbl3"           | 10 rolled back primary keys                                    | postgres
-    3308 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 41 and <= 82                      | postgres
-    3309 | ROLLBACK_TABLE         | END          | myschema1.mytbl1             | 11 rolled back primary keys                                    | postgres
-    3310 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 41 and <= 82                      | postgres
-    3311 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 2 rolled back primary keys                                     | postgres
-    3312 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 41 and <= 82                      | postgres
-    3313 | ROLLBACK_TABLE         | END          | myschema1.mytbl4             | 1 rolled back primary keys                                     | postgres
-    3314 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 41 and <= 82                      | postgres
-    3315 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 2 rolled back primary keys                                     | postgres
-    3316 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3317 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 1                                                      | postgres
-    3318 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Mark11_%_DONE                                             | postgres
-    3319 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Mark11_%_DONE                                             | postgres
-    3320 | ROLLBACK_GROUP         | NOTICE       | Rollback id 15               | 5 / 5 tables effectively processed.                            | postgres
-    3321 | ROLLBACK_GROUP         | NOTICE       | Rollback id 15               | 2 sequences processed.                                         | postgres
-    3322 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3323 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 15, 5 tables and 2 sequences effectively processed | postgres
-    3324 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark13 (timestamp)                   | postgres
-    3325 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3326 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3327 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3328 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 71 and <= 96                      | postgres
-    3329 | ROLLBACK_TABLE         | END          | myschema1.mytbl1             | 10 rolled back primary keys                                    | postgres
-    3330 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 71 and <= 96                      | postgres
-    3331 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 2 rolled back primary keys                                     | postgres
-    3332 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 71 and <= 96                      | postgres
-    3333 | ROLLBACK_TABLE         | END          | myschema1.mytbl4             | 1 rolled back primary keys                                     | postgres
-    3334 | ROLLBACK_TABLE         | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 71 and <= 96                      | postgres
-    3335 | ROLLBACK_TABLE         | END          | myschema1."myTbl3"           | 10 rolled back primary keys                                    | postgres
-    3336 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 71 and <= 96                      | postgres
-    3337 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 2 rolled back primary keys                                     | postgres
-    3338 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Mark12_%_START is deleted                            | postgres
-    3339 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Mark12_%_DONE is deleted                             | postgres
-    3340 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Mark11_%_START is deleted                            | postgres
-    3341 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Mark11_%_DONE is deleted                             | postgres
-    3342 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" | RESTART 11                                                     | postgres
-    3343 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
-    3344 | ROLLBACK_GROUP         | NOTICE       | Rollback id 16               | 5 / 5 tables effectively processed.                            | postgres
-    3345 | ROLLBACK_GROUP         | NOTICE       | Rollback id 16               | 2 sequences processed.                                         | postgres
-    3346 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3347 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 16, 5 tables and 2 sequences effectively processed | postgres
-    3348 | ROLLBACK_GROUP         | BEGIN        | emptyGroup                   | Unlogged rollback to mark EGM4 (timestamp)                     | postgres
-    3349 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3350 | LOCK_GROUP             | BEGIN        | emptyGroup                   | Rollback session #1                                            | postgres
-    3351 | LOCK_GROUP             | END          | emptyGroup                   | Rollback session #1: 0 tables locked, 0 deadlock(s)            | postgres
-    3352 | ROLLBACK_GROUP         | NOTICE       | Rollback id 17               | 0 / 0 tables effectively processed.                            | postgres
-    3353 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3354 | ROLLBACK_GROUP         | END          | emptyGroup                   | Rollback_id 17, 0 tables and 0 sequences effectively processed | postgres
-    3355 | ROLLBACK_GROUP         | BEGIN        | emptyGroup                   | Logged rollback to mark EGM3 (timestamp)                       | postgres
-    3356 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3357 | LOCK_GROUP             | BEGIN        | emptyGroup                   | Rollback session #1                                            | postgres
-    3358 | LOCK_GROUP             | END          | emptyGroup                   | Rollback session #1: 0 tables locked, 0 deadlock(s)            | postgres
-    3359 | SET_MARK_GROUP         | BEGIN        | emptyGroup                   | RLBK_EGM3_%_START                                              | postgres
-    3360 | CLEANUP_RLBK_STATE     |              | Rollback id 15               | set to COMMITTED                                               | postgres
-    3361 | CLEANUP_RLBK_STATE     |              | Rollback id 16               | set to COMMITTED                                               | postgres
-    3362 | CLEANUP_RLBK_STATE     |              | Rollback id 17               | set to COMMITTED                                               | postgres
-    3363 | SET_MARK_GROUP         | END          | emptyGroup                   | RLBK_EGM3_%_START                                              | postgres
-    3364 | SET_MARK_GROUP         | BEGIN        | emptyGroup                   | RLBK_EGM3_%_DONE                                               | postgres
-    3365 | SET_MARK_GROUP         | END          | emptyGroup                   | RLBK_EGM3_%_DONE                                               | postgres
-    3366 | ROLLBACK_GROUP         | NOTICE       | Rollback id 18               | 0 / 0 tables effectively processed.                            | postgres
-    3367 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3368 | ROLLBACK_GROUP         | END          | emptyGroup                   | Rollback_id 18, 0 tables and 0 sequences effectively processed | postgres
-    3369 | START_GROUP            | BEGIN        | myGroup4                     | With log reset                                                 | postgres
-    3370 | LOCK_GROUP             | BEGIN        | myGroup4                     |                                                                | postgres
-    3371 | LOCK_GROUP             | END          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3372 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | myGroup4_start                                                 | postgres
-    3373 | CLEANUP_RLBK_STATE     |              | Rollback id 18               | set to COMMITTED                                               | postgres
-    3374 | SET_MARK_GROUP         | END          | myGroup4                     | myGroup4_start                                                 | postgres
-    3375 | START_GROUP            | END          | myGroup4                     | 5 tables/sequences processed                                   | postgres
-    3376 | SET_MARK_GROUP         | BEGIN        | myGroup4                     |                                                                | postgres
-    3377 | LOCK_GROUP             | BEGIN        | myGroup4                     |                                                                | postgres
-    3378 | LOCK_GROUP             | END          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3379 | SET_MARK_GROUP         | END          | myGroup4                     | mark1                                                          | postgres
-    3380 | ROLLBACK_GROUP         | BEGIN        | myGroup4                     | Logged rollback to mark mark1 (timestamp)                      | postgres
-    3381 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3382 | LOCK_GROUP             | BEGIN        | myGroup4                     | Rollback session #1                                            | postgres
-    3383 | LOCK_GROUP             | END          | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3384 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | RLBK_mark1_%_START                                             | postgres
-    3385 | SET_MARK_GROUP         | END          | myGroup4                     | RLBK_mark1_%_START                                             | postgres
-    3386 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc1            | All log rows with emaj_gid > 99 and <= 102                     | postgres
-    3387 | ROLLBACK_TABLE         | END          | myschema4.mytblc1            | 1 rolled back primary keys                                     | postgres
-    3388 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc2            | All log rows with emaj_gid > 99 and <= 102                     | postgres
-    3389 | ROLLBACK_TABLE         | END          | myschema4.mytblc2            | 1 rolled back primary keys                                     | postgres
-    3390 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblm             | All log rows with emaj_gid > 99 and <= 102                     | postgres
-    3391 | ROLLBACK_TABLE         | END          | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
-    3392 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
-    3393 | SET_MARK_GROUP         | END          | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
-    3394 | ROLLBACK_GROUP         | NOTICE       | Rollback id 19               | 3 / 5 tables effectively processed.                            | postgres
-    3395 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3396 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 19, 3 tables and 0 sequences effectively processed | postgres
-    3397 | ROLLBACK_GROUP         | BEGIN        | myGroup4                     | Unlogged rollback to mark myGroup4_start (timestamp)           | postgres
-    3398 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3399 | LOCK_GROUP             | BEGIN        | myGroup4                     | Rollback session #1                                            | postgres
-    3400 | LOCK_GROUP             | END          | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3401 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc1            | All log rows with emaj_gid > 96 and <= 105                     | postgres
-    3402 | ROLLBACK_TABLE         | END          | myschema4.mytblc1            | 1 rolled back primary keys                                     | postgres
-    3403 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc2            | All log rows with emaj_gid > 96 and <= 105                     | postgres
-    3404 | ROLLBACK_TABLE         | END          | myschema4.mytblc2            | 1 rolled back primary keys                                     | postgres
-    3405 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblm             | All log rows with emaj_gid > 96 and <= 105                     | postgres
-    3406 | ROLLBACK_TABLE         | END          | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
-    3407 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark mark1 is deleted                                          | postgres
-    3408 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark RLBK_mark1_%_START is deleted                             | postgres
-    3409 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark RLBK_mark1_%_DONE is deleted                              | postgres
-    3410 | ROLLBACK_GROUP         | NOTICE       | Rollback id 20               | 3 / 5 tables effectively processed.                            | postgres
-    3411 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3412 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 20, 3 tables and 0 sequences effectively processed | postgres
-    3414 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
-    3415 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3416 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3417 | CLEANUP_RLBK_STATE     |              | Rollback id 19               | set to COMMITTED                                               | postgres
-    3418 | CLEANUP_RLBK_STATE     |              | Rollback id 20               | set to COMMITTED                                               | postgres
-    3419 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M1                                                       | postgres
-    3420 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Conso_M1 (timestamp)                   | postgres
-    3421 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3422 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3423 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3424 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M1_%_START                                          | postgres
-    3425 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M1_%_START                                          | postgres
-    3426 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3427 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
-    3428 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M1_%_DONE                                           | postgres
-    3429 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M1_%_DONE                                           | postgres
-    3430 | ROLLBACK_GROUP         | NOTICE       | Rollback id 21               | 0 / 5 tables effectively processed.                            | postgres
-    3431 | ROLLBACK_GROUP         | NOTICE       | Rollback id 21               | 2 sequences processed.                                         | postgres
-    3432 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3433 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 21, 0 tables and 2 sequences effectively processed | postgres
-    3434 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Conso_M1 and RLBK_Conso_M1_%_DONE      | postgres
-    3435 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted           | postgres
-    3436 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
-    3437 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3438 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3439 | CLEANUP_RLBK_STATE     |              | Rollback id 21               | set to COMMITTED                                               | postgres
-    3440 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M2                                                       | postgres
-    3441 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
-    3442 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
-    3443 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
-    3444 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M3                                                       | postgres
-    3445 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Conso_M2 (timestamp)                   | postgres
-    3446 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3447 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3448 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3449 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M2_%_START                                          | postgres
-    3450 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M2_%_START                                          | postgres
-    3451 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 105 and <= 122                    | postgres
-    3452 | ROLLBACK_TABLE         | END          | myschema1.mytbl1             | 12 rolled back primary keys                                    | postgres
-    3453 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 105 and <= 122                    | postgres
-    3454 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 1 rolled back primary keys                                     | postgres
-    3455 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 105 and <= 122                    | postgres
-    3456 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 2 rolled back primary keys                                     | postgres
-    3457 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3458 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
-    3459 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M2_%_DONE                                           | postgres
-    3460 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M2_%_DONE                                           | postgres
-    3461 | ROLLBACK_GROUP         | NOTICE       | Rollback id 22               | 3 / 5 tables effectively processed.                            | postgres
-    3462 | ROLLBACK_GROUP         | NOTICE       | Rollback id 22               | 2 sequences processed.                                         | postgres
-    3463 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3464 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 22, 3 tables and 2 sequences effectively processed | postgres
-    3465 | RENAME_MARK_GROUP      | BEGIN        | myGroup1                     | Conso_M2                                                       | postgres
-    3466 | RENAME_MARK_GROUP      | END          | myGroup1                     | Conso_M2 renamed Renamed_conso_M2                              | postgres
-    3467 | RENAME_MARK_GROUP      | BEGIN        | myGroup1                     | EMAJ_LAST_MARK                                                 | postgres
-    3468 | RENAME_MARK_GROUP      | END          | myGroup1                     | RLBK_Conso_M2_%_DONE renamed Renamed_last_mark                 | postgres
-    3469 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark | postgres
-    3470 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted           | postgres
-    3471 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark | postgres
-    3472 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 0 tables and 2 sequences processed ; 0 marks deleted           | postgres
-    3473 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Conso_M1 (timestamp)                 | postgres
-    3474 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
-    3475 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
-    3476 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3477 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 105 and <= 139                    | postgres
-    3478 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 1 rolled back primary keys                                     | postgres
-    3479 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 105 and <= 139                    | postgres
-    3480 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 1 rolled back primary keys                                     | postgres
-    3481 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Conso_M1_%_DONE is deleted                           | postgres
-    3482 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Renamed_conso_M2 is deleted                               | postgres
-    3483 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Renamed_last_mark is deleted                              | postgres
-    3484 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
-    3485 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
-    3486 | ROLLBACK_GROUP         | NOTICE       | Rollback id 23               | 2 / 5 tables effectively processed.                            | postgres
-    3487 | ROLLBACK_GROUP         | NOTICE       | Rollback id 23               | 2 sequences processed.                                         | postgres
-    3488 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
-    3489 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 23, 2 tables and 2 sequences effectively processed | postgres
-    3520 | CLEANUP_RLBK_STATE     |              | Rollback id 22               | set to COMMITTED                                               | postgres
-    3521 | CLEANUP_RLBK_STATE     |              | Rollback id 23               | set to COMMITTED                                               | postgres
-    3522 | CLEANUP_RLBK_STATE     |              | Rollback id 24               | set to ABORTED                                                 | postgres
+    3194 | ROLLBACK_SEQUENCE      |              | myschema2.myseq1             |                                                                | postgres
+    3195 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
+    3196 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                             | postgres
+    3197 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 11               | 0 / 11 tables effectively processed.                           | postgres
+    3198 | ROLLBACK_GROUPS        | NOTICE       | Rollback id 11               | 4 sequences processed.                                         | postgres
+    3199 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3200 | ROLLBACK_GROUPS        | END          | myGroup1,myGroup2            | Rollback_id 11, 0 tables and 4 sequences effectively processed | postgres
+    3201 | STOP_GROUPS            | BEGIN        | myGroup1,myGroup2            |                                                                | postgres
+    3202 | LOCK_GROUPS            | BEGIN        | myGroup1,myGroup2            |                                                                | postgres
+    3203 | LOCK_GROUPS            | END          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                | postgres
+    3204 | SET_MARK_GROUPS        | BEGIN        | myGroup1,myGroup2            | STOP_%                                                         | postgres
+    3205 | CLEANUP_RLBK_STATE     |              | Rollback id 11               | set to COMMITTED                                               | postgres
+    3206 | SET_MARK_GROUPS        | END          | myGroup1,myGroup2            | STOP_%                                                         | postgres
+    3207 | STOP_GROUPS            | END          | myGroup1,myGroup2            | 15 tables/sequences processed                                  | postgres
+    3208 | START_GROUP            | BEGIN        | myGroup1                     | With log reset                                                 | postgres
+    3209 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3210 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3211 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | Mark11                                                         | postgres
+    3212 | SET_MARK_GROUP         | END          | myGroup1                     | Mark11                                                         | postgres
+    3213 | START_GROUP            | END          | myGroup1                     | 7 tables/sequences processed                                   | postgres
+    3214 | START_GROUP            | BEGIN        | myGroup2                     | With log reset                                                 | postgres
+    3215 | LOCK_GROUP             | BEGIN        | myGroup2                     |                                                                | postgres
+    3216 | LOCK_GROUP             | END          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                 | postgres
+    3217 | SET_MARK_GROUP         | BEGIN        | myGroup2                     | Mark21                                                         | postgres
+    3218 | SET_MARK_GROUP         | END          | myGroup2                     | Mark21                                                         | postgres
+    3219 | START_GROUP            | END          | myGroup2                     | 8 tables/sequences processed                                   | postgres
+    3220 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
+    3221 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3222 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3223 | SET_MARK_GROUP         | END          | myGroup1                     | Mark12                                                         | postgres
+    3224 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
+    3225 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3226 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3227 | SET_MARK_GROUP         | END          | myGroup1                     | Mark13                                                         | postgres
+    3228 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark12 (timestamp)                   | postgres
+    3229 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3230 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3231 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3232 | ROLLBACK_TABLE         | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 29 and <= 41                      | postgres
+    3233 | ROLLBACK_TABLE         | END          | myschema1."myTbl3"           | 10 rolled back primary keys                                    | postgres
+    3234 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 29 and <= 41                      | postgres
+    3235 | ROLLBACK_TABLE         | END          | myschema1.mytbl4             | 1 rolled back primary keys                                     | postgres
+    3236 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Mark13 is deleted                                         | postgres
+    3237 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" | RESTART 1                                                      | postgres
+    3238 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
+    3239 | ROLLBACK_GROUP         | NOTICE       | Rollback id 12               | 2 / 5 tables effectively processed.                            | postgres
+    3240 | ROLLBACK_GROUP         | NOTICE       | Rollback id 12               | 2 sequences processed.                                         | postgres
+    3241 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3242 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 12, 2 tables and 2 sequences effectively processed | postgres
+    3243 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark11 (timestamp)                   | postgres
+    3244 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3245 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3246 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3247 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 2 and <= 41                       | postgres
+    3248 | ROLLBACK_TABLE         | END          | myschema1.mytbl1             | 11 rolled back primary keys                                    | postgres
+    3249 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 2 and <= 41                       | postgres
+    3250 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 3 rolled back primary keys                                     | postgres
+    3251 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 2 and <= 41                       | postgres
+    3252 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 6 rolled back primary keys                                     | postgres
+    3253 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Mark12 is deleted                                         | postgres
+    3254 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3255 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 1                                                      | postgres
+    3256 | ROLLBACK_GROUP         | NOTICE       | Rollback id 13               | 3 / 5 tables effectively processed.                            | postgres
+    3257 | ROLLBACK_GROUP         | NOTICE       | Rollback id 13               | 2 sequences processed.                                         | postgres
+    3258 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3259 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 13, 3 tables and 2 sequences effectively processed | postgres
+    3260 | STOP_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3261 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3262 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3263 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | STOP_%                                                         | postgres
+    3264 | CLEANUP_RLBK_STATE     |              | Rollback id 12               | set to COMMITTED                                               | postgres
+    3265 | CLEANUP_RLBK_STATE     |              | Rollback id 13               | set to COMMITTED                                               | postgres
+    3266 | SET_MARK_GROUP         | END          | myGroup1                     | STOP_%                                                         | postgres
+    3267 | STOP_GROUP             | END          | myGroup1                     | 7 tables/sequences processed                                   | postgres
+    3268 | START_GROUP            | BEGIN        | myGroup1                     | With log reset                                                 | postgres
+    3269 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3270 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3271 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | Mark11                                                         | postgres
+    3272 | SET_MARK_GROUP         | END          | myGroup1                     | Mark11                                                         | postgres
+    3273 | START_GROUP            | END          | myGroup1                     | 7 tables/sequences processed                                   | postgres
+    3274 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
+    3275 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3276 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3277 | SET_MARK_GROUP         | END          | myGroup1                     | Mark12                                                         | postgres
+    3278 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
+    3279 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3280 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3281 | SET_MARK_GROUP         | END          | myGroup1                     | Mark13                                                         | postgres
+    3282 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Mark12 (timestamp)                     | postgres
+    3283 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3284 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3285 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3286 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Mark12_%_START                                            | postgres
+    3287 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Mark12_%_START                                            | postgres
+    3288 | ROLLBACK_TABLE         | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 60 and <= 71                      | postgres
+    3289 | ROLLBACK_TABLE         | END          | myschema1."myTbl3"           | 10 rolled back primary keys                                    | postgres
+    3290 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 60 and <= 71                      | postgres
+    3291 | ROLLBACK_TABLE         | END          | myschema1.mytbl4             | 1 rolled back primary keys                                     | postgres
+    3292 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" | RESTART 1                                                      | postgres
+    3293 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
+    3294 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Mark12_%_DONE                                             | postgres
+    3295 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Mark12_%_DONE                                             | postgres
+    3296 | ROLLBACK_GROUP         | NOTICE       | Rollback id 14               | 2 / 5 tables effectively processed.                            | postgres
+    3297 | ROLLBACK_GROUP         | NOTICE       | Rollback id 14               | 2 sequences processed.                                         | postgres
+    3298 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3299 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 14, 2 tables and 2 sequences effectively processed | postgres
+    3300 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Mark11 (timestamp)                     | postgres
+    3301 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3302 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3303 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3304 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Mark11_%_START                                            | postgres
+    3305 | CLEANUP_RLBK_STATE     |              | Rollback id 14               | set to COMMITTED                                               | postgres
+    3306 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Mark11_%_START                                            | postgres
+    3307 | ROLLBACK_TABLE         | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 41 and <= 82                      | postgres
+    3308 | ROLLBACK_TABLE         | END          | myschema1."myTbl3"           | 10 rolled back primary keys                                    | postgres
+    3309 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 41 and <= 82                      | postgres
+    3310 | ROLLBACK_TABLE         | END          | myschema1.mytbl1             | 11 rolled back primary keys                                    | postgres
+    3311 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 41 and <= 82                      | postgres
+    3312 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 2 rolled back primary keys                                     | postgres
+    3313 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 41 and <= 82                      | postgres
+    3314 | ROLLBACK_TABLE         | END          | myschema1.mytbl4             | 1 rolled back primary keys                                     | postgres
+    3315 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 41 and <= 82                      | postgres
+    3316 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 2 rolled back primary keys                                     | postgres
+    3317 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3318 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 1                                                      | postgres
+    3319 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Mark11_%_DONE                                             | postgres
+    3320 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Mark11_%_DONE                                             | postgres
+    3321 | ROLLBACK_GROUP         | NOTICE       | Rollback id 15               | 5 / 5 tables effectively processed.                            | postgres
+    3322 | ROLLBACK_GROUP         | NOTICE       | Rollback id 15               | 2 sequences processed.                                         | postgres
+    3323 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3324 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 15, 5 tables and 2 sequences effectively processed | postgres
+    3325 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Mark13 (timestamp)                   | postgres
+    3326 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3327 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3328 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3329 | ROLLBACK_TABLE         | BEGIN        | myschema1."myTbl3"           | All log rows with emaj_gid > 71 and <= 96                      | postgres
+    3330 | ROLLBACK_TABLE         | END          | myschema1."myTbl3"           | 10 rolled back primary keys                                    | postgres
+    3331 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 71 and <= 96                      | postgres
+    3332 | ROLLBACK_TABLE         | END          | myschema1.mytbl1             | 10 rolled back primary keys                                    | postgres
+    3333 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 71 and <= 96                      | postgres
+    3334 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 2 rolled back primary keys                                     | postgres
+    3335 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl4             | All log rows with emaj_gid > 71 and <= 96                      | postgres
+    3336 | ROLLBACK_TABLE         | END          | myschema1.mytbl4             | 1 rolled back primary keys                                     | postgres
+    3337 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 71 and <= 96                      | postgres
+    3338 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 2 rolled back primary keys                                     | postgres
+    3339 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Mark12_%_START is deleted                            | postgres
+    3340 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Mark12_%_DONE is deleted                             | postgres
+    3341 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Mark11_%_START is deleted                            | postgres
+    3342 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Mark11_%_DONE is deleted                             | postgres
+    3343 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" | RESTART 11                                                     | postgres
+    3344 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
+    3345 | ROLLBACK_GROUP         | NOTICE       | Rollback id 16               | 5 / 5 tables effectively processed.                            | postgres
+    3346 | ROLLBACK_GROUP         | NOTICE       | Rollback id 16               | 2 sequences processed.                                         | postgres
+    3347 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3348 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 16, 5 tables and 2 sequences effectively processed | postgres
+    3349 | ROLLBACK_GROUP         | BEGIN        | emptyGroup                   | Unlogged rollback to mark EGM4 (timestamp)                     | postgres
+    3350 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3351 | LOCK_GROUP             | BEGIN        | emptyGroup                   | Rollback session #1                                            | postgres
+    3352 | LOCK_GROUP             | END          | emptyGroup                   | Rollback session #1: 0 tables locked, 0 deadlock(s)            | postgres
+    3353 | ROLLBACK_GROUP         | NOTICE       | Rollback id 17               | 0 / 0 tables effectively processed.                            | postgres
+    3354 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3355 | ROLLBACK_GROUP         | END          | emptyGroup                   | Rollback_id 17, 0 tables and 0 sequences effectively processed | postgres
+    3356 | ROLLBACK_GROUP         | BEGIN        | emptyGroup                   | Logged rollback to mark EGM3 (timestamp)                       | postgres
+    3357 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3358 | LOCK_GROUP             | BEGIN        | emptyGroup                   | Rollback session #1                                            | postgres
+    3359 | LOCK_GROUP             | END          | emptyGroup                   | Rollback session #1: 0 tables locked, 0 deadlock(s)            | postgres
+    3360 | SET_MARK_GROUP         | BEGIN        | emptyGroup                   | RLBK_EGM3_%_START                                              | postgres
+    3361 | CLEANUP_RLBK_STATE     |              | Rollback id 15               | set to COMMITTED                                               | postgres
+    3362 | CLEANUP_RLBK_STATE     |              | Rollback id 16               | set to COMMITTED                                               | postgres
+    3363 | CLEANUP_RLBK_STATE     |              | Rollback id 17               | set to COMMITTED                                               | postgres
+    3364 | SET_MARK_GROUP         | END          | emptyGroup                   | RLBK_EGM3_%_START                                              | postgres
+    3365 | SET_MARK_GROUP         | BEGIN        | emptyGroup                   | RLBK_EGM3_%_DONE                                               | postgres
+    3366 | SET_MARK_GROUP         | END          | emptyGroup                   | RLBK_EGM3_%_DONE                                               | postgres
+    3367 | ROLLBACK_GROUP         | NOTICE       | Rollback id 18               | 0 / 0 tables effectively processed.                            | postgres
+    3368 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3369 | ROLLBACK_GROUP         | END          | emptyGroup                   | Rollback_id 18, 0 tables and 0 sequences effectively processed | postgres
+    3370 | START_GROUP            | BEGIN        | myGroup4                     | With log reset                                                 | postgres
+    3371 | LOCK_GROUP             | BEGIN        | myGroup4                     |                                                                | postgres
+    3372 | LOCK_GROUP             | END          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3373 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | myGroup4_start                                                 | postgres
+    3374 | CLEANUP_RLBK_STATE     |              | Rollback id 18               | set to COMMITTED                                               | postgres
+    3375 | SET_MARK_GROUP         | END          | myGroup4                     | myGroup4_start                                                 | postgres
+    3376 | START_GROUP            | END          | myGroup4                     | 5 tables/sequences processed                                   | postgres
+    3377 | SET_MARK_GROUP         | BEGIN        | myGroup4                     |                                                                | postgres
+    3378 | LOCK_GROUP             | BEGIN        | myGroup4                     |                                                                | postgres
+    3379 | LOCK_GROUP             | END          | myGroup4                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3380 | SET_MARK_GROUP         | END          | myGroup4                     | mark1                                                          | postgres
+    3381 | ROLLBACK_GROUP         | BEGIN        | myGroup4                     | Logged rollback to mark mark1 (timestamp)                      | postgres
+    3382 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3383 | LOCK_GROUP             | BEGIN        | myGroup4                     | Rollback session #1                                            | postgres
+    3384 | LOCK_GROUP             | END          | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3385 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | RLBK_mark1_%_START                                             | postgres
+    3386 | SET_MARK_GROUP         | END          | myGroup4                     | RLBK_mark1_%_START                                             | postgres
+    3387 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc1            | All log rows with emaj_gid > 99 and <= 102                     | postgres
+    3388 | ROLLBACK_TABLE         | END          | myschema4.mytblc1            | 1 rolled back primary keys                                     | postgres
+    3389 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc2            | All log rows with emaj_gid > 99 and <= 102                     | postgres
+    3390 | ROLLBACK_TABLE         | END          | myschema4.mytblc2            | 1 rolled back primary keys                                     | postgres
+    3391 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblm             | All log rows with emaj_gid > 99 and <= 102                     | postgres
+    3392 | ROLLBACK_TABLE         | END          | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
+    3393 | SET_MARK_GROUP         | BEGIN        | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
+    3394 | SET_MARK_GROUP         | END          | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
+    3395 | ROLLBACK_GROUP         | NOTICE       | Rollback id 19               | 3 / 5 tables effectively processed.                            | postgres
+    3396 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3397 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 19, 3 tables and 0 sequences effectively processed | postgres
+    3398 | ROLLBACK_GROUP         | BEGIN        | myGroup4                     | Unlogged rollback to mark myGroup4_start (timestamp)           | postgres
+    3399 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3400 | LOCK_GROUP             | BEGIN        | myGroup4                     | Rollback session #1                                            | postgres
+    3401 | LOCK_GROUP             | END          | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3402 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc1            | All log rows with emaj_gid > 96 and <= 105                     | postgres
+    3403 | ROLLBACK_TABLE         | END          | myschema4.mytblc1            | 1 rolled back primary keys                                     | postgres
+    3404 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblc2            | All log rows with emaj_gid > 96 and <= 105                     | postgres
+    3405 | ROLLBACK_TABLE         | END          | myschema4.mytblc2            | 1 rolled back primary keys                                     | postgres
+    3406 | ROLLBACK_TABLE         | BEGIN        | myschema4.mytblm             | All log rows with emaj_gid > 96 and <= 105                     | postgres
+    3407 | ROLLBACK_TABLE         | END          | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
+    3408 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark mark1 is deleted                                          | postgres
+    3409 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark RLBK_mark1_%_START is deleted                             | postgres
+    3410 | ROLLBACK_GROUP         | MARK DELETED | myGroup4                     | mark RLBK_mark1_%_DONE is deleted                              | postgres
+    3411 | ROLLBACK_GROUP         | NOTICE       | Rollback id 20               | 3 / 5 tables effectively processed.                            | postgres
+    3412 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3413 | ROLLBACK_GROUP         | END          | myGroup4                     | Rollback_id 20, 3 tables and 0 sequences effectively processed | postgres
+    3415 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
+    3416 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3417 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3418 | CLEANUP_RLBK_STATE     |              | Rollback id 19               | set to COMMITTED                                               | postgres
+    3419 | CLEANUP_RLBK_STATE     |              | Rollback id 20               | set to COMMITTED                                               | postgres
+    3420 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M1                                                       | postgres
+    3421 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Conso_M1 (timestamp)                   | postgres
+    3422 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3423 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3424 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3425 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M1_%_START                                          | postgres
+    3426 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M1_%_START                                          | postgres
+    3427 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3428 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  |                                                                | postgres
+    3429 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M1_%_DONE                                           | postgres
+    3430 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M1_%_DONE                                           | postgres
+    3431 | ROLLBACK_GROUP         | NOTICE       | Rollback id 21               | 0 / 5 tables effectively processed.                            | postgres
+    3432 | ROLLBACK_GROUP         | NOTICE       | Rollback id 21               | 2 sequences processed.                                         | postgres
+    3433 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3434 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 21, 0 tables and 2 sequences effectively processed | postgres
+    3435 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Conso_M1 and RLBK_Conso_M1_%_DONE      | postgres
+    3436 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted           | postgres
+    3437 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
+    3438 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3439 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3440 | CLEANUP_RLBK_STATE     |              | Rollback id 21               | set to COMMITTED                                               | postgres
+    3441 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M2                                                       | postgres
+    3442 | SET_MARK_GROUP         | BEGIN        | myGroup1                     |                                                                | postgres
+    3443 | LOCK_GROUP             | BEGIN        | myGroup1                     |                                                                | postgres
+    3444 | LOCK_GROUP             | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                 | postgres
+    3445 | SET_MARK_GROUP         | END          | myGroup1                     | Conso_M3                                                       | postgres
+    3446 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Logged rollback to mark Conso_M2 (timestamp)                   | postgres
+    3447 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3448 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3449 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3450 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M2_%_START                                          | postgres
+    3451 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M2_%_START                                          | postgres
+    3452 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl1             | All log rows with emaj_gid > 105 and <= 122                    | postgres
+    3453 | ROLLBACK_TABLE         | END          | myschema1.mytbl1             | 12 rolled back primary keys                                    | postgres
+    3454 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 105 and <= 122                    | postgres
+    3455 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 1 rolled back primary keys                                     | postgres
+    3456 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 105 and <= 122                    | postgres
+    3457 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 2 rolled back primary keys                                     | postgres
+    3458 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3459 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
+    3460 | SET_MARK_GROUP         | BEGIN        | myGroup1                     | RLBK_Conso_M2_%_DONE                                           | postgres
+    3461 | SET_MARK_GROUP         | END          | myGroup1                     | RLBK_Conso_M2_%_DONE                                           | postgres
+    3462 | ROLLBACK_GROUP         | NOTICE       | Rollback id 22               | 3 / 5 tables effectively processed.                            | postgres
+    3463 | ROLLBACK_GROUP         | NOTICE       | Rollback id 22               | 2 sequences processed.                                         | postgres
+    3464 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3465 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 22, 3 tables and 2 sequences effectively processed | postgres
+    3466 | RENAME_MARK_GROUP      | BEGIN        | myGroup1                     | Conso_M2                                                       | postgres
+    3467 | RENAME_MARK_GROUP      | END          | myGroup1                     | Conso_M2 renamed Renamed_conso_M2                              | postgres
+    3468 | RENAME_MARK_GROUP      | BEGIN        | myGroup1                     | EMAJ_LAST_MARK                                                 | postgres
+    3469 | RENAME_MARK_GROUP      | END          | myGroup1                     | RLBK_Conso_M2_%_DONE renamed Renamed_last_mark                 | postgres
+    3470 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark | postgres
+    3471 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted           | postgres
+    3472 | CONSOLIDATE_RLBK_GROUP | BEGIN        | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark | postgres
+    3473 | CONSOLIDATE_RLBK_GROUP | END          | myGroup1                     | 0 tables and 2 sequences processed ; 0 marks deleted           | postgres
+    3474 | ROLLBACK_GROUP         | BEGIN        | myGroup1                     | Unlogged rollback to mark Conso_M1 (timestamp)                 | postgres
+    3475 | DBLINK_OPEN_CNX        |              | rlbk#1                       | Status = 1                                                     | postgres
+    3476 | LOCK_GROUP             | BEGIN        | myGroup1                     | Rollback session #1                                            | postgres
+    3477 | LOCK_GROUP             | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
+    3478 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2             | All log rows with emaj_gid > 105 and <= 139                    | postgres
+    3479 | ROLLBACK_TABLE         | END          | myschema1.mytbl2             | 1 rolled back primary keys                                     | postgres
+    3480 | ROLLBACK_TABLE         | BEGIN        | myschema1.mytbl2b            | All log rows with emaj_gid > 105 and <= 139                    | postgres
+    3481 | ROLLBACK_TABLE         | END          | myschema1.mytbl2b            | 1 rolled back primary keys                                     | postgres
+    3482 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark RLBK_Conso_M1_%_DONE is deleted                           | postgres
+    3483 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Renamed_conso_M2 is deleted                               | postgres
+    3484 | ROLLBACK_GROUP         | MARK DELETED | myGroup1                     | mark Renamed_last_mark is deleted                              | postgres
+    3485 | ROLLBACK_SEQUENCE      |              | myschema1."myTbl3_col31_seq" |                                                                | postgres
+    3486 | ROLLBACK_SEQUENCE      |              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
+    3487 | ROLLBACK_GROUP         | NOTICE       | Rollback id 23               | 2 / 5 tables effectively processed.                            | postgres
+    3488 | ROLLBACK_GROUP         | NOTICE       | Rollback id 23               | 2 sequences processed.                                         | postgres
+    3489 | DBLINK_CLOSE_CNX       |              | rlbk#1                       |                                                                | postgres
+    3490 | ROLLBACK_GROUP         | END          | myGroup1                     | Rollback_id 23, 2 tables and 2 sequences effectively processed | postgres
+    3521 | CLEANUP_RLBK_STATE     |              | Rollback id 22               | set to COMMITTED                                               | postgres
+    3522 | CLEANUP_RLBK_STATE     |              | Rollback id 23               | set to COMMITTED                                               | postgres
+    3523 | CLEANUP_RLBK_STATE     |              | Rollback id 24               | set to ABORTED                                                 | postgres
 (431 rows)
 

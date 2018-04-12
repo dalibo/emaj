@@ -73,7 +73,7 @@ PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 begin;
   drop schema myschema1 cascade;
   select emaj.emaj_start_group('myGroup1','M1');
-ERROR:  _verify_groups (1): In group "myGroup1", the table "myschema1"."mytbl1" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (1): In group "myGroup1", the table "myschema1"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at PERFORM
@@ -809,9 +809,9 @@ begin;
   drop schema mySchema2 cascade;
   select emaj.emaj_force_stop_group('myGroup2');
 WARNING:  _stop_groups: The schema "myschema2" does not exist any more.
+WARNING:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
 WARNING:  _stop_groups: The table "myschema2.mytbl1" does not exist any more.
 WARNING:  _stop_groups: The table "myschema2.mytbl2" does not exist any more.
-WARNING:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
 WARNING:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
 WARNING:  _stop_groups: The table "myschema2.mytbl5" does not exist any more.
 WARNING:  _stop_groups: The table "myschema2.mytbl6" does not exist any more.

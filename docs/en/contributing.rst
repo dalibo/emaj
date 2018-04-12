@@ -17,7 +17,7 @@ So the first acction to perform is to locally clone this repository on his/her o
 Description of the E-Maj tree
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-So one has a full directory tree (except the web clients). It contains all directories and files described in the :doc:`appendix <content>`, except the *doc* directory content that is separately maintained (see below). 
+So one has a full directory tree (except the web clients). It contains all directories and files described in the :doc:`appendix <content>`, except the *doc* directory content that is separately maintained (see below).
 
 The main directory also contains the following components:
 
@@ -35,7 +35,20 @@ The main directory also contains the following components:
 Setting tools parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The tools stored in the *tools* directory need some parameters to be set, depending on his/her own environment. The *tools/README* file details the changes to apply.
+The tools stored in the *tools* directory need some parameters to be set, depending on his/her own environment. A parameter system covers some tools. For the others, the *tools/README* file details the changes to apply.
+
+Créating the emaj_tools.env file
+''''''''''''''''''''''''''''''''
+
+The parameters that may be modified are grouped into the *tools/emaj_tools.env* file, which is called by *tools/emaj_tools.profile*.
+
+The repository contains a file *tools/emaj_tools.env-dist* that may be used as a template to create the *emaj_tools.env* file.
+
+The *emaj_tools.env* file must contain:
+
+* the list of PostgreSQL versions that are supported by the current E-Maj version and for which a PostgreSQL instance exists for tests (*EMAJ_USER_PGVER* variable),
+* for each PostgreSQL version used for the tests, 6 variables describing the location of binaries, the main directory of the related instance, the role and the ip-port to be used for the connection to the instance.
+
 
 Coding
 ------
@@ -103,7 +116,7 @@ The ideal is to be able to test E-Maj with all PostgreSQL versions that are supp
 
 The *tools/create_cluster.sh* script helps in creating a test instance. Its content may show the characteristics of the instance to create. It can also be executed (after parameters setting as indicated in *tools/README*)::
 
-   sh tools/create_cluster.sh <PostgreSQL_major_version>
+   tools/create_cluster.sh <PostgreSQL_major_version>
 
 Execute non regression tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -119,9 +132,9 @@ The test scenarios
 
 The test system contains 3 scenarios:
 
-* *test/emaj_standart_schedule* : full standart scenario,
-* *test/emaj_initial_upgrade_schedule* : the same scenario but installing the extension from the previous version with an immediate upgrade into the current version,
-* *test/emaj_upgrade_while_loging_schedule* : shorter scenario but with an upgrade into the current version while tables groups are in logging state.
+* a full standart scenario,
+* the same scenario but installing the extension from the previous version with an immediate upgrade into the current version,
+* a shorter scenario but with an upgrade into the current version while tables groups are in logging state.
 
 The 3 scenarios call *psql* scripts, all located into the *test/sql* directory. The scripts chain E-Maj function calls in different contexts, and SQL statements to prepare or check the results.
 
@@ -145,12 +158,12 @@ The test tool, *regress.sh*, combines all test functions.
 
 Before using it, it is necessary to:
 
-* setup its parameters (see the *tools/README* file),
+* have the PostgrSQL instances to be used already created and the *tools/emaj_tools.env* file already setup,
 * manually create the *test/<PostgreSQL_version>/results* directories.
 
 The test tool can be launched with the command::
 
-   sh tools/regress.sh
+   tools/regress.sh
 
 As it starts with a copy of the *emaj.control* file into the *SHAREDIR/extension* directory of each configured PostgreSQL version, it may ask for the password of the Linux account to be able to execute *sudo* commands.
 
@@ -158,20 +171,18 @@ It then displays the list of test functions in a menu. Just enter the letter cor
 
 The test functions are:
 
-* standart tests for each configured PostgreSQL version (scenario *emaj_standart_schedule*),
-* the tests with the installation of the previous version followed by an upgrade (scenario *emaj_initial_upgrade_schedule*),
-* the tests with an E-Maj version upgrade while tables groups are in logging state (scenario *emaj_upgrade_while_loging_schedule*),
+* standart tests for each configured PostgreSQL version,
+* the tests with the installation of the previous version followed by an upgrade,
+* the tests with an E-Maj version upgrade while tables groups are in logging state,
 * a *pgdump/pg_restore* test with different PostgreSQL versions,
 * a PostgreSQL upgrade version test using *pg_upgrade* with a database containing the E-Maj extension.
 
-The three first tests use the *regress* tool contained in the development PostgreSQL distributions. It is important to execute the three set of tests for each E-Maj change.
-
-The two last tests execute *shell* code directly integrated into *regress.sh*.
+It is important to execute the three first sets of tests for each E-Maj change.
 
 Validate results
 ''''''''''''''''
 
-After having executed a *psql* script, *regress* compares the outputs of the run with the expected outputs and reports the comparison result with the words *ok* or *failed*.
+After having executed a *psql* script, *regress.sh* compares the outputs of the run with the expected outputs and reports the comparison result with the words *ok* or *FAILED*.
 
 When at least one script fails, it is important to closely analyze the differences, by reviewing the *test/<PostgreSQL_version>/regression.diff* file content, and check that the differences are directly linked to changes applied in the extension source code or in the test scripts.
 

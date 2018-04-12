@@ -35,7 +35,22 @@ L’arborescence comprend les éléments complémentaires suivants :
 
 Paramétrer les outils
 ^^^^^^^^^^^^^^^^^^^^^
-Les outils présents dans le répertoire tools nécessitent d’être paramétrés en fonction de l’environnement de chacun. Le fichier *tools/README* détaille les adaptations à réaliser.
+Les outils présents dans le répertoire tools nécessitent d’être paramétrés en fonction de l’environnement de chacun. Un système de paramétrage couvre certains outils. Pour les autres, le fichier *tools/README* détaille les adaptations à réaliser.
+
+Le fichier *tools/emaj_tools.profile* contient des définitions de variables et de fonctions utilisées par différents outils. En principe, ces éléments n’ont pas besoin d’être modifiés.
+
+Création du fichier emaj_tools.env
+''''''''''''''''''''''''''''''''''
+
+Les paramétres susceptibles d’être modifiés sont regroupés dans le fichier *tools/emaj_tools.env*, lui même appelé par *tools/emaj_tools.profile*.
+
+Le dépôt contient un fichier *tools/emaj_tools.env-dist* qui peut servir de squelette pour créer le fichier *emaj_tools.env*.
+
+Le fichier *emaj_tools.env* doit contenir :
+
+* la liste des versions de PostgreSQL supportées par la version courante d’E-Maj et qui disposent d’une instance PostgreSQL de test (variable *EMAJ_USER_PGVER*),
+* pour chaque version d’instance PostgreSQL utilisée pour les tests, 6 variables décrivant la localisation des binaires et du répertoire principal de l’instance, les rôle et port ip à utiliser pour la connexion à l’instance.
+
 
 Coder
 -----
@@ -120,9 +135,9 @@ Les scénarios de test
 
 Le système de test comprend 3 scénarios de test :
 
-* *test/emaj_standart_schedule* : scénario standard complet,
-* *test/emaj_initial_upgrade_schedule* : le même scénario mais en installant l’extension  à partir de la version précédente puis *upgrade* dans la version courante,
-* *test/emaj_upgrade_while_loging_schedule* : scénario réduit mais avec un *upgrade* dans la version courante alors que des groupes de tables sont actifs.
+* un scénario standard complet,
+* le même scénario mais en installant l’extension  à partir de la version précédente puis *upgrade* dans la version courante,
+* un scénario réduit mais avec un *upgrade* dans la version courante alors que des groupes de tables sont actifs.
 
 Les 3 scénarios font appel à des scripts *psql*, tous localisés dans *test/sql*. Les scripts enchaînent dans différents contextes des séquences d’appels de fonctions E-Maj et de requêtes SQL de préparation et de contrôle des résultats obtenus.
 
@@ -146,12 +161,12 @@ L’outil de test, *regress.sh*, regroupe l’ensemble des fonctions de test.
 
 Avant de pouvoir l’utiliser, il faut :
 
-* le paramétrer (voir le fichier *tools/README*),
+* que les instances PostgreSQL de test et le fichier *tools/emaj_tools.env* aient été créés,
 * créer manuellement les répertoires *test/<version_postgres>/results*
 
 L’outil de test se lance avec la commande ::
 
-   sh tools/regress.sh
+   tools/regress.sh
 
 Comme il commence par copier le fichier *emaj.control* dans les répertoires *SHAREDIR/extension* des versions de PostgreSQL configurées, il peut demander le mot de passe du compte Linux pour exécuter des commandes *sudo*.
 
@@ -159,20 +174,18 @@ Il affiche ensuite la liste des fonctions de test dans un menu. Il suffit d’in
 
 On trouve :
 
-* les tests standards pour chaque version de PostgreSQL configurée (scénario *emaj_standart_schedule*),
-* les tests avec installation de la version précédente puis upgrade (scénario *emaj_initial_upgrade_schedule*),
-* les tests avec *upgrade* de version E-Maj sur des groupes actifs (scénario *emaj_upgrade_while_loging_schedule*),
+* les tests standards pour chaque version de PostgreSQL configurée,
+* les tests avec installation de la version précédente puis upgrade,
+* les tests avec *upgrade* de version E-Maj sur des groupes actifs,
 * un test de *pgdump/pg_restore* de la base avec des versions de PostgreSQL différentes,
 * un test d’*upgrade* de version de PostgreSQL par *pg_upgrade* avec une base contenant l’extension E-Maj.
 
-Les trois premiers tests font appel à l’outil *regress* présent dans les distributions de développement de PostgreSQL. Il est important d’exécuter ces trois séries de test pour chaque évolution E-Maj.
-
-Les deux derniers tests déroulent du code *shell* directement intégré dans *regress.sh*.
+Il est important d’exécuter ces trois premières séries de test pour chaque évolution E-Maj.
 
 Valider les résultats
 '''''''''''''''''''''
 
-Après avoir exécuté un script *psql*, *regress* compare le résultat obtenu avec le résultat attendu et affiche le résultat de la comparaison sous la forme *'ok'* ou *'failed'*.
+Après avoir exécuté un script *psql*, *regress.sh* compare le résultat obtenu avec le résultat attendu et affiche le résultat de la comparaison sous la forme *'ok'* ou *'FAILED'*.
 
 Dans le cas où au moins un script ressort en différence, il convient d’analyser scrupuleusement le contenu du fichier *test/<version_postgres>/regression.diff* pour vérifier si les écarts sont bien liés aux modifications apportées dans le code source de l’extension ou dans les scripts de test.
 

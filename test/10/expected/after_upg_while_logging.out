@@ -324,8 +324,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
       74 | SET_MARK_GROUP           | END                | myGroup2                     | RLBK_M2_%_START                                                             | postgres
       75 | ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4             | All log rows with emaj_gid > 77 and <= 81                                   | postgres
       76 | ROLLBACK_TABLE           | END                | myschema2.mytbl4             | 2 rolled back primary keys                                                  | postgres
-      77 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             | RESTART 1001 MAXVALUE 2000 CYCLE                                            | postgres
-      78 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+      77 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+      78 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             | RESTART 1001 MAXVALUE 2000 CYCLE                                            | postgres
       79 | SET_MARK_GROUP           | BEGIN              | myGroup2                     | RLBK_M2_%_DONE                                                              | postgres
       80 | SET_MARK_GROUP           | END                | myGroup2                     | RLBK_M2_%_DONE                                                              | postgres
       81 | ROLLBACK_GROUP           | NOTICE             | Rollback id 3                | 1 / 4 tables effectively processed.                                         | postgres
@@ -339,8 +339,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
       89 | SET_MARK_GROUP           | END                | myGroup2                     | RLBK_M3_%_START                                                             | postgres
       90 | ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4             | All log rows with emaj_gid > 81 and <= 83                                   | postgres
       91 | ROLLBACK_TABLE           | END                | myschema2.mytbl4             | 2 rolled back primary keys                                                  | postgres
-      92 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                         | postgres
-      93 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+      92 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+      93 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                         | postgres
       94 | SET_MARK_GROUP           | BEGIN              | myGroup2                     | RLBK_M3_%_DONE                                                              | postgres
       95 | SET_MARK_GROUP           | END                | myGroup2                     | RLBK_M3_%_DONE                                                              | postgres
       96 | ROLLBACK_GROUP           | NOTICE             | Rollback id 4                | 1 / 4 tables effectively processed.                                         | postgres
@@ -367,8 +367,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      117 | LOCK_GROUP               | END                | myGroup1,myGroup2            | Rollback session #1: 8 tables locked, 0 deadlock(s)                         | postgres
      118 | ROLLBACK_GROUPS          | MARK DELETED       | myGroup1                     | mark ALTER_% is deleted                                                     | postgres
      119 | ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq" |                                                                             | postgres
-     120 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             |                                                                             | postgres
-     121 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+     120 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+     121 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             |                                                                             | postgres
      122 | ROLLBACK_GROUPS          | NOTICE             | Rollback id 5                | 0 / 8 tables effectively processed.                                         | postgres
      123 | ROLLBACK_GROUPS          | NOTICE             | Rollback id 5                | 3 sequences processed.                                                      | postgres
      124 | ROLLBACK_GROUPS          | WARNING            | Rollback id 5                | The table myschema1."myTbl3" has been left unchanged (not in group anymore) | postgres
@@ -423,8 +423,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      173 | SET_MARK_GROUP           | END                | myGroup2                     | RLBK_M2_%_START                                                             | postgres
      174 | ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4             | All log rows with emaj_gid > 77 and <= 106                                  | postgres
      175 | ROLLBACK_TABLE           | END                | myschema2.mytbl4             | 2 rolled back primary keys                                                  | postgres
-     176 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             | RESTART 1001 MAXVALUE 2000 CYCLE                                            | postgres
-     177 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+     176 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+     177 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             | RESTART 1001 MAXVALUE 2000 CYCLE                                            | postgres
      178 | SET_MARK_GROUP           | BEGIN              | myGroup2                     | RLBK_M2_%_DONE                                                              | postgres
      179 | SET_MARK_GROUP           | END                | myGroup2                     | RLBK_M2_%_DONE                                                              | postgres
      180 | ROLLBACK_GROUP           | NOTICE             | Rollback id 7                | 1 / 4 tables effectively processed.                                         | postgres
@@ -443,8 +443,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
      193 | ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark Common is deleted                                                      | postgres
      194 | ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark RLBK_M2_%_START is deleted                                             | postgres
      195 | ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark RLBK_M2_%_DONE is deleted                                              | postgres
-     196 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                         | postgres
-     197 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+     196 | ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq" |                                                                             | postgres
+     197 | ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                         | postgres
      198 | ROLLBACK_GROUP           | NOTICE             | Rollback id 8                | 1 / 4 tables effectively processed.                                         | postgres
      199 | ROLLBACK_GROUP           | NOTICE             | Rollback id 8                | 2 sequences processed.                                                      | postgres
      200 | ROLLBACK_GROUP           | END                | myGroup2                     | Rollback_id 8, 1 tables and 2 sequences effectively processed               | postgres

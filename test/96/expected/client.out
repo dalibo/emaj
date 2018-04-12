@@ -25,7 +25,7 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
-\! ../../php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
@@ -41,7 +41,7 @@ select emaj.emaj_alter_group('myGroup1');
                 7
 (1 row)
 
-\! ../../php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
@@ -50,7 +50,7 @@ SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllow
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 140
 Call of _rlbk_init() function failed 
 -- unlogged rollback for 2 groups in unstrict mode
-\! ../../php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+\! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
@@ -60,7 +60,7 @@ Call of _rlbk_init() function failed
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 
 -- logged rollback for a single group and a single session
-\! ../../php/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
+\! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
@@ -114,7 +114,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 --------------------------------------------
 -- call emajRollbackMonitor.php using an emaj_viewer role
 --------------------------------------------
-\! ../../php/emajRollbackMonitor.php -h localhost -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -vr
+\! ${EMAJ_DIR}/php/emajRollbackMonitor.php -h localhost -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -vr
  E-Maj (version <devel>) - Monitoring rollbacks activity
 ---------------------------------------------------------------
 [current date and time]
