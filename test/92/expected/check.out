@@ -98,7 +98,7 @@ select funcname, calls from pg_stat_user_functions
  _change_log_index_tsp_tbl                 |     6
  _change_log_schema_tbl                    |     8
  _check_fk_groups                          |   204
- _check_group_names                        |   829
+ _check_group_names                        |   830
  _check_groups_content                     |    95
  _check_mark_name                          |   301
  _check_marks_range                        |    92
@@ -152,8 +152,8 @@ select funcname, calls from pg_stat_user_functions
  _set_time_stamp                           |   354
  _start_groups                             |    49
  _stop_groups                              |    63
- _verify_all_groups                        |    33
- _verify_all_schemas                       |    33
+ _verify_all_groups                        |    34
+ _verify_all_schemas                       |    34
  emaj_alter_group                          |    46
  emaj_alter_groups                         |    17
  emaj_cleanup_rollback_state               |     6
@@ -202,14 +202,14 @@ select funcname, calls from pg_stat_user_functions
  emaj_stop_groups                          |    12
  emaj_unprotect_group                      |     8
  emaj_unprotect_mark_group                 |     6
- emaj_verify_all                           |    33
+ emaj_verify_all                           |    34
 (113 rows)
 
--- count the total number of user-callable function calls
+-- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum 
 -----
- 663
+ 664
 (1 row)
 
 -----------------------------

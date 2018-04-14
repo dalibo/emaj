@@ -64,7 +64,7 @@ select funcname, calls from pg_stat_user_functions
     and funcname <> '_pg_version_num' and funcname <> '_verify_groups'
   order by funcname, funcid;
 
--- count the total number of user-callable function calls
+-- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
 
 -----------------------------

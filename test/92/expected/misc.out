@@ -1601,7 +1601,19 @@ begin;
 (1 row)
 
 rollback;
--- all in 1
+-- detection of modified primary key
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  alter table myschema1.mytbl4 add primary key (col41, col42);
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "mytbl4_pkey" for table "mytbl4"
+  select * from emaj.emaj_verify_all();
+                                                     emaj_verify_all                                                     
+-------------------------------------------------------------------------------------------------------------------------
+ In rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41 => col41,col42).
+(1 row)
+
+rollback;
+-- almost all in 1
 begin;
   create table emaj.dummy_log (col1 int);
   create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;

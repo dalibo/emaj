@@ -2421,6 +2421,34 @@ $_verify_groups$
       if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
+-- check the primary key structure of all tables belonging to rollbackable groups is unchanged
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq,
+                   'In rollbackable group "' || rel_group || '", the primary key of the table "' ||
+                   rel_schema || '"."' || rel_tblseq || '" has changed (' || rel_sql_pk_columns || ' => ' || current_pk_columns || ').' AS msg
+        FROM (
+          SELECT rel_schema, rel_tblseq, rel_group, rel_sql_pk_columns,
+                 string_agg(quote_ident(attname), ',' ORDER BY attnum) AS current_pk_columns
+            FROM emaj.emaj_relation, emaj.emaj_group, pg_catalog.pg_attribute, pg_catalog.pg_index, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE -- join conditions
+                  rel_group = group_name
+              AND relname = rel_tblseq AND nspname = rel_schema
+              AND pg_attribute.attrelid = pg_index.indrelid
+              AND indrelid = pg_class.oid AND relnamespace = pg_namespace.oid
+                  -- filter conditions
+              AND rel_group = ANY (v_groups) AND rel_kind = 'r' AND upper_inf(rel_time_range)
+              AND group_is_rollbackable
+              AND attnum = ANY (indkey)
+              AND indisprimary
+              AND attnum > 0 AND attisdropped = FALSE
+            GROUP BY rel_schema, rel_tblseq, rel_group, rel_sql_pk_columns
+          ) AS t
+          WHERE rel_sql_pk_columns <> current_pk_columns
+        ORDER BY 1,2,3
+    LOOP
+      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (10): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
 --
     RETURN;
   END;
@@ -6860,6 +6888,30 @@ $_verify_all_groups$
           AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
           AND relhasoids
         ORDER BY rel_schema, rel_tblseq, 1;
+-- check the primary key structure of all tables belonging to rollbackable groups is unchanged
+    RETURN QUERY
+      SELECT 'In rollbackable group "' || rel_group || '", the primary key of the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has changed (' || rel_sql_pk_columns || ' => ' || current_pk_columns || ').' AS msg
+        FROM (
+          SELECT rel_schema, rel_tblseq, rel_group, rel_sql_pk_columns,
+                 string_agg(quote_ident(attname), ',' ORDER BY attnum) AS current_pk_columns
+            FROM emaj.emaj_relation, emaj.emaj_group, pg_catalog.pg_attribute, pg_catalog.pg_index, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE -- join conditions
+                  rel_group = group_name
+              AND relname = rel_tblseq AND nspname = rel_schema
+              AND pg_attribute.attrelid = pg_index.indrelid
+              AND indrelid = pg_class.oid AND relnamespace = pg_namespace.oid
+                  -- filter conditions
+              AND rel_kind = 'r' AND upper_inf(rel_time_range)
+              AND group_is_rollbackable
+              AND attnum = ANY (indkey)
+              AND indisprimary
+              AND attnum > 0 AND attisdropped = FALSE
+            GROUP BY rel_schema, rel_tblseq, rel_group, rel_sql_pk_columns
+          ) AS t
+          WHERE rel_sql_pk_columns <> current_pk_columns
+        ORDER BY rel_schema, rel_tblseq, 1;
+--
     RETURN;
   END;
 $_verify_all_groups$;

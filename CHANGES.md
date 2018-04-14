@@ -5,6 +5,8 @@ E-Maj - Change log
 ###Enhancements:###
   * New emaj_log_stat_groups() and emaj_detailed_log_stat_groups() functions 
     produce log statistics for several tables groups.
+  * Add checks on primary key structures to be sure they are not altered
+    since their related group creation time.
 
 ###Bug fixes:###
 

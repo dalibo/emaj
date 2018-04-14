@@ -1623,7 +1623,19 @@ begin;
 (2 rows)
 
 rollback;
--- all in 1
+-- detection of modified primary key
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  alter table myschema1.mytbl4 add primary key (col41, col42);
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ In rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41 => col41,col42).
+(2 rows)
+
+rollback;
+-- almost all in 1
 begin;
   create table emaj.dummy_log (col1 int);
   create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;

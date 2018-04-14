@@ -665,8 +665,14 @@ begin;
   alter table "phil's schema3"."myTbl2\" set with oids;
   select * from emaj.emaj_verify_all();
 rollback;
+-- detection of modified primary key
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  alter table myschema1.mytbl4 add primary key (col41, col42);
+  select * from emaj.emaj_verify_all();
+rollback;
 
--- all in 1
+-- almost all in 1
 begin;
   create table emaj.dummy_log (col1 int);
   create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;
