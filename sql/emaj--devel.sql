@@ -4483,13 +4483,14 @@ $_rlbk_planning$
         WHERE upper_inf(rel_time_range) AND rel_group = ANY(v_groupNames) AND rel_kind = 'r';
 -- insert into emaj_rlbk_plan a row per table to effectively rollback.
 -- the numbers of log rows is computed using the _log_stat_tbl() function.
+-- a final check will be performed after tables will be locked to be sure no new table will have been updated
      INSERT INTO emaj.emaj_rlbk_plan
             (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_estimated_quantity)
       SELECT v_rlbkId, 'RLBK_TABLE', rel_schema, rel_tblseq, '',
-             emaj._log_stat_tbl(t, v_markTimeId, NULL)
+             emaj._log_stat_tbl(t, CASE WHEN v_markTimeId > lower(rel_time_range) THEN v_markTimeId ELSE lower(rel_time_range) END, NULL)
         FROM (SELECT * FROM emaj.emaj_relation
                 WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r') AS t
-        WHERE emaj._log_stat_tbl(t, v_markTimeId, NULL) > 0;
+        WHERE emaj._log_stat_tbl(t, CASE WHEN v_markTimeId > lower(rel_time_range) THEN v_markTimeId ELSE lower(rel_time_range) END, NULL) > 0;
      GET DIAGNOSTICS v_effNbTable = ROW_COUNT;
 --
 -- group tables into batchs to process all tables linked by foreign keys as a batch
@@ -5031,7 +5032,7 @@ $_rlbk_start_mark$
                               WHERE rlbp_schema = rel_schema AND rlbp_table = rel_tblseq
                                 AND rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE')
                     ) AS t
-      WHERE emaj._log_stat_tbl(t, v_markTimeId, NULL) > 0;
+      WHERE emaj._log_stat_tbl(t, CASE WHEN v_markTimeId > lower(rel_time_range) THEN v_markTimeId ELSE lower(rel_time_range) END, NULL) > 0;
     IF FOUND THEN
       v_errorMsg = 'the rollback operation has been cancelled due to concurrent activity at E-Maj rollback planning time on tables to process.';
       PERFORM emaj._rlbk_error(v_rlbkId, v_errorMsg, 'rlbk#1');

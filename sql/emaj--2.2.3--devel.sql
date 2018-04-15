@@ -315,6 +315,511 @@ $_verify_groups$
   END;
 $_verify_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._rlbk_planning(v_rlbkId INT)
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+$_rlbk_planning$
+-- This function builds the rollback steps for a rollback operation.
+-- It stores the result into the emaj_rlbk_plan table.
+-- The function returns the effective number of tables to process.
+-- It is called in an autonomous dblink transaction, if possible.
+-- The function is defined as SECURITY DEFINER so that emaj_viwer role can write into rollback tables without having specific privileges to do it.
+  DECLARE
+    v_groupNames             TEXT[];
+    v_mark                   TEXT;
+    v_isLoggedRlbk           BOOLEAN;
+    v_markTimeId             BIGINT;
+    v_nbSession              INT;
+    v_ctrlStepName           emaj._rlbk_step_enum;
+    v_effNbTable             INT;
+    v_batchNumber            INT;
+    v_checks                 INT;
+    v_estimDuration          INTERVAL;
+    v_estimMethod            INT;
+    v_estimDropFkDuration    INTERVAL;
+    v_estimDropFkMethod      INT;
+    v_estimSetFkDefDuration  INTERVAL;
+    v_estimSetFkDefMethod    INT;
+    v_avg_row_rlbk           INTERVAL;
+    v_avg_row_del_log        INTERVAL;
+    v_avg_fkey_check         INTERVAL;
+    v_fixed_step_rlbk        INTERVAL;
+    v_fixed_dblink_rlbk      INTERVAL;
+    v_sessionLoad            INTERVAL[];
+    v_minSession             INT;
+    v_minDuration            INTERVAL;
+    v_nbStep                 INT;
+    r_tbl                    RECORD;
+    r_fk                     RECORD;
+    r_batch                  RECORD;
+  BEGIN
+-- get the rollack characteristics for the emaj_rlbk event
+    SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session,
+           CASE WHEN rlbk_is_dblink_used THEN 'CTRL+DBLINK'::emaj._rlbk_step_enum ELSE 'CTRL-DBLINK'::emaj._rlbk_step_enum END
+      INTO v_groupNames, v_mark, v_isLoggedRlbk, v_nbSession, v_ctrlStepName
+      FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
+-- get some mark attributes from emaj_mark
+    SELECT mark_time_id INTO v_markTimeId
+      FROM emaj.emaj_mark
+      WHERE mark_group = v_groupNames[1] AND mark_name = v_mark;
+-- get all duration parameters that will be needed later from the emaj_param table,
+--   or get default values for rows that are not present in emaj_param table
+    SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'avg_row_rollback_duration'),'100 microsecond'::INTERVAL),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'avg_row_delete_log_duration'),'10 microsecond'::INTERVAL),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'avg_fkey_check_duration'),'5 microsecond'::INTERVAL),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'fixed_step_rollback_duration'),'2.5 millisecond'::INTERVAL),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'fixed_dblink_rollback_duration'),'4 millisecond'::INTERVAL)
+           INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_step_rlbk, v_fixed_dblink_rlbk;
+-- insert into emaj_rlbk_plan a row per table currently belonging to the tables groups to process.
+    INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey)
+      SELECT v_rlbkId, 'LOCK_TABLE', rel_schema, rel_tblseq, ''
+        FROM emaj.emaj_relation
+        WHERE upper_inf(rel_time_range) AND rel_group = ANY(v_groupNames) AND rel_kind = 'r';
+-- insert into emaj_rlbk_plan a row per table to effectively rollback.
+-- the numbers of log rows is computed using the _log_stat_tbl() function.
+-- a final check will be performed after tables will be locked to be sure no new table will have been updated
+     INSERT INTO emaj.emaj_rlbk_plan
+            (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_estimated_quantity)
+      SELECT v_rlbkId, 'RLBK_TABLE', rel_schema, rel_tblseq, '',
+             emaj._log_stat_tbl(t, CASE WHEN v_markTimeId > lower(rel_time_range) THEN v_markTimeId ELSE lower(rel_time_range) END, NULL)
+        FROM (SELECT * FROM emaj.emaj_relation
+                WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r') AS t
+        WHERE emaj._log_stat_tbl(t, CASE WHEN v_markTimeId > lower(rel_time_range) THEN v_markTimeId ELSE lower(rel_time_range) END, NULL) > 0;
+     GET DIAGNOSTICS v_effNbTable = ROW_COUNT;
+--
+-- group tables into batchs to process all tables linked by foreign keys as a batch
+--
+    v_batchNumber = 1;
+--   allocate tables with rows to rollback to batch number starting with the heaviest to rollback tables
+--     as reported by emaj_log_stat_group() function
+    FOR r_tbl IN
+        SELECT * FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE' ORDER BY rlbp_estimated_quantity DESC
+      LOOP
+--   is the table already allocated to a batch number (it may have been already allocated because of a fkey link) ?
+      PERFORM 0 FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE'
+          AND rlbp_schema = r_tbl.rlbp_schema AND rlbp_table = r_tbl.rlbp_table AND rlbp_batch_number IS NULL;
+--   no,
+      IF FOUND THEN
+--   allocate the table to the batch number, with all other tables linked by foreign key constraints
+        PERFORM emaj._rlbk_set_batch_number(v_rlbkId, v_batchNumber, r_tbl.rlbp_schema, r_tbl.rlbp_table);
+        v_batchNumber = v_batchNumber + 1;
+      END IF;
+    END LOOP;
+--
+-- if unlogged rollback, register into emaj_rlbk_plan "disable log triggers", "deletes from log tables"
+-- and "enable log trigger" steps
+--
+    IF NOT v_isLoggedRlbk THEN
+-- compute the cost for each DIS_LOG_TRG step
+--   if DIS_LOG_TRG statistics are available, compute an average cost
+      SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDuration FROM emaj.emaj_rlbk_stat
+        WHERE rlbt_step = 'DIS_LOG_TRG';
+      v_estimMethod = 2;
+      IF v_estimDuration IS NULL THEN
+--   otherwise, use the fixed_step_rollback_duration parameter
+        v_estimDuration = v_fixed_step_rlbk;
+        v_estimMethod = 3;
+      END IF;
+-- insert all DIS_LOG_TRG steps
+      INSERT INTO emaj.emaj_rlbk_plan (
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number,
+          rlbp_estimated_duration, rlbp_estimate_method
+        ) SELECT v_rlbkId, 'DIS_LOG_TRG', rlbp_schema, rlbp_table, '', rlbp_batch_number,
+                 v_estimDuration, v_estimMethod
+          FROM emaj.emaj_rlbk_plan
+          WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE';
+-- insert all DELETE_LOG steps. But the duration estimates will be computed later
+-- the estimated number of log rows to delete is set to the the estimated number of updates. This is underestimated
+--   in particular when SQL UPDATES are logged. But the collected statistics used for duration estimates are also
+--   based on the estimated number of updates.
+      INSERT INTO emaj.emaj_rlbk_plan (
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_estimated_quantity
+        ) SELECT v_rlbkId, 'DELETE_LOG', rlbp_schema, rlbp_table, '', rlbp_batch_number, rlbp_estimated_quantity
+          FROM emaj.emaj_rlbk_plan
+          WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE';
+-- compute the cost for each ENA_LOG_TRG step
+--   if DIS_LOG_TRG statistics are available, compute an average cost
+      SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDuration FROM emaj.emaj_rlbk_stat
+        WHERE rlbt_step = 'ENA_LOG_TRG';
+      v_estimMethod = 2;
+      IF v_estimDuration IS NULL THEN
+--   otherwise, use the fixed_step_rollback_duration parameter
+        v_estimDuration = v_fixed_step_rlbk;
+        v_estimMethod = 3;
+      END IF;
+-- insert all ENA_LOG_TRG steps
+      INSERT INTO emaj.emaj_rlbk_plan (
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number,
+          rlbp_estimated_duration, rlbp_estimate_method
+        ) SELECT v_rlbkId, 'ENA_LOG_TRG', rlbp_schema, rlbp_table, '', rlbp_batch_number,
+                 v_estimDuration, v_estimMethod
+          FROM emaj.emaj_rlbk_plan
+          WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE';
+    END IF;
+--
+-- process foreign key to define which action to perform on them
+--
+-- First compute the fixed duration estimates for each 'DROP_FK' and 'SET_FK_DEF' steps
+--   if DROP_FK statistics are available, compute an average cost
+    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDropFkDuration FROM emaj.emaj_rlbk_stat
+      WHERE rlbt_step = 'DROP_FK';
+    v_estimDropFkMethod = 2;
+    IF v_estimDropFkDuration IS NULL THEN
+--   if no statistics are available for this step, use the fixed_step_rollback_duration parameter
+      v_estimDropFkDuration = v_fixed_step_rlbk;
+      v_estimDropFkMethod = 3;
+    END IF;
+--   if SET_FK_DEF statistics are available, compute an average cost
+    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimSetFkDefDuration FROM emaj.emaj_rlbk_stat
+      WHERE rlbt_step = 'SET_FK_DEF';
+    v_estimSetFkDefMethod = 2;
+    IF v_estimSetFkDefDuration IS NULL THEN
+--   if no statistics are available for this step, use the fixed_step_rollback_duration parameter
+      v_estimSetFkDefDuration = v_fixed_step_rlbk;
+      v_estimSetFkDefMethod = 3;
+    END IF;
+-- select all foreign keys belonging to or referencing the tables to process
+    FOR r_fk IN
+      SELECT c.oid AS conoid, c.conname, n.nspname, t.relname, t.reltuples, pg_get_constraintdef(c.oid) AS def, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype, r.rlbp_batch_number
+        FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class t, emaj.emaj_rlbk_plan r
+        WHERE c.contype = 'f'                                            -- FK constraints only
+          AND rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE'       -- tables to rollback
+          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
+          AND n.nspname = r.rlbp_schema AND t.relname = r.rlbp_table     -- join on emaj_rlbk_plan table
+      UNION
+      SELECT c.oid AS conoid, c.conname, n.nspname, t.relname, t.reltuples, pg_get_constraintdef(c.oid) AS def, c.condeferrable, c.condeferred, c.confupdtype, c.confdeltype, r.rlbp_batch_number
+        FROM pg_catalog.pg_constraint c, pg_catalog.pg_namespace n, pg_catalog.pg_class t,
+             pg_catalog.pg_namespace rn, pg_catalog.pg_class rt, emaj.emaj_rlbk_plan r
+        WHERE c.contype = 'f'                                            -- FK constraints only
+          AND rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE'       -- tables to rollback
+          AND c.conrelid  = t.oid AND t.relnamespace  = n.oid            -- joins for table and namespace
+          AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
+          AND rn.nspname = r.rlbp_schema AND rt.relname = r.rlbp_table   -- join on emaj_rlbk_plan table
+      ORDER BY nspname, relname, conname
+      LOOP
+-- depending on the foreign key characteristics, record as 'to be dropped' or 'to be set deffered' or 'to just be reset immediate'
+      IF NOT r_fk.condeferrable OR r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
+-- non deferrable fkeys and deferrable fkeys with an action for UPDATE or DELETE other than 'no action' need to be dropped
+        INSERT INTO emaj.emaj_rlbk_plan (
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number,
+          rlbp_estimated_duration, rlbp_estimate_method
+          ) VALUES (
+          v_rlbkId, 'DROP_FK', r_fk.nspname, r_fk.relname, r_fk.conname, r_fk.rlbp_batch_number,
+          v_estimDropFkDuration, v_estimDropFkMethod
+          );
+        INSERT INTO emaj.emaj_rlbk_plan (
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_fkey_def, rlbp_estimated_quantity
+          ) VALUES (
+          v_rlbkId, 'ADD_FK', r_fk.nspname, r_fk.relname, r_fk.conname, r_fk.rlbp_batch_number, r_fk.def, r_fk.reltuples
+          );
+      ELSE
+-- other deferrable but not deferred fkeys need to be set deferred
+        IF NOT r_fk.condeferred THEN
+          INSERT INTO emaj.emaj_rlbk_plan (
+            rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number,
+            rlbp_estimated_duration, rlbp_estimate_method
+            ) VALUES (
+            v_rlbkId, 'SET_FK_DEF', r_fk.nspname, r_fk.relname, r_fk.conname, r_fk.rlbp_batch_number,
+            v_estimSetFkDefDuration, v_estimSetFkDefMethod
+            );
+        END IF;
+-- deferrable fkeys are recorded as 'to be set immediate at the end of the rollback operation'
+-- compute the number of fkey values to check at set immediate time
+        SELECT (coalesce(
+--   get the number of rolled back rows in the referencing table, if any
+           (SELECT rlbp_estimated_quantity
+              FROM emaj.emaj_rlbk_plan
+              WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE'       -- tables of the rollback event
+                AND rlbp_schema = r_fk.nspname AND rlbp_table = r_fk.relname)  -- referencing schema.table
+            , 0)) + (coalesce(
+--   get the number of rolled back rows in the referenced table, if any
+           (SELECT rlbp_estimated_quantity
+              FROM emaj.emaj_rlbk_plan, pg_catalog.pg_constraint c, pg_catalog.pg_namespace rn, pg_catalog.pg_class rt
+              WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE'       -- tables of the rollback event
+                AND c.oid = r_fk.conoid                                        -- constraint id
+                AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced schema.table
+                AND rn.nspname = rlbp_schema AND rt.relname = rlbp_table)      -- join on emaj_rlbk_plan
+            , 0)) INTO v_checks;
+-- and record the SET_FK_IMM step
+        INSERT INTO emaj.emaj_rlbk_plan (
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_estimated_quantity
+          ) VALUES (
+          v_rlbkId, 'SET_FK_IMM', r_fk.nspname, r_fk.relname, r_fk.conname, r_fk.rlbp_batch_number, v_checks
+          );
+      END IF;
+    END LOOP;
+--
+-- Now compute the estimation duration for each complex step ('RLBK_TABLE', 'DELETE_LOG', 'ADD_FK', 'SET_FK_IMM')
+--
+-- Compute the rollback duration estimates for the tables
+-- for each table with content to rollback
+    FOR r_tbl IN
+        SELECT * FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE'
+      LOOP
+-- first look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude)
+      SELECT sum(rlbt_duration) * r_tbl.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
+        FROM emaj.emaj_rlbk_stat
+        WHERE rlbt_step = 'RLBK_TABLE' AND rlbt_quantity > 0
+          AND rlbt_schema = r_tbl.rlbp_schema AND rlbt_table = r_tbl.rlbp_table
+          AND rlbt_quantity / r_tbl.rlbp_estimated_quantity < 10 AND r_tbl.rlbp_estimated_quantity / rlbt_quantity < 10;
+      v_estimMethod = 1;
+      IF v_estimDuration IS NULL THEN
+-- if there is no previous rollback operation with similar volume, take statistics for the table with all available volumes
+        SELECT sum(rlbt_duration) * r_tbl.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = 'RLBK_TABLE' AND rlbt_quantity > 0
+            AND rlbt_schema = r_tbl.rlbp_schema AND rlbt_table = r_tbl.rlbp_table;
+        v_estimMethod = 2;
+        IF v_estimDuration IS NULL THEN
+-- if there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table
+          v_estimDuration = v_avg_row_rlbk * r_tbl.rlbp_estimated_quantity + v_fixed_step_rlbk;
+          v_estimMethod = 3;
+        END IF;
+      END IF;
+      UPDATE emaj.emaj_rlbk_plan
+        SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE'
+          AND rlbp_schema = r_tbl.rlbp_schema AND rlbp_table = r_tbl.rlbp_table;
+    END LOOP;
+-- Compute the log rows delete duration for the tables
+    FOR r_tbl IN
+        SELECT * FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'DELETE_LOG'
+      LOOP
+-- first look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude)
+      SELECT sum(rlbt_duration) * r_tbl.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
+        FROM emaj.emaj_rlbk_stat
+        WHERE rlbt_step = 'DELETE_LOG' AND rlbt_quantity > 0
+          AND rlbt_schema = r_tbl.rlbp_schema AND rlbt_table = r_tbl.rlbp_table
+          AND rlbt_quantity / r_tbl.rlbp_estimated_quantity < 10 AND r_tbl.rlbp_estimated_quantity / rlbt_quantity < 10;
+      v_estimMethod = 1;
+      IF v_estimDuration IS NULL THEN
+-- if there is no previous rollback operation with similar volume, take statistics for the table with all available volumes
+        SELECT sum(rlbt_duration) * r_tbl.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = 'DELETE_LOG' AND rlbt_quantity > 0
+            AND rlbt_schema = r_tbl.rlbp_schema AND rlbt_table = r_tbl.rlbp_table;
+        v_estimMethod = 2;
+        IF v_estimDuration IS NULL THEN
+-- if there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table
+          v_estimDuration = v_avg_row_del_log * r_tbl.rlbp_estimated_quantity + v_fixed_step_rlbk;
+          v_estimMethod = 3;
+        END IF;
+      END IF;
+      UPDATE emaj.emaj_rlbk_plan
+        SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'DELETE_LOG'
+          AND rlbp_schema = r_tbl.rlbp_schema AND rlbp_table = r_tbl.rlbp_table;
+    END LOOP;
+-- Compute the fkey recreation duration
+    FOR r_fk IN
+        SELECT * FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'ADD_FK'
+      LOOP
+      IF r_fk.rlbp_estimated_quantity = 0 THEN
+-- empty table (or table not analyzed) => duration = 0
+        v_estimDuration = '0 SECONDS'::INTERVAL;
+        v_estimMethod = 3;
+      ELSE
+-- non empty table and statistics (with at least one row) are available
+        SELECT sum(rlbt_duration) * r_fk.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = 'ADD_FK' AND rlbt_quantity > 0
+            AND rlbt_schema = r_fk.rlbp_schema AND rlbt_table = r_fk.rlbp_table AND rlbt_fkey = r_fk.rlbp_fkey;
+        v_estimMethod = 1;
+        IF v_estimDuration IS NULL THEN
+-- non empty table, but no statistics with at least one row are available => take the last duration for this fkey, if any
+          SELECT rlbt_duration INTO v_estimDuration FROM emaj.emaj_rlbk_stat
+            WHERE rlbt_step = 'ADD_FK'
+              AND rlbt_schema = r_fk.rlbp_schema AND rlbt_table = r_tbl.rlbp_table AND rlbt_fkey = r_fk.rlbp_fkey
+              AND rlbt_rlbk_id =
+               (SELECT max(rlbt_rlbk_id) FROM emaj.emaj_rlbk_stat WHERE rlbt_step = 'ADD_FK'
+                  AND rlbt_schema = r_fk.rlbp_schema AND rlbt_table = r_fk.rlbp_table AND rlbt_fkey = r_fk.rlbp_fkey);
+          v_estimMethod = 2;
+          IF v_estimDuration IS NULL THEN
+-- definitely no statistics available, compute with the avg_fkey_check_duration parameter
+            v_estimDuration = r_fk.rlbp_estimated_quantity * v_avg_fkey_check + v_fixed_step_rlbk;
+            v_estimMethod = 3;
+          END IF;
+        END IF;
+      END IF;
+      UPDATE emaj.emaj_rlbk_plan
+        SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'ADD_FK'
+          AND rlbp_schema = r_fk.rlbp_schema AND rlbp_table = r_fk.rlbp_table AND rlbp_fkey = r_fk.rlbp_fkey;
+    END LOOP;
+-- Compute the fkey checks duration
+    FOR r_fk IN
+        SELECT * FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'SET_FK_IMM'
+      LOOP
+-- if fkey checks statistics are available for this fkey, compute an average cost
+      SELECT sum(rlbt_duration) * r_fk.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
+        FROM emaj.emaj_rlbk_stat
+        WHERE rlbt_step = 'SET_FK_IMM' AND rlbt_quantity > 0
+          AND rlbt_schema = r_fk.rlbp_schema AND rlbt_table = r_fk.rlbp_table AND rlbt_fkey = r_fk.rlbp_fkey;
+      v_estimMethod = 2;
+      IF v_estimDuration IS NULL THEN
+-- if no statistics are available for this fkey, use the avg_fkey_check parameter
+        v_estimDuration = r_fk.rlbp_estimated_quantity * v_avg_fkey_check + v_fixed_step_rlbk;
+        v_estimMethod = 3;
+      END IF;
+      UPDATE emaj.emaj_rlbk_plan
+        SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'SET_FK_IMM'
+          AND rlbp_schema = r_fk.rlbp_schema AND rlbp_table = r_fk.rlbp_table AND rlbp_fkey = r_fk.rlbp_fkey;
+    END LOOP;
+--
+-- Allocate batch number to sessions to spread the load on sessions as best as possible
+-- A batch represents all steps related to the processing of one table or several tables linked by foreign keys
+--
+--   initialisation
+    FOR v_session IN 1 .. v_nbSession LOOP
+      v_sessionLoad [v_session] = '0 SECONDS'::INTERVAL;
+    END LOOP;
+--   allocate tables batch to sessions, starting with the heaviest to rollback batch
+    FOR r_batch IN
+        SELECT rlbp_batch_number, sum(rlbp_estimated_duration) AS batch_duration
+          FROM emaj.emaj_rlbk_plan
+          WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_batch_number IS NOT NULL
+          GROUP BY rlbp_batch_number
+          ORDER BY sum(rlbp_estimated_duration) DESC
+      LOOP
+--   compute the least loaded session
+      v_minSession=1; v_minDuration = v_sessionLoad [1];
+      FOR v_session IN 2 .. v_nbSession LOOP
+        IF v_sessionLoad [v_session] < v_minDuration THEN
+          v_minSession = v_session;
+          v_minDuration = v_sessionLoad [v_session];
+        END IF;
+      END LOOP;
+--   allocate the batch to the session
+      UPDATE emaj.emaj_rlbk_plan SET rlbp_session = v_minSession
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_batch_number = r_batch.rlbp_batch_number;
+      v_sessionLoad [v_minSession] = v_sessionLoad [v_minSession] + r_batch.batch_duration;
+    END LOOP;
+-- assign session 1 to all 'LOCK_TABLE' steps not yet affected
+    UPDATE emaj.emaj_rlbk_plan SET rlbp_session = 1
+      WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_session IS NULL;
+-- Create the pseudo 'CTRL+DBLINK' or 'CTRL-DBLINK' step and compute its duration estimate
+-- get the number of recorded steps (except LOCK_TABLE)
+    SELECT count(*) INTO v_nbStep FROM emaj.emaj_rlbk_plan
+      WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step <> 'LOCK_TABLE';
+    IF v_nbStep > 0 THEN
+-- if CTRLxDBLINK statistics are available, compute an average cost
+      SELECT sum(rlbt_duration) * v_nbStep / sum(rlbt_quantity) INTO v_estimDuration
+        FROM emaj.emaj_rlbk_stat WHERE rlbt_step = v_ctrlStepName AND rlbt_quantity > 0;
+      v_estimMethod = 2;
+      IF v_estimDuration IS NULL THEN
+--   otherwise, use the fixed_step_rollback_duration parameter
+        v_estimDuration = v_fixed_dblink_rlbk * v_nbStep;
+        v_estimMethod = 3;
+      END IF;
+-- insert the 'CTRLxDBLINK' pseudo step
+      INSERT INTO emaj.emaj_rlbk_plan (
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_estimated_quantity,
+          rlbp_estimated_duration, rlbp_estimate_method
+        ) VALUES (
+          v_rlbkId, v_ctrlStepName, '', '', '', v_nbStep, v_estimDuration, v_estimMethod
+        );
+    END IF;
+-- return the number of tables to effectively rollback
+    RETURN v_effNbTable;
+  END;
+$_rlbk_planning$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_start_mark(v_rlbkId INT, v_multiGroup BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql AS
+$_rlbk_start_mark$
+-- For logged rollback, it sets a mark that materialize the point in time just before the tables rollback.
+-- All concerned tables are already locked.
+-- Before setting the mark, it checks no update has been recorded between the planning step and the locks set
+-- for tables for which no rollback was needed at planning time.
+-- It also sets the rollback status to EXECUTING.
+  DECLARE
+    v_stmt                   TEXT;
+    v_isDblinkUsable         BOOLEAN = FALSE;
+    v_timeId                 BIGINT;
+    v_groupNames             TEXT[];
+    v_mark                   TEXT;
+    v_isLoggedRlbk           BOOLEAN;
+    v_rlbkDatetime           TIMESTAMPTZ;
+    v_markTimeId             BIGINT;
+    v_markName               TEXT;
+    v_errorMsg               TEXT;
+  BEGIN
+-- determine whether the dblink connection for this session is opened
+    IF emaj._dblink_is_cnx_opened('rlbk#1') THEN
+      v_isDblinkUsable = TRUE;
+    END IF;
+-- get a time stamp for the rollback operation
+    v_stmt = 'SELECT emaj._set_time_stamp(''R'')';
+    IF v_isDblinkUsable THEN
+-- ... either through dblink if possible
+      SELECT time_id INTO v_timeId FROM dblink('rlbk#1',v_stmt) AS (time_id BIGINT);
+    ELSE
+-- ... or directly
+      EXECUTE v_stmt INTO v_timeId;
+    END IF;
+-- update the emaj_rlbk table to record the time stamp and adjust the rollback status
+    v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_time_id = ' || v_timeId || ', rlbk_status = ''EXECUTING''' ||
+             ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
+    IF v_isDblinkUsable THEN
+-- ... either through dblink if possible
+      PERFORM 0 FROM dblink('rlbk#1',v_stmt) AS (dummy INT);
+    ELSE
+-- ... or directly
+      EXECUTE v_stmt;
+    END IF;
+-- get the rollack characteristics for the emaj_rlbk
+    SELECT rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, time_clock_timestamp
+      INTO v_groupNames, v_mark, v_timeId, v_isLoggedRlbk, v_rlbkDatetime
+      FROM emaj.emaj_rlbk, emaj.emaj_time_stamp WHERE rlbk_time_id = time_id AND rlbk_id = v_rlbkId;
+-- get some mark attributes from emaj_mark
+    SELECT mark_time_id INTO v_markTimeId
+      FROM emaj.emaj_mark
+      WHERE mark_group = v_groupNames[1] AND mark_name = v_mark;
+-- check that no update has been recorded between planning time and lock time for tables that did not need to
+-- be rolled back at planning time.
+-- This may occur and cannot be avoided because tables cannot be locked before processing the rollback planning.
+-- (Sessions must lock the tables they will rollback and the planning processing distribute those tables to sessions.)
+    PERFORM 1 FROM (SELECT * FROM emaj.emaj_relation
+                      WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+                        AND NOT EXISTS
+                            (SELECT NULL FROM emaj.emaj_rlbk_plan
+                              WHERE rlbp_schema = rel_schema AND rlbp_table = rel_tblseq
+                                AND rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE')
+                    ) AS t
+      WHERE emaj._log_stat_tbl(t, CASE WHEN v_markTimeId > lower(rel_time_range) THEN v_markTimeId ELSE lower(rel_time_range) END, NULL) > 0;
+    IF FOUND THEN
+      v_errorMsg = 'the rollback operation has been cancelled due to concurrent activity at E-Maj rollback planning time on tables to process.';
+      PERFORM emaj._rlbk_error(v_rlbkId, v_errorMsg, 'rlbk#1');
+      RAISE EXCEPTION '_rlbk_start_mark: % Please retry.', v_errorMsg;
+    END IF;
+    IF v_isLoggedRlbk THEN
+-- If rollback is "logged" rollback, set a mark named with the pattern:
+-- 'RLBK_<mark name to rollback to>_%_START', where % represents the rollback start time
+      v_markName = 'RLBK_' || v_mark || '_' || to_char(v_rlbkDatetime, 'HH24.MI.SS.MS') || '_START';
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, TRUE, NULL, v_timeId);
+    END IF;
+    RETURN;
+-- trap and record exception during the rollback operation
+  EXCEPTION
+    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+      RAISE;
+    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+      PERFORM emaj._rlbk_error(v_rlbkId, 'In _rlbk_start_mark(): ' || SQLERRM, 'rlbk#1');
+      RAISE;
+  END;
+$_rlbk_start_mark$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
 $emaj_log_stat_group$
