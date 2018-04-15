@@ -388,6 +388,7 @@ CREATE TABLE emaj.emaj_rlbk_plan (
   rlbp_batch_number            INT,                        -- identifies a set of tables linked by foreign keys
   rlbp_session                 INT,                        -- session number the step is affected to
   rlbp_fkey_def                TEXT,                       -- foreign key definition used to recreate it, or NULL
+  rlbp_target_time_id          BIGINT,                     -- for RLBK_TABLE and DELETE_LOG, time_id to rollback to, or NULL
   rlbp_estimated_quantity      BIGINT,                     -- for RLBK_TABLE, estimated number of updates to rollback
                                                            -- for DELETE_LOG, estimated number of rows to delete
                                                            -- for fkeys, estimated number of keys to check
@@ -4485,8 +4486,9 @@ $_rlbk_planning$
 -- the numbers of log rows is computed using the _log_stat_tbl() function.
 -- a final check will be performed after tables will be locked to be sure no new table will have been updated
      INSERT INTO emaj.emaj_rlbk_plan
-            (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_estimated_quantity)
+            (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_target_time_id, rlbp_estimated_quantity)
       SELECT v_rlbkId, 'RLBK_TABLE', rel_schema, rel_tblseq, '',
+             CASE WHEN v_markTimeId > lower(rel_time_range) THEN v_markTimeId ELSE lower(rel_time_range) END,
              emaj._log_stat_tbl(t, CASE WHEN v_markTimeId > lower(rel_time_range) THEN v_markTimeId ELSE lower(rel_time_range) END, NULL)
         FROM (SELECT * FROM emaj.emaj_relation
                 WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r') AS t
@@ -4541,8 +4543,8 @@ $_rlbk_planning$
 --   in particular when SQL UPDATES are logged. But the collected statistics used for duration estimates are also
 --   based on the estimated number of updates.
       INSERT INTO emaj.emaj_rlbk_plan (
-          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_estimated_quantity
-        ) SELECT v_rlbkId, 'DELETE_LOG', rlbp_schema, rlbp_table, '', rlbp_batch_number, rlbp_estimated_quantity
+          rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_target_time_id, rlbp_batch_number, rlbp_estimated_quantity
+        ) SELECT v_rlbkId, 'DELETE_LOG', rlbp_schema, rlbp_table, '', rlbp_target_time_id, rlbp_batch_number, rlbp_estimated_quantity
           FROM emaj.emaj_rlbk_plan
           WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE';
 -- compute the cost for each ENA_LOG_TRG step
@@ -5092,7 +5094,7 @@ $_rlbk_session_exec$
       WHERE mark_time_id = time_id AND mark_group = v_groupNames[1] AND mark_name = v_mark;
 -- scan emaj_rlbp_plan to get all steps to process that have been affected to this session, in batch_number and step order
     FOR r_step IN
-      SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_fkey_def
+      SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_fkey_def, rlbp_target_time_id
         FROM emaj.emaj_rlbk_plan,
              (VALUES ('DIS_LOG_TRG',1),('DROP_FK',2),('SET_FK_DEF',3),('RLBK_TABLE',4),
                      ('DELETE_LOG',5),('SET_FK_IMM',6),('ADD_FK',7),('ENA_LOG_TRG',8)) AS step(step_name, step_order)
@@ -5130,12 +5132,19 @@ $_rlbk_session_exec$
                   ' DEFERRED';
         WHEN 'RLBK_TABLE' THEN
 -- process a table rollback
-          SELECT emaj._rlbk_tbl(emaj_relation.*, v_lastGlobalSeq, v_maxGlobalSeq, v_nbSession, v_isLoggedRlbk) INTO v_nbRows
+--  for tables added to the group after the rollback target mark, get the last sequence value specific to each table
+          SELECT emaj._rlbk_tbl(emaj_relation.*,
+                                CASE WHEN v_rlbkMarkTimeId = r_step.rlbp_target_time_id THEN v_lastGlobalSeq      -- common case
+                                     ELSE (SELECT time_last_emaj_gid FROM emaj.emaj_time_stamp WHERE time_id = r_step.rlbp_target_time_id) END,
+                                v_maxGlobalSeq, v_nbSession, v_isLoggedRlbk) INTO v_nbRows
             FROM emaj.emaj_relation
             WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;
         WHEN 'DELETE_LOG' THEN
 -- process the deletion of log rows
-          SELECT emaj._delete_log_tbl(emaj_relation.*, v_rlbkMarkTimeId, v_rlbkTimeId, v_lastGlobalSeq)
+--  for tables added to the group after the rollback target mark, get the last sequence value specific to each table
+          SELECT emaj._delete_log_tbl(emaj_relation.*, r_step.rlbp_target_time_id, v_rlbkTimeId,
+                                      CASE WHEN v_rlbkMarkTimeId = r_step.rlbp_target_time_id THEN v_lastGlobalSeq      -- common case
+                                           ELSE (SELECT time_last_emaj_gid FROM emaj.emaj_time_stamp WHERE time_id = r_step.rlbp_target_time_id) END)
             INTO v_nbRows
             FROM emaj.emaj_relation
             WHERE rel_schema = r_step.rlbp_schema AND rel_tblseq = r_step.rlbp_table;

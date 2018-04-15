@@ -154,6 +154,7 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_rlbk_plan_pkey" for table "emaj_rlbk_plan"
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------

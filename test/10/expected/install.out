@@ -393,6 +393,7 @@ primary key, btree, for table "emaj.emaj_rlbk"
  rlbp_batch_number       | integer                  |           |          | 
  rlbp_session            | integer                  |           |          | 
  rlbp_fkey_def           | text                     |           |          | 
+ rlbp_target_time_id     | bigint                   |           |          | 
  rlbp_estimated_quantity | bigint                   |           |          | 
  rlbp_estimated_duration | interval                 |           |          | 
  rlbp_estimate_method    | integer                  |           |          | 
