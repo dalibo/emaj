@@ -236,12 +236,14 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) o
 begin;
   delete from emaj.emaj_group_def where grpdef_group IN ('myGroup1','myGroup2');
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+  select * from emaj.emaj_relation where rel_group IN ('myGroup1','myGroup2');
 -- add one table or sequence to the empty groups
 -- TODO: remove the stop_groups() call once it will be possible to add a table/sequence to a logging group
   select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
   insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
   insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+  select * from emaj.emaj_relation where rel_group IN ('myGroup1','myGroup2');
 rollback;
 
 -----------------------------

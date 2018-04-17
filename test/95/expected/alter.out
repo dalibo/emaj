@@ -991,7 +991,7 @@ CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj.myschema1_mytbl1_log_fnct(
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 20 at EXECUTE
 SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._remove_tbl(emaj.emaj_alter_plan,bigint) line 18 at PERFORM
+PL/pgSQL function emaj._remove_tbl(emaj.emaj_alter_plan,bigint) line 19 at PERFORM
 SQL statement "SELECT emaj._remove_tbl(r_plan, v_timeId)"
 PL/pgSQL function emaj._alter_exec(bigint) line 25 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
@@ -1027,7 +1027,7 @@ CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj.myschema1_mytbl1_new_name_
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 20 at EXECUTE
 SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._remove_tbl(emaj.emaj_alter_plan,bigint) line 18 at PERFORM
+PL/pgSQL function emaj._remove_tbl(emaj.emaj_alter_plan,bigint) line 19 at PERFORM
 SQL statement "SELECT emaj._remove_tbl(r_plan, v_timeId)"
 PL/pgSQL function emaj._alter_exec(bigint) line 25 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
@@ -1065,7 +1065,7 @@ CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj.public_mytbl1_new_name_log
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 20 at EXECUTE
 SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._remove_tbl(emaj.emaj_alter_plan,bigint) line 18 at PERFORM
+PL/pgSQL function emaj._remove_tbl(emaj.emaj_alter_plan,bigint) line 19 at PERFORM
 SQL statement "SELECT emaj._remove_tbl(r_plan, v_timeId)"
 PL/pgSQL function emaj._alter_exec(bigint) line 25 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"

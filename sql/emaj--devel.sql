@@ -237,6 +237,7 @@ CREATE TABLE emaj.emaj_relation (
   rel_sql_columns              TEXT,                       -- piece of sql used to rollback: list of the columns
   rel_sql_pk_columns           TEXT,                       -- piece of sql used to rollback: list of the pk columns
   rel_sql_pk_eq_conditions     TEXT,                       -- piece of sql used to rollback: equality conditions on the pk columns
+  rel_log_seq_last_value       BIGINT,                     -- last value of the log sequence when the table is removed from the group (NULL otherwise)
   PRIMARY KEY (rel_schema, rel_tblseq, rel_time_range),
   FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name),
   FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema (sch_name),
@@ -1497,8 +1498,8 @@ $_create_tbl$
     EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_trunc_trg';
 -- register the table into emaj_relation
     INSERT INTO emaj.emaj_relation
-               (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority, rel_log_schema,
-                rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
+               (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority,
+                rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
                 rel_log_index, rel_log_sequence, rel_log_function,
                 rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions)
         VALUES (r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq, int8range(v_timeId, NULL, '[)'), r_grpdef.grpdef_group, r_grpdef.grpdef_priority,
@@ -1660,6 +1661,7 @@ $_remove_tbl$
     v_currentLogIndex        TEXT;
     v_logFunction            TEXT;
     v_logSequence            TEXT;
+    v_logSequenceLastValue   BIGINT;
     v_namesSuffix            TEXT;
     v_fullTableName          TEXT;
   BEGIN
@@ -1674,6 +1676,10 @@ $_remove_tbl$
         INTO v_logSchema, v_currentLogTable, v_currentLogIndex, v_logFunction, v_logSequence
         FROM emaj.emaj_relation
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- ... get the current log sequence characteristics
+      SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO STRICT v_logSequenceLastValue
+        FROM emaj.emaj_sequence
+        WHERE sequ_schema = v_logSchema AND sequ_name = v_logSequence AND sequ_time_id = v_timeId;
 -- ... compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names
       SELECT '_'|| coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
         FROM
@@ -1695,12 +1701,14 @@ $_remove_tbl$
 -- (but we keep the sequence related data in the emaj_sequence and the emaj_seq_hole tables)
       EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logFunction) || '() CASCADE';
       EXECUTE 'DROP SEQUENCE IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logSequence);
--- ... register the end of the relation time frame, the log table and index names change, and reset the content of now useless columns
--- (but keep the rel_log_sequence value: it will be needed later for _drop_tbl() for the emaj_sequence cleanup)
+-- ... register the end of the relation time frame, the last value of the log sequence, the log table and index names change,
+-- and reset the content of now useless columns
+-- (but do not reset the rel_log_sequence value: it will be needed later for _drop_tbl() for the emaj_sequence cleanup)
       UPDATE emaj.emaj_relation
-        SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)'),
+        SET rel_time_range = int8range(lower(rel_time_range), v_timeId, '[)'),
             rel_log_table = v_currentLogTable || v_namesSuffix , rel_log_index = v_currentLogIndex || v_namesSuffix,
-            rel_log_function = NULL, rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL
+            rel_log_function = NULL, rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL,
+            rel_log_seq_last_value = v_logSequenceLastValue
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
