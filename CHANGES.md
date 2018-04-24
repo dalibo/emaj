@@ -9,7 +9,8 @@ E-Maj - Change log
     since their related group creation time.
 
 ###Bug fixes:###
-
+  * The functions that estimate the rollbacks duration reported wrong results
+    when the 'EMAJ_LAST_MARK' keyword was used as rollback target mark.
 
 
 2.2.3 (2018-Mar-13)

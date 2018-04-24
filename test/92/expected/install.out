@@ -652,5 +652,6 @@ select pg_stat_reset_single_function_counters(funcid) from pg_stat_user_function
     where (funcname like E'emaj\\_%' or funcname like E'\\_%');
  pg_stat_reset_single_function_counters 
 ----------------------------------------
-(0 rows)
+ 
+(1 row)
 

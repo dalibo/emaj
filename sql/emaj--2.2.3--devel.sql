@@ -400,6 +400,59 @@ $_remove_tbl$
   END;
 $_remove_tbl$;
 
+CREATE OR REPLACE FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_beginTimeId BIGINT, v_endTimeId BIGINT)
+RETURNS BIGINT LANGUAGE plpgsql AS
+$_log_stat_tbl$
+-- This function returns the number of log rows for a single table between 2 time stamps or between a time stamp and the current situation.
+-- It is called by the emaj_log_stat_group(), _rlbk_planning(), _rlbk_start_mark() and _gen_sql_groups() functions.
+-- These statistics are computed using the serial id of log tables and holes is sequences recorded into emaj_seq_hole at rollback time or
+-- rollback consolidation time.
+-- Input: row from emaj_relation corresponding to the appplication table to proccess, the time stamp ids defining the time range to examine
+--        (a end time stamp id set to NULL indicates the current situation)
+-- Output: number of log rows between both marks for the table
+  DECLARE
+    v_beginLastValue         BIGINT;
+    v_endLastValue           BIGINT;
+    v_sumHole                BIGINT;
+  BEGIN
+-- get the log table id at begin time id
+    SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO STRICT v_beginLastValue
+       FROM emaj.emaj_sequence
+       WHERE sequ_schema = r_rel.rel_log_schema
+         AND sequ_name = r_rel.rel_log_sequence
+         AND sequ_time_id = v_beginTimeId;
+    IF v_endTimeId IS NULL THEN
+-- last time id is NULL, so examine the current state of the log table id
+      IF emaj._pg_version_num() < 100000 THEN
+        EXECUTE 'SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END FROM '
+             || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence) INTO v_endLastValue;
+      ELSE
+        EXECUTE 'SELECT CASE WHEN rel.is_called THEN rel.last_value ELSE rel.last_value - increment_by END FROM '
+             || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)  || ' rel, pg_sequences'
+             || ' WHERE schemaname = '|| quote_literal(r_rel.rel_log_schema) || ' AND sequencename = ' || quote_literal(r_rel.rel_log_sequence)
+          INTO v_endLastValue;
+      END IF;
+--   and count the sum of hole from the start time to now
+      SELECT coalesce(sum(sqhl_hole_size),0) INTO v_sumHole FROM emaj.emaj_seq_hole
+        WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq
+          AND sqhl_begin_time_id >= v_beginTimeId;
+    ELSE
+-- last time id is not NULL, so get the log table id at end time id
+      SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO v_endLastValue
+         FROM emaj.emaj_sequence
+         WHERE sequ_schema = r_rel.rel_log_schema
+           AND sequ_name = r_rel.rel_log_sequence
+           AND sequ_time_id = v_endTimeId;
+--   and count the sum of hole from the start time to the end time
+      SELECT coalesce(sum(sqhl_hole_size),0) INTO v_sumHole FROM emaj.emaj_seq_hole
+        WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq
+          AND sqhl_begin_time_id >= v_beginTimeId AND sqhl_end_time_id <= v_endTimeId;
+    END IF;
+-- return the stat row for the table
+    RETURN (v_endLastValue - v_beginLastValue - v_sumHole);
+  END;
+$_log_stat_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._verify_groups(v_groups TEXT[], v_onErrorStop BOOLEAN)
 RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
 $_verify_groups$
@@ -1533,6 +1586,66 @@ $_detailed_log_stat_groups$
     RETURN;
   END;
 $_detailed_log_stat_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT, v_isLoggedRlbk BOOLEAN)
+RETURNS INTERVAL LANGUAGE plpgsql SECURITY DEFINER AS
+$_estimate_rollback_groups$
+-- This function effectively computes an approximate duration of a rollback to a predefined mark for a groups array.
+-- It simulates a rollback on 1 session, by calling the _rlbk_planning function that already estimates elementary
+-- rollback steps duration. Once the global estimate is got, the rollback planning is cancelled.
+-- Input: group names array, a boolean indicating whether the groups array may contain several groups,
+--        the mark name of the rollback operation, the rollback type.
+-- Output: the approximate duration that the rollback would need as time interval.
+-- The function is declared SECURITY DEFINER so that emaj_viewer doesn't need a specific INSERT permission on emaj_rlbk.
+  DECLARE
+    v_markName               TEXT;
+    v_fixed_table_rlbk       INTERVAL;
+    v_rlbkId                 INT;
+    v_estimDuration          INTERVAL;
+    v_nbTblseq               INT;
+  BEGIN
+-- check the group names (the groups state checks are delayed for later)
+    SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '') INTO v_groupNames;
+-- if the group names array is null, immediately return NULL
+    IF v_groupNames IS NULL THEN
+      RETURN NULL;
+    END IF;
+-- check supplied group names and mark parameters with the isAlterGroupAllowed and isRollbackSimulation flags set to true
+    SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE) INTO v_markName;
+-- compute a random negative rollback-id (not to interfere with ids of real rollbacks)
+    SELECT (random() * -2147483648)::INT INTO v_rlbkId;
+--
+-- simulate a rollback planning
+--
+    BEGIN
+-- insert a row into the emaj_rlbk table for this simulated rollback operation
+      INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session)
+        SELECT v_rlbkId, v_groupNames, v_markName, mark_time_id, v_isLoggedRlbk, FALSE, 1
+          FROM emaj.emaj_mark WHERE mark_group = v_groupNames[1] AND mark_name = v_markName;
+-- call the _rlbk_planning function
+      PERFORM emaj._rlbk_planning(v_rlbkId);
+-- compute the sum of the duration estimates of all elementary steps (except LOCK_TABLE)
+      SELECT coalesce(sum(rlbp_estimated_duration), '0 SECONDS'::INTERVAL) INTO v_estimDuration
+        FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step <> 'LOCK_TABLE';
+-- cancel the effect of the rollback planning
+      RAISE EXCEPTION '';
+    EXCEPTION
+      WHEN RAISE_EXCEPTION THEN                 -- catch the raised exception and continue
+    END;
+-- get the "fixed_table_rollback_duration" parameter from the emaj_param table
+    SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'fixed_table_rollback_duration'),'1 millisecond'::INTERVAL)
+           INTO v_fixed_table_rlbk;
+-- get the the number of tables to lock and sequences to rollback
+    SELECT sum(group_nb_table)+sum(group_nb_sequence) INTO v_nbTblseq
+      FROM emaj.emaj_group
+      WHERE group_name = ANY(v_groupNames);
+-- compute the final estimated duration
+    v_estimDuration = v_estimDuration + (v_nbTblseq * v_fixed_table_rlbk);
+    RETURN v_estimDuration;
+  END;
+$_estimate_rollback_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._verify_all_groups()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS

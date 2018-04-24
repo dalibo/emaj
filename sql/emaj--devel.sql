@@ -2049,7 +2049,7 @@ $_log_stat_tbl$
     v_sumHole                BIGINT;
   BEGIN
 -- get the log table id at begin time id
-    SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO v_beginLastValue
+    SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO STRICT v_beginLastValue
        FROM emaj.emaj_sequence
        WHERE sequ_schema = r_rel.rel_log_schema
          AND sequ_name = r_rel.rel_log_sequence
@@ -6105,7 +6105,7 @@ $_estimate_rollback_groups$
     BEGIN
 -- insert a row into the emaj_rlbk table for this simulated rollback operation
       INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session)
-        SELECT v_rlbkId, v_groupNames, v_mark, mark_time_id, v_isLoggedRlbk, FALSE, 1
+        SELECT v_rlbkId, v_groupNames, v_markName, mark_time_id, v_isLoggedRlbk, FALSE, 1
           FROM emaj.emaj_mark WHERE mark_group = v_groupNames[1] AND mark_name = v_markName;
 -- call the _rlbk_planning function
       PERFORM emaj._rlbk_planning(v_rlbkId);
