@@ -789,23 +789,23 @@ select emaj.emaj_delete_mark_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 27 at PERFORM
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 28 at PERFORM
 select emaj.emaj_delete_mark_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 27 at PERFORM
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 28 at PERFORM
 -- unknown mark name
 select emaj.emaj_delete_mark_group('myGroup2',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 30 at SQL statement
 select emaj.emaj_delete_mark_group('myGroup2','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 30 at SQL statement
 -- next attempts should be OK
 select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_delete_mark_group 
@@ -857,7 +857,7 @@ select emaj.emaj_delete_mark_group('myGroup2','john''s mark #1');
 -- error: at least 1 mark should remain
 select emaj.emaj_delete_mark_group('myGroup1','SM3');
 ERROR:  emaj_delete_mark_group: "SM3" is the only mark of the group. It cannot be deleted.
-CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 34 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 35 at RAISE
 -----------------------------
 -- emaj_delete_before_mark_group() tests
 -----------------------------

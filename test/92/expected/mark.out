@@ -776,20 +776,20 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select emaj.emaj_delete_mark_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 27 at PERFORM
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 28 at PERFORM
 select emaj.emaj_delete_mark_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 27 at PERFORM
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 28 at PERFORM
 -- unknown mark name
 select emaj.emaj_delete_mark_group('myGroup2',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 30 at SQL statement
 select emaj.emaj_delete_mark_group('myGroup2','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 30 at SQL statement
 -- next attempts should be OK
 select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_delete_mark_group 

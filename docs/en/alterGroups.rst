@@ -77,7 +77,7 @@ However, some actions are possible while the tables groups are in *LOGGING* stat
 +-------------------------------------+---------------+-----------------------+
 | Remove a sequence from a group      | Yes           | emaj_group_def update |
 +-------------------------------------+---------------+-----------------------+
-| Add a table to a group              | No            |                       |
+| Add a table to a group              | Yes           | emaj_group_def update |
 +-------------------------------------+---------------+-----------------------+
 | Add a sequence to a group           | No            |                       |
 +-------------------------------------+---------------+-----------------------+
@@ -125,7 +125,52 @@ An E-Maj rollback operation targeting a mark set before such groups changes does
 
 However, the administrator can apply the same procedure to reset a tables group to a prior state.
 
+Incidence of tables or sequences addition or removal in a group in *LOGGING* state
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. caution::
 
-	Once a table or a sequence is removed from a tables group, any rollback operation will leave this object unchanged. Once unlinked from its tables group, the application table or sequence can be altered or dropped. The historical data linked to the object (logs, marks traces,...) are kept as is so that they can be later examined. However, they remain linked to the tables group that owned the object. To avoid any confusion, log tables are renamed, adding a numeric  suffix to its name. These logs and marks traces will only be deleted by a :ref:`group’s reset <emaj_reset_group>` operation or by the :ref:`deletion of the oldest marks <emaj_delete_before_mark_group>` of the group.
+	Once a table or a sequence is removed from a tables group, any rollback operation will leave this object unchanged. Once unlinked from its tables group, the application table or sequence can be altered or dropped. 
 
+The historical data linked to the object (logs, marks traces,...) are kept as is so that they can be later examined. However, they remain linked to the tables group that owned the object. To avoid any confusion, log tables are renamed, adding a numeric  suffix to its name. These logs and marks traces will only be deleted by a :ref:`group’s reset <emaj_reset_group>` operation or by the :ref:`deletion of the oldest marks <emaj_delete_before_mark_group>` of the group.
+
+.. caution::
+
+	When a table or a sequence is added into a tables group in *LOGGING* state, it is then processed by any further rollback operation. But updates that occurred before the time when the table or sequence was added into the group cannot be cancelled. Such a table will not be processed by a SQL script generation function call if the requested start mark has been set before the addition of the table or sequence into the group
+
+Some graphs help to more easily visualize the consequences of the addition or the removal of a table or a sequence into/from a tables group in *LOGGING* state.
+
+Let’s use a tables group containing 4 tables (t1 to t4) and 4 marks set over time (m1 to m4). At m2, t3 has been added to the group while t4 has been removed. At m3, t2 has been removed from the group while t4 has been re-added.
+
+.. image:: images/logging_group_changes.png
+   :align: center
+
+A rollback to the mark m1:
+
+* would process the table t1,
+* would **NOT** process the table t2, for lack of log after m3,
+* would process the table t3, but only up to m2,
+* would process the table t4, but only up to m3, for lack of log between m2 and m3.
+
+.. image:: images/logging_group_rollback.png
+   :align: center
+
+A log statistics report between the marks m1 and m4 would contain:
+
+* 1 row for t1 (m1,m4),
+* 1 row for t2 (m1,m3),
+* 1 row for t3 (m2,m4),
+* 2 rows for t4 (m1,m2) and (m3,m4).
+
+.. image:: images/logging_group_stat.png
+   :align: center
+
+The SQL script generation for the marks interval m1 to m4:
+
+* would process the table t1,
+* would process the table t2, but only up the mark m3,
+* would **NOT** process the table t3, for lack of log before m2,
+* would process the table t4, but only up to the mark m2, for lack of log between m2 and m3.
+
+.. image:: images/logging_group_gen_sql.png
+   :align: center

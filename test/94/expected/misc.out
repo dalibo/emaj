@@ -1164,15 +1164,15 @@ ERROR:  _gen_sql_groups: The filtered table/sequence names array cannot be empty
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 -- unknown table/sequence names in the tables filter
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile', array['foo']);
-ERROR:  _gen_sql_groups: 1 table/sequence (foo) does not belong to any of the selected tables groups.
+ERROR:  _gen_sql_groups: 1 table/sequence (foo) did not belong to any of the selected tables groups at Mark21 mark time.
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl1','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
-ERROR:  _gen_sql_groups: 2 tables/sequences (myschema1.mytbl1, phil's schema3.phil's tbl1) do not belong to any of the selected tables groups.
+ERROR:  _gen_sql_groups: 2 tables/sequences (myschema1.mytbl1, phil's schema3.phil's tbl1) did not belong to any of the selected tables groups at Mark21 mark time.
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl1','foo','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
-ERROR:  _gen_sql_groups: 2 tables/sequences (foo, phil's schema3.phil's tbl1) do not belong to any of the selected tables groups.
+ERROR:  _gen_sql_groups: 2 tables/sequences (foo, phil's schema3.phil's tbl1) did not belong to any of the selected tables groups at Multi-1 mark time.
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- invalid location path name
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
@@ -1969,7 +1969,7 @@ begin;
     select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emajb". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 29 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 23 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
   rollback to savepoint sp1;

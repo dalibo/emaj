@@ -79,7 +79,8 @@ begin;
   select * from emaj.emaj_sequence where sequ_time_id not in (select distinct mark_time_id from emaj.emaj_mark where mark_group = 'myGroup1');
   -- testing rollback
 --select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
-  select * from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+    from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
   select * from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
 --select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan);
   savepoint svp2;
@@ -101,55 +102,208 @@ begin;
 rollback;
 
 -----------------------------
--- remove tables
+-- add tables
 -----------------------------
 
---TODO: remove the transaction when adding a sequence will be possible and move the rollbacks later
+-- add myschema2.mytbl7 to the myGroup2 group
+-- first performs updates and set marks
+select emaj.emaj_set_mark_group('myGroup2','ADD_TBL test');
+insert into myschema2.mytbl7 values (1),(2),(3);
+select emaj.emaj_set_mark_group('myGroup2','Before ADD_TBL');
+delete from myschema2.mytbl7 where col71 = 3;
+
+-- then add the table to the group
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl7');
+select emaj.emaj_alter_group('myGroup2', 'Alter to add mytbl7');
+select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2';
+select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
+-- perform some other updates
+insert into myschema2.mytbl7 values (4),(5);
+
+-- remove the alter group mark just after the alter operation and then get statistics and set a mark
 begin;
-  insert into myschema1."myTbl3" (col33) values (1.);
-  select emaj.emaj_set_mark_group('myGroup1','Mk2c');
-  insert into myschema1."myTbl3" (col33) values (1.);
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and (grpdef_tblseq = 'myTbl3' or grpdef_tblseq = 'mytbl2b');
-  select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
-  select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
-  select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2;
-  delete from myschema1."myTbl3" where col33 = 1.;
-  select count(*) from "emajC"."myschema1_myTbl3_log_1";
-  select * from emaj.emaj_verify_all();
-  savepoint svp1;
-  -- testing log stat
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
-    from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
-  --testing snap and sql generation
+  select emaj.emaj_delete_mark_group('myGroup2','Alter to add mytbl7');
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+    from emaj.emaj_log_stat_group('myGroup2','Before ADD_TBL',NULL);
+  select emaj.emaj_set_mark_group('myGroup2','Just after ADD_TBL');
+  select mark_log_rows_before_next from emaj.emaj_mark where mark_name = 'Before ADD_TBL';
+rollback;
+
+-- set marks and look at statistics
+select emaj.emaj_set_mark_group('myGroup2','Just after ADD_TBL');
+update myschema2.mytbl7 set col71 = 6 where col71 = 2;
+select col71, emaj_verb, emaj_tuple from emaj.myschema2_mytbl7_log order by emaj_gid;
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+  from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
+select emaj.emaj_set_mark_group('myGroup2','After ADD_TBL');
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows 
+  from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test','After ADD_TBL');
+
+--testing snap and sql generation
 \! mkdir -p /tmp/emaj_test/alter
 \! rm -Rf /tmp/emaj_test/alter/*
-  select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/alter','');
+  select emaj.emaj_snap_group('myGroup2','/tmp/emaj_test/alter','');
 \! ls /tmp/emaj_test/alter
 \! rm -R /tmp/emaj_test/alter/*
-  select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp/emaj_test/alter',NULL);
+  select emaj.emaj_snap_log_group('myGroup2',NULL,'After ADD_TBL','/tmp/emaj_test/alter',NULL);
+\! ls /tmp/emaj_test/alter/myschema2*
+\! rm -R /tmp/emaj_test/alter/*
+  select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, '/tmp/emaj_test/alter/myFile',array['myschema2.mytbl7']);
+\! rm -R /tmp/emaj_test
+
+-- testing mark deletions
+begin;
+  -- testing delete a single mark set after the table addition
+  select emaj.emaj_delete_mark_group('myGroup2','After ADD_TBL');
+  select 'Should not exist' from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'After ADD_TBL';
+  -- testing delete all marks up to a mark set after the alter_group
+  select emaj.emaj_delete_before_mark_group('myGroup2','EMAJ_LAST_MARK');
+  select * from emaj.emaj_mark where mark_group = 'myGroup2';
+  select * from emaj.emaj_sequence where sequ_name = 'myschema2_mytbl7_log_seq' order by sequ_time_id;
+rollback;
+
+begin;
+  -- testing the alter_group mark deletion
+  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
+  select emaj.emaj_delete_mark_group('myGroup2','Alter to add mytbl7');
+  select * from emaj.emaj_sequence where sequ_name = 'myschema2_mytbl7_log_seq' order by sequ_time_id limit 1;
+rollback;
+
+-- test sequences and holes at bounds following a rollback targeting a mark set before an ADD_TBL
+begin;
+  delete from emaj.emaj_param where param_key = 'dblink_user_password';
+  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
+  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+    from emaj.emaj_rollback_group('myGroup2','Before ADD_TBL',true);
+  select * from emaj.emaj_sequence where sequ_schema = 'emaj' and sequ_name = 'myschema2_mytbl7_log_seq';
+  select * from emaj.emaj_seq_hole where sqhl_schema = 'myschema2' and sqhl_table = 'mytbl7';
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
+rollback;
+
+-- estimate and then perform a logged rollback to reach a mark prior the ADD_TBL operation and check
+select * from emaj.emaj_estimate_rollback_group('myGroup2','Before ADD_TBL',true);
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_logged_rollback_group('myGroup2','Before ADD_TBL',true);
+select col71, emaj_verb, emaj_tuple from emaj.myschema2_mytbl7_log order by emaj_gid;
+select * from myschema2.mytbl7 order by col71;
+
+-- consolidate this logged rollback
+select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','Logged_Rlbk_End');
+select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
+select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup2'; -- should report 1 row to consolidate
+select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
+select * from emaj.emaj_sequence where sequ_schema = 'emaj' and sequ_name = 'myschema2_mytbl7_log_seq';
+
+-- perform some other updates
+insert into myschema2.myTbl7 values (7),(8),(9);
+
+-- verify the group and detect the lack of the new log table
+begin;
+  select emaj.emaj_disable_protection_by_event_triggers();
+  drop table emaj.myschema2_mytbl7_log;
+  select * from emaj.emaj_verify_all();
+  select emaj.emaj_enable_protection_by_event_triggers();
+rollback;
+
+-- remove myTbl7 from the group, then re-add it
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl7';
+select emaj.emaj_alter_group('myGroup2', 'Alter to remove mytbl7');
+
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl7');
+select emaj.emaj_alter_group('myGroup2', 'Alter to re-add mytbl7');
+select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
+delete from myschema2.myTbl7 where col71 = 9;
+
+-- get statistics
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test',NULL);
+
+-- snap the logs
+\! mkdir -p /tmp/emaj_test/alter
+select emaj.emaj_snap_log_group('myGroup2',NULL,NULL,'/tmp/emaj_test/alter',NULL);
+\! ls /tmp/emaj_test/alter/myschema2_mytbl7_log*
+\! rm -R /tmp/emaj_test
+
+-- and finaly remove myTbl7 from the group
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl7';
+select emaj.emaj_alter_group('myGroup2', 'Alter to really remove mytbl7');
+
+-- and perform a full rollback (that do not process myTbl7)
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_rollback_group('myGroup2', 'ADD_TBL test',true);
+select * from myschema2.mytbl7 order by col71;
+
+
+-----------------------------
+-- remove tables
+-----------------------------
+insert into myschema1."myTbl3" (col33) values (1.);
+select emaj.emaj_set_mark_group('myGroup1','Mk2c');
+insert into myschema1."myTbl3" (col33) values (1.);
+
+update emaj.emaj_group_def set grpdef_group = 'temporarily_removed'
+  where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and (grpdef_tblseq = 'myTbl3' or grpdef_tblseq = 'mytbl2b');
+select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
+select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2;
+
+delete from myschema1."myTbl3" where col33 = 1.;
+select count(*) from "emajC"."myschema1_myTbl3_log_1";
+select * from emaj.emaj_verify_all();
+
+-- test statistics following a rollback targeting a mark set before a REMOVE_TBL
+begin;
+  delete from emaj.emaj_param where param_key = 'dblink_user_password';
+  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+    from emaj.emaj_rollback_group('myGroup1','Mk2c',true);
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+    from emaj.emaj_log_stat_group('myGroup1','Mk2b',NULL) order by 1,2,3,4;
+rollback;
+
+-- testing log stat
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
+
+--testing snap and sql generation
+\! mkdir -p /tmp/emaj_test/alter
+\! rm -Rf /tmp/emaj_test/alter/*
+select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/alter','');
+\! ls /tmp/emaj_test/alter
+\! rm -R /tmp/emaj_test/alter/*
+select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp/emaj_test/alter',NULL);
 \! ls /tmp/emaj_test/alter/myschema1*
 \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3']);
 \! rm -R /tmp/emaj_test
-  rollback to svp1;
-  -- testing delete a single mark set before the table removal
+
+-- test marks deletions
+begin;
+-- testing delete a single mark set before the table removal
   select emaj.emaj_delete_mark_group('myGroup1','Mk2c');
-  select * from emaj.emaj_sequence where sequ_time_id not in (select distinct mark_time_id from emaj.emaj_mark where mark_group = 'myGroup1');
   select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'Mk2b';
-  -- testing marks deletion (delete all marks before the alter_group)
+-- testing marks deletion (delete all marks before the alter_group)
   select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
   select 'should not exist' from pg_namespace where nspname = 'emajb';
-  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
-  rollback to svp1;
-  -- testing the alter_group mark deletion (it should reduce the time range of the removed tables)
-  select mark_id, mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
-  select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
+  select 'should not exist' from pg_class, pg_namespace 
+    where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
+rollback;
+
+begin;
+-- testing the alter_group mark deletion
+  select mark_id, mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next,
+         mark_logged_rlbk_target_mark
+    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
+  select emaj.emaj_delete_mark_group('myGroup1','2 tables removed from myGroup1');
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
-  select count(*) from "emajC"."myschema1_myTbl3_log_1";  -- Only 1 row should remain
-  select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 1;
-  rollback to svp1;
-  -- testing marks deletion (other cases)
+  select * from emaj.emaj_sequence where 
+    sequ_name in ('myschema1_mytbl2b_log_seq', 'myschema1_myTbl3_log_seq') order by sequ_time_id desc, sequ_name limit 2;
+  select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = '2 tables removed from myGroup1';
+rollback;
+
+begin;
+-- testing marks deletion (other cases)
   select emaj.emaj_set_mark_group('myGroup1','Mk2d');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
@@ -157,65 +311,62 @@ begin;
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
-  rollback to svp1;
-  -- testing rollback and consolidation
-  delete from emaj.emaj_param where param_key = 'dblink_user_password';
-  insert into myschema1.mytbl1 values (100, 'Alter_logg', E'\\000'::bytea);
-  select * from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
-  select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Logged_Rlbk_End');
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-  select emaj.emaj_alter_group('myGroup1','2nd remove_tbl');
-  select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1'; -- should report 2 rows to consolidate
-  select * from emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
-  select count(*) from emaj.myschema1_mytbl1_log_1;   -- the log table should be empty
-  select * from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
-  savepoint svp3;
-  -- testing group's reset
+rollback;
+
+-- testing rollback and consolidation
+insert into myschema1.mytbl1 values (100, 'Alter_logg', E'\\000'::bytea);
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Logged_Rlbk_End');
+update emaj.emaj_group_def set grpdef_group = 'temporarily_removed'
+  where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+select emaj.emaj_alter_group('myGroup1','2nd remove_tbl');
+select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1';
+select * from emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
+select count(*) from emaj.myschema1_mytbl1_log_1;   -- the log table should be empty
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
+
+-- testing group's reset
+begin;
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_reset_group('myGroup1');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select 'should not exist' from pg_namespace where nspname = 'emajb';
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
-  rollback to svp3;
-  -- testing group's stop and start
+rollback;
+
+-- testing group's stop and start
+begin;
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_start_group('myGroup1');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select 'should not exist' from pg_namespace where nspname = 'emajb';
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
-  rollback to svp1;
-  -- testing the table drop (remove first the sequence linked to the table, otherwise an event triger fires)
+rollback;
+
+-- testing the table drop (remove first the sequence linked to the table, otherwise an event triger fires)
+begin;
   delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_alter_group('myGroup1','alter_before_drop_mytbl3');
   drop table mySchema1."myTbl3";
 rollback;
 
--- testing a remove table just after a start group, and the deletion of the alter mark, resulting in the deletion of all logs for the table
-select emaj.emaj_start_group('myGroup4','g4_start');
--- simulate a remove_tbl and add_tbl by reducing the rel_time_range
---TODO (to be replaced by a remove_tbl and add_tblsequence when add_tbl will be developped)
-update emaj.emaj_relation set rel_time_range = int8range((select mark_time_id from emaj.emaj_mark where mark_name = 'g4_start'),null,'[)')
-  where rel_schema = 'myschema4' and rel_tblseq = 'mytblc1';
-insert into myschema4.myTblM values ('2001-09-11',0,'abc');
-update emaj.emaj_group_def set grpdef_group = 'dummy' where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblc1';
-select emaj.emaj_alter_group('myGroup4','g4_remove_part1');
-select emaj.emaj_delete_mark_group('myGroup4','g4_remove_part1');
-select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq = 'mytblc1';
+-- re-add all removed tables
+update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_group = 'temporarily_removed';
+select emaj.emaj_alter_group('myGroup1', 'tables re-added to myGroup1');
 
--- reset the myGroup4 state
-select emaj.emaj_stop_group('myGroup4');
-update emaj.emaj_group_def set grpdef_group = 'myGroup4' where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblc1';
-select emaj.emaj_alter_group('myGroup4','g4_reset_state');
-
---select * from emaj.emaj_hist order by hist_id desc limit 50;
 select emaj.emaj_cleanup_rollback_state();
 
 -- set an intermediate mark
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_id > 6000 order by mark_id;
+select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
+       mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+  from emaj.emaj_mark where mark_id > 6000 order by mark_id;
 
 -- estimate a rollback crossing alter group operations
+delete from emaj.emaj_rlbk_stat;    -- to avoid unstable results in estimates
 select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false);
 
 -- execute a rollback not crossing any alter group operation
@@ -224,7 +375,8 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false) o
 -- execute rollbacks crossing alter group operations
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) order by 1,2;
 
@@ -235,15 +387,16 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) o
 -- empty logging groups
 begin;
   delete from emaj.emaj_group_def where grpdef_group IN ('myGroup1','myGroup2');
-  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-  select * from emaj.emaj_relation where rel_group IN ('myGroup1','myGroup2');
--- add one table or sequence to the empty groups
--- TODO: remove the stop_groups() call once it will be possible to add a table/sequence to a logging group
-  select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','empty groups');
+  select * from emaj.emaj_relation where rel_group IN ('myGroup1','myGroup2') order by rel_schema, rel_tblseq, rel_time_range;
+-- add one table and sequence to the empty groups
   insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
-  insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
-  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-  select * from emaj.emaj_relation where rel_group IN ('myGroup1','myGroup2');
+-- TODO: uncomment the next line once it will be possible to add a sequence to a logging group
+--  insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','add a single table');
+  select * from emaj.emaj_relation
+    where (rel_schema = 'myschema1' and rel_tblseq = 'mytbl1') or (rel_schema = 'myschema2' and rel_tblseq = 'myseq1')
+    order by rel_schema, rel_tblseq, rel_time_range;
 rollback;
 
 -----------------------------
@@ -255,8 +408,11 @@ select emaj.emaj_force_drop_group('myGroup2');
 select emaj.emaj_force_drop_group('myGroup4');
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select sch_name from emaj.emaj_schema order by 1;
-select hist_function, hist_event, hist_object, 
-       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
   from emaj.emaj_hist where hist_id > 6000 order by hist_id;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
