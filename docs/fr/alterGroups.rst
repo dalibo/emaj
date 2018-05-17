@@ -79,7 +79,7 @@ Néanmoins certaines actions sont possibles sur des groupes de tables maintenus 
 +-------------------------------------+----------------+---------------------------+
 | Ajouter une table à un groupe       | Oui            | Ajustement emaj_group_def |
 +-------------------------------------+----------------+---------------------------+
-| Ajouter une séquence à un groupe    | Non            |                           |
+| Ajouter une séquence à un groupe    | Oui            | Ajustement emaj_group_def |
 +-------------------------------------+----------------+---------------------------+
 | Réparer une table ou une séquence   | Non            |                           |
 +-------------------------------------+----------------+---------------------------+
@@ -137,9 +137,9 @@ Une fois la table ou la séquence applicative décrochée de son groupe de table
 
 .. caution::
 
-   Quand une table ou une séquence est ajoutée à un groupe de tables actif, celle-ci est ensuite traitée par les éventuelles opérations de rollback. Dans ce cas, l’annulation des mises à jour ne pourra remonter que jusqu’au moment où la table a été ajoutée au groupe. En revanche une telle table ou séquence ne sera par traitée par une fonction de génération de script SQL si la marque de début souhaitée est antérieure à l’ajout de la table dans le groupe.
+   Quand une table ou une séquence est ajoutée à un groupe de tables actif, celle-ci est ensuite traitée par les éventuelles opérations de rollback. Mais si l’opération de rollback cible une marque posée avant l’ajout de la table ou de la séquence dans le groupe, la table ou la séquence sera remise dans l’état qu’elle avait au moment où elle a été ajoutée au groupe, et un message d’avertissement est généré. En revanche une telle table ou séquence ne sera pas traitée par une fonction de génération de script SQL si la marque de début souhaitée est antérieure à l’ajout de la table dans le groupe.
 
-Quelques graphiques permettent de visuliser plus facilement les conséquences de l’ajout ou la suppression d’une table ou d’une séquence dans un groupe de tables actif.
+Quelques graphiques permettent de visualiser plus facilement les conséquences de l’ajout ou la suppression d’une table ou d’une séquence dans un groupe de tables actif.
 
 Prenons 4 tables affectées à un groupe (t1 à t4) et 4 marques posées au fil du temps (m1 à m4). En m2, t3 a été ajoutée au groupe et t4 en a été retirée. En m3, t2 a été retirée du groupe alors que t4 y a été remis.
 

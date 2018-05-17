@@ -270,13 +270,13 @@ select count(*) from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    34
+    36
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    34
+    36
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;

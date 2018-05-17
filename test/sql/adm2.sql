@@ -495,7 +495,7 @@ insert into mySchema4.myTblP values (-1,'Stored in partition 1'), (1,'Stored in 
 select emaj.emaj_set_mark_group('myGroup4','M1');
 update mySchema4.myTblP set col1 = 2 where col1 = 1;
 
--- create a new partition and add it into the group
+-- create a new partition and add it into the group ; in passing also add the sequence linked to the serial column of the mother table
 reset role;
 CREATE TABLE mySchema4.myPartP3 PARTITION OF mySchema4.myTblP (PRIMARY KEY (col1)) FOR VALUES FROM (10) TO (19);
 -- create the table with PG 9.6- so that next scripts do not abort
@@ -504,11 +504,13 @@ grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user;
 
 set role emaj_regression_tests_adm_user;
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp3');
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblp_col3_seq');
 select emaj.emaj_alter_group('myGroup4','Add partition 3');
 insert into mySchema4.myTblP values (11,'Stored in partition 3');
 
--- remove an obsolete partition
+-- remove an obsolete partition ; in passing also remove the sequence linke to the serial column of the mother table
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mypartp1';
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblp_col3_seq';
 select emaj.emaj_alter_group('myGroup4','Remove partition 1');
 
 reset role;

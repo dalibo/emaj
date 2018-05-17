@@ -79,7 +79,7 @@ However, some actions are possible while the tables groups are in *LOGGING* stat
 +-------------------------------------+---------------+-----------------------+
 | Add a table to a group              | Yes           | emaj_group_def update |
 +-------------------------------------+---------------+-----------------------+
-| Add a sequence to a group           | No            |                       |
+| Add a sequence to a group           | Yes           | emaj_group_def update |
 +-------------------------------------+---------------+-----------------------+
 | Repair a table or a sequence        | No            |                       |
 +-------------------------------------+---------------+-----------------------+
@@ -136,7 +136,7 @@ The historical data linked to the object (logs, marks traces,...) are kept as is
 
 .. caution::
 
-	When a table or a sequence is added into a tables group in *LOGGING* state, it is then processed by any further rollback operation. But updates that occurred before the time when the table or sequence was added into the group cannot be cancelled. Such a table will not be processed by a SQL script generation function call if the requested start mark has been set before the addition of the table or sequence into the group
+	When a table or a sequence is added into a tables group in *LOGGING* state, it is then processed by any further rollback operation. But if the rollback operation targets a mark set before the addition into the group, the table or the sequence is left in its state at the time of the addition into the group and a warning message is issued. Such a table or sequence will not be processed by a SQL script generation function call if the requested start mark has been set before the addition of the table or sequence into the group
 
 Some graphs help to more easily visualize the consequences of the addition or the removal of a table or a sequence into/from a tables group in *LOGGING* state.
 

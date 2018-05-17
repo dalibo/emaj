@@ -172,6 +172,9 @@ CREATE TABLE myTbl8 (
 
 CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
 
+-- This sequence will remain outside any groups until the addition into a group in logging state
+CREATE SEQUENCE mySeq2;
+
 -- Third schema (for an audit_only group)
 
 DROP SCHEMA IF EXISTS "phil's schema3" CASCADE;
@@ -248,15 +251,17 @@ CREATE TRIGGER myTblM_insert_trigger BEFORE INSERT ON myTblM FOR EACH ROW EXECUT
 
 -- New partitionning style(PG 10+)
 
-DROP TABLE IF EXISTS myTblP ;
+DROP TABLE IF EXISTS myTblP;
 CREATE TABLE myTblP (
   col1       INT              NOT NULL,
-  col2       TEXT
+  col2       TEXT,
+  col3       SERIAL
 ) PARTITION BY RANGE (col1);
 -- create the table with PG 9.6- so that next scripts work
 CREATE TABLE IF NOT EXISTS myTblP (
   col1       INT              NOT NULL,
-  col2       TEXT
+  col2       TEXT,
+  col3       SERIAL
 );
 
 DROP TABLE IF EXISTS myPartP1 ;
@@ -299,18 +304,8 @@ create role emaj_regression_tests_anonym_user login password 'anonym';
 --
 grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 to emaj_regression_tests_adm_user, emaj_regression_tests_viewer_user;
 --
-grant select on mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b to emaj_regression_tests_viewer_user;
-grant select on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6, mySchema2.myTbl7, mySchema2.myTbl8 to emaj_regression_tests_viewer_user;
-grant select on "phil's schema3"."phil's tbl1", "phil's schema3"."myTbl2\" to emaj_regression_tests_viewer_user;
-grant select on mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2, mySchema4.myPartP1, mySchema4.myPartP2 to emaj_regression_tests_viewer_user;
-grant select on sequence mySchema1.myTbl2b_col20_seq, mySchema1."myTbl3_col31_seq" to emaj_regression_tests_viewer_user;
-grant select on sequence mySchema2."myTbl3_col31_seq", "phil's schema3"."phil's seq\1" to emaj_regression_tests_viewer_user;
+grant select on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4 to emaj_regression_tests_viewer_user;
+grant select on all sequences in schema mySchema1, mySchema2, mySchema4 to emaj_regression_tests_viewer_user;
 --
-grant all on mySchema1.myTbl1, mySchema1.myTbl2, mySchema1."myTbl3", mySchema1.myTbl4, mySchema1.myTbl2b to emaj_regression_tests_adm_user;
-grant all on mySchema2.myTbl1, mySchema2.myTbl2, mySchema2."myTbl3", mySchema2.myTbl4, mySchema2.myTbl5, mySchema2.myTbl6, mySchema2.myTbl7, mySchema2.myTbl8 to emaj_regression_tests_adm_user;
-grant all on "phil's schema3"."phil's tbl1", "phil's schema3"."myTbl2\", "phil's schema3".myTbl4 to emaj_regression_tests_adm_user;
-grant all on mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2, mySchema4.myTblP, mySchema4.myPartP1, mySchema4.myPartP2 to emaj_regression_tests_adm_user;
-grant all on sequence mySchema1.myTbl2b_col20_seq, mySchema1."myTbl3_col31_seq" to emaj_regression_tests_adm_user;
-grant all on sequence mySchema2.mySeq1, mySchema2."myTbl3_col31_seq" to emaj_regression_tests_adm_user;
-grant all on sequence "phil's schema3"."myTbl2\_col21_seq", "phil's schema3"."phil's seq\1" to emaj_regression_tests_adm_user;
-
+grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4 to emaj_regression_tests_adm_user;
+grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4 to emaj_regression_tests_adm_user;

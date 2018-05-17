@@ -1856,6 +1856,38 @@ $_create_seq$
   END;
 $_create_seq$;
 
+CREATE OR REPLACE FUNCTION emaj._add_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_add_seq$
+-- The function adds a sequence to a group. It is called during an alter group operation.
+-- If the group is in idle state, it simply calls the _create_seq() function.
+-- Otherwise, it calls the _create_seql() function, and record the current state of the sequence
+-- Required inputs: row from emaj_alter_plan corresponding to the appplication sequence to proccess, time stamp id of the alter group operation
+  DECLARE
+    r_grpdef                 emaj.emaj_group_def%ROWTYPE;
+  BEGIN
+-- get the table description from emaj_group_def
+    SELECT * INTO r_grpdef
+      FROM emaj.emaj_group_def
+      WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- create the table
+    PERFORM emaj._create_seq(r_grpdef, v_timeId);
+-- if the group is in logging state, perform additional tasks
+    IF r_plan.altr_group_is_logging THEN
+-- ... record the new sequence state in the emaj_sequence table for the current alter_group mark
+      INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
+                  sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
+        SELECT * FROM emaj._get_current_sequence_state(r_plan.altr_schema, r_plan.altr_tblseq, v_timeId) AS
+                      t(sequ_schema TEXT, sequ_name TEXT, sequ_time_id BIGINT, sequ_last_val BIGINT, sequ_start_val BIGINT, sequ_increment BIGINT, sequ_max_val BIGINT, sequ_min_val BIGINT, sequ_cache_val BIGINT, sequ_is_cycled BOOLEAN, sequ_is_called BOOLEAN);
+---- ... and insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('ALTER_GROUP', 'SEQUENCE ADDED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
+                'To logging group ' || r_plan.altr_group);
+    END IF;
+    RETURN;
+  END;
+$_add_seq$;
+
 CREATE OR REPLACE FUNCTION emaj._remove_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_remove_seq$
@@ -1886,9 +1918,11 @@ $_drop_seq$
 -- Required inputs: row from emaj_relation corresponding to the appplication sequence to proccess
   BEGIN
 -- delete rows from emaj_sequence
+-- if several rows exist in emaj_relation for the same sequence, due to removals and additions while the group was in logging state,
+--   the first function call deletes all emaj_sequence rows for the sequence
     EXECUTE 'DELETE FROM emaj.emaj_sequence WHERE sequ_schema = ' || quote_literal(r_rel.rel_schema) || ' AND sequ_name = ' || quote_literal(r_rel.rel_tblseq);
 -- and finaly delete the sequence reference from the emaj_relation table
-    DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;
+    DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
     RETURN;
   END;
 $_drop_seq$;
@@ -2082,6 +2116,7 @@ $_rlbk_seq$
       v_stmt=v_stmt || ' CYCLE ';
     END IF;
 -- and execute the statement if at least one parameter has changed
+
     IF v_stmt <> '' THEN
       EXECUTE 'ALTER SEQUENCE ' || v_fullSeqName || v_stmt;
     END IF;
@@ -3077,7 +3112,7 @@ $_alter_plan$
     SELECT string_agg(DISTINCT altr_group, ', ' ORDER BY altr_group) INTO v_groups
       FROM emaj.emaj_alter_plan
       WHERE altr_time_id = v_timeId
-        AND altr_step IN ('RESET_GROUP', 'REPAIR_TBL', 'ASSIGN_REL', 'ADD_SEQ')
+        AND altr_step IN ('RESET_GROUP', 'REPAIR_TBL', 'ASSIGN_REL')
         AND altr_group_is_logging;
     IF v_groups IS NOT NULL THEN
       RAISE EXCEPTION '_alter_plan: The groups "%" cannot be altered because they are in LOGGING state.', v_groups;
@@ -3212,10 +3247,8 @@ $_alter_exec$
           PERFORM emaj._add_tbl(r_plan, v_timeId);
 --
         WHEN 'ADD_SEQ' THEN
--- currently, this can only be done when the relation belongs to an IDLE group
--- create the sequence
-          PERFORM emaj._create_seq(emaj.emaj_group_def.*, v_timeId) FROM emaj.emaj_group_def
-            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- add a sequence to a group
+          PERFORM emaj._add_seq(r_plan, v_timeId);
 --
       END CASE;
     END LOOP;
@@ -5405,7 +5438,8 @@ $_rlbk_end$
     END IF;
 -- rollback the application sequences belonging to the groups
 -- warning, this operation is not transaction safe (that's why it is placed at the end of the operation)!
-    PERFORM emaj._rlbk_seq(t.*, v_markTimeId)
+-- if the sequence has been added to its group after the target rollback mark, rollback up to the corresponding alter_group time
+    PERFORM emaj._rlbk_seq(t.*, greatest(v_markTimeId, lower(t.rel_time_range)))
       FROM (SELECT * FROM emaj.emaj_relation
               WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t;

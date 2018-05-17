@@ -3,7 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-  * A table can be added to a tables group in LOGGING state.
+  * A table or a sequence can be added to a tables group in LOGGING state.
   * New emaj_log_stat_groups() and emaj_detailed_log_stat_groups() functions 
     produce log statistics for several tables groups.
   * Add checks on primary key structures to be sure they are not altered
