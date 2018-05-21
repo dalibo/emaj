@@ -1138,8 +1138,8 @@ ERROR:  could not open file "/tmp/emaj_test/snaps/myschema2_myTbl3.snap" for wri
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema2."myTbl3" ORDER BY col31) TO '/tmp/emaj_test/snaps/myschema2_myTbl3.snap' CSV HEADER"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 87 at EXECUTE
 select emaj.emaj_snap_group('phil''s group#3",','/tmp/emaj_test/snaps','CSV HEADER');
-ERROR:  could not open file "/tmp/emaj_test/snaps/phil's schema3_myTbl2\.snap" for writing: No such file or directory
-CONTEXT:  SQL statement "COPY (SELECT * FROM "phil's schema3"."myTbl2\" ORDER BY col21) TO E'/tmp/emaj_test/snaps/phil''s schema3_myTbl2\\.snap' CSV HEADER"
+ERROR:  could not open file "/tmp/emaj_test/snaps/phil's_schema3_myTbl2_.snap" for writing: No such file or directory
+CONTEXT:  SQL statement "COPY (SELECT * FROM "phil's schema3"."myTbl2\" ORDER BY col21) TO '/tmp/emaj_test/snaps/phil''s_schema3_myTbl2_.snap' CSV HEADER"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 87 at EXECUTE
 \! ls /tmp/emaj_test/snaps
 ls: cannot access '/tmp/emaj_test/snaps': No such file or directory

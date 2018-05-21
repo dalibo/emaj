@@ -406,7 +406,13 @@ select emaj.emaj_snap_log_group('myGroup2','','','/tmp/emaj_test/log_snaps','CSV
 select emaj.emaj_snap_log_group('myGroup2','Mark21',NULL,'/tmp/emaj_test/log_snaps','CSV HEADER');
 select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark21','/tmp/emaj_test/log_snaps','CSV');
 select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23','/tmp/emaj_test/log_snaps',NULL);
+
+-- mark name with special characters
+select emaj.emaj_set_mark_group('myGroup2',E'/<*crazy mark$>\\');
+select emaj.emaj_snap_log_group('myGroup2','Mark21',E'/<*crazy mark$>\\','/tmp/emaj_test/log_snaps',NULL);
+
 \! ls /tmp/emaj_test/log_snaps |sed s/[0-9][0-9].[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]/\[timestamp_mask\]/g
+select emaj.emaj_delete_mark_group('myGroup2',E'/<*crazy mark$>\\');
 
 -----------------------------
 -- emaj_gen_sql_group() and emaj_gen_sql_groups() test

@@ -6403,7 +6403,7 @@ $emaj_snap_group$
           WHERE upper_inf(rel_time_range) AND rel_group = v_groupName
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
-      v_fileName = v_dir || '/' || r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap';
+      v_fileName = v_dir || '/' || translate(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap', E' /\\$<>*', '_______');
       v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       CASE r_tblsq.rel_kind
         WHEN 'r' THEN
@@ -6553,7 +6553,7 @@ $emaj_snap_log_group$
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 --   build names
-      v_fileName = v_dir || '/' || r_tblsq.rel_log_table || '.snap';
+      v_fileName = v_dir || '/' || translate(r_tblsq.rel_log_table || '.snap', E' /\\$<>*', '_______');
       v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
 --   prepare the execute the COPY statement
       v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions
@@ -6563,7 +6563,7 @@ $emaj_snap_log_group$
       v_nbFile = v_nbFile + 1;
     END LOOP;
 -- generate the file for sequences state at start mark
-    v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_firstMark;
+    v_fileName = v_dir || '/' || translate(v_groupName || '_sequences_at_' || v_firstMark, E' /\\$<>*', '_______');
 -- and execute the COPY statement
     v_stmt = 'COPY (SELECT emaj_sequence.*' ||
              ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
@@ -6576,11 +6576,11 @@ $emaj_snap_log_group$
 -- prepare the file for sequences state at end mark
 -- generate the full file name and the COPY statement
     IF v_noSuppliedLastMark THEN
-      v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || to_char(v_lastMarkTs,'HH24.MI.SS.MS');
+      v_fileName = v_dir || '/' || translate(v_groupName || '_sequences_at_' || to_char(v_lastMarkTs,'HH24.MI.SS.MS'), E' /\\$<>*', '_______');
       v_stmt = 'SELECT * FROM ' ||
                'emaj._get_current_sequences_state(ARRAY[' || quote_literal(v_groupName) || '], ''S'', ' || v_lastMarkTimeId || ')';
     ELSE
-      v_fileName = v_dir || '/' || v_groupName || '_sequences_at_' || v_lastMark;
+      v_fileName = v_dir || '/' || translate(v_groupName || '_sequences_at_' || v_lastMark, E' /\\$<>*', '_______');
       v_stmt = 'SELECT emaj_sequence.*' ||
                ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
                ' WHERE sequ_time_id = ' || v_lastMarkTimeId ||

@@ -69,7 +69,7 @@ select nextval('myschema2.myseq2');
 \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_snap_log_group('myGroup2',NULL,'After ADD_SEQ','/tmp/emaj_test/alter',NULL);
 \! grep myseq2 /tmp/emaj_test/alter/myGroup2_sequences_at_Mk1
-\! grep myseq2 /tmp/emaj_test/alter/myGroup2_sequences_at_After\ ADD_SEQ
+\! grep myseq2 /tmp/emaj_test/alter/myGroup2_sequences_at_After_ADD_SEQ
 
 \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, '/tmp/emaj_test/alter/myFile');

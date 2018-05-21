@@ -8,6 +8,9 @@ E-Maj - Change log
     produce log statistics for several tables groups.
   * Add checks on primary key structures to be sure they are not altered
     since their related group creation time.
+  * For both emaj_snap_group() and emaj_snap_log_group() functions, avoid to 
+    get output file names with unconvenient characters. Replace spaces, /, \,
+    $, >, <, and * characters by _.
 
 ###Bug fixes:###
   * The functions that estimate the rollbacks duration reported wrong results
