@@ -142,6 +142,41 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_plan','');
 -- emaj types                     --
 --                                --
 ------------------------------------
+CREATE TYPE emaj._log_stat_type AS (
+  stat_group                   TEXT,                       -- group name owning the schema.table
+  stat_schema                  TEXT,                       -- schema name
+  stat_table                   TEXT,                       -- table name
+  stat_log_schema              TEXT,                       -- schema holding the log table
+  stat_log_table               TEXT,                       -- log table
+  stat_first_mark              TEXT,                       -- mark representing the lower bound of the time range
+  stat_first_mark_datetime     TIMESTAMPTZ,                -- clock timestamp of the mark representing the lower bound of the time range
+  stat_first_mark_gid          BIGINT,                     -- global sequence value at the lower bound of the time range
+  stat_last_mark               TEXT,                       -- mark representing the upper bound of the time range
+  stat_last_mark_datetime      TIMESTAMPTZ,                -- clock timestamp of the mark representing the upper bound of the time range
+  stat_last_mark_gid           BIGINT,                     -- global sequence value at the upper bound of the time range
+  stat_rows                    BIGINT                      -- estimated number of update events recorded for this table
+  );
+COMMENT ON TYPE emaj._log_stat_type IS
+$$Represents the structure of rows returned by the _log_stat_groups() function.$$;
+
+CREATE TYPE emaj._detailed_log_stat_type AS (
+  stat_group                   TEXT,                       -- group name owning the schema.table
+  stat_schema                  TEXT,                       -- schema name
+  stat_table                   TEXT,                       -- table name
+  stat_log_schema              TEXT,                       -- schema holding the log table
+  stat_log_table               TEXT,                       -- log table
+  stat_first_mark              TEXT,                       -- mark representing the lower bound of the time range
+  stat_first_mark_datetime     TIMESTAMPTZ,                -- clock timestamp of the mark representing the lower bound of the time range
+  stat_first_mark_gid          BIGINT,                     -- global sequence value at the lower bound of the time range
+  stat_last_mark               TEXT,                       -- mark representing the upper bound of the time range
+  stat_last_mark_datetime      TIMESTAMPTZ,                -- clock timestamp of the mark representing the upper bound of the time range
+  stat_last_mark_gid           BIGINT,                     -- global sequence value at the upper bound of the time range
+  stat_role                    VARCHAR(32),                -- user having generated update events
+  stat_verb                    VARCHAR(6),                 -- type of SQL statement (INSERT/UPDATE/DELETE)
+  stat_rows                    BIGINT                      -- real number of update events recorded for this table
+  );
+COMMENT ON TYPE emaj._detailed_log_stat_type IS
+$$Represents the structure of rows returned by the _detailed_log_stat_groups() function.$$;
 
 ------------------------------------
 --                                --
@@ -758,6 +793,7 @@ $_verify_groups$
 --        - a boolean indicating whether the function has to raise an exception in case of detected unconsistency.
 -- If onErrorStop boolean is false, it returns a set of _verify_groups_type records, one row per detected unconsistency, including the faulting schema and table or sequence names and a detailed message.
 -- If no error is detected, no row is returned.
+-- This function may be directly called by the Emaj_web client.
   DECLARE
     v_hint                   TEXT = 'You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.';
     r_object                 RECORD;
@@ -1583,6 +1619,117 @@ $_delete_intermediate_mark_group$
     RETURN;
   END;
 $_delete_intermediate_mark_group$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$_rlbk_async$
+-- The function calls the main rollback functions following the initialisation phase.
+-- It is only called by the Emaj_web client, in an asynchronous way, so that the rollback can be then monitored by the client.
+-- Input: rollback identifier, and a boolean saying if the rollback is a logged rollback
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  BEGIN
+-- simply chain the internal functions
+    PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
+    PERFORM emaj._rlbk_start_mark(v_rlbkId, v_multiGroup);
+    PERFORM emaj._rlbk_session_exec(v_rlbkId, 1);
+    RETURN QUERY SELECT * FROM emaj._rlbk_end(v_rlbkId, v_multiGroup);
+  END;
+$_rlbk_async$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN, v_isAlterGroupAllowed BOOLEAN DEFAULT FALSE)
+RETURNS INT LANGUAGE plpgsql AS
+$_rlbk_init$
+-- This is the first step of a rollback group processing.
+-- It tests the environment, the supplied parameters and the foreign key constraints.
+-- By calling the _rlbk_planning() function, it defines the different elementary steps needed for the operation,
+-- and spread the load on the requested number of sessions.
+-- It returns a rollback id that will be needed by next steps (or NULL if there are some NULL input).
+-- This function may be directly called by the Emaj_web client.
+  DECLARE
+    v_markName               TEXT;
+    v_markTimeId             BIGINT;
+    v_markTimestamp          TIMESTAMPTZ;
+    v_msg                    TEXT;
+    v_nbTblInGroups          INT;
+    v_nbSeqInGroups          INT;
+    v_dbLinkCnxStatus        INT;
+    v_isDblinkUsable         BOOLEAN = FALSE;
+    v_effNbTable             INT;
+    v_histId                 BIGINT;
+    v_stmt                   TEXT;
+    v_rlbkId                 INT;
+  BEGIN
+-- check supplied group names and mark parameters
+    SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE) INTO v_markName;
+    IF v_markName IS NOT NULL THEN
+-- check that no group is damaged
+      PERFORM 0 FROM emaj._verify_groups(v_groupNames, TRUE);
+-- get the time stamp id and its clock timestamp for the first group (as we know this time stamp is the same for all groups of the array)
+      SELECT time_id, time_clock_timestamp INTO v_markTimeId, v_markTimestamp
+        FROM emaj.emaj_mark, emaj.emaj_time_stamp
+        WHERE time_id = mark_time_id AND mark_group = v_groupNames[1] AND mark_name = v_markName;
+-- insert begin in the history
+      IF v_isLoggedRlbk THEN
+        v_msg = 'Logged';
+      ELSE
+        v_msg = 'Unlogged';
+      END IF;
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'BEGIN',
+                array_to_string(v_groupNames,','),
+                v_msg || ' rollback to mark ' || v_markName || ' [' || v_markTimestamp || ']'
+               ) RETURNING hist_id INTO v_histId;
+-- get the total number of tables for these groups
+      SELECT sum(group_nb_table), sum(group_nb_sequence) INTO v_nbTblInGroups, v_nbSeqInGroups
+        FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames) ;
+-- first try to open a dblink connection
+      SELECT emaj._dblink_open_cnx('rlbk#1') INTO v_dbLinkCnxStatus;
+      v_isDblinkUsable = (v_dbLinkCnxStatus >= 0);
+-- for parallel rollback (nb sessions > 1) the dblink connection must be ok
+      IF v_nbSession > 1 AND NOT v_isDblinkUsable THEN
+        RAISE EXCEPTION '_rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = % - see E-Maj documentation)', v_dbLinkCnxStatus;
+      END IF;
+-- create the row representing the rollback event in the emaj_rlbk table and get the rollback id back
+      v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, ' ||
+               'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
+               'rlbk_is_dblink_used) ' ||
+               'VALUES (' || quote_literal(v_groupNames) || ',' || quote_literal(v_markName) || ',' ||
+               v_markTimeId || ',' || v_isLoggedRlbk || ',' || quote_nullable(v_isAlterGroupAllowed) || ',' ||
+               v_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
+               v_isDblinkUsable || ') RETURNING rlbk_id';
+      IF v_isDblinkUsable THEN
+-- insert a rollback event into the emaj_rlbk table ... either through dblink if possible
+        SELECT rlbk_id INTO v_rlbkId FROM dblink('rlbk#1',v_stmt) AS (rlbk_id INT);
+      ELSE
+-- ... or directly
+        EXECUTE v_stmt INTO v_rlbkId;
+      END IF;
+-- issue warnings in case of foreign keys with tables outside the groups
+      PERFORM emaj._check_fk_groups(v_groupNames);
+-- call the rollback planning function to define all the elementary steps to perform,
+-- compute their estimated duration and attribute steps to sessions
+      v_stmt = 'SELECT emaj._rlbk_planning(' || v_rlbkId || ')';
+      IF v_isDblinkUsable THEN
+-- ... either through dblink if possible (do not try to open a connection, it has already been attempted)
+        SELECT eff_nb_table FROM dblink('rlbk#1',v_stmt) AS (eff_nb_table INT) INTO v_effNbTable;
+      ELSE
+-- ... or directly
+        EXECUTE v_stmt INTO v_effNbTable;
+      END IF;
+-- update the emaj_rlbk table to set the real number of tables to process and adjust the rollback status
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_eff_nb_table = ' || v_effNbTable ||
+               ', rlbk_status = ''LOCKING'' ' || ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
+      IF v_isDblinkUsable THEN
+-- ... either through dblink if possible
+        PERFORM 0 FROM dblink('rlbk#1',v_stmt) AS (dummy INT);
+      ELSE
+-- ... or directly
+        EXECUTE v_stmt;
+      END IF;
+    END IF;
+    RETURN v_rlbkId;
+  END;
+$_rlbk_init$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_planning(v_rlbkId INT)
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
@@ -2648,7 +2795,9 @@ $emaj_log_stat_group$
 -- Input: group name, the 2 mark names defining a range
 -- Output: set of log rows by table (including tables with 0 rows to rollback)
   BEGIN
-    RETURN QUERY SELECT * FROM emaj._log_stat_groups(ARRAY[v_groupName], FALSE, v_firstMark, v_lastMark);
+    RETURN QUERY
+      SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime, stat_rows
+        FROM emaj._log_stat_groups(ARRAY[v_groupName], FALSE, v_firstMark, v_lastMark);
   END;
 $emaj_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_group(TEXT,TEXT,TEXT) IS
@@ -2662,14 +2811,16 @@ $emaj_log_stat_groups$
 -- Input: group names array, the 2 mark names defining a range
 -- Output: set of log rows by table (including tables with 0 rows to rollback)
   BEGIN
-    RETURN QUERY SELECT * FROM emaj._log_stat_groups(v_groupNames, TRUE, v_firstMark, v_lastMark);
+    RETURN QUERY
+      SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime, stat_rows
+        FROM emaj._log_stat_groups(v_groupNames, TRUE, v_firstMark, v_lastMark);
   END;
 $emaj_log_stat_groups$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_groups(TEXT[],TEXT,TEXT) IS
 $$Returns global statistics about logged events for an E-Maj group between 2 marks for a groups array.$$;
 
 CREATE OR REPLACE FUNCTION emaj._log_stat_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_firstMark TEXT, v_lastMark TEXT)
-RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
+RETURNS SETOF emaj._log_stat_type LANGUAGE plpgsql AS
 $_log_stat_groups$
 -- This function effectively returns statistics on row updates executed between 2 marks or between a mark and the current situation for 1 or several groups.
 -- These statistics are computed using the serial id of log tables and holes is sequences recorded into emaj_seq_hole at rollback time
@@ -2679,11 +2830,14 @@ $_log_stat_groups$
 --   Use a NULL or an empty string as last_mark to know the number of rows to rollback to reach the mark specified by the first_mark parameter.
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark for the groups.
 -- Output: set of log rows by table (including tables with 0 rows to rollback)
+-- This function may be directly called by the Emaj_web client.
   DECLARE
     v_firstMarkTimeId        BIGINT;
     v_lastMarkTimeId         BIGINT;
     v_firstMarkTs            TIMESTAMPTZ;
     v_lastMarkTs             TIMESTAMPTZ;
+    v_firstEmajGid           BIGINT;
+    v_lastEmajGid            BIGINT;
   BEGIN
 -- check the groups name
     SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '') INTO v_groupNames;
@@ -2692,16 +2846,16 @@ $_log_stat_groups$
       SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)
         INTO v_firstMark, v_lastMark, v_firstMarkTimeId, v_lastMarkTimeId;
 -- get additional data for both mark timestamps (in some cases, v_firstMarkTimeId may be NULL)
-      SELECT time_clock_timestamp INTO v_firstMarkTs
+      SELECT time_clock_timestamp, time_last_emaj_gid INTO v_firstMarkTs, v_firstEmajGid
         FROM emaj.emaj_time_stamp WHERE time_id = v_firstMarkTimeId;
       IF v_lastMark IS NOT NULL AND v_lastMark <> '' THEN
-        SELECT time_clock_timestamp INTO v_lastMarkTs
+        SELECT time_clock_timestamp, time_last_emaj_gid INTO v_lastMarkTs, v_lastEmajGid
           FROM emaj.emaj_time_stamp WHERE time_id = v_lastMarkTimeId;
       END IF;
 -- for each table of the group, get the number of log rows and return the statistics
 -- shorten the timeframe if the table did not belong to the group on the entire requested time frame
       RETURN QUERY
-        SELECT rel_group, rel_schema, rel_tblseq,
+        SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table,
                CASE WHEN v_firstMarkTimeId IS NULL THEN NULL
                     WHEN v_firstMarkTimeId >= lower(rel_time_range) THEN v_firstMark
                     ELSE coalesce((SELECT mark_name FROM emaj.emaj_mark
@@ -2712,6 +2866,11 @@ $_log_stat_groups$
                     ELSE (SELECT time_clock_timestamp FROM emaj.emaj_time_stamp
                             WHERE time_id = lower(rel_time_range))
                  END AS stat_first_mark_datetime,
+               CASE WHEN v_firstMarkTimeId IS NULL THEN NULL
+                    WHEN v_firstMarkTimeId >= lower(rel_time_range) THEN v_firstEmajGid
+                    ELSE (SELECT time_last_emaj_gid FROM emaj.emaj_time_stamp
+                            WHERE time_id = lower(rel_time_range))
+                 END AS stat_first_mark_gid,
                CASE WHEN v_lastMarkTimeId IS NULL AND upper_inf(rel_time_range) THEN NULL
                     WHEN NOT upper_inf(rel_time_range) AND (v_lastMarkTimeId IS NULL OR upper(rel_time_range) < v_lastMarkTimeId)
                          THEN coalesce((SELECT mark_name FROM emaj.emaj_mark
@@ -2724,6 +2883,12 @@ $_log_stat_groups$
                                  WHERE time_id = upper(rel_time_range))
                     ELSE v_lastMarkTs
                  END AS stat_last_mark_datetime,
+               CASE WHEN v_lastMarkTimeId IS NULL AND upper_inf(rel_time_range) THEN NULL
+                    WHEN NOT upper_inf(rel_time_range) AND (v_lastMarkTimeId IS NULL OR upper(rel_time_range) < v_lastMarkTimeId)
+                         THEN (SELECT time_last_emaj_gid FROM emaj.emaj_time_stamp
+                                 WHERE time_id = upper(rel_time_range))
+                    ELSE v_lastEmajGid
+                 END AS stat_last_mark_gid,
                CASE WHEN v_firstMarkTimeId IS NULL THEN 0                                              -- group just created but without any mark
                     ELSE emaj._log_stat_tbl(emaj_relation,
                                             CASE WHEN v_firstMarkTimeId >= lower(rel_time_range)
@@ -2751,7 +2916,10 @@ $emaj_detailed_log_stat_group$
 -- Input: group name, the 2 marks names defining a range
 -- Output: table of updates by user and table
   BEGIN
-    RETURN QUERY SELECT * FROM emaj._detailed_log_stat_groups(ARRAY[v_groupName], FALSE, v_firstMark, v_lastMark);
+    RETURN QUERY
+      SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
+             stat_role, stat_verb, stat_rows
+        FROM emaj._detailed_log_stat_groups(ARRAY[v_groupName], FALSE, v_firstMark, v_lastMark);
   END;
 $emaj_detailed_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT,TEXT,TEXT) IS
@@ -2766,14 +2934,17 @@ $emaj_detailed_log_stat_groups$
 -- Input: group names array, the 2 marks names defining a range
 -- Output: table of updates by user and table
   BEGIN
-    RETURN QUERY SELECT * FROM emaj._detailed_log_stat_groups(v_groupNames, TRUE, v_firstMark, v_lastMark);
+    RETURN QUERY
+      SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
+             stat_role, stat_verb, stat_rows
+        FROM emaj._detailed_log_stat_groups(v_groupNames, TRUE, v_firstMark, v_lastMark);
   END;
 $emaj_detailed_log_stat_groups$;
 COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_groups(TEXT[],TEXT,TEXT) IS
 $$Returns detailed statistics about logged events for an E-Maj group between 2 marks for several groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._detailed_log_stat_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_firstMark TEXT, v_lastMark TEXT)
-RETURNS SETOF emaj.emaj_detailed_log_stat_type LANGUAGE plpgsql AS
+RETURNS SETOF emaj._detailed_log_stat_type LANGUAGE plpgsql AS
 $_detailed_log_stat_groups$
 -- This function effectively returns statistics on row updates executed between 2 marks as viewed through the log tables for one or several groups
 -- It provides more information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
@@ -2783,6 +2954,7 @@ $_detailed_log_stat_groups$
 --   a NULL value or an empty string as last_mark indicates the current situation
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: table of updates by user and table
+-- This function may be directly called by the Emaj_web client.
   DECLARE
     v_firstMarkTimeId        BIGINT;
     v_lastMarkTimeId         BIGINT;
@@ -2870,10 +3042,14 @@ $_detailed_log_stat_groups$
         v_stmt= 'SELECT ' || quote_literal(r_tblsq.rel_group) || '::TEXT AS stat_group, '
              || quote_literal(r_tblsq.rel_schema) || '::TEXT AS stat_schema, '
              || quote_literal(r_tblsq.rel_tblseq) || '::TEXT AS stat_table, '
+             || quote_literal(r_tblsq.rel_log_schema) || '::TEXT AS stat_log_schema, '
+             || quote_literal(r_tblsq.rel_log_table) || '::TEXT AS stat_log_table, '
              || quote_literal(v_lowerBoundMark) || '::TEXT AS stat_first_mark, '
              || quote_literal(v_lowerBoundMarkTs) || '::TIMESTAMPTZ AS stat_first_mark_datetime, '
+             || v_lowerBoundGid || '::BIGINT AS stat_first_mark_gid, '
              || coalesce(quote_literal(v_upperBoundMark),'NULL') || '::TEXT AS stat_last_mark, '
              || coalesce(quote_literal(v_upperBoundMarkTs),'NULL') || '::TIMESTAMPTZ AS stat_last_mark_datetime, '
+             || coalesce(v_upperBoundGid::text,'NULL') || '::BIGINT AS stat_last_mark_gid, '
              || ' emaj_user AS stat_user,'
              || ' CASE emaj_verb WHEN ''INS'' THEN ''INSERT'''
              ||                ' WHEN ''UPD'' THEN ''UPDATE'''

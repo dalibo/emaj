@@ -90,7 +90,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -101,7 +101,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -112,7 +112,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -123,7 +123,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -134,7 +134,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -152,7 +152,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -259,7 +259,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -270,7 +270,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -300,7 +300,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -311,7 +311,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -322,7 +322,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -333,7 +333,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -344,7 +344,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -355,7 +355,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -366,7 +366,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -377,7 +377,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -388,7 +388,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -400,7 +400,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 50 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -411,7 +411,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 29 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -429,7 +429,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -440,7 +440,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -477,7 +477,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 58 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -513,7 +513,7 @@ begin;
 ERROR:  _rlbk_check: Protected marks (Protected Mark 1, Protected Mark 2) for the group "myGroup1" block the rollback to the mark "Mark11".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 33 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -543,7 +543,7 @@ begin;
 ERROR:  _rlbk_check: Protected marks (Protected Mark 1) for the group "myGroup1" block the rollback to the mark "Common Mark 1".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 33 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -561,7 +561,7 @@ begin;
 ERROR:  _rlbk_check: Protected marks (Different_Mark) for the group "myGroup1" block the rollback to the mark "Mark11".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 33 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -587,9 +587,9 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_rollback_group('myGroup2','Mark21');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 36 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -599,9 +599,9 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 36 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -715,9 +715,9 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 36 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -727,9 +727,9 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 36 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"

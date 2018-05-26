@@ -2340,25 +2340,25 @@ select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 17 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['dummyGroup'], 'dummyMark', NULL); 
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 17 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 28 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['dummyGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 28 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 select emaj.emaj_estimate_rollback_group('dummyGroup', 'dummyMark', TRUE);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.

@@ -19,7 +19,7 @@ ERROR:  _check_group_names: The group "myGroup1" is currently protected against 
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
@@ -50,7 +50,7 @@ alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 ERROR:  _rlbk_check: Protected marks (M3) for the group "myGroup1" block the rollback to the mark "M2".
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY

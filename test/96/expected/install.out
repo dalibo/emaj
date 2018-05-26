@@ -66,6 +66,40 @@ select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user 
 delete from emaj.emaj_hist;
 -- check table list
 \d emaj.*
+          Composite type "emaj._detailed_log_stat_type"
+          Column          |           Type           | Modifiers 
+--------------------------+--------------------------+-----------
+ stat_group               | text                     | 
+ stat_schema              | text                     | 
+ stat_table               | text                     | 
+ stat_log_schema          | text                     | 
+ stat_log_table           | text                     | 
+ stat_first_mark          | text                     | 
+ stat_first_mark_datetime | timestamp with time zone | 
+ stat_first_mark_gid      | bigint                   | 
+ stat_last_mark           | text                     | 
+ stat_last_mark_datetime  | timestamp with time zone | 
+ stat_last_mark_gid       | bigint                   | 
+ stat_role                | character varying(32)    | 
+ stat_verb                | character varying(6)     | 
+ stat_rows                | bigint                   | 
+
+              Composite type "emaj._log_stat_type"
+          Column          |           Type           | Modifiers 
+--------------------------+--------------------------+-----------
+ stat_group               | text                     | 
+ stat_schema              | text                     | 
+ stat_table               | text                     | 
+ stat_log_schema          | text                     | 
+ stat_log_table           | text                     | 
+ stat_first_mark          | text                     | 
+ stat_first_mark_datetime | timestamp with time zone | 
+ stat_first_mark_gid      | bigint                   | 
+ stat_last_mark           | text                     | 
+ stat_last_mark_datetime  | timestamp with time zone | 
+ stat_last_mark_gid       | bigint                   | 
+ stat_rows                | bigint                   | 
+
 Composite type "emaj._verify_groups_type"
    Column   | Type | Modifiers 
 ------------+------+-----------

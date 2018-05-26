@@ -11,6 +11,7 @@ E-Maj - Change log
   * For both emaj_snap_group() and emaj_snap_log_group() functions, avoid to 
     get output file names with unconvenient characters. Replace spaces, /, \,
     $, >, <, and * characters by _.
+  * Minor coding improvements.
 
 ###Bug fixes:###
   * The functions that estimate the rollbacks duration reported wrong results

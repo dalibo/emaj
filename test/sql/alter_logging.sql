@@ -249,10 +249,10 @@ rollback;
 select emaj.emaj_set_mark_group('myGroup2','Just after ADD_TBL');
 update myschema2.mytbl7 set col71 = 6 where col71 = 2;
 select col71, emaj_verb, emaj_tuple from emaj.myschema2_mytbl7_log order by emaj_gid;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
 select emaj.emaj_set_mark_group('myGroup2','After ADD_TBL');
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows 
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test','After ADD_TBL');
 
 --testing snap and sql generation
@@ -293,7 +293,8 @@ begin;
     from emaj.emaj_rollback_group('myGroup2','Before ADD_TBL',true);
   select * from emaj.emaj_sequence where sequ_schema = 'emaj' and sequ_name = 'myschema2_mytbl7_log_seq' order by sequ_time_id;
   select * from emaj.emaj_seq_hole where sqhl_schema = 'myschema2' and sqhl_table = 'mytbl7';
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_rows 
+    from emaj._log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
 rollback;
 
 -- estimate and then perform a logged rollback to reach a mark prior the ADD_TBL operation and check
@@ -330,10 +331,13 @@ select emaj.emaj_alter_group('myGroup2', 'Alter to re-add mytbl7');
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
 delete from myschema2.myTbl7 where col71 = 9;
 
--- get statistics
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test',NULL);
+-- get statistics, using directly internal functions as done by web clients
+select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
+       stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_rows 
+  from emaj._log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
+select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
+       stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_role, stat_verb, stat_rows 
+  from emaj._detailed_log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
 
 -- snap the logs
 \! mkdir -p /tmp/emaj_test/alter
@@ -377,10 +381,11 @@ begin;
     from emaj.emaj_log_stat_group('myGroup1','Mk2b',NULL) order by 1,2,3,4;
 rollback;
 
--- testing log stat
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup1',NULL,NULL);
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup1',NULL,NULL);
+-- get statistics, using directly internal functions as done by web clients
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_rows 
+  from emaj._log_stat_groups('{"myGroup1"}',false,NULL,NULL);
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_role, stat_verb, stat_rows 
+  from emaj._detailed_log_stat_groups('{"myGroup1"}',false,NULL,NULL);
 
 --testing snap and sql generation
 \! mkdir -p /tmp/emaj_test/alter

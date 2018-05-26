@@ -166,7 +166,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_create_group                         |    29
  emaj_delete_before_mark_group             |    15
  emaj_delete_mark_group                    |    28
- emaj_detailed_log_stat_group              |    28
+ emaj_detailed_log_stat_group              |    26
  emaj_detailed_log_stat_groups             |     4
  emaj_disable_protection_by_event_triggers |     8
  emaj_drop_group                           |    18
@@ -180,7 +180,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_consolidable_rollbacks           |    10
  emaj_get_previous_mark_group              |     8
  emaj_get_previous_mark_group              |     9
- emaj_log_stat_group                       |    25
+ emaj_log_stat_group                       |    22
  emaj_log_stat_groups                      |     4
  emaj_logged_rollback_group                |     8
  emaj_logged_rollback_group                |    16
@@ -212,7 +212,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum 
 -----
- 725
+ 720
 (1 row)
 
 -----------------------------

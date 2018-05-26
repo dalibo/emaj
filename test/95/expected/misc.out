@@ -180,22 +180,22 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
 select * from emaj.emaj_log_stat_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 17 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['unknownGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 17 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 28 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['unknownGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 28 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 -- invalid marks
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
@@ -203,52 +203,52 @@ ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 56 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 56 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],NULL,NULL);
 ERROR:  _check_marks_range: The oldest marks of each group do not represent the same point in time.
 CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],NULL,NULL);
 ERROR:  _check_marks_range: The oldest marks of each group do not represent the same point in time.
 CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 -- start mark > end mark
 -- original test (uncomment for unit test)
@@ -1702,7 +1702,7 @@ PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 17 at PERFORM
     select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
