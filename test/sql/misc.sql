@@ -851,12 +851,13 @@ rollback;
 begin;
   drop extension emaj cascade;
 rollback;
+
 -- change a table structure that leads to a table rewrite
 begin;
-  alter table myschema1.mytbl1 add column newcol int default 1;
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
 rollback;
 begin;
-  alter table emaj.myschema1_mytbl1_log add column newcol int default 1;
+  alter table emaj.myschema1_mytbl1_log alter column col13 type varchar(10);
 rollback;
 
 -- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
@@ -873,7 +874,7 @@ rollback;
 -- perform changes on application components with the related tables group stopped (the event triggers should accept)
 begin;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
-  alter table myschema1.mytbl1 add column newcol int default 1;
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
   drop table myschema1.mytbl1 cascade;
   drop sequence myschema2.mySeq1;
 rollback;

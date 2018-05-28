@@ -2094,12 +2094,12 @@ CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 20 at RAI
 rollback;
 -- change a table structure that leads to a table rewrite
 begin;
-  alter table myschema1.mytbl1 add column newcol int default 1;
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
 ERROR:  E-Maj event trigger: Attempting to change the application table "myschema1.mytbl1" structure. But the table belongs to the active tables group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._emaj_event_trigger_table_rewrite_fnct() line 20 at RAISE
 rollback;
 begin;
-  alter table emaj.myschema1_mytbl1_log add column newcol int default 1;
+  alter table emaj.myschema1_mytbl1_log alter column col13 type varchar(10);
 ERROR:  E-Maj event trigger: Attempting to change the log table "emaj.myschema1_mytbl1_log" structure. But the table belongs to the tables group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._emaj_event_trigger_table_rewrite_fnct() line 28 at RAISE
 rollback;
@@ -2121,7 +2121,7 @@ begin;
                15
 (1 row)
 
-  alter table myschema1.mytbl1 add column newcol int default 1;
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
   drop table myschema1.mytbl1 cascade;
   drop sequence myschema2.mySeq1;
 rollback;
