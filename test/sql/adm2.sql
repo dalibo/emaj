@@ -529,6 +529,14 @@ select * from emaj.emaj_rollback_group('myGroup4','Start');
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_rollback_group('myGroup4','Start',true);
 
+-- testing a row update leading to a partition change (needs pg 11)
+insert into mySchema4.myTblP values (1,'Initialy stored in partition 2'), (11,'Stored in partition 3');
+select emaj.emaj_set_mark_group('myGroup4','Before update');
+update mySchema4.myTblP set col1 = 12 where col1=1;
+select emaj.emaj_logged_rollback_group('myGroup4','Before update');
+select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartP2_log;
+select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartP3_log;
+
 select emaj.emaj_stop_group('myGroup4');
 select emaj.emaj_drop_group('myGroup4');
 

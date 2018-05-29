@@ -324,7 +324,7 @@ select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End'
                                3
 (1 row)
 
-select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq2';
+select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq2' order by sequ_schema, sequ_name, sequ_time_id;
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
  myschema2   | myseq2    |         6058 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t

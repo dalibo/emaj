@@ -117,7 +117,7 @@ select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','Logged_Rlbk_End'
 select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add myseq2';
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup2'; -- should report 1 row to consolidate
 select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
-select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq2';
+select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq2' order by sequ_schema, sequ_name, sequ_time_id;
 
 -- remove mySeq2 from the group, then re-add it
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq2';
