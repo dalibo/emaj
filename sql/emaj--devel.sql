@@ -1607,8 +1607,7 @@ $_add_tbl$
 -- ... record the new log sequence state in the emaj_sequence table for the current alter_group mark
       INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
                   sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-        SELECT * FROM emaj._get_current_sequence_state(v_logSchema, v_logSequence, v_timeId) AS
-                      t(sequ_schema TEXT, sequ_name TEXT, sequ_time_id BIGINT, sequ_last_val BIGINT, sequ_start_val BIGINT, sequ_increment BIGINT, sequ_max_val BIGINT, sequ_min_val BIGINT, sequ_cache_val BIGINT, sequ_is_cycled BOOLEAN, sequ_is_called BOOLEAN);
+        SELECT * FROM emaj._get_current_sequence_state(v_logSchema, v_logSequence, v_timeId);
 -- ... activate the log and truncate triggers
       v_fullTableName  = quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq);
       EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg';
@@ -1917,8 +1916,7 @@ $_add_seq$
 -- ... record the new sequence state in the emaj_sequence table for the current alter_group mark
       INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
                   sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-        SELECT * FROM emaj._get_current_sequence_state(r_plan.altr_schema, r_plan.altr_tblseq, v_timeId) AS
-                      t(sequ_schema TEXT, sequ_name TEXT, sequ_time_id BIGINT, sequ_last_val BIGINT, sequ_start_val BIGINT, sequ_increment BIGINT, sequ_max_val BIGINT, sequ_min_val BIGINT, sequ_cache_val BIGINT, sequ_is_cycled BOOLEAN, sequ_is_called BOOLEAN);
+        SELECT * FROM emaj._get_current_sequence_state(r_plan.altr_schema, r_plan.altr_tblseq, v_timeId);
 ---- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES ('ALTER_GROUP', 'SEQUENCE ADDED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
@@ -2059,11 +2057,12 @@ $_delete_log_tbl$
       WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq
         AND sqhl_begin_time_id >= v_beginTimeId AND sqhl_begin_time_id < v_endTimeId;
 -- and then insert the new sequence hole
-    IF emaj._pg_version_num() < 100000 THEN
+    IF emaj._pg_version_num() >= 100000 THEN
       EXECUTE 'INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size) VALUES ('
         || quote_literal(r_rel.rel_schema) || ',' || quote_literal(r_rel.rel_tblseq) || ',' || v_beginTimeId || ',' || v_endTimeId || ', ('
-        || ' SELECT CASE WHEN is_called THEN last_value + increment_by ELSE last_value END FROM '
-        || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)
+        || ' SELECT CASE WHEN rel.is_called THEN rel.last_value + increment_by ELSE rel.last_value END FROM '
+        || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence) || ' rel, pg_sequences'
+        || ' WHERE schemaname = '|| quote_literal(r_rel.rel_log_schema) || ' AND sequencename = ' || quote_literal(r_rel.rel_log_sequence)
         || ')-('
         || ' SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM '
         || ' emaj.emaj_sequence WHERE'
@@ -2073,9 +2072,8 @@ $_delete_log_tbl$
     ELSE
       EXECUTE 'INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size) VALUES ('
         || quote_literal(r_rel.rel_schema) || ',' || quote_literal(r_rel.rel_tblseq) || ',' || v_beginTimeId || ',' || v_endTimeId || ', ('
-        || ' SELECT CASE WHEN rel.is_called THEN rel.last_value + increment_by ELSE rel.last_value END FROM '
-        || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence) || ' rel, pg_sequences'
-        || ' WHERE schemaname = '|| quote_literal(r_rel.rel_log_schema) || ' AND sequencename = ' || quote_literal(r_rel.rel_log_sequence)
+        || ' SELECT CASE WHEN is_called THEN last_value + increment_by ELSE last_value END FROM '
+        || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)
         || ')-('
         || ' SELECT CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END FROM '
         || ' emaj.emaj_sequence WHERE'
@@ -2113,14 +2111,14 @@ $_rlbk_seq$
     END;
 -- Read the current sequence's characteristics
     v_fullSeqName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
-    IF emaj._pg_version_num() < 100000 THEN
-      EXECUTE 'SELECT last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM '
-               || v_fullSeqName
-              INTO STRICT curr_seq_rec;
-    ELSE
+    IF emaj._pg_version_num() >= 100000 THEN
       EXECUTE 'SELECT rel.last_value, start_value, increment_by, max_value, min_value, cache_size as cache_value, cycle as is_cycled, rel.is_called FROM '
                || v_fullSeqName || ' rel, pg_catalog.pg_sequences '
                || 'WHERE schemaname = '|| quote_literal(r_rel.rel_schema) || ' AND sequencename = ' || quote_literal(r_rel.rel_tblseq)
+              INTO STRICT curr_seq_rec;
+    ELSE
+      EXECUTE 'SELECT last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM '
+               || v_fullSeqName
               INTO STRICT curr_seq_rec;
     END IF;
 -- Build the ALTER SEQUENCE statement, depending on the differences between the present values and the related
@@ -2190,14 +2188,14 @@ $_log_stat_tbl$
         AND sequ_time_id = v_beginTimeId;
     IF v_endTimeId IS NULL THEN
 -- last time id is NULL, so examine the current state of the log table id
-      IF emaj._pg_version_num() < 100000 THEN
-        EXECUTE 'SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END FROM '
-             || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence) INTO v_endLastValue;
-      ELSE
+      IF emaj._pg_version_num() >= 100000 THEN
         EXECUTE 'SELECT CASE WHEN rel.is_called THEN rel.last_value ELSE rel.last_value - increment_by END FROM '
              || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)  || ' rel, pg_sequences'
              || ' WHERE schemaname = '|| quote_literal(r_rel.rel_log_schema) || ' AND sequencename = ' || quote_literal(r_rel.rel_log_sequence)
           INTO v_endLastValue;
+      ELSE
+        EXECUTE 'SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END FROM '
+             || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence) INTO v_endLastValue;
       END IF;
 --   and count the sum of hole from the start time to now
       SELECT coalesce(sum(sqhl_hole_size),0) INTO v_sumHole FROM emaj.emaj_seq_hole
@@ -2321,7 +2319,7 @@ $_gen_sql_tbl$
 $_gen_sql_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._get_current_sequence_state(v_schema TEXT, v_sequence TEXT, v_timeId BIGINT)
-RETURNS RECORD LANGUAGE plpgsql AS
+RETURNS emaj.emaj_sequence LANGUAGE plpgsql AS
 $_get_current_sequence_state$
 -- The function returns the current state of a single sequence
 -- Input: schema and sequence name,
@@ -2330,17 +2328,17 @@ $_get_current_sequence_state$
   DECLARE
     r_sequ                   emaj.emaj_sequence%ROWTYPE;
   BEGIN
-    IF emaj._pg_version_num() < 100000 THEN
-      EXECUTE 'SELECT '|| quote_literal(v_schema) || ', ' || quote_literal(v_sequence) || ', ' ||
-               v_timeId || ', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-              'FROM ' || quote_ident(v_schema) || '.' || quote_ident(v_sequence)
-        INTO STRICT r_sequ;
-    ELSE
+    IF emaj._pg_version_num() >= 100000 THEN
       EXECUTE 'SELECT schemaname, sequencename, ' ||
                v_timeId || ', rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called ' ||
               'FROM ' || quote_ident(v_schema) || '.' || quote_ident(v_sequence) ||
               ' rel, pg_catalog.pg_sequences ' ||
               ' WHERE schemaname = '|| quote_literal(v_schema) || ' AND sequencename = ' || quote_literal(v_sequence)
+        INTO STRICT r_sequ;
+    ELSE
+      EXECUTE 'SELECT '|| quote_literal(v_schema) || ', ' || quote_literal(v_sequence) || ', ' ||
+               v_timeId || ', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
+              'FROM ' || quote_ident(v_schema) || '.' || quote_ident(v_sequence)
         INTO STRICT r_sequ;
     END IF;
     RETURN r_sequ;
@@ -2356,37 +2354,20 @@ $_get_current_sequences_state$
 --        time_id to set the sequ_time_id (if the time id is NULL, get the greatest BIGINT value, i.e. 9223372036854775807)
 -- Output: a set of records of type emaj_sequence, with a sequ_time_id set to the supplied v_timeId value
   DECLARE
-    v_schema                 TEXT;
-    v_sequence               TEXT;
     r_tblsq                  RECORD;
     r_sequ                   emaj.emaj_sequence%ROWTYPE;
   BEGIN
+-- TODO: when postgres version 9.2 will not be supported anymore, replace the function by a single set oriented statement with a LATERAL clause
+-- such as: SELECT t.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_log_schema,rel_log_sequence,v_timeId) AS t
+--            WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
     FOR r_tblsq IN
-        SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_sequence FROM emaj.emaj_relation
+        SELECT CASE WHEN v_relKind = 'r' THEN rel_log_schema ELSE rel_schema END AS schema,
+               CASE WHEN v_relKind = 'r' THEN rel_log_sequence ELSE rel_tblseq END AS sequence
+          FROM emaj.emaj_relation
           WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = v_relKind
           ORDER BY rel_priority, rel_schema, rel_tblseq
       LOOP
-      IF v_relKind = 'r' THEN
-        v_schema = r_tblsq.rel_log_schema;
-        v_sequence = r_tblsq.rel_log_sequence;
-      ELSE
-        v_schema = r_tblsq.rel_schema;
-        v_sequence = r_tblsq.rel_tblseq;
-      END IF;
-----TODO: call the _get_current_sequence_state() function instead of the 13 next lines
-      IF emaj._pg_version_num() < 100000 THEN
-        EXECUTE 'SELECT '|| quote_literal(v_schema) || ', ' || quote_literal(v_sequence) || ', ' ||
-                 v_timeId || ', last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called ' ||
-                'FROM ' || quote_ident(v_schema) || '.' || quote_ident(v_sequence)
-          INTO STRICT r_sequ;
-      ELSE
-        EXECUTE 'SELECT schemaname, sequencename, ' ||
-                 v_timeId || ', rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called ' ||
-                'FROM ' || quote_ident(v_schema) || '.' || quote_ident(v_sequence) ||
-                ' rel, pg_catalog.pg_sequences ' ||
-                ' WHERE schemaname = '|| quote_literal(v_schema) || ' AND sequencename = ' || quote_literal(v_sequence)
-          INTO STRICT r_sequ;
-      END IF;
+      SELECT * FROM emaj._get_current_sequence_state(r_tblsq.schema, r_tblsq.sequence, v_timeId) INTO r_sequ;
       RETURN NEXT r_sequ;
     END LOOP;
     RETURN;
@@ -6503,15 +6484,15 @@ $emaj_snap_group$
                   quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
         WHEN 'S' THEN
 -- if it is a sequence, the statement has no order by
-          IF emaj._pg_version_num() < 100000 THEN
-            v_stmt= 'COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, ' ||
-                    'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName ||
-                    ') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
-          ELSE
+          IF emaj._pg_version_num() >= 100000 THEN
             v_stmt= 'COPY (SELECT sequencename, rel.last_value, start_value, increment_by, max_value, ' ||
                     'min_value, cache_size, cycle, rel.is_called ' ||
                     'FROM ' || v_fullTableName || ' rel, pg_sequences ' ||
                     'WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_tblseq) ||
+                    ') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+          ELSE
+            v_stmt= 'COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, ' ||
+                    'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName ||
                     ') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
           END IF;
       END CASE;
@@ -6875,15 +6856,16 @@ $_gen_sql_groups$
         v_fullSeqName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
         IF v_lastMarkTimeId IS NULL AND upper_inf(r_tblsq.rel_time_range) THEN
 -- no supplied last mark and the sequence currently belongs to its group, so get current sequence characteritics
-          IF emaj._pg_version_num() < 100000 THEN
-            EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
-                    || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
-                   || 'FROM ' || v_fullSeqName INTO v_rqSeq;
-          ELSE
+          IF emaj._pg_version_num() >= 100000 THEN
             EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
                     || ''' || '' RESTART '' || CASE WHEN rel.is_called THEN rel.last_value + increment_by ELSE rel.last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_size || CASE WHEN NOT cycle THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
-                   || 'FROM ' || v_fullSeqName  || ' rel, pg_catalog.pg_sequences ' ||
-                  ' WHERE schemaname = ' || quote_literal(r_tblsq.rel_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_tblseq) INTO v_rqSeq;
+                    || 'FROM ' || v_fullSeqName  || ' rel, pg_catalog.pg_sequences ' ||
+                    ' WHERE schemaname = ' || quote_literal(r_tblsq.rel_schema) || ' AND sequencename = ' || quote_literal(r_tblsq.rel_tblseq)
+                    INTO v_rqSeq;
+          ELSE
+            EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
+                    || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' MINVALUE '' || min_value || '' CACHE '' || cache_value || CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
+                    || 'FROM ' || v_fullSeqName INTO v_rqSeq;
           END IF;
         ELSE
 -- a last mark is supplied, or the sequence does not belong to its groupe anymore, so get sequence characteristics from the emaj_sequence table
