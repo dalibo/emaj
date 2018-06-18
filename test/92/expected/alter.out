@@ -381,9 +381,9 @@ begin;
 (1 row)
 
   select emaj.emaj_alter_group('myGroup1');
-ERROR:  _alter_plan: The groups "myGroup1" cannot be altered because they are in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._alter_plan(v_groupNames, v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 40 at PERFORM
+ERROR:  alter_exec: Cannot repair the table myschema1.mytbl1. Its group myGroup1 is in LOGGING state.
+CONTEXT:  SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 rollback;
 -- alter a group with a table now already belonging to another group
@@ -585,7 +585,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -595,7 +595,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -605,7 +605,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -615,7 +615,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -625,7 +625,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -635,7 +635,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -645,7 +645,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -655,7 +655,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -665,7 +665,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -873,7 +873,7 @@ NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -881,7 +881,7 @@ NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl1" does not exist, ski
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -889,7 +889,7 @@ NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, s
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -904,7 +904,7 @@ NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -912,7 +912,7 @@ NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl1" does not exist, ski
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -920,7 +920,7 @@ NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, s
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -935,7 +935,7 @@ NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -943,7 +943,7 @@ NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl1" does not exist, ski
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -951,7 +951,7 @@ NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, s
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -974,7 +974,7 @@ NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -982,7 +982,7 @@ NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl1" does not exist, ski
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -990,7 +990,7 @@ NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, s
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1021,7 +1021,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1031,7 +1031,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1061,7 +1061,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1071,7 +1071,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1103,7 +1103,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1113,7 +1113,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1136,7 +1136,7 @@ CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 17 at EXECUTE statement
 SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
               WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._alter_exec(bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 48 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1144,7 +1144,7 @@ NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1152,7 +1152,7 @@ NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl1" does not exist, ski
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1160,7 +1160,7 @@ NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, s
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1177,7 +1177,7 @@ CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 17 at EXECUTE statement
 SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
               WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._alter_exec(bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 48 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1186,7 +1186,7 @@ CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj.myschema1_mytbl1_log_fnct(
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 22 at EXECUTE statement
 SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
               WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._alter_exec(bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 48 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1194,7 +1194,7 @@ NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1202,7 +1202,7 @@ NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl1" does not exist, ski
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1210,7 +1210,7 @@ NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, s
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1226,7 +1226,7 @@ CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log CASCADE"
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 28 at EXECUTE statement
 SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
               WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._alter_exec(bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 48 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1234,7 +1234,7 @@ NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1242,7 +1242,7 @@ NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl1" does not exist, ski
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1250,7 +1250,7 @@ NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, s
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._alter_exec(bigint) line 50 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 51 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1323,9 +1323,9 @@ PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 (1 row)
 
   select emaj.emaj_alter_groups('{"myGroup2","myGroup1","myGroup4"}');
-ERROR:  _alter_plan: The groups "myGroup1, myGroup2" cannot be altered because they are in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._alter_plan(v_groupNames, v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 40 at PERFORM
+ERROR:  alter_exec: Cannot repair the table myschema1.mytbl1. Its group myGroup1 is in LOGGING state.
+CONTEXT:  SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 rollback;
 -- alter groups with a table now already belonging to another group
@@ -1428,7 +1428,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1438,7 +1438,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1448,7 +1448,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1458,7 +1458,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1468,7 +1468,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1478,7 +1478,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1488,7 +1488,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1498,7 +1498,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1508,7 +1508,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1748,7 +1748,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1758,7 +1758,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 120 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -1768,7 +1768,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 127 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 121 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN

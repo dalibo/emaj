@@ -521,6 +521,71 @@ begin;
 rollback;
 
 -----------------------------
+-- change the group ownership of a table and a sequence (and some other attributes)
+-----------------------------
+
+update emaj.emaj_group_def set grpdef_group = 'myGroup1'
+  where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
+--TODO: remove the comment once the existing bug fixed (log function not updated when log table/sequence changes)
+update emaj.emaj_group_def set grpdef_group = 'myGroup1', --grpdef_log_schema_suffix = NULL, grpdef_emaj_names_prefix = 's2t3',
+                               grpdef_log_dat_tsp = 'tsplog1', grpdef_log_idx_tsp = 'tsplog1'
+  where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+
+-- case when the source group is idle and the destination group is logging
+begin;
+  select emaj.emaj_stop_group('myGroup2');
+  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'move to myGroup1 while logging');
+  select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan) order by 1,2,3,4,5;
+  select hist_function, hist_event, hist_object, hist_wording from emaj.emaj_hist 
+    where hist_function = 'ALTER_GROUPS' order by hist_id desc limit 4;
+rollback;
+
+-- case when both groups are logging
+-- should not work, because myGroup2 is missing in the groups list and both groups are in LOGGING state
+select emaj.emaj_alter_group('myGroup1', 'move to myGroup1');
+
+-- should be OK
+-- generates updates before the group change
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','before move');
+update myschema2."myTbl3" set col32 = col32 + '1 day' where col31 >= 8;
+
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'move to myGroup1');
+select * from emaj.emaj_relation where rel_schema = 'myschema2' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'myTbl3_col31_seq') order by 1,2,3,4;
+
+-- perform various tasks on the groups
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','after move');
+update myschema2."myTbl3" set col33 = 12.0 where col31 >= 9;
+select  stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_groups('{"myGroup1","myGroup2"}', 'before move', NULL)
+  where stat_schema = 'myschema2' and stat_table = 'myTbl3';
+select  stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_verb, stat_role, stat_rows
+  from emaj.emaj_detailed_log_stat_groups('{"myGroup1","myGroup2"}', 'before move', NULL) where stat_schema = 'myschema2' and stat_table = 'myTbl3';
+
+-- rollback to a mark set after the group change
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','after move');
+
+-- rollback to a mark set before the group change
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','before move',true);
+
+-- generate a sql script crossing the move
+\! mkdir -p /tmp/emaj_test/alter
+  select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
+    array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
+  select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
+    array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
+\! rm -R /tmp/emaj_test
+
+-- revert the emaj_group_def change and apply with a destination group in idle state
+update emaj.emaj_group_def set grpdef_group = 'myGroup2'
+  where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
+update emaj.emaj_group_def set grpdef_group = 'myGroup2', grpdef_log_schema_suffix = 'C', grpdef_emaj_names_prefix = NULL,
+                               grpdef_log_dat_tsp = NULL, grpdef_log_idx_tsp = NULL
+  where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+select emaj.emaj_stop_group('myGroup2');
+select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'back to idle myGroup2');
+
+-----------------------------
 -- test end: check
 -----------------------------
 

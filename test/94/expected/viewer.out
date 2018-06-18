@@ -222,7 +222,7 @@ select count(*) from emaj.emaj_visible_param;
 select count(*) from emaj.emaj_hist;
  count 
 -------
-    20
+    18
 (1 row)
 
 select count(*) from emaj.emaj_group_def;
@@ -270,25 +270,25 @@ select count(*) from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    36
+    38
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    36
+    38
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   116
+   123
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
  count 
 -------
-     0
+     7
 (1 row)
 
 select count(*) from emaj.mySchema1_myTbl1_log;

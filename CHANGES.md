@@ -4,6 +4,8 @@ E-Maj - Change log
 ------
 ###Enhancements:###
   * A table or a sequence can be added to a tables group in LOGGING state.
+  * A table or a sequence can be moved from one group to another, whatever
+    the state of these groups.
   * New emaj_log_stat_groups() and emaj_detailed_log_stat_groups() functions 
     produce log statistics for several tables groups.
   * Add checks on primary key structures to be sure they are not altered

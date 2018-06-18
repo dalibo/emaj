@@ -63,6 +63,34 @@ SELECT emaj._disable_event_triggers();
 ----------------------------------------------
 
 --
+-- process the _alter_step_enum type
+--
+-- temporariy change the altr_step column of the emaj_alter_plan table into text, so that the enum type to upgrade be not used anymore
+ALTER TABLE emaj.emaj_alter_plan ALTER COLUMN altr_step TYPE text;
+
+-- change the _alter_step_enum type
+DROP TYPE emaj._alter_step_enum;
+CREATE TYPE emaj._alter_step_enum AS ENUM (
+  'REMOVE_TBL',              -- remove a table from a group
+  'REMOVE_SEQ',              -- remove a sequence from a group
+  'REPAIR_TBL',              -- repair a damaged table
+  'REPAIR_SEQ',              -- repair a damaged sequence
+  'RESET_GROUP',             -- reset an idle group
+  'CHANGE_TBL_LOG_SCHEMA',   -- change the log schema for a table
+  'CHANGE_TBL_NAMES_PREFIX', -- change the E-Maj names prefix for a table
+  'CHANGE_TBL_LOG_DATA_TSP', -- change the log data tablespace for a table
+  'CHANGE_TBL_LOG_INDEX_TSP',-- change the log index tablespace for a table
+  'MOVE_TBL',                -- move a table from one group to another
+  'MOVE_SEQ',                -- move a sequence from one group to another
+  'CHANGE_REL_PRIORITY',     -- change the priority level for a table or a sequence
+  'ADD_TBL',                 -- add a table to a group
+  'ADD_SEQ'                  -- add a sequence to a group
+  );
+
+-- reset the altr_step column of the emaj_alter_plan table into _alter_step_enum type
+ALTER TABLE emaj.emaj_alter_plan ALTER COLUMN altr_step TYPE emaj._alter_step_enum USING altr_step::emaj._alter_step_enum;
+
+--
 -- process the emaj_relation table
 --
 -- a new column is just added to the table
@@ -410,7 +438,7 @@ $_add_tbl$
 -- ... activate the log and truncate triggers
       v_fullTableName  = quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq);
       EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg';
----- ... and insert an entry into the emaj_hist table
+-- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES ('ALTER_GROUP', 'TABLE ADDED', v_fullTableName, 'To logging group ' || r_plan.altr_group);
     END IF;
@@ -490,6 +518,39 @@ $_remove_tbl$
   END;
 $_remove_tbl$;
 
+CREATE OR REPLACE FUNCTION emaj._move_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_move_tbl$
+-- The function change the group ownership of a table. It is called during an alter group operation.
+-- Required inputs: row from emaj_alter_plan corresponding to the appplication table to proccess, time stamp id of the alter group operation
+  BEGIN
+    IF NOT r_plan.altr_group_is_logging AND NOT r_plan.altr_new_group_is_logging THEN
+-- no group is logging, so just adapt the last emaj_relation row related to the table
+      UPDATE emaj.emaj_relation
+        SET rel_group = r_plan.altr_new_group, rel_time_range = int8range(v_timeId, NULL, '[)')
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+    ELSE
+-- register the end of the previous relation time frame and create a new relation time frame with the new group
+      UPDATE emaj.emaj_relation
+        SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)')
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+      INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_priority, rel_log_schema,
+                                      rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
+                                      rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions,rel_log_seq_last_value)
+        SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), r_plan.altr_new_group, rel_kind, rel_priority, rel_log_schema,
+               rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
+               rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions,rel_log_seq_last_value
+          FROM emaj.emaj_relation
+          WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper(rel_time_range) = v_timeId;
+-- ... and insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('ALTER_GROUPS', 'TABLE MOVED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
+                'From group ' || r_plan.altr_group || ' to group ' || r_plan.altr_new_group);
+    END IF;
+    RETURN;
+  END;
+$_move_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_tbl$
@@ -540,11 +601,11 @@ $_add_seq$
   DECLARE
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
   BEGIN
--- get the table description from emaj_group_def
+-- get the sequence description from emaj_group_def
     SELECT * INTO r_grpdef
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
--- create the table
+-- create the sequence
     PERFORM emaj._create_seq(r_grpdef, v_timeId);
 -- if the group is in logging state, perform additional tasks
     IF r_plan.altr_group_is_logging THEN
@@ -552,7 +613,7 @@ $_add_seq$
       INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
                   sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
         SELECT * FROM emaj._get_current_sequence_state(r_plan.altr_schema, r_plan.altr_tblseq, v_timeId);
----- ... and insert an entry into the emaj_hist table
+-- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES ('ALTER_GROUP', 'SEQUENCE ADDED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
                 'To logging group ' || r_plan.altr_group);
@@ -560,6 +621,35 @@ $_add_seq$
     RETURN;
   END;
 $_add_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._move_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_move_seq$
+-- The function change the group ownership of a sequence. It is called during an alter group operation.
+-- Required inputs: row from emaj_alter_plan corresponding to the appplication sequence to proccess, time stamp id of the alter group operation
+  BEGIN
+    IF NOT r_plan.altr_group_is_logging AND NOT r_plan.altr_new_group_is_logging THEN
+-- no group is logging, so just adapt the last emaj_relation row related to the sequence
+      UPDATE emaj.emaj_relation
+        SET rel_group = r_plan.altr_new_group, rel_time_range = int8range(v_timeId, NULL, '[)')
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+    ELSE
+-- register the end of the previous relation time frame and create a new relation time frame with the new group
+      UPDATE emaj.emaj_relation
+        SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)')
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+      INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority, rel_kind)
+        SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), r_plan.altr_new_group, rel_priority, rel_kind
+          FROM emaj.emaj_relation
+          WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper(rel_time_range) = v_timeId;
+-- ... and insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('ALTER_GROUPS', 'SEQUENCE MOVED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
+                'From group ' || r_plan.altr_group || ' to group ' || r_plan.altr_new_group);
+    END IF;
+    RETURN;
+  END;
+$_move_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_seq(r_rel emaj.emaj_relation)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -1089,8 +1179,8 @@ $_alter_plan$
 -- Input: group names array, timestamp id of the operation (it will be used to identify rows in the emaj_alter_plan table)
   DECLARE
     v_schemaPrefix           TEXT = 'emaj';
-    v_groups                 TEXT;
   BEGIN
+-- the plan is built using the same steps order than the coming execution
 -- determine the relations that do not belong to the groups anymore
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
       SELECT v_timeId, CAST(CASE WHEN rel_kind = 'r' THEN 'REMOVE_TBL' ELSE 'REMOVE_SEQ' END AS emaj._alter_step_enum),
@@ -1102,26 +1192,30 @@ $_alter_plan$
                 WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
                   AND grpdef_group = ANY (v_groupNames));
 -- determine the tables that need to be "repaired" (damaged or out of sync E-Maj components)
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
       SELECT v_timeId, CAST(CASE WHEN rel_kind = 'r' THEN 'REPAIR_TBL' ELSE 'REPAIR_SEQ' END AS emaj._alter_step_enum),
-             rel_schema, rel_tblseq, rel_group, rel_priority
+             rel_schema, rel_tblseq, rel_group, grpdef_priority,
+             CASE WHEN rel_group <> grpdef_group THEN grpdef_group ELSE NULL END
         FROM (                                   -- all damaged or out of sync tables
           SELECT DISTINCT ver_schema, ver_tblseq FROM emaj._verify_groups(v_groupNames, FALSE)
-             ) AS t, emaj.emaj_relation
+             ) AS t, emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = ver_schema AND rel_tblseq = ver_tblseq AND upper_inf(rel_time_range)
+          AND rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
           AND rel_group = ANY (v_groupNames)
---   exclude tables that will have been removed in a previous step
+          AND grpdef_group = ANY (v_groupNames)
+--   exclude relations that will have been removed in a previous step
           AND (rel_schema, rel_tblseq) NOT IN (
             SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ'));
 -- determine the groups that will be reset (i.e. those in IDLE state)
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
-      SELECT v_timeId, 'RESET_GROUP', '', '', group_name, NULL
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group)
+      SELECT v_timeId, 'RESET_GROUP', '', '', group_name
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groupNames)
           AND NOT group_is_logging;
 -- determine the tables whose log schema in emaj_group_def has changed
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
-      SELECT v_timeId, 'CHANGE_TBL_LOG_SCHEMA', rel_schema, rel_tblseq, rel_group, grpdef_priority
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
+      SELECT v_timeId, 'CHANGE_TBL_LOG_SCHEMA', rel_schema, rel_tblseq, rel_group, grpdef_priority,
+             CASE WHEN rel_group <> grpdef_group THEN grpdef_group ELSE NULL END
         FROM emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
           AND rel_group = ANY (v_groupNames)
@@ -1132,8 +1226,9 @@ $_alter_plan$
           AND (rel_schema, rel_tblseq) NOT IN (
             SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
 -- determine the tables whose emaj names prefix in emaj_group_def has changed
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
-      SELECT v_timeId, 'CHANGE_TBL_NAMES_PREFIX', rel_schema, rel_tblseq, rel_group, grpdef_priority
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
+      SELECT v_timeId, 'CHANGE_TBL_NAMES_PREFIX', rel_schema, rel_tblseq, rel_group, grpdef_priority,
+             CASE WHEN rel_group <> grpdef_group THEN grpdef_group ELSE NULL END
         FROM emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
           AND rel_group = ANY (v_groupNames)
@@ -1144,8 +1239,9 @@ $_alter_plan$
           AND (rel_schema, rel_tblseq) NOT IN (
             SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
 -- determine the tables whose log data tablespace in emaj_group_def has changed
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
-      SELECT v_timeId, 'CHANGE_TBL_LOG_DATA_TSP', rel_schema, rel_tblseq, rel_group, grpdef_priority
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
+      SELECT v_timeId, 'CHANGE_TBL_LOG_DATA_TSP', rel_schema, rel_tblseq, rel_group, grpdef_priority,
+             CASE WHEN rel_group <> grpdef_group THEN grpdef_group ELSE NULL END
         FROM emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
           AND rel_group = ANY (v_groupNames)
@@ -1156,8 +1252,9 @@ $_alter_plan$
           AND (rel_schema, rel_tblseq) NOT IN (
             SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
 -- determine the tables whose log data tablespace in emaj_group_def has changed
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
-      SELECT v_timeId, 'CHANGE_TBL_LOG_INDEX_TSP', rel_schema, rel_tblseq, rel_group, grpdef_priority
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
+      SELECT v_timeId, 'CHANGE_TBL_LOG_INDEX_TSP', rel_schema, rel_tblseq, rel_group, grpdef_priority,
+             CASE WHEN rel_group <> grpdef_group THEN grpdef_group ELSE NULL END
         FROM emaj.emaj_relation, emaj.emaj_group_def
         WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
           AND rel_group = ANY (v_groupNames)
@@ -1167,9 +1264,10 @@ $_alter_plan$
 --   exclude tables that will have been repaired in a previous step
           AND (rel_schema, rel_tblseq) NOT IN (
             SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
--- determine the relations that change their group ownership
+-- determine the tables or sequences that change their group ownership
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
-      SELECT v_timeId, 'ASSIGN_REL', rel_schema, rel_tblseq, rel_group, grpdef_priority, grpdef_group
+      SELECT v_timeId, CAST(CASE WHEN rel_kind = 'r' THEN 'MOVE_TBL' ELSE 'MOVE_SEQ' END AS emaj._alter_step_enum),
+             rel_schema, rel_tblseq, rel_group, grpdef_priority, grpdef_group
       FROM emaj.emaj_relation, emaj.emaj_group_def
       WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
         AND rel_group = ANY (v_groupNames)
@@ -1206,15 +1304,6 @@ $_alter_plan$
       FROM emaj.emaj_group
       WHERE altr_new_group = group_name
         AND altr_time_id = v_timeId AND altr_new_group IS NOT NULL;
--- check groups LOGGING state, depending on the steps to perform
-    SELECT string_agg(DISTINCT altr_group, ', ' ORDER BY altr_group) INTO v_groups
-      FROM emaj.emaj_alter_plan
-      WHERE altr_time_id = v_timeId
-        AND altr_step IN ('RESET_GROUP', 'REPAIR_TBL', 'ASSIGN_REL')
-        AND altr_group_is_logging;
-    IF v_groups IS NOT NULL THEN
-      RAISE EXCEPTION '_alter_plan: The groups "%" cannot be altered because they are in LOGGING state.', v_groups;
-    END IF;
 -- and return
     RETURN;
   END;
@@ -1266,7 +1355,8 @@ $_alter_exec$
 -- get the table description from emaj_group_def
             SELECT * INTO r_grpdef
               FROM emaj.emaj_group_def
-             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
+               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- remove the table from its group
             PERFORM emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
               WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
@@ -1281,7 +1371,8 @@ $_alter_exec$
 -- get the sequence description from emaj_group_def
             SELECT * INTO r_grpdef
               FROM emaj.emaj_group_def
-             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
+               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- remove the sequence from its group
             PERFORM emaj._drop_seq(emaj.emaj_relation.*) FROM emaj.emaj_relation
               WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
@@ -1295,7 +1386,8 @@ $_alter_exec$
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- get the table description from emaj_group_def
           SELECT grpdef_log_schema_suffix INTO v_logSchemaSuffix FROM emaj.emaj_group_def
-            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+            WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
+              AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
           PERFORM emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix);
 --
@@ -1305,7 +1397,8 @@ $_alter_exec$
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- get the table description from emaj_group_def
           SELECT grpdef_emaj_names_prefix INTO v_emajNamesPrefix FROM emaj.emaj_group_def
-            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+            WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
+              AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
           PERFORM emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix);
 --
@@ -1315,7 +1408,8 @@ $_alter_exec$
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- get the table description from emaj_group_def
           SELECT grpdef_log_dat_tsp INTO v_logDatTsp FROM emaj.emaj_group_def
-            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+            WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
+              AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
           PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp);
 --
@@ -1325,15 +1419,18 @@ $_alter_exec$
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- get the table description from emaj_group_def
           SELECT grpdef_log_idx_tsp INTO v_logIdxTsp FROM emaj.emaj_group_def
-            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+            WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
+              AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
           PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp);
 --
-        WHEN 'ASSIGN_REL' THEN
--- currently, this can only be done when the relation belongs to an IDLE group
--- update the emaj_relation table to report the group ownership change
-          UPDATE emaj.emaj_relation SET rel_group = r_plan.altr_new_group
-            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq;
+        WHEN 'MOVE_TBL' THEN
+-- move a table from one group to another group
+          PERFORM emaj._move_tbl(r_plan, v_timeId);
+--
+        WHEN 'MOVE_SEQ' THEN
+-- move a sequence from one group to another group
+          PERFORM emaj._move_seq(r_plan, v_timeId);
 --
         WHEN 'CHANGE_REL_PRIORITY' THEN
 -- update the emaj_relation table to report the priority change
@@ -1529,9 +1626,12 @@ $_delete_before_mark_group$
       WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_mark;
 -- drop obsolete old log tables (whose end time stamp is older than the new first mark time stamp)
     FOR r_rel IN
-        SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
-          WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper(rel_time_range) <= v_markTimeId
-          ORDER BY rel_priority, rel_schema, rel_tblseq
+          SELECT DISTINCT rel_log_schema, rel_log_table FROM emaj.emaj_relation
+            WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper(rel_time_range) <= v_markTimeId
+        EXCEPT
+          SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
+            WHERE rel_kind = 'r' AND upper(rel_time_range) > v_markTimeId
+          ORDER BY 1,2
         LOOP
       EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' CASCADE';
     END LOOP;
@@ -2596,16 +2696,22 @@ $_rlbk_end$
                (CASE altr_step
                   WHEN 'ADD_SEQ' THEN
                     'The sequence ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
-                    ' has only been rolled back up to its latest group attachment state (' || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
+                    ' has only been rolled back to its latest group attachment state (' || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
                   WHEN 'ADD_TBL' THEN
                     'The table ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
-                    ' has only been rolled back up to its latest group attachment (' || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
+                    ' has only been rolled back to its latest group attachment (' || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
                   WHEN 'REMOVE_SEQ' THEN
                     'The sequence ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
                     ' has been left unchanged (not in group anymore since ' || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
                   WHEN 'REMOVE_TBL' THEN
                     'The table ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
                     ' has been left unchanged (not in group anymore since ' || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
+                  WHEN 'MOVE_SEQ' THEN
+                    'The sequence ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
+                    ' has only been rolled back to its latest group attachment state (' || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
+                  WHEN 'MOVE_TBL' THEN
+                    'The table ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
+                    ' has only been rolled back to its latest group attachment (' || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
                   END)::TEXT AS message
             FROM (
 -- suppress duplicate ADD_TBL / REMOVE_TBL or ADD_SEQ / REMOVE_SEQ for same table or sequence, by keeping the most recent step
@@ -2614,7 +2720,7 @@ $_rlbk_end$
                        rank() OVER (PARTITION BY altr_schema, altr_tblseq ORDER BY altr_time_id DESC) AS altr_rank
                 FROM emaj.emaj_alter_plan
                 WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> '' AND altr_rlbk_id IS NULL AND
-                      altr_step IN ('ADD_TBL','REMOVE_TBL','ADD_SEQ','REMOVE_SEQ')
+                      altr_step IN ('ADD_TBL','ADD_SEQ','REMOVE_TBL','REMOVE_SEQ','MOVE_TBL','MOVE_SEQ')
                 ) AS t1
               WHERE altr_rank = 1
             ) AS t2, emaj.emaj_time_stamp
@@ -2641,7 +2747,7 @@ $_rlbk_end$
                        rank() OVER (PARTITION BY altr_schema, altr_tblseq ORDER BY altr_time_id DESC) AS altr_rank
                 FROM emaj.emaj_alter_plan
                 WHERE altr_time_id > v_markTimeId AND altr_group = ANY (v_groupNames) AND altr_tblseq <> '' AND altr_rlbk_id IS NULL AND
-                      altr_step NOT IN ('ADD_TBL','REMOVE_TBL','ADD_SEQ','REMOVE_SEQ')
+                      altr_step NOT IN ('ADD_TBL','ADD_SEQ','REMOVE_TBL','REMOVE_SEQ','MOVE_TBL','MOVE_SEQ')
                 ) AS t1
               WHERE altr_rank = 1
             ) AS t2
@@ -2820,6 +2926,64 @@ $emaj_get_consolidable_rollbacks$
 $emaj_get_consolidable_rollbacks$;
 COMMENT ON FUNCTION emaj.emaj_get_consolidable_rollbacks() IS
 $$Returns the list of logged rollback operations that can be consolidated.$$;
+
+CREATE OR REPLACE FUNCTION emaj._reset_groups(v_groupNames TEXT[])
+RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+$_reset_groups$
+-- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences images
+-- It is called by emaj_reset_group(), emaj_start_group() and emaj_alter_group() functions
+-- Input: group names array
+-- Output: number of processed tables and sequences
+-- There is no check of the groups state (this is done by callers)
+-- The function is defined as SECURITY DEFINER so that an emaj_adm role can truncate log tables
+  DECLARE
+    v_eventTriggers          TEXT[];
+    r_rel                    RECORD;
+  BEGIN
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- delete all marks for the groups from the emaj_mark table
+    DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames);
+-- delete emaj_sequence rows related to the tables of the groups
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence
+        AND rel_group = ANY (v_groupNames) AND rel_kind = 'r';
+-- delete all sequence holes for the tables of the groups
+    DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
+      WHERE rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
+        AND rel_group = ANY (v_groupNames) AND rel_kind = 'r';
+-- delete emaj_sequence rows related to the sequences of the groups
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE rel_schema = sequ_schema AND rel_tblseq = sequ_name AND
+            rel_group = ANY (v_groupNames) AND rel_kind = 'S';
+-- drop obsolete emaj objects for removed tables
+    FOR r_rel IN
+          SELECT DISTINCT rel_log_schema, rel_log_table FROM emaj.emaj_relation
+            WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' AND NOT upper_inf(rel_time_range)
+        EXCEPT
+          SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
+            WHERE rel_kind = 'r' AND upper_inf(rel_time_range)
+          ORDER BY 1,2
+        LOOP
+      EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' CASCADE';
+    END LOOP;
+-- deletes old versions of emaj_relation rows (those with a not infinity upper bound)
+    DELETE FROM emaj.emaj_relation
+      WHERE rel_group = ANY (v_groupNames) AND NOT upper_inf(rel_time_range);
+-- truncate remaining log tables for application tables
+    FOR r_rel IN
+        SELECT rel_log_schema, rel_log_table, rel_log_sequence FROM emaj.emaj_relation
+          WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+--   truncate the log table
+      EXECUTE 'TRUNCATE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
+    END LOOP;
+-- enable previously disabled event triggers
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+    RETURN sum(group_nb_table)+sum(group_nb_sequence) FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames);
+  END;
+$_reset_groups$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT)
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
@@ -3024,6 +3188,7 @@ $_detailed_log_stat_groups$
           FROM emaj.emaj_time_stamp WHERE time_id = v_lastMarkTimeId;
       END IF;
 -- for each table currently belonging to the group
+-- count the number of operations per type (INSERT, UPDATE and DELETE) and role
       FOR r_tblsq IN
           SELECT rel_priority, rel_schema, rel_tblseq, rel_group, rel_time_range, rel_log_schema, rel_log_table
             FROM emaj.emaj_relation
@@ -3032,7 +3197,6 @@ $_detailed_log_stat_groups$
               AND (v_lastMarkTimeId IS NULL OR lower(rel_time_range) < v_lastMarkTimeId)
             ORDER BY rel_schema, rel_tblseq, rel_time_range
           LOOP
--- count the number of operations per type (INSERT, UPDATE and DELETE) and role
 -- compute the lower bound for this table
         IF v_firstMarkTimeId >= lower(r_tblsq.rel_time_range) THEN
 -- usual case: the table belonged to the group at statistics start mark
@@ -3041,9 +3205,9 @@ $_detailed_log_stat_groups$
           v_lowerBoundGid = v_firstEmajGid;
         ELSE
 -- special case: the table has been added to the group after the statistics start mark
-          SELECT coalesce(mark_name, '[deleted mark]') INTO v_lowerBoundMark
+          SELECT mark_name INTO v_lowerBoundMark
             FROM emaj.emaj_mark
-            WHERE mark_time_id = lower(r_tblsq.rel_time_range) AND mark_group = ANY(v_groupNames);
+            WHERE mark_time_id = lower(r_tblsq.rel_time_range) AND mark_group = r_tblsq.rel_group;
           IF v_lowerBoundMark IS NULL THEN
 -- the mark set at alter_group time may have been deleted
             v_lowerBoundMark = '[deleted mark]';
@@ -3060,9 +3224,13 @@ $_detailed_log_stat_groups$
           v_upperBoundGid = NULL;
         ELSIF NOT upper_inf(r_tblsq.rel_time_range) AND (v_lastMarkTimeId IS NULL OR upper(r_tblsq.rel_time_range) < v_lastMarkTimeId) THEN
 -- special case: the table has been removed from its group before the statistics end mark
-          SELECT mark_name INTO STRICT v_upperBoundMark
+          SELECT mark_name INTO v_upperBoundMark
             FROM emaj.emaj_mark
-            WHERE mark_time_id = upper(r_tblsq.rel_time_range) AND mark_group = ANY(v_groupNames);
+            WHERE mark_time_id = upper(r_tblsq.rel_time_range) AND mark_group = r_tblsq.rel_group;
+          IF v_upperBoundMark IS NULL THEN
+-- the mark set at alter_group time may have been deleted
+            v_upperBoundMark = '[deleted mark]';
+          END IF;
           SELECT time_clock_timestamp, time_last_emaj_gid INTO v_upperBoundMarkTs, v_upperBoundGid
             FROM emaj.emaj_time_stamp
             WHERE time_id = upper(r_tblsq.rel_time_range);

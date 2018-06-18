@@ -174,3 +174,7 @@ The SQL script generation for the marks interval m1 to m4:
 
 .. image:: images/logging_group_gen_sql.png
    :align: center
+
+If the structure of an application table has been inadvertently changed while it belonged to a tables group in *LOGGING* state, the mark set and rollback operations will be blocked by the E-Maj internal checks. To avoid stopping, altering and then restarting the tables group, it is possible to only remove the concerned table from its group and then to re-add it.
+
+When a table changes its affected group, the impact on the ability to generate a SQL script or to rollback the source and destination tables groups is similar to removing the table from its source group and then adding the table to the destination group.
