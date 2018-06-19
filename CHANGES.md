@@ -3,11 +3,21 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * A table or a sequence can be added to a tables group in LOGGING state.
+  * A table or a sequence can be moved from one group to another, whatever
+    the state of these groups.
   * New emaj_log_stat_groups() and emaj_detailed_log_stat_groups() functions 
     produce log statistics for several tables groups.
+  * Add checks on primary key structures to be sure they are not altered
+    since their related group creation time.
+  * For both emaj_snap_group() and emaj_snap_log_group() functions, avoid to 
+    get output file names with unconvenient characters. Replace spaces, /, \,
+    $, >, <, and * characters by _.
+  * Minor coding improvements.
 
 ###Bug fixes:###
-
+  * The functions that estimate the rollbacks duration reported wrong results
+    when the 'EMAJ_LAST_MARK' keyword was used as rollback target mark.
 
 
 2.2.3 (2018-Mar-13)

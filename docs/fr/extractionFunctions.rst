@@ -22,6 +22,8 @@ Cette fonction *emaj_snap_group()* génère un fichier par table et par séquenc
 
 Le nom des fichiers créés est du type : *<nom.du.schema>_<nom.de.table/séquence>.snap*
 
+D’éventuels caractères peu pratiques dans un nom de fichier, les espaces, « / », « \\ », « $ », « > », « < », et « \* » sont remplacés par des « _ ».
+
 Les fichiers correspondant aux séquences ne comportent qu'une seule ligne, qui contient les caractéristiques de la séquence.
 
 Les fichiers correspondant aux tables contiennent un enregistrement par ligne de la table, dans le format spécifié en paramètre. Ces enregistrements sont triés dans l'ordre croissant de la clé primaire.
@@ -69,6 +71,8 @@ La fonction génère également deux fichiers, contenant l'état des séquences 
 Si la borne de fin représente la situation courante, le nom du fichier devient *<nom.du.groupe>_sequences_at_<heure>*, l'heure étant exprimée avec un format *HH.MM.SS.mmm*.
 
 Tous ces fichiers sont stockés dans le répertoire ou dossier correspondant au quatrième paramètre de la fonction. D'éventuels fichiers de même nom se trouveront écrasés.
+
+D’éventuels caractères peu pratiques dans un nom de fichier, les espaces, « / », « \\ », « $ », « > », « < », et « \* » sont remplacés par des « _ ».
 
 En fin d'opération, un fichier *_INFO* est créé dans ce même répertoire. Il contient un message incluant le nom du groupe de tables, les marques qui ont servi de bornes et la date et l'heure de l'opération.
 

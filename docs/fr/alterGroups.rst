@@ -77,9 +77,9 @@ Néanmoins certaines actions sont possibles sur des groupes de tables maintenus 
 +-------------------------------------+----------------+---------------------------+
 | Oter une séquence d’un groupe       | Oui            | Ajustement emaj_group_def |
 +-------------------------------------+----------------+---------------------------+
-| Ajouter une table à un groupe       | Non            |                           |
+| Ajouter une table à un groupe       | Oui            | Ajustement emaj_group_def |
 +-------------------------------------+----------------+---------------------------+
-| Ajouter une séquence à un groupe    | Non            |                           |
+| Ajouter une séquence à un groupe    | Oui            | Ajustement emaj_group_def |
 +-------------------------------------+----------------+---------------------------+
 | Réparer une table ou une séquence   | Non            |                           |
 +-------------------------------------+----------------+---------------------------+
@@ -126,7 +126,56 @@ Une opération de rollback E-Maj ciblant une marque antérieure à une modificat
 
 Néanmoins, l’administrateur a la possibilité d’appliquer cette même procédure pour revenir à un état antérieur.
 
+Incidence des ajouts ou suppressions de tables et séquences dans un groupe en état *LOGGING*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. caution::
 
-	Quand une table ou une séquence est détachée de son groupe de tables, toute opération de rollback ultérieure sur ce groupe sera sans effet sur cet objet. Une fois la table ou la séquence applicative décrochée de son groupe de tables, elle peut être modifiée (*ALTER*) ou supprimée (*DROP*). Les historiques liés à l’objet (logs, trace des marques,...) sont conservés pour examen éventuel. Ils restent néanmoins associés à l'ancien groupe d'appartenance de l'objet. Pour éviter toute confusion, les tables de log sont renommées, avec l’ajout dans le nom d’un suffixe numérique. Ces logs et traces des marques ne seront supprimés que par les opérations de :ref:`réinitialisation du groupe de tables <emaj_reset_group>` ou par les :ref:`suppressions des plus anciennes marques <emaj_delete_before_mark_group>` du groupe.
+	Quand une table ou une séquence est détachée de son groupe de tables, toute opération de rollback ultérieure sur ce groupe sera sans effet sur cet objet. 
 
+Une fois la table ou la séquence applicative décrochée de son groupe de tables, elle peut être modifiée (*ALTER*) ou supprimée (*DROP*). Les historiques liés à l’objet (logs, trace des marques,...) sont conservés pour examen éventuel. Ils restent néanmoins associés à l'ancien groupe d'appartenance de l'objet. Pour éviter toute confusion, les tables de log sont renommées, avec l’ajout dans le nom d’un suffixe numérique. Ces logs et traces des marques ne seront supprimés que par les opérations de :ref:`réinitialisation du groupe de tables <emaj_reset_group>` ou par les :ref:`suppressions des plus anciennes marques <emaj_delete_before_mark_group>` du groupe.
+
+.. caution::
+
+   Quand une table ou une séquence est ajoutée à un groupe de tables actif, celle-ci est ensuite traitée par les éventuelles opérations de rollback. Mais si l’opération de rollback cible une marque posée avant l’ajout de la table ou de la séquence dans le groupe, la table ou la séquence sera remise dans l’état qu’elle avait au moment où elle a été ajoutée au groupe, et un message d’avertissement est généré. En revanche une telle table ou séquence ne sera pas traitée par une fonction de génération de script SQL si la marque de début souhaitée est antérieure à l’ajout de la table dans le groupe.
+
+Quelques graphiques permettent de visualiser plus facilement les conséquences de l’ajout ou la suppression d’une table ou d’une séquence dans un groupe de tables actif.
+
+Prenons 4 tables affectées à un groupe (t1 à t4) et 4 marques posées au fil du temps (m1 à m4). En m2, t3 a été ajoutée au groupe et t4 en a été retirée. En m3, t2 a été retirée du groupe alors que t4 y a été remis.
+
+.. image:: images/logging_group_changes.png
+   :align: center
+
+Un rollback à la marque m1 :
+
+* traiterait la table t1,
+* **NE** traiterait **PAS** la table t2, faute de log après m3,
+* traiterait la table t3, mais en ne remontant que jusqu’à m2,
+* traiterait la table t4, mais en ne remontant que jusqu’à m3, faute de log entre m2 et m3.
+
+.. image:: images/logging_group_rollback.png
+   :align: center
+
+Une restitution de statistiques entre les marques m1 et m4 produirait :
+
+* 1 ligne pour t1 (m1,m4),
+* 1 ligne pour t2 (m1,m3),
+* 1 ligne pour t3 (m2,m4),
+* 2 lignes pour t4 (m1,m2) et (m3,m4).
+
+.. image:: images/logging_group_stat.png
+   :align: center
+
+La génération d’un script SQL pour l’intervalle m1 à m4 :
+
+* traiterait la table t1,
+* traiterait la table t2, mais en n’allant pas au-delà de m3,
+* **NE** traiterait **PAS** la table t3, faute de log avant m2,
+* traiterait la table t4, mais en n’allant pas au-delà de m2, faute de log entre m2 et m3.
+
+.. image:: images/logging_group_gen_sql.png
+   :align: center
+
+Si la structure d’une table applicative a été modifiée par mégarde alors qu’elle se trouvait dans un groupe de tables actif, les opérations de pose de marque et de rollback seront bloquées par les contrôles internes d’E-Maj. On peut éviter de devoir arrêter, modifier puis relancer le groupe de tables en retirant la table concernée de son groupe puis en la rajoutant.
+
+Quand une table change de groupe d’affectation, l’incidence sur la capacité de générer un script SQL ou de procéder à un rollback des groupes de tables source et destination est similaire à ce que serait la suppression de la table du groupe source puis son ajout dans le groupe destination.

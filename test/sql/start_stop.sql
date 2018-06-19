@@ -98,6 +98,16 @@ begin;
   alter table myschema1."myTbl3" set with oids;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
+-- detection of a primary key structure change
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  alter table myschema1.mytbl4 add primary key (col41, col42);
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+
+
+
+
 
 -- should be OK
 

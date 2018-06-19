@@ -180,22 +180,22 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
 select * from emaj.emaj_log_stat_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 17 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['unknownGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 17 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 28 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['unknownGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 28 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 -- invalid marks
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
@@ -203,52 +203,52 @@ ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 56 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 56 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],NULL,NULL);
 ERROR:  _check_marks_range: The oldest marks of each group do not represent the same point in time.
 CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],NULL,NULL);
 ERROR:  _check_marks_range: The oldest marks of each group do not represent the same point in time.
 CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 -- start mark > end mark
 -- original test (uncomment for unit test)
@@ -988,6 +988,19 @@ select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23','/tmp/emaj_test/log
                    9
 (1 row)
 
+-- mark name with special characters
+select emaj.emaj_set_mark_group('myGroup2',E'/<*crazy mark$>\\');
+ emaj_set_mark_group 
+---------------------
+                   8
+(1 row)
+
+select emaj.emaj_snap_log_group('myGroup2','Mark21',E'/<*crazy mark$>\\','/tmp/emaj_test/log_snaps',NULL);
+ emaj_snap_log_group 
+---------------------
+                   9
+(1 row)
+
 \! ls /tmp/emaj_test/log_snaps |sed s/[0-9][0-9].[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]/\[timestamp_mask\]/g
 _INFO
 myGroup2_sequences_at_[timestamp_mask]
@@ -995,12 +1008,19 @@ myGroup2_sequences_at_[timestamp_mask]
 myGroup2_sequences_at_Mark21
 myGroup2_sequences_at_Mark23
 myGroup2_sequences_at_Multi-3
+myGroup2_sequences_at____crazy_mark___
 myschema2_myTbl3_log.snap
 myschema2_mytbl1_log.snap
 myschema2_mytbl2_log.snap
 myschema2_mytbl4_log.snap
 myschema2_mytbl6_log.snap
 otherPrefix4mytbl5_log.snap
+select emaj.emaj_delete_mark_group('myGroup2',E'/<*crazy mark$>\\');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
 -----------------------------
 -- emaj_gen_sql_group() and emaj_gen_sql_groups() test
 -----------------------------
@@ -1164,15 +1184,15 @@ ERROR:  _gen_sql_groups: The filtered table/sequence names array cannot be empty
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 -- unknown table/sequence names in the tables filter
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile', array['foo']);
-ERROR:  _gen_sql_groups: 1 table/sequence (foo) does not belong to any of the selected tables groups.
+ERROR:  _gen_sql_groups: 1 table/sequence (foo) did not belong to any of the selected tables groups at Mark21 mark time.
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl1','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
-ERROR:  _gen_sql_groups: 2 tables/sequences (myschema1.mytbl1, phil's schema3.phil's tbl1) do not belong to any of the selected tables groups.
+ERROR:  _gen_sql_groups: 2 tables/sequences (myschema1.mytbl1, phil's schema3.phil's tbl1) did not belong to any of the selected tables groups at Mark21 mark time.
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl1','foo','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
-ERROR:  _gen_sql_groups: 2 tables/sequences (foo, phil's schema3.phil's tbl1) do not belong to any of the selected tables groups.
+ERROR:  _gen_sql_groups: 2 tables/sequences (foo, phil's schema3.phil's tbl1) did not belong to any of the selected tables groups at Multi-1 mark time.
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- invalid location path name
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
@@ -1601,7 +1621,19 @@ begin;
 (1 row)
 
 rollback;
--- all in 1
+-- detection of modified primary key
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  alter table myschema1.mytbl4 add primary key (col41, col42);
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "mytbl4_pkey" for table "mytbl4"
+  select * from emaj.emaj_verify_all();
+                                                     emaj_verify_all                                                     
+-------------------------------------------------------------------------------------------------------------------------
+ In rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41 => col41,col42).
+(1 row)
+
+rollback;
+-- almost all in 1
 begin;
   create table emaj.dummy_log (col1 int);
   create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;
@@ -1647,7 +1679,7 @@ PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 17 at PERFORM
     select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -1931,7 +1963,7 @@ begin;
     select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emajb". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 29 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 23 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
   rollback to savepoint sp1;
@@ -2016,10 +2048,10 @@ begin;
 rollback;
 -- change a table structure that leads to a table rewrite
 begin;
-  alter table myschema1.mytbl1 add column newcol int default 1;
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
 rollback;
 begin;
-  alter table emaj.myschema1_mytbl1_log add column newcol int default 1;
+  alter table emaj.myschema1_mytbl1_log alter column col13 type varchar(10);
 rollback;
 -- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
 begin;
@@ -2039,7 +2071,7 @@ begin;
                15
 (1 row)
 
-  alter table myschema1.mytbl1 add column newcol int default 1;
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
   drop table myschema1.mytbl1 cascade;
   drop sequence myschema2.mySeq1;
 rollback;
@@ -2119,36 +2151,44 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     5098 | SNAP_LOG_GROUP     | END                     | myGroup2          | 3 generated files                                                                                                  | postgres
     5099 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From mark Mark21 to mark Mark23 towards /tmp/emaj_test/log_snaps                                                   | postgres
     5100 | SNAP_LOG_GROUP     | END                     | myGroup2          | 9 generated files                                                                                                  | postgres
-    5103 | GEN_SQL_GROUPS     | BEGIN                   |                   |                                                                                                                    | postgres
-    5104 | GEN_SQL_GROUPS     | END                     |                   | 0 generated statements                                                                                             | postgres
-    5139 | GEN_SQL_GROUP      | BEGIN                   | emptyGroup        | From initial mark to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
-    5140 | GEN_SQL_GROUP      | END                     | emptyGroup        | 0 generated statements                                                                                             | postgres
-    5141 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
-    5142 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5143 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From mark Mark21 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                    | postgres
-    5144 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5145 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark Mark22 towards /tmp/emaj_test/sql_scripts/myFile                                         | postgres
-    5146 | GEN_SQL_GROUP      | END                     | myGroup2          | 11602 generated statements                                                                                         | postgres
-    5147 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
-    5148 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 11714 generated statements                                                                                         | postgres
-    5149 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-2 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile                                        | postgres
-    5150 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 114 generated statements                                                                                           | postgres
-    5151 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile                                 | postgres
+    5101 | SET_MARK_GROUP     | BEGIN                   | myGroup2          |                                                                                                                    | postgres
+    5102 | LOCK_GROUP         | BEGIN                   | myGroup2          |                                                                                                                    | postgres
+    5103 | LOCK_GROUP         | END                     | myGroup2          | 6 tables locked, 0 deadlock(s)                                                                                     | postgres
+    5104 | SET_MARK_GROUP     | END                     | myGroup2          | /<*crazy mark$>\                                                                                                   | postgres
+    5105 | SNAP_LOG_GROUP     | BEGIN                   | myGroup2          | From mark Mark21 to mark /<*crazy mark$>\ towards /tmp/emaj_test/log_snaps                                         | postgres
+    5106 | SNAP_LOG_GROUP     | END                     | myGroup2          | 9 generated files                                                                                                  | postgres
+    5107 | DELETE_MARK_GROUP  | BEGIN                   | myGroup2          | /<*crazy mark$>\                                                                                                   | postgres
+    5108 | DELETE_MARK_GROUP  | END                     | myGroup2          | /<*crazy mark$>\                                                                                                   | postgres
+    5111 | GEN_SQL_GROUPS     | BEGIN                   |                   |                                                                                                                    | postgres
+    5112 | GEN_SQL_GROUPS     | END                     |                   | 0 generated statements                                                                                             | postgres
+    5147 | GEN_SQL_GROUP      | BEGIN                   | emptyGroup        | From initial mark to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
+    5148 | GEN_SQL_GROUP      | END                     | emptyGroup        | 0 generated statements                                                                                             | postgres
+    5149 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
+    5150 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
+    5151 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From mark Mark21 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                    | postgres
     5152 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5153 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5154 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
-    5155 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5156 | GEN_SQL_GROUP      | END                     | myGroup2          | 11711 generated statements                                                                                         | postgres
-    5157 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5158 | GEN_SQL_GROUP      | END                     | myGroup2          | 11611 generated statements                                                                                         | postgres
-    5159 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5160 | GEN_SQL_GROUP      | END                     | myGroup2          | 1 generated statements                                                                                             | postgres
+    5153 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark Mark22 towards /tmp/emaj_test/sql_scripts/myFile                                         | postgres
+    5154 | GEN_SQL_GROUP      | END                     | myGroup2          | 11602 generated statements                                                                                         | postgres
+    5155 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to current situation towards /tmp/emaj_test/sql_scripts/myFile                                   | postgres
+    5156 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 11714 generated statements                                                                                         | postgres
+    5157 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-2 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile                                        | postgres
+    5158 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 114 generated statements                                                                                           | postgres
+    5159 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile                                 | postgres
+    5160 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
     5161 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
-    5162 | GEN_SQL_GROUP      | END                     | myGroup2          | 100 generated statements                                                                                           | postgres
-    5163 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering        | postgres
-    5164 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 100 generated statements                                                                                           | postgres
-    5232 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |                   | <none>                                                                                                             | postgres
-    5233 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
-    5234 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
-(85 rows)
+    5162 | GEN_SQL_GROUP      | END                     | myGroup2          | 11712 generated statements                                                                                         | postgres
+    5163 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5164 | GEN_SQL_GROUP      | END                     | myGroup2          | 11711 generated statements                                                                                         | postgres
+    5165 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5166 | GEN_SQL_GROUP      | END                     | myGroup2          | 11611 generated statements                                                                                         | postgres
+    5167 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5168 | GEN_SQL_GROUP      | END                     | myGroup2          | 1 generated statements                                                                                             | postgres
+    5169 | GEN_SQL_GROUP      | BEGIN                   | myGroup2          | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering | postgres
+    5170 | GEN_SQL_GROUP      | END                     | myGroup2          | 100 generated statements                                                                                           | postgres
+    5171 | GEN_SQL_GROUPS     | BEGIN                   | myGroup1,myGroup2 | From mark Multi-1 to mark Multi-3 towards /tmp/emaj_test/sql_scripts/myFile with tables/sequences filtering        | postgres
+    5172 | GEN_SQL_GROUPS     | END                     | myGroup1,myGroup2 | 100 generated statements                                                                                           | postgres
+    5240 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |                   | <none>                                                                                                             | postgres
+    5241 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
+    5242 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |                   | <none>                                                                                                             | postgres
+(93 rows)
 

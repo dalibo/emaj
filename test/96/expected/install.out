@@ -66,6 +66,40 @@ select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user 
 delete from emaj.emaj_hist;
 -- check table list
 \d emaj.*
+          Composite type "emaj._detailed_log_stat_type"
+          Column          |           Type           | Modifiers 
+--------------------------+--------------------------+-----------
+ stat_group               | text                     | 
+ stat_schema              | text                     | 
+ stat_table               | text                     | 
+ stat_log_schema          | text                     | 
+ stat_log_table           | text                     | 
+ stat_first_mark          | text                     | 
+ stat_first_mark_datetime | timestamp with time zone | 
+ stat_first_mark_gid      | bigint                   | 
+ stat_last_mark           | text                     | 
+ stat_last_mark_datetime  | timestamp with time zone | 
+ stat_last_mark_gid       | bigint                   | 
+ stat_role                | character varying(32)    | 
+ stat_verb                | character varying(6)     | 
+ stat_rows                | bigint                   | 
+
+              Composite type "emaj._log_stat_type"
+          Column          |           Type           | Modifiers 
+--------------------------+--------------------------+-----------
+ stat_group               | text                     | 
+ stat_schema              | text                     | 
+ stat_table               | text                     | 
+ stat_log_schema          | text                     | 
+ stat_log_table           | text                     | 
+ stat_first_mark          | text                     | 
+ stat_first_mark_datetime | timestamp with time zone | 
+ stat_first_mark_gid      | bigint                   | 
+ stat_last_mark           | text                     | 
+ stat_last_mark_datetime  | timestamp with time zone | 
+ stat_last_mark_gid       | bigint                   | 
+ stat_rows                | bigint                   | 
+
 Composite type "emaj._verify_groups_type"
    Column   | Type | Modifiers 
 ------------+------+-----------
@@ -329,6 +363,7 @@ primary key, btree, for table "emaj.emaj_param"
  rel_sql_columns          | text      | 
  rel_sql_pk_columns       | text      | 
  rel_sql_pk_eq_conditions | text      | 
+ rel_log_seq_last_value   | bigint    | 
 Indexes:
     "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq, rel_time_range)
     "emaj_relation_idx1" btree (rel_group, rel_kind)
@@ -420,6 +455,7 @@ primary key, btree, for table "emaj.emaj_rlbk"
  rlbp_batch_number       | integer                  | 
  rlbp_session            | integer                  | 
  rlbp_fkey_def           | text                     | 
+ rlbp_target_time_id     | bigint                   | 
  rlbp_estimated_quantity | bigint                   | 
  rlbp_estimated_duration | interval                 | 
  rlbp_estimate_method    | integer                  | 
@@ -639,17 +675,10 @@ Owned by: emaj.emaj_time_stamp.time_id
  param_value_interval | interval | 
 
 -- reset function calls statistics (so the check.sql output is stable with all installation paths)
--- wait during half a second to let the statistics collector aggregate the latest stats
-select pg_sleep(0.5);
- pg_sleep 
-----------
- 
-(1 row)
-
-select pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
-    where (funcname like E'emaj\\_%' or funcname like E'\\_%');
- pg_stat_reset_single_function_counters 
-----------------------------------------
- 
-(1 row)
+with reset as (select funcid, pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
+                 where (funcname like E'emaj\\_%' or funcname like E'\\_%') )
+  select * from reset where funcid is null;
+ funcid | pg_stat_reset_single_function_counters 
+--------+----------------------------------------
+(0 rows)
 

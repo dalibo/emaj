@@ -17,7 +17,7 @@ These **tables group integrity checks** verify that:
 * each table of the group has its log table, its log function and its triggers,
 * the log tables structure always reflects the related application tables structure,
 * no table has been altered as *UNLOGGED* or *WITH OIDS* table,
-* for *ROLLBACKABLE* tables groups, application tables have their primary key.
+* for *ROLLBACKABLE* tables groups, application tables have their primary key and their structure has not changed.
 
 By using the :ref:`emaj_verify_all() <emaj_verify_all>` function, the administrator can perform the same checks on demand on all tables groups.
 

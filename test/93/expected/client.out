@@ -45,7 +45,7 @@ select emaj.emaj_alter_group('myGroup1');
 -----------------------------------------------------------
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 140
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 140
 Call of _rlbk_init() function failed 
 -- unlogged rollback for 2 groups in unstrict mode
 \! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a

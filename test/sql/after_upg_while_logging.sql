@@ -12,7 +12,8 @@ select * from emaj.emaj_verify_all();
 -----------------------------
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',false) order by 1,2;
 select emaj.emaj_unprotect_group('myGroup1');
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',true) order by 1,2;
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',true) order by 1,2;
 
 -----------------------------
 -- Step 3 : for myGroup1, update tables, then unprotect, logged_rollback, rename the end rollback mark and consolidate the rollback
@@ -101,8 +102,13 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 -- test end: check and reset history
 -----------------------------
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
-select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist order by hist_id) as t;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user 
+  from emaj.emaj_hist order by hist_id;
 --
 reset role;
 truncate emaj.emaj_hist;

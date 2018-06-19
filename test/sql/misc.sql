@@ -406,7 +406,13 @@ select emaj.emaj_snap_log_group('myGroup2','','','/tmp/emaj_test/log_snaps','CSV
 select emaj.emaj_snap_log_group('myGroup2','Mark21',NULL,'/tmp/emaj_test/log_snaps','CSV HEADER');
 select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark21','/tmp/emaj_test/log_snaps','CSV');
 select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23','/tmp/emaj_test/log_snaps',NULL);
+
+-- mark name with special characters
+select emaj.emaj_set_mark_group('myGroup2',E'/<*crazy mark$>\\');
+select emaj.emaj_snap_log_group('myGroup2','Mark21',E'/<*crazy mark$>\\','/tmp/emaj_test/log_snaps',NULL);
+
 \! ls /tmp/emaj_test/log_snaps |sed s/[0-9][0-9].[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]/\[timestamp_mask\]/g
+select emaj.emaj_delete_mark_group('myGroup2',E'/<*crazy mark$>\\');
 
 -----------------------------
 -- emaj_gen_sql_group() and emaj_gen_sql_groups() test
@@ -665,8 +671,14 @@ begin;
   alter table "phil's schema3"."myTbl2\" set with oids;
   select * from emaj.emaj_verify_all();
 rollback;
+-- detection of modified primary key
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  alter table myschema1.mytbl4 add primary key (col41, col42);
+  select * from emaj.emaj_verify_all();
+rollback;
 
--- all in 1
+-- almost all in 1
 begin;
   create table emaj.dummy_log (col1 int);
   create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;
@@ -839,12 +851,13 @@ rollback;
 begin;
   drop extension emaj cascade;
 rollback;
+
 -- change a table structure that leads to a table rewrite
 begin;
-  alter table myschema1.mytbl1 add column newcol int default 1;
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
 rollback;
 begin;
-  alter table emaj.myschema1_mytbl1_log add column newcol int default 1;
+  alter table emaj.myschema1_mytbl1_log alter column col13 type varchar(10);
 rollback;
 
 -- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
@@ -861,7 +874,7 @@ rollback;
 -- perform changes on application components with the related tables group stopped (the event triggers should accept)
 begin;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
-  alter table myschema1.mytbl1 add column newcol int default 1;
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
   drop table myschema1.mytbl1 cascade;
   drop sequence myschema2.mySeq1;
 rollback;

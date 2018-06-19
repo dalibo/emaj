@@ -483,6 +483,61 @@ begin;
   select emaj.emaj_stop_group('myGroup4','M8');
 commit;
 select * from emaj.emaj_mark where mark_group = 'myGroup4' order by mark_id;
+
+-----------------------------
+-- Step 16 : test partition attach and detach
+-----------------------------
+-- Needs postgres 10+
+
+set role emaj_regression_tests_adm_user;
+select emaj.emaj_start_group('myGroup4','Start');
+insert into mySchema4.myTblP values (-1,'Stored in partition 1'), (1,'Stored in partition 2');
+select emaj.emaj_set_mark_group('myGroup4','M1');
+update mySchema4.myTblP set col1 = 2 where col1 = 1;
+
+-- create a new partition and add it into the group ; in passing also add the sequence linked to the serial column of the mother table
+reset role;
+CREATE TABLE mySchema4.myPartP3 PARTITION OF mySchema4.myTblP (PRIMARY KEY (col1)) FOR VALUES FROM (10) TO (19);
+-- create the table with PG 9.6- so that next scripts do not abort
+CREATE TABLE IF NOT EXISTS mySchema4.myPartP3 (PRIMARY KEY (col1)) INHERITS (mySchema4.myTblP);
+grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user;
+
+set role emaj_regression_tests_adm_user;
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp3');
+insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblp_col3_seq');
+select emaj.emaj_alter_group('myGroup4','Add partition 3');
+insert into mySchema4.myTblP values (11,'Stored in partition 3');
+
+-- remove an obsolete partition ; in passing also remove the sequence linke to the serial column of the mother table
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mypartp1';
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblp_col3_seq';
+select emaj.emaj_alter_group('myGroup4','Remove partition 1');
+
+reset role;
+drop table mySchema4.myPartP1;
+set role emaj_regression_tests_adm_user;
+
+-- look at statistics and log content
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup4',NULL, NULL) order by 1,2,3,4;
+select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq like 'mypar%' order by rel_tblseq, rel_time_range;
+select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartP3_log order by emaj_gid;
+select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartP1_log_1 order by emaj_gid;
+
+-- rollback to a mark set before the first changes
+select * from emaj.emaj_rollback_group('myGroup4','Start');
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_rollback_group('myGroup4','Start',true);
+
+-- testing a row update leading to a partition change (needs pg 11)
+insert into mySchema4.myTblP values (1,'Initialy stored in partition 2'), (11,'Stored in partition 3');
+select emaj.emaj_set_mark_group('myGroup4','Before update');
+update mySchema4.myTblP set col1 = 12 where col1=1;
+select emaj.emaj_logged_rollback_group('myGroup4','Before update');
+select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartP2_log;
+select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartP3_log;
+
+select emaj.emaj_stop_group('myGroup4');
 select emaj.emaj_drop_group('myGroup4');
 
 -----------------------------
@@ -494,19 +549,26 @@ select emaj.emaj_cleanup_rollback_state();
 -- check rollback related tables
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
        rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
-       case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_messages
+       case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime",
+       regexp_replace(array_to_string(rlbk_messages,'#'),E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_rlbk where rlbk_id >= 10000 order by rlbk_id;
 select rlbs_rlbk_id, rlbs_session, 
        case when rlbs_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
   from emaj.emaj_rlbk_session where rlbs_rlbk_id >= 10000  order by rlbs_rlbk_id, rlbs_session;
-select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_session,
+select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_target_time_id, rlbp_batch_number, rlbp_session,
        rlbp_fkey_def, rlbp_estimated_quantity, rlbp_estimate_method, rlbp_quantity
   from emaj.emaj_rlbk_plan where rlbp_rlbk_id >= 10000  order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey;
 select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity
   from emaj.emaj_rlbk_stat where rlbt_rlbk_id >= 10000 order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
-select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from emaj.emaj_hist order by hist_id;
+select hist_id, hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist order by hist_id;
 --
 reset role;
 alter table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
@@ -523,4 +585,3 @@ select count(*) from mySchema2.myTbl2;
 select count(*) from mySchema2."myTbl3";
 select count(*) from mySchema2.myTbl5;
 select count(*) from mySchema2.myTbl6;
-

@@ -90,7 +90,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -101,7 +101,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -112,7 +112,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -123,7 +123,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -134,7 +134,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -152,7 +152,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -259,7 +259,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -270,7 +270,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -300,7 +300,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -311,7 +311,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -322,7 +322,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -333,7 +333,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -344,7 +344,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -355,7 +355,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -366,7 +366,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -377,7 +377,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -388,7 +388,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -400,7 +400,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 50 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -411,7 +411,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 29 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -429,7 +429,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -440,7 +440,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -477,7 +477,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 58 at R
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -513,7 +513,7 @@ begin;
 ERROR:  _rlbk_check: Protected marks (Protected Mark 1, Protected Mark 2) for the group "myGroup1" block the rollback to the mark "Mark11".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 33 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -543,7 +543,7 @@ begin;
 ERROR:  _rlbk_check: Protected marks (Protected Mark 1) for the group "myGroup1" block the rollback to the mark "Common Mark 1".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 33 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -561,7 +561,7 @@ begin;
 ERROR:  _rlbk_check: Protected marks (Different_Mark) for the group "myGroup1" block the rollback to the mark "Mark11".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 33 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -587,9 +587,9 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_rollback_group('myGroup2','Mark21');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 36 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -599,9 +599,9 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 36 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -615,11 +615,11 @@ WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "my
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 ERROR:  _rlbk_seq: No mark at time id "3003" can be found for the sequence "myschema2.myseq1".
 CONTEXT:  PL/pgSQL function emaj._rlbk_seq(emaj.emaj_relation,bigint) line 21 at RAISE
-SQL statement "SELECT emaj._rlbk_seq(t.*, v_markTimeId)
+SQL statement "SELECT emaj._rlbk_seq(t.*, greatest(v_markTimeId, lower(t.rel_time_range)))
       FROM (SELECT * FROM emaj.emaj_relation
               WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t"
-PL/pgSQL function emaj._rlbk_end(integer,boolean) line 125 at PERFORM
+PL/pgSQL function emaj._rlbk_end(integer,boolean) line 128 at PERFORM
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 30 at RETURN QUERY
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
@@ -715,9 +715,9 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 36 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -727,9 +727,9 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
 ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 36 at RAISE
 SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -2434,119 +2434,119 @@ select rlbs_rlbk_id, rlbs_session,
            24 |            1 | [ts]
 (22 rows)
 
-select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_batch_number, rlbp_session,
+select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_target_time_id, rlbp_batch_number, rlbp_session,
        rlbp_fkey_def, rlbp_estimated_quantity, rlbp_estimate_method, rlbp_quantity
   from emaj.emaj_rlbk_plan order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey;
- rlbp_rlbk_id |  rlbp_step  | rlbp_schema | rlbp_table |     rlbp_fkey     | rlbp_batch_number | rlbp_session |                                                              rlbp_fkey_def                                                              | rlbp_estimated_quantity | rlbp_estimate_method | rlbp_quantity 
---------------+-------------+-------------+------------+-------------------+-------------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------+-------------------------+----------------------+---------------
-           12 | DIS_LOG_TRG | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                    3 |              
-           12 | DIS_LOG_TRG | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
-           12 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
-           12 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
-           12 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      10 |                    3 |            10
-           12 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    3 |             1
-           12 | DELETE_LOG  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      10 |                    3 |            10
-           12 | DELETE_LOG  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    3 |             3
-           12 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                       2 |                    3 |              
-           12 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
-           12 | ENA_LOG_TRG | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                    3 |              
-           12 | ENA_LOG_TRG | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
-           12 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      12 |                    3 |              
-           13 | DIS_LOG_TRG | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           13 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           13 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           13 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           13 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           13 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                      15 |                    3 |            11
-           13 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       6 |                    3 |             3
-           13 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       6 |                    3 |             6
-           13 | DELETE_LOG  | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                      15 |                    3 |            18
-           13 | DELETE_LOG  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       6 |                    3 |             8
-           13 | DELETE_LOG  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       6 |                    3 |             6
-           13 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                       6 |                    2 |              
-           13 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 1 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
-           13 | ENA_LOG_TRG | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           13 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           13 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           13 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      16 |                    2 |              
-           14 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           14 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           14 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
-           14 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           14 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                       1 |                    2 |              
-           14 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
-           14 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       6 |                    2 |              
-           15 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           15 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           15 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      20 |                    1 |            10
-           15 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                      15 |                    1 |            11
-           15 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           15 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           15 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             1
-           15 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                       4 |                    2 |              
-           15 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
-           15 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       9 |                    2 |              
-           16 | DIS_LOG_TRG | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | DIS_LOG_TRG | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | DIS_LOG_TRG | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
-           16 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                      10 |                    1 |            10
-           16 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           16 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           16 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           16 | DELETE_LOG  | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
-           16 | DELETE_LOG  | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                      10 |                    1 |            10
-           16 | DELETE_LOG  | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           16 | DELETE_LOG  | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           16 | DELETE_LOG  | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           16 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 2 |            1 |                                                                                                                                         |                       3 |                    2 |              
-           16 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
-           16 | ENA_LOG_TRG | myschema1   | myTbl3     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | ENA_LOG_TRG | myschema1   | mytbl1     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | ENA_LOG_TRG | myschema1   | mytbl4     |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           16 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      24 |                    2 |              
-           19 | RLBK_TABLE  | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           19 | RLBK_TABLE  | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           19 | RLBK_TABLE  | myschema4   | mytblm     |                   |                 3 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           19 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       3 |                    2 |              
-           20 | DIS_LOG_TRG | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           20 | DIS_LOG_TRG | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           20 | DIS_LOG_TRG | myschema4   | mytblm     |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
-           20 | RLBK_TABLE  | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                       3 |                    1 |             1
-           20 | RLBK_TABLE  | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                       3 |                    1 |             1
-           20 | RLBK_TABLE  | myschema4   | mytblm     |                   |                 3 |            1 |                                                                                                                                         |                       3 |                    1 |             1
-           20 | DELETE_LOG  | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                       3 |                    3 |             3
-           20 | DELETE_LOG  | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                       3 |                    3 |             3
-           20 | DELETE_LOG  | myschema4   | mytblm     |                   |                 3 |            1 |                                                                                                                                         |                       3 |                    3 |             3
-           20 | ENA_LOG_TRG | myschema4   | mytblc1    |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           20 | ENA_LOG_TRG | myschema4   | mytblc2    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           20 | ENA_LOG_TRG | myschema4   | mytblm     |                   |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
-           20 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      12 |                    2 |              
-           22 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           22 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           22 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                 1 |            1 |                                                                                                                                         |                      13 |                    1 |            12
-           22 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       2 |                    1 |             1
-           22 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
-           22 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                       2 |                    2 |              
-           22 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                 1 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
-           22 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                       7 |                    2 |              
-           23 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           23 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           23 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           23 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           23 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           23 | DELETE_LOG  | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                       1 |                    1 |             1
-           23 | DELETE_LOG  | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             2
-           23 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                 1 |            1 |                                                                                                                                         |                       1 |                    2 |              
-           23 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
-           23 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
-           23 | CTRL+DBLINK |             |            |                   |                   |              |                                                                                                                                         |                      10 |                    2 |              
+ rlbp_rlbk_id |  rlbp_step  | rlbp_schema | rlbp_table |     rlbp_fkey     | rlbp_target_time_id | rlbp_batch_number | rlbp_session |                                                              rlbp_fkey_def                                                              | rlbp_estimated_quantity | rlbp_estimate_method | rlbp_quantity 
+--------------+-------------+-------------+------------+-------------------+---------------------+-------------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------+-------------------------+----------------------+---------------
+           12 | DIS_LOG_TRG | myschema1   | myTbl3     |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    3 |              
+           12 | DIS_LOG_TRG | myschema1   | mytbl4     |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
+           12 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
+           12 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
+           12 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                3032 |                 1 |            1 |                                                                                                                                         |                      10 |                    3 |            10
+           12 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                3032 |                 2 |            1 |                                                                                                                                         |                       2 |                    3 |             1
+           12 | DELETE_LOG  | myschema1   | myTbl3     |                   |                3032 |                 1 |            1 |                                                                                                                                         |                      10 |                    3 |            10
+           12 | DELETE_LOG  | myschema1   | mytbl4     |                   |                3032 |                 2 |            1 |                                                                                                                                         |                       2 |                    3 |             3
+           12 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 2 |            1 |                                                                                                                                         |                       2 |                    3 |              
+           12 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
+           12 | ENA_LOG_TRG | myschema1   | myTbl3     |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    3 |              
+           12 | ENA_LOG_TRG | myschema1   | mytbl4     |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    3 |              
+           12 | CTRL+DBLINK |             |            |                   |                     |                   |              |                                                                                                                                         |                      12 |                    3 |              
+           13 | DIS_LOG_TRG | myschema1   | mytbl1     |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           13 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           13 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           13 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           13 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           13 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                3030 |                 1 |            1 |                                                                                                                                         |                      15 |                    3 |            11
+           13 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                3030 |                 1 |            1 |                                                                                                                                         |                       6 |                    3 |             3
+           13 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                3030 |                 2 |            1 |                                                                                                                                         |                       6 |                    3 |             6
+           13 | DELETE_LOG  | myschema1   | mytbl1     |                   |                3030 |                 1 |            1 |                                                                                                                                         |                      15 |                    3 |            18
+           13 | DELETE_LOG  | myschema1   | mytbl2     |                   |                3030 |                 1 |            1 |                                                                                                                                         |                       6 |                    3 |             8
+           13 | DELETE_LOG  | myschema1   | mytbl2b    |                   |                3030 |                 2 |            1 |                                                                                                                                         |                       6 |                    3 |             6
+           13 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 1 |            1 |                                                                                                                                         |                       6 |                    2 |              
+           13 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 1 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
+           13 | ENA_LOG_TRG | myschema1   | mytbl1     |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           13 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           13 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           13 | CTRL+DBLINK |             |            |                   |                     |                   |              |                                                                                                                                         |                      16 |                    2 |              
+           14 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           14 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           14 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                3038 |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
+           14 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                3038 |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           14 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 2 |            1 |                                                                                                                                         |                       1 |                    2 |              
+           14 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
+           14 | CTRL+DBLINK |             |            |                   |                     |                   |              |                                                                                                                                         |                       6 |                    2 |              
+           15 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           15 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           15 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                3037 |                 1 |            1 |                                                                                                                                         |                      20 |                    1 |            10
+           15 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                3037 |                 2 |            1 |                                                                                                                                         |                      15 |                    1 |            11
+           15 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                3037 |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
+           15 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                3037 |                 3 |            1 |                                                                                                                                         |                       2 |                    1 |             2
+           15 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                3037 |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             1
+           15 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 2 |            1 |                                                                                                                                         |                       4 |                    2 |              
+           15 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
+           15 | CTRL+DBLINK |             |            |                   |                     |                   |              |                                                                                                                                         |                       9 |                    2 |              
+           16 | DIS_LOG_TRG | myschema1   | myTbl3     |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | DIS_LOG_TRG | myschema1   | mytbl1     |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                     |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | DIS_LOG_TRG | myschema1   | mytbl4     |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | RLBK_TABLE  | myschema1   | myTbl3     |                   |                3039 |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
+           16 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                3039 |                 2 |            1 |                                                                                                                                         |                      10 |                    1 |            10
+           16 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                3039 |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
+           16 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                3039 |                 3 |            1 |                                                                                                                                         |                       2 |                    1 |             2
+           16 | RLBK_TABLE  | myschema1   | mytbl4     |                   |                3039 |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           16 | DELETE_LOG  | myschema1   | myTbl3     |                   |                3039 |                 1 |            1 |                                                                                                                                         |                      10 |                    1 |            10
+           16 | DELETE_LOG  | myschema1   | mytbl1     |                   |                3039 |                 2 |            1 |                                                                                                                                         |                      10 |                    1 |            10
+           16 | DELETE_LOG  | myschema1   | mytbl2     |                   |                3039 |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
+           16 | DELETE_LOG  | myschema1   | mytbl2b    |                   |                3039 |                 3 |            1 |                                                                                                                                         |                       2 |                    1 |             2
+           16 | DELETE_LOG  | myschema1   | mytbl4     |                   |                3039 |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           16 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 2 |            1 |                                                                                                                                         |                       3 |                    2 |              
+           16 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
+           16 | ENA_LOG_TRG | myschema1   | myTbl3     |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | ENA_LOG_TRG | myschema1   | mytbl1     |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                     |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | ENA_LOG_TRG | myschema1   | mytbl4     |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           16 | CTRL+DBLINK |             |            |                   |                     |                   |              |                                                                                                                                         |                      24 |                    2 |              
+           19 | RLBK_TABLE  | myschema4   | mytblc1    |                   |                3049 |                 1 |            1 |                                                                                                                                         |                       1 |                    3 |             1
+           19 | RLBK_TABLE  | myschema4   | mytblc2    |                   |                3049 |                 2 |            1 |                                                                                                                                         |                       1 |                    3 |             1
+           19 | RLBK_TABLE  | myschema4   | mytblm     |                   |                3049 |                 3 |            1 |                                                                                                                                         |                       1 |                    3 |             1
+           19 | CTRL+DBLINK |             |            |                   |                     |                   |              |                                                                                                                                         |                       3 |                    2 |              
+           20 | DIS_LOG_TRG | myschema4   | mytblc1    |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | DIS_LOG_TRG | myschema4   | mytblc2    |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | DIS_LOG_TRG | myschema4   | mytblm     |                   |                     |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | RLBK_TABLE  | myschema4   | mytblc1    |                   |                3048 |                 1 |            1 |                                                                                                                                         |                       3 |                    1 |             1
+           20 | RLBK_TABLE  | myschema4   | mytblc2    |                   |                3048 |                 2 |            1 |                                                                                                                                         |                       3 |                    1 |             1
+           20 | RLBK_TABLE  | myschema4   | mytblm     |                   |                3048 |                 3 |            1 |                                                                                                                                         |                       3 |                    1 |             1
+           20 | DELETE_LOG  | myschema4   | mytblc1    |                   |                3048 |                 1 |            1 |                                                                                                                                         |                       3 |                    3 |             3
+           20 | DELETE_LOG  | myschema4   | mytblc2    |                   |                3048 |                 2 |            1 |                                                                                                                                         |                       3 |                    3 |             3
+           20 | DELETE_LOG  | myschema4   | mytblm     |                   |                3048 |                 3 |            1 |                                                                                                                                         |                       3 |                    3 |             3
+           20 | ENA_LOG_TRG | myschema4   | mytblc1    |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | ENA_LOG_TRG | myschema4   | mytblc2    |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | ENA_LOG_TRG | myschema4   | mytblm     |                   |                     |                 3 |            1 |                                                                                                                                         |                         |                    2 |              
+           20 | CTRL+DBLINK |             |            |                   |                     |                   |              |                                                                                                                                         |                      12 |                    2 |              
+           22 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           22 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           22 | RLBK_TABLE  | myschema1   | mytbl1     |                   |                3056 |                 1 |            1 |                                                                                                                                         |                      13 |                    1 |            12
+           22 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                3056 |                 1 |            1 |                                                                                                                                         |                       2 |                    1 |             1
+           22 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                3056 |                 2 |            1 |                                                                                                                                         |                       2 |                    1 |             2
+           22 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 1 |            1 |                                                                                                                                         |                       2 |                    2 |              
+           22 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |                     |                 1 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                       0 |                    3 |              
+           22 | CTRL+DBLINK |             |            |                   |                     |                   |              |                                                                                                                                         |                       7 |                    2 |              
+           23 | DIS_LOG_TRG | myschema1   | mytbl2     |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           23 | DIS_LOG_TRG | myschema1   | mytbl2b    |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           23 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           23 | RLBK_TABLE  | myschema1   | mytbl2     |                   |                3053 |                 1 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           23 | RLBK_TABLE  | myschema1   | mytbl2b    |                   |                3053 |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           23 | DELETE_LOG  | myschema1   | mytbl2     |                   |                3053 |                 1 |            1 |                                                                                                                                         |                       1 |                    1 |             1
+           23 | DELETE_LOG  | myschema1   | mytbl2b    |                   |                3053 |                 2 |            1 |                                                                                                                                         |                       1 |                    1 |             2
+           23 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |                     |                 1 |            1 |                                                                                                                                         |                       1 |                    2 |              
+           23 | ENA_LOG_TRG | myschema1   | mytbl2     |                   |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
+           23 | ENA_LOG_TRG | myschema1   | mytbl2b    |                   |                     |                 2 |            1 |                                                                                                                                         |                         |                    2 |              
+           23 | CTRL+DBLINK |             |            |                   |                     |                   |              |                                                                                                                                         |                      10 |                    2 |              
 (108 rows)
 
 select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat

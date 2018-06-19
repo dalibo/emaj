@@ -183,10 +183,10 @@ begin;
 (1 row)
 
   select emaj.emaj_alter_group('myGroup1');
-ERROR:  _alter_plan: The groups "myGroup1" cannot be altered because they are in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._alter_plan(text[],bigint) line 131 at RAISE
-SQL statement "SELECT emaj._alter_plan(v_groupNames, v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 40 at PERFORM
+ERROR:  alter_exec: Cannot repair the table myschema1.mytbl1. Its group myGroup1 is in LOGGING state.
+CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint) line 37 at RAISE
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 rollback;
 -- alter a group with a table now already belonging to another group
@@ -744,10 +744,10 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 (1 row)
 
   select emaj.emaj_alter_groups('{"myGroup2","myGroup1","myGroup4"}');
-ERROR:  _alter_plan: The groups "myGroup1, myGroup2" cannot be altered because they are in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._alter_plan(text[],bigint) line 131 at RAISE
-SQL statement "SELECT emaj._alter_plan(v_groupNames, v_timeId)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 40 at PERFORM
+ERROR:  alter_exec: Cannot repair the table myschema1.mytbl1. Its group myGroup1 is in LOGGING state.
+CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint) line 37 at RAISE
+SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 rollback;
 -- alter groups with a table now already belonging to another group

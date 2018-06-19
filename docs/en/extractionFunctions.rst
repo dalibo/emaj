@@ -24,6 +24,8 @@ New files will overwrite existing files of the same name.
 
 Created files are named with the following pattern: *<schema.name>_<table/sequence.name>.snap*
 
+Some unconvenient in file name characters, namely spaces, “/”, “\\”, “$”, “>”, “<”, and “\*” are replaced by “_”.
+
 Each file corresponding to a sequence has only one row, containing all characteristics of the sequence.
 
 Files corresponding to tables contain one record per row, in the format corresponding to the supplied parameter. These records are sorted in ascending order of the primary key.
@@ -69,6 +71,8 @@ This *emaj_snap_log_group()* function generates one file per log table, containi
 The function also generates two files, containing the application sequences state at the time of the respective supplied marks, and named: *<log.table.name>.snap*. So most of the time, they look like: *<group.name>_sequences_at_<mark.name>*.
 
 All these files are stored in the directory or folder corresponding to the fourth parameter. New files will overwrite existing files of the same name.
+
+Some unconvenient in file name characters, namely spaces, “/”, “\\”, “$”, “>”, “<”, and “\*” are replaced by “_”.
 
 At the end of the operation, a file named *_INFO* is created in this same directory/folder. It contains a message including the table's group name, the mark's name that defined the mark range and the date and time of the snap operation.
 

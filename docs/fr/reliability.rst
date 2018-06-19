@@ -17,7 +17,7 @@ Ces **contrôles d'intégrité du groupe de tables** vérifient que :
 * chacune des tables d'un groupe a toujours sa table de log associée, sa fonction de log ainsi que ses triggers,
 * la structure des tables de log est toujours en phase avec celle des tables applicatives associées,
 * aucune table n'a été transformée en table *UNLOGGED* ou *WITH OIDS*,
-* pour les groupes de tables rollbackable, les tables applicatives ont toujours leur clé primaire.
+* pour les groupes de tables rollbackable, les tables applicatives ont toujours leur clé primaire et que leur structure n’a pas changé.
 
 En utilisant la fonction :ref:`emaj_verify_all() <emaj_verify_all>`, l'administration peut effectuer à la demande ces mêmes contrôles sur l'ensemble des groupes de tables.
 

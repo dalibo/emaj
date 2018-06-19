@@ -6,7 +6,7 @@
 #---------------------------------------------#
 
 # Array containing the PostgreSQL's versions supported by this E-Maj release
-typeset -r EMAJ_SUPPORTED_PGVER=(9.{2..6} 10)
+typeset -r EMAJ_SUPPORTED_PGVER=(9.{2..6} 10 11)
 
 # Array of pseudo-vars used by scripts
 typeset -r EMAJ_PGVARS=('DIR' 'BIN' 'SHARE')
