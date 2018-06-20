@@ -319,34 +319,9 @@ $_create_tbl$
     END IF;
 -- create the sequence associated to the log table
     EXECUTE 'CREATE SEQUENCE ' || v_sequenceName;
--- creation of the log fonction that will be mapped to the log trigger later
--- The new row is logged for each INSERT, the old row is logged for each DELETE
--- and the old and the new rows are logged for each UPDATE.
-    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
-         || 'BEGIN'
--- The sequence associated to the log table is incremented at the beginning of the function ...
-         || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
--- ... and the global id sequence is incremented by the first/only INSERT into the log table.
-         || '  IF (TG_OP = ''DELETE'') THEN'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
-         || '    RETURN OLD;'
-         || '  ELSIF (TG_OP = ''UPDATE'') THEN'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'';'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', lastval();'
-         || '    RETURN NEW;'
-         || '  ELSIF (TG_OP = ''INSERT'') THEN'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''INS'', ''NEW'';'
-         || '    RETURN NEW;'
-         || '  END IF;'
-         || '  RETURN NULL;'
-         || 'END;'
-         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER;';
--- creation of the log trigger on the application table, using the previously created log function
--- But the trigger is not immediately activated (it will be at emaj_start_group time)
-    EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
-    EXECUTE 'CREATE TRIGGER emaj_log_trg'
-         || ' AFTER INSERT OR UPDATE OR DELETE ON ' || v_fullTableName
-         || '  FOR EACH ROW EXECUTE PROCEDURE ' || v_logFnctName || '()';
+-- create the log function and the log trigger
+    PERFORM emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName);
+-- Deactivate the log trigger (it will be enabled at emaj_start_group time)
     EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
 -- creation of the trigger that manage any TRUNCATE on the application table
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
@@ -390,6 +365,47 @@ $_create_tbl$
     RETURN;
   END;
 $_create_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._create_log_trigger(v_fullTableName TEXT, v_logTableName TEXT, v_sequenceName TEXT, v_logFnctName TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_create_log_trigger$
+-- The function creates the log function and the associated log trigger for an application table.
+-- It is called by several functions.
+-- Inputs: the full name of the application table, the log table, the log sequence and the log function
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can manage the trigger on the application table.
+  DECLARE
+  BEGIN
+-- drop the log trigger if it exists
+    EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
+-- create the log fonction that will be mapped to the log trigger just after
+--   the new row is logged for each INSERT, the old row is logged for each DELETE
+--   and the old and the new rows are logged for each UPDATE.
+    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
+         || 'BEGIN'
+-- The sequence associated to the log table is incremented at the beginning of the function ...
+         || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
+-- ... and the global id sequence is incremented by the first/only INSERT into the log table.
+         || '  IF (TG_OP = ''DELETE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
+         || '    RETURN OLD;'
+         || '  ELSIF (TG_OP = ''UPDATE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'';'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', lastval();'
+         || '    RETURN NEW;'
+         || '  ELSIF (TG_OP = ''INSERT'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''INS'', ''NEW'';'
+         || '    RETURN NEW;'
+         || '  END IF;'
+         || '  RETURN NULL;'
+         || 'END;'
+         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER;';
+-- create the log trigger on the application table, using the previously created log function
+    EXECUTE 'CREATE TRIGGER emaj_log_trg'
+         || ' AFTER INSERT OR UPDATE OR DELETE ON ' || v_fullTableName
+         || '  FOR EACH ROW EXECUTE PROCEDURE ' || v_logFnctName || '()';
+    RETURN;
+  END;
+$_create_log_trigger$;
 
 CREATE OR REPLACE FUNCTION emaj._add_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
@@ -445,6 +461,87 @@ $_add_tbl$
     RETURN;
   END;
 $_add_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_log_schema_tbl(r_rel emaj.emaj_relation, v_newLogSchemaSuffix TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_log_schema_tbl$
+-- This function processes the change of log schema for an application table
+-- Input: the existing emaj_relation row for the table, and the new log schema suffix
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
+  DECLARE
+    v_emajSchema             TEXT = 'emaj';
+    v_schemaPrefix           TEXT = 'emaj';
+    v_newLogSchema           TEXT;
+  BEGIN
+-- build the name of new log schema
+    v_newLogSchema = coalesce(v_schemaPrefix || v_newLogSchemaSuffix, v_emajSchema);
+-- process the log schema change for the log table and the log sequence
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
+    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
+-- modify the log function (name and content)
+    EXECUTE 'DROP FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
+    PERFORM emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table),
+                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence),
+                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function));
+-- as the group in LOGGING state, keep the trigger enabled
+-- adjust sequences schema names in emaj_sequence tables
+    UPDATE emaj.emaj_sequence SET sequ_schema = v_newLogSchema WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation SET rel_log_schema = v_newLogSchema
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'LOG SCHEMA CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              r_rel.rel_log_schema || ' => ' || v_newLogSchema);
+    RETURN;
+  END;
+$_change_log_schema_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_emaj_names_prefix(r_rel emaj.emaj_relation, v_newNamesPrefix TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_emaj_names_prefix$
+-- This function processes the change of emaj names prefix for an application table
+-- Input: the existing emaj_relation row for the table and the new emaj names prefix
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
+  DECLARE
+    v_newEmajNamesPrefix     TEXT;
+    v_newLogTableName        TEXT;
+    v_newLogFunctionName     TEXT;
+    v_newLogSequenceName     TEXT;
+    v_newLogIndexName        TEXT;
+  BEGIN
+-- build the name of new emaj components associated to the application table (non schema qualified and not quoted)
+    v_newEmajNamesPrefix = coalesce(v_newNamesPrefix, r_rel.rel_schema || '_' || r_rel.rel_tblseq);
+    v_newLogTableName    = v_newEmajNamesPrefix || '_log';
+    v_newLogIndexName    = v_newEmajNamesPrefix || '_log_idx';
+    v_newLogSequenceName = v_newEmajNamesPrefix || '_log_seq';
+    v_newLogFunctionName = v_newEmajNamesPrefix || '_log_fnct';
+-- process the emaj names prefix change
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' RENAME TO ' || quote_ident(v_newLogTableName);
+    EXECUTE 'ALTER INDEX ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_index)|| ' RENAME TO ' || quote_ident(v_newLogIndexName);
+    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' RENAME TO ' || quote_ident(v_newLogSequenceName);
+-- modify the log function (name and content)
+    EXECUTE 'DROP FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
+    PERFORM emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+                                     quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogTableName),
+                                     quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogSequenceName),
+                                     quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName));
+-- as the group in LOGGING state, keep the trigger enabled
+-- adjust sequences schema names in emaj_sequence tables
+    UPDATE emaj.emaj_sequence SET sequ_name = v_newLogSequenceName WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation
+      SET rel_log_table = v_newLogTableName, rel_log_index = v_newLogIndexName,
+          rel_log_sequence = v_newLogSequenceName, rel_log_function = v_newLogFunctionName
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'NAMES PREFIX CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(substring(r_rel.rel_log_table FROM '(.*)_log$'),r_rel.rel_log_table,'Internal error in _change_emaj_names_prefix') || ' => ' || v_newEmajNamesPrefix);
+    RETURN;
+  END;
+$_change_emaj_names_prefix$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS

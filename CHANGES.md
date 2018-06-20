@@ -18,7 +18,9 @@ E-Maj - Change log
 ###Bug fixes:###
   * The functions that estimate the rollbacks duration reported wrong results
     when the 'EMAJ_LAST_MARK' keyword was used as rollback target mark.
-
+  * When a logging group was altered and changed either the log schema suffix
+    or the emaj names prefix for an application table, the log of the
+    subsequent updates on the table failed.
 
 2.2.3 (2018-Mar-13)
 ------

@@ -23,8 +23,11 @@ set default_tablespace = tspemaj_renamed;
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','Attributes_changed');
 reset default_tablespace;
 
--- set an intermediate mark
+-- perform some operations: set an intermediate mark, update myTbl3 and rollback
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk2');
+insert into myschema1."myTbl3" values (11, now(), 11.0);
+update myschema2."myTbl3" set col33 = 11.0 where col31 = 10;
+select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 
 -- change the priority back
 update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
@@ -526,8 +529,7 @@ rollback;
 
 update emaj.emaj_group_def set grpdef_group = 'myGroup1'
   where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
---TODO: remove the comment once the existing bug fixed (log function not updated when log table/sequence changes)
-update emaj.emaj_group_def set grpdef_group = 'myGroup1', --grpdef_log_schema_suffix = NULL, grpdef_emaj_names_prefix = 's2t3',
+update emaj.emaj_group_def set grpdef_group = 'myGroup1', grpdef_log_schema_suffix = NULL, grpdef_emaj_names_prefix = 's2t3',
                                grpdef_log_dat_tsp = 'tsplog1', grpdef_log_idx_tsp = 'tsplog1'
   where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 
