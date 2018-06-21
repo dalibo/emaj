@@ -187,6 +187,39 @@ Valider les résultats
 
 Après avoir exécuté un script *psql*, *regress.sh* compare le résultat obtenu avec le résultat attendu et affiche le résultat de la comparaison sous la forme *'ok'* ou *'FAILED'*.
 
+Voici un exemple d’affichage du déroulement d’un test (ici le scénario avec installation et upgrade de version et avec une différence détectée) ::
+
+	Run regression test
+	============== dropping database "regression"         ==============
+	DROP DATABASE
+	============== creating database "regression"         ==============
+	CREATE DATABASE
+	ALTER DATABASE
+	============== running regression test queries        ==============
+	test install_upgrade          ... ok
+	test setup                    ... ok
+	test create_drop              ... ok
+	test start_stop               ... ok
+	test mark                     ... ok
+	test rollback                 ... ok
+	test misc                     ... ok
+	test alter                    ... ok
+	test alter_logging            ... ok
+	test viewer                   ... ok
+	test adm1                     ... ok
+	test adm2                     ... ok
+	test client                   ... ok
+	test check                    ... FAILED
+	test cleanup                  ... ok
+	
+	=======================
+	1 of 15 tests failed.
+	=======================
+	
+	The differences that caused some tests to fail can be viewed in the
+	file "/home/postgres/proj/emaj/test/11/regression.diffs".  A copy of the test summary that you see
+	above is saved in the file "/home/postgres/proj/emaj/test/11/regression.out".
+
 Dans le cas où au moins un script ressort en différence, il convient d’analyser scrupuleusement le contenu du fichier *test/<version_postgres>/regression.diff* pour vérifier si les écarts sont bien liés aux modifications apportées dans le code source de l’extension ou dans les scripts de test.
 
 Une fois que les écarts relevés sont tous jugés valides, il faut copier le contenu des répertoires *test/<version_postgres>/result* dans *test/<version_postgres>/expected*. Un script *shell* permet de traiter toutes les versions PostgreSQL en une seule commande ::
@@ -213,6 +246,19 @@ Le script s’exécute avec la commande ::
    perl tools/check_error_messages.pl
 
 Certains messages sont connus pour ne pas être couverts (cas d’erreurs difficilement reproductibles par exemple). Ces messages, codés dans le script *perl*, sont exclus de l’affichage final.
+
+Évaluer les performances
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Le répertoire *tools/performance* contient quelques scripts shell permettant de réaliser des mesures de performances. Comme le résultat des mesures est totalement dépendant de la plateforme et de l’environnement utilisés, aucun résultat de référence n’est fourni.
+
+Les scripts couvrent les domaines suivants :
+
+* *log_overhead/pgbench.sh* évalue le surcoût du mécanisme de log, à l’aide de pgbench,
+* *large_group/large_group.sh* évalue le fonctionnement de groupes contenant un grand nombre de tables,
+* *rollback/rollback_perf.sh* évalue les performances des rollbacks E-Maj avec différents profils de tables.
+
+Pour chacun de ces fichiers, des variables sont à configurer en début de scripts,
 
 .. _documenting:
 
