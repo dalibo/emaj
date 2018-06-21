@@ -1582,7 +1582,7 @@ $_create_log_trigger$
   END;
 $_create_log_trigger$;
 
-CREATE OR REPLACE FUNCTION emaj._add_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._add_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_add_tbl$
 -- The function adds a table to a group. It is called during an alter group operation.
@@ -1631,13 +1631,14 @@ $_add_tbl$
       EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg';
 -- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES ('ALTER_GROUP', 'TABLE ADDED', v_fullTableName, 'To logging group ' || r_plan.altr_group);
+        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'TABLE ADDED',
+                v_fullTableName, 'To logging group ' || r_plan.altr_group);
     END IF;
     RETURN;
   END;
 $_add_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_log_schema_tbl(r_rel emaj.emaj_relation, v_newLogSchemaSuffix TEXT)
+CREATE OR REPLACE FUNCTION emaj._change_log_schema_tbl(r_rel emaj.emaj_relation, v_newLogSchemaSuffix TEXT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_change_log_schema_tbl$
 -- This function processes the change of log schema for an application table
@@ -1667,13 +1668,13 @@ $_change_log_schema_tbl$
       WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUP', 'LOG SCHEMA CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
-              r_rel.rel_log_schema || ' => ' || v_newLogSchema);
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'LOG SCHEMA CHANGED',
+              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq), r_rel.rel_log_schema || ' => ' || v_newLogSchema);
     RETURN;
   END;
 $_change_log_schema_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_emaj_names_prefix(r_rel emaj.emaj_relation, v_newNamesPrefix TEXT)
+CREATE OR REPLACE FUNCTION emaj._change_emaj_names_prefix(r_rel emaj.emaj_relation, v_newNamesPrefix TEXT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_change_emaj_names_prefix$
 -- This function processes the change of emaj names prefix for an application table
@@ -1712,13 +1713,15 @@ $_change_emaj_names_prefix$
       WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUP', 'NAMES PREFIX CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
-              coalesce(substring(r_rel.rel_log_table FROM '(.*)_log$'),r_rel.rel_log_table,'Internal error in _change_emaj_names_prefix') || ' => ' || v_newEmajNamesPrefix);
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'NAMES PREFIX CHANGED',
+              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(substring(r_rel.rel_log_table FROM '(.*)_log$'),r_rel.rel_log_table,'Internal error in _change_emaj_names_prefix')
+                || ' => ' || v_newEmajNamesPrefix);
     RETURN;
   END;
 $_change_emaj_names_prefix$;
 
-CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(r_rel emaj.emaj_relation, v_newLogDatTsp TEXT)
+CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(r_rel emaj.emaj_relation, v_newLogDatTsp TEXT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_change_log_data_tsp_tbl$
 -- This function changes the log data tablespace for an application table
@@ -1739,13 +1742,14 @@ $_change_log_data_tsp_tbl$
       WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUP', 'LOG DATA TABLESPACE CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'LOG DATA TABLESPACE CHANGED',
+              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
               coalesce(r_rel.rel_log_dat_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogDatTsp, 'Default tablespace'));
     RETURN;
   END;
 $_change_log_data_tsp_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(r_rel emaj.emaj_relation, v_newLogIdxTsp TEXT)
+CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(r_rel emaj.emaj_relation, v_newLogIdxTsp TEXT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_change_log_index_tsp_tbl$
 -- This function changes the log index tablespace for an application table
@@ -1766,13 +1770,14 @@ $_change_log_index_tsp_tbl$
       WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUP', 'LOG INDEX TABLESPACE CHANGED', quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'LOG INDEX TABLESPACE CHANGED',
+              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
               coalesce(r_rel.rel_log_idx_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogIdxTsp, 'Default tablespace'));
     RETURN;
   END;
 $_change_log_index_tsp_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_remove_tbl$
 -- The function removes a table from a group. It is called during an alter group operation.
@@ -1837,8 +1842,8 @@ $_remove_tbl$
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES ('ALTER_GROUP', 'TABLE REMOVED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
-                'From logging group ' || r_plan.altr_group);
+        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'TABLE REMOVED',
+                quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'From logging group ' || r_plan.altr_group);
     END IF;
     RETURN;
   END;
@@ -1958,7 +1963,7 @@ $_create_seq$
   END;
 $_create_seq$;
 
-CREATE OR REPLACE FUNCTION emaj._add_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._add_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_add_seq$
 -- The function adds a sequence to a group. It is called during an alter group operation.
@@ -1982,14 +1987,14 @@ $_add_seq$
         SELECT * FROM emaj._get_current_sequence_state(r_plan.altr_schema, r_plan.altr_tblseq, v_timeId);
 -- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES ('ALTER_GROUP', 'SEQUENCE ADDED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
-                'To logging group ' || r_plan.altr_group);
+        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'SEQUENCE ADDED',
+                quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'To logging group ' || r_plan.altr_group);
     END IF;
     RETURN;
   END;
 $_add_seq$;
 
-CREATE OR REPLACE FUNCTION emaj._remove_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._remove_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_remove_seq$
 -- The function removes a sequence from a group. It is called during an alter group operation.
@@ -2001,8 +2006,8 @@ $_remove_seq$
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES ('ALTER_GROUP', 'SEQUENCE REMOVED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
-                'From logging group ' || r_plan.altr_group);
+        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'SEQUENCE REMOVED',
+                quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'From logging group ' || r_plan.altr_group);
     ELSE
 -- if the group is in idle state, drop the sequence immediately
       PERFORM emaj._drop_seq(emaj.emaj_relation.*) FROM emaj.emaj_relation
@@ -3072,11 +3077,11 @@ $_alter_groups$
 -- we can now plan all the steps needed to perform the operation
       PERFORM emaj._alter_plan(v_groupNames, v_timeId);
 -- create the needed secondary schemas
-      PERFORM emaj._create_log_schemas('ALTER_GROUP', v_groupNames);
+      PERFORM emaj._create_log_schemas(CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, v_groupNames);
 -- execute the plan
-      PERFORM emaj._alter_exec(v_timeId);
+      PERFORM emaj._alter_exec(v_timeId, v_multiGroup);
 -- drop the E-Maj secondary schemas that are now useless (i.e. not used by any created group)
-      PERFORM emaj._drop_log_schemas('ALTER_GROUP', FALSE);
+      PERFORM emaj._drop_log_schemas(CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, FALSE);
 -- update tables and sequences counters and the last alter timestamp in the emaj_group table
       UPDATE emaj.emaj_group
         SET group_last_alter_time_id = v_timeId,
@@ -3235,7 +3240,7 @@ $_alter_plan$
   END;
 $_alter_plan$;
 
-CREATE OR REPLACE FUNCTION emaj._alter_exec(v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._alter_exec(v_timeId BIGINT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_alter_exec$
 -- This function executes the alter groups operation that has been planned by the _alter_plan() function.
@@ -3261,11 +3266,11 @@ $_alter_exec$
       CASE r_plan.altr_step
         WHEN 'REMOVE_TBL' THEN
 -- remove a table from its group
-          PERFORM emaj._remove_tbl(r_plan, v_timeId);
+          PERFORM emaj._remove_tbl(r_plan, v_timeId, v_multiGroup);
 --
         WHEN 'REMOVE_SEQ' THEN
 -- remove a sequence from its group
-          PERFORM emaj._remove_seq(r_plan, v_timeId);
+          PERFORM emaj._remove_seq(r_plan, v_timeId, v_multiGroup);
 --
         WHEN 'RESET_GROUP' THEN
 -- reset a group
@@ -3315,7 +3320,7 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix);
+          PERFORM emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup);
 --
         WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN
 -- get the table description from emaj_relation
@@ -3326,7 +3331,7 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix);
+          PERFORM emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup);
 --
         WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN
 -- get the table description from emaj_relation
@@ -3337,7 +3342,7 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp);
+          PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp, v_multiGroup);
 --
         WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
 -- get the table description from emaj_relation
@@ -3348,7 +3353,7 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp);
+          PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp, v_multiGroup);
 --
         WHEN 'MOVE_TBL' THEN
 -- move a table from one group to another group
@@ -3365,11 +3370,11 @@ $_alter_exec$
 --
         WHEN 'ADD_TBL' THEN
 -- add a table to a group
-          PERFORM emaj._add_tbl(r_plan, v_timeId);
+          PERFORM emaj._add_tbl(r_plan, v_timeId, v_multiGroup);
 --
         WHEN 'ADD_SEQ' THEN
 -- add a sequence to a group
-          PERFORM emaj._add_seq(r_plan, v_timeId);
+          PERFORM emaj._add_seq(r_plan, v_timeId, v_multiGroup);
 --
       END CASE;
     END LOOP;

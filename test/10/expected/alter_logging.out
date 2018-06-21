@@ -1721,14 +1721,18 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 (7 rows)
 
   select hist_function, hist_event, hist_object, hist_wording from emaj.emaj_hist 
-    where hist_function = 'ALTER_GROUPS' order by hist_id desc limit 4;
- hist_function |   hist_event   |         hist_object          |             hist_wording              
----------------+----------------+------------------------------+---------------------------------------
- ALTER_GROUPS  | END            | myGroup1,myGroup2            | Timestamp Id : 6119
- ALTER_GROUPS  | SEQUENCE MOVED | myschema2."myTbl3_col31_seq" | From group myGroup2 to group myGroup1
- ALTER_GROUPS  | TABLE MOVED    | myschema2."myTbl3"           | From group myGroup2 to group myGroup1
- ALTER_GROUPS  | BEGIN          | myGroup1,myGroup2            | 
-(4 rows)
+    where hist_function = 'ALTER_GROUPS' order by hist_id desc limit 8;
+ hist_function |          hist_event          |         hist_object          |             hist_wording              
+---------------+------------------------------+------------------------------+---------------------------------------
+ ALTER_GROUPS  | END                          | myGroup1,myGroup2            | Timestamp Id : 6119
+ ALTER_GROUPS  | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From group myGroup2 to group myGroup1
+ ALTER_GROUPS  | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup2 to group myGroup1
+ ALTER_GROUPS  | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1
+ ALTER_GROUPS  | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1
+ ALTER_GROUPS  | NAMES PREFIX CHANGED         | myschema2."myTbl3"           | myschema2_myTbl3 => s2t3
+ ALTER_GROUPS  | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj
+ ALTER_GROUPS  | BEGIN                        | myGroup1,myGroup2            | 
+(8 rows)
 
 rollback;
 -- case when both groups are logging
@@ -2033,28 +2037,28 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUPS           | BEGIN                        |                              |                                                                                                                        | postgres
  ALTER_GROUPS           | END                          |                              |                                                                                                                        | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | SCHEMA DROPPED               | emajb                        |                                                                                                                        | postgres
+ ALTER_GROUPS           | SCHEMA DROPPED               | emajb                        |                                                                                                                        | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6040                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | SCHEMA CREATED               | emajb                        |                                                                                                                        | postgres
+ ALTER_GROUPS           | SCHEMA CREATED               | emajb                        |                                                                                                                        | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6041                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | SCHEMA CREATED               | emajtmp                      |                                                                                                                        | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emajtmp                                                                                                       | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                                                                               | postgres
+ ALTER_GROUPS           | SCHEMA CREATED               | emajtmp                      |                                                                                                                        | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emajtmp                                                                                                       | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                                                                               | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6042                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajtmp => emajC                                                                                                       | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                                                                               | postgres
- ALTER_GROUP            | SCHEMA DROPPED               | emajtmp                      |                                                                                                                        | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajtmp => emajC                                                                                                       | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                                                                               | postgres
+ ALTER_GROUPS           | SCHEMA DROPPED               | emajtmp                      |                                                                                                                        | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6043                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                                                                        | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | Default tablespace => tsplog1                                                                                          | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                                                                        | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | Default tablespace => tsplog1                                                                                          | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6044                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                                                                        | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                                                                          | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                                                                        | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6045                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6046                                                                                                    | postgres
@@ -2077,10 +2081,10 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS            | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS        | BEGIN                        | myGroup1,myGroup2            | Attributes_changed                                                                                                     | postgres
  SET_MARK_GROUPS        | END                          | myGroup1,myGroup2            | Attributes_changed                                                                                                     | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj                                                                                                          | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                                                                               | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                                                                        | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | Default tablespace => tsplog1                                                                                          | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj                                                                                                          | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                                                                               | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                                                                        | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | Default tablespace => tsplog1                                                                                          | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6052                                                                                                    | postgres
  SET_MARK_GROUPS        | BEGIN                        | myGroup1,myGroup2            | Mk2                                                                                                                    | postgres
  LOCK_GROUPS            | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
@@ -2114,10 +2118,10 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS            | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS        | BEGIN                        | myGroup1,myGroup2            | ALTER_%                                                                                                                | postgres
  SET_MARK_GROUPS        | END                          | myGroup1,myGroup2            | ALTER_%                                                                                                                | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emaj => emajC                                                                                                          | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                                                                               | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                                                                        | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                                                                          | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emaj => emajC                                                                                                          | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                                                                               | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                                                                        | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6056                                                                                                    | postgres
  SET_MARK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP             | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
@@ -2533,10 +2537,10 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS            | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS        | BEGIN                        | myGroup1,myGroup2            | move to myGroup1                                                                                                       | postgres
  SET_MARK_GROUPS        | END                          | myGroup1,myGroup2            | move to myGroup1                                                                                                       | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj                                                                                                          | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema2."myTbl3"           | myschema2_myTbl3 => s2t3                                                                                               | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj                                                                                                          | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema2."myTbl3"           | myschema2_myTbl3 => s2t3                                                                                               | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
  ALTER_GROUPS           | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup2 to group myGroup1                                                                                  | postgres
  ALTER_GROUPS           | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From group myGroup2 to group myGroup1                                                                                  | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6121                                                                                                    | postgres
@@ -2605,10 +2609,10 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS            | END                          | myGroup1                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUPS        | BEGIN                        | myGroup1                     | back to idle myGroup2                                                                                                  | postgres
  SET_MARK_GROUPS        | END                          | myGroup1                     | back to idle myGroup2                                                                                                  | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emaj => emajC                                                                                                          | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema2."myTbl3"           | s2t3 => myschema2_myTbl3                                                                                               | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emaj => emajC                                                                                                          | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema2."myTbl3"           | s2t3 => myschema2_myTbl3                                                                                               | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS           | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup1 to group myGroup2                                                                                  | postgres
  ALTER_GROUPS           | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From group myGroup1 to group myGroup2                                                                                  | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6127                                                                                                    | postgres

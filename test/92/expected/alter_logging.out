@@ -37,10 +37,10 @@ set default_tablespace = tspemaj_renamed;
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','Attributes_changed');
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema2_myTbl3_log_fnct"() CASCADE"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 16 at EXECUTE statement
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE statement
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema2.myTbl3" does not exist, skipping
@@ -50,18 +50,18 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 17 at PERFORM
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema1_myTbl3_log_fnct"() CASCADE"
-PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text) line 23 at EXECUTE statement
-SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 90 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE statement
+SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema1.myTbl3" does not exist, skipping
@@ -71,10 +71,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogTableName),
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogSequenceName),
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
-PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text) line 24 at PERFORM
-SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 90 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
@@ -144,10 +144,10 @@ update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = '
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 16 at EXECUTE statement
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE statement
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema2.myTbl3" does not exist, skipping
@@ -157,18 +157,18 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 17 at PERFORM
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC".s1t3_log_fnct() CASCADE"
-PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text) line 23 at EXECUTE statement
-SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 90 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE statement
+SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema1.myTbl3" does not exist, skipping
@@ -178,10 +178,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogTableName),
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogSequenceName),
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
-PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text) line 24 at PERFORM
-SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 90 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
@@ -831,10 +831,10 @@ NOTICE:  table "myschema2_mytbl7_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl7_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema2.mytbl7" does not exist, skipping
@@ -843,20 +843,20 @@ PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUT
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for table "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl7"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
@@ -1225,10 +1225,10 @@ NOTICE:  table "myschema2_mytbl7_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema2_mytbl7_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema2.mytbl7" does not exist, skipping
@@ -1237,20 +1237,20 @@ PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUT
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for table "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl7"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
@@ -1747,10 +1747,10 @@ NOTICE:  table "myschema1_myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emajC"."myschema1_myTbl3_log""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema1.myTbl3" does not exist, skipping
@@ -1759,30 +1759,30 @@ PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUT
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1."myTbl3""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl1" does not exist, skipping
@@ -1791,30 +1791,30 @@ PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUT
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emajb.myschema1_mytbl2b_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl2b" does not exist, skipping
@@ -1823,20 +1823,20 @@ PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUT
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl2b"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
@@ -2081,10 +2081,10 @@ NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl1" does not exist, skipping
@@ -2093,20 +2093,20 @@ PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUT
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for table "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint) line 24 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId)"
-PL/pgSQL function emaj._alter_exec(bigint) line 129 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1,myGroup2).
@@ -2149,10 +2149,10 @@ begin;
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'move to myGroup1 while logging');
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema2_myTbl3_log_fnct"() CASCADE"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 16 at EXECUTE statement
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE statement
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema2.myTbl3" does not exist, skipping
@@ -2162,18 +2162,18 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 17 at PERFORM
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
-PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text) line 23 at EXECUTE statement
-SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 90 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE statement
+SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema2.myTbl3" does not exist, skipping
@@ -2183,10 +2183,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogTableName),
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogSequenceName),
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
-PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text) line 24 at PERFORM
-SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 90 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
@@ -2215,14 +2215,18 @@ PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 (7 rows)
 
   select hist_function, hist_event, hist_object, hist_wording from emaj.emaj_hist 
-    where hist_function = 'ALTER_GROUPS' order by hist_id desc limit 4;
- hist_function |   hist_event   |         hist_object          |             hist_wording              
----------------+----------------+------------------------------+---------------------------------------
- ALTER_GROUPS  | END            | myGroup1,myGroup2            | Timestamp Id : 6119
- ALTER_GROUPS  | SEQUENCE MOVED | myschema2."myTbl3_col31_seq" | From group myGroup2 to group myGroup1
- ALTER_GROUPS  | TABLE MOVED    | myschema2."myTbl3"           | From group myGroup2 to group myGroup1
- ALTER_GROUPS  | BEGIN          | myGroup1,myGroup2            | 
-(4 rows)
+    where hist_function = 'ALTER_GROUPS' order by hist_id desc limit 8;
+ hist_function |          hist_event          |         hist_object          |             hist_wording              
+---------------+------------------------------+------------------------------+---------------------------------------
+ ALTER_GROUPS  | END                          | myGroup1,myGroup2            | Timestamp Id : 6119
+ ALTER_GROUPS  | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From group myGroup2 to group myGroup1
+ ALTER_GROUPS  | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup2 to group myGroup1
+ ALTER_GROUPS  | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1
+ ALTER_GROUPS  | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1
+ ALTER_GROUPS  | NAMES PREFIX CHANGED         | myschema2."myTbl3"           | myschema2_myTbl3 => s2t3
+ ALTER_GROUPS  | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj
+ ALTER_GROUPS  | BEGIN                        | myGroup1,myGroup2            | 
+(8 rows)
 
 rollback;
 -- case when both groups are logging
@@ -2252,10 +2256,10 @@ update myschema2."myTbl3" set col32 = col32 + '1 day' where col31 >= 8;
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'move to myGroup1');
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema2_myTbl3_log_fnct"() CASCADE"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 16 at EXECUTE statement
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE statement
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema2.myTbl3" does not exist, skipping
@@ -2265,18 +2269,18 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 17 at PERFORM
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
-PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text) line 23 at EXECUTE statement
-SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 90 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE statement
+SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema2.myTbl3" does not exist, skipping
@@ -2286,10 +2290,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogTableName),
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogSequenceName),
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
-PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text) line 24 at PERFORM
-SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 90 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
@@ -2416,10 +2420,10 @@ select emaj.emaj_stop_group('myGroup2');
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'back to idle myGroup2');
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj.s2t3_log_fnct() CASCADE"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 16 at EXECUTE statement
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE statement
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema2.myTbl3" does not exist, skipping
@@ -2429,18 +2433,18 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 17 at PERFORM
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC".s2t3_log_fnct() CASCADE"
-PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text) line 23 at EXECUTE statement
-SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 90 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE statement
+SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema2.myTbl3" does not exist, skipping
@@ -2450,10 +2454,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogTableName),
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogSequenceName),
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
-PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text) line 24 at PERFORM
-SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 90 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
@@ -2648,28 +2652,28 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUPS           | BEGIN                        |                              |                                                                                                                        | postgres
  ALTER_GROUPS           | END                          |                              |                                                                                                                        | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | SCHEMA DROPPED               | emajb                        |                                                                                                                        | postgres
+ ALTER_GROUPS           | SCHEMA DROPPED               | emajb                        |                                                                                                                        | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6040                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | SCHEMA CREATED               | emajb                        |                                                                                                                        | postgres
+ ALTER_GROUPS           | SCHEMA CREATED               | emajb                        |                                                                                                                        | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6041                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | SCHEMA CREATED               | emajtmp                      |                                                                                                                        | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emajtmp                                                                                                       | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                                                                               | postgres
+ ALTER_GROUPS           | SCHEMA CREATED               | emajtmp                      |                                                                                                                        | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emajtmp                                                                                                       | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                                                                               | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6042                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajtmp => emajC                                                                                                       | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                                                                               | postgres
- ALTER_GROUP            | SCHEMA DROPPED               | emajtmp                      |                                                                                                                        | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajtmp => emajC                                                                                                       | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                                                                               | postgres
+ ALTER_GROUPS           | SCHEMA DROPPED               | emajtmp                      |                                                                                                                        | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6043                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                                                                        | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | Default tablespace => tsplog1                                                                                          | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                                                                        | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | Default tablespace => tsplog1                                                                                          | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6044                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                                                                        | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                                                                          | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                                                                        | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6045                                                                                                    | postgres
  ALTER_GROUPS           | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6046                                                                                                    | postgres
@@ -2692,10 +2696,10 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS            | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS        | BEGIN                        | myGroup1,myGroup2            | Attributes_changed                                                                                                     | postgres
  SET_MARK_GROUPS        | END                          | myGroup1,myGroup2            | Attributes_changed                                                                                                     | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj                                                                                                          | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                                                                               | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                                                                        | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | Default tablespace => tsplog1                                                                                          | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj                                                                                                          | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | myschema1_myTbl3 => s1t3                                                                                               | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                                                                        | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | Default tablespace => tsplog1                                                                                          | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6052                                                                                                    | postgres
  SET_MARK_GROUPS        | BEGIN                        | myGroup1,myGroup2            | Mk2                                                                                                                    | postgres
  LOCK_GROUPS            | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
@@ -2729,10 +2733,10 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS            | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS        | BEGIN                        | myGroup1,myGroup2            | ALTER_%                                                                                                                | postgres
  SET_MARK_GROUPS        | END                          | myGroup1,myGroup2            | ALTER_%                                                                                                                | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emaj => emajC                                                                                                          | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                                                                               | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                                                                        | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                                                                          | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emaj => emajC                                                                                                          | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema1."myTbl3"           | s1t3 => myschema1_myTbl3                                                                                               | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                                                                        | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6056                                                                                                    | postgres
  SET_MARK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP             | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
@@ -3148,10 +3152,10 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS            | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS        | BEGIN                        | myGroup1,myGroup2            | move to myGroup1                                                                                                       | postgres
  SET_MARK_GROUPS        | END                          | myGroup1,myGroup2            | move to myGroup1                                                                                                       | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj                                                                                                          | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema2."myTbl3"           | myschema2_myTbl3 => s2t3                                                                                               | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emajC => emaj                                                                                                          | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema2."myTbl3"           | myschema2_myTbl3 => s2t3                                                                                               | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
  ALTER_GROUPS           | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup2 to group myGroup1                                                                                  | postgres
  ALTER_GROUPS           | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From group myGroup2 to group myGroup1                                                                                  | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6121                                                                                                    | postgres
@@ -3220,10 +3224,10 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS            | END                          | myGroup1                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUPS        | BEGIN                        | myGroup1                     | back to idle myGroup2                                                                                                  | postgres
  SET_MARK_GROUPS        | END                          | myGroup1                     | back to idle myGroup2                                                                                                  | postgres
- ALTER_GROUP            | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emaj => emajC                                                                                                          | postgres
- ALTER_GROUP            | NAMES PREFIX CHANGED         | myschema2."myTbl3"           | s2t3 => myschema2_myTbl3                                                                                               | postgres
- ALTER_GROUP            | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
- ALTER_GROUP            | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
+ ALTER_GROUPS           | LOG SCHEMA CHANGED           | myschema2."myTbl3"           | emaj => emajC                                                                                                          | postgres
+ ALTER_GROUPS           | NAMES PREFIX CHANGED         | myschema2."myTbl3"           | s2t3 => myschema2_myTbl3                                                                                               | postgres
+ ALTER_GROUPS           | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
+ ALTER_GROUPS           | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS           | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup1 to group myGroup2                                                                                  | postgres
  ALTER_GROUPS           | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From group myGroup1 to group myGroup2                                                                                  | postgres
  ALTER_GROUPS           | END                          | myGroup1,myGroup2            | Timestamp Id : 6127                                                                                                    | postgres

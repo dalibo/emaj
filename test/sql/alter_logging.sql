@@ -539,7 +539,7 @@ begin;
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'move to myGroup1 while logging');
   select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan) order by 1,2,3,4,5;
   select hist_function, hist_event, hist_object, hist_wording from emaj.emaj_hist 
-    where hist_function = 'ALTER_GROUPS' order by hist_id desc limit 4;
+    where hist_function = 'ALTER_GROUPS' order by hist_id desc limit 8;
 rollback;
 
 -- case when both groups are logging

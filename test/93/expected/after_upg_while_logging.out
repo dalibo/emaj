@@ -88,10 +88,10 @@ update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_sche
 select emaj.emaj_alter_group('myGroup1');
 NOTICE:  drop cascades to trigger emaj_log_trg on table mytbl2b
 CONTEXT:  SQL statement "DROP FUNCTION emajb.myschema1_mytbl2b_log_fnct() CASCADE"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 16 at EXECUTE statement
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE statement
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for table "myschema1.mytbl2b" does not exist, skipping
@@ -101,10 +101,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence),
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text) line 17 at PERFORM
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix)"
-PL/pgSQL function emaj._alter_exec(bigint) line 79 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId)"
+PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
+SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
