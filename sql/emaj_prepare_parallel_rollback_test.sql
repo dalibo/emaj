@@ -11,7 +11,7 @@
 --      VALUES ('dblink_user_password','user=<user> password=<password>'
 --
 -- Once this script is executed, you can type:
--- ./php/emajParallelRollback.php -g 'emaj parallel rollback test group' -m BEFORE_PROC_2 -s 3 -v <and connection parameters>
+-- ./client/emajParallelRollback.php -g 'emaj parallel rollback test group' -m BEFORE_PROC_2 -s 3 -v <and connection parameters>
 --
 -- The role configured for the dblink connection and the role used to perform the parallel 
 -- rollback operation must also be at least member of emaj_adm.
@@ -249,8 +249,8 @@ ALTER TABLE mytbl2 DISABLE TRIGGER mytbl2trg;
 \echo '---'
 \echo '--- emaj_prepare_parallel_rollback_test.sql script successfuly completed.'
 \echo '--- A parallel rollback can be performed, from the E-Maj main directory, using a command like:'
-\echo '    ./php/emajParallelRollback.php -g ''emaj parallel rollback test group'' -m BEFORE_PROC_2 -s 3 -v <and any needed connection parameters among -dhpUW>'
-\echo '--- "./php/emajParallelRollback.php --help" provides information about available parameters.'
+\echo '    ./client/emajParallelRollback.php -g ''emaj parallel rollback test group'' -m BEFORE_PROC_2 -s 3 -v <and any needed connection parameters among -dhpUW>'
+\echo '--- "./client/emajParallelRollback.php --help" provides information about available parameters.'
 \echo '---'
 
 \unset ECHO

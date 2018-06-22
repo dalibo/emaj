@@ -28,20 +28,20 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
-\! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
 
 -- unlogged rollback for 2 groups in strict mode, after having performed an alter group operation
 update emaj.emaj_group_def set grpdef_priority = 1 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
 select emaj.emaj_alter_group('myGroup1');
-\! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 
 -- unlogged rollback for 2 groups in unstrict mode
-\! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 
 -- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
 
 --------------------------------------------
 -- Prepare data for emajRollbackMonitor.php
@@ -93,5 +93,5 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 --------------------------------------------
 -- call emajRollbackMonitor.php using an emaj_viewer role
 --------------------------------------------
-\! ${EMAJ_DIR}/php/emajRollbackMonitor.php -h localhost -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -vr
+\! ${EMAJ_DIR}/client/emajRollbackMonitor.php -h localhost -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -vr
 

@@ -67,13 +67,13 @@ Exemples
 
 La commande ::
 
-   ./php/emajParallelRollback.php -d mydb -g myGroup1 -m Mark1 -s 3
+   ./client/emajParallelRollback.php -d mydb -g myGroup1 -m Mark1 -s 3
 
 se connecte à la base de données *mydb* et exécute un rollback du groupe *myGroup1* à la marque *Mark1*, avec 3 sessions en parallèle.
 
 La commande :
 
-   ./php/emajParallelRollback.php -d mydb -g "myGroup1,myGroup2" -m Mark1 -s 3 -l
+   ./client/emajParallelRollback.php -d mydb -g "myGroup1,myGroup2" -m Mark1 -s 3 -l
 
 se connecte à la base de données *mydb* et exécute un rollback annulable (« *logged rollback* ») des 2 groupes *myGroup1* et *myGroup2* à la marque *Mark1*, avec 3 sessions en parallèle.
 

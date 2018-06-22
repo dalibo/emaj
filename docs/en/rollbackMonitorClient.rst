@@ -43,13 +43,13 @@ Examples
 
 The command::
 
-   ./php/emajRollbackMonitor.php -i 3 -n 10
+   ./client/emajRollbackMonitor.php -i 3 -n 10
 
 displays 10 times and every 3 seconds, the list of in progress rollback operations and the list of the at most 3 latest rollback operations completed in the latest 24 hours.
 
 The command::
 
-   ./php/emajRollbackMonitor.php -a 12 -l 10
+   ./client/emajRollbackMonitor.php -a 12 -l 10
 
 displays only once the list of in progress rollback operations and the list of at most 10 operations completed in the latest 12 hours.
 
