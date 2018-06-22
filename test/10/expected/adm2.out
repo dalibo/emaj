@@ -459,6 +459,10 @@ select emaj.emaj_alter_group('phil''s group#3",');
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
+NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."myTbl2\"
+NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
+NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."myTbl2\"
+NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
  emaj_alter_group 
 ------------------
                 4
@@ -515,6 +519,10 @@ select emaj.emaj_alter_groups('{"phil''s group#3\",","myGroup4"}');
 NOTICE:  table "phil's schema3_phil's tbl1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
+NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."myTbl2\"
+NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
+NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."myTbl2\"
+NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
  emaj_alter_groups 
 -------------------
                  9
@@ -809,13 +817,13 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
  rlbt_rlbk_id |  rlbt_step  | rlbt_schema | rlbt_table |     rlbt_fkey     | rlbt_quantity 
 --------------+-------------+-------------+------------+-------------------+---------------
-         6017 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             2
-         6017 | CTRL+DBLINK |             |            |                   |             1
-         6018 | DIS_LOG_TRG |             |            |                   |             1
-         6018 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             6
-         6018 | DELETE_LOG  | myschema2   | myTbl3     |                   |             6
-         6018 | ENA_LOG_TRG |             |            |                   |             1
-         6018 | CTRL+DBLINK |             |            |                   |             4
+         6018 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             2
+         6018 | CTRL+DBLINK |             |            |                   |             1
+         6019 | DIS_LOG_TRG |             |            |                   |             1
+         6019 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             6
+         6019 | DELETE_LOG  | myschema2   | myTbl3     |                   |             6
+         6019 | ENA_LOG_TRG |             |            |                   |             1
+         6019 | CTRL+DBLINK |             |            |                   |             4
         10000 | DROP_FK     |             |            |                   |             1
         10000 | SET_FK_DEF  |             |            |                   |             2
         10000 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             4
@@ -1037,13 +1045,13 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
  rlbt_rlbk_id |  rlbt_step  | rlbt_schema | rlbt_table |     rlbt_fkey     | rlbt_quantity 
 --------------+-------------+-------------+------------+-------------------+---------------
-         6017 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             2
-         6017 | CTRL+DBLINK |             |            |                   |             1
-         6018 | DIS_LOG_TRG |             |            |                   |             1
-         6018 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             6
-         6018 | DELETE_LOG  | myschema2   | myTbl3     |                   |             6
-         6018 | ENA_LOG_TRG |             |            |                   |             1
-         6018 | CTRL+DBLINK |             |            |                   |             4
+         6018 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             2
+         6018 | CTRL+DBLINK |             |            |                   |             1
+         6019 | DIS_LOG_TRG |             |            |                   |             1
+         6019 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             6
+         6019 | DELETE_LOG  | myschema2   | myTbl3     |                   |             6
+         6019 | ENA_LOG_TRG |             |            |                   |             1
+         6019 | CTRL+DBLINK |             |            |                   |             4
         10000 | DROP_FK     |             |            |                   |             1
         10000 | SET_FK_DEF  |             |            |                   |             2
         10000 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             4
@@ -2713,7 +2721,7 @@ select hist_id, hist_function, hist_event, hist_object,
  hist_id |      hist_function       |       hist_event        |                                   hist_object                                    |                                             regexp_replace                                              | hist_user 
 ---------+--------------------------+-------------------------+----------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------+-----------
    10030 | START_GROUP              | BEGIN                   | myGroup1                                                                         | With log reset                                                                                          | postgres
-   10031 | PURGE_HISTORY            |                         |                                                                                  | 29 emaj_hist rows deleted ; 57 alter groups events deleted ; 38 rollback events deleted                 | postgres
+   10031 | PURGE_HISTORY            |                         |                                                                                  | 29 emaj_hist rows deleted ; 57 alter groups events deleted ; 39 rollback events deleted                 | postgres
    10032 | LOCK_GROUP               | BEGIN                   | myGroup1                                                                         |                                                                                                         | postgres
    10033 | LOCK_GROUP               | END                     | myGroup1                                                                         | 5 tables locked, 0 deadlock(s)                                                                          | postgres
    10034 | SET_MARK_GROUP           | BEGIN                   | myGroup1                                                                         | M1                                                                                                      | postgres
@@ -3031,9 +3039,9 @@ select hist_id, hist_function, hist_event, hist_object,
    10352 | CREATE_GROUP             | BEGIN                   | myGroup4                                                                         | rollbackable                                                                                            | postgres
    10353 | CREATE_GROUP             | END                     | myGroup4                                                                         | 5 tables/sequences processed                                                                            | postgres
    10354 | ALTER_GROUPS             | BEGIN                   | phil's group#3",,myGroup4                                                        |                                                                                                         | postgres
-   10355 | ALTER_GROUP              | LOG SCHEMA CHANGED      | "phil's schema3"."myTbl2\"                                                       | emaj3 => emaj                                                                                           | postgres
-   10356 | ALTER_GROUP              | NAMES PREFIX CHANGED    | "phil's schema3"."myTbl2\"                                                       | phil_mytbl2 => phil's schema3_myTbl2\                                                                   | postgres
-   10357 | ALTER_GROUP              | SCHEMA DROPPED          | emaj3                                                                            |                                                                                                         | postgres
+   10355 | ALTER_GROUPS             | LOG SCHEMA CHANGED      | "phil's schema3"."myTbl2\"                                                       | emaj3 => emaj                                                                                           | postgres
+   10356 | ALTER_GROUPS             | NAMES PREFIX CHANGED    | "phil's schema3"."myTbl2\"                                                       | phil_mytbl2 => phil's schema3_myTbl2\                                                                   | postgres
+   10357 | ALTER_GROUPS             | SCHEMA DROPPED          | emaj3                                                                            |                                                                                                         | postgres
    10358 | ALTER_GROUPS             | END                     | myGroup4,phil's group#3",                                                        | Timestamp Id : 10040                                                                                    | postgres
    10359 | DROP_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
    10360 | DROP_GROUP               | SCHEMA DROPPED          | "emaj #'3"                                                                       |                                                                                                         | postgres

@@ -218,6 +218,13 @@ $$Represents the structure of rows returned by the _detailed_log_stat_groups() f
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION emaj._change_log_schema_tbl(R_REL EMAJ.EMAJ_RELATION,V_NEWLOGSCHEMASUFFIX TEXT);
+DROP FUNCTION emaj._change_emaj_names_prefix(R_REL EMAJ.EMAJ_RELATION,V_NEWNAMESPREFIX TEXT);
+DROP FUNCTION emaj._change_log_data_tsp_tbl(R_REL EMAJ.EMAJ_RELATION,V_NEWLOGDATTSP TEXT);
+DROP FUNCTION emaj._change_log_index_tsp_tbl(R_REL EMAJ.EMAJ_RELATION,V_NEWLOGIDXTSP TEXT);
+DROP FUNCTION emaj._remove_tbl(R_PLAN EMAJ.EMAJ_ALTER_PLAN,V_TIMEID BIGINT);
+DROP FUNCTION emaj._remove_seq(R_PLAN EMAJ.EMAJ_ALTER_PLAN,V_TIMEID BIGINT);
+DROP FUNCTION emaj._alter_exec(V_TIMEID BIGINT);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
@@ -319,34 +326,9 @@ $_create_tbl$
     END IF;
 -- create the sequence associated to the log table
     EXECUTE 'CREATE SEQUENCE ' || v_sequenceName;
--- creation of the log fonction that will be mapped to the log trigger later
--- The new row is logged for each INSERT, the old row is logged for each DELETE
--- and the old and the new rows are logged for each UPDATE.
-    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
-         || 'BEGIN'
--- The sequence associated to the log table is incremented at the beginning of the function ...
-         || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
--- ... and the global id sequence is incremented by the first/only INSERT into the log table.
-         || '  IF (TG_OP = ''DELETE'') THEN'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
-         || '    RETURN OLD;'
-         || '  ELSIF (TG_OP = ''UPDATE'') THEN'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'';'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', lastval();'
-         || '    RETURN NEW;'
-         || '  ELSIF (TG_OP = ''INSERT'') THEN'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''INS'', ''NEW'';'
-         || '    RETURN NEW;'
-         || '  END IF;'
-         || '  RETURN NULL;'
-         || 'END;'
-         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER;';
--- creation of the log trigger on the application table, using the previously created log function
--- But the trigger is not immediately activated (it will be at emaj_start_group time)
-    EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
-    EXECUTE 'CREATE TRIGGER emaj_log_trg'
-         || ' AFTER INSERT OR UPDATE OR DELETE ON ' || v_fullTableName
-         || '  FOR EACH ROW EXECUTE PROCEDURE ' || v_logFnctName || '()';
+-- create the log function and the log trigger
+    PERFORM emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName);
+-- Deactivate the log trigger (it will be enabled at emaj_start_group time)
     EXECUTE 'ALTER TABLE ' || v_fullTableName || ' DISABLE TRIGGER emaj_log_trg';
 -- creation of the trigger that manage any TRUNCATE on the application table
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
@@ -391,7 +373,48 @@ $_create_tbl$
   END;
 $_create_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._add_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._create_log_trigger(v_fullTableName TEXT, v_logTableName TEXT, v_sequenceName TEXT, v_logFnctName TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_create_log_trigger$
+-- The function creates the log function and the associated log trigger for an application table.
+-- It is called by several functions.
+-- Inputs: the full name of the application table, the log table, the log sequence and the log function
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can manage the trigger on the application table.
+  DECLARE
+  BEGIN
+-- drop the log trigger if it exists
+    EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
+-- create the log fonction that will be mapped to the log trigger just after
+--   the new row is logged for each INSERT, the old row is logged for each DELETE
+--   and the old and the new rows are logged for each UPDATE.
+    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
+         || 'BEGIN'
+-- The sequence associated to the log table is incremented at the beginning of the function ...
+         || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
+-- ... and the global id sequence is incremented by the first/only INSERT into the log table.
+         || '  IF (TG_OP = ''DELETE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
+         || '    RETURN OLD;'
+         || '  ELSIF (TG_OP = ''UPDATE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'';'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', lastval();'
+         || '    RETURN NEW;'
+         || '  ELSIF (TG_OP = ''INSERT'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''INS'', ''NEW'';'
+         || '    RETURN NEW;'
+         || '  END IF;'
+         || '  RETURN NULL;'
+         || 'END;'
+         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER;';
+-- create the log trigger on the application table, using the previously created log function
+    EXECUTE 'CREATE TRIGGER emaj_log_trg'
+         || ' AFTER INSERT OR UPDATE OR DELETE ON ' || v_fullTableName
+         || '  FOR EACH ROW EXECUTE PROCEDURE ' || v_logFnctName || '()';
+    RETURN;
+  END;
+$_create_log_trigger$;
+
+CREATE OR REPLACE FUNCTION emaj._add_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_add_tbl$
 -- The function adds a table to a group. It is called during an alter group operation.
@@ -440,13 +463,153 @@ $_add_tbl$
       EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg';
 -- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES ('ALTER_GROUP', 'TABLE ADDED', v_fullTableName, 'To logging group ' || r_plan.altr_group);
+        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'TABLE ADDED',
+                v_fullTableName, 'To logging group ' || r_plan.altr_group);
     END IF;
     RETURN;
   END;
 $_add_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._change_log_schema_tbl(r_rel emaj.emaj_relation, v_newLogSchemaSuffix TEXT, v_multiGroup BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_log_schema_tbl$
+-- This function processes the change of log schema for an application table
+-- Input: the existing emaj_relation row for the table, and the new log schema suffix
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
+  DECLARE
+    v_emajSchema             TEXT = 'emaj';
+    v_schemaPrefix           TEXT = 'emaj';
+    v_newLogSchema           TEXT;
+  BEGIN
+-- build the name of new log schema
+    v_newLogSchema = coalesce(v_schemaPrefix || v_newLogSchemaSuffix, v_emajSchema);
+-- process the log schema change for the log table and the log sequence
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
+    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
+-- modify the log function (name and content)
+    EXECUTE 'DROP FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
+    PERFORM emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table),
+                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence),
+                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function));
+-- as the group in LOGGING state, keep the trigger enabled
+-- adjust sequences schema names in emaj_sequence tables
+    UPDATE emaj.emaj_sequence SET sequ_schema = v_newLogSchema WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation SET rel_log_schema = v_newLogSchema
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'LOG SCHEMA CHANGED',
+              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq), r_rel.rel_log_schema || ' => ' || v_newLogSchema);
+    RETURN;
+  END;
+$_change_log_schema_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_emaj_names_prefix(r_rel emaj.emaj_relation, v_newNamesPrefix TEXT, v_multiGroup BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_emaj_names_prefix$
+-- This function processes the change of emaj names prefix for an application table
+-- Input: the existing emaj_relation row for the table and the new emaj names prefix
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
+  DECLARE
+    v_newEmajNamesPrefix     TEXT;
+    v_newLogTableName        TEXT;
+    v_newLogFunctionName     TEXT;
+    v_newLogSequenceName     TEXT;
+    v_newLogIndexName        TEXT;
+  BEGIN
+-- build the name of new emaj components associated to the application table (non schema qualified and not quoted)
+    v_newEmajNamesPrefix = coalesce(v_newNamesPrefix, r_rel.rel_schema || '_' || r_rel.rel_tblseq);
+    v_newLogTableName    = v_newEmajNamesPrefix || '_log';
+    v_newLogIndexName    = v_newEmajNamesPrefix || '_log_idx';
+    v_newLogSequenceName = v_newEmajNamesPrefix || '_log_seq';
+    v_newLogFunctionName = v_newEmajNamesPrefix || '_log_fnct';
+-- process the emaj names prefix change
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' RENAME TO ' || quote_ident(v_newLogTableName);
+    EXECUTE 'ALTER INDEX ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_index)|| ' RENAME TO ' || quote_ident(v_newLogIndexName);
+    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' RENAME TO ' || quote_ident(v_newLogSequenceName);
+-- modify the log function (name and content)
+    EXECUTE 'DROP FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
+    PERFORM emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+                                     quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogTableName),
+                                     quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogSequenceName),
+                                     quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName));
+-- as the group in LOGGING state, keep the trigger enabled
+-- adjust sequences schema names in emaj_sequence tables
+    UPDATE emaj.emaj_sequence SET sequ_name = v_newLogSequenceName WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation
+      SET rel_log_table = v_newLogTableName, rel_log_index = v_newLogIndexName,
+          rel_log_sequence = v_newLogSequenceName, rel_log_function = v_newLogFunctionName
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'NAMES PREFIX CHANGED',
+              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(substring(r_rel.rel_log_table FROM '(.*)_log$'),r_rel.rel_log_table,'Internal error in _change_emaj_names_prefix')
+                || ' => ' || v_newEmajNamesPrefix);
+    RETURN;
+  END;
+$_change_emaj_names_prefix$;
+
+CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(r_rel emaj.emaj_relation, v_newLogDatTsp TEXT, v_multiGroup BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_log_data_tsp_tbl$
+-- This function changes the log data tablespace for an application table
+-- Input: the existing emaj_relation row for the table and the new log data tablespace
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
+  DECLARE
+    v_newTsp                 TEXT;
+  BEGIN
+-- build the new data tablespace name. If needed, get the name of the current default tablespace.
+    v_newTsp = v_newLogDatTsp;
+    IF v_newTsp IS NULL OR v_newTsp = '' THEN
+      v_newTsp = emaj._get_default_tablespace();
+    END IF;
+-- process the log data tablespace change
+    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation SET rel_log_dat_tsp = v_newLogDatTsp
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'LOG DATA TABLESPACE CHANGED',
+              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(r_rel.rel_log_dat_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogDatTsp, 'Default tablespace'));
+    RETURN;
+  END;
+$_change_log_data_tsp_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(r_rel emaj.emaj_relation, v_newLogIdxTsp TEXT, v_multiGroup BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_change_log_index_tsp_tbl$
+-- This function changes the log index tablespace for an application table
+-- Input: the existing emaj_relation row for the table and the new log index tablespace
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
+  DECLARE
+    v_newTsp                 TEXT;
+  BEGIN
+-- build the new data tablespace name. If needed, get the name of the current default tablespace.
+    v_newTsp = v_newLogIdxTsp;
+    IF v_newTsp IS NULL OR v_newTsp = '' THEN
+      v_newTsp = emaj._get_default_tablespace();
+    END IF;
+-- process the log index tablespace change
+    EXECUTE 'ALTER INDEX ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_index) || ' SET TABLESPACE ' || quote_ident(v_newTsp);
+-- update the table attributes into emaj_relation
+    UPDATE emaj.emaj_relation SET rel_log_idx_tsp = v_newLogIdxTsp
+      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'LOG INDEX TABLESPACE CHANGED',
+              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
+              coalesce(r_rel.rel_log_idx_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogIdxTsp, 'Default tablespace'));
+    RETURN;
+  END;
+$_change_log_index_tsp_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_remove_tbl$
 -- The function removes a table from a group. It is called during an alter group operation.
@@ -511,8 +674,8 @@ $_remove_tbl$
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES ('ALTER_GROUP', 'TABLE REMOVED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
-                'From logging group ' || r_plan.altr_group);
+        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'TABLE REMOVED',
+                quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'From logging group ' || r_plan.altr_group);
     END IF;
     RETURN;
   END;
@@ -591,7 +754,7 @@ $_drop_tbl$
   END;
 $_drop_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._add_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._add_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_add_seq$
 -- The function adds a sequence to a group. It is called during an alter group operation.
@@ -615,12 +778,35 @@ $_add_seq$
         SELECT * FROM emaj._get_current_sequence_state(r_plan.altr_schema, r_plan.altr_tblseq, v_timeId);
 -- ... and insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES ('ALTER_GROUP', 'SEQUENCE ADDED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
-                'To logging group ' || r_plan.altr_group);
+        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'SEQUENCE ADDED',
+                quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'To logging group ' || r_plan.altr_group);
     END IF;
     RETURN;
   END;
 $_add_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._remove_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql AS
+$_remove_seq$
+-- The function removes a sequence from a group. It is called during an alter group operation.
+-- Required inputs: row from emaj_alter_plan corresponding to the appplication sequence to proccess, time stamp id of the alter group operation
+  BEGIN
+    IF r_plan.altr_group_is_logging THEN
+-- if the group is in logging state, just register the end of the relation time frame
+      UPDATE emaj.emaj_relation SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)')
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- ... and insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'SEQUENCE REMOVED',
+                quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'From logging group ' || r_plan.altr_group);
+    ELSE
+-- if the group is in idle state, drop the sequence immediately
+      PERFORM emaj._drop_seq(emaj.emaj_relation.*) FROM emaj.emaj_relation
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+    END IF;
+    RETURN;
+  END;
+$_remove_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._move_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -1171,6 +1357,74 @@ $_drop_group$
   END;
 $_drop_group$;
 
+CREATE OR REPLACE FUNCTION emaj._alter_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$_alter_groups$
+-- This function effectively alters a tables groups array.
+-- It takes into account the changes recorded in the emaj_group_def table since the groups have been created.
+-- Input: group names array, flag indicating whether the function is called by the multi-group function or not
+-- Output: number of tables and sequences belonging to the groups after the operation
+  DECLARE
+    v_loggingGroups          TEXT[];
+    v_markName               TEXT;
+    v_timeId                 BIGINT;
+    v_eventTriggers          TEXT[];
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','));
+-- check the group names
+    SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '') INTO v_groupNames;
+    IF v_groupNames IS NOT NULL THEN
+-- performs various checks on the groups content described in the emaj_group_def table
+      PERFORM emaj._check_groups_content(v_groupNames, NULL);
+-- build the list of groups that are in logging state
+      SELECT array_agg(group_name ORDER BY group_name) INTO v_loggingGroups FROM emaj.emaj_group
+        WHERE group_name = ANY(v_groupNames) AND group_is_logging;
+-- check and process the supplied mark name, if it is worth to be done
+       IF v_loggingGroups IS NOT NULL THEN
+         SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
+       END IF;
+-- OK
+-- get the time stamp of the operation
+      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- for LOGGING groups, lock all tables to get a stable point
+      IF v_loggingGroups IS NOT NULL THEN
+-- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or vacuum operation.
+        PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', v_multiGroup);
+-- and set the mark, using the same time identifier
+        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, v_multiGroup, TRUE, NULL, v_timeId);
+      END IF;
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+      SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- we can now plan all the steps needed to perform the operation
+      PERFORM emaj._alter_plan(v_groupNames, v_timeId);
+-- create the needed secondary schemas
+      PERFORM emaj._create_log_schemas(CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, v_groupNames);
+-- execute the plan
+      PERFORM emaj._alter_exec(v_timeId, v_multiGroup);
+-- drop the E-Maj secondary schemas that are now useless (i.e. not used by any created group)
+      PERFORM emaj._drop_log_schemas(CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, FALSE);
+-- update tables and sequences counters and the last alter timestamp in the emaj_group table
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId,
+            group_nb_table = (SELECT count(*) FROM emaj.emaj_relation WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'r'),
+            group_nb_sequence = (SELECT count(*) FROM emaj.emaj_relation WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'S')
+        WHERE group_name = ANY (v_groupNames);
+-- enable previously disabled event triggers
+      PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- check foreign keys with tables outside the groups
+      PERFORM emaj._check_fk_groups(v_groupNames);
+    END IF;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'END', array_to_string(v_groupNames,','),
+              'Timestamp Id : ' || v_timeId );
+-- and return
+    RETURN sum(group_nb_table) + sum(group_nb_sequence) FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames);
+  END;
+$_alter_groups$;
+
 CREATE OR REPLACE FUNCTION emaj._alter_plan(v_groupNames TEXT[], v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_alter_plan$
@@ -1309,7 +1563,7 @@ $_alter_plan$
   END;
 $_alter_plan$;
 
-CREATE OR REPLACE FUNCTION emaj._alter_exec(v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._alter_exec(v_timeId BIGINT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_alter_exec$
 -- This function executes the alter groups operation that has been planned by the _alter_plan() function.
@@ -1335,11 +1589,11 @@ $_alter_exec$
       CASE r_plan.altr_step
         WHEN 'REMOVE_TBL' THEN
 -- remove a table from its group
-          PERFORM emaj._remove_tbl(r_plan, v_timeId);
+          PERFORM emaj._remove_tbl(r_plan, v_timeId, v_multiGroup);
 --
         WHEN 'REMOVE_SEQ' THEN
 -- remove a sequence from its group
-          PERFORM emaj._remove_seq(r_plan, v_timeId);
+          PERFORM emaj._remove_seq(r_plan, v_timeId, v_multiGroup);
 --
         WHEN 'RESET_GROUP' THEN
 -- reset a group
@@ -1389,7 +1643,7 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix);
+          PERFORM emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup);
 --
         WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN
 -- get the table description from emaj_relation
@@ -1400,7 +1654,7 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix);
+          PERFORM emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup);
 --
         WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN
 -- get the table description from emaj_relation
@@ -1411,7 +1665,7 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp);
+          PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp, v_multiGroup);
 --
         WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
 -- get the table description from emaj_relation
@@ -1422,7 +1676,7 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp);
+          PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp, v_multiGroup);
 --
         WHEN 'MOVE_TBL' THEN
 -- move a table from one group to another group
@@ -1439,11 +1693,11 @@ $_alter_exec$
 --
         WHEN 'ADD_TBL' THEN
 -- add a table to a group
-          PERFORM emaj._add_tbl(r_plan, v_timeId);
+          PERFORM emaj._add_tbl(r_plan, v_timeId, v_multiGroup);
 --
         WHEN 'ADD_SEQ' THEN
 -- add a sequence to a group
-          PERFORM emaj._add_seq(r_plan, v_timeId);
+          PERFORM emaj._add_seq(r_plan, v_timeId, v_multiGroup);
 --
       END CASE;
     END LOOP;
