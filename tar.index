@@ -31,5 +31,5 @@ emaj-2.2.3/doc/Emaj.2.2.3_pres_en.odp
 emaj-2.2.3/doc/Emaj.2.2.3_pres_fr.odp
 emaj-2.2.3/doc/Emaj.2.2.3_pres_en.pdf
 emaj-2.2.3/doc/Emaj.2.2.3_pres_fr.pdf
-emaj-2.2.3/php/emajParallelRollback.php
-emaj-2.2.3/php/emajRollbackMonitor.php
+emaj-2.2.3/client/emajParallelRollback.php
+emaj-2.2.3/client/emajRollbackMonitor.php
