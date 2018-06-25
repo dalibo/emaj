@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 # emajRollbackMonitor.pl
-# This php module belongs to the E-Maj PostgreSQL extension.
+# This perl module belongs to the E-Maj PostgreSQL extension.
 #
 # This software is distributed under the GNU General Public License.
 #
