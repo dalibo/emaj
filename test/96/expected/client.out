@@ -29,7 +29,7 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
-CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 50 at RAISE in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 140
+CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 50 at RAISE in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 141
 Call of _rlbk_init() function failed 
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
@@ -47,7 +47,7 @@ select emaj.emaj_alter_group('myGroup1');
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 44 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 140
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement in /home/postgres/proj/emaj/php/emajParallelRollback.php on line 141
 Call of _rlbk_init() function failed 
 -- unlogged rollback for 2 groups in unstrict mode
 \! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
@@ -58,7 +58,6 @@ Call of _rlbk_init() function failed
     Notice: 9 / 11 tables effectively processed.
     Notice: 4 sequences processed.
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
-
 -- logged rollback for a single group and a single session
 \! ${EMAJ_DIR}/php/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
  E-Maj (version <devel>) - launching parallel rollbacks
@@ -67,7 +66,6 @@ Call of _rlbk_init() function failed
 ==> Rollback completed.
     Notice: 3 / 5 tables effectively processed.
     Notice: 2 sequences processed.
-
 --------------------------------------------
 -- Prepare data for emajRollbackMonitor.php
 --------------------------------------------
@@ -120,11 +118,11 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 [current date and time]
 ** rollback 20000 started at [rollback start time] for groups {myGroup1,myGroup2}
    status: COMMITTED ; ended at [rollback end time]
-   rollback to mark: Multi-1 set at [mark time]
+   rollback to mark: "Multi-1" set at [mark time]
    3 session(s) to process 9 table(s) and 4 sequence(s)
 ** rollback 20001 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time]
-   rollback to mark: Multi-1 set at [mark time]
+   rollback to mark: "Multi-1" set at [mark time]
    1 session(s) to process 3 table(s) and 2 sequence(s)
 -> rollback 20101 started at [rollback start time] for groups {group20101}
    status: EXECUTING ; completion 85 %; @ 20 secs remaining
@@ -141,11 +139,11 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 [current date and time]
 ** rollback 20000 started at [rollback start time] for groups {myGroup1,myGroup2}
    status: COMMITTED ; ended at [rollback end time]
-   rollback to mark: Multi-1 set at [mark time]
+   rollback to mark: "Multi-1" set at [mark time]
    3 session(s) to process 9 table(s) and 4 sequence(s)
 ** rollback 20001 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time]
-   rollback to mark: Multi-1 set at [mark time]
+   rollback to mark: "Multi-1" set at [mark time]
    1 session(s) to process 3 table(s) and 2 sequence(s)
 -> rollback 20101 started at [rollback start time] for groups {group20101}
    status: EXECUTING ; completion 85 %; @ 20 secs remaining

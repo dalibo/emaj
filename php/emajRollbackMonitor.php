@@ -8,7 +8,8 @@
 // It monitors E-Maj rollback operations in progress or recently completed.
 
   $EmajVersion = '<devel>';
-  $progName = 'emajRollbackMonitor';
+  $appName = 'emajRollbackMonitor';
+  $progName = 'emajRollbackMonitor.php';
 
 // Just asking for help
   if ($argc == 2 and ($argv[1] == '--help' or $argv[1] == '?')) {
@@ -103,7 +104,7 @@
       $regressTest = true;
       break;
   }
-  $conn_string .= 'application_name='.$progName;
+  $conn_string .= 'application_name='.$appName;
 
 // Open a database session.
 //   Connection parameters are optional. If not supplied, the environment variables and PostgreSQL default values are used
@@ -139,7 +140,7 @@
       }
       echo "** rollback {$row['rlbk_id']} started at {$row['rlbk_start_datetime']} for groups {$row['rlbk_groups']}\n";
       echo "   status: {$row['rlbk_status']} ; ended at {$row['rlbk_end_datetime']}\n";
-      if ($verbose) echo "   rollback to mark: {$row['rlbk_mark']} set at {$row['rlbk_mark_datetime']}\n";
+      if ($verbose) echo "   rollback to mark: \"{$row['rlbk_mark']}\" set at {$row['rlbk_mark_datetime']}\n";
       if ($verbose) echo "   {$row['rlbk_nb_session']} session(s) to process {$row['rlbk_eff_nb_table']} table(s) and {$row['rlbk_nb_sequence']} sequence(s)\n";
     }
 
@@ -183,7 +184,7 @@ function print_help(){
   echo "$progName belongs to the E-Maj PostgreSQL extension (version $EmajVersion).\n";
   echo "It monitors E-Maj rollback operations in progress or recently completed.\n\n";
   echo "Usage:\n";
-  echo "  $progName.php [OPTION]... \n";
+  echo "  $progName [OPTION]... \n";
   echo "\nOptions:\n";
   echo "  -a          max time interval for completed rollback operations to display (in hours, default = 24)\n";
   echo "  -i          time Interval between 2 displays (in seconds, default = 5s)\n";
@@ -198,9 +199,9 @@ function print_help(){
   echo "  -U,         User name to connect as\n";
   echo "  -W,         passWord associated to the user, if needed\n";
   echo "\nExamples:\n";
-  echo "  php emajRollbackMonitor.php -i 3 -n 10 \n";
+  echo "  emajRollbackMonitor.php -i 3 -n 10 \n";
   echo "              performs 10 displays during 30 seconds.\n";
-  echo "  php emajRollbackMonitor.php -a 12 -l 10 \n";
+  echo "  emajRollbackMonitor.php -a 12 -l 10 \n";
   echo "              a single display with a maximum of 10 completed operations in the past 12 hours.\n";
 }
 
