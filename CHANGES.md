@@ -102,6 +102,8 @@ E-Maj - Change log
   * Fix 2 bogus calls to the _rlbk_error() internal function.
   * Old versions of rollback functions now properly check that no previous
     alter group operations would be crossed by a requested rollback.
+  * Fix a bug in E-Maj rollbacks monitoring: the start timestamp and the
+    target mark timestamp of committed rollbacks were broken.
 
 2.1.0 (2017-Aug-02)
 ------

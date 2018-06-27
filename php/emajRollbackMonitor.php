@@ -120,7 +120,13 @@
       echo date("d/m/Y - H:i:s")."\n";
 
 // Retrieve the recently completed rollback operations
-    $query = "SELECT * FROM (SELECT * FROM emaj.emaj_rlbk WHERE rlbk_end_datetime > current_timestamp - '{$complRlbkAgo} hours'::interval ORDER BY rlbk_id DESC LIMIT {$nbComplRlbk}) AS t ORDER BY rlbk_id ASC";
+    $query = "SELECT * FROM (
+                SELECT emaj.emaj_rlbk.*, tsr.time_tx_timestamp AS rlbk_start_datetime, tsm.time_tx_timestamp AS rlbk_mark_datetime
+                  FROM emaj.emaj_rlbk, emaj.emaj_time_stamp tsr, emaj.emaj_time_stamp tsm
+                  WHERE tsr.time_id = rlbk_time_id AND tsm.time_id = rlbk_mark_time_id
+                    AND rlbk_end_datetime > current_timestamp - '{$complRlbkAgo} hours'::interval
+                  ORDER BY rlbk_id DESC LIMIT {$nbComplRlbk}) AS t
+              ORDER BY rlbk_id ASC";
     $result = pg_query($dbconn,$query)
         or die('Access to the emaj_rlbk table failed '.pg_last_error()."\n");
 
