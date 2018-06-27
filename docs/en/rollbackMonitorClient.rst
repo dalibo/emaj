@@ -43,29 +43,29 @@ Examples
 
 The command::
 
-   ./php/emajRollbackMonitor.php -i 3 -n 10
+   ./client/emajRollbackMonitor.php -i 3 -n 10
 
 displays 10 times and every 3 seconds, the list of in progress rollback operations and the list of the at most 3 latest rollback operations completed in the latest 24 hours.
 
 The command::
 
-   ./php/emajRollbackMonitor.php -a 12 -l 10
+   ./client/emajRollbackMonitor.php -a 12 -l 10
 
 displays only once the list of in progress rollback operations and the list of at most 10 operations completed in the latest 12 hours.
 
 Example of display::
 
-    E-Maj (version 1.1.0) - Monitoring rollbacks activity
+    E-Maj (version 2.2.0) - Monitoring rollbacks activity
    ---------------------------------------------------------------
-   04/07/2013 - 12:07:17
-   ** rollback 34 started at 2013-07-04 12:06:20.350962+02 for groups {myGroup1,myGroup2}
-      status: COMMITTED ; ended at 2013-07-04 12:06:21.149111+02 
-   ** rollback 35 started at 2013-07-04 12:06:21.474217+02 for groups {myGroup1}
-      status: COMMITTED ; ended at 2013-07-04 12:06:21.787615+02 
-   -> rollback 36 started at 2013-07-04 12:04:31.769992+02 for groups {group1232}
+   04/02/2018 - 12:07:17
+   ** rollback 34 started at 2018-02-04 12:06:20.350962+02 for groups {myGroup1,myGroup2}
+      status: COMMITTED ; ended at 2018-02-04 12:06:21.149111+02 
+   ** rollback 35 started at 2018-02-04 12:06:21.474217+02 for groups {myGroup1}
+      status: COMMITTED ; ended at 2018-02-04 12:06:21.787615+02 
+   -> rollback 36 started at 2018-02-04 12:04:31.769992+02 for groups {group1232}
       status: EXECUTING ; completion 89 % ; 00:00:20 remaining
-   -> rollback 37 started at 2013-07-04 12:04:21.894546+02 for groups {group1233}
+   -> rollback 37 started at 2018-02-04 12:04:21.894546+02 for groups {group1233}
       status: LOCKING ; completion 0 % ; 00:22:20 remaining
-   -> rollback 38 started at 2013-07-04 12:05:21.900311+02 for groups {group1234}
+   -> rollback 38 started at 2018-02-04 12:05:21.900311+02 for groups {group1234}
       status: PLANNING ; completion 0 %
 

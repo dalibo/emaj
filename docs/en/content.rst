@@ -70,7 +70,7 @@ Once :doc:`installed <install>`, an E-Maj version contents the following files.
 +---------------------------------------------+---------------------------------------------------------------------+
 | doc/Emaj.<version>_pres.fr.pdf              | French version of the E-Maj presentation (pdf version)              |
 +---------------------------------------------+---------------------------------------------------------------------+
-| php/emajParallelRollback.php                | php tool for parallel rollback                                      |
+| client/emajParallelRollback.php             | php tool for parallel rollback                                      |
 +---------------------------------------------+---------------------------------------------------------------------+
-| php/emajRollbackMonitor.php                 | php tool for rollbacks monitoring                                   |
+| client/emajRollbackMonitor.php              | php tool for rollbacks monitoring                                   |
 +---------------------------------------------+---------------------------------------------------------------------+

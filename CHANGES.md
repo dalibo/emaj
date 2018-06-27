@@ -13,6 +13,8 @@ E-Maj - Change log
   * For both emaj_snap_group() and emaj_snap_log_group() functions, avoid to 
     get output file names with unconvenient characters. Replace spaces, /, \,
     $, >, <, and * characters by _.
+  * Rename the php sub-directory into client. (this may need some changes in
+    users scripts)
   * Minor coding improvements.
 
 ###Bug fixes:###
@@ -23,6 +25,9 @@ E-Maj - Change log
     subsequent updates on the table failed.
   * In both emajParallelRollback.php and emajRollbackMonitor.php clients, fix
     the connection string with the proper value for the password.
+  * Fix a bug in E-Maj rollbacks monitoring: the start timestamp and the
+    target mark timestamp of committed rollbacks were broken.
+
 
 2.2.3 (2018-Mar-13)
 ------
@@ -102,8 +107,6 @@ E-Maj - Change log
   * Fix 2 bogus calls to the _rlbk_error() internal function.
   * Old versions of rollback functions now properly check that no previous
     alter group operations would be crossed by a requested rollback.
-  * Fix a bug in E-Maj rollbacks monitoring: the start timestamp and the
-    target mark timestamp of committed rollbacks were broken.
 
 2.1.0 (2017-Aug-02)
 ------
