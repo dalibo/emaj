@@ -66,7 +66,7 @@
       break;
     case 'W':
       $password = $options['W'];
-      $conn_string .= 'password='.$username.' ';
+      $conn_string .= 'password='.$password.' ';
       break;
     case 'a':
       if (! is_numeric($options['a']) )

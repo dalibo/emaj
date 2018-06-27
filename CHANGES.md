@@ -21,6 +21,8 @@ E-Maj - Change log
   * When a logging group was altered and changed either the log schema suffix
     or the emaj names prefix for an application table, the log of the
     subsequent updates on the table failed.
+  * In both emajParallelRollback.php and emajRollbackMonitor.php clients, fix
+    the connection string with the proper value for the password.
 
 2.2.3 (2018-Mar-13)
 ------

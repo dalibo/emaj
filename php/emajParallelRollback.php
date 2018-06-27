@@ -71,7 +71,7 @@
       break;
     case 'W':
       $password = $options['W'];
-      $conn_string .= 'password='.$username.' ';
+      $conn_string .= 'password='.$password.' ';
       break;
 // other parameters
     case 'a':
