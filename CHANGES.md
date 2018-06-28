@@ -15,6 +15,7 @@ E-Maj - Change log
     $, >, <, and * characters by _.
   * Rename the php sub-directory into client. (this may need some changes in
     users scripts)
+  * Add perl scripts similar to php scripts for the parallel rollback.  
   * Minor coding improvements.
 
 ###Bug fixes:###

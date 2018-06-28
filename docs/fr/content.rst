@@ -72,5 +72,9 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +---------------------------------------------+---------------------------------------------------------------------+
 | client/emajParallelRollback.php             | client php pour les rollbacks parallélisés                          |
 +---------------------------------------------+---------------------------------------------------------------------+
+| client/emajParallelRollback.pl              | client perl pour les rollbacks parallélisés                         |
++---------------------------------------------+---------------------------------------------------------------------+
 | client/emajRollbackMonitor.php              | client php pour le suivi des rollbacks                              |
++---------------------------------------------+---------------------------------------------------------------------+
+| client/emajRollbackMonitor.pl               | client perl pour le suivi des rollbacks                             |
 +---------------------------------------------+---------------------------------------------------------------------+

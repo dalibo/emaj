@@ -7,14 +7,21 @@ E-Maj fournit un client externe qui se lance en ligne de commande et qui permet 
 Préalables
 ----------
 
-La commande qui permet de suivre l'exécution des opérations de rollbacks est codée en *php*. En conséquence, le logiciel **php** et son interface PostgreSQL doivent être installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l'instance PostgreSQL).
+Deux outils équivalents sont en fait proposés, l’un codé en *php*, l’autre en *perl*. L’un ou l’autre nécessite que certains composants logiciel soient installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l’instance PostgreSQL) :
+
+* pour le client *php*, le logiciel **php** et son interface PostgreSQL
+* pour le client *perl*, le logiciel **perl** avec les modules *DBI* et *DBD::Pg*
+
 
 Syntaxe
 -------
 
-La syntaxe de la commande permettant le suivi des opérations de rollback est ::
+Les deux commandes php et perl partagent la même syntaxe ::
 
    emajRollbackMonitor.php [OPTIONS]...
+
+et::
+   emajRollbackMonitor.pl [OPTIONS]...
 
 Options générales :
 
@@ -50,7 +57,7 @@ affiche 10 fois la liste des opérations de rollback en cours et celles des au p
 
 La commande ::
 
-   ./client/emajRollbackMonitor.php -a 12 -l 10
+   ./client/emajRollbackMonitor.pl -a 12 -l 10
 
 affichera une seule fois la liste des opérations de rollback en cours et celle des au plus 10 opérations terminées dans les 12 dernières heures.
 
