@@ -92,50 +92,50 @@ select funcname, calls from pg_stat_user_functions
 -------------------------------------------+-------
  _add_seq                                  |     7
  _add_tbl                                  |    18
- _alter_exec                               |    75
- _alter_groups                             |    76
- _alter_plan                               |    77
+ _alter_exec                               |    76
+ _alter_groups                             |    77
+ _alter_plan                               |    78
  _change_emaj_names_prefix                 |    11
  _change_log_data_tsp_tbl                  |    19
  _change_log_index_tsp_tbl                 |     9
  _change_log_schema_tbl                    |    11
- _check_fk_groups                          |   229
- _check_group_names                        |   921
- _check_groups_content                     |   108
- _check_mark_name                          |   346
+ _check_fk_groups                          |   233
+ _check_group_names                        |   926
+ _check_groups_content                     |   109
+ _check_mark_name                          |   350
  _check_marks_range                        |   111
- _check_new_mark                           |   235
- _cleanup_rollback_state                   |   284
- _create_log_schemas                       |   107
+ _check_new_mark                           |   236
+ _cleanup_rollback_state                   |   294
+ _create_log_schemas                       |   108
  _create_log_trigger                       |   161
  _create_seq                               |    47
  _create_tbl                               |   139
- _dblink_close_cnx                         |    62
- _dblink_is_cnx_opened                     |   639
- _dblink_open_cnx                          |    78
+ _dblink_close_cnx                         |    69
+ _dblink_is_cnx_opened                     |   671
+ _dblink_open_cnx                          |    86
  _delete_before_mark_group                 |    19
  _delete_between_marks_group               |    13
  _delete_intermediate_mark_group           |    23
- _delete_log_tbl                           |    41
+ _delete_log_tbl                           |    44
  _detailed_log_stat_groups                 |    33
- _disable_event_triggers                   |   292
+ _disable_event_triggers                   |   293
  _drop_group                               |    26
- _drop_log_schemas                         |   170
+ _drop_log_schemas                         |   171
  _drop_seq                                 |    50
  _drop_tbl                                 |   157
  _emaj_event_trigger_table_rewrite_fnct    |   103
- _enable_event_triggers                    |   288
+ _enable_event_triggers                    |   289
  _estimate_rollback_groups                 |    13
- _event_trigger_sql_drop_fnct              |    75
+ _event_trigger_sql_drop_fnct              |    96
  _gen_sql_groups                           |    19
  _gen_sql_tbl                              |    36
- _get_current_sequence_state               |  2216
- _get_current_sequences_state              |   551
+ _get_current_sequence_state               |  2283
+ _get_current_sequences_state              |   561
  _get_default_tablespace                   |    10
  _get_previous_mark_group                  |    37
- _lock_groups                              |   227
+ _lock_groups                              |   228
  _log_stat_groups                          |    30
- _log_stat_tbl                             |  2854
+ _log_stat_tbl                             |  2978
  _log_truncate_fnct                        |     2
  _move_seq                                 |     5
  _move_tbl                                 |     5
@@ -144,27 +144,27 @@ select funcname, calls from pg_stat_user_functions
  _remove_tbl                               |    40
  _reset_groups                             |   110
  _rlbk_async                               |     2
- _rlbk_check                               |    94
- _rlbk_end                                 |    74
+ _rlbk_check                               |    98
+ _rlbk_end                                 |    77
  _rlbk_groups                              |    72
- _rlbk_init                                |    75
- _rlbk_planning                            |    88
- _rlbk_seq                                 |   169
- _rlbk_session_exec                        |    77
- _rlbk_session_lock                        |    77
- _rlbk_set_batch_number                    |   164
- _rlbk_start_mark                          |    75
- _rlbk_tbl                                 |    97
- _rollback_activity                        |    15
- _set_mark_groups                          |   273
- _set_time_stamp                           |   398
+ _rlbk_init                                |    78
+ _rlbk_planning                            |    91
+ _rlbk_seq                                 |   179
+ _rlbk_session_exec                        |    84
+ _rlbk_session_lock                        |    84
+ _rlbk_set_batch_number                    |   188
+ _rlbk_start_mark                          |    78
+ _rlbk_tbl                                 |   118
+ _rollback_activity                        |    17
+ _set_mark_groups                          |   278
+ _set_time_stamp                           |   404
  _start_groups                             |    49
  _stop_groups                              |    64
  _verify_all_groups                        |    37
  _verify_all_schemas                       |    37
- emaj_alter_group                          |    56
+ emaj_alter_group                          |    57
  emaj_alter_groups                         |    20
- emaj_cleanup_rollback_state               |     7
+ emaj_cleanup_rollback_state               |    10
  emaj_comment_group                        |     5
  emaj_comment_mark_group                   |    10
  emaj_consolidate_rollback_group           |    13
@@ -195,7 +195,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_protect_mark_group                   |    11
  emaj_rename_mark_group                    |    22
  emaj_reset_group                          |     7
- emaj_rollback_activity                    |     4
+ emaj_rollback_activity                    |     6
  emaj_rollback_group                       |    10
  emaj_rollback_group                       |    19
  emaj_rollback_groups                      |     4
@@ -217,7 +217,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum 
 -----
- 737
+ 743
 (1 row)
 
 -----------------------------

@@ -21,6 +21,7 @@ Les deux commandes php et perl partagent la même syntaxe ::
    emajRollbackMonitor.php [OPTIONS]...
 
 et::
+
    emajRollbackMonitor.pl [OPTIONS]...
 
 Options générales :

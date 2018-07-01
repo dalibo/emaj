@@ -92,7 +92,8 @@ use warnings; use strict;
     $res = $2;
 # get interresting pieces from each line
     if ($line =~ /^.*\/(.+?)\.out:(ERROR|WARNING|psql):\s*(\S.*)/ ||             # line from postgres
-        $line =~ /^.*\/(.+?)\.out:PHP Warning.*?(ERROR|WARNING):\s*(\S.*)/) {    # line ERROR or WARNING from PHP
+        $line =~ /^.*\/(.+?)\.out:PHP Warning.*?(ERROR|WARNING):\s*(\S.*)/ ||    # line ERROR or WARNING from PHP
+        $line =~ /^.*\/(.+?)\.out:DBD::Pg.*?(ERROR|WARNING):\s*(\S.*)/) {        # line ERROR or WARNING from Perl
 # one interesting line identified
       $script = $1.'.sql';
       $msgType = $2;

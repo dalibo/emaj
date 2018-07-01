@@ -118,6 +118,14 @@ The *tools/create_cluster.sh* script helps in creating a test instance. Its cont
 
    tools/create_cluster.sh <PostgreSQL_major_version>
 
+Install software dependancies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Testing the clients may require to install some additional software components:
+
+* the **php** software, with its PostgreSQL interface,
+* the **perl** software, with the *DBI* and *DBD::Pg* modules.
+
 Execute non regression tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

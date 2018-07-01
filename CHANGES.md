@@ -10,12 +10,13 @@ E-Maj - Change log
     produce log statistics for several tables groups.
   * Add checks on primary key structures to be sure they are not altered
     since their related group creation time.
-  * For both emaj_snap_group() and emaj_snap_log_group() functions, avoid to 
+  * For both emaj_snap_group() and emaj_snap_log_group() functions, avoid to
     get output file names with unconvenient characters. Replace spaces, /, \,
     $, >, <, and * characters by _.
   * Rename the php sub-directory into client. (this may need some changes in
-    users scripts)
-  * Add perl scripts similar to php scripts for the parallel rollback.  
+    users scripts).
+  * Add perl clients similar to php clients to monitor E-Maj rollbacks and
+    run E-Maj parallel rollbacks.
   * Minor coding improvements.
 
 ###Bug fixes:###

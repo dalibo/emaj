@@ -6,10 +6,10 @@ E-Maj delivers an external client to run as a command that monitors the progress
 Prerequisite
 ------------
 
-Two equivalent tools are actually provided, one coded in *php* and the other in *perl*. Both need that some software component be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL instance) :
+Two equivalent tools are actually provided, one coded in *php* and the other in *perl*. Both need that some software components be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL instance) :
 
 * for the *php* client, the **php** software and its PostgreSQL interface,
-* for the *perl* client, the **perl** software with the *DBI* and *DBD::Pg modules*.
+* for the *perl* client, the **perl** software with the *DBI* and *DBD::Pg* modules.
 
 Syntax
 ------
@@ -19,6 +19,7 @@ Both php and perl commands share the same syntax::
    emajRollbackMonitor.php [OPTIONS]...
 
 and::
+
    emajRollbackMonitor.pl [OPTIONS]...
 
 The general options are:
