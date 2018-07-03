@@ -649,16 +649,22 @@ $_remove_tbl$
              FROM emaj.emaj_relation
              WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq
           ) AS t;
--- ... rename the log table and its index
-      EXECUTE 'ALTER TABLE ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogTable) ||
+-- ... rename the log table and its index (they may have been dropped)
+      EXECUTE 'ALTER TABLE IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogTable) ||
               ' RENAME TO '|| quote_ident(v_currentLogTable || v_namesSuffix);
-      EXECUTE 'ALTER INDEX ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogIndex) ||
+      EXECUTE 'ALTER INDEX IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogIndex) ||
               ' RENAME TO '|| quote_ident(v_currentLogIndex || v_namesSuffix);
 --TODO: share some code with _drop_tbl() ?
--- ... drop the log and truncate triggers (the application table is expected to exist)
+-- ... drop the log and truncate triggers
+--     (check the application table exists before dropping its triggers to avoid an error fires with postgres version <= 9.3)
       v_fullTableName  = quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq);
-      EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
-      EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
+      PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relnamespace = pg_namespace.oid
+          AND nspname = r_plan.altr_schema AND relname = r_plan.altr_tblseq AND relkind = 'r';
+      IF FOUND THEN
+        EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
+        EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
+      END IF;
 -- ... drop the log function and the log sequence
 -- (but we keep the sequence related data in the emaj_sequence and the emaj_seq_hole tables)
       EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logFunction) || '() CASCADE';
@@ -1081,16 +1087,31 @@ $_get_current_sequences_state$
 -- TODO: when postgres version 9.2 will not be supported anymore, replace the function by a single set oriented statement with a LATERAL clause
 -- such as: SELECT t.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_log_schema,rel_log_sequence,v_timeId) AS t
 --            WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
-    FOR r_tblsq IN
-        SELECT CASE WHEN v_relKind = 'r' THEN rel_log_schema ELSE rel_schema END AS schema,
-               CASE WHEN v_relKind = 'r' THEN rel_log_sequence ELSE rel_tblseq END AS sequence
-          FROM emaj.emaj_relation
-          WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = v_relKind
-          ORDER BY rel_priority, rel_schema, rel_tblseq
-      LOOP
-      SELECT * FROM emaj._get_current_sequence_state(r_tblsq.schema, r_tblsq.sequence, v_timeId) INTO r_sequ;
-      RETURN NEXT r_sequ;
-    END LOOP;
+    IF v_relKind = 'r' THEN
+      FOR r_tblsq IN
+-- scan the log sequences of existing application tables currently linked to the groups
+          SELECT rel_log_schema, rel_log_sequence
+            FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relname = rel_log_sequence AND nspname = rel_log_schema AND relnamespace = pg_namespace.oid
+              AND upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+        SELECT * FROM emaj._get_current_sequence_state(r_tblsq.rel_log_schema, r_tblsq.rel_log_sequence, v_timeId) INTO r_sequ;
+        RETURN NEXT r_sequ;
+      END LOOP;
+    ELSE
+      FOR r_tblsq IN
+-- scan the existing application sequences currently linked to the groups
+          SELECT rel_schema, rel_tblseq
+            FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relname = rel_tblseq AND nspname = rel_schema AND relnamespace = pg_namespace.oid
+              AND upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+        SELECT * FROM emaj._get_current_sequence_state(r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_timeId) INTO r_sequ;
+        RETURN NEXT r_sequ;
+      END LOOP;
+    END IF;
     RETURN;
   END;
 $_get_current_sequences_state$;
