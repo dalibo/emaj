@@ -3144,6 +3144,7 @@ $_alter_plan$
                 WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
                   AND grpdef_group = ANY (v_groupNames));
 -- determine the tables that need to be "repaired" (damaged or out of sync E-Maj components)
+-- (normally, there should not be any REPAIR_SEQ - if any, the _alter_exec() function will produce an exception)
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
       SELECT v_timeId, CAST(CASE WHEN rel_kind = 'r' THEN 'REPAIR_TBL' ELSE 'REPAIR_SEQ' END AS emaj._alter_step_enum),
              rel_schema, rel_tblseq, rel_group, grpdef_priority,
@@ -3317,20 +3318,7 @@ $_alter_exec$
           END IF;
 --
         WHEN 'REPAIR_SEQ' THEN
-          IF r_plan.altr_group_is_logging THEN
-            RAISE EXCEPTION 'alter_exec: Cannot repair the sequence %.%. Its group % is in LOGGING state.', r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
-          ELSE
--- get the sequence description from emaj_group_def
-            SELECT * INTO r_grpdef
-              FROM emaj.emaj_group_def
-             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
-               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
--- remove the sequence from its group
-            PERFORM emaj._drop_seq(emaj.emaj_relation.*) FROM emaj.emaj_relation
-              WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
--- and recreate it
-            PERFORM emaj._create_seq(r_grpdef, v_timeId);
-          END IF;
+          RAISE EXCEPTION 'alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.', r_plan.altr_schema, r_plan.altr_tblseq;
 --
         WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN
 -- get the table description from emaj_relation

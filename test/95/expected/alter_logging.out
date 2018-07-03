@@ -39,7 +39,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -52,7 +52,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -60,7 +60,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema1_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -73,7 +73,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -146,7 +146,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -159,7 +159,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -167,7 +167,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC".s1t3_log_fnct() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -180,7 +180,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -833,7 +833,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -845,7 +845,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -855,7 +855,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1228,7 +1228,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1240,7 +1240,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1250,7 +1250,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1750,7 +1750,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1762,7 +1762,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1772,7 +1772,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1782,7 +1782,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1794,7 +1794,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1804,7 +1804,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1814,7 +1814,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1826,7 +1826,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1836,7 +1836,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -2084,7 +2084,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2096,7 +2096,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2106,7 +2106,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2152,7 +2152,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2165,7 +2165,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2173,7 +2173,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2186,7 +2186,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2259,7 +2259,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2272,7 +2272,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2280,7 +2280,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2293,7 +2293,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2423,7 +2423,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj.s2t3_log_fnct() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2436,7 +2436,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2444,7 +2444,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC".s2t3_log_fnct() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2457,7 +2457,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN

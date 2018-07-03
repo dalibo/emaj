@@ -146,7 +146,7 @@ use warnings; use strict;
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: Internal error (group "%" is empty).'
                             # error messages that can in fact not be encountered in the current version
        && $msgs{$fnctId} ne 'EXCEPTION:_check_mark_name: The groups "%" have no mark.'
-       && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Cannot repair the sequence %.%. Its group % is in LOGGING state.'
+       && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.'
        && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Cannot repair the table %.%. Its group % is in LOGGING state.'
                             # execution conditions that cannot be reproduced without parallelism
        && $msgs{$fnctId} ne 'EXCEPTION:_lock_groups: Too many (5) deadlocks encountered while locking tables of group "%".'
