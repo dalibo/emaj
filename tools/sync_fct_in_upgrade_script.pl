@@ -302,7 +302,7 @@ use warnings; use strict;
     if (!exists($currFunctions{$fnctSignature}) || 
         getReturnType($prevFunctions{$fnctSignature}) ne getReturnType($currFunctions{$fnctSignature})) {
       # the function is either deleted or has a changed return type
-      print FICUPG "DROP FUNCTION $fnctSignature;\n";
+      print FICUPG "DROP FUNCTION IF EXISTS $fnctSignature;\n";
       $nbDropUpgrade++;
     }
   }

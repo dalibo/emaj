@@ -820,20 +820,20 @@ select emaj.emaj_drop_group('myGroup4');
 -- Checking step 9
 -----------------------------
 select * from emaj.emaj_alter_plan where altr_time_id > 10000 order by 1,2,3,4,5;
- altr_time_id |        altr_step        |  altr_schema   | altr_tblseq |    altr_group    | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging | altr_rlbk_id 
---------------+-------------------------+----------------+-------------+------------------+---------------+-----------------------+----------------+-------------------+---------------------------+--------------
-        10036 | REPAIR_TBL              | phil's schema3 | phil's tbl1 | phil's group#3", |               | f                     |                |                   |                           |             
-        10036 | RESET_GROUP             |                |             | phil's group#3", |               | f                     |                |                   |                           |             
-        10036 | CHANGE_TBL_LOG_SCHEMA   | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                   |                           |             
-        10036 | CHANGE_TBL_NAMES_PREFIX | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                   |                           |             
-        10036 | CHANGE_REL_PRIORITY     | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                 1 |                           |             
-        10040 | REPAIR_TBL              | phil's schema3 | phil's tbl1 | phil's group#3", |               | f                     |                |                   |                           |             
-        10040 | RESET_GROUP             |                |             | myGroup4         |               | f                     |                |                   |                           |             
-        10040 | RESET_GROUP             |                |             | phil's group#3", |               | f                     |                |                   |                           |             
-        10040 | CHANGE_TBL_LOG_SCHEMA   | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                   |                           |             
-        10040 | CHANGE_TBL_NAMES_PREFIX | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                   |                           |             
-        10040 | CHANGE_REL_PRIORITY     | myschema4      | mytblm      | myGroup4         |               | f                     |                |               999 |                           |             
-        10040 | CHANGE_REL_PRIORITY     | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                   |                           |             
+ altr_time_id |        altr_step        |  altr_schema   | altr_tblseq |    altr_group    | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging | altr_rlbk_id 
+--------------+-------------------------+----------------+-------------+------------------+---------------+-----------------------+----------------+---------------------------+--------------
+        10036 | REPAIR_TBL              | phil's schema3 | phil's tbl1 | phil's group#3", |               | f                     |                |                           |             
+        10036 | RESET_GROUP             |                |             | phil's group#3", |               | f                     |                |                           |             
+        10036 | CHANGE_TBL_LOG_SCHEMA   | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                           |             
+        10036 | CHANGE_TBL_NAMES_PREFIX | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                           |             
+        10036 | CHANGE_REL_PRIORITY     | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                           |             
+        10040 | REPAIR_TBL              | phil's schema3 | phil's tbl1 | phil's group#3", |               | f                     |                |                           |             
+        10040 | RESET_GROUP             |                |             | myGroup4         |               | f                     |                |                           |             
+        10040 | RESET_GROUP             |                |             | phil's group#3", |               | f                     |                |                           |             
+        10040 | CHANGE_TBL_LOG_SCHEMA   | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                           |             
+        10040 | CHANGE_TBL_NAMES_PREFIX | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                           |             
+        10040 | CHANGE_REL_PRIORITY     | myschema4      | mytblm      | myGroup4         |           999 | f                     |                |                           |             
+        10040 | CHANGE_REL_PRIORITY     | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                           |             
 (12 rows)
 
 -----------------------------

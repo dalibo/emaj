@@ -327,7 +327,6 @@ CREATE TABLE emaj.emaj_alter_plan (
   altr_priority                INT         ,               -- priority level, with the same meaning and representation than in emaj_group_def
   altr_group_is_logging        BOOLEAN     ,               -- copy of the emaj_group.group_is_logging column at alter time
   altr_new_group               TEXT        ,               -- target group name, when the relation changes its group ownership
-  altr_new_priority            INT         ,               -- target priority level, when the relation changes its priority level
   altr_new_group_is_logging    BOOLEAN     ,               -- state of the target group, when the relation changes its group ownership
   altr_rlbk_id                 BIGINT      ,               -- rollback id if a rollback has already crossed over the alter step
   PRIMARY KEY (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group),
@@ -3227,8 +3226,8 @@ $_alter_plan$
         AND grpdef_group = ANY (v_groupNames)
         AND rel_group <> grpdef_group;
 -- determine the relation that change their priority level
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_priority)
-      SELECT v_timeId, 'CHANGE_REL_PRIORITY', rel_schema, rel_tblseq, rel_group, rel_priority, grpdef_priority
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_REL_PRIORITY', rel_schema, rel_tblseq, rel_group, grpdef_priority
       FROM emaj.emaj_relation, emaj.emaj_group_def
       WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
         AND rel_group = ANY (v_groupNames)
@@ -3374,7 +3373,7 @@ $_alter_exec$
 --
         WHEN 'CHANGE_REL_PRIORITY' THEN
 -- update the emaj_relation table to report the priority change
-          UPDATE emaj.emaj_relation SET rel_priority = r_plan.altr_new_priority
+          UPDATE emaj.emaj_relation SET rel_priority = r_plan.altr_priority
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 --
         WHEN 'ADD_TBL' THEN

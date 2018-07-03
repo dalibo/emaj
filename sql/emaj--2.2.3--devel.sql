@@ -91,6 +91,56 @@ CREATE TYPE emaj._alter_step_enum AS ENUM (
 ALTER TABLE emaj.emaj_alter_plan ALTER COLUMN altr_step TYPE emaj._alter_step_enum USING altr_step::emaj._alter_step_enum;
 
 --
+-- process the emaj_alter_plan table
+--
+-- move the obsolete content of the altr_new_priority column into the altr_priority for concerned steps
+UPDATE emaj.emaj_alter_plan SET altr_priority = altr_new_priority WHERE altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ');
+
+-- drop the altr_new_priority column
+
+-- create a temporary table with the old structure and copy the source content
+CREATE TEMP TABLE emaj_alter_plan_old (LIKE emaj.emaj_alter_plan);
+
+INSERT INTO emaj_alter_plan_old SELECT * FROM emaj.emaj_alter_plan;
+
+-- drop the old table
+DROP TABLE emaj.emaj_alter_plan CASCADE;
+
+-- create the new table, with its indexes, comment, constraints (except foreign key)...
+CREATE TABLE emaj.emaj_alter_plan (
+  altr_time_id                 BIGINT      NOT NULL,       -- time stamp id of the alter_groups operation
+  altr_step                    emaj._alter_step_enum
+                                           NOT NULL,       -- elementary step of the alter groups operation
+  altr_schema                  TEXT        NOT NULL,       -- schema name, depending on the step ('' when meaningless)
+  altr_tblseq                  TEXT        NOT NULL,       -- table or sequence name, depending on the step ('' when meaningless)
+  altr_group                   TEXT        NOT NULL,       -- group that owns the table or the sequence ('' when meaningless)
+  altr_priority                INT         ,               -- priority level, with the same meaning and representation than in emaj_group_def
+  altr_group_is_logging        BOOLEAN     ,               -- copy of the emaj_group.group_is_logging column at alter time
+  altr_new_group               TEXT        ,               -- target group name, when the relation changes its group ownership
+  altr_new_group_is_logging    BOOLEAN     ,               -- state of the target group, when the relation changes its group ownership
+  altr_rlbk_id                 BIGINT      ,               -- rollback id if a rollback has already crossed over the alter step
+  PRIMARY KEY (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group),
+  FOREIGN KEY (altr_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
+  );
+COMMENT ON TABLE emaj.emaj_alter_plan IS
+$$Contains elementary steps of alter_groups operations.$$;
+
+-- populate the new table
+INSERT INTO emaj.emaj_alter_plan
+  SELECT altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, 
+         altr_group_is_logging, altr_new_group, altr_new_group_is_logging, altr_rlbk_id
+    FROM emaj_alter_plan_old;
+
+-- create indexes
+-- recreate the foreign keys that point on this table
+-- set the last value for the sequence associated to the serial column
+
+--
+-- add created or recreated tables and sequences to the list of content to save by pg_dump
+--
+SELECT pg_catalog.pg_extension_config_dump('emaj_alter_plan','');
+
+--
 -- process the emaj_relation table
 --
 -- a new column is just added to the table
@@ -218,13 +268,13 @@ $$Represents the structure of rows returned by the _detailed_log_stat_groups() f
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
-DROP FUNCTION emaj._change_log_schema_tbl(R_REL EMAJ.EMAJ_RELATION,V_NEWLOGSCHEMASUFFIX TEXT);
-DROP FUNCTION emaj._change_emaj_names_prefix(R_REL EMAJ.EMAJ_RELATION,V_NEWNAMESPREFIX TEXT);
-DROP FUNCTION emaj._change_log_data_tsp_tbl(R_REL EMAJ.EMAJ_RELATION,V_NEWLOGDATTSP TEXT);
-DROP FUNCTION emaj._change_log_index_tsp_tbl(R_REL EMAJ.EMAJ_RELATION,V_NEWLOGIDXTSP TEXT);
-DROP FUNCTION emaj._remove_tbl(R_PLAN EMAJ.EMAJ_ALTER_PLAN,V_TIMEID BIGINT);
-DROP FUNCTION emaj._remove_seq(R_PLAN EMAJ.EMAJ_ALTER_PLAN,V_TIMEID BIGINT);
-DROP FUNCTION emaj._alter_exec(V_TIMEID BIGINT);
+DROP FUNCTION IF EXISTS emaj._change_log_schema_tbl(R_REL EMAJ.EMAJ_RELATION,V_NEWLOGSCHEMASUFFIX TEXT);
+DROP FUNCTION IF EXISTS emaj._change_emaj_names_prefix(R_REL EMAJ.EMAJ_RELATION,V_NEWNAMESPREFIX TEXT);
+DROP FUNCTION IF EXISTS emaj._change_log_data_tsp_tbl(R_REL EMAJ.EMAJ_RELATION,V_NEWLOGDATTSP TEXT);
+DROP FUNCTION IF EXISTS emaj._change_log_index_tsp_tbl(R_REL EMAJ.EMAJ_RELATION,V_NEWLOGIDXTSP TEXT);
+DROP FUNCTION IF EXISTS emaj._remove_tbl(R_PLAN EMAJ.EMAJ_ALTER_PLAN,V_TIMEID BIGINT);
+DROP FUNCTION IF EXISTS emaj._remove_seq(R_PLAN EMAJ.EMAJ_ALTER_PLAN,V_TIMEID BIGINT);
+DROP FUNCTION IF EXISTS emaj._alter_exec(V_TIMEID BIGINT);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
@@ -1550,8 +1600,8 @@ $_alter_plan$
         AND grpdef_group = ANY (v_groupNames)
         AND rel_group <> grpdef_group;
 -- determine the relation that change their priority level
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_priority)
-      SELECT v_timeId, 'CHANGE_REL_PRIORITY', rel_schema, rel_tblseq, rel_group, rel_priority, grpdef_priority
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_REL_PRIORITY', rel_schema, rel_tblseq, rel_group, grpdef_priority
       FROM emaj.emaj_relation, emaj.emaj_group_def
       WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
         AND rel_group = ANY (v_groupNames)
@@ -1697,7 +1747,7 @@ $_alter_exec$
 --
         WHEN 'CHANGE_REL_PRIORITY' THEN
 -- update the emaj_relation table to report the priority change
-          UPDATE emaj.emaj_relation SET rel_priority = r_plan.altr_new_priority
+          UPDATE emaj.emaj_relation SET rel_priority = r_plan.altr_priority
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 --
         WHEN 'ADD_TBL' THEN

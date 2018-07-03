@@ -118,7 +118,6 @@ Composite type "emaj._verify_groups_type"
  altr_priority             | integer               | 
  altr_group_is_logging     | boolean               | 
  altr_new_group            | text                  | 
- altr_new_priority         | integer               | 
  altr_new_group_is_logging | boolean               | 
  altr_rlbk_id              | bigint                | 
 Indexes:
