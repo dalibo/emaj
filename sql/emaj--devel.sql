@@ -327,7 +327,6 @@ CREATE TABLE emaj.emaj_alter_plan (
   altr_priority                INT         ,               -- priority level, with the same meaning and representation than in emaj_group_def
   altr_group_is_logging        BOOLEAN     ,               -- copy of the emaj_group.group_is_logging column at alter time
   altr_new_group               TEXT        ,               -- target group name, when the relation changes its group ownership
-  altr_new_priority            INT         ,               -- target priority level, when the relation changes its priority level
   altr_new_group_is_logging    BOOLEAN     ,               -- state of the target group, when the relation changes its group ownership
   altr_rlbk_id                 BIGINT      ,               -- rollback id if a rollback has already crossed over the alter step
   PRIMARY KEY (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group),
@@ -1817,16 +1816,22 @@ $_remove_tbl$
              FROM emaj.emaj_relation
              WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq
           ) AS t;
--- ... rename the log table and its index
-      EXECUTE 'ALTER TABLE ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogTable) ||
+-- ... rename the log table and its index (they may have been dropped)
+      EXECUTE 'ALTER TABLE IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogTable) ||
               ' RENAME TO '|| quote_ident(v_currentLogTable || v_namesSuffix);
-      EXECUTE 'ALTER INDEX ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogIndex) ||
+      EXECUTE 'ALTER INDEX IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_currentLogIndex) ||
               ' RENAME TO '|| quote_ident(v_currentLogIndex || v_namesSuffix);
 --TODO: share some code with _drop_tbl() ?
--- ... drop the log and truncate triggers (the application table is expected to exist)
+-- ... drop the log and truncate triggers
+--     (check the application table exists before dropping its triggers to avoid an error fires with postgres version <= 9.3)
       v_fullTableName  = quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq);
-      EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
-      EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
+      PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relnamespace = pg_namespace.oid
+          AND nspname = r_plan.altr_schema AND relname = r_plan.altr_tblseq AND relkind = 'r';
+      IF FOUND THEN
+        EXECUTE 'DROP TRIGGER IF EXISTS emaj_log_trg ON ' || v_fullTableName;
+        EXECUTE 'DROP TRIGGER IF EXISTS emaj_trunc_trg ON ' || v_fullTableName;
+      END IF;
 -- ... drop the log function and the log sequence
 -- (but we keep the sequence related data in the emaj_sequence and the emaj_seq_hole tables)
       EXECUTE 'DROP FUNCTION IF EXISTS ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logFunction) || '() CASCADE';
@@ -2457,16 +2462,31 @@ $_get_current_sequences_state$
 -- TODO: when postgres version 9.2 will not be supported anymore, replace the function by a single set oriented statement with a LATERAL clause
 -- such as: SELECT t.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_log_schema,rel_log_sequence,v_timeId) AS t
 --            WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
-    FOR r_tblsq IN
-        SELECT CASE WHEN v_relKind = 'r' THEN rel_log_schema ELSE rel_schema END AS schema,
-               CASE WHEN v_relKind = 'r' THEN rel_log_sequence ELSE rel_tblseq END AS sequence
-          FROM emaj.emaj_relation
-          WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = v_relKind
-          ORDER BY rel_priority, rel_schema, rel_tblseq
-      LOOP
-      SELECT * FROM emaj._get_current_sequence_state(r_tblsq.schema, r_tblsq.sequence, v_timeId) INTO r_sequ;
-      RETURN NEXT r_sequ;
-    END LOOP;
+    IF v_relKind = 'r' THEN
+      FOR r_tblsq IN
+-- scan the log sequences of existing application tables currently linked to the groups
+          SELECT rel_log_schema, rel_log_sequence
+            FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relname = rel_log_sequence AND nspname = rel_log_schema AND relnamespace = pg_namespace.oid
+              AND upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+        SELECT * FROM emaj._get_current_sequence_state(r_tblsq.rel_log_schema, r_tblsq.rel_log_sequence, v_timeId) INTO r_sequ;
+        RETURN NEXT r_sequ;
+      END LOOP;
+    ELSE
+      FOR r_tblsq IN
+-- scan the existing application sequences currently linked to the groups
+          SELECT rel_schema, rel_tblseq
+            FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relname = rel_tblseq AND nspname = rel_schema AND relnamespace = pg_namespace.oid
+              AND upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+        SELECT * FROM emaj._get_current_sequence_state(r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_timeId) INTO r_sequ;
+        RETURN NEXT r_sequ;
+      END LOOP;
+    END IF;
     RETURN;
   END;
 $_get_current_sequences_state$;
@@ -3123,6 +3143,7 @@ $_alter_plan$
                 WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
                   AND grpdef_group = ANY (v_groupNames));
 -- determine the tables that need to be "repaired" (damaged or out of sync E-Maj components)
+-- (normally, there should not be any REPAIR_SEQ - if any, the _alter_exec() function will produce an exception)
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
       SELECT v_timeId, CAST(CASE WHEN rel_kind = 'r' THEN 'REPAIR_TBL' ELSE 'REPAIR_SEQ' END AS emaj._alter_step_enum),
              rel_schema, rel_tblseq, rel_group, grpdef_priority,
@@ -3205,8 +3226,8 @@ $_alter_plan$
         AND grpdef_group = ANY (v_groupNames)
         AND rel_group <> grpdef_group;
 -- determine the relation that change their priority level
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_priority)
-      SELECT v_timeId, 'CHANGE_REL_PRIORITY', rel_schema, rel_tblseq, rel_group, rel_priority, grpdef_priority
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_REL_PRIORITY', rel_schema, rel_tblseq, rel_group, grpdef_priority
       FROM emaj.emaj_relation, emaj.emaj_group_def
       WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
         AND rel_group = ANY (v_groupNames)
@@ -3296,20 +3317,7 @@ $_alter_exec$
           END IF;
 --
         WHEN 'REPAIR_SEQ' THEN
-          IF r_plan.altr_group_is_logging THEN
-            RAISE EXCEPTION 'alter_exec: Cannot repair the sequence %.%. Its group % is in LOGGING state.', r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
-          ELSE
--- get the sequence description from emaj_group_def
-            SELECT * INTO r_grpdef
-              FROM emaj.emaj_group_def
-             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
-               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
--- remove the sequence from its group
-            PERFORM emaj._drop_seq(emaj.emaj_relation.*) FROM emaj.emaj_relation
-              WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
--- and recreate it
-            PERFORM emaj._create_seq(r_grpdef, v_timeId);
-          END IF;
+          RAISE EXCEPTION 'alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.', r_plan.altr_schema, r_plan.altr_tblseq;
 --
         WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN
 -- get the table description from emaj_relation
@@ -3365,7 +3373,7 @@ $_alter_exec$
 --
         WHEN 'CHANGE_REL_PRIORITY' THEN
 -- update the emaj_relation table to report the priority change
-          UPDATE emaj.emaj_relation SET rel_priority = r_plan.altr_new_priority
+          UPDATE emaj.emaj_relation SET rel_priority = r_plan.altr_priority
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 --
         WHEN 'ADD_TBL' THEN

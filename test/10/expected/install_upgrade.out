@@ -154,6 +154,11 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function _remove_tbl(emaj_alter_plan,bigint)
+drop cascades to function _remove_seq(emaj_alter_plan,bigint)
+NOTICE:  function emaj._remove_tbl(emaj.emaj_alter_plan,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._remove_seq(emaj.emaj_alter_plan,pg_catalog.int8) does not exist, skipping
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------

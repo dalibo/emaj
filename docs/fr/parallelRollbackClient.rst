@@ -34,6 +34,7 @@ Les deux commandes php et perl partagent la même syntaxe ::
    emajParallelRollback.php -g <nom.du.ou.des.groupes> -m <marque> -s <nombre.de.sessions> [OPTIONS]...
 
 et::
+
    emajParallelRollback.pl -g <nom.du.ou.des.groupes> -m <marque> -s <nombre.de.sessions> [OPTIONS]...
 
 Options générales :

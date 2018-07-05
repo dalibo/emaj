@@ -568,7 +568,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."myTbl2
 CONTEXT:  SQL statement "DROP FUNCTION emaj."phil's schema3_myTbl2\_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE statement
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -581,7 +581,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -589,7 +589,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."myTbl2
 CONTEXT:  SQL statement "DROP FUNCTION emaj3."phil's schema3_myTbl2\_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE statement
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -602,7 +602,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -761,7 +761,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."myTbl2
 CONTEXT:  SQL statement "DROP FUNCTION emaj3.phil_mytbl2_log_fnct() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE statement
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -774,7 +774,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -782,7 +782,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."myTbl2
 CONTEXT:  SQL statement "DROP FUNCTION emaj.phil_mytbl2_log_fnct() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE statement
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -795,7 +795,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -820,20 +820,20 @@ select emaj.emaj_drop_group('myGroup4');
 -- Checking step 9
 -----------------------------
 select * from emaj.emaj_alter_plan where altr_time_id > 10000 order by 1,2,3,4,5;
- altr_time_id |        altr_step        |  altr_schema   | altr_tblseq |    altr_group    | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging | altr_rlbk_id 
---------------+-------------------------+----------------+-------------+------------------+---------------+-----------------------+----------------+-------------------+---------------------------+--------------
-        10036 | REPAIR_TBL              | phil's schema3 | phil's tbl1 | phil's group#3", |               | f                     |                |                   |                           |             
-        10036 | RESET_GROUP             |                |             | phil's group#3", |               | f                     |                |                   |                           |             
-        10036 | CHANGE_TBL_LOG_SCHEMA   | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                   |                           |             
-        10036 | CHANGE_TBL_NAMES_PREFIX | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                   |                           |             
-        10036 | CHANGE_REL_PRIORITY     | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                 1 |                           |             
-        10040 | REPAIR_TBL              | phil's schema3 | phil's tbl1 | phil's group#3", |               | f                     |                |                   |                           |             
-        10040 | RESET_GROUP             |                |             | myGroup4         |               | f                     |                |                   |                           |             
-        10040 | RESET_GROUP             |                |             | phil's group#3", |               | f                     |                |                   |                           |             
-        10040 | CHANGE_TBL_LOG_SCHEMA   | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                   |                           |             
-        10040 | CHANGE_TBL_NAMES_PREFIX | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                   |                           |             
-        10040 | CHANGE_REL_PRIORITY     | myschema4      | mytblm      | myGroup4         |               | f                     |                |               999 |                           |             
-        10040 | CHANGE_REL_PRIORITY     | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                   |                           |             
+ altr_time_id |        altr_step        |  altr_schema   | altr_tblseq |    altr_group    | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging | altr_rlbk_id 
+--------------+-------------------------+----------------+-------------+------------------+---------------+-----------------------+----------------+---------------------------+--------------
+        10036 | REPAIR_TBL              | phil's schema3 | phil's tbl1 | phil's group#3", |               | f                     |                |                           |             
+        10036 | RESET_GROUP             |                |             | phil's group#3", |               | f                     |                |                           |             
+        10036 | CHANGE_TBL_LOG_SCHEMA   | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                           |             
+        10036 | CHANGE_TBL_NAMES_PREFIX | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                           |             
+        10036 | CHANGE_REL_PRIORITY     | phil's schema3 | myTbl2\     | phil's group#3", |             1 | f                     |                |                           |             
+        10040 | REPAIR_TBL              | phil's schema3 | phil's tbl1 | phil's group#3", |               | f                     |                |                           |             
+        10040 | RESET_GROUP             |                |             | myGroup4         |               | f                     |                |                           |             
+        10040 | RESET_GROUP             |                |             | phil's group#3", |               | f                     |                |                           |             
+        10040 | CHANGE_TBL_LOG_SCHEMA   | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                           |             
+        10040 | CHANGE_TBL_NAMES_PREFIX | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                           |             
+        10040 | CHANGE_REL_PRIORITY     | myschema4      | mytblm      | myGroup4         |           999 | f                     |                |                           |             
+        10040 | CHANGE_REL_PRIORITY     | phil's schema3 | myTbl2\     | phil's group#3", |               | f                     |                |                           |             
 (12 rows)
 
 -----------------------------
@@ -1660,7 +1660,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1672,7 +1672,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -2482,7 +2482,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -2494,7 +2494,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -2504,7 +2504,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -2512,7 +2512,7 @@ WARNING:  _create_seq: The sequence myschema4.mytblp_col3_seq is linked to table
 CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_timeId)"
 PL/pgSQL function emaj._add_seq(emaj.emaj_alter_plan,bigint,boolean) line 14 at PERFORM
 SQL statement "SELECT emaj._add_seq(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 133 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -2619,6 +2619,313 @@ select emaj.emaj_drop_group('myGroup4');
  emaj_drop_group 
 -----------------
                5
+(1 row)
+
+-----------------------------
+-- Step 17 : test defect with application table or sequence
+-----------------------------
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
+select emaj.emaj_create_group('phil''s group#3",',false);
+NOTICE:  table "phil's schema3_myTbl2\_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_myTbl2\_log""
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "phil's schema3.myTbl2\" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."myTbl2\""
+PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE statement
+SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "phil's schema3.myTbl2\" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."myTbl2\""
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+NOTICE:  table "phil's schema3_mytbl4_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_mytbl4_log""
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "phil's schema3.mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
+PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE statement
+SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "phil's schema3.mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".mytbl4"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+NOTICE:  table "short_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj #'3".short_log"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+NOTICE:  trigger "emaj_log_trg" for table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
+PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE statement
+SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+NOTICE:  trigger "emaj_trunc_trg" for table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+ emaj_create_group 
+-------------------
+                 5
+(1 row)
+
+select emaj.emaj_start_group('phil''s group#3",','start');
+ emaj_start_group 
+------------------
+                5
+(1 row)
+
+-- disable event triggers for this step and change an application table structure
+select emaj.emaj_disable_protection_by_event_triggers();
+ emaj_disable_protection_by_event_triggers 
+-------------------------------------------
+                                         0
+(1 row)
+
+-----------------------------
+-- test remove_and_add operations to repair an application table
+-----------------------------
+reset role;
+alter table "phil's schema3".mytbl4 alter column col45 type char(11);
+set role emaj_regression_tests_adm_user;
+select * from emaj.emaj_verify_all();
+                                                                            emaj_verify_all                                                                             
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ In group "phil's group#3",", the structure of the application table "phil's schema3"."mytbl4" is not coherent with its log table ("emaj"."phil's schema3_mytbl4_log").
+(1 row)
+
+delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
+select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table');
+ emaj_alter_group 
+------------------
+                4
+(1 row)
+
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
+select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table');
+NOTICE:  table "phil's schema3_mytbl4_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_mytbl4_log""
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+NOTICE:  trigger "emaj_log_trg" for table "phil's schema3.mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
+PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE statement
+SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+NOTICE:  trigger "emaj_trunc_trg" for table "phil's schema3.mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".mytbl4"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+ emaj_alter_group 
+------------------
+                5
+(1 row)
+
+select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4';
+   rel_schema   | rel_tblseq | rel_time_range |    rel_group     | rel_kind | rel_priority | rel_log_schema |        rel_log_table        | rel_log_dat_tsp |          rel_log_index          | rel_log_idx_tsp |       rel_log_sequence        |        rel_log_function        |                  rel_sql_columns                  | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value 
+----------------+------------+----------------+------------------+----------+--------------+----------------+-----------------------------+-----------------+---------------------------------+-----------------+-------------------------------+--------------------------------+---------------------------------------------------+--------------------+--------------------------+------------------------
+ phil's schema3 | mytbl4     | [10109,10111)  | phil's group#3", | r        |              | emaj           | phil's schema3_mytbl4_log_1 |                 | phil's schema3_mytbl4_log_idx_1 |                 | phil's schema3_mytbl4_log_seq |                                |                                                   |                    |                          |                      0
+ phil's schema3 | mytbl4     | [10112,)       | phil's group#3", | r        |              | emaj           | phil's schema3_mytbl4_log   |                 | phil's schema3_mytbl4_log_idx   |                 | phil's schema3_mytbl4_log_seq | phil's schema3_mytbl4_log_fnct | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45 | col41              | tbl.col41 = keys.col41   |                       
+(2 rows)
+
+-----------------------------
+-- test a remove operation to fix the case of a deleted log table, log sequence or log function
+-----------------------------
+reset role;
+drop table emaj."phil's schema3_mytbl4_log";
+set role emaj_regression_tests_adm_user;
+select * from emaj.emaj_verify_all();
+                                       emaj_verify_all                                       
+---------------------------------------------------------------------------------------------
+ In group "phil's group#3",", the log table "emaj"."phil's schema3_mytbl4_log" is not found.
+(1 row)
+
+delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
+select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table_2');
+NOTICE:  relation "phil's schema3_mytbl4_log" does not exist, skipping
+CONTEXT:  SQL statement "ALTER TABLE IF EXISTS emaj."phil's schema3_mytbl4_log" RENAME TO "phil's schema3_mytbl4_log_2""
+PL/pgSQL function emaj._remove_tbl(emaj.emaj_alter_plan,bigint,boolean) line 40 at EXECUTE statement
+SQL statement "SELECT emaj._remove_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 25 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+NOTICE:  relation "phil's schema3_mytbl4_log_idx" does not exist, skipping
+CONTEXT:  SQL statement "ALTER INDEX IF EXISTS emaj."phil's schema3_mytbl4_log_idx" RENAME TO "phil's schema3_mytbl4_log_idx_2""
+PL/pgSQL function emaj._remove_tbl(emaj.emaj_alter_plan,bigint,boolean) line 42 at EXECUTE statement
+SQL statement "SELECT emaj._remove_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 25 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+ emaj_alter_group 
+------------------
+                4
+(1 row)
+
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
+select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table_2');
+NOTICE:  table "phil's schema3_mytbl4_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_mytbl4_log""
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+NOTICE:  trigger "emaj_log_trg" for table "phil's schema3.mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
+PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE statement
+SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 at PERFORM
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+NOTICE:  trigger "emaj_trunc_trg" for table "phil's schema3.mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".mytbl4"
+PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 at EXECUTE statement
+SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
+SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+ emaj_alter_group 
+------------------
+                5
+(1 row)
+
+select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4';
+   rel_schema   | rel_tblseq | rel_time_range |    rel_group     | rel_kind | rel_priority | rel_log_schema |        rel_log_table        | rel_log_dat_tsp |          rel_log_index          | rel_log_idx_tsp |       rel_log_sequence        |        rel_log_function        |                  rel_sql_columns                  | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value 
+----------------+------------+----------------+------------------+----------+--------------+----------------+-----------------------------+-----------------+---------------------------------+-----------------+-------------------------------+--------------------------------+---------------------------------------------------+--------------------+--------------------------+------------------------
+ phil's schema3 | mytbl4     | [10109,10111)  | phil's group#3", | r        |              | emaj           | phil's schema3_mytbl4_log_1 |                 | phil's schema3_mytbl4_log_idx_1 |                 | phil's schema3_mytbl4_log_seq |                                |                                                   |                    |                          |                      0
+ phil's schema3 | mytbl4     | [10112,10113)  | phil's group#3", | r        |              | emaj           | phil's schema3_mytbl4_log_2 |                 | phil's schema3_mytbl4_log_idx_2 |                 | phil's schema3_mytbl4_log_seq |                                |                                                   |                    |                          |                      0
+ phil's schema3 | mytbl4     | [10114,)       | phil's group#3", | r        |              | emaj           | phil's schema3_mytbl4_log   |                 | phil's schema3_mytbl4_log_idx   |                 | phil's schema3_mytbl4_log_seq | phil's schema3_mytbl4_log_fnct | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45 | col41              | tbl.col41 = keys.col41   |                       
+(3 rows)
+
+-----------------------------
+-- test a remove operation to fix the case of a deleted application table or sequence
+-----------------------------
+-- in fact just rename the table and the sequence
+reset role;
+alter table "phil's schema3".mytbl4 rename to mytbl4_sav;
+alter sequence "phil's schema3"."phil's seq\1" rename to "phil's seq\1_sav";
+set role emaj_regression_tests_adm_user;
+-- try to set a mark or alter the group
+begin;
+  select emaj.emaj_set_mark_group('phil''s group#3",','should fails');
+ERROR:  _verify_groups (1): In group "phil's group#3",", the table "phil's schema3"."mytbl4" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(array[v_groupName], TRUE)"
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 17 at PERFORM
+rollback;
+begin;
+  select emaj.emaj_alter_group('phil''s group#3",','should also fails');
+WARNING:  _check_groups_content: Error, the table or sequence "phil's schema3".mytbl4 does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+WARNING:  _check_groups_content: Error, the table or sequence "phil's schema3"."phil's seq\1" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
+CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+rollback;
+delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
+delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s seq\1';
+select emaj.emaj_alter_group('phil''s group#3",','remove_the_dropped_table_and_seq');
+NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3".mytbl4_sav
+CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj."phil's schema3_mytbl4_log_fnct"() CASCADE"
+PL/pgSQL function emaj._remove_tbl(emaj.emaj_alter_plan,bigint,boolean) line 57 at EXECUTE statement
+SQL statement "SELECT emaj._remove_tbl(r_plan, v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 25 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+ emaj_alter_group 
+------------------
+                3
+(1 row)
+
+-- check that the log table does not exist anymore
+select count(*) from emaj."phil's schema3_mytbl4_log";
+ERROR:  relation "emaj.phil's schema3_mytbl4_log" does not exist
+LINE 1: select count(*) from emaj."phil's schema3_mytbl4_log";
+                             ^
+-- revert the changes
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','phil''s seq\1');
+reset role;
+alter table "phil's schema3".mytbl4_sav rename to mytbl4;
+alter table "phil's schema3".mytbl4 alter column col45 type char(10);
+alter sequence "phil's schema3"."phil's seq\1_sav" rename to "phil's seq\1";
+-- ree-nable the event triggers and drop the group
+set role emaj_regression_tests_adm_user;
+select emaj.emaj_enable_protection_by_event_triggers();
+ emaj_enable_protection_by_event_triggers 
+------------------------------------------
+                                        0
+(1 row)
+
+select emaj.emaj_stop_group('phil''s group#3",');
+ emaj_stop_group 
+-----------------
+               3
+(1 row)
+
+select emaj.emaj_drop_group('phil''s group#3",');
+NOTICE:  table "phil's schema3_mytbl4_log_2" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj."phil's schema3_mytbl4_log_2" CASCADE"
+PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation) line 28 at EXECUTE statement
+SQL statement "SELECT CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel)
+                     WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel) END"
+PL/pgSQL function emaj._drop_group(text,boolean) line 19 at PERFORM
+SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
+PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
+ emaj_drop_group 
+-----------------
+               3
 (1 row)
 
 -----------------------------
@@ -3195,7 +3502,15 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10106 |             100437 | R
    10107 |             100437 | M
    10108 |             100437 | M
-(109 rows)
+   10109 |             100437 | C
+   10110 |             100437 | M
+   10111 |             100437 | A
+   10112 |             100437 | A
+   10113 |             100437 | A
+   10114 |             100437 | A
+   10115 |             100437 | A
+   10116 |             100437 | M
+(117 rows)
 
 select hist_id, hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -4017,7 +4332,63 @@ select hist_id, hist_function, hist_event, hist_object,
    10891 | STOP_GROUP               | END                     | myGroup4                                                                         | 5 tables/sequences processed                                                                            | postgres
    10892 | DROP_GROUP               | BEGIN                   | myGroup4                                                                         |                                                                                                         | postgres
    10893 | DROP_GROUP               | END                     | myGroup4                                                                         | 5 tables/sequences processed                                                                            | postgres
-(811 rows)
+   10894 | CREATE_GROUP             | BEGIN                   | phil's group#3",                                                                 | audit_only                                                                                              | postgres
+   10895 | CREATE_GROUP             | SCHEMA CREATED          | "emaj #'3"                                                                       |                                                                                                         | postgres
+   10896 | CREATE_GROUP             | END                     | phil's group#3",                                                                 | 5 tables/sequences processed                                                                            | postgres
+   10897 | START_GROUP              | BEGIN                   | phil's group#3",                                                                 | With log reset                                                                                          | postgres
+   10898 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10899 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 3 tables locked, 0 deadlock(s)                                                                          | postgres
+   10900 | SET_MARK_GROUP           | BEGIN                   | phil's group#3",                                                                 | start                                                                                                   | postgres
+   10901 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | start                                                                                                   | postgres
+   10902 | START_GROUP              | END                     | phil's group#3",                                                                 | 5 tables/sequences processed                                                                            | postgres
+   10903 | DISABLE_PROTECTION       | EVENT TRIGGERS DISABLED |                                                                                  | <none>                                                                                                  | postgres
+   10904 | ALTER_GROUP              | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10905 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10906 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 3 tables locked, 0 deadlock(s)                                                                          | postgres
+   10907 | SET_MARK_GROUP           | BEGIN                   | phil's group#3",                                                                 | remove_the_damaged_table                                                                                | postgres
+   10908 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | remove_the_damaged_table                                                                                | postgres
+   10909 | ALTER_GROUP              | TABLE REMOVED           | "phil's schema3".mytbl4                                                          | From logging group phil's group#3",                                                                     | postgres
+   10910 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | Timestamp Id : 10111                                                                                    | postgres
+   10911 | ALTER_GROUP              | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10912 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10913 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                                                                          | postgres
+   10914 | SET_MARK_GROUP           | BEGIN                   | phil's group#3",                                                                 | re_add_the_table                                                                                        | postgres
+   10915 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | re_add_the_table                                                                                        | postgres
+   10916 | ALTER_GROUP              | TABLE ADDED             | "phil's schema3".mytbl4                                                          | To logging group phil's group#3",                                                                       | postgres
+   10917 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | Timestamp Id : 10112                                                                                    | postgres
+   10918 | ALTER_GROUP              | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10919 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10920 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 3 tables locked, 0 deadlock(s)                                                                          | postgres
+   10921 | SET_MARK_GROUP           | BEGIN                   | phil's group#3",                                                                 | remove_the_damaged_table_2                                                                              | postgres
+   10922 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | remove_the_damaged_table_2                                                                              | postgres
+   10923 | ALTER_GROUP              | TABLE REMOVED           | "phil's schema3".mytbl4                                                          | From logging group phil's group#3",                                                                     | postgres
+   10924 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | Timestamp Id : 10113                                                                                    | postgres
+   10925 | ALTER_GROUP              | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10926 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10927 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                                                                          | postgres
+   10928 | SET_MARK_GROUP           | BEGIN                   | phil's group#3",                                                                 | re_add_the_table_2                                                                                      | postgres
+   10929 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | re_add_the_table_2                                                                                      | postgres
+   10930 | ALTER_GROUP              | TABLE ADDED             | "phil's schema3".mytbl4                                                          | To logging group phil's group#3",                                                                       | postgres
+   10931 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | Timestamp Id : 10114                                                                                    | postgres
+   10934 | ALTER_GROUP              | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10935 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10936 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                                                                          | postgres
+   10937 | SET_MARK_GROUP           | BEGIN                   | phil's group#3",                                                                 | remove_the_dropped_table_and_seq                                                                        | postgres
+   10938 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | remove_the_dropped_table_and_seq                                                                        | postgres
+   10939 | ALTER_GROUP              | TABLE REMOVED           | "phil's schema3".mytbl4                                                          | From logging group phil's group#3",                                                                     | postgres
+   10940 | ALTER_GROUP              | SEQUENCE REMOVED        | "phil's schema3"."phil's seq\1"                                                  | From logging group phil's group#3",                                                                     | postgres
+   10941 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | Timestamp Id : 10115                                                                                    | postgres
+   10942 | ENABLE_PROTECTION        | EVENT TRIGGERS ENABLED  |                                                                                  | <none>                                                                                                  | postgres
+   10943 | STOP_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10944 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10945 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                                                                          | postgres
+   10946 | SET_MARK_GROUP           | BEGIN                   | phil's group#3",                                                                 | STOP_%                                                                                                  | postgres
+   10947 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | STOP_%                                                                                                  | postgres
+   10948 | STOP_GROUP               | END                     | phil's group#3",                                                                 | 3 tables/sequences processed                                                                            | postgres
+   10949 | DROP_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10950 | DROP_GROUP               | SCHEMA DROPPED          | "emaj #'3"                                                                       |                                                                                                         | postgres
+   10951 | DROP_GROUP               | END                     | phil's group#3",                                                                 | 3 tables/sequences processed                                                                            | postgres
+(867 rows)
 
 --
 reset role;

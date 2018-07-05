@@ -51,6 +51,11 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function _remove_tbl(emaj_alter_plan,bigint)
+drop cascades to function _remove_seq(emaj_alter_plan,bigint)
+NOTICE:  function emaj._remove_tbl(emaj.emaj_alter_plan,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._remove_seq(emaj.emaj_alter_plan,pg_catalog.int8) does not exist, skipping
 -----------------------------
 -- check installation
 -----------------------------
@@ -150,7 +155,6 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  altr_priority             | integer               |           |          | 
  altr_group_is_logging     | boolean               |           |          | 
  altr_new_group            | text                  |           |          | 
- altr_new_priority         | integer               |           |          | 
  altr_new_group_is_logging | boolean               |           |          | 
  altr_rlbk_id              | bigint                |           |          | 
 Indexes:

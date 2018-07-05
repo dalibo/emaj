@@ -92,7 +92,8 @@ use warnings; use strict;
     $res = $2;
 # get interresting pieces from each line
     if ($line =~ /^.*\/(.+?)\.out:(ERROR|WARNING|psql):\s*(\S.*)/ ||             # line from postgres
-        $line =~ /^.*\/(.+?)\.out:PHP Warning.*?(ERROR|WARNING):\s*(\S.*)/) {    # line ERROR or WARNING from PHP
+        $line =~ /^.*\/(.+?)\.out:PHP Warning.*?(ERROR|WARNING):\s*(\S.*)/ ||    # line ERROR or WARNING from PHP
+        $line =~ /^.*\/(.+?)\.out:DBD::Pg.*?(ERROR|WARNING):\s*(\S.*)/) {        # line ERROR or WARNING from Perl
 # one interesting line identified
       $script = $1.'.sql';
       $msgType = $2;
@@ -145,7 +146,7 @@ use warnings; use strict;
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: Internal error (group "%" is empty).'
                             # error messages that can in fact not be encountered in the current version
        && $msgs{$fnctId} ne 'EXCEPTION:_check_mark_name: The groups "%" have no mark.'
-       && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Cannot repair the sequence %.%. Its group % is in LOGGING state.'
+       && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.'
        && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Cannot repair the table %.%. Its group % is in LOGGING state.'
                             # execution conditions that cannot be reproduced without parallelism
        && $msgs{$fnctId} ne 'EXCEPTION:_lock_groups: Too many (5) deadlocks encountered while locking tables of group "%".'

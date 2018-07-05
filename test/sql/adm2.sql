@@ -541,6 +541,88 @@ select emaj.emaj_stop_group('myGroup4');
 select emaj.emaj_drop_group('myGroup4');
 
 -----------------------------
+-- Step 17 : test defect with application table or sequence
+-----------------------------
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
+select emaj.emaj_create_group('phil''s group#3",',false);
+select emaj.emaj_start_group('phil''s group#3",','start');
+
+-- disable event triggers for this step and change an application table structure
+select emaj.emaj_disable_protection_by_event_triggers();
+
+-----------------------------
+-- test remove_and_add operations to repair an application table
+-----------------------------
+reset role;
+alter table "phil's schema3".mytbl4 alter column col45 type char(11);
+set role emaj_regression_tests_adm_user;
+
+select * from emaj.emaj_verify_all();
+
+delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
+select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table');
+
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
+select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table');
+
+select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4';
+
+-----------------------------
+-- test a remove operation to fix the case of a deleted log table, log sequence or log function
+-----------------------------
+reset role;
+drop table emaj."phil's schema3_mytbl4_log";
+set role emaj_regression_tests_adm_user;
+select * from emaj.emaj_verify_all();
+
+delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
+select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table_2');
+
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
+select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table_2');
+
+select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4';
+
+-----------------------------
+-- test a remove operation to fix the case of a deleted application table or sequence
+-----------------------------
+-- in fact just rename the table and the sequence
+reset role;
+alter table "phil's schema3".mytbl4 rename to mytbl4_sav;
+alter sequence "phil's schema3"."phil's seq\1" rename to "phil's seq\1_sav";
+
+set role emaj_regression_tests_adm_user;
+
+-- try to set a mark or alter the group
+begin;
+  select emaj.emaj_set_mark_group('phil''s group#3",','should fails');
+rollback;
+begin;
+  select emaj.emaj_alter_group('phil''s group#3",','should also fails');
+rollback;
+
+delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
+delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s seq\1';
+select emaj.emaj_alter_group('phil''s group#3",','remove_the_dropped_table_and_seq');
+
+-- check that the log table does not exist anymore
+select count(*) from emaj."phil's schema3_mytbl4_log";
+
+-- revert the changes
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','phil''s seq\1');
+reset role;
+alter table "phil's schema3".mytbl4_sav rename to mytbl4;
+alter table "phil's schema3".mytbl4 alter column col45 type char(10);
+alter sequence "phil's schema3"."phil's seq\1_sav" rename to "phil's seq\1";
+
+-- ree-nable the event triggers and drop the group
+set role emaj_regression_tests_adm_user;
+select emaj.emaj_enable_protection_by_event_triggers();
+select emaj.emaj_stop_group('phil''s group#3",');
+select emaj.emaj_drop_group('phil''s group#3",');
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 -- first set all rollback events state

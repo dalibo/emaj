@@ -19,10 +19,10 @@ To build the most balanced sessions as possible, E-Maj takes into account:
 Prerequisites
 -------------
 
-Two equivalent tools are actually provided, one coded in *php* and the other in *perl*. Both need that some software component be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL instance) :
+Two equivalent tools are actually provided, one coded in *php* and the other in *perl*. Both need that some software components be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL instance) :
 
 * for the *php* client, the **php** software and its PostgreSQL interface,
-* for the *perl* client, the **perl** software with the *DBI* and *DBD::Pg modules*.
+* for the *perl* client, the **perl** software with the *DBI* and *DBD::Pg* modules.
 
 Rolling back each session on behalf of a unique transaction implies the use of two phase commit. As a consequence, the **max_prepared_transaction** parameter of the *postgresql.conf* file must be adjusted. As the default value of this parameter equals 0, it must be modified by specifying a value at least equal to the maximum number of *sessions* that will be used.
 
@@ -34,6 +34,7 @@ Both php and perl commands share the same syntax::
    emajParallelRollback.php -g <group(s).name> -m <mark> -s <number.of.sessions> [OPTIONS]...
 
 and::
+
    emajParallelRollback.pl -g <group(s).name> -m <mark> -s <number.of.sessions> [OPTIONS]...
 
 The general options are:

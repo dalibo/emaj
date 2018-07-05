@@ -39,7 +39,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -52,7 +52,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -60,7 +60,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema1_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -73,7 +73,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -146,7 +146,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -159,7 +159,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -167,7 +167,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC".s1t3_log_fnct() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -180,7 +180,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -833,7 +833,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -845,7 +845,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -855,7 +855,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1228,7 +1228,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1240,7 +1240,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1250,7 +1250,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1750,7 +1750,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1762,7 +1762,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1772,7 +1772,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1782,7 +1782,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1794,7 +1794,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1804,7 +1804,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1814,7 +1814,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1826,7 +1826,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -1836,7 +1836,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -2084,7 +2084,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 66 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2096,7 +2096,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 97 a
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2106,7 +2106,7 @@ PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 102 
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 129 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2152,7 +2152,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2165,7 +2165,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2173,7 +2173,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2186,7 +2186,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2204,15 +2204,15 @@ PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 (1 row)
 
   select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan) order by 1,2,3,4,5;
- altr_time_id |        altr_step         | altr_schema |   altr_tblseq    | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging | altr_rlbk_id 
---------------+--------------------------+-------------+------------------+------------+---------------+-----------------------+----------------+-------------------+---------------------------+--------------
-         6119 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6119 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       |                   | t                         |             
-         6119 | CHANGE_TBL_NAMES_PREFIX  | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       |                   | t                         |             
-         6119 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       |                   | t                         |             
-         6119 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       |                   | t                         |             
-         6119 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       |                   | t                         |             
-         6119 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup2   |               | f                     | myGroup1       |                   | t                         |             
+ altr_time_id |        altr_step         | altr_schema |   altr_tblseq    | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging | altr_rlbk_id 
+--------------+--------------------------+-------------+------------------+------------+---------------+-----------------------+----------------+---------------------------+--------------
+         6119 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
+         6119 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       | t                         |             
+         6119 | CHANGE_TBL_NAMES_PREFIX  | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       | t                         |             
+         6119 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       | t                         |             
+         6119 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       | t                         |             
+         6119 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       | t                         |             
+         6119 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup2   |               | f                     | myGroup1       | t                         |             
 (7 rows)
 
   select hist_function, hist_event, hist_object, hist_wording from emaj.emaj_hist 
@@ -2259,7 +2259,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2272,7 +2272,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2280,7 +2280,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2293,7 +2293,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2423,7 +2423,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj.s2t3_log_fnct() CASCADE"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2436,7 +2436,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
 PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 79 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2444,7 +2444,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC".s2t3_log_fnct() CASCADE"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 23 at EXECUTE
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -2457,7 +2457,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                      quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName))"
 PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 90 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
@@ -3353,157 +3353,157 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 (105 rows)
 
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
- altr_time_id |        altr_step         | altr_schema |   altr_tblseq    | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging | altr_rlbk_id 
---------------+--------------------------+-------------+------------------+------------+---------------+-----------------------+----------------+-------------------+---------------------------+--------------
-         6008 | RESET_GROUP              |             |                  | emptyGroup |               | f                     |                |                   |                           |             
-         6009 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6010 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6010 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6010 | REMOVE_TBL               | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6010 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6011 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   |                           |             
-         6011 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6012 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6012 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6012 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6012 | ADD_TBL                  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6013 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6013 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   |                           |             
-         6014 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6014 | CHANGE_TBL_LOG_SCHEMA    | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6015 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6015 | CHANGE_TBL_LOG_SCHEMA    | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6016 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6016 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6017 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6017 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6018 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6018 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6019 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6019 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6020 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2           | myGroup1   |               | f                     |                |                   |                           |             
-         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6021 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2           | myGroup1   |               | f                     |                |                   |                           |             
-         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6022 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6022 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6023 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6023 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6024 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6024 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                30 |                           |             
-         6025 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6025 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            30 | f                     |                |                   |                           |             
-         6026 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6026 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |               | f                     |                |                20 |                           |             
-         6027 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6027 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6028 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6028 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6029 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6029 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6030 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6031 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6031 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6032 | REMOVE_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6032 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6032 | ADD_TBL                  | myschema1   | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   |                           |             
-         6033 | REMOVE_TBL               | myschema1   | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   |                           |             
-         6033 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6033 | ADD_TBL                  | public      | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   |                           |             
-         6034 | REMOVE_TBL               | public      | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                   |                           |             
-         6034 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6034 | ADD_TBL                  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6035 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6035 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6036 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6036 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6037 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                   |                           |             
-         6037 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6040 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6040 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6040 | REMOVE_TBL               | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                   |                           |             
-         6040 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   |                           |             
-         6040 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6040 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6041 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6041 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6041 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6041 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6041 | ADD_TBL                  | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                   |                           |             
-         6041 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                   |                           |             
-         6042 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6042 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6042 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | f                     |                |                   |                           |             
-         6042 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6043 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6043 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6043 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | f                     |                |                   |                           |             
-         6043 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                   |                           |             
-         6044 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6044 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6044 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6044 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | f                     |                |                   |                           |             
-         6044 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                30 |                           |             
-         6045 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6045 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6045 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                   |                           |             
-         6045 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | f                     |                |                   |                           |             
-         6045 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            30 | f                     |                |                20 |                           |             
-         6046 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6046 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6046 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       |                   | f                         |             
-         6046 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup2   |               | f                     | myGroup1       |                   | f                         |             
-         6047 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                   |                           |             
-         6047 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6047 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup1   |               | f                     | myGroup2       |                   | f                         |             
-         6047 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup1   |               | f                     | myGroup2       |                   | f                         |             
-         6051 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            20 | t                     |                |                30 |                           |         6015
-         6052 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                   |                           |         6015
-         6052 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                   |                           |         6015
-         6052 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                   |                           |         6015
-         6052 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | t                     |                |                   |                           |         6015
-         6055 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            30 | t                     |                |                20 |                           |         6013
-         6056 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                   |                           |         6013
-         6056 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                   |                           |         6013
-         6056 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                   |                           |         6013
-         6056 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | t                     |                |                   |                           |         6013
-         6059 | ADD_SEQ                  | myschema2   | myseq2           | myGroup2   |               | t                     |                |                   |                           |         6002
-         6064 | REMOVE_SEQ               | myschema2   | myseq2           | myGroup2   |               | t                     |                |                   |                           |         6003
-         6065 | ADD_SEQ                  | myschema2   | myseq2           | myGroup2   |               | t                     |                |                   |                           |         6003
-         6066 | REMOVE_SEQ               | myschema2   | myseq2           | myGroup2   |               | t                     |                |                   |                           |         6003
-         6070 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | t                     |                |                   |                           |         6010
-         6078 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | t                     |                |                   |                           |         6010
-         6081 | ADD_TBL                  | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                   |                           |         6007
-         6088 | REMOVE_TBL               | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                   |                           |         6008
-         6089 | ADD_TBL                  | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                   |                           |         6008
-         6091 | REMOVE_TBL               | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                   |                           |         6008
-         6094 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                   |                           |         6010
-         6094 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                   |                           |         6010
-         6100 | REMOVE_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | t                     |                |                   |                           |         6011
-         6106 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                   |                           |         6013
-         6106 | ADD_TBL                  | myschema1   | mytbl1           | myGroup1   |            20 | t                     |                |                   |                           |         6013
-         6106 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                   |                           |         6013
-         6121 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | t                     | myGroup1       |                   | t                         |         6019
-         6121 | CHANGE_TBL_NAMES_PREFIX  | myschema2   | myTbl3           | myGroup2   |               | t                     | myGroup1       |                   | t                         |         6019
-         6121 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | myTbl3           | myGroup2   |               | t                     | myGroup1       |                   | t                         |         6019
-         6121 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | myTbl3           | myGroup2   |               | t                     | myGroup1       |                   | t                         |         6019
-         6121 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup2   |               | t                     | myGroup1       |                   | t                         |         6019
-         6121 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup2   |               | t                     | myGroup1       |                   | t                         |         6019
-         6127 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                   |                           |             
-         6127 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       |                   | f                         |             
-         6127 | CHANGE_TBL_NAMES_PREFIX  | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       |                   | f                         |             
-         6127 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       |                   | f                         |             
-         6127 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       |                   | f                         |             
-         6127 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       |                   | f                         |             
-         6127 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup1   |               | t                     | myGroup2       |                   | f                         |             
+ altr_time_id |        altr_step         | altr_schema |   altr_tblseq    | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging | altr_rlbk_id 
+--------------+--------------------------+-------------+------------------+------------+---------------+-----------------------+----------------+---------------------------+--------------
+         6008 | RESET_GROUP              |             |                  | emptyGroup |               | f                     |                |                           |             
+         6009 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6010 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6010 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6010 | REMOVE_TBL               | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                           |             
+         6010 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6011 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                           |             
+         6011 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6012 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6012 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6012 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6012 | ADD_TBL                  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                           |             
+         6013 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6013 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                           |             
+         6014 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6014 | CHANGE_TBL_LOG_SCHEMA    | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6015 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6015 | CHANGE_TBL_LOG_SCHEMA    | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6016 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6016 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6017 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6017 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6018 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6018 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6019 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6019 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6020 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2           | myGroup1   |               | f                     |                |                           |             
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6020 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                           |             
+         6021 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2           | myGroup1   |               | f                     |                |                           |             
+         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                           |             
+         6022 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6022 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6023 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6023 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6024 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6024 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            30 | f                     |                |                           |             
+         6025 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6025 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |               | f                     |                |                           |             
+         6026 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6026 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6027 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6027 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6028 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6028 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6029 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6029 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6030 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6031 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6031 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6032 | REMOVE_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6032 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6032 | ADD_TBL                  | myschema1   | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                           |             
+         6033 | REMOVE_TBL               | myschema1   | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                           |             
+         6033 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6033 | ADD_TBL                  | public      | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                           |             
+         6034 | REMOVE_TBL               | public      | mytbl1_new_name  | myGroup1   |            20 | f                     |                |                           |             
+         6034 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6034 | ADD_TBL                  | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6035 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6035 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6036 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6036 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6037 | REPAIR_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6037 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6040 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6040 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6040 | REMOVE_TBL               | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                           |             
+         6040 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                           |             
+         6040 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6040 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
+         6041 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6041 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
+         6041 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6041 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6041 | ADD_TBL                  | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                           |             
+         6041 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                           |             
+         6042 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6042 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
+         6042 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | f                     |                |                           |             
+         6042 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6043 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6043 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
+         6043 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | f                     |                |                           |             
+         6043 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
+         6044 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6044 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
+         6044 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6044 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | f                     |                |                           |             
+         6044 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            30 | f                     |                |                           |             
+         6045 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6045 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
+         6045 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
+         6045 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | f                     |                |                           |             
+         6045 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            20 | f                     |                |                           |             
+         6046 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6046 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
+         6046 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup2   |               | f                     | myGroup1       | f                         |             
+         6046 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup2   |               | f                     | myGroup1       | f                         |             
+         6047 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
+         6047 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
+         6047 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup1   |               | f                     | myGroup2       | f                         |             
+         6047 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup1   |               | f                     | myGroup2       | f                         |             
+         6051 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            30 | t                     |                |                           |         6015
+         6052 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                           |         6015
+         6052 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                           |         6015
+         6052 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                           |         6015
+         6052 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | t                     |                |                           |         6015
+         6055 | CHANGE_REL_PRIORITY      | myschema1   | mytbl1           | myGroup1   |            20 | t                     |                |                           |         6013
+         6056 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                           |         6013
+         6056 | CHANGE_TBL_NAMES_PREFIX  | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                           |         6013
+         6056 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                           |         6013
+         6056 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | mytbl6           | myGroup2   |               | t                     |                |                           |         6013
+         6059 | ADD_SEQ                  | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |         6002
+         6064 | REMOVE_SEQ               | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |         6003
+         6065 | ADD_SEQ                  | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |         6003
+         6066 | REMOVE_SEQ               | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |         6003
+         6070 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | t                     |                |                           |         6010
+         6078 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | t                     |                |                           |         6010
+         6081 | ADD_TBL                  | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6007
+         6088 | REMOVE_TBL               | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6008
+         6089 | ADD_TBL                  | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6008
+         6091 | REMOVE_TBL               | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6008
+         6094 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                           |         6010
+         6094 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                           |         6010
+         6100 | REMOVE_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | t                     |                |                           |         6011
+         6106 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                           |         6013
+         6106 | ADD_TBL                  | myschema1   | mytbl1           | myGroup1   |            20 | t                     |                |                           |         6013
+         6106 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                           |         6013
+         6121 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup2   |               | t                     | myGroup1       | t                         |         6019
+         6121 | CHANGE_TBL_NAMES_PREFIX  | myschema2   | myTbl3           | myGroup2   |               | t                     | myGroup1       | t                         |         6019
+         6121 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | myTbl3           | myGroup2   |               | t                     | myGroup1       | t                         |         6019
+         6121 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | myTbl3           | myGroup2   |               | t                     | myGroup1       | t                         |         6019
+         6121 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup2   |               | t                     | myGroup1       | t                         |         6019
+         6121 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup2   |               | t                     | myGroup1       | t                         |         6019
+         6127 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
+         6127 | CHANGE_TBL_LOG_SCHEMA    | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       | f                         |             
+         6127 | CHANGE_TBL_NAMES_PREFIX  | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       | f                         |             
+         6127 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       | f                         |             
+         6127 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       | f                         |             
+         6127 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       | f                         |             
+         6127 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup1   |               | t                     | myGroup2       | f                         |             
 (149 rows)
 
 truncate emaj.emaj_hist;

@@ -121,6 +121,14 @@ Le script *tools/create_cluster.sh* est une aide à la création des instances d
 
    sh tools/create_cluster.sh <version_majeure_PostgreSQL>
 
+Installer les dépendances logicielles
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Les tests des clients peut nécessiter l’installation de quelques composants logiciels supplémentaires :
+
+* le logiciel **php** et son interface PostgreSQL,
+* le logiciel **perl** avec les modules *DBI* et *DBD::Pg*.
+
 Exécuter les tests de non régression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
