@@ -56,49 +56,45 @@ But the previous method has several drawbacks:
 * logs recorded before the operation are lost,
 * it is not possible to rollback a tables group to a previous state anymore.
 
-However, some actions are possible while the tables groups are in *LOGGING* state. The following table lists the allowed actions.
+However, some actions are possible while the tables groups are in *LOGGING* state. The following table lists the allowed actions. Details about each method is presented below.
 
-+-------------------------------------+---------------+-----------------------+
-| Action                              | LOGGING Group | Method                |
-+=====================================+===============+=======================+
-| Change the groupe ownership         | No            |                       | 
-+-------------------------------------+---------------+-----------------------+
-| Change the log schema suffix        | Yes           | emaj_group_def update |
-+-------------------------------------+---------------+-----------------------+
-| Change the E-Maj names prefix       | Yes           | emaj_group_def update |
-+-------------------------------------+---------------+-----------------------+
-| Change the log data tablespace      | Yes           | emaj_group_def update |
-+-------------------------------------+---------------+-----------------------+
-| Change the log index tablespace     | Yes           | emaj_group_def update |
-+-------------------------------------+---------------+-----------------------+
-| Change the E-Maj priority           | Yes           | emaj_group_def update |
-+-------------------------------------+---------------+-----------------------+
-| Remove a table from a group         | Yes           | emaj_group_def update |
-+-------------------------------------+---------------+-----------------------+
-| Remove a sequence from a group      | Yes           | emaj_group_def update |
-+-------------------------------------+---------------+-----------------------+
-| Add a table to a group              | Yes           | emaj_group_def update |
-+-------------------------------------+---------------+-----------------------+
-| Add a sequence to a group           | Yes           | emaj_group_def update |
-+-------------------------------------+---------------+-----------------------+
-| Repair a table or a sequence        | No            |                       |
-+-------------------------------------+---------------+-----------------------+
-| Rename a table                      | No            |                       |
-+-------------------------------------+---------------+-----------------------+
-| Rename a sequence                   | No            |                       |
-+-------------------------------------+---------------+-----------------------+
-| Change the schema of a table        | No            |                       |
-+-------------------------------------+---------------+-----------------------+
-| Change the schema of a sequence     | No            |                       |
-+-------------------------------------+---------------+-----------------------+
-| Rename a table’s column             | No            |                       |
-+-------------------------------------+---------------+-----------------------+
-| Change a table’s structure          | No            |                       |
-+-------------------------------------+---------------+-----------------------+
-| Other forms of ALTER TABLE          | Yes           | No E-Maj impact       |
-+-------------------------------------+---------------+-----------------------+
-| Other forms of ALTER SEQUENCE       | Yes           | No E-Maj impact       |
-+-------------------------------------+---------------+-----------------------+
++------------------------------------------------+---------------+-----------------------+
+| Action                                         | LOGGING Group | Method                |
++================================================+===============+=======================+
+| Change the log schema suffix                   | Yes           | emaj_group_def update |
++------------------------------------------------+---------------+-----------------------+
+| Change the E-Maj names prefix                  | Yes           | emaj_group_def update |
++------------------------------------------------+---------------+-----------------------+
+| Change the log data tablespace                 | Yes           | emaj_group_def update |
++------------------------------------------------+---------------+-----------------------+
+| Change the log index tablespace                | Yes           | emaj_group_def update |
++------------------------------------------------+---------------+-----------------------+
+| Change the E-Maj priority                      | Yes           | emaj_group_def update |
++------------------------------------------------+---------------+-----------------------+
+| Remove a table/sequence from a group           | Yes           | emaj_group_def update |
++------------------------------------------------+---------------+-----------------------+
+| Add a table/sequence to a group                | Yes           | emaj_group_def update |
++------------------------------------------------+---------------+-----------------------+
+| Change the group ownership of a table/sequence | Yes           | emaj_group_def update |
++------------------------------------------------+---------------+-----------------------+
+| Repair a table or a sequence                   | Yes           | chaining remove/add   |
++------------------------------------------------+---------------+-----------------------+
+| Rename a table                                 | No            |                       |
++------------------------------------------------+---------------+-----------------------+
+| Rename a sequence                              | No            |                       |
++------------------------------------------------+---------------+-----------------------+
+| Change the schema of a table                   | No            |                       |
++------------------------------------------------+---------------+-----------------------+
+| Change the schema of a sequence                | No            |                       |
++------------------------------------------------+---------------+-----------------------+
+| Rename a table’s column                        | No            |                       |
++------------------------------------------------+---------------+-----------------------+
+| Change a table’s structure                     | No            |                       |
++------------------------------------------------+---------------+-----------------------+
+| Other forms of ALTER TABLE                     | Yes           | No E-Maj impact       |
++------------------------------------------------+---------------+-----------------------+
+| Other forms of ALTER SEQUENCE                  | Yes           | No E-Maj impact       |
++------------------------------------------------+---------------+-----------------------+
 
 The "emaj_group_def update" method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -178,3 +174,22 @@ The SQL script generation for the marks interval m1 to m4:
 If the structure of an application table has been inadvertently changed while it belonged to a tables group in *LOGGING* state, the mark set and rollback operations will be blocked by the E-Maj internal checks. To avoid stopping, altering and then restarting the tables group, it is possible to only remove the concerned table from its group and then to re-add it.
 
 When a table changes its affected group, the impact on the ability to generate a SQL script or to rollback the source and destination tables groups is similar to removing the table from its source group and then adding the table to the destination group.
+
+The “Chaining Remove/Add” method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Eventhough the event triggers created with E-Maj limit the risk, some E-Maj components that support an application table (log table, sequence or function) may be dropped. In such  a case, the associated tables group cannot work correctly anymore.
+
+In order to solve the issue without stopping the tables group (and thus loose the benefits of the recorded logs), it is possible to remove the table from its group and then re-add it. Four steps need to be executed:
+
+* delete the row corresponding to the application table from the *emaj_group_def* table,
+* call the *emaj_alter_group()* function for the related tables group, in order to effectively remove the table from the group,
+* insert again the row corresponding to the table into the *emaj_group_def* table,
+* call the *emaj_alter_group()* function again in order to re-add the table to the group.
+
+Of course, once the table is removed from its group, the content of the associated logs cannot be used for a potential rollback or script generation anymore.
+
+It may also happen that an application table or sequence be dropped. In this case, the table of sequence  can be removed from its group, by chaining these steps:
+
+* delete the row corresponding to the application table or sequence from the *emaj_group_def* table,
+* call the *emaj_alter_group()* function for the related tables group, in order to effectively remove the table or sequence.
