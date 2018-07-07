@@ -3,6 +3,15 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+
+
+
+2.3.0 (2018-Jul-8)
+------
+###Enhancements:###
   * A table or a sequence can be added to a tables group in LOGGING state.
   * A table or a sequence can be moved from one group to another, whatever
     the state of these groups.

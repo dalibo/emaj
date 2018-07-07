@@ -80,8 +80,11 @@
 	done
 	git mv sql/emaj--devel.sql sql/emaj--${NEW}.sql
 
-# Change version identifiers inside files from /php + /tools + META.json README.md
-	find php tools META.json README.md -type f -exec sed -i "s/<devel>/${NEW}/g" '{}' \;
+# Change version identifiers inside files from /client + + META.json README.md
+	find client META.json README.md -type f -exec sed -i "s/<devel>/${NEW}/g" '{}' \;
+
+# Change version identifiers inside files from /tools, except the README file
+	find tools ! -path tools/README -type f -exec sed -i "s/<devel>/${NEW}/g" '{}' \;
 
 # Change version identifiers inside emaj.control
 	sed -i "s/devel/${NEW}/g" emaj.control
