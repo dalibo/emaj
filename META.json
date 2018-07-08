@@ -17,7 +17,7 @@
    "provides": {
      "emaj": {
        "file": "sql/emaj--<devel>.sql",
-       "docfile": "doc/emaj.<devel>_doc_en.pdf",
+       "docfile": "doc/Emaj.<devel>_doc_en.pdf",
        "version": "<devel>",
        "abstract": "Tables updates log and rollback"
      }
