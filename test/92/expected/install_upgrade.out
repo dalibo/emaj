@@ -13,14 +13,14 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 select * from pg_available_extension_versions where name = 'emaj';
  name | version | installed | superuser | relocatable | schema |      requires       |                                            comment                                             
 ------+---------+-----------+-----------+-------------+--------+---------------------+------------------------------------------------------------------------------------------------
- emaj | 2.2.3   | f         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+ emaj | 2.3.0   | f         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
  emaj | devel   | f         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
 -- look at all available update paths
 select * from pg_extension_update_paths('emaj') order by 1,2;;
-   source   |   target   |                                   path                                    
-------------+------------+---------------------------------------------------------------------------
+   source   |   target   |                                       path                                       
+------------+------------+----------------------------------------------------------------------------------
  1.3.1      | 2.0.0      | 1.3.1--2.0.0
  1.3.1      | 2.0.1      | 1.3.1--2.0.0--2.0.1
  1.3.1      | 2.1.0      | 1.3.1--2.0.0--2.0.1--2.1.0
@@ -28,7 +28,8 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
  1.3.1      | 2.2.1      | 1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1
  1.3.1      | 2.2.2      | 1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2
  1.3.1      | 2.2.3      | 1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3
- 1.3.1      | devel      | 1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--devel
+ 1.3.1      | 2.3.0      | 1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--2.3.0
+ 1.3.1      | devel      | 1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--2.3.0--devel
  1.3.1      | unpackaged | 
  2.0.0      | 1.3.1      | 
  2.0.0      | 2.0.1      | 2.0.0--2.0.1
@@ -37,7 +38,8 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
  2.0.0      | 2.2.1      | 2.0.0--2.0.1--2.1.0--2.2.0--2.2.1
  2.0.0      | 2.2.2      | 2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2
  2.0.0      | 2.2.3      | 2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3
- 2.0.0      | devel      | 2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--devel
+ 2.0.0      | 2.3.0      | 2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--2.3.0
+ 2.0.0      | devel      | 2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--2.3.0--devel
  2.0.0      | unpackaged | 
  2.0.1      | 1.3.1      | 
  2.0.1      | 2.0.0      | 
@@ -46,7 +48,8 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
  2.0.1      | 2.2.1      | 2.0.1--2.1.0--2.2.0--2.2.1
  2.0.1      | 2.2.2      | 2.0.1--2.1.0--2.2.0--2.2.1--2.2.2
  2.0.1      | 2.2.3      | 2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3
- 2.0.1      | devel      | 2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--devel
+ 2.0.1      | 2.3.0      | 2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--2.3.0
+ 2.0.1      | devel      | 2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--2.3.0--devel
  2.0.1      | unpackaged | 
  2.1.0      | 1.3.1      | 
  2.1.0      | 2.0.0      | 
@@ -55,7 +58,8 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
  2.1.0      | 2.2.1      | 2.1.0--2.2.0--2.2.1
  2.1.0      | 2.2.2      | 2.1.0--2.2.0--2.2.1--2.2.2
  2.1.0      | 2.2.3      | 2.1.0--2.2.0--2.2.1--2.2.2--2.2.3
- 2.1.0      | devel      | 2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--devel
+ 2.1.0      | 2.3.0      | 2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--2.3.0
+ 2.1.0      | devel      | 2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--2.3.0--devel
  2.1.0      | unpackaged | 
  2.2.0      | 1.3.1      | 
  2.2.0      | 2.0.0      | 
@@ -64,7 +68,8 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
  2.2.0      | 2.2.1      | 2.2.0--2.2.1
  2.2.0      | 2.2.2      | 2.2.0--2.2.1--2.2.2
  2.2.0      | 2.2.3      | 2.2.0--2.2.1--2.2.2--2.2.3
- 2.2.0      | devel      | 2.2.0--2.2.1--2.2.2--2.2.3--devel
+ 2.2.0      | 2.3.0      | 2.2.0--2.2.1--2.2.2--2.2.3--2.3.0
+ 2.2.0      | devel      | 2.2.0--2.2.1--2.2.2--2.2.3--2.3.0--devel
  2.2.0      | unpackaged | 
  2.2.1      | 1.3.1      | 
  2.2.1      | 2.0.0      | 
@@ -73,7 +78,8 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
  2.2.1      | 2.2.0      | 
  2.2.1      | 2.2.2      | 2.2.1--2.2.2
  2.2.1      | 2.2.3      | 2.2.1--2.2.2--2.2.3
- 2.2.1      | devel      | 2.2.1--2.2.2--2.2.3--devel
+ 2.2.1      | 2.3.0      | 2.2.1--2.2.2--2.2.3--2.3.0
+ 2.2.1      | devel      | 2.2.1--2.2.2--2.2.3--2.3.0--devel
  2.2.1      | unpackaged | 
  2.2.2      | 1.3.1      | 
  2.2.2      | 2.0.0      | 
@@ -82,7 +88,8 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
  2.2.2      | 2.2.0      | 
  2.2.2      | 2.2.1      | 
  2.2.2      | 2.2.3      | 2.2.2--2.2.3
- 2.2.2      | devel      | 2.2.2--2.2.3--devel
+ 2.2.2      | 2.3.0      | 2.2.2--2.2.3--2.3.0
+ 2.2.2      | devel      | 2.2.2--2.2.3--2.3.0--devel
  2.2.2      | unpackaged | 
  2.2.3      | 1.3.1      | 
  2.2.3      | 2.0.0      | 
@@ -91,8 +98,19 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
  2.2.3      | 2.2.0      | 
  2.2.3      | 2.2.1      | 
  2.2.3      | 2.2.2      | 
- 2.2.3      | devel      | 2.2.3--devel
+ 2.2.3      | 2.3.0      | 2.2.3--2.3.0
+ 2.2.3      | devel      | 2.2.3--2.3.0--devel
  2.2.3      | unpackaged | 
+ 2.3.0      | 1.3.1      | 
+ 2.3.0      | 2.0.0      | 
+ 2.3.0      | 2.0.1      | 
+ 2.3.0      | 2.1.0      | 
+ 2.3.0      | 2.2.0      | 
+ 2.3.0      | 2.2.1      | 
+ 2.3.0      | 2.2.2      | 
+ 2.3.0      | 2.2.3      | 
+ 2.3.0      | devel      | 2.3.0--devel
+ 2.3.0      | unpackaged | 
  devel      | 1.3.1      | 
  devel      | 2.0.0      | 
  devel      | 2.0.1      | 
@@ -101,6 +119,7 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
  devel      | 2.2.1      | 
  devel      | 2.2.2      | 
  devel      | 2.2.3      | 
+ devel      | 2.3.0      | 
  devel      | unpackaged | 
  unpackaged | 1.3.1      | unpackaged--1.3.1
  unpackaged | 2.0.0      | unpackaged--1.3.1--2.0.0
@@ -110,18 +129,19 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
  unpackaged | 2.2.1      | unpackaged--1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1
  unpackaged | 2.2.2      | unpackaged--1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2
  unpackaged | 2.2.3      | unpackaged--1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3
- unpackaged | devel      | unpackaged--1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--devel
-(90 rows)
+ unpackaged | 2.3.0      | unpackaged--1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--2.3.0
+ unpackaged | devel      | unpackaged--1.3.1--2.0.0--2.0.1--2.1.0--2.2.0--2.2.1--2.2.2--2.2.3--2.3.0--devel
+(110 rows)
 
 -----------------------------------------------------------
 -- emaj update to next_version
 -----------------------------------------------------------
-CREATE EXTENSION emaj VERSION '2.2.3';
+CREATE EXTENSION emaj VERSION '2.3.0';
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
  extname | extversion 
 ---------+------------
- emaj    | 2.2.3
+ emaj    | 2.3.0
 (1 row)
 
 select relname from pg_catalog.pg_class, 
@@ -154,13 +174,6 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to function _remove_tbl(emaj_alter_plan,bigint)
-drop cascades to function _remove_seq(emaj_alter_plan,bigint)
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_alter_plan_pkey" for table "emaj_alter_plan"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_rlbk_plan_pkey" for table "emaj_rlbk_plan"
-NOTICE:  function emaj._remove_tbl(emaj.emaj_alter_plan,pg_catalog.int8) does not exist, skipping
-NOTICE:  function emaj._remove_seq(emaj.emaj_alter_plan,pg_catalog.int8) does not exist, skipping
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------
@@ -217,8 +230,8 @@ select emaj.emaj_verify_all();
 select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_id | hist_function | hist_event |  hist_object  |         hist_wording         | hist_user 
 ---------+---------------+------------+---------------+------------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 2.2.3   | Initialisation completed     | postgres
-       2 | EMAJ_INSTALL  |            | E-Maj <devel> | Upgrade from 2.2.3 completed | postgres
+       1 | EMAJ_INSTALL  |            | E-Maj 2.3.0   | Initialisation completed     | postgres
+       2 | EMAJ_INSTALL  |            | E-Maj <devel> | Upgrade from 2.3.0 completed | postgres
 (2 rows)
 
 delete from emaj.emaj_hist;

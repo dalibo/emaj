@@ -273,7 +273,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist order by hist_id;
       hist_function       |     hist_event     |         hist_object          |                                        regexp_replace                                         | hist_user 
 --------------------------+--------------------+------------------------------+-----------------------------------------------------------------------------------------------+-----------
- EMAJ_INSTALL             |                    | E-Maj 2.2.3                  | Initialisation completed                                                                      | postgres
+ EMAJ_INSTALL             |                    | E-Maj 2.3.0                  | Initialisation completed                                                                      | postgres
  CREATE_GROUP             | BEGIN              | myGroup1                     | rollbackable                                                                                  | postgres
  CREATE_GROUP             | END                | myGroup1                     | 6 tables/sequences processed                                                                  | postgres
  CREATE_GROUP             | BEGIN              | myGroup2                     | rollbackable                                                                                  | postgres
@@ -384,7 +384,7 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUP              | TABLE REMOVED      | myschema1."myTbl3"           | From logging group myGroup1                                                                   | postgres
  ALTER_GROUP              | LOG SCHEMA CHANGED | myschema1.mytbl2b            | emaj => emajb                                                                                 | postgres
  ALTER_GROUP              | END                | myGroup1                     | Timestamp Id : 18                                                                             | postgres
- EMAJ_INSTALL             |                    | E-Maj <devel>                | Upgrade from 2.2.3 completed                                                                  | postgres
+ EMAJ_INSTALL             |                    | E-Maj <devel>                | Upgrade from 2.3.0 completed                                                                  | postgres
  UNPROTECT_GROUP          |                    | myGroup1                     | Status 1                                                                                      | postgres
  ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2            | Unlogged rollback to mark Common (timestamp)                                                  | postgres
  DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -5                                                                                   | postgres
