@@ -105,6 +105,15 @@ GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
+------------------------------------
+--                                --
+-- extension configuration        --
+--                                --
+------------------------------------
+
+SELECT pg_catalog.pg_extension_config_dump('emaj_hist','WHERE hist_id > 1');
+SELECT pg_catalog.pg_extension_config_dump('emaj_schema','WHERE sch_name <> ''emaj''');
+
 
 ------------------------------------
 --                                --

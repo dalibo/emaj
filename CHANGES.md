@@ -6,7 +6,8 @@ E-Maj - Change log
 
 
 ###Bug fixes:###
-
+  * Fix 2 issues when dumping a database with E-Maj using pg_dump. The
+    restore of the emaj_schema or emaj_hist tables may lead to wrong content.
 
 
 2.3.0 (2018-Jul-8)
