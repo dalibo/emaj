@@ -21,7 +21,7 @@
 # EMAJ_REGTEST_MENU                : Contains the menu's entries (do not fill this array)
 typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_STANDART_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
-#typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER='9.3!9.6'
+typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER='9.3!9.6'
 # typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('9.3!9.6' '9.5!10')
 typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='9.2!10'
 typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
@@ -111,6 +111,12 @@ migrat_test()
   pg_getvars ${1} 'old'
 # Get vars (and prefixed with 'new') for the target database
   pg_getvars ${2} 'new'
+  echo "Creation of control tables on database regression from ${1}"
+  ${oldPGBIN}/psql -p ${oldPGPORT} -U ${oldPGUSER} regression  <${EMAJ_DIR}/test/${1}/sql/before_dump.sql
+  if [ $? -ne 0 ]; then
+    echo "  Error: can't create control tables before dump of regression database from ${1}"
+    return 1
+  fi
   echo "Dump regression database from ${1} with pg_dump ${2}"
   ${newPGBIN}/pg_dump -p ${oldPGPORT} -U ${oldPGUSER} regression -f ${EMAJ_DIR}/test/${1}/results/regression.dump
   if [ $? -eq 0 ]; then
