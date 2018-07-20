@@ -265,6 +265,8 @@ update emaj.emaj_group_def set grpdef_log_schema_suffix = 'b' where grpdef_schem
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 reset role;
 select emaj.emaj_alter_group('myGroup1');
+NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
+NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
  emaj_alter_group 
 ------------------
                 5
@@ -427,10 +429,10 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 (4 rows)
 
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
- altr_time_id |       altr_step       | altr_schema | altr_tblseq | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_priority | altr_new_group_is_logging | altr_rlbk_id 
---------------+-----------------------+-------------+-------------+------------+---------------+-----------------------+----------------+-------------------+---------------------------+--------------
-           18 | REMOVE_TBL            | myschema1   | myTbl3      | myGroup1   |            10 | t                     |                |                   |                           |             
-           18 | CHANGE_TBL_LOG_SCHEMA | myschema1   | mytbl2b     | myGroup1   |               | t                     |                |                   |                           |             
+ altr_time_id |       altr_step       | altr_schema | altr_tblseq | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging | altr_rlbk_id 
+--------------+-----------------------+-------------+-------------+------------+---------------+-----------------------+----------------+---------------------------+--------------
+           18 | REMOVE_TBL            | myschema1   | myTbl3      | myGroup1   |            10 | t                     |                |                           |             
+           18 | CHANGE_TBL_LOG_SCHEMA | myschema1   | mytbl2b     | myGroup1   |               | t                     |                |                           |             
 (2 rows)
 
 -- log tables

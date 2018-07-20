@@ -3,6 +3,16 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+  * Fix 2 issues when dumping a database with E-Maj using pg_dump. The
+    restore of the emaj_schema or emaj_hist tables may lead to wrong content.
+
+
+2.3.0 (2018-Jul-8)
+------
+###Enhancements:###
   * A table or a sequence can be added to a tables group in LOGGING state.
   * A table or a sequence can be moved from one group to another, whatever
     the state of these groups.
