@@ -5,6 +5,55 @@
 -----------------------------
 -- Checking restore
 -----------------------------
+
+DO LANGUAGE plpgsql $$
+DECLARE
+r             RECORD;
+delta         SMALLINT;
+expected_val  BIGINT;
+returned_val  BIGINT;
+BEGIN
+-- Comparing the number of rows in each table
+FOR r IN
+  SELECT nspname, relname
+    FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+   WHERE relnamespace = pg_namespace.oid
+     AND relkind = 'r' AND nspname ~ '^emaj' AND relname !~ '^emaj_regtest'
+   ORDER BY 1,2
+LOOP
+  SELECT tbl_tuple INTO expected_val FROM emaj.emaj_regtest_dump_tbl where tbl_schema = r.nspname and tbl_name = r.relname;
+  EXECUTE 'SELECT count(*) FROM '||quote_ident(r.nspname)||'.'||quote_ident(r.relname) INTO returned_val;
+  IF expected_val <> returned_val THEN
+    IF r.nspname||'.'||r.relname = 'emaj.emaj_hist' THEN
+      IF expected_val = (returned_val-1) THEN
+        CONTINUE;
+      END IF;
+    END IF;
+    RAISE WARNING 'Error, the table %.% contains % rows instead of %', quote_ident(r.nspname), quote_ident(r.relname), returned_val, expected_val;
+  END IF;
+END LOOP;
+-- Comparing the properties of each sequence
+FOR r IN
+  SELECT nspname, relname
+    FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+   WHERE relnamespace = pg_namespace.oid
+     AND relkind = 'S' AND nspname ~ '^emaj' AND relname !~ '^emaj_regtest' AND relname ~ '_seq$'
+   ORDER BY 1,2
+LOOP
+  EXECUTE 'SELECT * FROM emaj.emaj_regtest_dump_seq WHERE sequ_schema = '||quote_literal(r.nspname)||' AND sequ_name = '||quote_literal(r.relname)||' EXCEPT SELECT * FROM emaj._get_current_sequence_state('||quote_literal(r.nspname)||','||quote_literal(r.relname)||',0)';
+  GET DIAGNOSTICS delta = ROW_COUNT;
+  IF delta > 0 THEN
+    SELECT sequ_last_val INTO expected_val FROM emaj.emaj_regtest_dump_seq where sequ_schema = r.nspname and sequ_name = r.relname;
+    EXECUTE 'SELECT sequ_last_val FROM emaj._get_current_sequence_state('||quote_literal(r.nspname)||','||quote_literal(r.relname)||',0)' INTO returned_val;
+    IF expected_val <> returned_val THEN
+      RAISE WARNING 'Error, the sequence %.% has last_val equal to % instead of %', quote_ident(r.nspname), quote_ident(r.relname), returned_val, expected_val;
+    ELSE
+      RAISE WARNING 'Error, the properties of the sequence %.% are not the expected ones', quote_ident(r.nspname), quote_ident(r.relname);
+    END IF;
+  END IF;
+END LOOP;
+END $$;
+
 select relname,relkind from pg_class where relname like 'emaj_%';
 select * from emaj.emaj_global_seq;
 
