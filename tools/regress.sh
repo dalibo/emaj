@@ -21,8 +21,7 @@
 # EMAJ_REGTEST_MENU                : Contains the menu's entries (do not fill this array)
 typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_STANDART_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
-#typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER='9.3!9.6'
-# typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('9.3!9.6' '9.5!10')
+typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('9.3!9.6' '9.5!11')
 typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='9.2!10'
 typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_UPGRADE_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
@@ -111,23 +110,29 @@ migrat_test()
   pg_getvars ${1} 'old'
 # Get vars (and prefixed with 'new') for the target database
   pg_getvars ${2} 'new'
-  echo "Dump regression database from ${1} with pg_dump ${2}"
+  echo "Create the control tables in the ${1} regression database"
+  ${oldPGBIN}/psql -p ${oldPGPORT} -U ${oldPGUSER} regression  <${EMAJ_DIR}/test/${1}/sql/before_dump.sql
+  if [ $? -ne 0 ]; then
+    echo "  Error: can't create control tables before dump of regression database from ${1}"
+    return 1
+  fi
+  echo "Dump the regression database from ${1} (using pg_dump ${2})"
   ${newPGBIN}/pg_dump -p ${oldPGPORT} -U ${oldPGUSER} regression -f ${EMAJ_DIR}/test/${1}/results/regression.dump
   if [ $? -eq 0 ]; then
-    echo "Reload ${1} regression database from ${2} dump"
+    echo "Reload the ${2} regression database from the ${1} dump"
     ${newPGBIN}/dropdb -p ${newPGPORT} -U ${newPGUSER} regression
     ${newPGBIN}/createdb -p ${newPGPORT} -U ${newPGUSER} regression
     if [ ! -d "${EMAJ_DIR}/test/${2}/results" ]; then
       mkdir "${EMAJ_DIR}/test/${2}/results"
     fi
-    echo "  --> checking db restore..."
+    echo "  --> check the db restore"
     ${newPGBIN}/psql -p ${newPGPORT} -U ${newPGUSER} regression <${EMAJ_DIR}/test/${1}/results/regression.dump >${EMAJ_DIR}/test/${2}/results/restore.out 2>&1
     diff ${EMAJ_DIR}/test/${2}/expected/restore.out ${EMAJ_DIR}/test/${2}/results/restore.out
-    echo "  --> checking use of the restored db..." 
+    echo "  --> use the restored db and check" 
     ${newPGBIN}/psql -p ${newPGPORT} -U ${newPGUSER} -a regression <${EMAJ_DIR}/test/${1}/sql/after_restore.sql >${EMAJ_DIR}/test/${2}/results/after_restore.out 2>&1
     diff ${EMAJ_DIR}/test/${2}/expected/after_restore.out ${EMAJ_DIR}/test/${2}/results/after_restore.out #| tee ${EMAJ_DIR}/test/${2}/after_restore.diff
   else
-    echo "  Error: can't dump regression database from ${1}"
+    echo "  Error: can't dump the regression database from ${1}"
     return 1
   fi
   return 0

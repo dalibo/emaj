@@ -185,10 +185,10 @@ On trouve :
 * les tests standards pour chaque version de PostgreSQL configurée,
 * les tests avec installation de la version précédente puis upgrade,
 * les tests avec *upgrade* de version E-Maj sur des groupes actifs,
-* un test de *pgdump/pg_restore* de la base avec des versions de PostgreSQL différentes,
+* des tests de sauvegarde de la base par *pg_dump* et restauration, avec des versions de PostgreSQL différentes,
 * un test d’*upgrade* de version de PostgreSQL par *pg_upgrade* avec une base contenant l’extension E-Maj.
 
-Il est important d’exécuter ces trois premières séries de test pour chaque évolution E-Maj.
+Il est important d’exécuter ces quatre premières séries de test pour chaque évolution E-Maj.
 
 Valider les résultats
 '''''''''''''''''''''

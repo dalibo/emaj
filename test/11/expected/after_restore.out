@@ -56,6 +56,7 @@ BEGIN
     DROP TABLE emaj.emaj_regtest_dump_tbl, emaj.emaj_regtest_dump_seq;
   END IF;
 END $$;
+WARNING:  Error, the properties of the sequence emaj.emaj_rlbk_rlbk_id_seq are not the expected ones
 DO
 -----------------------------
 -- Let's use the E-Maj environment

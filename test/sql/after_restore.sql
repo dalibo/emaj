@@ -1,13 +1,67 @@
--- after_restore.sql: Test emaj environment restored from a dump taken at the end of schedule reg tests
---                All operations are executed by super-user
+-- after_restore.sql: test the emaj environment restored from a dump taken at the end of schedule reg tests
+-- All operations are executed by a super-user
 --
 
 -----------------------------
 -- Checking restore
 -----------------------------
-select relname,relkind from pg_class where relname like 'emaj_%';
-select * from emaj.emaj_global_seq;
 
+DO LANGUAGE plpgsql $$
+DECLARE
+  r             RECORD;
+  keepTable     BOOLEAN = false;
+  delta         SMALLINT;
+  expected_val  BIGINT;
+  returned_val  BIGINT;
+BEGIN
+-- Comparing the number of rows in each table
+  FOR r IN
+    SELECT nspname, relname
+      FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+     WHERE relnamespace = pg_namespace.oid
+       AND relkind = 'r' AND nspname ~ '^emaj' AND relname !~ '^emaj_regtest'
+     ORDER BY 1,2
+  LOOP
+    SELECT tbl_tuple INTO expected_val FROM emaj.emaj_regtest_dump_tbl WHERE tbl_schema = r.nspname AND tbl_name = r.relname;
+    EXECUTE 'SELECT count(*) FROM '||quote_ident(r.nspname)||'.'||quote_ident(r.relname) INTO returned_val;
+    IF NOT (expected_val = returned_val OR (r.nspname || '.' || r.relname = 'emaj.emaj_hist' AND expected_val = returned_val - 1)) THEN
+-- the emaj_hist table may contain 1 more row created at extension creation
+      RAISE WARNING 'Error, the table %.% contains % rows instead of %', quote_ident(r.nspname), quote_ident(r.relname), returned_val, expected_val;
+      keepTable = true;
+    END IF;
+  END LOOP;
+-- Comparing the properties of each sequence
+  FOR r IN
+    SELECT nspname, relname
+      FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+     WHERE relnamespace = pg_namespace.oid
+       AND relkind = 'S' AND nspname ~ '^emaj' AND relname !~ '^emaj_regtest' AND relname ~ '_seq$'
+     ORDER BY 1,2
+  LOOP
+    EXECUTE 'SELECT * FROM emaj.emaj_regtest_dump_seq WHERE sequ_schema = ' || quote_literal(r.nspname) || ' AND sequ_name = ' || quote_literal(r.relname)
+         || ' EXCEPT SELECT * FROM emaj._get_current_sequence_state(' || quote_literal(r.nspname) || ',' || quote_literal(r.relname) || ',0)';
+    GET DIAGNOSTICS delta = ROW_COUNT;
+    IF delta > 0 THEN
+      SELECT sequ_last_val INTO expected_val FROM emaj.emaj_regtest_dump_seq WHERE sequ_schema = r.nspname AND sequ_name = r.relname;
+      EXECUTE 'SELECT sequ_last_val FROM emaj._get_current_sequence_state(' || quote_literal(r.nspname) || ',' || quote_literal(r.relname) || ',0)'
+        INTO returned_val;
+      IF expected_val <> returned_val THEN
+        RAISE WARNING 'Error, the sequence %.% has last_val equal to % instead of %', quote_ident(r.nspname), quote_ident(r.relname), returned_val, expected_val;
+      ELSE
+        RAISE WARNING 'Error, the properties of the sequence %.% are not the expected ones', quote_ident(r.nspname), quote_ident(r.relname);
+      END IF;
+      keepTable = true;
+    END IF;
+  END LOOP;
+-- if everything is OK, drop both control tables created just before the database dump
+  IF NOT keepTable THEN
+    DROP TABLE emaj.emaj_regtest_dump_tbl, emaj.emaj_regtest_dump_seq;
+  END IF;
+END $$;
+
+-----------------------------
+-- Let's use the E-Maj environment
+-----------------------------
 -----------------------------
 -- Step 1 : for myGroup2, update tables and set a mark 
 -----------------------------
@@ -33,15 +87,15 @@ select * from mySchema2.myTbl2 order by col21;
 select col31,col33 from mySchema2."myTbl3" order by col31;
 select * from mySchema2.myTbl4 order by col41;
 -- log tables
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
+select col11, col12, col13, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl1_log order by col11, col12, emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl2_log order by col21, emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple from "emajC"."myschema2_myTbl3_log" order by col31, emaj_gid, emaj_tuple desc;
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl4_log order by col41, emaj_gid, emaj_tuple desc;
 --
 -----------------------------
 -- Step 2 : for myGroup2, rollback to mark Multi-1 (set before dump/restore) 
 -----------------------------
-select * from emaj.emaj_log_stat_group('myGroup2','Multi-1',NULL);
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Multi-1',NULL);
 select emaj.emaj_rollback_group('myGroup2','Multi-1');
 --
 -----------------------------
@@ -57,10 +111,10 @@ select * from mySchema2.myTbl2 order by col21;
 select col31,col33 from mySchema2."myTbl3" order by col31;
 select * from mySchema2.myTbl4 order by col41;
 -- log tables
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
+select col11, col12, col13, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
 --
 -----------------------------
 -- Step 3 : stop myGroup2
@@ -70,9 +124,9 @@ select emaj.emaj_stop_group('myGroup2');
 -----------------------------
 -- test end: check and reset history
 -----------------------------
-select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist order by hist_id) as t;
+select count(*) from emaj.emaj_hist;
+--select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
+--  (select * from emaj.emaj_hist order by hist_id) as t;
 --
 truncate emaj.emaj_hist;
 alter sequence emaj.emaj_hist_hist_id_seq restart 30000;
-

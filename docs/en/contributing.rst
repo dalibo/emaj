@@ -182,10 +182,10 @@ The test functions are:
 * standart tests for each configured PostgreSQL version,
 * the tests with the installation of the previous version followed by an upgrade,
 * the tests with an E-Maj version upgrade while tables groups are in logging state,
-* a *pgdump/pg_restore* test with different PostgreSQL versions,
+* tests chaining a database save with *pg_dump* and a restore, with different PostgreSQL versions,
 * a PostgreSQL upgrade version test using *pg_upgrade* with a database containing the E-Maj extension.
 
-It is important to execute the three first sets of tests for each E-Maj change.
+It is important to execute the four first sets of tests for each E-Maj change.
 
 Validate results
 ''''''''''''''''
