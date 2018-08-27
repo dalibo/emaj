@@ -374,8 +374,8 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  emptyGroup       | t                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
  myGroup1         | t                | f                       |              5 |                 2 | t                     |                   1000 |                          | 
  myGroup2         | t                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              5 |                 0 | t                     |                     10 |                          | 
- phil's group#3", | t                | t                       |              2 |                 2 | f                     |                      9 |                          | 
+ myGroup4         | f                | f                       |              5 |                 0 | t                     |                     11 |                          | 
+ phil's group#3", | t                | t                       |              2 |                 2 | f                     |                     10 |                          | 
 (5 rows)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
@@ -470,8 +470,8 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  emptyGroup       | f                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
  myGroup1         | f                | f                       |              5 |                 2 | t                     |                   1000 |                          | 
  myGroup2         | t                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              5 |                 0 | t                     |                     10 |                          | 
- phil's group#3", | t                | t                       |              2 |                 2 | f                     |                      9 |                          | 
+ myGroup4         | f                | f                       |              5 |                 0 | t                     |                     11 |                          | 
+ phil's group#3", | t                | t                       |              2 |                 2 | f                     |                     10 |                          | 
 (5 rows)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
@@ -711,8 +711,8 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  emptyGroup       | f                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
  myGroup1         | t                | f                       |              5 |                 2 | t                     |                   1000 |                          | 
  myGroup2         | t                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              5 |                 0 | t                     |                     10 |                          | 
- phil's group#3", | t                | t                       |              2 |                 2 | f                     |                      9 |                          | 
+ myGroup4         | f                | f                       |              5 |                 0 | t                     |                     11 |                          | 
+ phil's group#3", | t                | t                       |              2 |                 2 | f                     |                     10 |                          | 
 (5 rows)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
@@ -941,8 +941,8 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
  emptyGroup       | f                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
  myGroup1         | f                | f                       |              5 |                 2 | t                     |                   1000 |                          | 
  myGroup2         | f                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              5 |                 0 | t                     |                     10 |                          | 
- phil's group#3", | t                | t                       |              2 |                 2 | f                     |                      9 |                          | 
+ myGroup4         | f                | f                       |              5 |                 0 | t                     |                     11 |                          | 
+ phil's group#3", | t                | t                       |              2 |                 2 | f                     |                     10 |                          | 
 (5 rows)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;

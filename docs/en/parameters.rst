@@ -29,6 +29,7 @@ But the E-Maj administrator may insert other rows into the *emaj_param* table to
 
 Presented in alphabetic order, the existing key values are:
 
+* **alter_log_table** : (text) *ALTER TABLE* directive executed at the log table creation ; no *ALTER TABLE* exectuted by default (to :ref:`add one or several technical columns<addLogColumns>`).
 * **avg_fkey_check_duration** : (interval) default value = 20 µs ; defines the average duration of a foreign key value check ; can be modified to better represent the performance of the server that hosts the database when using the :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` function.
 * **avg_row_delete_log_duration** : (interval) default value = 10 µs ; defines the average duration of a log row deletion ; can be modified to better represent the performance of the server that hosts the database when using the :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` function.
 * **avg_row_rollback_duration** : (interval) default value = 100 µs ; defines the average duration of a row rollback ; can be modified to better represent the performance of the server that hosts the database when using the :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` function.

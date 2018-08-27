@@ -82,13 +82,7 @@ As this function may generate large or very large files (of course depending on 
 
 The structure of log tables is directly derived from the structure of the related application  table. The log tables contain the same columns with the same type. But they also have some additional technical columns:
 
-* emaj_verb : type of the SQL verb that generated the update (*INS*, *UPD*, *DEL*) 
-* emaj_tuple : row version (*OLD* for *DEL* and *UPD*, *NEW* for *INS* and *UPD*)
-* emaj_gid : log row identifier
-* emaj_changed : log row insertion timestamp 
-* emaj_txid : transaction id that performed the update
-* emaj_user : connection role that performed the update
-* emaj_user_ip : ip address of the client that performed the update (if the client was connected with ip protocol)
+The structure of log tables is described :ref:`here <logTableStructure>`.
 
 .. _emaj_gen_sql_group:
 

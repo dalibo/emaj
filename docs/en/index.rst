@@ -51,6 +51,7 @@ Welcome to the E-Maj's documentation!
    :caption: Miscellaneous:
 
    parameters
+   logTables
    reliability
    traces
    impactsAdmin

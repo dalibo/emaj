@@ -1,0 +1,38 @@
+Structure des tables de log
+===========================
+
+.. _logTableStructure:
+
+Structure standard
+------------------
+
+Les tables de log ont une structure qui découle directement des tables applicatives dont elles enregistrent les mises à jour. Elles contiennent les mêmes colonnes avec les mêmes types. Mais elles possèdent aussi quelques colonnes techniques complémentaires :
+
+* emaj_verb : type de verbe SQL ayant généré la mise à jour (*INS*, *UPD*, *DEL*)
+* emaj_tuple : version des lignes (*OLD* pour les *DEL* et *UPD* ; *NEW* pour *INS* et *UPD*)
+* emaj_gid : identifiant de la ligne de log
+* emaj_changed : date et heure de l'insertion de la ligne dans la table de log
+* emaj_txid : identifiant de la transaction à l'origine de la mise à jour (*txid* PostgreSQL)
+* emaj_user : rôle de connexion à l'origine de la mise à jour
+* emaj_user_ip : adresse ip du client à l'origine de la mise à jour (si le client est connecté avec le protocole ip)
+* emaj_user_port : port ip du client à l'origine de la mise à jour (si le client est connecté avec le protocole ip)
+
+.. _addLogColumns:
+
+Ajouter des colonnes techniques
+-------------------------------
+Il est possible d’ajouter une ou plusieurs colonnes techniques pour enrichir les traces. Ces colonnes doivent remplir les conditions suivantes :
+
+* elles doivent être valorisées avec une valeur par défaut (clause *DEFAULT*) associée à une fonction (pour que les triggers de logs ne soient pas impactés),
+* leur nom doit commencer par les caractères *emaj_* (pour que les fonctions de contrôles ne les détectent pas comme anormales).
+
+Pour ajouter une ou plusieurs colonnes techniques, il faut ajouter le paramètre de clé « alter_log_table » dans la table :ref:`emaj_param<emaj_param>`. La valeur texte associée doit contenir une clause d’*ALTER TABLE*. Lors de la création d’une table de log, si le paramètre existe, une requête *ALTER TABLE* avec ce paramètre est exécutée.
+
+Par exemple, on peut ajouter dans les tables de log une colonne pour enregistrer la valeur du champ de connexion *application_name* de la manière suivante ::
+
+   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('alter_log_table',
+     'ADD COLUMN emaj_appname TEXT DEFAULT current_setting(''application_name'')');
+
+Plusieurs directives *ADD COLUMN* peuvent être concaténées, séparées par une virgule.
+
+Pour changer la structure de tables de log existantes après valorisation ou modification du paramètre alter_log_table, les groupes de tables doivent être supprimés puis recréés.

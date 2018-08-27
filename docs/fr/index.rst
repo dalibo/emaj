@@ -51,6 +51,7 @@ Bienvenue dans la documentation E-Maj !
    :caption: Considérations diverses :
 
    parameters
+   logTables
    reliability
    traces
    impactsAdmin

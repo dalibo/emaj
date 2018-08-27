@@ -3,7 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-
+  * Additional columns can be added to log tables by setting a new parameter
+    into the emaj_param table.
 
 ###Bug fixes:###
   * Fix 2 issues when dumping a database with E-Maj using pg_dump. The

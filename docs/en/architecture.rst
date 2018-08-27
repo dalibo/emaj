@@ -44,16 +44,7 @@ For each application table, the following objects are created:
 .. image:: images/created_objects.png
    :align: center
 
-A **log table** has the same structure as its corresponding application table. However, it contains some additional technical columns:
-
-* a unique identifier, as an integer associated to a global sequence,
-* the precise date and time of the update,
-* the type of the executed SQL operation: *INS* for *INSERT*, *UPD* for *UPDATE* and *DEL* for *DELETE*,
-* an attribute taking either *OLD* or *NEW* value, allowing to distinguish old and new values of updated rows,
-* the internal transaction identifier (the PostgreSQL *txid*) that performed the update,
-* the connection role who performed the update,
-* the ip address of the user who performed the update,
-* the ip port of the user who performed the update.
+A **log table** has the same structure as its corresponding application table. However, it contains some :ref:`additional technical columns<logTableStructure>`.
 
 To let E-Maj work, some **other technical objects** are also created at extension installation time:
 

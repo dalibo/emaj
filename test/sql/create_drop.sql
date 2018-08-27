@@ -133,6 +133,12 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 rollback;
 
+-- bad alter_log_table parameter
+begin;
+  insert into emaj.emaj_param (param_key, param_value_text) values ('alter_log_table','dummmy content');
+  select emaj.emaj_create_group('myGroup1');
+rollback;
+
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
 

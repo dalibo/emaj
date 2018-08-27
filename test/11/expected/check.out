@@ -101,12 +101,12 @@ select funcname, calls from pg_stat_user_functions
  _change_log_schema_tbl                    |    11
  _check_fk_groups                          |   240
  _check_group_names                        |   936
- _check_groups_content                     |   115
+ _check_groups_content                     |   116
  _check_mark_name                          |   350
  _check_marks_range                        |   111
  _check_new_mark                           |   243
  _cleanup_rollback_state                   |   301
- _create_log_schemas                       |   114
+ _create_log_schemas                       |   115
  _create_log_trigger                       |   166
  _create_seq                               |    49
  _create_tbl                               |   144
@@ -123,7 +123,7 @@ select funcname, calls from pg_stat_user_functions
  _drop_log_schemas                         |   178
  _drop_seq                                 |    52
  _drop_tbl                                 |   162
- _emaj_event_trigger_table_rewrite_fnct    |   106
+ _emaj_event_trigger_table_rewrite_fnct    |   107
  _enable_event_triggers                    |   298
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |    96
@@ -157,7 +157,7 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_tbl                                 |   118
  _rollback_activity                        |    17
  _set_mark_groups                          |   285
- _set_time_stamp                           |   412
+ _set_time_stamp                           |   413
  _start_groups                             |    50
  _stop_groups                              |    65
  _verify_all_groups                        |    39

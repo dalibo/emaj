@@ -44,16 +44,7 @@ Pour chaque table applicative sont créés :
 .. image:: images/created_objects.png
    :align: center
 
-Une **table de log** a la même structure que la table applicative correspondante. Elle comprend néanmoins quelques colonnes techniques supplémentaires :
-
-* un identifiant unique, sous la forme d'un entier associé à une séquence globale,
-* la date et l'heure précise de la mise à jour,
-* le type d'opération SQL effectuée : *INS* pour *INSERT*, *UPD* pour *UPDATE* et *DEL* pour *DELETE*,
-* un attribut '*OLD*' ou '*NEW*' permettant de distinguer les anciennes et nouvelles valeurs des lignes mises à jour,
-* le numéro interne de la transaction à l'origine de la mise à jour (*txid* PostgreSQL),
-* le rôle de connexion à l'origine de la mise à jour,
-* l'adresse ip de l'utilisateur à l'origine de la mise à jour,
-* le port ip de l'utilisateur à l'origine de la mise à jour.
+Une **table de log** a la même structure que la table applicative correspondante. Elle comprend néanmoins quelques :ref:`colonnes techniques supplémentaires<logTableStructure>`.
 
 Pour le bon fonctionnement d'E-Maj, un certain nombre d'**objets techniques** sont également créés à l'installation de cette extension :
 

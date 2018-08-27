@@ -29,6 +29,7 @@ Mais l'administrateur d'E-Maj peut insérer d'autres lignes dans *emaj_param* po
 
 Les valeurs de clé des paramètres sont, par ordre alphabétique :
 
+* **alter_log_table** : (texte) directive d’*ALTER TABLE* exécuté à la création des tables de log ; aucun *ALTER TABLE* exécuté par défaut (pour :ref:`ajouter une ou plusieurs colonnes techniques<addLogColumns>`).
 * **avg_fkey_check_duration** : (intervalle) valeur par défaut = 20 µs ; définit la durée moyenne du contrôle d'une clé étrangère ; peut être modifiée pour mieux représenter la performance du serveur qui héberge la base de données à l'exécution d'une fonction :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>`.
 * **avg_row_delete_log_duration** : (intervalle) valeur par défaut = 10 µs ; définit la durée moyenne de suppression d'une ligne du log ; peut être modifiée pour mieux représenter la performance du serveur qui héberge la base de données à l'exécution d'une fonction :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>`.
 * **avg_row_rollback_duration** : (intervalle) valeur par défaut = 100 µs ; définit la durée moyenne de rollback d'une ligne ; peut être modifiée pour mieux représenter la performance du serveur qui héberge la base de données à l'exécution d'une fonction :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>`.

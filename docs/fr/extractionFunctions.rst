@@ -82,13 +82,7 @@ Comme la fonction peut générer de gros, voire très gros, fichiers (en fonctio
 
 Les tables de log ont une structure qui découlent directement des tables applicatives dont elles enregistrent les mises à jour. Elles contiennent les mêmes colonnes avec les mêmes types. Mais elles possèdent aussi quelques colonnes techniques complémentaires :
 
-* emaj_verb : type de verbe SQL ayant généré la mise à jour (*INS*, *UPD*, *DEL*)
-* emaj_tuple : version des lignes (*OLD* pour les *DEL* et *UPD* ; *NEW* pour *INS* et *UPD*)
-* emaj_gid : identifiant de la ligne de log
-* emaj_changed : date et heure de l'insertion de la ligne dans la table de log
-* emaj_txid : identifiant de la transaction à l'origine de la mise à jour
-* emaj_user : rôle de connexion à l'origine de la mise à jour
-* emaj_user_ip : adresse ip du client à l'origine de la mise à jour (si le client est connecté avec le protocole ip)
+La structure des tables de log est décrite :ref:`ici <logTableStructure>`.
 
 .. _emaj_gen_sql_group:
 
