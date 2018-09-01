@@ -49,6 +49,16 @@ On the other hand, in case of data only save or restore (i.e. without schema, us
 * with *pg_dump* (or *pg_dumpall*) with save in *plain* format (and *psql* is used to restore),
 * with *pg_restore* command with save in *tar* or *custom* format.
 
+Restoring the database structure generates 2 error messages reporting that the *_emaj_protection_event_trigger_fnct()* function and the *emaj_protection_trg* event trigger already exist::
+
+    ...
+    ERROR:  function "_emaj_protection_event_trigger_fnct" already exists with same argument types
+    ...
+    ERROR:  event trigger "emaj_protection_trg" already exists
+    ...
+
+This message display is normal and does not indicate a defective restore. Indeed, both objects are created with the extension and are then detached from it, so that the trigger can block any attempt of the extension drop. As a result, the *pg_dump* tool saves them as independent objects. And when restoring, these objects are created twice, first with the emaj extension creation, and then as independent objects, this second attempt generating both error messages.
+
 Logical save and restore of partial database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -51,6 +51,15 @@ En revanche, dans le cas de sauvegarde et restauration des données seulement (s
 * à la commande *pg_dump* (ou *pg_dumpall*) pour les sauvegardes au format plain (*psql* utilisé pour le rechargement),
 * à la commande *pg_restore* pour les sauvegardes au format *tar* ou *custom*.
 
+La restauration de la structure de la base de données génère 2 messages d'erreur indiquant que la fonction *_emaj_protection_event_trigger_fnct()* et que le trigger sur événement *emaj_protection_trg* existent déjà ::
+
+    ...
+    ERROR:  function "_emaj_protection_event_trigger_fnct" already exists with same argument types
+    ...
+    ERROR:  event trigger "emaj_protection_trg" already exists
+    ...
+
+L'affichage de ces messages est normal et n'est pas le signe d'une restauration défectueuse. En effet, ces 2 objets sont créés avec l'extension mais en sont détachés ensuite, de sorte que le trigger puisse être capable de bloquer la suppression éventuelle de l'extension. L'outil *pg_dump* les sauvegarde donc comme des objets indépendants. Lors de la restauration, ces objets sont donc créés 2 fois, une première fois avec l'extension emaj et une seconde fois en tant qu'objet indépendant. C'est cette seconde tentative de création qui provoque les 2 messages d'erreur.
 
 Sauvegarde et restauration logique de base de données partielle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
