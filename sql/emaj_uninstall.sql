@@ -102,14 +102,15 @@ $emaj_uninstall$
     DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
 --
 -- Also revoke grants given on postgres functions to both emaj roles
-    REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_viewer;
-    REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_viewer;
-    REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_adm;
-    REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_adm;
--- revoke also the grant given to emaj_adm on the dblink_connect_u function at install time with E-Maj versions 1.n
-    IF EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE proname = 'dblink_connect_u') THEN
-      REVOKE ALL ON FUNCTION dblink_connect_u(text,text) FROM emaj_adm;
-    END IF;
+    REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_adm, emaj_viewer;
+    REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_adm, emaj_viewer;
+-- revoke also the grant given to emaj_adm on the dblink_connect_u function at install time
+    FOR r_object IN 
+      SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace 
+        WHERE pronamespace = pg_namespace.oid AND proname = 'dblink_connect_u' AND pronargs = 2
+      LOOP
+        EXECUTE 'REVOKE ALL ON FUNCTION ' || r_object.nspname || '.dblink_connect_u(text,text) FROM emaj_adm';
+    END LOOP;
 --
 -- Check if emaj roles can be dropped
     v_roleToDrop = true;
