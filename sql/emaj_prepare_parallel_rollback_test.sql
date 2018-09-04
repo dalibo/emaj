@@ -246,6 +246,8 @@ DELETE FROM "myTbl3";
 \echo '---'
 ALTER TABLE mytbl2 DISABLE TRIGGER mytbl2trg;
 
+RESET search_path;
+
 \echo '---'
 \echo '--- emaj_prepare_parallel_rollback_test.sql script successfuly completed.'
 \echo '--- A parallel rollback can be performed, from the E-Maj main directory, using a command like:'
