@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 # create_version.sh 
 # Tool to create a new version from the un-versionned emaj environment
 # Usage: (assuming the E-Maj project root directory is ~/proj/emaj)

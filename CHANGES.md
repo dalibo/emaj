@@ -3,13 +3,21 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+
+
+
+2.3.1 (2018-Sept-6)
+------
+###Enhancements:###
   * Additional columns can be added to log tables by setting a new parameter
     into the emaj_param table.
 
 ###Bug fixes:###
   * Fix 2 issues when dumping a database with E-Maj using pg_dump. The
     restore of the emaj_schema or emaj_hist tables may lead to wrong content.
-
 
 2.3.0 (2018-Jul-8)
 ------
@@ -40,7 +48,6 @@ E-Maj - Change log
     the connection string with the proper value for the password.
   * Fix a bug in E-Maj rollbacks monitoring: the start timestamp and the
     target mark timestamp of committed rollbacks were broken.
-
 
 2.2.3 (2018-Mar-13)
 ------
