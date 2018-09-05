@@ -1,5 +1,5 @@
 --
--- E-Maj : logs and rollbacks table updates : Version 2.3.0
+-- E-Maj : logs and rollbacks table updates : Version 2.3.1
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -549,7 +549,7 @@ $$Represents the structure of rows returned by the _detailed_log_stat_groups() f
 -- Parameters                     --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','2.3.0');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','2.3.1');
 
 -- Other parameters are optional. They may be set by E-Maj administrators if needed.
 
@@ -573,6 +573,10 @@ INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version'
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1 millisecond'::INTERVAL);
 -- The fixed_dblink_rollback_duration parameter defines the fixed cost of dblink use for any rollback step
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','4 millisecond'::INTERVAL);
+
+-- A parameter allowing to adjust the log tables content by adding extra information column
+--   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('alter_log_table',
+--     'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(), ADD COLUMN emaj_appname TEXT DEFAULT current_setting(''application_name'')');
 
 -- view readable by emaj_viewer role. It hides the 'dblink_user_password' parameter's value
 CREATE VIEW emaj.emaj_visible_param WITH (security_barrier) AS
@@ -1424,6 +1428,7 @@ $_create_tbl$
     v_colList                TEXT;
     v_pkColList              TEXT;
     v_pkCondList             TEXT;
+    v_alter_log_table_param  TEXT;
     v_stmt                   TEXT;
     v_triggerList            TEXT;
   BEGIN
@@ -1475,7 +1480,12 @@ $_create_tbl$
          || ' ADD COLUMN emaj_user      VARCHAR(32) DEFAULT session_user,'
          || ' ADD COLUMN emaj_user_ip   INET        DEFAULT inet_client_addr(),'
          || ' ADD COLUMN emaj_user_port INT         DEFAULT inet_client_port()';
--- creation of the index on the log table
+-- adjust the log table structure with the alter_log_table parameter, if set
+    SELECT param_value_text INTO v_alter_log_table_param FROM emaj.emaj_param WHERE param_key = ('alter_log_table');
+    IF v_alter_log_table_param IS NOT NULL AND v_alter_log_table_param <> '' THEN
+      EXECUTE 'ALTER TABLE ' || v_logTableName || ' ' || v_alter_log_table_param;
+    END IF;
+-- create the index on the log table
     EXECUTE 'CREATE UNIQUE INDEX ' || v_logIdxName || ' ON '
          ||  v_logTableName || ' (emaj_gid, emaj_tuple) ' || v_idxTblSpace;
 -- set the index associated to the primary key as cluster index. It may be useful for CLUSTER command.
@@ -2381,7 +2391,7 @@ $_gen_sql_tbl$
       SELECT attname, format_type(atttypid,atttypmod) FROM pg_catalog.pg_attribute, pg_catalog.pg_index
         WHERE pg_attribute.attrelid = pg_index.indrelid
           AND attnum = ANY (indkey)
-          AND indrelid = v_fullTableName ::regclass AND indisprimary
+          AND indrelid = v_fullTableName::regclass AND indisprimary
           AND attnum > 0 AND NOT attisdropped
     LOOP
 -- test if the column format (at least up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric data types)
@@ -7812,11 +7822,11 @@ GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_vi
 ----------------------------------------
 -- register emaj tables content as candidate for pg_dump
 SELECT pg_catalog.pg_extension_config_dump('emaj_param','WHERE param_key <> ''emaj_version''');
-SELECT pg_catalog.pg_extension_config_dump('emaj_hist','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_hist','WHERE hist_id > 1');
 SELECT pg_catalog.pg_extension_config_dump('emaj_group_def','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_time_stamp','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_schema','');
+SELECT pg_catalog.pg_extension_config_dump('emaj_schema','WHERE sch_name <> ''emaj''');
 SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
@@ -7835,7 +7845,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_mark_mark_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
 -- insert the init record into the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 2.3.0', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 2.3.1', 'Initialisation completed');
 -- insert the emaj schema into the emaj_schema table
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 

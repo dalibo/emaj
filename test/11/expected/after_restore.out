@@ -628,16 +628,16 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       -3 |                    | 
       -2 |                    | 
       -1 |                    | 
-       4 |                  0 | C
        5 |                  0 | C
        6 |                  0 | C
-       9 |                  0 | C
+       7 |                  0 | C
       10 |                  0 | C
-      11 |                  0 | M
+      11 |                  0 | C
       12 |                  0 | M
-      13 |                  0 | C
-      14 |                  0 | M
-      15 |                  0 | C
+      13 |                  0 | M
+      14 |                  0 | C
+      15 |                  0 | M
+      16 |                  0 | C
     1000 |                  0 | C
     1001 |                  0 | C
     1002 |                  0 | C
