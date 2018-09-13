@@ -40,6 +40,8 @@ Après restauration des fichiers, les groupes de tables se retrouveront dans l'�
 Sauvegarde et restauration logique de base de données complète
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Pour les sauvegardes et restaurations logiques de base de données avec E-Maj, utilisant *pg_dump*, et *psql* ou *pg_restore*, il est essentiel que la base d’origine et la base restaurée utilisent la **même version d’E-Maj**. Dans le cas contraire, le contenu de certaines tables techniques peut ne pas correspondre à leur structure. La lecture de la ligne de clé *'emaj_version'* de la table *emaj.emaj_param* peut permettre de connaître la version d’une extension E-Maj créée dans une base de données.
+
 Pour les groupes de tables arrêtés (en état *IDLE*), comme les triggers de logs sont inactifs et que le contenu des tables de log n'a pas d'importance, il n'y a aucune précaution particulière à prendre pour les retrouver dans le même état après une restauration.
 
 Pour les groupes de tables en état *LOGGING* au moment de la sauvegarde, il faut s'assurer que les triggers de logs ne sont pas activés au moment de la reconstitution (restauration) des tables applicatives. Dans le cas contraire, pendant la reconstruction des tables, toutes les insertions de lignes seraient aussi enregistrées dans les tables de logs !
