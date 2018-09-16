@@ -22,17 +22,14 @@ The structure of log tables is directly derived from the structure of the relate
 Adding technical columns
 ------------------------
 
-It is possible to add one or several technical columns to enrich the traces. These columns must follow some rules:
-
-* their value must be set as a default value (a *DEFAULT* clause) associated to a function (so that the log triggers are not impacted),
-* their name must start with the characters *emaj_* (so that the check functions do not detect them as abnormal).
+It is possible to add one or several technical columns to enrich the traces. These columns value must be set as a default value (a *DEFAULT* clause) associated to a function (so that the log triggers are not impacted).
 
 To add one or several technical columns, a parameter of key *alter_log_table* must be inserted into the :ref:`emaj_param<emaj_param>` table. The associated text value must contain an *ALTER TABLE* clause. At the log table creation time, if the parameter exists, an *ALTER TABLE* statement with this parameter is executed.
 
 For instance, one can add to log tables a column to record the value of the *application_name* connection field with::
 
    INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('alter_log_table',
-     'ADD COLUMN emaj_appname TEXT DEFAULT current_setting(''application_name'')');
+     'ADD COLUMN extra_col_appname TEXT DEFAULT current_setting(''application_name'')');
 
 Several *ADD COLUMN* directives may be concatenated, separated by a comma.
 

@@ -3,7 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-
+  * Remove the restriction on column name when a column is added to log
+    tables.
 
 ###Bug fixes:###
 

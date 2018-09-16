@@ -240,6 +240,7 @@ CREATE TABLE emaj.emaj_relation (
   rel_sql_pk_columns           TEXT,                       -- piece of sql used to rollback: list of the pk columns
   rel_sql_pk_eq_conditions     TEXT,                       -- piece of sql used to rollback: equality conditions on the pk columns
   rel_log_seq_last_value       BIGINT,                     -- last value of the log sequence when the table is removed from the group (NULL otherwise)
+  rel_emaj_verb_attnum         SMALLINT,                   -- column number (attnum) of the log table's emaj_verb column in the pg_attribute table
   PRIMARY KEY (rel_schema, rel_tblseq, rel_time_range),
   FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group (group_name),
   FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema (sch_name),
@@ -249,7 +250,7 @@ COMMENT ON TABLE emaj.emaj_relation IS
 $$Contains the content (tables and sequences) of created E-Maj groups.$$;
 -- index on emaj_relation used to speedup most functions working on groups with large E-Maj configuration
 CREATE INDEX emaj_relation_idx1 ON emaj.emaj_relation (rel_group, rel_kind);
--- index on emaj_relation used to speedup _verify_schema() with large E-Maj configuration
+-- index on emaj_relation used to speedup _verify_all_schemas() with large E-Maj configuration
 CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
 
 -- table containing the marks
@@ -1428,6 +1429,7 @@ $_create_tbl$
     v_colList                TEXT;
     v_pkColList              TEXT;
     v_pkCondList             TEXT;
+    v_attnum                 SMALLINT;
     v_alter_log_table_param  TEXT;
     v_stmt                   TEXT;
     v_triggerList            TEXT;
@@ -1480,6 +1482,13 @@ $_create_tbl$
          || ' ADD COLUMN emaj_user      VARCHAR(32) DEFAULT session_user,'
          || ' ADD COLUMN emaj_user_ip   INET        DEFAULT inet_client_addr(),'
          || ' ADD COLUMN emaj_user_port INT         DEFAULT inet_client_port()';
+-- get the attnum of the emaj_verb column
+    SELECT attnum INTO STRICT v_attnum
+      FROM pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+      WHERE relnamespace = pg_namespace.oid AND attrelid = pg_class.oid
+        AND nspname = v_logSchema
+        AND relname = v_baseLogTableName
+        AND attname = 'emaj_verb';
 -- adjust the log table structure with the alter_log_table parameter, if set
     SELECT param_value_text INTO v_alter_log_table_param FROM emaj.emaj_param WHERE param_key = ('alter_log_table');
     IF v_alter_log_table_param IS NOT NULL AND v_alter_log_table_param <> '' THEN
@@ -1497,7 +1506,7 @@ $_create_tbl$
         FROM pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND attrelid = pg_class.oid
           AND nspname = v_logSchema AND relname = v_baseLogTableName
-          AND attnum > 0 AND attnotnull AND attisdropped = FALSE AND attname NOT LIKE E'emaj\\_%') AS t;
+          AND attnum > 0 AND attnum < v_attnum AND attisdropped = FALSE AND attnotnull) AS t;
     IF v_stmt IS NOT NULL THEN
       EXECUTE 'ALTER TABLE ' || v_logTableName || v_stmt;
     END IF;
@@ -1527,11 +1536,13 @@ $_create_tbl$
                (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority,
                 rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
                 rel_log_index, rel_log_sequence, rel_log_function,
-                rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions)
+                rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions,
+                rel_emaj_verb_attnum)
         VALUES (r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq, int8range(v_timeId, NULL, '[)'), r_grpdef.grpdef_group, r_grpdef.grpdef_priority,
                 v_logSchema, r_grpdef.grpdef_log_dat_tsp, r_grpdef.grpdef_log_idx_tsp, 'r', v_baseLogTableName,
                 v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName,
-                v_colList, v_pkColList, v_pkCondList);
+                v_colList, v_pkColList, v_pkCondList,
+                v_attnum);
 --
 -- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
     SELECT string_agg(tgname, ', ' ORDER BY tgname) INTO v_triggerList FROM (
@@ -1882,10 +1893,10 @@ $_move_tbl$
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
       INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_priority, rel_log_schema,
                                       rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
-                                      rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions,rel_log_seq_last_value)
+                                      rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions,rel_log_seq_last_value, rel_emaj_verb_attnum)
         SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), r_plan.altr_new_group, rel_kind, rel_priority, rel_log_schema,
                rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
-               rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions,rel_log_seq_last_value
+               rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions, rel_log_seq_last_value, rel_emaj_verb_attnum
           FROM emaj.emaj_relation
           WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper(rel_time_range) = v_timeId;
 -- ... and insert an entry into the emaj_hist table
@@ -2627,7 +2638,7 @@ $_verify_groups$
             FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
             WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema
               AND relname = rel_log_table
-              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = FALSE AND attname NOT LIKE 'emaj%'
+              AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = FALSE AND attnum < rel_emaj_verb_attnum
               AND rel_group = ANY (v_groups) AND rel_kind = 'r' AND upper_inf(rel_time_range))
       SELECT DISTINCT rel_schema, rel_tblseq,
              'In group "' || rel_group || '", the structure of the application table "' ||
@@ -7168,7 +7179,7 @@ $_verify_all_groups$
               FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
               WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema
                 AND relname = rel_log_table
-                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = FALSE AND attname NOT LIKE 'emaj%'
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = FALSE AND attnum < rel_emaj_verb_attnum
                 AND upper_inf(rel_time_range) AND rel_kind = 'r')
         SELECT DISTINCT rel_schema, rel_tblseq,
                'In group "' || rel_group || '", the structure of the application table "' ||

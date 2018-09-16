@@ -336,6 +336,7 @@ primary key, btree, for table "emaj.emaj_param"
  rel_sql_pk_columns       | text      |           |          | 
  rel_sql_pk_eq_conditions | text      |           |          | 
  rel_log_seq_last_value   | bigint    |           |          | 
+ rel_emaj_verb_attnum     | smallint  |           |          | 
 Indexes:
     "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq, rel_time_range)
     "emaj_relation_idx1" btree (rel_group, rel_kind)

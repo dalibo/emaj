@@ -21,17 +21,14 @@ Les tables de log ont une structure qui découle directement des tables applicat
 
 Ajouter des colonnes techniques
 -------------------------------
-Il est possible d’ajouter une ou plusieurs colonnes techniques pour enrichir les traces. Ces colonnes doivent remplir les conditions suivantes :
-
-* elles doivent être valorisées avec une valeur par défaut (clause *DEFAULT*) associée à une fonction (pour que les triggers de logs ne soient pas impactés),
-* leur nom doit commencer par les caractères *emaj_* (pour que les fonctions de contrôles ne les détectent pas comme anormales).
+Il est possible d’ajouter une ou plusieurs colonnes techniques pour enrichir les traces. Ces colonnes doivent doivent être valorisées avec une valeur par défaut (clause *DEFAULT*) associée à une fonction (pour que les triggers de logs ne soient pas impactés).
 
 Pour ajouter une ou plusieurs colonnes techniques, il faut ajouter le paramètre de clé « alter_log_table » dans la table :ref:`emaj_param<emaj_param>`. La valeur texte associée doit contenir une clause d’*ALTER TABLE*. Lors de la création d’une table de log, si le paramètre existe, une requête *ALTER TABLE* avec ce paramètre est exécutée.
 
 Par exemple, on peut ajouter dans les tables de log une colonne pour enregistrer la valeur du champ de connexion *application_name* de la manière suivante ::
 
    INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('alter_log_table',
-     'ADD COLUMN emaj_appname TEXT DEFAULT current_setting(''application_name'')');
+     'ADD COLUMN extra_col_appname TEXT DEFAULT current_setting(''application_name'')');
 
 Plusieurs directives *ADD COLUMN* peuvent être concaténées, séparées par une virgule.
 
