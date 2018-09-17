@@ -1479,9 +1479,7 @@ $_create_tbl$
          || ' ADD COLUMN emaj_gid       BIGINT      NOT NULL   DEFAULT nextval(''emaj.emaj_global_seq''),'
          || ' ADD COLUMN emaj_changed   TIMESTAMPTZ DEFAULT clock_timestamp(),'
          || ' ADD COLUMN emaj_txid      BIGINT      DEFAULT txid_current(),'
-         || ' ADD COLUMN emaj_user      VARCHAR(32) DEFAULT session_user,'
-         || ' ADD COLUMN emaj_user_ip   INET        DEFAULT inet_client_addr(),'
-         || ' ADD COLUMN emaj_user_port INT         DEFAULT inet_client_port()';
+         || ' ADD COLUMN emaj_user      VARCHAR(32) DEFAULT session_user';
 -- get the attnum of the emaj_verb column
     SELECT attnum INTO STRICT v_attnum
       FROM pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace

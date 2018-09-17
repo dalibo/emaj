@@ -81,7 +81,7 @@ set role emaj_regression_tests_adm_user;
 -----------------------------
 -- set the parameter to drop the emaj_user_port column and add an 'extra_col_appname' column
 insert into emaj.emaj_param (param_key, param_value_text) values ('alter_log_table',
-  'DROP COLUMN emaj_user_port, ADD COLUMN extra_col_appname TEXT DEFAULT current_setting(''application_name'')');
+  'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(), ADD COLUMN extra_col_appname TEXT DEFAULT current_setting(''application_name'')');
 
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_comment_group('myGroup1','This is group #1');

@@ -252,7 +252,7 @@ ERROR:  syntax error at or near "dummmy"
 LINE 1: ALTER TABLE "emajC"."myschema1_myTbl3_log" dummmy content
                                                    ^
 QUERY:  ALTER TABLE "emajC"."myschema1_myTbl3_log" dummmy content
-CONTEXT:  PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 90 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 88 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
 rollback;

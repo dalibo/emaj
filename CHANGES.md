@@ -5,6 +5,9 @@ E-Maj - Change log
 ###Enhancements:###
   * Remove the restriction on column name when a column is added to log
     tables.
+  * In log tables, both emaj_client_ip and emaj_client_port columns are not
+    created anymore. If needed, they can be added using the 'alter_log_tables'
+    emaj_param parameter.
 
 ###Bug fixes:###
 
