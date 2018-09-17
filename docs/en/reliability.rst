@@ -15,7 +15,7 @@ These **tables group integrity checks** verify that:
 * the PostgreSQL version at tables group creation time is compatible with the current version,
 * each application sequence or table of the group always exists, 
 * each table of the group has its log table, its log function and its triggers,
-* the log tables structure always reflects the related application tables structure,
+* the log tables structure always reflects the related application tables structure, and contains all required technical columns,
 * no table has been altered as *UNLOGGED* or *WITH OIDS* table,
 * for *ROLLBACKABLE* tables groups, application tables have their primary key and their structure has not changed.
 

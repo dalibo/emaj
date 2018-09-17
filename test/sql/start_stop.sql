@@ -104,13 +104,13 @@ begin;
   alter table myschema1.mytbl4 add primary key (col41, col42);
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
-
-
-
-
+-- detection of a log table missing a technical column
+begin;
+  alter table emaj.myschema1_mytbl1_log drop column emaj_verb;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
 
 -- should be OK
-
 -- use the first correct emaj_start_group() function call to test the emaj_hist purge
 INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','0.1 second'::interval);
 select pg_sleep(0.2);

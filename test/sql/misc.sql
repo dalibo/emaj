@@ -677,6 +677,12 @@ begin;
   alter table myschema1.mytbl4 add primary key (col41, col42);
   select * from emaj.emaj_verify_all();
 rollback;
+-- detection of a corrupted log table (missing some technical columns)
+begin;
+  alter table emaj.myschema1_mytbl1_log drop column emaj_verb, drop column emaj_tuple;
+  alter table emaj.myschema1_mytbl4_log drop column emaj_gid, drop column emaj_user;
+  select * from emaj.emaj_verify_all();
+rollback;
 
 -- almost all in 1
 begin;

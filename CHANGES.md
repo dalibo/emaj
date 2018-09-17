@@ -8,6 +8,7 @@ E-Maj - Change log
   * In log tables, both emaj_client_ip and emaj_client_port columns are not
     created anymore. If needed, they can be added using the 'alter_log_tables'
     emaj_param parameter.
+  * Enforce the checks on log tables structure.
 
 ###Bug fixes:###
 

@@ -442,7 +442,7 @@ $_verify_groups$
           )) AS t
         ORDER BY 1,2,3
     LOOP
-      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (6): % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (6): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check all tables have their primary key if they belong to a rollbackable group
@@ -461,7 +461,7 @@ $_verify_groups$
                    AND contype = 'p')
         ORDER BY 1,2,3
     LOOP
-      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check all tables are persistent tables (i.e. have not been altered as UNLOGGED after their tables group creation)
@@ -475,7 +475,7 @@ $_verify_groups$
           AND relpersistence <> 'p'
         ORDER BY 1,2,3
     LOOP
-      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check no table has been altered as WITH OIDS after tables groups creation
@@ -489,7 +489,7 @@ $_verify_groups$
           AND relhasoids
         ORDER BY 1,2,3
     LOOP
-      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 -- check the primary key structure of all tables belonging to rollbackable groups is unchanged
@@ -517,7 +517,36 @@ $_verify_groups$
           WHERE rel_sql_pk_columns <> current_pk_columns
         ORDER BY 1,2,3
     LOOP
-      if v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (10): % %',r_object.msg,v_hint; END IF;
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (10): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- check all log tables have the 6 required technical columns. It only returns one row per faulting table.
+    FOR r_object IN
+      SELECT DISTINCT rel_schema, rel_tblseq,
+             'In group "' || rel_group || '", the log table "' ||
+             rel_log_schema || '"."' || rel_log_table || '" miss some technical columns (' ||
+             string_agg(attname,', ') || ').' AS msg
+        FROM (
+            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
+              FROM emaj.emaj_relation, (VALUES ('emaj_verb'), ('emaj_tuple'), ('emaj_gid'), ('emaj_changed'), ('emaj_txid'), ('emaj_user')) AS t(attname)
+              WHERE rel_group = ANY (v_groups) AND rel_kind = 'r' AND upper_inf(rel_time_range)
+                AND EXISTS
+                  (SELECT NULL FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+                     WHERE nspname = rel_log_schema AND relname = rel_log_table
+                       AND relnamespace = pg_namespace.oid)
+          EXCEPT
+            SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
+              FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema
+                AND relname = rel_log_table
+                AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = FALSE
+                AND attname IN ('emaj_verb', 'emaj_tuple', 'emaj_gid', 'emaj_changed', 'emaj_txid', 'emaj_user')
+                AND rel_group = ANY (v_groups) AND rel_kind = 'r' AND upper_inf(rel_time_range)
+          ) AS t2
+        GROUP BY rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table
+        ORDER BY 1,2,3
+    LOOP
+      IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (11): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
 --
@@ -722,6 +751,33 @@ $_verify_all_groups$
           ) AS t
           WHERE rel_sql_pk_columns <> current_pk_columns
         ORDER BY rel_schema, rel_tblseq, 1;
+-- check all log tables have the 6 required technical columns.
+    RETURN QUERY
+      SELECT msg FROM (
+        SELECT DISTINCT rel_schema, rel_tblseq,
+               'In group "' || rel_group || '", the log table "' ||
+               rel_log_schema || '"."' || rel_log_table || '" miss some technical columns (' ||
+               string_agg(attname,', ') || ').' AS msg
+          FROM (
+              SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
+                FROM emaj.emaj_relation, (VALUES ('emaj_verb'), ('emaj_tuple'), ('emaj_gid'), ('emaj_changed'), ('emaj_txid'), ('emaj_user')) AS t(attname)
+                WHERE rel_kind = 'r' AND upper_inf(rel_time_range)
+                  AND EXISTS
+                    (SELECT NULL FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+                       WHERE nspname = rel_log_schema AND relname = rel_log_table
+                         AND relnamespace = pg_namespace.oid)
+            EXCEPT
+              SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
+                FROM emaj.emaj_relation, pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
+                WHERE relnamespace = pg_namespace.oid AND nspname = rel_log_schema
+                  AND relname = rel_log_table
+                  AND attrelid = pg_class.oid AND attnum > 0 AND attisdropped = FALSE
+                  AND attname IN ('emaj_verb', 'emaj_tuple', 'emaj_gid', 'emaj_changed', 'emaj_txid', 'emaj_user')
+                  AND rel_kind = 'r' AND upper_inf(rel_time_range)
+             ) AS t2
+          GROUP BY rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table
+          ORDER BY 1,2,3
+        ) AS t;
 --
     RETURN;
   END;

@@ -1698,6 +1698,19 @@ begin;
 (2 rows)
 
 rollback;
+-- detection of a corrupted log table (missing some technical columns)
+begin;
+  alter table emaj.myschema1_mytbl1_log drop column emaj_verb, drop column emaj_tuple;
+  alter table emaj.myschema1_mytbl4_log drop column emaj_gid, drop column emaj_user;
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ In group "myGroup1", the log table "emaj"."myschema1_mytbl1_log" miss some technical columns (emaj_tuple, emaj_verb).
+ In group "myGroup1", the log table "emaj"."myschema1_mytbl4_log" miss some technical columns (emaj_gid, emaj_user).
+(3 rows)
+
+rollback;
 -- almost all in 1
 begin;
   create table emaj.dummy_log (col1 int);
