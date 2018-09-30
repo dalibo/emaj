@@ -29,11 +29,11 @@ Recherche de marque
 
 La fonction *emaj_get_previous_mark_group()* permet de connaître, pour un groupe de tables, le nom de la dernière marque qui précède soit une date et une heure donnée, soit une autre marque. ::
 
-   SELECT emaj.emaj_get_previous_mark group('<nom.du.groupe>', '<date.et.heure>');
+   SELECT emaj.emaj_get_previous_mark_group('<nom.du.groupe>', '<date.et.heure>');
 
 ou ::
 
-   SELECT emaj.emaj_get_previous_mark group('<nom.du.groupe>', '<marque>');
+   SELECT emaj.emaj_get_previous_mark_group('<nom.du.groupe>', '<marque>');
 
 Dans la première forme, la date et l'heure doivent être exprimées sous la forme d'un *TIMESTAMPTZ*, par exemple le littéral *'2011/06/30 12:00:00 +02'*. Si l'heure fournie est strictement égale à l'heure d'une marque existante, la marque retournée sera la marque précédente.
 
