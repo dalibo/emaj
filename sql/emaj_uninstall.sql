@@ -13,7 +13,8 @@
 
 \set ON_ERROR_STOP ON
 \set ECHO none
-\echo '>>> Starting E-Maj uninstallation procedure...'
+\set QUIET on
+\echo '>>> Starting the E-Maj uninstallation procedure...'
 
 SET client_min_messages TO WARNING;
 
@@ -93,7 +94,7 @@ $emaj_uninstall$
     PERFORM emaj.emaj_force_drop_group(group_name) FROM emaj.emaj_group;
 --
 -- Drop the emaj extension
-    DROP EXTENSION emaj;
+    DROP EXTENSION emaj CASCADE;
 --
 -- Drop the primary schema.
     DROP SCHEMA IF EXISTS emaj CASCADE;
@@ -219,5 +220,6 @@ $emaj_uninstall$
 $emaj_uninstall$;
 
 SET client_min_messages TO default;
-\echo '>>> E-maj successfully uninstalled from this database'
+\unset QUIET
 
+\echo '>>> E-maj successfully uninstalled from this database'

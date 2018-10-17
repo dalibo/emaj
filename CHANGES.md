@@ -11,7 +11,7 @@ E-Maj - Change log
   * Enforce the checks on log tables structure.
 
 ###Bug fixes:###
-
+  * Fix a race condition that aborts the emaj_uninstall.sql script.
 
 
 2.3.1 (2018-Sept-6)
