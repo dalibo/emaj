@@ -2478,7 +2478,7 @@ $_get_current_sequences_state$
     r_tblsq                  RECORD;
     r_sequ                   emaj.emaj_sequence%ROWTYPE;
   BEGIN
--- TODO: when postgres version 9.2 will not be supported anymore, replace the function by a single set oriented statement with a LATERAL clause
+--TODO: when postgres version 9.2 will not be supported anymore, replace the function by a single set oriented statement with a LATERAL clause
 -- such as: SELECT t.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_log_schema,rel_log_sequence,v_timeId) AS t
 --            WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
     IF v_relKind = 'r' THEN
@@ -4176,7 +4176,7 @@ $_delete_before_mark_group$
       EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' CASCADE';
     END LOOP;
 -- delete obsolete emaj_sequence and emaj_relation rows (those corresponding to the just dropped log tables)
---TODO delete also holes
+-- (the related emaj_seq_hole rows will be deleted just later ; they are not directly linked to a emaj_relation row)
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r'
         AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND upper(rel_time_range) <= v_markTimeId
