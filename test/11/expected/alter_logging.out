@@ -676,7 +676,7 @@ begin;
 
   -- testing the sequence drop
   drop sequence mySchema1."myTbl3_col31_seq" cascade;
-NOTICE:  drop cascades to default for table myschema1."myTbl3" column col31
+NOTICE:  drop cascades to default value for column col31 of table myschema1."myTbl3"
 rollback;
 -- re-add the removed sequence
 update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_group = 'temporarily_removed';

@@ -2,11 +2,11 @@
 # create_cluster.sh
 # E-Maj tool, distributed under GPL3 licence
 # Create a postgres cluster suitable to run the E-Maj regression tests
-# Syntax: create_cluster <minor postgres version>
+# Syntax: create_cluster.sh <major postgres version>
 
 if [ ${#} -lt 1 ]; then
-    echo "Usage: ${0} <minor postgres version>"
-    echo "for instance: '${0} 102 (or 10.2)' for version 10.2"
+    echo "Usage: ${0} <major postgres version>"
+    echo "for instance: '${0} 10' for version 10.2"
     exit 1
 fi
 
