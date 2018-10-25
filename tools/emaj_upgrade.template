@@ -50,6 +50,10 @@ $do$;
 
 -- OK, the upgrade operation can start...
 
+-- insert the upgrade begin record in the operation history
+INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+  VALUES ('EMAJ_INSTALL','BEGIN','E-Maj <devel>', 'Upgrade from <PREVIOUS_VERSION> started');
+
 -- lock emaj_group table to avoid any concurrent E-Maj activity
 LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
 
@@ -148,8 +152,9 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
 -- update the version id in the emaj_param table
 UPDATE emaj.emaj_param SET param_value_text = '<devel>' WHERE param_key = 'emaj_version';
 
--- insert the upgrade record in the operation history
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Upgrade from <PREVIOUS_VERSION> completed');
+-- insert the upgrade end record in the operation history
+INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+  VALUES ('EMAJ_INSTALL','END','E-Maj <devel>', 'Upgrade from <PREVIOUS_VERSION> completed');
 
 -- post installation checks
 DO

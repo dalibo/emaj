@@ -5,7 +5,7 @@ SET client_min_messages TO WARNING;
 -----------------------------
 -- prepare groups
 -----------------------------
-delete from emaj.emaj_group_def;
+truncate emaj.emaj_group_def;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,NULL,NULL,'tsplog1','tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b',NULL,'tsp log''2','tsp log''2');
@@ -167,7 +167,7 @@ ERROR:  tablespace "dummyTablespace" does not exist
 CONTEXT:  SQL statement "CREATE TABLE emaj.myschema1_mytbl1_log (LIKE myschema1.mytbl1) TABLESPACE "dummyTablespace""
 PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 69 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
 rollback;
 -- already existing secondary schema
 begin;
@@ -175,7 +175,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 ERROR:  _create_log_schemas: The schema "emajb" should not exist. Drop it manually, or modify emaj_group_def table's content.
 CONTEXT:  SQL statement "SELECT emaj._create_log_schemas('CREATE_GROUP', ARRAY[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 44 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 45 at PERFORM
 rollback;
 -- conflict on emaj names prefix inside the group to create
 begin;
@@ -199,7 +199,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
  emaj_create_group 
 -------------------
                  7
@@ -254,13 +254,13 @@ LINE 1: ALTER TABLE "emajC"."myschema1_myTbl3_log" dummmy content
 QUERY:  ALTER TABLE "emajC"."myschema1_myTbl3_log" dummmy content
 CONTEXT:  PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 88 at EXECUTE statement
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
 rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
  emaj_create_group 
 -------------------
                  7
@@ -279,10 +279,10 @@ alter table myschema2.myTbl8 add foreign key (col81) references myschema2.myTbl6
 select emaj.emaj_create_group('myGroup2',true);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 75 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 75 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -295,7 +295,7 @@ begin;
   select emaj.emaj_create_group('phil''s group#3",',false);
 WARNING:  _create_seq: The sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table belong to another tables group (dummyGrp3).
 CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_timeId)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 69 at PERFORM
  emaj_create_group 
 -------------------
                  3
@@ -309,7 +309,7 @@ begin;
   select emaj.emaj_create_group('phil''s group#3",',false);
 WARNING:  _create_seq: The sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table does not belong to any tables group.
 CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_timeId)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 68 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 69 at PERFORM
  emaj_create_group 
 -------------------
                  3
@@ -326,7 +326,7 @@ select emaj.emaj_create_group('phil''s group#3",',false);
 select emaj.emaj_create_group('myGroup4');
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
  emaj_create_group 
 -------------------
                  5
@@ -373,16 +373,17 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  emajb
 (4 rows)
 
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
-       group_creation_time_id, group_last_alter_time_id, group_comment
- from emaj.emaj_group order by group_name;
-    group_name    | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
-------------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
- emptyGroup       | f                | t                       |              0 |                 0 | f                     |                      6 |                          | 
- myGroup1         | f                | f                       |              5 |                 2 | t                     |                      5 |                          | 
- myGroup2         | f                | f                       |              6 |                 2 | t                     |                      7 |                          | 
- myGroup4         | f                | f                       |              5 |                 0 | t                     |                     11 |                          | 
- phil's group#3", | f                | t                       |              2 |                 2 | f                     |                     10 |                          | 
+select group_name, group_is_rollbackable, group_creation_time_id,
+       group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
+       group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
+  from emaj.emaj_group order by group_name;
+    group_name    | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_has_waiting_changes | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
+------------------+-----------------------+------------------------+--------------------------+---------------------------+------------------+-------------------------+----------------+-------------------+---------------
+ emptyGroup       | f                     |                      6 |                          | f                         | f                | t                       |              0 |                 0 | 
+ myGroup1         | t                     |                      5 |                          | f                         | f                | f                       |              5 |                 2 | 
+ myGroup2         | t                     |                      7 |                          | f                         | f                | f                       |              6 |                 2 | 
+ myGroup4         | t                     |                     11 |                          | f                         | f                | f                       |              5 |                 0 | 
+ phil's group#3", | f                     |                     10 |                          | f                         | f                | t                       |              2 |                 2 | 
 (5 rows)
 
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq, rel_time_range;
@@ -419,7 +420,7 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
 ------------+--------------------------------+------------+------------+------------+----------+-------------
  emaj       | emaj_alter_plan                | postgres   |            | t          | f        | t
  emaj       | emaj_group                     | postgres   |            | t          | f        | t
- emaj       | emaj_group_def                 | postgres   |            | t          | f        | f
+ emaj       | emaj_group_def                 | postgres   |            | t          | f        | t
  emaj       | emaj_hist                      | postgres   |            | t          | f        | f
  emaj       | emaj_mark                      | postgres   |            | t          | f        | t
  emaj       | emaj_param                     | postgres   |            | t          | f        | f
@@ -585,7 +586,7 @@ PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at PERFORM
 select emaj.emaj_create_group('myGroup1',false);
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
  emaj_create_group 
 -------------------
                  7
@@ -606,10 +607,10 @@ select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_create_group('myGroup2',true);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 75 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 75 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
  emaj_create_group 
 -------------------
                  8

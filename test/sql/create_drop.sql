@@ -5,7 +5,7 @@ SET client_min_messages TO WARNING;
 -----------------------------
 -- prepare groups
 -----------------------------
-delete from emaj.emaj_group_def;
+truncate emaj.emaj_group_def;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,NULL,NULL,'tsplog1','tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b',NULL,'tsp log''2','tsp log''2');
@@ -179,9 +179,11 @@ select emaj.emaj_create_group('myGroup2');
 
 -- impact of created groups
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
-       group_creation_time_id, group_last_alter_time_id, group_comment
- from emaj.emaj_group order by group_name;
+
+select group_name, group_is_rollbackable, group_creation_time_id,
+       group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
+       group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
+  from emaj.emaj_group order by group_name;
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq, rel_time_range;
 select * from pg_tables where schemaname like 'emaj%' order by tablename;
 

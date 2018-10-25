@@ -139,6 +139,11 @@ set role emaj_regression_tests_adm_user;
 -- emaj tables
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
 
+-- to be uncommented in the next version
+--select group_name, group_is_rollbackable, group_creation_time_id,
+--       group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
+--       group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
+--  from emaj.emaj_group order by group_name;
 select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
        group_creation_time_id, group_last_alter_time_id, group_comment
   from emaj.emaj_group order by group_name;
@@ -166,3 +171,8 @@ select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
+
+-------------------------------
+-- Specific tests for this upgrade
+-------------------------------
+update emaj.emaj_group_def set grpdef_priority = 21 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';

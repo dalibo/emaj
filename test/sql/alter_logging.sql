@@ -12,6 +12,12 @@ select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mk1');
 
 -- change the priority
 update emaj.emaj_group_def set grpdef_priority = 30 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  -- also test the internal _adjust_group_properties() function, by simulating wrong values for group_has_waiting_changes
+update emaj.emaj_group set group_has_waiting_changes = true where group_name = 'emptyGroup';
+update emaj.emaj_group set group_has_waiting_changes = false where group_name = 'myGroup1';
+select emaj._adjust_group_properties();
+select group_name, group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1' or group_name = 'emptyGroup' order by 1;
+
 select emaj.emaj_alter_group('myGroup1','Priority Changed');
 
 -- change the emaj names prefix, the log schema, the log data tablespace and the log index tablespace for different tables
@@ -20,6 +26,10 @@ update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_sc
 update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsplog1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
 set default_tablespace = tspemaj_renamed;
+update emaj.emaj_group set group_has_waiting_changes = false where group_name = 'myGroup1';
+select emaj._adjust_group_properties();
+select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1';
+
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','Attributes_changed');
 reset default_tablespace;
 
@@ -51,10 +61,17 @@ select nextval('myschema2.myseq2');
 select emaj.emaj_set_mark_group('myGroup2','Before ADD_SEQ');
 select nextval('myschema2.myseq2');
 
--- then add the table to the group
+-- then add the sequence to the group
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq2');
+
+update emaj.emaj_group set group_has_waiting_changes = false where group_name = 'myGroup2';
+select emaj._adjust_group_properties();
+
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup2';
 select emaj.emaj_alter_group('myGroup2', 'Alter to add myseq2');
-select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2';
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup2';
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
 select * from emaj.emaj_sequence where sequ_name = 'myseq2';
 
@@ -153,8 +170,11 @@ select emaj.emaj_set_mark_group('myGroup1','Mk2b');
 select emaj.emaj_set_mark_group('myGroup1','Before_remove');
 
 update emaj.emaj_group_def set grpdef_group = 'temporarily_removed' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_alter_group('myGroup1','Sequence_removed');
-select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup1';
 select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq';
 select * from emaj.emaj_verify_all();
 
@@ -234,7 +254,8 @@ delete from myschema2.mytbl7 where col71 = 3;
 -- then add the table to the group
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl7');
 select emaj.emaj_alter_group('myGroup2', 'Alter to add mytbl7');
-select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2';
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup2';
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
 -- perform some other updates
 insert into myschema2.mytbl7 values (4),(5);
@@ -367,8 +388,14 @@ insert into myschema1."myTbl3" (col33) values (1.);
 
 update emaj.emaj_group_def set grpdef_group = 'temporarily_removed'
   where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and (grpdef_tblseq = 'myTbl3' or grpdef_tblseq = 'mytbl2b');
+
+update emaj.emaj_group set group_has_waiting_changes = false where group_name = 'myGroup1';
+select emaj._adjust_group_properties();
+select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1';
+
 select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
-select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup1';
 select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2;
 
 delete from myschema1."myTbl3" where col33 = 1.;

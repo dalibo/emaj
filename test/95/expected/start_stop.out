@@ -11,7 +11,7 @@ alter sequence emaj.emaj_mark_mark_id_seq restart 1000;
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
  emaj_create_group 
 -------------------
                  7
@@ -20,10 +20,10 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFOR
 select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 75 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 75 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -374,16 +374,14 @@ select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\
 --rollback;
 SET client_min_messages TO WARNING;
 -- impact of started group
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable,
-       group_creation_time_id, group_last_alter_time_id, group_comment
-  from emaj.emaj_group order by group_name;
-    group_name    | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
-------------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
- emptyGroup       | t                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
- myGroup1         | t                | f                       |              5 |                 2 | t                     |                   1000 |                          | 
- myGroup2         | t                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              5 |                 0 | t                     |                     11 |                          | 
- phil's group#3", | t                | t                       |              2 |                 2 | f                     |                     10 |                          | 
+select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
+    group_name    | group_is_logging | group_is_rlbk_protected 
+------------------+------------------+-------------------------
+ emptyGroup       | t                | f
+ myGroup1         | t                | f
+ myGroup2         | t                | f
+ myGroup4         | f                | f
+ phil's group#3", | t                | t
 (5 rows)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
@@ -470,16 +468,14 @@ select emaj.emaj_stop_group('emptyGroup');
 (1 row)
 
 -- impact of stopped group
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
-       group_creation_time_id, group_last_alter_time_id, group_comment
-  from emaj.emaj_group order by group_name;
-    group_name    | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
-------------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
- emptyGroup       | f                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
- myGroup1         | f                | f                       |              5 |                 2 | t                     |                   1000 |                          | 
- myGroup2         | t                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              5 |                 0 | t                     |                     11 |                          | 
- phil's group#3", | t                | t                       |              2 |                 2 | f                     |                     10 |                          | 
+select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
+    group_name    | group_is_logging | group_is_rlbk_protected 
+------------------+------------------+-------------------------
+ emptyGroup       | f                | f
+ myGroup1         | f                | f
+ myGroup2         | t                | f
+ myGroup4         | f                | f
+ phil's group#3", | t                | t
 (5 rows)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
@@ -696,7 +692,7 @@ PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 (1 row)
 
 rollback;
--- impact of started group
+-- impact of started groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
@@ -711,16 +707,14 @@ PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
                 15
 (1 row)
 
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
-       group_creation_time_id, group_last_alter_time_id, group_comment
-  from emaj.emaj_group order by group_name;
-    group_name    | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
-------------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
- emptyGroup       | f                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
- myGroup1         | t                | f                       |              5 |                 2 | t                     |                   1000 |                          | 
- myGroup2         | t                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              5 |                 0 | t                     |                     11 |                          | 
- phil's group#3", | t                | t                       |              2 |                 2 | f                     |                     10 |                          | 
+select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
+    group_name    | group_is_logging | group_is_rlbk_protected 
+------------------+------------------+-------------------------
+ emptyGroup       | f                | f
+ myGroup1         | t                | f
+ myGroup2         | t                | f
+ myGroup4         | f                | f
+ phil's group#3", | t                | t
 (5 rows)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
@@ -940,17 +934,15 @@ CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
                      0
 (1 row)
 
--- impact of stopped group
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
-       group_creation_time_id, group_last_alter_time_id, group_comment
-  from emaj.emaj_group order by group_name;
-    group_name    | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_comment 
-------------------+------------------+-------------------------+----------------+-------------------+-----------------------+------------------------+--------------------------+---------------
- emptyGroup       | f                | f                       |              0 |                 0 | t                     |                   1002 |                          | 
- myGroup1         | f                | f                       |              5 |                 2 | t                     |                   1000 |                          | 
- myGroup2         | f                | f                       |              6 |                 2 | t                     |                   1001 |                          | 
- myGroup4         | f                | f                       |              5 |                 0 | t                     |                     11 |                          | 
- phil's group#3", | t                | t                       |              2 |                 2 | f                     |                     10 |                          | 
+-- impact of stopped groups
+select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
+    group_name    | group_is_logging | group_is_rlbk_protected 
+------------------+------------------+-------------------------
+ emptyGroup       | f                | f
+ myGroup1         | f                | f
+ myGroup2         | f                | f
+ myGroup4         | f                | f
+ phil's group#3", | t                | t
 (5 rows)
 
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;

@@ -75,20 +75,17 @@ rollback;
 -- should be OK
 -- nothing to change
 select emaj.emaj_alter_group('emptyGroup');
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable,
-       group_creation_time_id, group_last_alter_time_id, group_comment
- from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_alter_group('myGroup1');
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable,
-       group_creation_time_id, group_last_alter_time_id, group_comment
- from emaj.emaj_group where group_name = 'myGroup1';
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 -- only 3 tables to remove (+ log schemas emajb)
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl4';
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_alter_group('myGroup1');
-select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup1';
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 -- only 1 sequence to remove
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -98,8 +95,11 @@ select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name =
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b',NULL,'tsp log''2','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,NULL,'tsplog1','tsp log''2');
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_alter_group('myGroup1');
-select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup1';
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 -- only 1 sequence to add
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
@@ -107,7 +107,11 @@ select emaj.emaj_alter_group('myGroup1');
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
 -- only change the log schema
 update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_alter_group('myGroup1');
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name = 'myGroup1';
 select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myschema1_myTbl3_log';
 update emaj.emaj_group_def set grpdef_log_schema_suffix = 'C' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 select emaj.emaj_alter_group('myGroup1');
@@ -287,7 +291,11 @@ select rel_priority from emaj.emaj_relation where rel_schema = 'myschema1' and r
 update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
 select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' and upper_inf(rel_time_range) group by 1 order by 1;
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name IN ('myGroup1','myGroup2') order by group_name;
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+  from emaj.emaj_group where group_name IN ('myGroup1','myGroup2') order by group_name;
 select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' and upper_inf(rel_time_range) group by 1 order by 1;
 update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';

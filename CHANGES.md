@@ -8,10 +8,13 @@ E-Maj - Change log
   * In log tables, both emaj_client_ip and emaj_client_port columns are not
     created anymore. If needed, they can be added using the 'alter_log_tables'
     emaj_param parameter.
+  * The emaj_verify_all() function returns a warning indicating whether some
+    tables groups need to be altered to match their emaj_group_def
+    configuration.
   * Enforce the checks on log tables structure.
 
 ###Bug fixes:###
-  * Fix a race condition that aborts the emaj_uninstall.sql script.
+  * Fix a rare condition that aborts the emaj_uninstall.sql script.
 
 
 2.3.1 (2018-Sept-6)

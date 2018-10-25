@@ -37,6 +37,15 @@ select count(*) from emaj.emaj_rlbk_stat;
 select count(*) from emaj.mySchema1_myTbl1_log;
 
 -----------------------------
+-- test the emaj_group_def table truncate with existing groups
+-----------------------------
+select group_name, group_has_waiting_changes from emaj.emaj_group order by 1;
+create temp table emaj_group_def_save as select * from emaj.emaj_group_def;
+truncate emaj.emaj_group_def;
+select group_name, group_has_waiting_changes from emaj.emaj_group order by 1;
+insert into emaj.emaj_group_def select * from emaj_group_def_save;
+
+-----------------------------
 -- stop, reset and drop existing groups
 -----------------------------
 select emaj.emaj_stop_group('myGroup1','Simple stop mark');
@@ -135,8 +144,9 @@ select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 -- Checking step 1
 -----------------------------
 -- emaj tables
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
-       group_creation_time_id, group_last_alter_time_id, group_comment
+select group_name, group_is_rollbackable, group_creation_time_id,
+       group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
+       group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
 select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;

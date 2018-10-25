@@ -196,6 +196,11 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to constraint emaj_relation_rel_group_fkey on table emaj_relation
+drop cascades to constraint emaj_mark_mark_group_fkey on table emaj_mark
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "emaj_group_pkey" for table "emaj_group"
+NOTICE:  drop cascades to function _verify_groups(text[],boolean)
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------
@@ -253,8 +258,9 @@ select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user 
  hist_id | hist_function | hist_event |  hist_object  |         hist_wording         | hist_user 
 ---------+---------------+------------+---------------+------------------------------+-----------
        1 | EMAJ_INSTALL  |            | E-Maj 2.3.1   | Initialisation completed     | postgres
-       2 | EMAJ_INSTALL  |            | E-Maj <devel> | Upgrade from 2.3.1 completed | postgres
-(2 rows)
+       2 | EMAJ_INSTALL  | BEGIN      | E-Maj <devel> | Upgrade from 2.3.1 started   | postgres
+       3 | EMAJ_INSTALL  | END        | E-Maj <devel> | Upgrade from 2.3.1 completed | postgres
+(3 rows)
 
 delete from emaj.emaj_hist;
 -- reset function calls statistics (so the check.sql output is stable with all installation paths)

@@ -565,7 +565,7 @@ select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table');
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
 select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table');
 
-select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4';
+select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
 
 -----------------------------
 -- test a remove operation to fix the case of a deleted log table, log sequence or log function
@@ -581,7 +581,7 @@ select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table_2');
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
 select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table_2');
 
-select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4';
+select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
 
 -----------------------------
 -- test a remove operation to fix the case of a deleted application table or sequence
