@@ -615,6 +615,7 @@ reset role;
 alter table "phil's schema3".mytbl4_sav rename to mytbl4;
 alter table "phil's schema3".mytbl4 alter column col45 type char(10);
 alter sequence "phil's schema3"."phil's seq\1_sav" rename to "phil's seq\1";
+select emaj.emaj_alter_group('phil''s group#3",','revert_last_changes');
 
 -- ree-nable the event triggers and drop the group
 set role emaj_regression_tests_adm_user;

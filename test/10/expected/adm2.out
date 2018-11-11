@@ -2277,6 +2277,14 @@ reset role;
 alter table "phil's schema3".mytbl4_sav rename to mytbl4;
 alter table "phil's schema3".mytbl4 alter column col45 type char(10);
 alter sequence "phil's schema3"."phil's seq\1_sav" rename to "phil's seq\1";
+select emaj.emaj_alter_group('phil''s group#3",','revert_last_changes');
+NOTICE:  table "phil's schema3_mytbl4_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
+ emaj_alter_group 
+------------------
+                5
+(1 row)
+
 -- ree-nable the event triggers and drop the group
 set role emaj_regression_tests_adm_user;
 select emaj.emaj_enable_protection_by_event_triggers();
@@ -2288,14 +2296,14 @@ select emaj.emaj_enable_protection_by_event_triggers();
 select emaj.emaj_stop_group('phil''s group#3",');
  emaj_stop_group 
 -----------------
-               3
+               5
 (1 row)
 
 select emaj.emaj_drop_group('phil''s group#3",');
 NOTICE:  table "phil's schema3_mytbl4_log_2" does not exist, skipping
  emaj_drop_group 
 -----------------
-               3
+               5
 (1 row)
 
 -----------------------------
@@ -2895,8 +2903,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10113 |             100443 | A
    10114 |             100443 | A
    10115 |             100443 | A
-   10116 |             100443 | M
-(117 rows)
+   10116 |             100443 | A
+   10117 |             100443 | M
+(118 rows)
 
 select hist_id, hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -3770,17 +3779,25 @@ select hist_id, hist_function, hist_event, hist_object,
    10945 | ALTER_GROUP              | TABLE REMOVED           | "phil's schema3".mytbl4                                                          | From logging group phil's group#3",                                                                     | postgres
    10946 | ALTER_GROUP              | SEQUENCE REMOVED        | "phil's schema3"."phil's seq\1"                                                  | From logging group phil's group#3",                                                                     | postgres
    10947 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | Timestamp Id : 10115                                                                                    | postgres
-   10948 | ENABLE_PROTECTION        | EVENT TRIGGERS ENABLED  |                                                                                  | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                          | postgres
-   10949 | STOP_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
-   10950 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
-   10951 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                                                                          | postgres
-   10952 | SET_MARK_GROUP           | BEGIN                   | phil's group#3",                                                                 | STOP_%                                                                                                  | postgres
-   10953 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | STOP_%                                                                                                  | postgres
-   10954 | STOP_GROUP               | END                     | phil's group#3",                                                                 | 3 tables/sequences processed                                                                            | postgres
-   10955 | DROP_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
-   10956 | DROP_GROUP               | SCHEMA DROPPED          | "emaj #'3"                                                                       |                                                                                                         | postgres
-   10957 | DROP_GROUP               | END                     | phil's group#3",                                                                 | 3 tables/sequences processed                                                                            | postgres
-(873 rows)
+   10948 | ALTER_GROUP              | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10949 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10950 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                                                                          | postgres
+   10951 | SET_MARK_GROUP           | BEGIN                   | phil's group#3",                                                                 | revert_last_changes                                                                                     | postgres
+   10952 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | revert_last_changes                                                                                     | postgres
+   10953 | ALTER_GROUP              | TABLE ADDED             | "phil's schema3".mytbl4                                                          | To logging group phil's group#3",                                                                       | postgres
+   10954 | ALTER_GROUP              | SEQUENCE ADDED          | "phil's schema3"."phil's seq\1"                                                  | To logging group phil's group#3",                                                                       | postgres
+   10955 | ALTER_GROUP              | END                     | phil's group#3",                                                                 | Timestamp Id : 10116                                                                                    | postgres
+   10956 | ENABLE_PROTECTION        | EVENT TRIGGERS ENABLED  |                                                                                  | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                          | postgres
+   10957 | STOP_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10958 | LOCK_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10959 | LOCK_GROUP               | END                     | phil's group#3",                                                                 | 3 tables locked, 0 deadlock(s)                                                                          | postgres
+   10960 | SET_MARK_GROUP           | BEGIN                   | phil's group#3",                                                                 | STOP_%                                                                                                  | postgres
+   10961 | SET_MARK_GROUP           | END                     | phil's group#3",                                                                 | STOP_%                                                                                                  | postgres
+   10962 | STOP_GROUP               | END                     | phil's group#3",                                                                 | 5 tables/sequences processed                                                                            | postgres
+   10963 | DROP_GROUP               | BEGIN                   | phil's group#3",                                                                 |                                                                                                         | postgres
+   10964 | DROP_GROUP               | SCHEMA DROPPED          | "emaj #'3"                                                                       |                                                                                                         | postgres
+   10965 | DROP_GROUP               | END                     | phil's group#3",                                                                 | 5 tables/sequences processed                                                                            | postgres
+(881 rows)
 
 --
 reset role;
