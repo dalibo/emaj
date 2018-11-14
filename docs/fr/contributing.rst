@@ -228,7 +228,7 @@ Voici un exemple d’affichage du déroulement d’un test (ici le scénario ave
 	file "/home/postgres/proj/emaj/test/11/regression.diffs".  A copy of the test summary that you see
 	above is saved in the file "/home/postgres/proj/emaj/test/11/regression.out".
 
-Dans le cas où au moins un script ressort en différence, il convient d’analyser scrupuleusement le contenu du fichier *test/<version_postgres>/regression.diff* pour vérifier si les écarts sont bien liés aux modifications apportées dans le code source de l’extension ou dans les scripts de test.
+Dans le cas où au moins un script ressort en différence, il convient d’analyser scrupuleusement le contenu du fichier *test/<version_postgres>/regression.diffs* pour vérifier si les écarts sont bien liés aux modifications apportées dans le code source de l’extension ou dans les scripts de test.
 
 Une fois que les écarts relevés sont tous jugés valides, il faut copier le contenu des répertoires *test/<version_postgres>/result* dans *test/<version_postgres>/expected*. Un script *shell* permet de traiter toutes les versions PostgreSQL en une seule commande ::
 

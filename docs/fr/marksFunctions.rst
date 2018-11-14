@@ -56,38 +56,38 @@ Une marque portant le nouveau nom souhaité ne doit pas déjà exister pour le g
 
 .. _emaj_delete_mark_group:
 
-Suppression d'une marque
-------------------------
+Effacement d'une marque
+-----------------------
 
-Une marque peut également être supprimée par l'intermédiaire de la commande SQL ::
+Une marque peut également être effacée par l'intermédiaire de la commande SQL ::
 
    SELECT emaj.emaj_delete_mark_group('<nom.du.groupe>', '<nom.de.marque>');
 
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 
-La fonction retourne la valeur 1, c'est à dire le nombre de marques effectivement supprimées.
+La fonction retourne la valeur 1, c'est à dire le nombre de marques effectivement effacées.
 
-Pour qu'il reste au moins une marque après l'exécution de la fonction, la suppression d'une marque n'est possible que s'il y a au moins 2 marques pour le groupe de tables concerné. 
+Pour qu'il reste au moins une marque après l'exécution de la fonction, l'effacement d'une marque n'est possible que s'il y a au moins 2 marques pour le groupe de tables concerné. 
 
-Si la marque supprimée est la première marque pour le groupe, les lignes devenues inutiles dans les tables de log sont supprimées.
+Si la marque effacée est la première marque pour le groupe, les lignes devenues inutiles dans les tables de log sont supprimées.
 
-Si une table a été :ref:`détachée d’un groupe de tables<alter_logging_group>` et que la marque supprimée correspond à la dernière marque connue pour cette table, les logs couvrant l’intervalle de temps entre cette marque et la marque précédente sont effacés.
+Si une table a été :ref:`détachée d’un groupe de tables<alter_logging_group>` et que la marque effacée correspond à la dernière marque connue pour cette table, les logs couvrant l’intervalle de temps entre cette marque et la marque précédente sont supprimés.
 
 
 .. _emaj_delete_before_mark_group:
 
-Suppression des marques les plus anciennes
-------------------------------------------
+Effacement des marques les plus anciennes
+-----------------------------------------
 
-Pour facilement supprimer en une seule opération toutes les marques d'un groupe de tables antérieures à une marque donnée, on peut exécuter la requête ::
+Pour facilement effacer en une seule opération toutes les marques d'un groupe de tables antérieures à une marque donnée, on peut exécuter la requête ::
 
    SELECT emaj.emaj_delete_before_mark_group('<nom.du.groupe>', '<nom.de.marque>');
 
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 
-La fonction supprime les marques antérieures à la marque spécifiée, cette dernière devenant la nouvelle première marque. Elle supprime également des tables de log toutes les données concernant les mises à jour de tables applicative antérieures à cette marque.
+La fonction efface les marques antérieures à la marque spécifiée, cette dernière devenant la nouvelle première marque. Elle supprime également des tables de log toutes les données concernant les mises à jour de tables applicative antérieures à cette marque.
 
-La fonction retourne le nombre de marques supprimées.
+La fonction retourne le nombre de marques effacées.
 
 La fonction procède également à la purge des événements les plus anciens de la table technique :ref:`emaj_hist <emaj_hist>`.
 
@@ -95,7 +95,7 @@ Cette fonction permet ainsi d'utiliser E-Maj sur de longues périodes sans avoir
 
 Néanmoins, comme cette suppression de lignes dans les tables de log ne peut utiliser de verbe SQL *TRUNCATE*, la durée d'exécution de la fonction *emaj_delete_before_mark_group()* peut être plus longue qu'un simple arrêt et relance de groupe. En contrepartie, elle ne nécessite pas de pose de verrou sur les tables du groupe concerné. Son exécution peut donc se poursuivre alors que d'autres traitements mettent à jour les tables applicatives. Seules d'autres actions E-Maj sur le même groupe de tables, comme la pose d'une nouvelle marque, devront attendre la fin de l'exécution d'une fonction *emaj_delete_before_mark_group()*.
 
-Associées, les fonctions *emaj_delete_before_mark_group()*, et :ref:`emaj_get_previous_mark_group() <emaj_get_previous_mark_group>` permettent de supprimer les marques antérieures à un délai de rétention. Ainsi par exemple, pour supprimer toutes les marques (et les logs associés) posées depuis plus de 24 heures, on peut exécuter la requête ::
+Associées, les fonctions *emaj_delete_before_mark_group()*, et :ref:`emaj_get_previous_mark_group() <emaj_get_previous_mark_group>` permettent d'effacer les marques antérieures à un délai de rétention. Ainsi par exemple, pour effacer toutes les marques (et supprimer les logs associés) posées depuis plus de 24 heures, on peut exécuter la requête ::
 
    SELECT emaj.emaj_delete_before_mark_group('<groupe>', emaj.emaj_get_previous_mark_group('<groupe>', current_timestamp - '1 DAY'::INTERVAL));
 

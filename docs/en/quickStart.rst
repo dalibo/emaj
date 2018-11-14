@@ -16,6 +16,8 @@ To install E-Maj, log on your postgres (or another) account, download E-Maj from
 
   sudo cp sql/emaj--* $(pg_config --sharedir)/extension/.
 
+For PostgreSQL versions prior 9.6, see this :ref:`chapter <create_emaj_extension>`.
+
 For more details, or in case of problem, look at :doc:`there <install>`.
 
 Extension install
@@ -23,13 +25,11 @@ Extension install
 
 To install the emaj extension into a database, log on the target database, using a super-user role and execute::
 
-  create extension dblink;
-
-  create extension btree_gist;
-
-  create extension emaj;
+  create extension emaj cascade;
 
   grant emaj_adm to <role>;
+
+For PostgreSQL versions prior 9.6, see :ref:`this chapter <create_emaj_extension>`.
 
 With the latest statement, you give E-Maj administration grants to a particular role.  Then, this role can be used to execute all E-Maj operations, avoiding the use of superuser role.
 

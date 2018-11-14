@@ -15,7 +15,7 @@ For these operations, the user must log on the concerned database as a superuser
 Dblink and btree_gist extensions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Two extensions are required to let E-Maj work: **dblink** and **btree_gist**. They are supplied with PostgreSQL. If they are not installed into the database, they must be installed before installing E-Maj.
+Two extensions are required to let E-Maj work: **dblink** and **btree_gist**. They are supplied with PostgreSQL. With PostgreSQL versions 9.6 and later, these extensions will be created at the same time as the emaj extension (see further), if they are not already installed into the database. With older PostgreSQL versions, they must be created before E-Maj.
 
 To do it, just issue the following commands::
 
@@ -29,13 +29,16 @@ Optionally, if the E-Maj administrator wants to store E-Maj technical tables int
 
    SET default_tablespace = <tablespace.name>;
 
+.. _create_emaj_extension:
 
 Creating the E-Maj extension
 ----------------------------
 
 The E-Maj extension can now be created into the database, by executing the SQL command::
 
-   CREATE EXTENSION emaj;
+   CREATE EXTENSION emaj CASCADE;
+
+With PostgreSQL version prior 9.6, the *CASCADE* clause doesn’t exist. In that case,the needed extensions must be :ref:`explicitely created before emaj <preliminary_operations>`.
 
 To start with, the script verifies that the PostgreSQL version is at least 9.2, and that the current user has the *superuser* attribute.
 

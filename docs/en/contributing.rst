@@ -225,7 +225,7 @@ Here is an example of the display issued by the test tool (in this case with the
 	file "/home/postgres/proj/emaj/test/11/regression.diffs".  A copy of the test summary that you see
 	above is saved in the file "/home/postgres/proj/emaj/test/11/regression.out".
 
-When at least one script fails, it is important to closely analyze the differences, by reviewing the *test/<PostgreSQL_version>/regression.diff* file content, and check that the differences are directly linked to changes applied in the extension source code or in the test scripts.
+When at least one script fails, it is important to closely analyze the differences, by reviewing the *test/<PostgreSQL_version>/regression.diffs* file content, and check that the differences are directly linked to changes applied in the extension source code or in the test scripts.
 
 Once the reported differences are considered as valid, the content of the *test/<PostgreSQL_version>/result* directories must be copied into the *test/<PostgreSQL_version>/expected* directories. A *shell* script processes all PostgreSQL versions in a single command::
 
