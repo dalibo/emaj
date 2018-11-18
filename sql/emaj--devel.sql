@@ -967,7 +967,8 @@ $_check_groups_content$
 --  - do not already belong to another tables group,
 --  - will not generate conflicts on emaj objects to create (when emaj names prefix is not the default one)
 -- It also checks that:
---  - tables are not TEMPORARY, UNLOGGED or WITH OIDS
+--  - tables are not TEMPORARY
+--  - for rollbackable groups, tables are not UNLOGGED or WITH OIDS
 --  - for rollbackable groups, all tables have a PRIMARY KEY
 --  - for sequences, the tablespaces, emaj log schema and emaj object name prefix are all set to NULL
 -- Input: name array of the tables group to check,
@@ -1055,28 +1056,47 @@ $_check_groups_content$
       RAISE WARNING '_check_groups_content: Error, the table %.% is a TEMPORARY table.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
       v_nbError = v_nbError + 1;
     END LOOP;
--- check no table is an unlogged table
+-- for rollbackable groups, check no table is an unlogged table
     FOR r IN
+-- only 0 or 1 SELECT is really executed, depending on the v_isRollbackable value
       SELECT grpdef_schema, grpdef_tblseq
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+        WHERE v_isRollbackable                                                 -- true (or false) for tables groups creation
+          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
           AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 'u'
+        UNION ALL
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
+        WHERE v_isRollbackable IS NULL                                         -- NULL for alter groups function call
+          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 'u'
+          AND group_name = grpdef_group AND group_is_rollbackable              -- the is_rollbackable attribute is read from the emaj_group table
         ORDER BY grpdef_schema, grpdef_tblseq
     LOOP
       RAISE WARNING '_check_groups_content: Error, the table %.% is an UNLOGGED table.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
       v_nbError = v_nbError + 1;
     END LOOP;
--- check no table is a WITH OIDS table
+-- for rollbackable groups, check no table is a WITH OIDS table
     FOR r IN
+-- only 0 or 1 SELECT is really executed, depending on the v_isRollbackable value
       SELECT grpdef_schema, grpdef_tblseq
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+        WHERE v_isRollbackable                                                 -- true (or false) for tables groups creation
+          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
           AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relhasoids
+        UNION ALL
+      SELECT grpdef_schema, grpdef_tblseq
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
+        WHERE v_isRollbackable IS NULL                                         -- NULL for alter groups function call
+          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relhasoids
+          AND group_name = grpdef_group AND group_is_rollbackable              -- the is_rollbackable attribute is read from the emaj_group table
         ORDER BY grpdef_schema, grpdef_tblseq
     LOOP
       RAISE WARNING '_check_groups_content: Error, the table %.% is declared WITH OIDS.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
       v_nbError = v_nbError + 1;
     END LOOP;
+-- for rollbackable groups, check every table has a primary key
     FOR r IN
 -- only 0 or 1 SELECT is really executed, depending on the v_isRollbackable value
       SELECT grpdef_schema, grpdef_tblseq
@@ -2738,28 +2758,30 @@ $_verify_groups$
       IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
--- check all tables are persistent tables (i.e. have not been altered as UNLOGGED after their tables group creation)
+-- for rollbackable groups, check no table has been altered as UNLOGGED or dropped and recreated as TEMP table after tables groups creation
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
              'In rollbackable group "' || rel_group || '", the table "' ||
              rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
-        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
         WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
           AND rel_group = ANY (v_groups) AND rel_kind = 'r' AND upper_inf(rel_time_range)
+          AND group_name = rel_group AND group_is_rollbackable
           AND relpersistence <> 'p'
         ORDER BY 1,2,3
     LOOP
       IF v_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
--- check no table has been altered as WITH OIDS after tables groups creation
+-- for rollbackable groups, check no table has been altered as WITH OIDS after tables groups creation
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
              'In rollbackable group "' || rel_group || '", the table "' ||
              rel_schema || '"."' || rel_tblseq || '" is declared WITH OIDS.' AS msg
-        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
         WHERE relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
           AND rel_group = ANY (v_groups) AND rel_kind = 'r' AND upper_inf(rel_time_range)
+          AND group_name = rel_group AND group_is_rollbackable
           AND relhasoids
         ORDER BY 1,2,3
     LOOP
@@ -7312,22 +7334,24 @@ $_verify_all_groups$
               (SELECT NULL FROM pg_catalog.pg_class, pg_catalog.pg_namespace
                  WHERE nspname = rel_schema AND relname = rel_tblseq AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
--- check all tables are persistent tables (i.e. have not been altered as UNLOGGED after their tables group creation)
+-- for rollbackable groups, check no table has been altered as UNLOGGED or dropped and recreated as TEMP table after tables groups creation
     RETURN QUERY
       SELECT 'In rollbackable group "' || rel_group || '", the table "' ||
              rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
-        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
         WHERE upper_inf(rel_time_range) AND rel_kind = 'r'
           AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+          AND group_name = rel_group AND group_is_rollbackable
           AND relpersistence <> 'p'
         ORDER BY rel_schema, rel_tblseq, 1;
 -- check all tables are WITHOUT OIDS (i.e. have not been altered as WITH OIDS after their tables group creation)
     RETURN QUERY
       SELECT 'In rollbackable group "' || rel_group || '", the table "' ||
              rel_schema || '"."' || rel_tblseq || '" is WITH OIDS.' AS msg
-        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
         WHERE upper_inf(rel_time_range) AND rel_kind = 'r'
           AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
+          AND group_name = rel_group AND group_is_rollbackable
           AND relhasoids
         ORDER BY rel_schema, rel_tblseq, 1;
 -- check the primary key structure of all tables belonging to rollbackable groups is unchanged

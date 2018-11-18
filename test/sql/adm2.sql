@@ -542,10 +542,26 @@ select emaj.emaj_drop_group('myGroup4');
 
 -----------------------------
 -- Step 17 : test defect with application table or sequence
+--           also test some changes on the unlogged and the with oids tables
 -----------------------------
+update emaj.emaj_group_def set grpdef_group = 'phil''s group#3",' where grpdef_schema = 'myschema5';
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
 select emaj.emaj_create_group('phil''s group#3",',false);
 select emaj.emaj_start_group('phil''s group#3",','start');
+
+-----------------------------
+-- test changes on the unlogged and the with oids tables
+-----------------------------
+insert into myschema5.myUnloggedTbl values (10),(11),(12);
+update myschema5.myUnloggedTbl set col1 = 13 where col1 = 12;
+delete from myschema5.myUnloggedTbl where col1 = 10;
+insert into myschema5.myOidsTbl values (20),(21),(22);
+update myschema5.myOidsTbl set col1 = 23 where col1 = 22;
+delete from myschema5.myOidsTbl where col1 = 21;
+
+select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj.myschema5_myUnloggedTbl_log order by emaj_gid;
+select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj.myschema5_myOidsTbl_log order by emaj_gid;
+
 
 -- disable event triggers for this step and change an application table structure
 select emaj.emaj_disable_protection_by_event_triggers();

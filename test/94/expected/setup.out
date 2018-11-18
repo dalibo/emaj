@@ -242,7 +242,7 @@ LINE 1: CREATE TABLE myPartP2 PARTITION OF myTblP (PRIMARY KEY (col1...
                               ^
 -- create the table with PG 9.6- so that next scripts do not abort
 CREATE TABLE IF NOT EXISTS myPartP2 (PRIMARY KEY (col1)) INHERITS (myTblP);
--- fifth schema (for unsupported tables)
+-- fifth schema (for tables unsupported in rollbackable tables groups)
 DROP SCHEMA IF EXISTS mySchema5 CASCADE;
 CREATE SCHEMA mySchema5;
 SET search_path=mySchema5;
@@ -269,5 +269,5 @@ grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5
 grant select on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4 to emaj_regression_tests_viewer_user;
 grant select on all sequences in schema mySchema1, mySchema2, mySchema4 to emaj_regression_tests_viewer_user;
 --
-grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4 to emaj_regression_tests_adm_user;
-grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4 to emaj_regression_tests_adm_user;
+grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 to emaj_regression_tests_adm_user;
+grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 to emaj_regression_tests_adm_user;

@@ -60,7 +60,7 @@ Toute table appartenant à un groupe de tables non créé en mode *AUDIT_ONLY* d
 
 E-Maj gère les partitions élémentaires de tables partitionnées créées avec le DDL déclaratif (à partir de PostgreSQL 10). Elles sont gérées comme n’importe quelle autre table. En revanche, comme les tables mères restent toujours vides, E-Maj refuse qu’elles soient assignées à un groupe de tables. Toutes les partitions d’une même table partitionnée n’ont pas nécessairement besoin d’être couvertes par E-Maj. Des partitions d’une même table partitionnée peuvent être affectées à des groupes de tables différents.
 
-De par leur nature, ni les tables temporaires (*TEMPORARY TABLE*), ni les tables non tracées (*UNLOGGED TABLE*) ne peuvent être supportées par E-Maj. Les tables doivent aussi être implicitement ou explicitement définies *WITHOUT OIDS*.
+De par leur nature, les tables temporaires (*TEMPORARY TABLE*) ne peuvent être supportées par E-Maj. Et les tables de type *UNLOGGED* ou *WITH OIDS* ne peuvent appartenir qu’à un groupe de tables de type *AUDIT_ONLY*.
 
 Si une séquence est associée à une table applicative, il faut explicitement la déclarer dans le même groupe que sa table. Ainsi, lors d'une opération de rollback, elle sera remise dans l'état où elle se trouvait lors de la pose de la marque servant de référence au rollback.
 

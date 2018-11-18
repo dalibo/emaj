@@ -32,6 +32,8 @@ insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc1');
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc2');
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp1');
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp2');
+insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
+insert into emaj.emaj_group_def values ('myGroup5','myschema5','myoidstbl');
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
 insert into emaj.emaj_group_def values ('dummyGrp1','myschema1','dummyTable');
 insert into emaj.emaj_group_def values ('dummyGrp2','emaj','emaj_param');
@@ -64,7 +66,7 @@ select emaj.emaj_create_group('dummyGrp1');
 WARNING:  _check_groups_content: Error, the table or sequence "dummySchema".mytbl4 does not exist.
 WARNING:  _check_groups_content: Error, the table or sequence myschema1."dummyTable" does not exist.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 -- group with a partitionned table (in PG 10+) (abort for lack of PRIMARY KEY with prior PG versions)
@@ -73,7 +75,7 @@ begin;
   select emaj.emaj_create_group('myGroup4');
 WARNING:  _check_groups_content: Error, the table myschema4.mytblp has no PRIMARY KEY.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -88,28 +90,20 @@ begin;
       where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
   select emaj.emaj_create_group('myGroup5');
 WARNING:  _check_groups_content: Error, the table pg_temp_2.mytemptbl is a TEMPORARY table.
-ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
-SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
-rollback;
--- group with an unlogged table
-begin;
-  insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
-  select emaj.emaj_create_group('myGroup5');
 WARNING:  _check_groups_content: Error, the table myschema5.myunloggedtbl is an UNLOGGED table.
-ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
-SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
-rollback;
--- group with a WITH OIDS table
-begin;
-  insert into emaj.emaj_group_def values ('myGroup5','myschema5','myoidstbl');
-  select emaj.emaj_create_group('myGroup5');
 WARNING:  _check_groups_content: Error, the table myschema5.myoidstbl is declared WITH OIDS.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
+SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
+rollback;
+-- group with an unlogged table and a WITH OIDS table
+begin;
+  select emaj.emaj_create_group('myGroup5',true);
+WARNING:  _check_groups_content: Error, the table myschema5.myunloggedtbl is an UNLOGGED table.
+WARNING:  _check_groups_content: Error, the table myschema5.myoidstbl is declared WITH OIDS.
+ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -117,7 +111,7 @@ rollback;
 select emaj.emaj_create_group('phil''s group#3",',true);
 WARNING:  _check_groups_content: Error, the table "phil's schema3"."myTbl2\" has no PRIMARY KEY.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 -- sequence with a log schema suffix defined in the emaj_group_def table
@@ -126,7 +120,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the secondary log schema suffix is not NULL.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -136,7 +130,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the emaj names prefix is not NULL.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -147,7 +141,7 @@ begin;
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the index log tablespace is not NULL.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -179,7 +173,7 @@ begin;
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema1_mytbl4" is configured for several tables in the groups.
 WARNING:  _check_groups_content: Error, the emaj prefix "samePrefix" is configured for several tables in the groups.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -199,7 +193,7 @@ WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Ve
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema1_mytbl2" is already used.
 WARNING:  _check_groups_content: Error, the emaj prefix "samePrefix" is already used.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -216,7 +210,7 @@ WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the emaj names prefix is not NULL.
 WARNING:  _check_groups_content: Error, for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 rollback;
@@ -296,12 +290,18 @@ WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_
                  5
 (1 row)
 
+select emaj.emaj_create_group('myGroup5',false);
+ emaj_create_group 
+-------------------
+                 2
+(1 row)
+
 -- create a group with a table from an E-Maj secondary schema
 select emaj.emaj_create_group('dummyGrp2',false);
 WARNING:  _check_groups_content: Error, the table or sequence emaj.emaj_param belongs to an E-Maj schema.
 WARNING:  _check_groups_content: Error, the table or sequence "emajC"."myschema1_myTbl3_log" belongs to an E-Maj schema.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 -- create a group with a table already belonging to another group
@@ -311,7 +311,7 @@ WARNING:  _check_groups_content: Error, the table or sequence myschema2.mytbl2 b
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema1_mytbl1" is already used.
 WARNING:  _check_groups_content: Error, the emaj prefix "myschema2_mytbl2" is already used.
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 35 at PERFORM
 -- already created
@@ -338,8 +338,9 @@ select group_name, group_is_rollbackable, group_creation_time_id,
  myGroup1         | t                     |                      5 |                          | f                         | f                | f                       |              5 |                 2 | 
  myGroup2         | t                     |                      7 |                          | f                         | f                | f                       |              6 |                 2 | 
  myGroup4         | t                     |                     11 |                          | f                         | f                | f                       |              5 |                 0 | 
+ myGroup5         | f                     |                     12 |                          | f                         | f                | t                       |              2 |                 0 | 
  phil's group#3", | f                     |                     10 |                          | f                         | f                | t                       |              2 |                 2 | 
-(5 rows)
+(6 rows)
 
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq, rel_time_range;
    rel_schema   |    rel_tblseq     | rel_time_range |    rel_group     | rel_kind | rel_priority | rel_log_schema |         rel_log_table          | rel_log_dat_tsp |           rel_log_index            | rel_log_idx_tsp |          rel_log_sequence          |          rel_log_function           |                       rel_sql_columns                       |      rel_sql_pk_columns       |                               rel_sql_pk_eq_conditions                                | rel_log_seq_last_value | rel_emaj_verb_attnum 
@@ -364,11 +365,13 @@ select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, r
  myschema4      | mytblc1           | [11,)          | myGroup4         | r        |              | emaj           | myschema4_mytblc1_log          |                 | myschema4_mytblc1_log_idx          |                 | myschema4_mytblc1_log_seq          | myschema4_mytblc1_log_fnct          | tbl.col1,tbl.col2,tbl.col3                                  | col1,col2                     | tbl.col1 = keys.col1 AND tbl.col2 = keys.col2                                         |                        |                    4
  myschema4      | mytblc2           | [11,)          | myGroup4         | r        |              | emaj           | myschema4_mytblc2_log          |                 | myschema4_mytblc2_log_idx          |                 | myschema4_mytblc2_log_seq          | myschema4_mytblc2_log_fnct          | tbl.col1,tbl.col2,tbl.col3                                  | col1,col2                     | tbl.col1 = keys.col1 AND tbl.col2 = keys.col2                                         |                        |                    4
  myschema4      | mytblm            | [11,)          | myGroup4         | r        |              | emaj           | myschema4_mytblm_log           |                 | myschema4_mytblm_log_idx           |                 | myschema4_mytblm_log_seq           | myschema4_mytblm_log_fnct           | tbl.col1,tbl.col2,tbl.col3                                  | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    4
+ myschema5      | myoidstbl         | [12,)          | myGroup5         | r        |              | emaj           | myschema5_myoidstbl_log        |                 | myschema5_myoidstbl_log_idx        |                 | myschema5_myoidstbl_log_seq        | myschema5_myoidstbl_log_fnct        | tbl.col1                                                    | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    2
+ myschema5      | myunloggedtbl     | [12,)          | myGroup5         | r        |              | emaj           | myschema5_myunloggedtbl_log    |                 | myschema5_myunloggedtbl_log_idx    |                 | myschema5_myunloggedtbl_log_seq    | myschema5_myunloggedtbl_log_fnct    | tbl.col1                                                    | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    2
  phil's schema3 | myTbl2\           | [10,)          | phil's group#3", | r        |              | emaj           | phil's schema3_myTbl2\_log     |                 | phil's schema3_myTbl2\_log_idx     |                 | phil's schema3_myTbl2\_log_seq     | phil's schema3_myTbl2\_log_fnct     | tbl.col21,tbl.col22,tbl.col23                               |                               |                                                                                       |                        |                    4
  phil's schema3 | myTbl2\_col21_seq | [10,)          | phil's group#3", | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               |                                                                                       |                        |                     
  phil's schema3 | phil's seq\1      | [10,)          | phil's group#3", | S        |              |                |                                |                 |                                    |                 |                                    |                                     |                                                             |                               |                                                                                       |                        |                     
  phil's schema3 | phil's tbl1       | [10,)          | phil's group#3", | r        |              | emaj #'3       | phil's schema3_phil's tbl1_log |                 | phil's schema3_phil's tbl1_log_idx |                 | phil's schema3_phil's tbl1_log_seq | phil's schema3_phil's tbl1_log_fnct | tbl."phil's col11",tbl."phil's col12",tbl."phil\s col13"    | "phil's col11","phil's col12" | tbl."phil's col11" = keys."phil's col11" AND tbl."phil's col12" = keys."phil's col12" |                        |                    4
-(24 rows)
+(26 rows)
 
 select * from pg_tables where schemaname like 'emaj%' order by tablename;
  schemaname |           tablename            | tableowner | tablespace | hasindexes | hasrules | hastriggers | rowsecurity 
@@ -403,10 +406,12 @@ select * from pg_tables where schemaname like 'emaj%' order by tablename;
  emaj       | myschema4_mytblc1_log          | postgres   |            | t          | f        | f           | f
  emaj       | myschema4_mytblc2_log          | postgres   |            | t          | f        | f           | f
  emaj       | myschema4_mytblm_log           | postgres   |            | t          | f        | f           | f
+ emaj       | myschema5_myoidstbl_log        | postgres   |            | t          | f        | f           | f
+ emaj       | myschema5_myunloggedtbl_log    | postgres   |            | t          | f        | f           | f
  emaj       | otherPrefix4mytbl5_log         | postgres   |            | t          | f        | f           | f
  emaj       | phil's schema3_myTbl2\_log     | postgres   |            | t          | f        | f           | f
  emaj #'3   | phil's schema3_phil's tbl1_log | postgres   |            | t          | f        | f           | f
-(33 rows)
+(35 rows)
 
 -----------------------------
 -- emaj_comment_group() tests
@@ -521,6 +526,12 @@ select emaj.emaj_drop_group('emptyGroup');
                0
 (1 row)
 
+select emaj.emaj_drop_group('myGroup5');
+ emaj_drop_group 
+-----------------
+               2
+(1 row)
+
 -- already dropped
 select emaj.emaj_drop_group('myGroup2');
 ERROR:  _check_group_names: The group "myGroup2" does not exist.
@@ -617,6 +628,8 @@ select hist_function, hist_event, hist_object,
  CREATE_GROUP     | END            | phil's group#3", | 4 tables/sequences processed   | postgres
  CREATE_GROUP     | BEGIN          | myGroup4         | rollbackable                   | postgres
  CREATE_GROUP     | END            | myGroup4         | 5 tables/sequences processed   | postgres
+ CREATE_GROUP     | BEGIN          | myGroup5         | audit_only                     | postgres
+ CREATE_GROUP     | END            | myGroup5         | 2 tables/sequences processed   | postgres
  COMMENT_GROUP    |                | myGroup1         |                                | postgres
  COMMENT_GROUP    |                | myGroup1         |                                | postgres
  COMMENT_GROUP    |                | emptyGroup       |                                | postgres
@@ -641,6 +654,8 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP       | END            | myGroup2         | 8 tables/sequences processed   | postgres
  DROP_GROUP       | BEGIN          | emptyGroup       |                                | postgres
  DROP_GROUP       | END            | emptyGroup       | 0 tables/sequences processed   | postgres
+ DROP_GROUP       | BEGIN          | myGroup5         |                                | postgres
+ DROP_GROUP       | END            | myGroup5         | 2 tables/sequences processed   | postgres
  CREATE_GROUP     | BEGIN          | myGroup1         | audit_only                     | postgres
  CREATE_GROUP     | SCHEMA CREATED | "emajC"          |                                | postgres
  CREATE_GROUP     | SCHEMA CREATED | emajb            |                                | postgres
@@ -661,7 +676,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP | BEGIN          | myGroup2         |                                | postgres
  FORCE_DROP_GROUP | SCHEMA DROPPED | "emajC"          |                                | postgres
  FORCE_DROP_GROUP | END            | myGroup2         | 8 tables/sequences processed   | postgres
-(57 rows)
+(61 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -671,10 +686,11 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
        7 |                  0 | C
       10 |                  0 | C
       11 |                  0 | C
-      12 |                  0 | M
+      12 |                  0 | C
       13 |                  0 | M
-      14 |                  0 | C
-      15 |                  0 | M
-      16 |                  0 | C
-(10 rows)
+      14 |                  0 | M
+      15 |                  0 | C
+      16 |                  0 | M
+      17 |                  0 | C
+(11 rows)
 

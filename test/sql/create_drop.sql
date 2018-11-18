@@ -35,6 +35,9 @@ insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc2');
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp1');
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp2');
 
+insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
+insert into emaj.emaj_group_def values ('myGroup5','myschema5','myoidstbl');
+
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
 insert into emaj.emaj_group_def values ('dummyGrp1','myschema1','dummyTable');
 insert into emaj.emaj_group_def values ('dummyGrp2','emaj','emaj_param');
@@ -72,15 +75,9 @@ begin;
       where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
   select emaj.emaj_create_group('myGroup5');
 rollback;
--- group with an unlogged table
+-- group with an unlogged table and a WITH OIDS table
 begin;
-  insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
-  select emaj.emaj_create_group('myGroup5');
-rollback;
--- group with a WITH OIDS table
-begin;
-  insert into emaj.emaj_group_def values ('myGroup5','myschema5','myoidstbl');
-  select emaj.emaj_create_group('myGroup5');
+  select emaj.emaj_create_group('myGroup5',true);
 rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
@@ -167,6 +164,7 @@ rollback;
 -- should be OK
 select emaj.emaj_create_group('phil''s group#3",',false);
 select emaj.emaj_create_group('myGroup4');
+select emaj.emaj_create_group('myGroup5',false);
 
 -- create a group with a table from an E-Maj secondary schema
 select emaj.emaj_create_group('dummyGrp2',false);
@@ -224,6 +222,7 @@ rollback;
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_drop_group('myGroup2');
 select emaj.emaj_drop_group('emptyGroup');
+select emaj.emaj_drop_group('myGroup5');
 
 -- already dropped
 select emaj.emaj_drop_group('myGroup2');

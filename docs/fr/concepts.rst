@@ -10,7 +10,7 @@ Le « **groupe de tables** » (*tables group*) représente un ensemble de **tab
 
 A un instant donné, un groupe de tables est soit dans un état « **actif** » (*LOGGING*), soit dans un état « **inactif** » (*IDLE*). L'état actif signifie que les mises à jour apportées aux tables du groupe sont enregistrées.
 
-Un groupe de tables est soit de type « **ROLLBACKABLE** » (cas standard), soit de type « **AUDIT_ONLY** ». Dans ce second cas, il n'est pas possible de procéder à un rollback du groupe. En revanche, cela permet d'enregistrer à des fins d'observation les mises à jour du contenu de tables ne possédant pas de clé primaire.
+Un groupe de tables est soit de type « **ROLLBACKABLE** » (cas standard), soit de type « **AUDIT_ONLY** ». Dans ce second cas, il n'est pas possible de procéder à un rollback du groupe. En revanche, cela permet d'enregistrer à des fins d'observation les mises à jour du contenu de tables ne possédant pas de clé primaire ou de tables de type *UNLOGGED* ou *WITH OIDS*.
 
 
 Marque

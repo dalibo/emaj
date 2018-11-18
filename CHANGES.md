@@ -3,6 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Unlogged tables and tables with OIDS can be members of audit_only groups.
   * Remove the restriction on column name when a column is added to log
     tables.
   * In log tables, both emaj_client_ip and emaj_client_port columns are not

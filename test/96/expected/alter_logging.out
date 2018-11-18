@@ -1809,7 +1809,7 @@ select emaj.emaj_alter_group('myGroup1', 'move to myGroup1');
 WARNING:  _check_groups_content: Error, the table or sequence myschema2."myTbl3" belongs to another group (myGroup2).
 WARNING:  _check_groups_content: Error, the table or sequence myschema2."myTbl3_col31_seq" belongs to another group (myGroup2).
 ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 187 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
 SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
