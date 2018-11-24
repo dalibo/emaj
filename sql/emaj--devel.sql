@@ -628,20 +628,9 @@ CREATE TRIGGER emaj_group_def_change_trg
   AFTER INSERT OR UPDATE OR DELETE  ON emaj.emaj_group_def
   FOR EACH ROW EXECUTE PROCEDURE emaj._emaj_group_def_change_fnct();
 
-CREATE OR REPLACE FUNCTION emaj._emaj_group_def_truncate_fnct()
-RETURNS TRIGGER LANGUAGE plpgsql AS
-$_emaj_group_def_truncate_fnct$
--- This function is associated to the emaj_emaj_group_def_truncate_trg trigger set on the emaj_group_def table
--- It sets the group_has_waiting_changes boolean column of the emaj_group table to TRUE for all existing groups, if any
-  BEGIN
-    UPDATE emaj.emaj_group SET group_has_waiting_changes = TRUE;
-    RETURN NULL;
-  END;
-$_emaj_group_def_truncate_fnct$;
-
 CREATE TRIGGER emaj_group_def_truncate_trg
   AFTER TRUNCATE ON emaj.emaj_group_def
-  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_group_def_truncate_fnct();
+  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_group_def_change_fnct();
 
 ------------------------------------
 --                                --

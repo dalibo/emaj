@@ -253,7 +253,7 @@ Indexes:
     "emaj_group_def_idx1" btree (grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
 Triggers:
     emaj_group_def_change_trg AFTER INSERT OR DELETE OR UPDATE ON emaj.emaj_group_def FOR EACH ROW EXECUTE PROCEDURE emaj._emaj_group_def_change_fnct()
-    emaj_group_def_truncate_trg AFTER TRUNCATE ON emaj.emaj_group_def FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_group_def_truncate_fnct()
+    emaj_group_def_truncate_trg AFTER TRUNCATE ON emaj.emaj_group_def FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_group_def_change_fnct()
 Tablespace: "tspemaj"
 
    Index "emaj.emaj_group_def_idx1"
