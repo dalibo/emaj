@@ -309,3 +309,5 @@ grant select on all sequences in schema mySchema1, mySchema2, mySchema4 to emaj_
 --
 grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 to emaj_regression_tests_adm_user;
 grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 to emaj_regression_tests_adm_user;
+--
+grant all on database regression to emaj_regression_tests_anonym_user;

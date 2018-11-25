@@ -2083,38 +2083,38 @@ select emaj.emaj_enable_protection_by_event_triggers();
 begin;
   drop table myschema1.mytbl1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the application table "myschema1.mytbl1". But it belongs to the active tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 41 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 42 at RAISE
 rollback;
 begin;
   drop sequence myschema2.mySeq1;
 ERROR:  E-Maj event trigger: Attempting to drop the application sequence "myschema2.myseq1". But it belongs to the active tables group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 57 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 58 at RAISE
 rollback;
 begin;
   drop schema myschema1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the application schema "myschema1". But it belongs to the active tables groups "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 26 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 27 at RAISE
 rollback;
 -- drop emaj components
 begin;
   drop table "emajC"."myschema1_myTbl3_log";
 ERROR:  E-Maj event trigger: Attempting to drop the log table "emajC.myschema1_myTbl3_log". But dropping an E-Maj log table is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 47 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 48 at RAISE
 rollback;
 begin;
   drop sequence emaj.myschema1_mytbl1_log_seq;
 ERROR:  E-Maj event trigger: Attempting to drop the log sequence "emaj.myschema1_mytbl1_log_seq". But dropping an E-Maj sequence is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 63 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 64 at RAISE
 rollback;
 begin;
   drop function "emajC"."myschema1_myTbl3_log_fnct"() cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the log function ""emajC"."myschema1_myTbl3_log_fnct"()". But dropping an E-Maj log function is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 71 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 72 at RAISE
 rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
 ERROR:  E-Maj event trigger: Attempting to drop the "emaj_log_trg on myschema1.mytbl1" E-Maj trigger. But dropping an E-Maj trigger is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 81 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 82 at RAISE
 rollback;
 begin;
   drop schema emaj cascade;
@@ -2124,7 +2124,7 @@ rollback;
 begin;
   drop schema emajb cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the schema "emajb". But dropping an E-Maj schema is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 32 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 33 at RAISE
 rollback;
 begin;
   drop extension emaj cascade;
@@ -2135,12 +2135,12 @@ rollback;
 begin;
   alter table myschema1.mytbl1 alter column col13 type varchar(10);
 ERROR:  E-Maj event trigger: Attempting to change the application table "myschema1.mytbl1" structure. But the table belongs to the active tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._emaj_event_trigger_table_rewrite_fnct() line 20 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_table_rewrite_fnct() line 21 at RAISE
 rollback;
 begin;
   alter table emaj.myschema1_mytbl1_log alter column col13 type varchar(10);
 ERROR:  E-Maj event trigger: Attempting to change the log table "emaj.myschema1_mytbl1_log" structure. But the table belongs to the tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._emaj_event_trigger_table_rewrite_fnct() line 28 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_table_rewrite_fnct() line 29 at RAISE
 rollback;
 -- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
 begin;
@@ -2175,6 +2175,14 @@ begin;
 (2 rows)
 
 rollback;
+-- a non emaj user should be able to create, alter and drop a table without being disturbed by E-Maj event triggers
+set role emaj_regression_tests_anonym_user;
+create schema anonym_user_schema;
+create table anonym_user_schema.anonym_user_table (col1 int);
+alter table anonym_user_schema.anonym_user_table add column col2 text;
+drop table anonym_user_schema.anonym_user_table;
+drop schema anonym_user_schema;
+reset role;
 -- finaly leave the event triggers enabled
 -----------------------------
 -- test a table reclustering (it will use the pkey index as clustered index) and a vacuum full

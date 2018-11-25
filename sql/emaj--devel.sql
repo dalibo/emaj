@@ -7711,13 +7711,14 @@ ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
 ';
 
 CREATE OR REPLACE FUNCTION emaj._event_trigger_sql_drop_fnct()
- RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
+ RETURNS EVENT_TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS
 $_event_trigger_sql_drop_fnct$
 -- This function is called by the emaj_sql_drop_trg event trigger
 -- The function blocks any ddl operation that leads to a drop of
 --   - an application table or a sequence registered into an active (not stopped) E-Maj group, or a schema containing such tables/sequence
 --   - an E-Maj schema, a log table, a log sequence, a log function or a log trigger
 -- The drop of emaj schema or extension is managed by another event trigger
+-- The function is declared SECURITY DEFINER so that non emaj roles can access the emaj internal tables when dropping their objects
   DECLARE
     v_groupName              TEXT;
     r_dropped                RECORD;
@@ -7823,13 +7824,14 @@ END IF;
 IF emaj._pg_version_num() >= 90500 THEN
 -- table_rewrite event trigger are only possible with postgres 9.5+
 
-CREATE OR REPLACE FUNCTION emaj._emaj_event_trigger_table_rewrite_fnct()
- RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
-$_emaj_event_trigger_table_rewrite_fnct$
+CREATE OR REPLACE FUNCTION emaj._event_trigger_table_rewrite_fnct()
+ RETURNS EVENT_TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS
+$_event_trigger_table_rewrite_fnct$
 -- This function is called by the emaj_table_rewrite_trg event trigger
 -- The function blocks any ddl operation that leads to a table rewrite for:
 --   - an application table registered into an active (not stopped) E-Maj group
 --   - an E-Maj log table
+-- The function is declared SECURITY DEFINER so that non emaj roles can access the emaj internal tables when altering their tables
   DECLARE
     v_tableSchema            TEXT;
     v_tableName              TEXT;
@@ -7856,15 +7858,15 @@ $_emaj_event_trigger_table_rewrite_fnct$
                       v_tableSchema, v_tableName , v_groupName;
     END IF;
   END;
-$_emaj_event_trigger_table_rewrite_fnct$;
-COMMENT ON FUNCTION emaj._emaj_event_trigger_table_rewrite_fnct() IS
+$_event_trigger_table_rewrite_fnct$;
+COMMENT ON FUNCTION emaj._event_trigger_table_rewrite_fnct() IS
 $$E-Maj extension: support of the emaj_table_rewrite_trg event trigger.$$;
 
 EXECUTE '
 DROP EVENT TRIGGER IF EXISTS emaj_table_rewrite_trg;
 CREATE EVENT TRIGGER emaj_table_rewrite_trg
   ON table_rewrite
-  EXECUTE PROCEDURE emaj._emaj_event_trigger_table_rewrite_fnct();
+  EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
 ';
 EXECUTE '
 COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS

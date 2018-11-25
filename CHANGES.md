@@ -15,6 +15,8 @@ E-Maj - Change log
   * Enforce the checks on log tables structure.
 
 ###Bug fixes:###
+  * Fix error that may occur when a non emaj role tries to drop or alter an
+    object.
   * Fix a rare condition that aborts the emaj_uninstall.sql script.
 
 

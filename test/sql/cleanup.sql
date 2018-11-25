@@ -21,6 +21,7 @@ drop role emaj_regression_tests_viewer_user;
 -----------------------------
 -- drop emaj_regression_tests_anonym_user role
 -----------------------------
+revoke all on database regression from emaj_regression_tests_anonym_user;
 drop role emaj_regression_tests_anonym_user;
 
 -----------------------------
