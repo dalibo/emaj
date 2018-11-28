@@ -8041,10 +8041,6 @@ GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._adjust_group_properties() TO emaj_viewer;
 
--- add grants to emaj roles on some system functions, needed for ppa plugin
-GRANT EXECUTE ON FUNCTION pg_catalog.pg_database_size(name) TO emaj_adm, emaj_viewer;
-GRANT EXECUTE ON FUNCTION pg_catalog.pg_size_pretty(bigint) TO emaj_adm, emaj_viewer;
-
 ----------------------------------------
 --                                    --
 -- specific operations for extension  --
