@@ -203,9 +203,9 @@ begin;
   -- testing the alter_group mark deletion
   select emaj.emaj_delete_mark_group('myGroup1','Sequence_removed');
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq';
-  select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id,
+  select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id,
     mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
-    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
+    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
 rollback;
 
 begin;
@@ -443,9 +443,10 @@ rollback;
 
 begin;
 -- testing the alter_group mark deletion
-  select mark_id, mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next,
+  select mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next,
          mark_logged_rlbk_target_mark
-    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
+    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
+    
   select emaj.emaj_delete_mark_group('myGroup1','2 tables removed from myGroup1');
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
   select * from emaj.emaj_sequence where 
@@ -511,10 +512,9 @@ select emaj.emaj_cleanup_rollback_state();
 
 -- set an intermediate mark
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
-
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
        mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
-  from emaj.emaj_mark where mark_id > 6000 order by mark_id;
+  from emaj.emaj_mark order by mark_time_id;
 
 -- estimate a rollback crossing alter group operations
 delete from emaj.emaj_rlbk_stat;    -- to avoid unstable results in estimates

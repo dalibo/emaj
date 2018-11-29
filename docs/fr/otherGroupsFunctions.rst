@@ -141,23 +141,23 @@ La fonction *emaj_get_consolidable_rollbacks()* permet d'identifier les rollback
 
 La fonction retourne un ensemble de lignes comprenant les colonnes :
 
-+----------------------------+-------------+-----------------------------------------+
-| Colonne                    | Type        | Description                             |
-+============================+=============+=========================================+
-| cons_group                 | TEXT        | groupe de tables rollbackés             |
-+----------------------------+-------------+-----------------------------------------+
-| cons_target_rlbk_mark_name | TEXT        | nom de la marque cible du rollback      |
-+----------------------------+-------------+-----------------------------------------+
-| cons_target_rlbk_mark_id   | BIGINT      | identifiant interne de la marque cible  |
-+----------------------------+-------------+-----------------------------------------+
-| cons_end_rlbk_mark_name    | TEXT        | nom de la marque de fin de rollback     |
-+----------------------------+-------------+-----------------------------------------+
-| cons_end_rlbk_mark_id      | BIGINT      | identifiant interne de la marque de fin |
-+----------------------------+-------------+-----------------------------------------+
-| cons_rows                  | BIGINT      | nombre de mises à jour intermédiaires   |
-+----------------------------+-------------+-----------------------------------------+
-| cons_marks                 | INT         | nombre de marques intermédiaires        |
-+----------------------------+-------------+-----------------------------------------+
++-------------------------------+-------------+-----------------------------------------+
+| Colonne                       | Type        | Description                             |
++===============================+=============+=========================================+
+| cons_group                    | TEXT        | groupe de tables rollbackés             |
++-------------------------------+-------------+-----------------------------------------+
+| cons_target_rlbk_mark_name    | TEXT        | nom de la marque cible du rollback      |
++-------------------------------+-------------+-----------------------------------------+
+| cons_target_rlbk_mark_time_id | BIGINT      | identifiant interne de la marque cible  |
++-------------------------------+-------------+-----------------------------------------+
+| cons_end_rlbk_mark_name       | TEXT        | nom de la marque de fin de rollback     |
++-------------------------------+-------------+-----------------------------------------+
+| cons_end_rlbk_mark_time_id    | BIGINT      | identifiant interne de la marque de fin |
++-------------------------------+-------------+-----------------------------------------+
+| cons_rows                     | BIGINT      | nombre de mises à jour intermédiaires   |
++-------------------------------+-------------+-----------------------------------------+
+| cons_marks                    | INT         | nombre de marques intermédiaires        |
++-------------------------------+-------------+-----------------------------------------+
 
 A l'aide de cette fonction, il est ainsi facile de consolider tous les rollbacks possibles de tous les groupes de tables d'une base de données pour récupérer le maximum d'espace disque possible ::
 

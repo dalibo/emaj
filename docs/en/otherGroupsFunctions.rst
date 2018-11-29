@@ -142,23 +142,23 @@ The *emaj_get_consolidable_rollbacks()* function help to identify the rollbacks 
 
 The function returns a set of rows with the following columns:
 
-+----------------------------+-------------+--------------------------------------+
-| Column                     | Type        | Description                          |
-+============================+=============+======================================+
-| cons_group                 | TEXT        | rolled back tables group             |
-+----------------------------+-------------+--------------------------------------+
-| cons_target_rlbk_mark_name | TEXT        | rollback target mark name            |
-+----------------------------+-------------+--------------------------------------+
-| cons_target_rlbk_mark_id   | BIGINT      | identifier of the target mark        |
-+----------------------------+-------------+--------------------------------------+
-| cons_end_rlbk_mark_name    | TEXT        | rollback end mark name               |
-+----------------------------+-------------+--------------------------------------+
-| cons_end_rlbk_mark_id      | BIGINT      | internal identifier of the end mark  |
-+----------------------------+-------------+--------------------------------------+
-| cons_rows                  | BIGINT      | number of intermediate updates       |
-+----------------------------+-------------+--------------------------------------+
-| cons_marks                 | INT         | number of intermediate marks         |
-+----------------------------+-------------+--------------------------------------+
++-------------------------------+-------------+--------------------------------------+
+| Column                        | Type        | Description                          |
++===============================+=============+======================================+
+| cons_group                    | TEXT        | rolled back tables group             |
++-------------------------------+-------------+--------------------------------------+
+| cons_target_rlbk_mark_name    | TEXT        | rollback target mark name            |
++-------------------------------+-------------+--------------------------------------+
+| cons_target_rlbk_mark_time_id | BIGINT      | identifier of the target mark        |
++-------------------------------+-------------+--------------------------------------+
+| cons_end_rlbk_mark_name       | TEXT        | rollback end mark name               |
++-------------------------------+-------------+--------------------------------------+
+| cons_end_rlbk_mark_time_id    | BIGINT      | internal identifier of the end mark  |
++-------------------------------+-------------+--------------------------------------+
+| cons_rows                     | BIGINT      | number of intermediate updates       |
++-------------------------------+-------------+--------------------------------------+
+| cons_marks                    | INT         | number of intermediate marks         |
++-------------------------------+-------------+--------------------------------------+
 
 Using this function, it is easy to consolidate at once all “*consolidable*” rollbacks for all tables groups in order to recover as much as possible disk space::
 

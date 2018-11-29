@@ -258,8 +258,6 @@ CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
 CREATE TABLE emaj.emaj_mark (
   mark_group                   TEXT        NOT NULL,       -- group for which the mark has been set
   mark_name                    TEXT        NOT NULL,       -- mark name
-  mark_id                      BIGSERIAL   NOT NULL,       -- serial id used to order rows (not to rely on timestamps
-                                                           -- that are not safe if system time changes)
   mark_time_id                 BIGINT      NOT NULL,       -- time stamp of the mark creation, used as a reference
                                                            --   for other tables like emaj_sequence and all log tables
   mark_is_deleted              BOOLEAN     NOT NULL,       -- boolean to indicate whether the mark is deleted
@@ -491,9 +489,9 @@ $$Represents the structure of rows returned by the emaj_rollback_activity() func
 CREATE TYPE emaj.emaj_consolidable_rollback_type AS (
   cons_group                   TEXT,                       -- group name
   cons_target_rlbk_mark_name   TEXT,                       -- name of the mark used as target of the logged rollback operation
-  cons_target_rlbk_mark_id     BIGINT,                     -- id of the mark used as target of the logged rollback operation
+  cons_target_rlbk_mark_time_id BIGINT,                     -- timestamp of the mark used as target of the logged rollback operation
   cons_end_rlbk_mark_name      TEXT,                       -- name of the mark set at the end of the logged rollback operation
-  cons_end_rlbk_mark_id        BIGINT,                     -- id of the mark set at the end of the logged rollback operation
+  cons_end_rlbk_mark_time_id   BIGINT,                     -- timestamp of the mark set at the end of the logged rollback operation
   cons_rows                    BIGINT,                     -- estimated number of update events that can be consolidated for the rollback
   cons_marks                   INT                         -- number of marks that would be deleted by a consolidation
   );
@@ -1193,7 +1191,7 @@ $_check_mark_name$
       END IF;
 -- get the name of the last mark for the first group in the array, as we now know that all groups share the same last mark
       SELECT mark_name INTO v_markName FROM emaj.emaj_mark
-        WHERE mark_group = v_groupNames[1] ORDER BY mark_id DESC LIMIT 1;
+        WHERE mark_group = v_groupNames[1] ORDER BY mark_time_id DESC LIMIT 1;
     ELSE
 -- for usual mark name (i.e. not EMAJ_LAST_MARK)
 -- check that the mark exists for all groups
@@ -1318,7 +1316,7 @@ $_check_marks_range$
         END IF;
 -- get the name of the first mark for the first group in the array, as we now know that all groups share the same first mark
         SELECT mark_name INTO v_firstMark FROM emaj.emaj_mark
-          WHERE mark_group = v_groupNames[1] ORDER BY mark_id LIMIT 1;
+          WHERE mark_group = v_groupNames[1] ORDER BY mark_time_id LIMIT 1;
       END IF;
     ELSE
 -- checks the supplied first mark
@@ -3787,8 +3785,8 @@ $_stop_groups$
 -- and set the number of log rows to 0 for these marks
         UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = 0
           WHERE mark_group = ANY (v_groupNames)
-            AND (mark_group, mark_id) IN                        -- select only last mark of each concerned group
-                (SELECT mark_group, max(mark_id) FROM emaj.emaj_mark
+            AND (mark_group, mark_time_id) IN                        -- select only last mark of each concerned group
+                (SELECT mark_group, max(mark_time_id) FROM emaj.emaj_mark
                  WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted GROUP BY mark_group);
       END IF;
 -- set all marks for the groups from the emaj_mark table as 'DELETED' to avoid any further rollback and remove protection if any
@@ -3962,20 +3960,20 @@ $_set_mark_groups$
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
 -- record the number of log rows for the old last mark of each group
 --   the statement updates no row in case of emaj_start_group(s)
-    WITH stat_group1 AS (                                         -- for each group, the mark id and time id of the last active mark
-      SELECT mark_group, max(mark_id) as last_mark_id, max(mark_time_id) AS last_mark_time_id
+    WITH stat_group1 AS (                                           -- for each group, time id of the last active mark
+      SELECT mark_group, max(mark_time_id) AS last_mark_time_id
         FROM emaj.emaj_mark
-        WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted
+        WHERE NOT mark_is_deleted
         GROUP BY mark_group),
          stat_group2 AS (                                         -- compute the number of log rows for all tables currently belonging to these groups
-      SELECT mark_group, last_mark_id, coalesce(
+      SELECT mark_group, last_mark_time_id, coalesce(
           (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
              FROM emaj.emaj_relation
              WHERE rel_group = mark_group AND rel_kind = 'r' AND upper_inf(rel_time_range)), 0) AS mark_stat
         FROM stat_group1 )
     UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = mark_stat
       FROM stat_group2 s
-      WHERE s.mark_group = m.mark_group AND s.last_mark_id = m.mark_id;
+      WHERE s.mark_group = m.mark_group AND s.last_mark_time_id = m.mark_time_id;
 -- for tables currently belonging to the groups, record the associated log sequence state into the emaj sequence table
     INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
                 sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
@@ -4111,7 +4109,6 @@ $emaj_delete_mark_group$
 --   The keyword 'EMAJ_LAST_MARK' can be used as mark to delete to specify the last set mark.
 -- Output: number of deleted marks, i.e. 1
   DECLARE
-    v_markId                 BIGINT;
     v_markTimeId             BIGINT;
     v_previousMarkTimeId     BIGINT;
     v_previousMarkName       TEXT;
@@ -4119,7 +4116,7 @@ $emaj_delete_mark_group$
     v_nextMarkTimeId         BIGINT;
     v_nextMarkName           TEXT;
     v_nextMarkGlobalSeq      BIGINT;
-    v_idNewMin               BIGINT;
+    v_timeIdNewMin           BIGINT;
     v_markNewMin             TEXT;
     v_count                  INT;
   BEGIN
@@ -4136,12 +4133,12 @@ $emaj_delete_mark_group$
     IF v_count < 2 THEN
       RAISE EXCEPTION 'emaj_delete_mark_group: "%" is the only mark of the group. It cannot be deleted.', v_mark;
     END IF;
--- OK, now get the id and time stamp id of the mark to delete
-    SELECT mark_id, mark_time_id INTO v_markId, v_markTimeId
+-- OK, now get the time stamp id of the mark to delete
+    SELECT mark_time_id INTO v_markTimeId
       FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name = v_mark;
--- ... and the id and timestamp of the future first mark
-    SELECT mark_id, mark_name INTO v_idNewMin, v_markNewMin
-      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_mark ORDER BY mark_id LIMIT 1;
+-- ... and the timestamp of the future first mark
+    SELECT mark_time_id, mark_name INTO v_timeIdNewMin, v_markNewMin
+      FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_name <> v_mark ORDER BY mark_time_id LIMIT 1;
 -- ... and the name, the time id and the last global sequence value of the previous mark
     SELECT emaj._get_previous_mark_group(v_groupName, v_mark) INTO v_previousMarkName;
     SELECT mark_time_id, time_last_emaj_gid INTO v_previousMarkTimeId, v_previousMarkGlobalSeq
@@ -4160,7 +4157,7 @@ $emaj_delete_mark_group$
     ELSE
 -- otherwise, the mark to delete is an intermediate mark for the group
 -- process the mark deletion with _delete_intermediate_mark_group()
-      PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_mark, v_markId, v_markTimeId);
+      PERFORM emaj._delete_intermediate_mark_group(v_groupName, v_mark, v_markTimeId);
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -4220,7 +4217,6 @@ $_delete_before_mark_group$
 -- Output: number of deleted marks, number of tables effectively processed (for which at least one log row has been deleted)
   DECLARE
     v_eventTriggers          TEXT[];
-    v_markId                 BIGINT;
     v_markGlobalSeq          BIGINT;
     v_markTimeId             BIGINT;
     v_nbMark                 INT;
@@ -4228,8 +4224,8 @@ $_delete_before_mark_group$
   BEGIN
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
--- retrieve the id, the timestamp and the emaj_gid value and the time stamp id of the mark
-    SELECT mark_id, time_last_emaj_gid, mark_time_id INTO v_markId, v_markGlobalSeq, v_markTimeId
+-- retrieve the timestamp and the emaj_gid value and the time stamp id of the mark
+    SELECT time_last_emaj_gid, mark_time_id INTO v_markGlobalSeq, v_markTimeId
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_mark;
 -- drop obsolete old log tables (whose end time stamp is older than the new first mark time stamp)
@@ -4283,13 +4279,13 @@ $_delete_before_mark_group$
         AND lower(rel_time_range) <> sequ_time_id;
 --    and that may have one of the deleted marks as target mark from a previous logged rollback operation
     UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = NULL
-      WHERE mark_group = v_groupName AND mark_id >= v_markId
+      WHERE mark_group = v_groupName AND mark_time_id >= v_markTimeId
         AND mark_logged_rlbk_target_mark IN (
             SELECT mark_name FROM emaj.emaj_mark
-              WHERE mark_group = v_groupName AND mark_id < v_markId
+              WHERE mark_group = v_groupName AND mark_time_id < v_markTimeId
             );
 -- delete oldest marks
-    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id < v_markId;
+    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_time_id < v_markTimeId;
     GET DIAGNOSTICS v_nbMark = ROW_COUNT;
 
 --TODO: drop useless application tables (when a feature will need it)
@@ -4305,7 +4301,7 @@ $_delete_before_mark_group$
   END;
 $_delete_before_mark_group$;
 
-CREATE OR REPLACE FUNCTION emaj._delete_intermediate_mark_group(v_groupName TEXT, v_markName TEXT, v_markId BIGINT, v_markTimeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._delete_intermediate_mark_group(v_groupName TEXT, v_markName TEXT, v_markTimeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_delete_intermediate_mark_group$
 -- This function effectively deletes an intermediate mark for a group.
@@ -4337,10 +4333,10 @@ $_delete_intermediate_mark_group$
 -- adjust the mark_log_rows_before_next column of the previous mark
 -- get the name of the mark immediately preceeding the mark to delete
     SELECT mark_name, mark_time_id INTO v_previousMark, v_previousMarkTimeId FROM emaj.emaj_mark
-      WHERE mark_group = v_groupName AND mark_id < v_markId ORDER BY mark_id DESC LIMIT 1;
+      WHERE mark_group = v_groupName AND mark_time_id < v_markTimeId ORDER BY mark_time_id DESC LIMIT 1;
 -- get the name of the first mark succeeding the mark to delete
     SELECT mark_name, mark_time_id INTO v_nextMark, v_nextMarkTimeId FROM emaj.emaj_mark
-      WHERE mark_group = v_groupName AND mark_id > v_markId ORDER BY mark_id LIMIT 1;
+      WHERE mark_group = v_groupName AND mark_time_id > v_markTimeId ORDER BY mark_time_id LIMIT 1;
     IF NOT FOUND THEN
 -- no next mark, so update the previous mark with NULL
       UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
@@ -4731,7 +4727,6 @@ $_rlbk_check$
   DECLARE
     v_markName               TEXT;
     v_aGroupName             TEXT;
-    v_markId                 BIGINT;
     v_markTimeId             BIGINT;
     v_protectedMarkList      TEXT;
   BEGIN
@@ -4747,14 +4742,15 @@ $_rlbk_check$
       IF NOT isRollbackSimulation THEN
 -- check that for each group that the rollback wouldn't delete protected marks (check disabled for rollback simulation)
         FOREACH v_aGroupName IN ARRAY v_groupNames LOOP
---   get the target mark id
-          SELECT mark_id INTO v_markId FROM emaj.emaj_mark
+--   get the target mark time id
+          SELECT mark_time_id INTO v_markTimeId FROM emaj.emaj_mark
             WHERE mark_group = v_aGroupName AND mark_name = v_markName;
 --   and look at the protected mark
           SELECT string_agg(mark_name,', ' ORDER BY mark_name) INTO v_protectedMarkList FROM (
             SELECT mark_name FROM emaj.emaj_mark
-              WHERE mark_group = v_aGroupName AND mark_id > v_markId AND mark_is_rlbk_protected
-              ORDER BY mark_id) AS t;
+              WHERE mark_group = v_aGroupName AND mark_time_id > v_markTimeId AND mark_is_rlbk_protected
+              ORDER BY mark_time_id) AS t;
+
           IF v_protectedMarkList IS NOT NULL THEN
             RAISE EXCEPTION '_rlbk_check: Protected marks (%) for the group "%" block the rollback to the mark "%".', v_protectedMarkList, v_aGroupName, v_markName;
           END IF;
@@ -5431,7 +5427,6 @@ $_rlbk_session_exec$
     v_isLoggedRlbk           BOOLEAN;
     v_nbSession              INT;
     v_maxGlobalSeq           BIGINT;
-    v_rlbkMarkId             BIGINT;
     v_lastGlobalSeq          BIGINT;
     v_nbRows                 BIGINT;
     r_step                   RECORD;
@@ -5444,9 +5439,9 @@ $_rlbk_session_exec$
     SELECT rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, time_last_emaj_gid
       INTO v_groupNames, v_mark, v_rlbkTimeId, v_isLoggedRlbk, v_nbSession, v_maxGlobalSeq
       FROM emaj.emaj_rlbk, emaj.emaj_time_stamp WHERE rlbk_id = v_rlbkId AND rlbk_time_id = time_id;
--- fetch the mark_id, the last global sequence at set_mark time for the first group of the groups array (they all share the same values - except for the mark_id)
-    SELECT mark_id, mark_time_id, time_last_emaj_gid
-      INTO v_rlbkMarkId, v_rlbkMarkTimeId, v_lastGlobalSeq
+-- fetch the mark_time_id, the last global sequence at set_mark time for the first group of the groups array (they all share the same values)
+    SELECT mark_time_id, time_last_emaj_gid
+      INTO v_rlbkMarkTimeId, v_lastGlobalSeq
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupNames[1] AND mark_name = v_mark;
 -- scan emaj_rlbp_plan to get all steps to process that have been affected to this session, in batch_number and step order
@@ -5586,7 +5581,6 @@ $_rlbk_end$
     v_effNbTbl               INT;
     v_rlbkDatetime           TIMESTAMPTZ;
     v_ctrlDuration           INTERVAL;
-    v_markId                 BIGINT;
     v_markTimeId             BIGINT;
     v_nbSeq                  INT;
     v_markName               TEXT;
@@ -5606,14 +5600,12 @@ $_rlbk_end$
       WHERE mark_group = v_groupNames[1] AND mark_name = v_mark;
 -- if "unlogged" rollback, delete all marks later than the now rolled back mark and the associated sequences
     IF NOT v_isLoggedRlbk THEN
--- get the highest mark id of the mark used for rollback, for all groups
-      SELECT max(mark_id) INTO v_markId
-        FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames) AND mark_name = v_mark;
+-- get the highest mark time id of the mark used for rollback, for all groups
 -- delete the marks that are suppressed by the rollback (the related sequences have been already deleted by rollback functions)
 -- with a logging in the history
       WITH deleted AS (
         DELETE FROM emaj.emaj_mark
-          WHERE mark_group = ANY (v_groupNames) AND mark_id > v_markId
+          WHERE mark_group = ANY (v_groupNames) AND mark_time_id > v_markTimeId
           RETURNING mark_time_id, mark_group, mark_name),
            sorted_deleted AS (                                       -- the sort is performed to produce stable results in regression tests
         SELECT mark_group, mark_name FROM deleted ORDER BY mark_time_id, mark_group)
@@ -5623,8 +5615,8 @@ $_rlbk_end$
 -- and reset the mark_log_rows_before_next column for the new last mark
       UPDATE emaj.emaj_mark SET mark_log_rows_before_next = NULL
         WHERE mark_group = ANY (v_groupNames)
-          AND (mark_group, mark_id) IN                -- select only the last non deleted mark of each concerned group
-              (SELECT mark_group, max(mark_id) FROM emaj.emaj_mark
+          AND (mark_group, mark_time_id) IN                -- select only the last non deleted mark of each concerned group
+              (SELECT mark_group, max(mark_time_id) FROM emaj.emaj_mark
                WHERE mark_group = ANY (v_groupNames) AND NOT mark_is_deleted GROUP BY mark_group);
 -- the sequences related to the deleted marks can be also suppressed
 --   delete first application sequences related data for the groups
@@ -5978,21 +5970,19 @@ $_delete_between_marks_group$
 -- Input: group name, name of both marks that defines the range to delete.
 -- Output: number of deleted marks, number of tables effectively processed (for which at least one log row has been deleted)
   DECLARE
-    v_firstMarkId            BIGINT;
     v_firstMarkGlobalSeq     BIGINT;
     v_firstMarkTimeId        BIGINT;
-    v_lastMarkId             BIGINT;
     v_lastMarkGlobalSeq      BIGINT;
     v_lastMarkTimeId         BIGINT;
     v_nbUpd                  BIGINT;
     r_rel                    RECORD;
   BEGIN
--- retrieve the id, the timestamp and the emaj_gid value and the time stamp id of the first mark
-    SELECT mark_id, time_last_emaj_gid, mark_time_id INTO v_firstMarkId, v_firstMarkGlobalSeq, v_firstMarkTimeId
+-- retrieve the timestamp and the emaj_gid value and the time stamp id of the first mark
+    SELECT time_last_emaj_gid, mark_time_id INTO v_firstMarkGlobalSeq, v_firstMarkTimeId
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_firstMark;
--- retrieve the id, the timestamp and the emaj_gid value and the time stamp id of the last mark
-    SELECT mark_id, time_last_emaj_gid, mark_time_id INTO v_lastMarkId, v_lastMarkGlobalSeq, v_lastMarkTimeId
+-- retrieve the timestamp and the emaj_gid value and the time stamp id of the last mark
+    SELECT time_last_emaj_gid, mark_time_id INTO v_lastMarkGlobalSeq, v_lastMarkTimeId
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_lastMark;
 -- delete rows from all log tables (no need to try to delete if v_firstMarkGlobalSeq and v_lastMarkGlobalSeq are equal)
@@ -6052,16 +6042,16 @@ $_delete_between_marks_group$
 -- in emaj_mark, reset the mark_logged_rlbk_target_mark column to null for marks of the group that will remain
 --    and that may have one of the deleted marks as target mark from a previous logged rollback operation
     UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = NULL
-      WHERE mark_group = v_groupName AND mark_id >= v_lastMarkId
+      WHERE mark_group = v_groupName AND mark_time_id >= v_lastMarkTimeId
         AND mark_logged_rlbk_target_mark IN (
             SELECT mark_name FROM emaj.emaj_mark
-              WHERE mark_group = v_groupName AND mark_id > v_firstMarkId AND mark_id < v_lastMarkId
+              WHERE mark_group = v_groupName AND mark_time_id > v_firstMarkTimeId AND mark_time_id < v_lastMarkTimeId
             );
 -- set the mark_log_rows_before_next of the first mark to 0
     UPDATE emaj.emaj_mark SET mark_log_rows_before_next = 0
       WHERE mark_group = v_groupName AND mark_name = v_firstMark;
 -- and finaly delete all intermediate marks
-    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_id > v_firstMarkId AND mark_id < v_lastMarkId;
+    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_time_id > v_firstMarkTimeId AND mark_time_id < v_lastMarkTimeId;
     GET DIAGNOSTICS v_nbMark = ROW_COUNT;
     RETURN;
   END;
@@ -6078,8 +6068,8 @@ $emaj_get_consolidable_rollbacks$
 -- search and return all marks range corresponding to any logged rollback operation
     RETURN QUERY
       SELECT m1.mark_group AS cons_group,
-             m2.mark_name AS cons_target_rlbk_mark_name, m2.mark_id AS cons_target_rlbk_mark_id,
-             m1.mark_name AS cons_end_rlbk_mark_name, m1.mark_id AS cons_end_rlbk_mark_id,
+             m2.mark_name AS cons_target_rlbk_mark_name, m2.mark_time_id AS cons_target_rlbk_mark_time_id,
+             m1.mark_name AS cons_end_rlbk_mark_name, m1.mark_time_id AS cons_end_rlbk_mark_time_id,
              cast(coalesce(
                   (SELECT sum(emaj._log_stat_tbl(emaj_relation,
                                                  greatest(m2.mark_time_id, lower(rel_time_range)),
@@ -6089,11 +6079,11 @@ $emaj_get_consolidable_rollbacks$
                      WHERE rel_group = m1.mark_group AND rel_kind = 'r' AND rel_time_range @> m1.mark_time_id)
                           ,0) AS BIGINT) AS cons_rows,
              cast((SELECT count(*) FROM emaj.emaj_mark m3
-                   WHERE m3.mark_group = m1.mark_group AND m3.mark_id > m2.mark_id AND m3.mark_id < m1.mark_id) AS INT) AS cons_marks
+                   WHERE m3.mark_group = m1.mark_group AND m3.mark_time_id > m2.mark_time_id AND m3.mark_time_id < m1.mark_time_id) AS INT) AS cons_marks
         FROM emaj.emaj_mark m1
           JOIN emaj.emaj_mark m2 ON (m2.mark_name = m1.mark_logged_rlbk_target_mark AND m2.mark_group = m1.mark_group)
           WHERE m1.mark_logged_rlbk_target_mark IS NOT NULL
-          ORDER BY m1.mark_id;
+          ORDER BY m1.mark_time_id;
   END;
 $emaj_get_consolidable_rollbacks$;
 COMMENT ON FUNCTION emaj.emaj_get_consolidable_rollbacks() IS
@@ -8071,7 +8061,6 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_global_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_hist_hist_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_time_stamp_time_id_seq','');
-SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_mark_mark_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
 -- insert the init record into the operation history

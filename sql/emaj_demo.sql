@@ -338,7 +338,7 @@ select * from myTbl4 where col43 is NULL;
 \echo '---'
 \echo '--- Latests updates have been canceled. But the old MARK4 still exists. And 2 new marks frame the rollback operation.'
 \echo '---'
-select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_id;
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
 \echo '---'
 \echo '--- And the rollback operation has been logged.'
 \echo '---'
@@ -364,8 +364,7 @@ select emaj.emaj_comment_mark_group('emaj demo group 1','End of rollback','This 
 \echo '---'
 \echo '--- Look at the result in the emaj_group table.'
 \echo '---'
-select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_id;
-
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
 \echo '---'
 \echo '--- Find the name of the mark set 1 micro-second ago.'
 \echo '---'
@@ -385,7 +384,7 @@ select emaj.emaj_rollback_group('emaj demo group 1','MARK5');
 \echo '---'
 \echo '--- ... and look at the result in the emaj_mark table.'
 \echo '---'
-select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_id;
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
@@ -450,7 +449,7 @@ select * from emaj_demo_app_schema.mySeq1;
 \echo '---'
 \echo '--- Look at the emaj_group table.'
 \echo '---'
-select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2') order by mark_id;
+select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2') order by mark_time_id;
 
 \unset ON_ERROR_STOP
 
@@ -494,7 +493,7 @@ select emaj.emaj_delete_before_mark_group('emaj demo group 1','MARK5');
 \echo '--- Look at the result in the log table and in the emaj_mark table.'
 \echo '---'
 select * from emaj_demo.emaj_demo_app_schema_mytbl4_log;
-select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_id;
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
@@ -515,7 +514,7 @@ select emaj.emaj_stop_group('emaj demo group 2','Our own stop mark for the secon
 \echo '---'
 \echo '--- The marks are still there but are logically deleted.'
 \echo '---'
-select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2') order by mark_id;
+select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2') order by mark_time_id;
 
 \echo '---'
 \echo '--- The log rows are still there too, but are not usable for any rollback.'
