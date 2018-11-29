@@ -200,6 +200,7 @@ NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to constraint emaj_relation_rel_group_fkey on table emaj_relation
 drop cascades to constraint emaj_mark_mark_group_fkey on table emaj_mark
 NOTICE:  drop cascades to function _verify_groups(text[],boolean)
+NOTICE:  drop cascades to function emaj_get_consolidable_rollbacks()
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------
@@ -223,7 +224,6 @@ select relname from pg_catalog.pg_class,
  emaj_hist
  emaj_hist_hist_id_seq
  emaj_mark
- emaj_mark_mark_id_seq
  emaj_param
  emaj_relation
  emaj_rlbk
@@ -236,7 +236,7 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(20 rows)
+(19 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';

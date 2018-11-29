@@ -5,7 +5,6 @@
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 2000;
-alter sequence emaj.emaj_mark_mark_id_seq restart 2000;
 select emaj.emaj_start_group('myGroup1','Mark1');
  emaj_start_group 
 ------------------
@@ -195,31 +194,31 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
 (1 row)
 
 -- impact of mark set
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    1002 | phil's group#3", | Mark3          |         1005 | f               | f                      |              |                           | 
-    2000 | myGroup1         | Mark1          |         2000 | f               | f                      |              |                         0 | 
-    2001 | myGroup2         | Mark2          |         2001 | f               | f                      |              |                         0 | 
-    2002 | emptyGroup       | MarkInit       |         2002 | f               | f                      |              |                         0 | 
-    2003 | myGroup1         | SM1            |         2003 | f               | f                      |              |                         0 | 
-    2004 | myGroup2         | SM1            |         2004 | f               | f                      |              |                         0 | 
-    2005 | myGroup2         | phil's mark #1 |         2005 | f               | f                      |              |                         0 | 
-    2006 | emptyGroup       | SM1            |         2006 | f               | f                      |              |                           | 
-    2007 | myGroup1         | MARK_%         |         2007 | f               | f                      |              |                         0 | 
-    2008 | myGroup2         | MARK_%         |         2008 | f               | f                      |              |                         0 | 
-    2009 | myGroup2         | MARK_%         |         2009 | f               | f                      |              |                         0 | 
-    2010 | myGroup1         | Foo%Bar        |         2010 | f               | f                      |              |                         0 | 
-    2011 | myGroup1         | SM3            |         2011 | f               | f                      |              |                         0 | 
-    2012 | myGroup2         | SM3            |         2011 | f               | f                      |              |                         0 | 
-    2013 | myGroup1         | MARK_%         |         2012 | f               | f                      |              |                         0 | 
-    2014 | myGroup2         | MARK_%         |         2012 | f               | f                      |              |                         0 | 
-    2015 | myGroup1         | MARK_%         |         2013 | f               | f                      |              |                         0 | 
-    2016 | myGroup2         | MARK_%         |         2013 | f               | f                      |              |                         0 | 
-    2017 | myGroup1         | MARK_%         |         2014 | f               | f                      |              |                         0 | 
-    2018 | myGroup2         | MARK_%         |         2014 | f               | f                      |              |                         0 | 
-    2019 | myGroup1         | Bar%Foo        |         2015 | f               | f                      |              |                           | 
-    2020 | myGroup2         | Bar%Foo        |         2015 | f               | f                      |              |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ phil's group#3", | Mark3          |         1005 | f               | f                      |              |                         0 | 
+ myGroup1         | Mark1          |         2000 | f               | f                      |              |                         0 | 
+ myGroup2         | Mark2          |         2001 | f               | f                      |              |                         0 | 
+ emptyGroup       | MarkInit       |         2002 | f               | f                      |              |                         0 | 
+ myGroup1         | SM1            |         2003 | f               | f                      |              |                         0 | 
+ myGroup2         | SM1            |         2004 | f               | f                      |              |                         0 | 
+ myGroup2         | phil's mark #1 |         2005 | f               | f                      |              |                         0 | 
+ emptyGroup       | SM1            |         2006 | f               | f                      |              |                         0 | 
+ myGroup1         | MARK_%         |         2007 | f               | f                      |              |                         0 | 
+ myGroup2         | MARK_%         |         2008 | f               | f                      |              |                         0 | 
+ myGroup2         | MARK_%         |         2009 | f               | f                      |              |                         0 | 
+ myGroup1         | Foo%Bar        |         2010 | f               | f                      |              |                         0 | 
+ myGroup1         | SM3            |         2011 | f               | f                      |              |                         0 | 
+ myGroup2         | SM3            |         2011 | f               | f                      |              |                         0 | 
+ myGroup1         | MARK_%         |         2012 | f               | f                      |              |                         0 | 
+ myGroup2         | MARK_%         |         2012 | f               | f                      |              |                         0 | 
+ myGroup1         | MARK_%         |         2013 | f               | f                      |              |                         0 | 
+ myGroup2         | MARK_%         |         2013 | f               | f                      |              |                         0 | 
+ myGroup1         | MARK_%         |         2014 | f               | f                      |              |                         0 | 
+ myGroup2         | MARK_%         |         2014 | f               | f                      |              |                         0 | 
+ myGroup1         | Bar%Foo        |         2015 | f               | f                      |              |                           | 
+ myGroup2         | Bar%Foo        |         2015 | f               | f                      |              |                           | 
 (22 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
@@ -590,31 +589,31 @@ select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
 (1 row)
 
 -- impact of mark rename
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
-    1002 | phil's group#3", | Mark3          |         1005 | f               | f                      |                                        |                           | 
-    2000 | myGroup1         | First Mark     |         2000 | f               | f                      |                                        |                         0 | 
-    2001 | myGroup2         | Mark2          |         2001 | f               | f                      |                                        |                         0 | 
-    2002 | emptyGroup       | MarkInit       |         2002 | f               | f                      |                                        |                         0 | 
-    2003 | myGroup1         | SM1            |         2003 | f               | f                      | a better comment for group #1          |                         0 | 
-    2004 | myGroup2         | SM1            |         2004 | f               | f                      |                                        |                         0 | 
-    2005 | myGroup2         | john's mark #1 |         2005 | f               | f                      | a good phil's comment!                 |                         0 | 
-    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                           | Mark1
-    2007 | myGroup1         | MARK_%         |         2007 | f               | f                      |                                        |                         0 | 
-    2008 | myGroup2         | MARK_%         |         2008 | f               | f                      |                                        |                         0 | 
-    2009 | myGroup2         | MARK_%         |         2009 | f               | f                      |                                        |                         0 | 
-    2010 | myGroup1         | Foo%Bar        |         2010 | f               | f                      |                                        |                         0 | 
-    2011 | myGroup1         | SM3            |         2011 | f               | f                      |                                        |                         0 | 
-    2012 | myGroup2         | SM3            |         2011 | f               | f                      |                                        |                         0 | 
-    2013 | myGroup1         | MARK_%         |         2012 | f               | f                      |                                        |                         0 | 
-    2014 | myGroup2         | MARK_%         |         2012 | f               | f                      |                                        |                         0 | 
-    2015 | myGroup1         | MARK_%         |         2013 | f               | f                      |                                        |                         0 | 
-    2016 | myGroup2         | MARK_%         |         2013 | f               | f                      |                                        |                         0 | 
-    2017 | myGroup1         | MARK_%         |         2014 | f               | f                      |                                        |                         0 | 
-    2018 | myGroup2         | MARK_%         |         2014 | f               | f                      |                                        |                         0 | 
-    2019 | myGroup1         | SM2            |         2015 | f               | f                      |                                        |                           | First Mark
-    2020 | myGroup2         | SM2            |         2015 | f               | f                      | a comment for group #2                 |                           | Mark1
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ phil's group#3", | Mark3          |         1005 | f               | f                      |                                        |                         0 | 
+ myGroup1         | First Mark     |         2000 | f               | f                      |                                        |                         0 | 
+ myGroup2         | Mark2          |         2001 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | MarkInit       |         2002 | f               | f                      |                                        |                         0 | 
+ myGroup1         | SM1            |         2003 | f               | f                      | a better comment for group #1          |                         0 | 
+ myGroup2         | SM1            |         2004 | f               | f                      |                                        |                         0 | 
+ myGroup2         | john's mark #1 |         2005 | f               | f                      | a good phil's comment!                 |                         0 | 
+ emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ myGroup1         | MARK_%         |         2007 | f               | f                      |                                        |                         0 | 
+ myGroup2         | MARK_%         |         2008 | f               | f                      |                                        |                         0 | 
+ myGroup2         | MARK_%         |         2009 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Foo%Bar        |         2010 | f               | f                      |                                        |                         0 | 
+ myGroup1         | SM3            |         2011 | f               | f                      |                                        |                         0 | 
+ myGroup2         | SM3            |         2011 | f               | f                      |                                        |                         0 | 
+ myGroup1         | MARK_%         |         2012 | f               | f                      |                                        |                         0 | 
+ myGroup2         | MARK_%         |         2012 | f               | f                      |                                        |                         0 | 
+ myGroup1         | MARK_%         |         2013 | f               | f                      |                                        |                         0 | 
+ myGroup2         | MARK_%         |         2013 | f               | f                      |                                        |                         0 | 
+ myGroup1         | MARK_%         |         2014 | f               | f                      |                                        |                         0 | 
+ myGroup2         | MARK_%         |         2014 | f               | f                      |                                        |                         0 | 
+ myGroup1         | SM2            |         2015 | f               | f                      |                                        |                           | First Mark
+ myGroup2         | SM2            |         2015 | f               | f                      | a comment for group #2                 |                           | Mark1
 (22 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -776,20 +775,20 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select emaj.emaj_delete_mark_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 28 at PERFORM
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 27 at PERFORM
 select emaj.emaj_delete_mark_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 28 at PERFORM
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 27 at PERFORM
 -- unknown mark name
 select emaj.emaj_delete_mark_group('myGroup2',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 30 at SQL statement
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 29 at SQL statement
 select emaj.emaj_delete_mark_group('myGroup2','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
-PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 30 at SQL statement
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 29 at SQL statement
 -- next attempts should be OK
 select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_delete_mark_group 
@@ -826,12 +825,13 @@ select emaj.emaj_delete_mark_group('myGroup1','First Mark');
 select sum(emaj.emaj_delete_mark_group('myGroup1',mark_name)) from 
  (select mark_name from emaj.emaj_mark
     where mark_group = 'myGroup1' and (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d')
-    order by mark_id) as t;
+    order by mark_time_id) as t;
  sum 
 -----
    5
 (1 row)
 
+    
 select emaj.emaj_delete_mark_group('myGroup2','john''s mark #1');
  emaj_delete_mark_group 
 ------------------------
@@ -961,10 +961,10 @@ select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
                        1
 (1 row)
 
-select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
- mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
----------+-----------+------------+-----------------+------------------------
-    2011 | SM3       | myGroup1   | f               | t
+select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+ mark_time_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
+--------------+-----------+------------+-----------------+------------------------
+         2011 | SM3       | myGroup1   | f               | t
 (1 row)
 
 select emaj.emaj_protect_mark_group('emptyGroup','EMAJ_LAST_MARK');
@@ -980,10 +980,10 @@ select emaj.emaj_protect_mark_group('myGroup1','SM3');
                        0
 (1 row)
 
-select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
- mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
----------+-----------+------------+-----------------+------------------------
-    2011 | SM3       | myGroup1   | f               | t
+select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+ mark_time_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
+--------------+-----------+------------+-----------------+------------------------
+         2011 | SM3       | myGroup1   | f               | t
 (1 row)
 
 -----------------------------
@@ -1019,10 +1019,10 @@ select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
                          1
 (1 row)
 
-select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
- mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
----------+-----------+------------+-----------------+------------------------
-    2011 | SM3       | myGroup1   | f               | f
+select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+ mark_time_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
+--------------+-----------+------------+-----------------+------------------------
+         2011 | SM3       | myGroup1   | f               | f
 (1 row)
 
 select emaj.emaj_unprotect_mark_group('emptyGroup','EMAJ_LAST_MARK');
@@ -1038,10 +1038,10 @@ select emaj.emaj_unprotect_mark_group('myGroup1','SM3');
                          0
 (1 row)
 
-select mark_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
- mark_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
----------+-----------+------------+-----------------+------------------------
-    2011 | SM3       | myGroup1   | f               | f
+select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+ mark_time_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
+--------------+-----------+------------+-----------------+------------------------
+         2011 | SM3       | myGroup1   | f               | f
 (1 row)
 
 -- check mark protections is removed by stop_group functions
@@ -1052,12 +1052,13 @@ select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
 (1 row)
 
 select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected 
-  from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
+  from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
  regexp_replace | mark_is_deleted | mark_is_rlbk_protected 
 ----------------+-----------------+------------------------
  SM3            | f               | t
 (1 row)
 
+  
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
 -----------------
@@ -1065,7 +1066,7 @@ select emaj.emaj_stop_group('myGroup1');
 (1 row)
 
 select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected 
-  from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
+  from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
  regexp_replace | mark_is_deleted | mark_is_rlbk_protected 
 ----------------+-----------------+------------------------
  SM3            | t               | f
@@ -1107,17 +1108,17 @@ select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 (1 row)
 
 -- check marks state
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
-    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
-    2011 | myGroup1         | SM3            |         2011 | t               | f                      |                                        |                         0 | 
-    2020 | myGroup2         | SM2            |         2015 | t               | f                      | a comment for group #2                 |                         0 | 
-    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
-    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
-    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
-    2024 | myGroup1         | RENAMED        |         2019 | t               | f                      |                                        |                         0 | 
-    2025 | myGroup2         | STOP_%         |         2020 | t               | f                      |                                        |                         0 | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ myGroup1         | SM3            |         2011 | t               | f                      |                                        |                         0 | 
+ myGroup2         | SM2            |         2015 | t               | f                      | a comment for group #2                 |                         0 | 
+ emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                         0 | 
+ myGroup1         | RENAMED        |         2019 | t               | f                      |                                        |                         0 | 
+ myGroup2         | STOP_%         |         2020 | t               | f                      |                                        |                         0 | 
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;

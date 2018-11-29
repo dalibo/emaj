@@ -384,9 +384,9 @@ begin;
 (1 row)
 
   select * from emaj.emaj_mark where mark_group = 'myGroup2';
- mark_group |      mark_name      | mark_id | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+---------------------+---------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup2   | Alter to add myseq2 |    6021 |         6059 | f               | f                      |              |                           | 
+ mark_group |      mark_name      | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+---------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup2   | Alter to add myseq2 |         6059 | f               | f                      |              |                           | 
 (1 row)
 
   select * from emaj.emaj_sequence where sequ_name = 'myseq2' order by sequ_time_id;
@@ -512,9 +512,9 @@ select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_n
 (1 row)
 
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup2'; -- should report 1 row to consolidate
- cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_id | cons_rows | cons_marks 
-------------+----------------------------+--------------------------+-------------------------+-----------------------+-----------+------------
- myGroup2   | Before ADD_SEQ             |                     6020 | Logged_Rlbk_End         |                  6024 |         0 |          3
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
+------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
+ myGroup2   | Before ADD_SEQ             |                          6058 | Logged_Rlbk_End         |                       6063 |         0 |          3
 (1 row)
 
 select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
@@ -742,13 +742,13 @@ begin;
  myschema1  | myTbl3_col31_seq | [6041,6070)    | myGroup1  | S        |            1 |                |               |                 |               |                 |                  |                  |                 |                    |                          |                        |                     
 (1 row)
 
-  select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id,
+  select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id,
     mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
-    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
- mark_id | mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    6031 | myGroup1   | After_remove   |         6072 | f               | f                      |              |                           | 
-    6029 | myGroup1   | Before_remove  |         6069 | f               | f                      |              |                         0 | 
+    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
+ mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | After_remove   |         6072 | f               | f                      |              |                           | 
+ myGroup1   | Before_remove  |         6069 | f               | f                      |              |                         0 | 
 (2 rows)
 
 rollback;
@@ -1074,9 +1074,9 @@ begin;
 (1 row)
 
   select * from emaj.emaj_mark where mark_group = 'myGroup2';
- mark_group |     mark_name      | mark_id | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+--------------------+---------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup2   | Just after ADD_TBL |    6041 |         6083 | f               | f                      |              |                           | 
+ mark_group |     mark_name      | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+--------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup2   | Just after ADD_TBL |         6083 | f               | f                      |              |                           | 
 (1 row)
 
   select * from emaj.emaj_sequence where sequ_name = 'myschema2_mytbl7_log_seq' order by sequ_time_id;
@@ -1214,9 +1214,9 @@ select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_n
 (1 row)
 
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup2'; -- should report 1 row to consolidate
- cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_id | cons_rows | cons_marks 
-------------+----------------------------+--------------------------+-------------------------+-----------------------+-----------+------------
- myGroup2   | Before ADD_TBL             |                     6038 | Logged_Rlbk_End         |                  6044 |         7 |          4
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
+------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
+ myGroup2   | Before ADD_TBL             |                          6080 | Logged_Rlbk_End         |                       6087 |         7 |          4
 (1 row)
 
 select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
@@ -1559,9 +1559,9 @@ begin;
 (1 row)
 
   select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'Mk2b';
- mark_group | mark_name | mark_id | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+-----------+---------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mk2b      |    6028 |         6068 | f               | f                      |              |                         0 | 
+ mark_group | mark_name | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | Mk2b      |         6068 | f               | f                      |              |                         0 | 
 (1 row)
 
 -- testing marks deletion (delete all marks before the alter_group)
@@ -1585,15 +1585,16 @@ begin;
 rollback;
 begin;
 -- testing the alter_group mark deletion
-  select mark_id, mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next,
+  select mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next,
          mark_logged_rlbk_target_mark
-    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id desc limit 2;
- mark_id | mark_group |           mark_name            | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+--------------------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    6049 | myGroup1   | 2 tables removed from myGroup1 |         6094 | f               | f                      |              |                           | 
-    6048 | myGroup1   | Mk2c                           |         6093 | f               | f                      |              |                         1 | 
+    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
+ mark_group |           mark_name            | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+--------------------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | 2 tables removed from myGroup1 |         6094 | f               | f                      |              |                           | 
+ myGroup1   | Mk2c                           |         6093 | f               | f                      |              |                         1 | 
 (2 rows)
 
+    
   select emaj.emaj_delete_mark_group('myGroup1','2 tables removed from myGroup1');
  emaj_delete_mark_group 
 ------------------------
@@ -1616,8 +1617,8 @@ begin;
 (2 rows)
 
   select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = '2 tables removed from myGroup1';
- mark_group | mark_name | mark_id | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+-----------+---------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ mark_group | mark_name | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
 (0 rows)
 
 rollback;
@@ -1698,9 +1699,9 @@ PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 (1 row)
 
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1';
- cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_id | cons_rows | cons_marks 
-------------+----------------------------+--------------------------+-------------------------+-----------------------+-----------+------------
- myGroup1   | Mk2b                       |                     6028 | Logged_Rlbk_End         |                  6052 |         2 |          7
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
+------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
+ myGroup1   | Mk2b                       |                          6068 | Logged_Rlbk_End         |                       6099 |         2 |          7
 (1 row)
 
 select * from emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
@@ -1926,28 +1927,28 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
                    15
 (1 row)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
        mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
-  from emaj.emaj_mark where mark_id > 6000 order by mark_id;
- mark_id | mark_group |       regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+-----------------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    6008 | myGroup1   | Mk1                         |         6050 | f               | f                      |              |                         0 | 
-    6009 | myGroup2   | Mk1                         |         6050 | f               | f                      |              |                         0 | 
-    6010 | myGroup1   | Priority Changed            |         6051 | f               | f                      |              |                         0 | 
-    6011 | myGroup1   | Attributes_changed          |         6052 | f               | f                      |              |                         0 | 
-    6012 | myGroup2   | Attributes_changed          |         6052 | f               | f                      |              |                         0 | 
-    6013 | myGroup1   | Mk2                         |         6053 | f               | f                      |              |                         0 | 
-    6014 | myGroup2   | Mk2                         |         6053 | f               | f                      |              |                         0 | 
-    6015 | myGroup1   | ALTER_%                     |         6055 | f               | f                      |              |                         0 | 
-    6016 | myGroup2   | ALTER_%                     |         6055 | f               | f                      |              |                         0 | 
-    6017 | myGroup1   | ALTER_%                     |         6056 | f               | f                      |              |                         0 | 
-    6018 | myGroup2   | ALTER_%                     |         6056 | f               | f                      |              |                         0 | 
-    6019 | myGroup2   | ADD_SEQ test                |         6057 | f               | f                      |              |                         0 | 
-    6028 | myGroup1   | Mk2b                        |         6068 | f               | f                      |              |                         0 | 
-    6037 | myGroup2   | ADD_TBL test                |         6079 | f               | f                      |              |                         0 | 
-    6058 | myGroup1   | tables re-added to myGroup1 |         6106 | f               | f                      |              |                         0 | 
-    6059 | myGroup1   | Mk3                         |         6107 | f               | f                      |              |                           | 
-    6060 | myGroup2   | Mk3                         |         6107 | f               | f                      |              |                           | 
+  from emaj.emaj_mark order by mark_time_id, mark_group;
+ mark_group |       regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | Mk1                         |         6050 | f               | f                      |              |                         0 | 
+ myGroup2   | Mk1                         |         6050 | f               | f                      |              |                         0 | 
+ myGroup1   | Priority Changed            |         6051 | f               | f                      |              |                         0 | 
+ myGroup1   | Attributes_changed          |         6052 | f               | f                      |              |                         0 | 
+ myGroup2   | Attributes_changed          |         6052 | f               | f                      |              |                         0 | 
+ myGroup1   | Mk2                         |         6053 | f               | f                      |              |                         0 | 
+ myGroup2   | Mk2                         |         6053 | f               | f                      |              |                         0 | 
+ myGroup1   | ALTER_%                     |         6055 | f               | f                      |              |                         0 | 
+ myGroup2   | ALTER_%                     |         6055 | f               | f                      |              |                         0 | 
+ myGroup1   | ALTER_%                     |         6056 | f               | f                      |              |                         0 | 
+ myGroup2   | ALTER_%                     |         6056 | f               | f                      |              |                         0 | 
+ myGroup2   | ADD_SEQ test                |         6057 | f               | f                      |              |                         0 | 
+ myGroup1   | Mk2b                        |         6068 | f               | f                      |              |                         0 | 
+ myGroup2   | ADD_TBL test                |         6079 | f               | f                      |              |                         0 | 
+ myGroup1   | tables re-added to myGroup1 |         6106 | f               | f                      |              |                         0 | 
+ myGroup1   | Mk3                         |         6107 | f               | f                      |              |                           | 
+ myGroup2   | Mk3                         |         6107 | f               | f                      |              |                           | 
 (17 rows)
 
 -- estimate a rollback crossing alter group operations

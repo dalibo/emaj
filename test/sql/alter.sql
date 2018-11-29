@@ -3,7 +3,6 @@
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 6000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 6000;
-alter sequence emaj.emaj_mark_mark_id_seq restart 6000;
 alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 6000;
 
 -----------------------------

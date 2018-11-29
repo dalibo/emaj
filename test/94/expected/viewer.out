@@ -388,8 +388,8 @@ select * from emaj.emaj_rollback_activity();
 (0 rows)
 
 select * from emaj.emaj_get_consolidable_rollbacks();
- cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_id | cons_rows | cons_marks 
-------------+----------------------------+--------------------------+-------------------------+-----------------------+-----------+------------
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
+------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
 (0 rows)
 
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);

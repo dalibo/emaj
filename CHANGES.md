@@ -13,6 +13,9 @@ E-Maj - Change log
     tables groups need to be altered to match their emaj_group_def
     configuration.
   * Enforce the checks on log tables structure.
+  * In the structure of the emaj_get_consolidable_rollbacks() return type,
+    both mark identifiers are replaced by timestamp identifiers. This may
+    impact clients calling this function.
 
 ###Bug fixes:###
   * Fix error that may occur when a non emaj role tries to drop or alter an

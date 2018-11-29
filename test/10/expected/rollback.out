@@ -6,7 +6,6 @@
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 3000;
-alter sequence emaj.emaj_mark_mark_id_seq restart 3000;
 -----------------------------
 -- rollback nothing tests
 -----------------------------
@@ -88,7 +87,7 @@ select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 72 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -99,7 +98,7 @@ select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup2" is not in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 72 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -110,7 +109,7 @@ select emaj.emaj_logged_rollback_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 72 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -121,7 +120,7 @@ select emaj.emaj_logged_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup2" is not in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 72 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -132,7 +131,7 @@ select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}',NULL);
 ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are not in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 75 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -150,7 +149,7 @@ begin;
 ERROR:  _check_group_names: The group "myGroup2" is not in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 72 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -257,7 +256,7 @@ select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup1" is currently protected against rollback operations.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 83 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -268,7 +267,7 @@ select emaj.emaj_logged_rollback_groups('{"myGroup2","myGroup1"}',NULL);
 ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are currently protected against rollback operations.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 86 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -298,7 +297,7 @@ select emaj.emaj_rollback_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -309,7 +308,7 @@ select emaj.emaj_rollback_group('myGroup1','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -320,7 +319,7 @@ select emaj.emaj_logged_rollback_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -331,7 +330,7 @@ select emaj.emaj_logged_rollback_group('myGroup1','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -342,7 +341,7 @@ select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",""}',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -353,7 +352,7 @@ select emaj.emaj_rollback_groups('{"myGroup1","myGroup2",NULL}',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -364,7 +363,7 @@ select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -375,7 +374,7 @@ select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2","myGroup2"}',NUL
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 43 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -386,7 +385,7 @@ select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark11');
 ERROR:  _check_mark_name: The mark "Mark11" does not exist for the group "myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -398,7 +397,7 @@ select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Different_Mark');
 ERROR:  _check_mark_name: The mark "Different_Mark" does not represent the same point in time for all groups.
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 50 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -409,7 +408,7 @@ select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 ERROR:  _check_mark_name: The EMAJ_LAST_MARK does not represent the same point in time for all groups.
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 29 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -427,7 +426,7 @@ select emaj.emaj_rollback_group('phil''s group#3",','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "phil's group#3"," has been created as AUDIT_ONLY.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 50 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -438,7 +437,7 @@ select emaj.emaj_logged_rollback_groups(array['phil''s group#3",','auditOnlyEmpt
 ERROR:  _check_group_names: The groups "auditOnlyEmptyGroup, phil's group#3"," have been created as AUDIT_ONLY.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 53 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -475,7 +474,7 @@ begin;
 ERROR:  _check_mark_name: For the group "myGroup1", the mark "GeneratedStopMark" is DELETED.
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 58 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
@@ -619,7 +618,7 @@ SQL statement "SELECT emaj._rlbk_seq(t.*, greatest(v_markTimeId, lower(t.rel_tim
       FROM (SELECT * FROM emaj.emaj_relation
               WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
               ORDER BY rel_priority, rel_schema, rel_tblseq) as t"
-PL/pgSQL function emaj._rlbk_end(integer,boolean) line 128 at PERFORM
+PL/pgSQL function emaj._rlbk_end(integer,boolean) line 125 at PERFORM
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 30 at RETURN QUERY
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
@@ -809,16 +808,16 @@ select emaj.emaj_set_mark_group('myGroup1','Mark12');
                    7
 (1 row)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
-    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
-    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
-    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
-    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
-    3029 | myGroup1         | Mark11         |         3030 | f               | f                      |                                        |                        27 | 
-    3030 | myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                           | 
-    3031 | myGroup1         | Mark12         |         3032 | f               | f                      |                                        |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark11         |         3030 | f               | f                      |                                        |                        27 | 
+ myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark12         |         3032 | f               | f                      |                                        |                           | 
 (7 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -875,17 +874,17 @@ select emaj.emaj_set_mark_group('myGroup1','Mark13');
                    7
 (1 row)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
-    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
-    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
-    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
-    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
-    3029 | myGroup1         | Mark11         |         3030 | f               | f                      |                                        |                        27 | 
-    3030 | myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                           | 
-    3031 | myGroup1         | Mark12         |         3032 | f               | f                      |                                        |                        12 | 
-    3032 | myGroup1         | Mark13         |         3033 | f               | f                      |                                        |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark11         |         3030 | f               | f                      |                                        |                        27 | 
+ myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark12         |         3032 | f               | f                      |                                        |                        12 | 
+ myGroup1         | Mark13         |         3033 | f               | f                      |                                        |                           | 
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1006,16 +1005,16 @@ select emaj.emaj_rollback_group('myGroup1','Mark12');
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
-    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
-    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
-    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
-    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
-    3029 | myGroup1         | Mark11         |         3030 | f               | f                      |                                        |                        27 | 
-    3030 | myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                           | 
-    3031 | myGroup1         | Mark12         |         3032 | f               | f                      |                                        |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark11         |         3030 | f               | f                      |                                        |                        27 | 
+ myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark12         |         3032 | f               | f                      |                                        |                           | 
 (7 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1092,16 +1091,16 @@ select emaj.emaj_stop_group('myGroup1');
 (1 row)
 
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
-    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
-    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
-    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
-    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
-    3029 | myGroup1         | Mark11         |         3030 | t               | f                      |                                        |                         0 | 
-    3030 | myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                           | 
-    3033 | myGroup1         | STOP_%         |         3036 | t               | f                      |                                        |                         0 | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark11         |         3030 | t               | f                      |                                        |                         0 | 
+ myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                         0 | 
+ myGroup1         | STOP_%         |         3036 | t               | f                      |                                        |                         0 | 
 (7 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1273,17 +1272,17 @@ select emaj.emaj_set_mark_group('myGroup1','Mark13');
                    7
 (1 row)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
-    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
-    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
-    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
-    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
-    3030 | myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                           | 
-    3034 | myGroup1         | Mark11         |         3037 | f               | f                      |                                        |                        19 | 
-    3035 | myGroup1         | Mark12         |         3038 | f               | f                      |                                        |                        11 | 
-    3036 | myGroup1         | Mark13         |         3039 | f               | f                      |                                        |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                         0 | 
+ myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark11         |         3037 | f               | f                      |                                        |                        19 | 
+ myGroup1         | Mark12         |         3038 | f               | f                      |                                        |                        11 | 
+ myGroup1         | Mark13         |         3039 | f               | f                      |                                        |                           | 
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1392,19 +1391,19 @@ select emaj.emaj_logged_rollback_group('myGroup1','Mark12');
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    |   regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+---------------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
-    2006 | emptyGroup       | SM2                 |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
-    2021 | emptyGroup       | EGM3                |         2016 | f               | f                      |                                        |                         0 | 
-    2022 | emptyGroup       | EGM4                |         2017 | f               | f                      |                                        |                           | 
-    2023 | phil's group#3", | Mark4               |         2018 | f               | f                      |                                        |                           | 
-    3030 | myGroup2         | Mark21              |         3031 | f               | f                      |                                        |                           | 
-    3034 | myGroup1         | Mark11              |         3037 | f               | f                      |                                        |                        19 | 
-    3035 | myGroup1         | Mark12              |         3038 | f               | f                      |                                        |                        11 | 
-    3036 | myGroup1         | Mark13              |         3039 | f               | f                      |                                        |                         0 | 
-    3037 | myGroup1         | RLBK_Mark12_%_START |         3040 | f               | f                      |                                        |                        11 | 
-    3038 | myGroup1         | RLBK_Mark12_%_DONE  |         3041 | f               | f                      |                                        |                           | Mark12
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    |   regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+---------------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2                 |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3                |         2016 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4                |         2017 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark4               |         2018 | f               | f                      |                                        |                         0 | 
+ myGroup2         | Mark21              |         3031 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark11              |         3037 | f               | f                      |                                        |                        19 | 
+ myGroup1         | Mark12              |         3038 | f               | f                      |                                        |                        11 | 
+ myGroup1         | Mark13              |         3039 | f               | f                      |                                        |                         0 | 
+ myGroup1         | RLBK_Mark12_%_START |         3040 | f               | f                      |                                        |                        11 | 
+ myGroup1         | RLBK_Mark12_%_DONE  |         3041 | f               | f                      |                                        |                           | Mark12
 (10 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1516,21 +1515,21 @@ select emaj.emaj_logged_rollback_group('myGroup1','Mark11');
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    |   regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+---------------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
-    2006 | emptyGroup       | SM2                 |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
-    2021 | emptyGroup       | EGM3                |         2016 | f               | f                      |                                        |                         0 | 
-    2022 | emptyGroup       | EGM4                |         2017 | f               | f                      |                                        |                           | 
-    2023 | phil's group#3", | Mark4               |         2018 | f               | f                      |                                        |                           | 
-    3030 | myGroup2         | Mark21              |         3031 | f               | f                      |                                        |                           | 
-    3034 | myGroup1         | Mark11              |         3037 | f               | f                      |                                        |                        19 | 
-    3035 | myGroup1         | Mark12              |         3038 | f               | f                      |                                        |                        11 | 
-    3036 | myGroup1         | Mark13              |         3039 | f               | f                      |                                        |                         0 | 
-    3037 | myGroup1         | RLBK_Mark12_%_START |         3040 | f               | f                      |                                        |                        11 | 
-    3038 | myGroup1         | RLBK_Mark12_%_DONE  |         3041 | f               | f                      |                                        |                         0 | Mark12
-    3039 | myGroup1         | RLBK_Mark11_%_START |         3042 | f               | f                      |                                        |                        14 | 
-    3040 | myGroup1         | RLBK_Mark11_%_DONE  |         3043 | f               | f                      |                                        |                           | Mark11
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    |   regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+---------------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2                 |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3                |         2016 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4                |         2017 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark4               |         2018 | f               | f                      |                                        |                         0 | 
+ myGroup2         | Mark21              |         3031 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark11              |         3037 | f               | f                      |                                        |                        19 | 
+ myGroup1         | Mark12              |         3038 | f               | f                      |                                        |                        11 | 
+ myGroup1         | Mark13              |         3039 | f               | f                      |                                        |                         0 | 
+ myGroup1         | RLBK_Mark12_%_START |         3040 | f               | f                      |                                        |                        11 | 
+ myGroup1         | RLBK_Mark12_%_DONE  |         3041 | f               | f                      |                                        |                         0 | Mark12
+ myGroup1         | RLBK_Mark11_%_START |         3042 | f               | f                      |                                        |                        14 | 
+ myGroup1         | RLBK_Mark11_%_DONE  |         3043 | f               | f                      |                                        |                           | Mark11
 (12 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1682,17 +1681,17 @@ select emaj.emaj_rollback_group('myGroup1','Mark13');
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_id;
- mark_id |    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
-    2006 | emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
-    2021 | emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
-    2022 | emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                           | 
-    2023 | phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                           | 
-    3030 | myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                           | 
-    3034 | myGroup1         | Mark11         |         3037 | f               | f                      |                                        |                        19 | 
-    3035 | myGroup1         | Mark12         |         3038 | f               | f                      |                                        |                        11 | 
-    3036 | myGroup1         | Mark13         |         3039 | f               | f                      |                                        |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                         0 | 
+ myGroup2         | Mark21         |         3031 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Mark11         |         3037 | f               | f                      |                                        |                        19 | 
+ myGroup1         | Mark12         |         3038 | f               | f                      |                                        |                        11 | 
+ myGroup1         | Mark13         |         3039 | f               | f                      |                                        |                           | 
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -2187,30 +2186,31 @@ select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Renamed_last_mar
  
 (1 row)
 
-select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id, 
-       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_id, cons_rows, cons_marks 
+select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id, 
+       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_time_id, cons_rows, cons_marks 
   from emaj.emaj_get_consolidable_rollbacks();
- cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id |    regexp_replace    | cons_end_rlbk_mark_id | cons_rows | cons_marks 
-------------+----------------------------+--------------------------+----------------------+-----------------------+-----------+------------
- emptyGroup | EGM3                       |                     2021 | RLBK_EGM3_%_DONE     |                  3042 |         0 |          2
- myGroup1   | Conso_M1                   |                     3047 | RLBK_Conso_M1_%_DONE |                  3049 |         0 |          0
- myGroup1   | Renamed_conso_M2           |                     3050 | Renamed_last_mark    |                  3053 |        32 |          2
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id |    regexp_replace    | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
+------------+----------------------------+-------------------------------+----------------------+----------------------------+-----------+------------
+ emptyGroup | EGM3                       |                          2016 | RLBK_EGM3_%_DONE     |                       3047 |         0 |          2
+ myGroup1   | Conso_M1                   |                          3053 | RLBK_Conso_M1_%_DONE |                       3055 |         0 |          0
+ myGroup1   | Renamed_conso_M2           |                          3056 | Renamed_last_mark    |                       3059 |        32 |          2
 (3 rows)
 
+  
 select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
  emaj_consolidate_rollback_group 
 ---------------------------------
                                5
 (1 row)
 
-select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_id, 
-       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_id, cons_rows, cons_marks
+select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id, 
+       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), cons_end_rlbk_mark_time_id, cons_rows, cons_marks
   from emaj.emaj_get_consolidable_rollbacks();
- cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id |    regexp_replace    | cons_end_rlbk_mark_id | cons_rows | cons_marks 
-------------+----------------------------+--------------------------+----------------------+-----------------------+-----------+------------
- emptyGroup | EGM3                       |                     2021 | RLBK_EGM3_%_DONE     |                  3042 |         0 |          2
- myGroup1   | Conso_M1                   |                     3047 | RLBK_Conso_M1_%_DONE |                  3049 |         0 |          0
- myGroup1   | Renamed_conso_M2           |                     3050 | Renamed_last_mark    |                  3053 |         0 |          0
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id |    regexp_replace    | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
+------------+----------------------------+-------------------------------+----------------------+----------------------------+-----------+------------
+ emptyGroup | EGM3                       |                          2016 | RLBK_EGM3_%_DONE     |                       3047 |         0 |          2
+ myGroup1   | Conso_M1                   |                          3053 | RLBK_Conso_M1_%_DONE |                       3055 |         0 |          0
+ myGroup1   | Renamed_conso_M2           |                          3056 | Renamed_last_mark    |                       3059 |         0 |          0
 (3 rows)
 
 -- consolidate a rollback already consolidated
@@ -2220,16 +2220,16 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
                                2
 (1 row)
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_id;
- mark_id | mark_group |    regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
----------+------------+----------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
-    3034 | myGroup1   | Mark11               |         3037 | f               | f                      |              |                        19 | 
-    3035 | myGroup1   | Mark12               |         3038 | f               | f                      |              |                        11 | 
-    3036 | myGroup1   | Mark13               |         3039 | f               | f                      |              |                         0 | 
-    3047 | myGroup1   | Conso_M1             |         3053 | f               | f                      |              |                         0 | 
-    3049 | myGroup1   | RLBK_Conso_M1_%_DONE |         3055 | f               | f                      |              |                         0 | Conso_M1
-    3050 | myGroup1   | Renamed_conso_M2     |         3056 | f               | f                      |              |                         0 | 
-    3053 | myGroup1   | Renamed_last_mark    |         3059 | f               | f                      |              |                           | Renamed_conso_M2
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
+ mark_group |    regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+----------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | Mark11               |         3037 | f               | f                      |              |                        19 | 
+ myGroup1   | Mark12               |         3038 | f               | f                      |              |                        11 | 
+ myGroup1   | Mark13               |         3039 | f               | f                      |              |                         0 | 
+ myGroup1   | Conso_M1             |         3053 | f               | f                      |              |                         0 | 
+ myGroup1   | RLBK_Conso_M1_%_DONE |         3055 | f               | f                      |              |                         0 | Conso_M1
+ myGroup1   | Renamed_conso_M2     |         3056 | f               | f                      |              |                         0 | 
+ myGroup1   | Renamed_last_mark    |         3059 | f               | f                      |              |                           | Renamed_conso_M2
 (7 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_time_id, sequ_schema, sequ_name;
@@ -2306,9 +2306,9 @@ begin;
 (1 row)
 
   select * from emaj.emaj_get_consolidable_rollbacks();
- cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_id | cons_rows | cons_marks 
-------------+----------------------------+--------------------------+-------------------------+-----------------------+-----------+------------
- emptyGroup | EGM3                       |                     2021 | end_rlbk_mark           |                  3042 |         0 |          2
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
+------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
+ emptyGroup | EGM3                       |                          2016 | end_rlbk_mark           |                       3047 |         0 |          2
 (1 row)
 
   select emaj.emaj_consolidate_rollback_group('emptyGroup','end_rlbk_mark');
@@ -2317,13 +2317,13 @@ begin;
                                0
 (1 row)
 
-  select * from emaj.emaj_mark where mark_group = 'emptyGroup' order by mark_id;
- mark_group |   mark_name   | mark_id | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+---------------+---------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup | SM2           |    2006 |         2006 | t               | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup | EGM3          |    2021 |         2016 | t               | f                      |                                        |                         0 | 
- emptyGroup | end_rlbk_mark |    3042 |         3047 | t               | f                      |                                        |                         0 | EGM3
- emptyGroup | stop          |    3054 |         3061 | t               | f                      |                                        |                         0 | 
+  select * from emaj.emaj_mark where mark_group = 'emptyGroup' order by mark_time_id, mark_group;
+ mark_group |   mark_name   | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+---------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup | SM2           |         2006 | t               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup | EGM3          |         2016 | t               | f                      |                                        |                         0 | 
+ emptyGroup | end_rlbk_mark |         3047 | t               | f                      |                                        |                         0 | EGM3
+ emptyGroup | stop          |         3061 | t               | f                      |                                        |                         0 | 
 (4 rows)
 
 rollback;

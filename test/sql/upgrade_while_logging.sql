@@ -47,7 +47,6 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 select * from emaj.emaj_global_seq;
 select * from emaj.emaj_hist_hist_id_seq;
 select * from emaj.emaj_time_stamp_time_id_seq;
-select * from emaj.emaj_mark_mark_id_seq;
 select * from emaj.emaj_rlbk_rlbk_id_seq;
 
 -- check log sequences position

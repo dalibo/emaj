@@ -148,9 +148,10 @@ select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, gr
        group_creation_time_id, group_last_alter_time_id, group_comment
   from emaj.emaj_group order by group_name;
 
-select mark_id, mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, 
+
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, 
        mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark 
-  from emaj.emaj_mark order by mark_id;
+  from emaj.emaj_mark order by mark_time_id, mark_group;
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
   from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;

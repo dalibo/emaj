@@ -34,7 +34,6 @@ select relname from pg_catalog.pg_class,
  emaj_hist
  emaj_hist_hist_id_seq
  emaj_mark
- emaj_mark_mark_id_seq
  emaj_param
  emaj_relation
  emaj_rlbk
@@ -47,7 +46,7 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(20 rows)
+(19 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -137,15 +136,15 @@ Foreign-key constraints:
 primary key, btree, for table "emaj.emaj_alter_plan"
 
 Composite type "emaj.emaj_consolidable_rollback_type"
-           Column           |  Type   | Modifiers 
-----------------------------+---------+-----------
- cons_group                 | text    | 
- cons_target_rlbk_mark_name | text    | 
- cons_target_rlbk_mark_id   | bigint  | 
- cons_end_rlbk_mark_name    | text    | 
- cons_end_rlbk_mark_id      | bigint  | 
- cons_rows                  | bigint  | 
- cons_marks                 | integer | 
+            Column             |  Type   | Modifiers 
+-------------------------------+---------+-----------
+ cons_group                    | text    | 
+ cons_target_rlbk_mark_name    | text    | 
+ cons_target_rlbk_mark_time_id | bigint  | 
+ cons_end_rlbk_mark_name       | text    | 
+ cons_end_rlbk_mark_time_id    | bigint  | 
+ cons_rows                     | bigint  | 
+ cons_marks                    | integer | 
 
         Composite type "emaj.emaj_detailed_log_stat_type"
           Column          |           Type           | Modifiers 
@@ -284,12 +283,11 @@ primary key, btree, for table "emaj.emaj_hist"
  stat_last_mark_datetime  | timestamp with time zone | 
  stat_rows                | bigint                   | 
 
-                                          Table "emaj.emaj_mark"
-            Column            |  Type   |                            Modifiers                             
-------------------------------+---------+------------------------------------------------------------------
+               Table "emaj.emaj_mark"
+            Column            |  Type   | Modifiers 
+------------------------------+---------+-----------
  mark_group                   | text    | not null
  mark_name                    | text    | not null
- mark_id                      | bigint  | not null default nextval('emaj.emaj_mark_mark_id_seq'::regclass)
  mark_time_id                 | bigint  | not null
  mark_is_deleted              | boolean | not null
  mark_is_rlbk_protected       | boolean | not null
@@ -308,21 +306,6 @@ Foreign-key constraints:
 --------------+--------+--------------
  mark_time_id | bigint | mark_time_id
 btree, for table "emaj.emaj_mark"
-
-      Sequence "emaj.emaj_mark_mark_id_seq"
-    Column     |  Type   |         Value         
----------------+---------+-----------------------
- sequence_name | name    | emaj_mark_mark_id_seq
- last_value    | bigint  | 1
- start_value   | bigint  | 1
- increment_by  | bigint  | 1
- max_value     | bigint  | 9223372036854775807
- min_value     | bigint  | 1
- cache_value   | bigint  | 1
- log_cnt       | bigint  | 0
- is_cycled     | boolean | f
- is_called     | boolean | f
-Owned by: emaj.emaj_mark.mark_id
 
   Index "emaj.emaj_mark_pkey"
    Column   | Type | Definition 
