@@ -55,6 +55,7 @@ NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to constraint emaj_relation_rel_group_fkey on table emaj_relation
 drop cascades to constraint emaj_mark_mark_group_fkey on table emaj_mark
 NOTICE:  drop cascades to function _verify_groups(text[],boolean)
+NOTICE:  drop cascades to function emaj_get_consolidable_rollbacks()
 -----------------------------
 -- check installation
 -----------------------------
@@ -78,7 +79,6 @@ select relname from pg_catalog.pg_class,
  emaj_hist
  emaj_hist_hist_id_seq
  emaj_mark
- emaj_mark_mark_id_seq
  emaj_param
  emaj_relation
  emaj_rlbk
@@ -91,7 +91,7 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(20 rows)
+(19 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -174,16 +174,16 @@ Tablespace: "tspemaj"
 primary key, btree, for table "emaj.emaj_alter_plan"
 Tablespace: "tspemaj"
 
-         Composite type "emaj.emaj_consolidable_rollback_type"
-           Column           |  Type   | Collation | Nullable | Default 
-----------------------------+---------+-----------+----------+---------
- cons_group                 | text    |           |          | 
- cons_target_rlbk_mark_name | text    |           |          | 
- cons_target_rlbk_mark_id   | bigint  |           |          | 
- cons_end_rlbk_mark_name    | text    |           |          | 
- cons_end_rlbk_mark_id      | bigint  |           |          | 
- cons_rows                  | bigint  |           |          | 
- cons_marks                 | integer |           |          | 
+          Composite type "emaj.emaj_consolidable_rollback_type"
+            Column             |  Type   | Collation | Nullable | Default 
+-------------------------------+---------+-----------+----------+---------
+ cons_group                    | text    |           |          | 
+ cons_target_rlbk_mark_name    | text    |           |          | 
+ cons_target_rlbk_mark_time_id | bigint  |           |          | 
+ cons_end_rlbk_mark_name       | text    |           |          | 
+ cons_end_rlbk_mark_time_id    | bigint  |           |          | 
+ cons_rows                     | bigint  |           |          | 
+ cons_marks                    | integer |           |          | 
 
                   Composite type "emaj.emaj_detailed_log_stat_type"
           Column          |           Type           | Collation | Nullable | Default 
@@ -311,12 +311,11 @@ Tablespace: "tspemaj"
  stat_last_mark_datetime  | timestamp with time zone |           |          | 
  stat_rows                | bigint                   |           |          | 
 
-                                             Table "emaj.emaj_mark"
-            Column            |  Type   | Collation | Nullable |                     Default                     
-------------------------------+---------+-----------+----------+-------------------------------------------------
+                         Table "emaj.emaj_mark"
+            Column            |  Type   | Collation | Nullable | Default 
+------------------------------+---------+-----------+----------+---------
  mark_group                   | text    |           | not null | 
  mark_name                    | text    |           | not null | 
- mark_id                      | bigint  |           | not null | nextval('emaj.emaj_mark_mark_id_seq'::regclass)
  mark_time_id                 | bigint  |           | not null | 
  mark_is_deleted              | boolean |           | not null | 
  mark_is_rlbk_protected       | boolean |           | not null | 
@@ -337,12 +336,6 @@ Tablespace: "tspemaj"
  mark_time_id | bigint | mark_time_id
 btree, for table "emaj.emaj_mark"
 Tablespace: "tspemaj"
-
-                    Sequence "emaj.emaj_mark_mark_id_seq"
-  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
---------+-------+---------+---------------------+-----------+---------+-------
- bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
-Owned by: emaj.emaj_mark.mark_id
 
   Index "emaj.emaj_mark_pkey"
    Column   | Type | Definition 
@@ -1063,12 +1056,6 @@ select * from emaj.emaj_time_stamp_time_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
          18 |      15 | t
-(1 row)
-
-select * from emaj.emaj_mark_mark_id_seq;
- last_value | log_cnt | is_called 
-------------+---------+-----------
-         14 |      19 | t
 (1 row)
 
 select * from emaj.emaj_rlbk_rlbk_id_seq;
