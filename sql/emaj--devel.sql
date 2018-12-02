@@ -2529,52 +2529,6 @@ $_get_current_sequence_state$
   END;
 $_get_current_sequence_state$;
 
-CREATE OR REPLACE FUNCTION emaj._get_current_sequences_state(v_groupNames TEXT[], v_relKind TEXT, v_timeId BIGINT)
-RETURNS SETOF emaj.emaj_sequence LANGUAGE plpgsql AS
-$_get_current_sequences_state$
--- The function returns the current state of all log or application sequences for a tables groups array
--- Input: group names array,
---        kind of relations ('r' for log sequences, 'S' for application sequences),
---        time_id to set the sequ_time_id (if the time id is NULL, get the greatest BIGINT value, i.e. 9223372036854775807)
--- Output: a set of records of type emaj_sequence, with a sequ_time_id set to the supplied v_timeId value
-  DECLARE
-    r_tblsq                  RECORD;
-    r_sequ                   emaj.emaj_sequence%ROWTYPE;
-  BEGIN
---TODO: when postgres version 9.2 will not be supported anymore, replace the function by a single set oriented statement with a LATERAL clause
--- such as: SELECT t.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_log_schema, rel_log_sequence, v_timeId) AS t
---            WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
--- or:      SELECT t.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, v_timeId) AS t
---            WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
-    IF v_relKind = 'r' THEN
-      FOR r_tblsq IN
--- scan the log sequences of existing application tables currently linked to the groups
-          SELECT rel_log_schema, rel_log_sequence
-            FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relname = rel_log_sequence AND nspname = rel_log_schema AND relnamespace = pg_namespace.oid
-              AND upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
-            ORDER BY rel_priority, rel_schema, rel_tblseq
-        LOOP
-        SELECT * FROM emaj._get_current_sequence_state(r_tblsq.rel_log_schema, r_tblsq.rel_log_sequence, v_timeId) INTO r_sequ;
-        RETURN NEXT r_sequ;
-      END LOOP;
-    ELSE
-      FOR r_tblsq IN
--- scan the existing application sequences currently linked to the groups
-          SELECT rel_schema, rel_tblseq
-            FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relname = rel_tblseq AND nspname = rel_schema AND relnamespace = pg_namespace.oid
-              AND upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
-            ORDER BY rel_priority, rel_schema, rel_tblseq
-        LOOP
-        SELECT * FROM emaj._get_current_sequence_state(r_tblsq.rel_schema, r_tblsq.rel_tblseq, v_timeId) INTO r_sequ;
-        RETURN NEXT r_sequ;
-      END LOOP;
-    END IF;
-    RETURN;
-  END;
-$_get_current_sequences_state$;
-
 --------------------------------------------
 --                                        --
 --       Functions to manage groups       --
@@ -3946,9 +3900,18 @@ $_set_mark_groups$
       SELECT emaj._set_time_stamp('M') INTO v_timeId;
     END IF;
 -- record sequences state as early as possible (no lock protects them from other transactions activity)
+--   the join on pg_namespace and pg_class filters the potentially dropped application sequences
+    WITH seq AS (                        -- selected sequences
+      SELECT rel_schema, rel_tblseq
+        FROM emaj.emaj_relation, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relname = rel_tblseq AND nspname = rel_schema AND relnamespace = pg_namespace.oid
+          AND upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
+      )
     INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
                 sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-      SELECT * FROM emaj._get_current_sequences_state(v_groupNames, 'S', v_timeId);
+      SELECT t.*
+        FROM seq, 
+             LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, v_timeId) AS t;
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
 -- record the number of log rows for the old last mark of each group
 --   the statement updates no row in case of emaj_start_group(s)
@@ -3969,7 +3932,8 @@ $_set_mark_groups$
 -- for tables currently belonging to the groups, record the associated log sequence state into the emaj sequence table
     INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
                 sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-      SELECT * FROM emaj._get_current_sequences_state(v_groupNames, 'r', v_timeId);
+      SELECT seq.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_log_schema, rel_log_sequence, v_timeId) AS seq
+        WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r';
     GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
 -- record the mark for each group into the emaj_mark table
     INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
@@ -6847,8 +6811,9 @@ $emaj_snap_log_group$
 -- generate the full file name and the COPY statement
     IF v_noSuppliedLastMark THEN
       v_fileName = v_dir || '/' || translate(v_groupName || '_sequences_at_' || to_char(v_lastMarkTs,'HH24.MI.SS.MS'), E' /\\$<>*', '_______');
-      v_stmt = 'SELECT * FROM ' ||
-               'emaj._get_current_sequences_state(ARRAY[' || quote_literal(v_groupName) || '], ''S'', ' || v_lastMarkTimeId || ')';
+      v_stmt = 'SELECT seq.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, ' ||
+                                                                                               v_lastMarkTimeId || ') AS seq' ||
+               '  WHERE upper_inf(rel_time_range) AND rel_group = ' || quote_literal(v_groupName) || ' AND rel_kind = ''S''';
     ELSE
       v_fileName = v_dir || '/' || translate(v_groupName || '_sequences_at_' || v_lastMark, E' /\\$<>*', '_______');
       v_stmt = 'SELECT emaj_sequence.*' ||

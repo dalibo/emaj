@@ -17,6 +17,7 @@ E-Maj - Change log
     both mark identifiers are replaced by timestamp identifiers. This may
     impact clients calling this function.
   * The PostgreSQL versions prior 9.5 are not supported anymore.
+  * Minor coding improvements.
 
 ###Bug fixes:###
   * Fix error that may occur when a non emaj role tries to drop or alter an
