@@ -25,9 +25,9 @@ $do$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj installation: The current user (%) is not a superuser.', current_user;
     END IF;
--- check postgres version is >= 9.2
-    IF current_setting('server_version_num')::INT < 90200 THEN
-      RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 9.2.', current_setting('server_version');
+-- check postgres version is >= 9.5
+    IF current_setting('server_version_num')::INT < 90500 THEN
+      RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 9.5.', current_setting('server_version');
     END IF;
 -- create emaj roles (NOLOGIN), if they do not exist
 -- does 'emaj_adm' already exist ?
@@ -2542,8 +2542,10 @@ $_get_current_sequences_state$
     r_sequ                   emaj.emaj_sequence%ROWTYPE;
   BEGIN
 --TODO: when postgres version 9.2 will not be supported anymore, replace the function by a single set oriented statement with a LATERAL clause
--- such as: SELECT t.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_log_schema,rel_log_sequence,v_timeId) AS t
+-- such as: SELECT t.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_log_schema, rel_log_sequence, v_timeId) AS t
 --            WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+-- or:      SELECT t.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, v_timeId) AS t
+--            WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
     IF v_relKind = 'r' THEN
       FOR r_tblsq IN
 -- scan the log sequences of existing application tables currently linked to the groups
@@ -2594,9 +2596,9 @@ $_verify_groups$
   BEGIN
 -- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
 -- Let's start with some global checks that always raise an exception if an issue is detected
--- check the postgres version: E-Maj needs postgres 9.2+
-    IF emaj._pg_version_num() < 90200 THEN
-      RAISE EXCEPTION '_verify_groups : The current postgres version (%) is not compatible with this E-Maj version. It should be at least 9.2.', version();
+-- check the postgres version: E-Maj needs postgres 9.5+
+    IF emaj._pg_version_num() < 90500 THEN
+      RAISE EXCEPTION '_verify_groups : The current postgres version (%) is not compatible with this E-Maj version. It should be at least 9.5.', version();
     END IF;
 -- OK, now look for groups unconsistency
 -- Unlike emaj_verify_all(), there is no direct check that application schemas exist
@@ -3585,12 +3587,7 @@ $_start_groups$
       SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
 -- OK, lock all tables to get a stable point
 --   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
---   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
-      IF emaj._pg_version_num() >= 90500 THEN
-        PERFORM emaj._lock_groups(v_groupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
-      ELSE
-        PERFORM emaj._lock_groups(v_groupNames,'ACCESS EXCLUSIVE',v_multiGroup);
-      END IF;
+      PERFORM emaj._lock_groups(v_groupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
 -- enable all log triggers for the groups
 -- for each relation currently belonging to the group,
       FOR r_tblsq IN
@@ -3713,12 +3710,7 @@ $_stop_groups$
 -- OK (no error detected and at least one group in logging state)
 -- lock all tables to get a stable point
 --   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the risk of deadlock.
---   the requested lock level is based on the lock level of the future ALTER TABLE, which depends on the postgres version.
-      IF emaj._pg_version_num() >= 90500 THEN
-        PERFORM emaj._lock_groups(v_groupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
-      ELSE
-        PERFORM emaj._lock_groups(v_groupNames,'ACCESS EXCLUSIVE',v_multiGroup);
-      END IF;
+      PERFORM emaj._lock_groups(v_groupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
 -- verify that all application schemas for the groups still exists
       FOR r_schema IN
           SELECT DISTINCT rel_schema FROM emaj.emaj_relation
@@ -5238,7 +5230,6 @@ $_rlbk_session_lock$
     v_isDblinkUsable         BOOLEAN = FALSE;
     v_groupNames             TEXT[];
     v_nbRetry                SMALLINT = 0;
-    v_lockmode               TEXT;
     v_ok                     BOOLEAN = FALSE;
     v_nbTbl                  INT;
     r_tbl                    RECORD;
@@ -5286,17 +5277,11 @@ $_rlbk_session_lock$
             ORDER BY rel_priority, rel_schema, rel_tblseq
             LOOP
 --   lock each table
---     The locking level is EXCLUSIVE mode, except for tables whose log trigger needs to be disabled/enables when postgres version is prior 9.5.
---     In this later case, the ACCESS EXCLUSIVE mode is used, blocking all concurrent accesses to these tables.
---     In the former case, the EXCLUSIVE mode blocks all concurrent update capabilities of all tables of the groups (including tables with no logged
---     update to rollback), in order to ensure a stable state of the group at the end of the rollback operation). But these tables can be accessed
---     by SELECT statements during the E-Maj rollback.
-          IF emaj._pg_version_num() < 90500 AND r_tbl.disLogTrg THEN
-            v_lockmode = 'ACCESS EXCLUSIVE';
-          ELSE
-            v_lockmode = 'EXCLUSIVE';
-          END IF;
-          EXECUTE 'LOCK TABLE ' || r_tbl.fullName || ' IN ' || v_lockmode || ' MODE';
+--     The locking level is EXCLUSIVE mode.
+--     This blocks all concurrent update capabilities of all tables of the groups (including tables with no logged update to rollback),
+--     in order to ensure a stable state of the group at the end of the rollback operation).
+--     But these tables can be accessed by SELECT statements during the E-Maj rollback.
+          EXECUTE 'LOCK TABLE ' || r_tbl.fullName || ' IN EXCLUSIVE MODE';
           v_nbTbl = v_nbTbl + 1;
         END LOOP;
 -- ok, all tables locked
@@ -5723,7 +5708,6 @@ $_rlbk_end$
     END IF;
 -- then, for new style calling functions, return the WARNING messages for any elementary action from alter group operations that has not been rolled back
     IF v_isAlterGroupAllowed IS NOT NULL THEN
---TODO: add missing cases
       rlbk_severity = 'Warning';
       FOR r_msg IN
 -- steps are splitted into 2 groups to filter them differently
@@ -7497,24 +7481,22 @@ $emaj_verify_all$
     r_object                 RECORD;
   BEGIN
 -- Global checks
--- detect if the current postgres version is at least 9.2
-    IF emaj._pg_version_num() < 90200 THEN
-      RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with this E-Maj version. It should be at least 9.2.';
+-- detect if the current postgres version is at least 9.5
+    IF emaj._pg_version_num() < 90500 THEN
+      RETURN NEXT 'The current postgres version (' || version() || ') is not compatible with this E-Maj version. It should be at least 9.5.';
       v_errorFound = TRUE;
     END IF;
-    IF emaj._pg_version_num() >= 90300 THEN
--- With postgres 9.3+, report a warning if some E-Maj event triggers are missing
-      SELECT (CASE WHEN emaj._pg_version_num() >= 90500 THEN 3 WHEN emaj._pg_version_num() >= 90300 THEN 2 END) - count(*)
-        INTO v_nbMissingEventTrigger FROM pg_catalog.pg_event_trigger
-        WHERE evtname IN ('emaj_protection_trg','emaj_sql_drop_trg','emaj_table_rewrite_trg');
-      IF v_nbMissingEventTrigger > 0 THEN
-        RETURN NEXT 'Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.';
-      END IF;
--- With postgres 9.3+, report a warning if some E-Maj event triggers exist but are not enabled
-      PERFORM 1 FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
-      IF FOUND THEN
-        RETURN NEXT 'Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.';
-      END IF;
+-- report a warning if some E-Maj event triggers are missing
+    SELECT 3 - count(*)
+      INTO v_nbMissingEventTrigger FROM pg_catalog.pg_event_trigger
+      WHERE evtname IN ('emaj_protection_trg','emaj_sql_drop_trg','emaj_table_rewrite_trg');
+    IF v_nbMissingEventTrigger > 0 THEN
+      RETURN NEXT 'Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.';
+    END IF;
+-- report a warning if some E-Maj event triggers exist but are not enabled
+    PERFORM 1 FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
+    IF FOUND THEN
+      RETURN NEXT 'Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.';
     END IF;
 -- check all E-Maj primary and secondary schemas
     FOR r_object IN
@@ -7633,23 +7615,9 @@ $_adjust_group_properties$;
 
 ------------------------------------------
 --                                      --
--- event triggers and related functions --
+-- event trigger related functions      --
 --                                      --
 ------------------------------------------
---
--- Event triggers creation depends on postgres version:
--- - sql_drop event trigger needs postgres 9.3+
--- - table_rewrite trigger needs postgres 9.5+
--- If E-Maj has been installed with older postgres versions, and this version has then been upgraded, the
--- set_event_triggers_protection.sql script can be used to add the missing components.
-
-DO
-$do$
-BEGIN
-
--- beginning of 9.3+ specific code
-IF emaj._pg_version_num() >= 90300 THEN
--- sql_drop event trigger are only possible with postgres 9.3+
 
 CREATE OR REPLACE FUNCTION public._emaj_protection_event_trigger_fnct()
  RETURNS EVENT_TRIGGER LANGUAGE plpgsql AS
@@ -7680,26 +7648,6 @@ $_emaj_protection_event_trigger_fnct$;
 COMMENT ON FUNCTION public._emaj_protection_event_trigger_fnct() IS
 $$E-Maj extension: support of the emaj_protection_trg event trigger.$$;
 
--- all commands involving an event trigger is submitted by an EXECUTE instruction
--- this is needed for compatibility with pre 9.3 postgres version that do not know event triggers
-EXECUTE '
-DROP EVENT TRIGGER IF EXISTS emaj_protection_trg;
-CREATE EVENT TRIGGER emaj_protection_trg
-  ON sql_drop
-  WHEN TAG IN (''DROP EXTENSION'',''DROP SCHEMA'')
-  EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
-';
-EXECUTE '
-COMMENT ON EVENT TRIGGER emaj_protection_trg IS
-$$Blocks the removal of the emaj extension or schema.$$;
-';
-
--- remove both event trigger components from the extension, so that they can fire the "DROP EXTENSION emaj"
-ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
-EXECUTE '
-ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
-';
-
 CREATE OR REPLACE FUNCTION emaj._event_trigger_sql_drop_fnct()
  RETURNS EVENT_TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS
 $_event_trigger_sql_drop_fnct$
@@ -7715,10 +7663,7 @@ $_event_trigger_sql_drop_fnct$
   BEGIN
 -- scan all dropped objects
     FOR r_dropped IN
-      SELECT * FROM pg_event_trigger_dropped_objects()
---TODO: when postgres 9.4 will not be supported any more, replace the statement by:
---      SELECT object_type, schema_name, object_name, object_identity, original FROM pg_event_trigger_dropped_objects()
--- (the 'original' column is not known in pg9.4- versions)
+      SELECT object_type, schema_name, object_name, object_identity, original FROM pg_event_trigger_dropped_objects()
     LOOP
       CASE
         WHEN r_dropped.object_type = 'schema' THEN
@@ -7777,14 +7722,11 @@ $_event_trigger_sql_drop_fnct$
           END IF;
         WHEN r_dropped.object_type = 'trigger' THEN
 -- the object is a trigger
---   if postgres version is 9.5+ (to see the 'original' column of the pg_event_trigger_dropped_objects() function),
 --   look at the trigger name pattern to identify emaj trigger
 --   and do not raise an exception if the triggers drop is derived from a drop of a table or a function
-          IF emaj._pg_version_num() >= 90500 THEN
-            IF r_dropped.original AND
-               (r_dropped.object_identity LIKE 'emaj_log_trg%' OR r_dropped.object_identity LIKE 'emaj_trunc_trg%') THEN
-              RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the "%" E-Maj trigger. But dropping an E-Maj trigger is not allowed.', r_dropped.object_identity;
-            END IF;
+          IF r_dropped.original AND
+             (r_dropped.object_identity LIKE 'emaj_log_trg%' OR r_dropped.object_identity LIKE 'emaj_trunc_trg%') THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the "%" E-Maj trigger. But dropping an E-Maj trigger is not allowed.', r_dropped.object_identity;
           END IF;
         ELSE
           CONTINUE;
@@ -7794,25 +7736,6 @@ $_event_trigger_sql_drop_fnct$
 $_event_trigger_sql_drop_fnct$;
 COMMENT ON FUNCTION emaj._event_trigger_sql_drop_fnct() IS
 $$E-Maj extension: support of the emaj_sql_drop_trg event trigger.$$;
-
-EXECUTE '
-DROP EVENT TRIGGER IF EXISTS emaj_sql_drop_trg;
-CREATE EVENT TRIGGER emaj_sql_drop_trg
-  ON sql_drop
-  WHEN TAG IN (''DROP FUNCTION'',''DROP SCHEMA'',''DROP SEQUENCE'',''DROP TABLE'',''DROP TRIGGER'')
-  EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
-';
-EXECUTE '
-COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
-$$Controls the removal of E-Maj components.$$;
-';
-
--- end of 9.3+ specific code
-END IF;
-
--- beginning of 9.5+ specific code
-IF emaj._pg_version_num() >= 90500 THEN
--- table_rewrite event trigger are only possible with postgres 9.5+
 
 CREATE OR REPLACE FUNCTION emaj._event_trigger_table_rewrite_fnct()
  RETURNS EVENT_TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS
@@ -7852,23 +7775,8 @@ $_event_trigger_table_rewrite_fnct$;
 COMMENT ON FUNCTION emaj._event_trigger_table_rewrite_fnct() IS
 $$E-Maj extension: support of the emaj_table_rewrite_trg event trigger.$$;
 
-EXECUTE '
-DROP EVENT TRIGGER IF EXISTS emaj_table_rewrite_trg;
-CREATE EVENT TRIGGER emaj_table_rewrite_trg
-  ON table_rewrite
-  EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
-';
-EXECUTE '
-COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
-$$Controls some changes in E-Maj tables structure.$$;
-';
-
--- end of 9.5+ specific code
-END IF;
-END $do$;
-
 CREATE OR REPLACE FUNCTION emaj.emaj_disable_protection_by_event_triggers()
- RETURNS INT LANGUAGE plpgsql AS
+  RETURNS INT LANGUAGE plpgsql AS
 $emaj_disable_protection_by_event_triggers$
 -- This function disables all known E-Maj event triggers that are in enabled state.
 -- It may be used by an emaj_adm role.
@@ -7898,14 +7806,11 @@ $emaj_enable_protection_by_event_triggers$
   DECLARE
     v_eventTriggers          TEXT[];
   BEGIN
-    IF emaj._pg_version_num() >= 90300 THEN
 -- build the event trigger names array from the pg_event_trigger table
--- (pg_event_trigger table doesn't exists in 9.2- postgres versions)
-      SELECT coalesce(array_agg(evtname  ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
-        FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
+    SELECT coalesce(array_agg(evtname  ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
+      FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
 -- call the _enable_event_triggers() function
-      PERFORM emaj._enable_event_triggers(v_eventTriggers);
-    END IF;
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
 -- insert a row into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
       VALUES ('ENABLE_PROTECTION', 'EVENT TRIGGERS ENABLED',
@@ -7929,18 +7834,16 @@ $_disable_event_triggers$
     v_eventTrigger           TEXT;
     v_eventTriggers          TEXT[] = ARRAY[]::TEXT[];
   BEGIN
-    IF emaj._pg_version_num() >= 90300 THEN
 -- build the event trigger names array from the pg_event_trigger table
 -- (pg_event_trigger table doesn't exists in 9.2- postgres versions)
 -- A single operation like emaj_alter_groups() may call the function several times. But this is not an issue as only enabled triggers are disabled.
-      SELECT coalesce(array_agg(evtname ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
-        FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled <> 'D';
+    SELECT coalesce(array_agg(evtname ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
+      FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled <> 'D';
 -- disable each event trigger
-      FOREACH v_eventTrigger IN ARRAY v_eventTriggers
-      LOOP
-        EXECUTE 'ALTER EVENT TRIGGER ' || v_eventTrigger || ' DISABLE';
-      END LOOP;
-    END IF;
+    FOREACH v_eventTrigger IN ARRAY v_eventTriggers
+    LOOP
+      EXECUTE 'ALTER EVENT TRIGGER ' || v_eventTrigger || ' DISABLE';
+    END LOOP;
     RETURN v_eventTriggers;
   END;
 $_disable_event_triggers$;
@@ -7964,6 +7867,49 @@ $_enable_event_triggers$
     RETURN v_eventTriggers;
   END;
 $_enable_event_triggers$;
+
+
+
+------------------------------------------
+--                                      --
+-- event triggers                       --
+--                                      --
+------------------------------------------
+--
+-- Event triggers creation depends on postgres version:
+-- - sql_drop event trigger needs postgres 9.3+
+-- - table_rewrite trigger needs postgres 9.5+
+-- Now that the oldest supported postgres version is 9.5, all installations should have both event triggers
+-- If E-Maj has been installed with older postgres versions, and this version has then been upgraded, the
+-- set_event_triggers_protection.sql script can be used to add the missing components.
+
+-- sql_drop event triggers
+
+CREATE EVENT TRIGGER emaj_protection_trg
+  ON sql_drop
+  WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
+  EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
+COMMENT ON EVENT TRIGGER emaj_protection_trg IS
+$$Blocks the removal of the emaj extension or schema.$$;
+
+-- remove both event trigger components from the extension, so that they can fire the "DROP EXTENSION emaj"
+ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
+ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
+
+CREATE EVENT TRIGGER emaj_sql_drop_trg
+  ON sql_drop
+  WHEN TAG IN ('DROP FUNCTION','DROP SCHEMA','DROP SEQUENCE','DROP TABLE','DROP TRIGGER')
+  EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
+COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
+$$Controls the removal of E-Maj components.$$;
+
+-- table_rewrite event trigger
+
+CREATE EVENT TRIGGER emaj_table_rewrite_trg
+  ON table_rewrite
+  EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
+COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
+$$Controls some changes in E-Maj tables structure.$$;
 
 ------------------------------------
 --                                --

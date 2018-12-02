@@ -22,7 +22,7 @@
 typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_STANDART_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
 typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('9.3!9.6' '9.5!11')
-typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='9.2!10'
+typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='9.5!11'
 typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_UPGRADE_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
 typeset -r EMAJ_REGTEST_MIXED=('install_previous' 'setup' 'before_upg_while_logging' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
@@ -167,7 +167,7 @@ pg_upgrade_test()
   rm -Rf ${oldPGDATA}/tsplog2/${TSPDIRPREFIX}*
   rm -Rf ${oldPGDATA}/emaj_tblsp/${TSPDIRPREFIX}*
   mkdir ${newPGDATA}
-  ${newPGBIN}/initdb -D ${newPGDATA} -U ${newPGUSER}
+  ${newPGBIN}/initdb -D ${newPGDATA} -U ${newPGUSER} -k
   sed -i "s/#port = 5432/port = ${newPGPORT}/" ${newPGDATA}/postgresql.conf
   echo " "
   echo "--> stopping the old cluster..."

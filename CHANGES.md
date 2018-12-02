@@ -16,6 +16,7 @@ E-Maj - Change log
   * In the structure of the emaj_get_consolidable_rollbacks() return type,
     both mark identifiers are replaced by timestamp identifiers. This may
     impact clients calling this function.
+  * The PostgreSQL versions prior 9.5 are not supported anymore.
 
 ###Bug fixes:###
   * Fix error that may occur when a non emaj role tries to drop or alter an

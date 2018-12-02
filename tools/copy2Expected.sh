@@ -6,15 +6,6 @@
 
 EMAJ_HOME="/home/postgres/proj/emaj"
 
-rm $EMAJ_HOME/test/92/expected/*
-cp $EMAJ_HOME/test/92/results/*.out $EMAJ_HOME/test/92/expected/.
-
-rm $EMAJ_HOME/test/93/expected/*
-cp $EMAJ_HOME/test/93/results/*.out $EMAJ_HOME/test/93/expected/.
-
-rm $EMAJ_HOME/test/94/expected/*
-cp $EMAJ_HOME/test/94/results/*.out $EMAJ_HOME/test/94/expected/.
-
 rm $EMAJ_HOME/test/95/expected/*
 cp $EMAJ_HOME/test/95/results/*.out $EMAJ_HOME/test/95/expected/.
 

@@ -1829,7 +1829,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 78 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 73 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
@@ -1871,7 +1871,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 91 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 86 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
@@ -1909,7 +1909,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 101 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 96 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
@@ -1976,7 +1976,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The schema "myschema2" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 60 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 55 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to force the group's stop and drop the group
@@ -2080,38 +2080,38 @@ select emaj.emaj_enable_protection_by_event_triggers();
 begin;
   drop table myschema1.mytbl1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the application table "myschema1.mytbl1". But it belongs to the active tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 42 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 39 at RAISE
 rollback;
 begin;
   drop sequence myschema2.mySeq1;
 ERROR:  E-Maj event trigger: Attempting to drop the application sequence "myschema2.myseq1". But it belongs to the active tables group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 58 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 55 at RAISE
 rollback;
 begin;
   drop schema myschema1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the application schema "myschema1". But it belongs to the active tables groups "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 27 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 24 at RAISE
 rollback;
 -- drop emaj components
 begin;
   drop table "emajC"."myschema1_myTbl3_log";
 ERROR:  E-Maj event trigger: Attempting to drop the log table "emajC.myschema1_myTbl3_log". But dropping an E-Maj log table is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 48 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 45 at RAISE
 rollback;
 begin;
   drop sequence emaj.myschema1_mytbl1_log_seq;
 ERROR:  E-Maj event trigger: Attempting to drop the log sequence "emaj.myschema1_mytbl1_log_seq". But dropping an E-Maj sequence is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 64 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 61 at RAISE
 rollback;
 begin;
   drop function "emajC"."myschema1_myTbl3_log_fnct"() cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the log function ""emajC"."myschema1_myTbl3_log_fnct"()". But dropping an E-Maj log function is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 72 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 69 at RAISE
 rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
 ERROR:  E-Maj event trigger: Attempting to drop the "emaj_log_trg on myschema1.mytbl1" E-Maj trigger. But dropping an E-Maj trigger is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 82 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 77 at RAISE
 rollback;
 begin;
   drop schema emaj cascade;
@@ -2121,7 +2121,7 @@ rollback;
 begin;
   drop schema emajb cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the schema "emajb". But dropping an E-Maj schema is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 33 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 30 at RAISE
 rollback;
 begin;
   drop extension emaj cascade;

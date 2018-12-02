@@ -26,7 +26,7 @@ By using the :ref:`emaj_verify_all() <emaj_verify_all>` function, the administra
 Event triggers
 --------------
 
-Installing E-Maj on instances using PostgreSQL version 9.3 or higher adds 2 event triggers of type “*sql_drop*“:
+Installing E-Maj adds 2 event triggers of type “*sql_drop*“:
 
 * *emaj_sql_drop_trg* blocks the drop attempts of:
 
@@ -36,7 +36,7 @@ Installing E-Maj on instances using PostgreSQL version 9.3 or higher adds 2 even
 
 * *emaj_protection_trg* blocks the drop attempts of the *emaj* extension itself and the main *emaj* schema.
 
-Installing E-Maj on instances using PostgreSQL version 9.5 or higher adds 1 event trigger of type “table_rewrite”:
+Installing E-Maj also adds an event trigger of type “table_rewrite”:
 
 * *emaj_table_rewrite_trg* blocks any structure change of application or log table.
 

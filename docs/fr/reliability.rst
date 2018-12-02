@@ -26,7 +26,7 @@ En utilisant la fonction :ref:`emaj_verify_all() <emaj_verify_all>`, l'administr
 Triggers sur événements
 -----------------------
 
-L'installation d'E-Maj dans des instances PostgreSQL de version 9.3 et suivantes inclut la création de 2 triggers sur événements de type « *sql_drop* » :
+L'installation d'E-Maj inclut la création de 2 triggers sur événements de type « *sql_drop* » :
 
 * *emaj_sql_drop_trg* bloque la suppression :
 
@@ -36,7 +36,7 @@ L'installation d'E-Maj dans des instances PostgreSQL de version 9.3 et suivantes
 
 * *emaj_protection_trg* bloque la suppression de l'extension *emaj* elle-même et du schéma principal *emaj*.
 
-L'installation d'E-Maj dans des instances PostgreSQL de version 9.5 et suivantes inclut la création d'un 3ème trigger sur événements, de type « *table_rewrite* ».
+L'installation d'E-Maj inclut aussi la création d'un 3ème trigger sur événements, de type « *table_rewrite* » :
 
 * *emaj_table_rewrite_trg* bloque tout changement de structure de table applicative ou de table de log.
 

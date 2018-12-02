@@ -452,7 +452,7 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 78 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 73 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 rollback;
 -- should be OK
@@ -762,7 +762,7 @@ begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 ERROR:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 78 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 73 at RAISE
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 7 at RETURN
 rollback;
 -- should be OK

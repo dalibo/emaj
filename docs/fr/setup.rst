@@ -39,7 +39,7 @@ L'extension E-Maj peut maintenant être créée dans la base de données, en ex�
 
 Pour les versions de PostgreSQL antérieures à la version 9.6, la clause *CASCADE* n’existe pas. Les :ref:`extensions pré-requises doivent être créées explicitement <preliminary_operations>` si nécessaire.
 
-Le script commence par vérifier que la version de PostgreSQL est supérieure ou égale à la version 9.2, que le rôle qui exécute le script a bien l'attribut *superuser*.
+Le script commence par vérifier que la version de PostgreSQL est supérieure ou égale à la version 9.5, que le rôle qui exécute le script a bien l'attribut *superuser*.
 
 Le script crée alors le schéma *emaj* avec ses tables techniques, ses types et ses fonctions. 
 

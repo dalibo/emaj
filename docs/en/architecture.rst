@@ -56,7 +56,7 @@ To let E-Maj work, some **other technical objects** are also created at extensio
 * 1 sequence named *emaj_global_seq* used to assign to every update recorded in any log table of the database a unique identifier with an increasing value over time,
 * 1 specific schema, named emaj, that contains all these relational objects,
 * 2 roles acting as groups (NOLOGIN): *emaj_adm* to manage E-Maj components, and *emaj_viewer* to only look at E-Maj components
-* 2 event triggers when the PostgreSQL version is 9.3 or 9.4 and 3 event triggers when the PostgreSQL version is at least 9.5.
+* 3 event triggers.
 
 Some technical tables, whose structure is interesting to know, are described in details: :ref:`emaj_group_def <emaj_group_def>`, :ref:`emaj_param <emaj_param>` and :ref:`emaj_hist <emaj_hist>`.
 

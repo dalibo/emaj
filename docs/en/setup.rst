@@ -40,7 +40,7 @@ The E-Maj extension can now be created into the database, by executing the SQL c
 
 With PostgreSQL version prior 9.6, the *CASCADE* clause doesn’t exist. In that case,the needed extensions must be :ref:`explicitely created before emaj <preliminary_operations>`.
 
-To start with, the script verifies that the PostgreSQL version is at least 9.2, and that the current user has the *superuser* attribute.
+To start with, the script verifies that the PostgreSQL version is at least 9.5, and that the current user has the *superuser* attribute.
 
 Then the script creates the *emaj* schema with its technical tables, types and functions. 
 

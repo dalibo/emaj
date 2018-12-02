@@ -56,7 +56,7 @@ Pour le bon fonctionnement d'E-Maj, un certain nombre d'**objets techniques** so
 * 1 séquence, nommée *emaj_global_seq*, permettant d'associer à chaque mise à jour enregistrée dans une table de log quelconque de la base de données un identifiant unique de valeur croissante au fil du temps,
 * 1 schéma spécifique, nommé *emaj*, qui contient tous ces objets,
 * 2 rôles de type groupe (sans possibilité de connexion) : *emaj_adm* pour administrer les composants E-Maj, et *emaj_viewer* pour uniquement consulter les composants E-Maj,
-* 2 triggers sur événement avec PostgreSQL 9.3 et 9.4 et 3 triggers sur événement à partir de PostgreSQL 9.5.
+* 3 triggers sur événement.
 
 Quelques tables techniques dont il peut être utile de connaître la structure sont décrites en détail :  :ref:`emaj_group_def <emaj_group_def>`, :ref:`emaj_param <emaj_param>` et :ref:`emaj_hist <emaj_hist>`.
 

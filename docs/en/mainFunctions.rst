@@ -155,7 +155,7 @@ The *<are.old.logs.to.be.deleted?>* parameter is an optional boolean. By default
 
 The function returns the number of tables and sequences contained by the group.
 
-To be sure that no transaction implying any table of the group is currently running, the *emaj_start_group()* function explicitly sets on each table of the group an *ACCESS EXCLUSIVE* lock if the PostgreSQL version is prior 9.5, or *SHARE ROW EXCLUSIVE* lock in other cases. If transactions accessing these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
+To be sure that no transaction implying any table of the group is currently running, the *emaj_start_group()* function explicitly sets a *SHARE ROW EXCLUSIVE* lock on each table of the group. If transactions accessing these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
 
 The function also performs a purge of the oldest events in the :ref:`emaj_hist <emaj_hist>` technical table.
 
@@ -217,7 +217,7 @@ The third parameter is a boolean that indicates whether the rollback operation m
 
 The function returns a set of rows with a severity level set to either “*Notice*” or “*Warning*” values, and a textual message. The function returns a “*Notice*” row indicating the number of tables and sequences that have been effectively modified by the rollback operation. Other messages of type “*Warning*” may also be reported when the rollback operation has processed tables group changes.
 
-To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If the PostgreSQL version is prior 9.5, the lock mode is even *ACCESS EXCLUSIVE* for tables having updates to cancel and whose log trigger must consequently be disabled during the operation. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
+To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 
 If tables belonging to the group to rollback have triggers, it may be necessary to de-activate them before the rollback and re-activate them after (more details :ref:`here <application_triggers>`).
 
@@ -339,7 +339,7 @@ The function returns the number of tables and sequences contained in the group.
 
 If the mark parameter is not specified or is empty or *NULL*, a mark name is generated: "*STOP_%*" where '%' represents the current transaction start time expressed as “*hh.mn.ss.mmm*”.
 
-Stopping a tables group simply deactivates log triggers of application tables of the group. The setting of *ACCESS EXCLUSIVE* locks for PostgreSQL versions prior 9.5, or *SHARE ROW EXCLUSIVE* locks in other cases, can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
+Stopping a tables group simply deactivates log triggers of application tables of the group. The setting of *SHARE ROW EXCLUSIVE* locks may lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
 
 Additionally, the *emaj_stop_group()* function changes the status of all marks set for the group into a *DELETED* state. Then, it is not possible to execute a rollback command any more, even though no updates have been applied on tables between the execution of both *emaj_stop_group()* and :ref:`emaj_rollback_group() <emaj_rollback_group>` functions.
 
