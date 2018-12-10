@@ -138,13 +138,14 @@ A solid test environment is supplied in the repository. It contains:
 The test scenarios
 ''''''''''''''''''
 
-The test system contains 3 scenarios:
+The test system contains 4 scenarios:
 
 * a full standart scenario,
+* the same scenario but installing the extension with the *emaj-devel.sql* script provided for cases when a *“CREATE EXTENSION emaj*” statement is not possible,
 * the same scenario but installing the extension from the previous version with an immediate upgrade into the current version,
 * a shorter scenario but with an upgrade into the current version while tables groups are in logging state.
 
-The 3 scenarios call *psql* scripts, all located into the *test/sql* directory. The scripts chain E-Maj function calls in different contexts, and SQL statements to prepare or check the results.
+These scenarios call *psql* scripts, all located into the *test/sql* directory. The scripts chain E-Maj function calls in different contexts, and SQL statements to prepare or check the results.
 
 At the end of scripts, internal sequences are often reset, so that a single function call insertion does not produce impacts in the next scripts results.
 
@@ -173,7 +174,7 @@ The test tool can be launched with the command::
 
    tools/regress.sh
 
-As it starts with a copy of the *emaj.control* file into the *SHAREDIR/extension* directory of each configured PostgreSQL version, it may ask for the password of the Linux account to be able to execute *sudo* commands.
+As it starts with a copy of the *emaj.control* file into the *SHAREDIR/extension* directory of each configured PostgreSQL version, it may ask for the password of the Linux account to be able to execute *sudo* commands. It also automatically generates the *emaj-devel.sql* script used to create the extension with *psql*.
 
 It then displays the list of test functions in a menu. Just enter the letter corresponding to the choosen test.
 
@@ -181,6 +182,7 @@ The test functions are:
 
 * standart tests for each configured PostgreSQL version,
 * the tests with the installation of the previous version followed by an upgrade,
+* the tests with the installation of the version with the *emaj-devel.sql* script,
 * the tests with an E-Maj version upgrade while tables groups are in logging state,
 * tests chaining a database save with *pg_dump* and a restore, with different PostgreSQL versions,
 * a PostgreSQL upgrade version test using *pg_upgrade* with a database containing the E-Maj extension.

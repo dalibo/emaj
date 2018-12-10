@@ -1,6 +1,4 @@
 -- install.sql : install E-Maj as an extension (for postgres version 9.1+)
---               First install with psql script and then transform emaj objects as extension
---               Then directly install as extension
 --
 -----------------------------
 -- install dblink and btree_gist
@@ -11,6 +9,13 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 -- emaj installation as extension
 -----------------------------
 CREATE EXTENSION emaj VERSION 'devel';
+-----------------------------
+-- verify that dropping the extension is blocked by event trigger
+-----------------------------
+BEGIN;
+  DROP EXTENSION emaj CASCADE;
+ERROR:  E-Maj event trigger: Attempting to drop the emaj extension. Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.
+ROLLBACK;
 -----------------------------
 -- check installation
 -----------------------------

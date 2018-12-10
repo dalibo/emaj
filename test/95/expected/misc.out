@@ -2118,10 +2118,7 @@ begin;
   drop schema emajb cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the schema "emajb". But dropping an E-Maj schema is not allowed.
 rollback;
-begin;
-  drop extension emaj cascade;
-ERROR:  E-Maj event trigger: Attempting to drop the emaj extension. Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.
-rollback;
+-- dropping the extension in tested by the install sql script because it depends on the way the extension is created
 -- change a table structure that leads to a table rewrite
 begin;
   alter table myschema1.mytbl1 alter column col13 type varchar(10);

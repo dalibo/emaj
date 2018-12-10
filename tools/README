@@ -3,6 +3,7 @@ tools/README
 The tool directory contains several tools that may be essential or useful in E-Maj development:
 - regress.sh is a shell script that selects and executes regression tests,
 - copy2Expected.sh is a shell script that copys the result files of regression tests environment to the reference directory,
+- create_sql_install_script.pl is a perl script that generates the psql install script from the extension install script,
 - check_code.pl is a perl script that performs various checks on the script that creates the emaj extension,
 - check_error_messages.pl is a perl script that analyzes how the non regression tests cover the error or warning messages coded in the E-Maj source file,
 - sync_fct_in_upgrade_script.pl is a perl script that generates the functions part of the upgrade scripts,
@@ -60,6 +61,12 @@ Customisation:
 At the beginning of the script (near line 7), the variable EMAJ_HOME is initialized with the emaj project root directory. You must adapt its value to fit your installation.
 Then for each available major postgres version on the environment, 2 commands copy the ouput test files from the /results to the /expected directories. You must adapt the script to your installed major postgres versions.
 
+create_sql_install_script.pl
+----------------------------
+The create_sql_install_script.pl perl script generates the psql install script from the extension install script. It reads the sql/emaj--devel.sql file and writes the sql/emaj-devel.sql file. The tool is called by regress.sh at every execution, so that both install scripts are maintained in-sync. It performs about 10 changes in the source code. To do that, it recognizes some specific pieces of code and performs the changes. A final check verifies that all expected patterns have been found.
+
+Customisation:
+No customization is required.
 
 check_code.pl
 -------------

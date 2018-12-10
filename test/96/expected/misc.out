@@ -2123,11 +2123,7 @@ begin;
 ERROR:  E-Maj event trigger: Attempting to drop the schema "emajb". But dropping an E-Maj schema is not allowed.
 CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 30 at RAISE
 rollback;
-begin;
-  drop extension emaj cascade;
-ERROR:  E-Maj event trigger: Attempting to drop the emaj extension. Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.
-CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 20 at RAISE
-rollback;
+-- dropping the extension in tested by the install sql script because it depends on the way the extension is created
 -- change a table structure that leads to a table rewrite
 begin;
   alter table myschema1.mytbl1 alter column col13 type varchar(10);

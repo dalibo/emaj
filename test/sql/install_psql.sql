@@ -1,4 +1,4 @@
--- install.sql : install E-Maj as an extension (for postgres version 9.1+)
+-- install_psql.sql : install E-Maj with a psql script
 --
 -----------------------------
 -- install dblink and btree_gist
@@ -9,24 +9,11 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 -----------------------------
 -- emaj installation as extension
 -----------------------------
-CREATE EXTENSION emaj VERSION 'devel';
-
------------------------------
--- verify that dropping the extension is blocked by event trigger
------------------------------
-BEGIN;
-  DROP EXTENSION emaj CASCADE;
-ROLLBACK;
+\i sql/emaj-devel.sql
 
 -----------------------------
 -- check installation
 -----------------------------
--- check impact in catalog
-select extname, extversion from pg_extension where extname = 'emaj';
-select relname from pg_catalog.pg_class, 
-                    (select unnest(extconfig) as oid from pg_catalog.pg_extension where extname = 'emaj') as t 
-  where t.oid = pg_class.oid
-  order by 1;
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';

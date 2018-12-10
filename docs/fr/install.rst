@@ -14,25 +14,25 @@ E-Maj et ses compléments sont également disponibles sur le site Internet **git
 * Interface graphique Emaj_web (https://github.com/beaud76/emaj_web)
 
 
-Installation sur Linux
-**********************
+Installation standard sur Linux
+*******************************
 
-Télécharger la dernière version d’E-Maj par un moyen à votre convenance. Si le *client pgxn* est installé, on peut simplement exécuter la commande ::
+Téléchargez la dernière version d’E-Maj par un moyen à votre convenance. Si le *client pgxn* est installé, on peut simplement exécuter la commande ::
 
 	pgxn download E-Maj
 
-Puis décompresser l’archive avec les commandes suivantes ::
+Puis décompressez l’archive avec les commandes suivantes ::
 
 	unzip e-maj-<version>.zip
 
 	cd e-maj-<version>/
 
-Identifier la localisation précise du répertoire *SHAREDIR*. Selon l’installation de PostgreSQL, la commande *pg_config --sharedir* peut retourner directement le nom du répertoire. Sinon, rechercher les localisations typiques, telles que :
+Identifiez la localisation précise du répertoire *SHAREDIR*. Selon l’installation de PostgreSQL, la commande *pg_config --sharedir* peut retourner directement le nom du répertoire. Sinon, rechercher les localisations typiques, telles que :
 
 * */usr/share/postgresql/<pg_version>* pour Debian ou Ubuntu
 * */usr/pgsql-<pg_version>/share* pour RedHat ou CentOS
 
-Copier quelques fichiers vers le répertoire des extensions de la version de PostgreSQL souhaitée. En tant que super-utilisateur ou en préfixant les commandes avec sudo, taper ::
+Copiez quelques fichiers vers le répertoire des extensions de la version de PostgreSQL souhaitée. En tant que super-utilisateur ou en préfixant les commandes avec sudo, taper ::
 
 	cp emaj.control <répertoire_SHAREDIR>/extension/.
 
@@ -40,6 +40,24 @@ Copier quelques fichiers vers le répertoire des extensions de la version de Pos
 
 La dernière version d’E-Maj est maintenant installée et référencée par PostgreSQL. Le répertoire e-maj-<version> contient l’arborescence :doc:`décrite ici <content>`.
 
+.. _minimum_install:
+
+Installation minimale sur Linux
+*******************************
+
+Sur certains environnements (cloud de type DBaaS par exemple), il n’est pas possible d’ajouter des extensions dans le répertoire *SHAREDIR*. Pour ces cas de figure, on peut procéder à une installation minimale.
+
+Téléchargez la dernière version d’E-Maj par un moyen à votre convenance, et décompressez la.
+
+Par exemple, si le client pgxn est installé, exécutez les commandes ::
+
+	pgxn download E-Maj
+
+	unzip e-maj-<version>.zip
+
+Le répertoire e-maj-<version> généré contient l’arborescence :doc:`décrite ici <content>`.
+
+La :doc:`création de l’extension <setup>` est alors un peu différente.
 
 Installation sous Windows
 *************************

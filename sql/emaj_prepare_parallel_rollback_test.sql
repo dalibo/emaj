@@ -38,10 +38,10 @@ $do$
   DECLARE
     v_msg          TEXT;
   BEGIN
--- check E-Maj is installed as an extension
-    PERFORM 0 FROM pg_catalog.pg_extension WHERE extname = 'emaj';
+-- check that the emaj schema exists
+    PERFORM 1 FROM pg_catalog.pg_namespace WHERE nspname = 'emaj';
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj parallel rollback test setup: E-Maj is not installed, or is not installed as an EXTENSION';
+      RAISE EXCEPTION 'E-Maj demo: the emaj schema does not exist in this database. E-Maj is not installed.';
     END IF;
 -- check the current role is member of emaj_adm (or is a superuser)
     IF NOT pg_catalog.pg_has_role('emaj_adm','USAGE') THEN

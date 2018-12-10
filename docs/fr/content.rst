@@ -44,6 +44,8 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj-0.11.0-to-0.11.1.sql               | script de mise à jour d’une version E-Maj 0.11.0                    |
 +---------------------------------------------+---------------------------------------------------------------------+
+| sql/emaj-3.0.0.sql                          | script psql de création de l'extension                              |
++---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj_demo.sql                           | script psql de démonstration d' E-Maj                               |
 +---------------------------------------------+---------------------------------------------------------------------+
 | sql/emaj_prepare_parallel_rollback_test.sql | script psql de test pour les rollbacks parallélisés                 |

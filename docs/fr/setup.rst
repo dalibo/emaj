@@ -3,41 +3,31 @@ Création de l'extension E-Maj dans une base de données
 
 Si une extension existe déjà dans la base de données, mais dans une ancienne version d'E-Maj, il faut la :doc:`mettre à jour <upgrade>`.
 
-Quelques opérations préliminaires sont requises.
+La façon standard d’installer E-Maj consiste à créer un objet *EXTENSION* (au sens de PostgreSQL). Pour ce faire, l’utilisateur doit être connecté à la base de données en tant que super-utilisateur.
+
+Pour les environnements pour lesquels il n’est pas possible de procéder ainsi (cas des :ref:`installations minimales<minimum_install>`), on peut exécuter un script *psql*.
 
 .. _preliminary_operations:
 
-Opérations préliminaires
-------------------------
+Opération préliminaire facultative
+----------------------------------
 
-Pour ces opérations, l'utilisateur doit se connecter à la base de données concernée en tant que super-utilisateur.
+Les tables techniques de l’extension sont créés dans le tablespace par défaut. Si l’administrateur E-Maj veut stocker les tables techniques dans un tablespace dédié, il peut le créer si besoin et le définir comme tablespace par défaut pour la session ::
 
-Extensions *dblink* et *btree_gist*
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Deux extensions sont requises pour faire fonctionner E-Maj : **dblink** et **btree_gist**. Elles sont fournies avec PostgreSQL. A partir de la version 9.6 de PostgreSQL, ces extensions pourront être automatiquement créées en même temps que E-Maj si elles ne sont pas déjà présentes dans la base de données. Avec les versions antérieures de PostgreSQL, il est nécessaire de les créer au préalable, en exécutant ::
-
-   CREATE EXTENSION IF NOT EXISTS dblink;
-   CREATE EXTENSION IF NOT EXISTS btree_gist;
-
-Tablespace
-^^^^^^^^^^
-
-Optionnellement, si l’administrateur E-Maj veut stocker les tables techniques dans un **tablespace dédié**, il peut le créer si besoin et le définir comme tablespace par défaut pour la session ::
-
-   SET default_tablespace = <nom.tablespace>;
+	SET default_tablespace = <nom.tablespace>;
 
 
 .. _create_emaj_extension:
 
-Création de l'extension E-Maj
------------------------------
+Création standard de l’EXTENSION emaj
+-------------------------------------
+
+Version PostgreSQL 9.6 et suivantes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 L'extension E-Maj peut maintenant être créée dans la base de données, en exécutant la commande SQL ::
 
    CREATE EXTENSION emaj CASCADE;
-
-Pour les versions de PostgreSQL antérieures à la version 9.6, la clause *CASCADE* n’existe pas. Les :ref:`extensions pré-requises doivent être créées explicitement <preliminary_operations>` si nécessaire.
 
 Le script commence par vérifier que la version de PostgreSQL est supérieure ou égale à la version 9.5, que le rôle qui exécute le script a bien l'attribut *superuser*.
 
@@ -50,6 +40,28 @@ Le script crée alors le schéma *emaj* avec ses tables techniques, ses types et
 S'ils n'existent pas déjà, les 2 rôles *emaj_adm* et *emaj_viewer* sont également créés.
 
 Enfin, le script d'installation examine la configuration de l'instance. Le cas échéant, il affiche un message concernant le paramètre *-max_prepared_statements*.
+
+Version PostgreSQL 9.5
+^^^^^^^^^^^^^^^^^^^^^^
+
+Pour les versions de PostgreSQL antérieures à la version 9.6, la clause *CASCADE* n’existe pas. Les extensions pré-requises doivent donc être créées explicitement si elles n'existent pas déjà dans la base de données ::
+
+	CREATE EXTENSION IF NOT EXISTS dblink;
+	CREATE EXTENSION IF NOT EXISTS btree_gist;
+	CREATE EXTENSION emaj;
+
+Création de l’extension par script
+----------------------------------
+
+Lorsque la création de l’objet *EXTENSION* emaj n’est pas permise, il est possible de créer tous les composants nécessaires par un script psql ::
+
+	\i <répertoire_emaj>/sql/emaj-<version>.sql
+
+où <répertoire_emaj> est le répertoire issu de l’:ref:`installation du logiciel<minimum_install>` et <version> la version courante d’E-Maj.
+
+.. caution::
+
+	Il n’est pas indispensable d’avoir de droit super-utilisateur pour exécuter ce script d’installation. Mais si ce n’est pas le cas, le rôle utilisé devra disposer des droits nécessaires pour créer les triggers sur les tables applicatives des futurs groupes de tables.
 
 
 Adaptation du fichier de configuration postgresql.conf

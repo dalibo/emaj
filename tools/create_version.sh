@@ -79,6 +79,7 @@
 		fi
 	done
 	git mv sql/emaj--devel.sql sql/emaj--${NEW}.sql
+	git mv sql/emaj--devel.psql sql/emaj--${NEW}.psql
 
 # Change version identifiers inside files from /client + + META.json README.md
 	find client META.json README.md -type f -exec sed -i "s/<devel>/${NEW}/g" '{}' \;

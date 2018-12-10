@@ -856,9 +856,7 @@ rollback;
 begin;
   drop schema emajb cascade;
 rollback;
-begin;
-  drop extension emaj cascade;
-rollback;
+-- dropping the extension in tested by the install sql script because it depends on the way the extension is created
 
 -- change a table structure that leads to a table rewrite
 begin;

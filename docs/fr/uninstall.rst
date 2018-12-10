@@ -10,7 +10,7 @@ Si on souhaite supprimer les **rôles** *emaj_adm* et *emaj_viewer*, il faut au 
 
 Si ces rôles *emaj_adm* et *emaj_viewer* possèdent des droits d'accès sur des tables ou autres objets relationnels applicatifs, il faut également supprimer ces droits au préalable à l'aide d'autres requêtes SQL *REVOKE*.
 
-Bien qu'installé avec une requête *CREATE EXTENSION*, E-Maj ne peut se désinstaller par une simple requête *DROP EXTENSION*. Un trigger sur événement bloque d'ailleurs l'exécution d'une telle requête (à partir de PostgreSQL 9.3).
+Bien qu'installé en standard avec une requête *CREATE EXTENSION*, E-Maj ne peut se désinstaller par une simple requête *DROP EXTENSION*. Un trigger sur événement bloque d'ailleurs l'exécution d'une telle requête.
 
 Pour désinstaller E-Maj, il faut simplement exécuter le **script fourni** *emaj_uninstall.sql*. ::
 

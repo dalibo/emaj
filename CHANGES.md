@@ -3,6 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * A psql script is supplied to install emaj on environments where it is not 
+    possible to CREATE an EXTENSION (like PGaaS clouds).
   * Unlogged tables and tables with OIDS can be members of audit_only groups.
   * Remove the restriction on column name when a column is added to log
     tables.

@@ -3,27 +3,27 @@
 --
 -- This software is distributed under the GNU General Public License.
 --
--- This script is automatically called by a "CREATE EXTENSION emaj CASCADE;" statement.
+-- This psql script creates the emaj environment, for cases when the "CREATE EXTENSION" syntax is not possible.
+-- Use the "CREATE EXTENSION" syntax when possible.
 --
--- This script must be executed by a role having SUPERUSER privileges.
+-- This script may be executed by a non SUPERUSER role. But in this case, the installation role must be
+--   the owner of application tables and sequences that will constitute the future tables groups.
 --
 -- The E-Maj technical tables will be installed into the default tablespace.
 -- The user executing the installation may set it to a particular value using a "set default_tablespace to <name>;" statement.
 --
 -- The emaj extension also installs the dblink and btree_gist extensions into the database if they are not already installed.
 
--- complain if this script is executed in psql, rather than via a CREATE EXTENSION statement
-\echo Use "CREATE EXTENSION emaj" to install the E-Maj extension. \quit
 
 -- perform some checks and create emaj roles
 DO LANGUAGE plpgsql
 $do$
   BEGIN
 -- check the current role is a superuser
-    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj installation: The current user (%) is not a superuser.', current_user;
-    END IF;
+--  PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+--  IF NOT FOUND THEN
+--    RAISE EXCEPTION 'E-Maj installation: The current user (%) is not a superuser.', current_user;
+--  END IF;
 -- check postgres version is >= 9.5
     IF current_setting('server_version_num')::INT < 90500 THEN
       RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 9.5.', current_setting('server_version');
@@ -50,6 +50,13 @@ $do$
   END;
 $do$;
 
+BEGIN TRANSACTION;
+
+DROP SCHEMA IF EXISTS emaj CASCADE;
+CREATE SCHEMA emaj;
+
+CREATE EXTENSION IF NOT EXISTS dblink;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 COMMENT ON SCHEMA emaj IS
 $$Contains all E-Maj related objects.$$;
 
@@ -7854,27 +7861,27 @@ CREATE EVENT TRIGGER emaj_protection_trg
   ON sql_drop
   WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
   EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
-COMMENT ON EVENT TRIGGER emaj_protection_trg IS
-$$Blocks the removal of the emaj extension or schema.$$;
+--COMMENT ON EVENT TRIGGER emaj_protection_trg IS
+--$$Blocks the removal of the emaj extension or schema.$$;
 
 -- remove both event trigger components from the extension, so that they can fire the "DROP EXTENSION emaj"
-ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
-ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
+--ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
+--ALTER EXTENSION emaj DROP EVENT TRIGGER emaj_protection_trg;
 
 CREATE EVENT TRIGGER emaj_sql_drop_trg
   ON sql_drop
   WHEN TAG IN ('DROP FUNCTION','DROP SCHEMA','DROP SEQUENCE','DROP TABLE','DROP TRIGGER')
   EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
-COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
-$$Controls the removal of E-Maj components.$$;
+--COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
+--$$Controls the removal of E-Maj components.$$;
 
 -- table_rewrite event trigger
 
 CREATE EVENT TRIGGER emaj_table_rewrite_trg
   ON table_rewrite
   EXECUTE PROCEDURE emaj._event_trigger_table_rewrite_fnct();
-COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
-$$Controls some changes in E-Maj tables structure.$$;
+--COMMENT ON EVENT TRIGGER emaj_table_rewrite_trg IS
+--$$Controls some changes in E-Maj tables structure.$$;
 
 ------------------------------------
 --                                --
@@ -7948,54 +7955,44 @@ GRANT EXECUTE ON FUNCTION emaj._adjust_group_properties() TO emaj_viewer;
 --                                    --
 ----------------------------------------
 -- register emaj tables content as candidate for pg_dump
-SELECT pg_catalog.pg_extension_config_dump('emaj_param','WHERE param_key <> ''emaj_version''');
-SELECT pg_catalog.pg_extension_config_dump('emaj_hist','WHERE hist_id > 1');
-SELECT pg_catalog.pg_extension_config_dump('emaj_group_def','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_time_stamp','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_schema','WHERE sch_name <> ''emaj''');
-SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_seq_hole','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_alter_plan','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_session','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_plan','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_param','WHERE param_key <> ''emaj_version''');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_hist','WHERE hist_id > 1');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_group_def','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_time_stamp','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_schema','WHERE sch_name <> ''emaj''');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_seq_hole','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_alter_plan','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_session','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_plan','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
 
 -- register emaj sequences values as candidate for pg_dump
-SELECT pg_catalog.pg_extension_config_dump('emaj_global_seq','');
-SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_hist_hist_id_seq','');
-SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_time_stamp_time_id_seq','');
-SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_global_seq','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_hist_hist_id_seq','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_time_stamp_time_id_seq','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
 -- insert the init record into the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Initialisation completed');
 -- insert the emaj schema into the emaj_schema table
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 
--- Set comments for all internal functions,
--- by directly inserting a row in the pg_description table for all emaj functions that do not have yet a recorded comment
-INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
-  SELECT pg_proc.oid, pg_class.oid, 0 , 'E-Maj internal function'
-    FROM pg_catalog.pg_proc, pg_catalog.pg_class
-    WHERE pg_class.relname = 'pg_proc'
-      AND pg_proc.oid IN               -- list all emaj functions that do not have yet a comment in pg_description
-       (SELECT pg_proc.oid
-          FROM pg_catalog.pg_proc
-               JOIN pg_catalog.pg_namespace ON (pronamespace=pg_namespace.oid)
-               LEFT OUTER JOIN pg_catalog.pg_description ON (pg_description.objoid = pg_proc.oid
-                                     AND classoid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_proc')
-                                     AND objsubid = 0)
-          WHERE nspname = 'emaj' AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
-            AND pg_description.description IS NULL
-       );
 
 -- final checks and messages
 DO LANGUAGE plpgsql
 $do$
   BEGIN
+    RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';
+-- check if the role is superuser
+    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+    IF NOT FOUND THEN
+      RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser. This may lead to permission issues when using E-Maj.', current_user;
+    END IF;
 -- check the max_prepared_transactions GUC value and report a warning if its value is too low for parallel rollback
     IF current_setting('max_prepared_transactions')::INT <= 1 THEN
       RAISE WARNING 'E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback is possible.', current_setting('max_prepared_transactions');
@@ -8003,3 +8000,4 @@ $do$
     RETURN;
   END;
 $do$;
+COMMIT;

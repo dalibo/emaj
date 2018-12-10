@@ -141,13 +141,14 @@ Un solide environnement de test est fourni dans le dépôt. Il contient :
 Les scénarios de test
 '''''''''''''''''''''
 
-Le système de test comprend 3 scénarios de test :
+Le système de test comprend 4 scénarios de test :
 
 * un scénario standard complet,
-* le même scénario mais en installant l’extension  à partir de la version précédente puis *upgrade* dans la version courante,
+* le même scénario mais en installant l’extension à partir de la version précédente puis *upgrade* dans la version courante,
+* le même scénario mais en installant l’extension à partir du script *emaj-devel.sql* fourni pour les cas où une requête "*CREATE EXTENSION emaj*" n’est pas possible,
 * un scénario réduit mais avec un *upgrade* dans la version courante alors que des groupes de tables sont actifs.
 
-Les 3 scénarios font appel à des scripts *psql*, tous localisés dans *test/sql*. Les scripts enchaînent dans différents contextes des séquences d’appels de fonctions E-Maj et de requêtes SQL de préparation et de contrôle des résultats obtenus.
+Ces scénarios font appel à des scripts *psql*, tous localisés dans *test/sql*. Les scripts enchaînent dans différents contextes des séquences d’appels de fonctions E-Maj et de requêtes SQL de préparation et de contrôle des résultats obtenus.
 
 Généralement, en fin de script, des séquences internes sont réinitialisées pour qu’un simple ajout d’un appel de fonction dans le script ne génère pas d’impact dans le résultat des scripts suivants.
 
@@ -176,7 +177,7 @@ L’outil de test se lance avec la commande ::
 
    tools/regress.sh
 
-Comme il commence par copier le fichier *emaj.control* dans les répertoires *SHAREDIR/extension* des versions de PostgreSQL configurées, il peut demander le mot de passe du compte Linux pour exécuter des commandes *sudo*.
+Comme il commence par copier le fichier *emaj.control* dans les répertoires *SHAREDIR/extension* des versions de PostgreSQL configurées, il peut demander le mot de passe du compte Linux pour exécuter des commandes *sudo*. Au lancement, il génère aussi automatiquement le fichier *emaj-devel.sql*, la version *psql* du script de création de l’extension.
 
 Il affiche ensuite la liste des fonctions de test dans un menu. Il suffit d’indiquer la lettre correspondant au test souhaité.
 
@@ -184,6 +185,7 @@ On trouve :
 
 * les tests standards pour chaque version de PostgreSQL configurée,
 * les tests avec installation de la version précédente puis upgrade,
+* les tests avec installation de la version par le script *emaj-devel.sql*,
 * les tests avec *upgrade* de version E-Maj sur des groupes actifs,
 * des tests de sauvegarde de la base par *pg_dump* et restauration, avec des versions de PostgreSQL différentes,
 * un test d’*upgrade* de version de PostgreSQL par *pg_upgrade* avec une base contenant l’extension E-Maj.

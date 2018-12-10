@@ -10,7 +10,7 @@ If the drop of the *emaj_adm* and *emaj_viewer* **roles** is desirable, rights o
 
 If these *emaj_adm* and *emaj_viewer* roles own access rights on other application objects, these rights must be suppressed too, before starting the uninstall operation.
 
-Allthough E-Maj is installed as an extension, it cannot be uninstalled with a simple *DROP EXTENSION* statement. An event trigger blocks such a statement (with PostgreSQL 9.3+).
+Allthough E-Maj is usualy installed with a *CREATE EXTENSION* statement, it cannot be uninstalled with a simple *DROP EXTENSION* statement. An event trigger blocks such a statement.
 
 To uninstall E-Maj, just execute the *emaj_uninstall.sql* **delivered script**. ::
 

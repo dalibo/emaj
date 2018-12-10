@@ -12,6 +12,8 @@
 # EMAJ_REGTEST_STANDART            : Contains the sequence of sql scripts of the "standart" regression test
 # EMAJ_REGTEST_STANDART_PGVER      : Contains the PostgreSQL versions on which the "standart" regression test can be run
 # EMAJ_REGTEST_DUMP_RESTORE_PGVER  : Contains the PostgreSQL versions on which the "dump and restore" regression test can be run
+# EMAJ_REGTEST_PSQL                : Contains the sequence of sql scripts of the "psql" regression test 
+# EMAJ_REGTEST_PSQL_PGVER          : Contains the PostgreSQL versions on which the "psql" regression test can be run
 # EMAJ_REGTEST_PGUPGRADE_PGVER     : Contains the PostgreSQL versions on which the "pg_upgrade" regression test can be run
 # EMAJ_REGTEST_UPGRADE             : Contains the sequence of sql scripts of the "E-Maj upgrade" regression test
 # EMAJ_REGTEST_UPGRADE_PGVER       : Contains the PostgreSQL versions on which the "E-Maj upgrade" regression test can be run
@@ -22,6 +24,8 @@
 typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_STANDART_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
 typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('9.3!9.6' '9.5!11')
+typeset -r EMAJ_REGTEST_PSQL=('install_psql' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
+typeset -r EMAJ_REGTEST_PSQL_PGVER=(11)
 typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='9.5!11'
 typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_UPGRADE_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
@@ -222,6 +226,10 @@ for PGUSERVER in ${EMAJ_USER_PGVER[@]//.}; do
   sudo sed -ri "s|^#directory\s+= .*$|directory = '${EMAJ_DIR}/sql/'|" ${PGSHARE}/extension/emaj.control
 done
 
+# generate the psql install script
+echo "Generating the psql install script..."
+perl ${EMAJ_DIR}/tools/create_sql_install_script.pl
+
 # choose a test
 echo " "
 echo "--- E-Maj regression tests ---"
@@ -243,6 +251,7 @@ echo "----------------"
 MENU_KEY_1STREGTEST_STANDART='a'
 MENU_KEY_ALLREGTEST_STANDART='t'
 MENU_KEY_1STREGTEST_DUMP_RESTORE='m'
+MENU_KEY_1STREGTEST_PSQL='p'
 MENU_KEY_1STREGTEST_PGUPGRADE='u'
 MENU_KEY_1STREGTEST_UPGRADE='A'
 MENU_KEY_ALLREGTEST_UPGRADE='T'
@@ -318,6 +327,26 @@ for PGMENUVER in ${EMAJ_REGTEST_DUMP_RESTORE_PGVER[@]}; do
     fi
   done
 done
+
+# REG TEST WITH A PSQL INSTALL
+nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_PSQL}`
+for PGMENUVER in ${EMAJ_REGTEST_PSQL_PGVER[@]}; do
+  for PGUSERVER in ${EMAJ_USER_PGVER[@]//.}; do
+    if [ "${PGMENUVER//.}" == "${PGUSERVER}" ]; then
+      # decimal to ASCII char
+      MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+      # store the menu's entry
+      EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) psql install test" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
+      # store the associated function to execute
+      EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} psql"
+      # the next decimal ASCII character
+      let nCHAR++
+      let TODISPLAY++
+      continue 2
+    fi
+   done 
+done
+
 
 # PG UPGRADE TEST
 nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_PGUPGRADE}`

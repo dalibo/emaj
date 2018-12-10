@@ -4,10 +4,11 @@
 -- 
 -- This software is distributed under the GNU General Public License.
 --
--- This script uninstalls any E-Maj extension in version 2.0.0 and later.
--- It drops all components previously created by a "CREATE EXTENSION emaj;" statement and by the use of the extension.
+-- This script uninstalls any E-Maj environment.
+-- It drops all components previously created either by a "CREATE EXTENSION emaj;" statement or using a psql script.
 --
--- The script must be executed by a role having SUPERUSER privileges.
+-- When emaj is installed as an EXTENSION, the script must be executed by a role having SUPERUSER privileges.
+-- Otherwise it must be executed by the emaj schema owner.
 --
 -- After its execution, some operations may have to be done manually.
 
@@ -18,39 +19,14 @@
 
 SET client_min_messages TO WARNING;
 
--- A single DO procedure performs the operation
+-- Start with some checks
 
 DO LANGUAGE plpgsql 
 $emaj_uninstall$
   DECLARE
-    v_rolSuper              BOOLEAN;
-    v_nonIdleGroupList      TEXT;
     v_nbObject              INTEGER;
     r_object                RECORD;
-    v_roleToDrop            BOOLEAN;
-    v_dbList                TEXT;
-    v_granteeRoleList       TEXT;
-    v_granteeClassList      TEXT;
-    v_granteeFunctionList   TEXT;
-    v_tspList               TEXT;
   BEGIN
---
--- Check the current role is superuser
-    SELECT rolsuper INTO v_rolSuper FROM pg_roles WHERE rolname = current_user;
-    IF NOT v_rolSuper THEN
-      RAISE EXCEPTION 'emaj_uninstall: The role executing this script must be a superuser';
-    END IF;
---
--- Check postgres version is at least 9.1
-    IF current_setting('server_version_num')::int < 90100 THEN
-      RAISE EXCEPTION 'emaj_uninstall: The postgres version is not compatible with this script (it should be at least 9.1)';
-    END IF;
---
--- Check E-Maj is installed as an extension
-    PERFORM 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj';
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_uninstall: E-Maj is not installed, or is not installed as an EXTENSION';
-    END IF;
 --
 -- Check emaj schema is present
     PERFORM 1 FROM pg_namespace WHERE nspname = 'emaj';
@@ -58,22 +34,59 @@ $emaj_uninstall$
       RAISE EXCEPTION 'emaj_uninstall: The schema ''emaj'' doesn''t exist';
     END IF;
 --
+-- Check postgres version is at least 9.1
+    IF current_setting('server_version_num')::int < 90200 THEN
+      RAISE EXCEPTION 'emaj_uninstall: The postgres version is not compatible with this script (it should be at least 9.2)';
+    END IF;
+--
+-- For extensions, check the current role is superuser
+    IF EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj') THEN
+       PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+       IF NOT FOUND THEN
+         RAISE EXCEPTION 'emaj_uninstall: The role executing this script must be a superuser';
+       END IF;
+    ELSE
+-- Otherwise, check the current role is the owner of the emaj schema, i.e. the role who installed emaj
+      PERFORM 1 FROM pg_catalog.pg_roles, pg_catalog.pg_namespace
+        WHERE nspowner = pg_roles.oid AND nspname = 'emaj' AND rolname = current_user;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'emaj_uninstall: The role executing this script must be the owner of the emaj schema';
+      END IF;
+	END IF;
+--
 -- Check that no E-Maj schema contain any non E-Maj object
     v_nbObject = 0;
     FOR r_object IN 
       SELECT msg FROM emaj._verify_all_schemas() msg 
-        WHERE msg NOT LIKE 'The E-Maj schema % does not exist any more.'
+        WHERE msg NOT LIKE 'emaj_uninstall: The E-Maj schema % does not exist any more.'
       LOOP
 -- a secondary schema contains objects that do not belong to E-Maj
       RAISE WARNING '%',r_object.msg;
       v_nbObject = v_nbObject + 1;
     END LOOP;
     IF v_nbObject > 0 THEN
-      RAISE EXCEPTION 'There are % unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall function.', v_nbObject;
+      RAISE EXCEPTION 'emaj_uninstall: There are % unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall function.', v_nbObject;
     END IF;
+    RETURN;
+  END;
+$emaj_uninstall$;
 --
 -- OK, all conditions are met
+-- Uninstall the extension in a single transaction
 --
+BEGIN TRANSACTION;
+
+DO LANGUAGE plpgsql 
+$emaj_uninstall$
+  DECLARE
+    v_roleToDrop            BOOLEAN;
+    v_dbList                TEXT;
+    v_granteeRoleList       TEXT;
+    v_granteeClassList      TEXT;
+    v_granteeFunctionList   TEXT;
+    v_tspList               TEXT;
+    r_object                RECORD;
+  BEGIN
 -- Disable event triggers that would block the DROP EXTENSION command
     PERFORM emaj.emaj_disable_protection_by_event_triggers();
 --
@@ -93,8 +106,8 @@ $emaj_uninstall$
 -- Drop all created groups, bypassing potential errors, to remove all components not directly linked to the EXTENSION
     PERFORM emaj.emaj_force_drop_group(group_name) FROM emaj.emaj_group;
 --
--- Drop the emaj extension
-    DROP EXTENSION emaj CASCADE;
+-- Drop the emaj extension, if it is an EXTENSION
+    DROP EXTENSION IF EXISTS emaj CASCADE;
 --
 -- Drop the primary schema.
     DROP SCHEMA IF EXISTS emaj CASCADE;
@@ -102,15 +115,17 @@ $emaj_uninstall$
 -- Drop the event trigger that is external to the extension, and its function
     DROP FUNCTION IF EXISTS public._emaj_protection_event_trigger_fnct() CASCADE;
 --
--- Also revoke grants given on postgres functions to both emaj roles
-    REVOKE ALL ON FUNCTION pg_size_pretty(bigint) FROM emaj_adm, emaj_viewer;
-    REVOKE ALL ON FUNCTION pg_database_size(name) FROM emaj_adm, emaj_viewer;
 -- revoke also the grant given to emaj_adm on the dblink_connect_u function at install time
     FOR r_object IN 
       SELECT nspname FROM pg_catalog.pg_proc, pg_catalog.pg_namespace 
         WHERE pronamespace = pg_namespace.oid AND proname = 'dblink_connect_u' AND pronargs = 2
       LOOP
-        EXECUTE 'REVOKE ALL ON FUNCTION ' || r_object.nspname || '.dblink_connect_u(text,text) FROM emaj_adm';
+        BEGIN
+          EXECUTE 'REVOKE ALL ON FUNCTION ' || r_object.nspname || '.dblink_connect_u(text,text) FROM emaj_adm';
+        EXCEPTION
+          WHEN insufficient_privilege THEN
+            RAISE WARNING 'emaj_uninstall: Trying to REVOKE grants on function dblink_connect_u() raises an exception. Continue...';
+        END;
     END LOOP;
 --
 -- Check if emaj roles can be dropped
@@ -218,6 +233,8 @@ $emaj_uninstall$
     RETURN;
   END;
 $emaj_uninstall$;
+
+COMMIT;
 
 SET client_min_messages TO default;
 \unset QUIET

@@ -14,8 +14,8 @@ E-Maj and its add-ons are also available on the **github.org** Internet site:
 * Emaj_web GUI (https://github.com/beaud76/emaj_web)
 
 
-Installation on Linux
-*********************
+Standart installation on Linux
+******************************
 
 Download the latest E-Maj version by any convenient way. If the *pgxn client* is installed, just execute the command::
 
@@ -39,6 +39,26 @@ Copy some files to the extension directory of the postgresql version you want to
 	cp sql/emaj--* <SHAREDIR_directory>/extension/.
 
 The latest E-Maj version is now installed and referenced by PostgreSQL. The e-maj-<version> directory contains the file tree :doc:`described here <content>`.
+
+.. _minimum_install:
+
+Minimum installation on Linux
+*****************************
+
+On some environments (like DBaaS clouds for instance), it is not allowed to add extensions into the *SHAREDIR* directory. For these cases, a minimum installation is possible.
+
+Download the latest E-Maj version by any convenient way and decompress it.
+
+If the *pgxn* client is installed, just execute the commands::
+
+	pgxn download E-Maj
+
+	unzip e-maj-<version>.zip
+
+
+The e-maj-<version> directory contains the file tree :doc:`described here <content>`.
+
+The :doc:`extension creation<setup>` will be a little bit different.
 
 
 Installation on Windows
