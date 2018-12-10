@@ -62,10 +62,9 @@ Welcome to the E-Maj's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Web clients:
+   :caption: Emaj_web:
 
    webOverview
-   ppaPluginInstall
    webInstall
    webUsage
 

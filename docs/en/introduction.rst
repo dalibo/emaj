@@ -37,7 +37,7 @@ E-Maj actually groups several components:
 
 * a PostgreSQL **extension** object created into each database, named *emaj* and holding some tables, functions, sequences, ...
 * a set of **external clients** working in command line interface,
-* a **web GUI** as a plugin for the *phpPgAdmin* tool, or an independent web application, **Emaj_web**.
+* a web GUI, **Emaj_web**.
 
 The external clients and the GUI call the functions of the emaj extension.
 

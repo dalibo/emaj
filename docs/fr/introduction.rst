@@ -37,7 +37,7 @@ E-Maj regroupe en fait plusieurs composants :
 
 * un objet PorstgreSQL **extension** créé dans chaque base de données, nommée emaj et contenant quelques tables, fonctions, séquences, ...
 * un ensemble de **clients externes** appelables en ligne de commande,
-* une **interface graphique web** sous la forme d’un plugin pour l’outil *phpPgAdmin*, ou d’une application indépendante, **Emaj_web**.
+* une **interface graphique web**, **Emaj_web**.
 
 Les clients externes et l’interface graphique font appel aux fonctions de l’extension emaj.
 
@@ -45,4 +45,3 @@ Les clients externes et l’interface graphique font appel aux fonctions de l’
    :align: center
 
 Tous ces composants sont décrits dans cette documentation.
-

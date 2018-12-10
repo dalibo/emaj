@@ -1,14 +1,11 @@
-Web clients overview
-====================
+Emaj_web overview
+=================
 
-To make E-Maj use easier, two web applications are also available:
+A web application, **Emaj_web**, makes E-Maj use easier.
 
-* a **plug-in for the phpPgAdmin** administration tool in its versions 5.1 and higher,
-* an independent web application, **Emaj_web**.
+For the records, a plugin for *phpPgAdmin* also existed. But it is not maintained any more since E-Maj 3.0.
 
-Both web clients provide the same functionalities with E-Maj, and have a very similar user interface.
-
-*Emaj_web* borrows to *phpPgAdmin* its infrastructure (browser, icon trails, database connection,  management,…) and some useful functions like browsing the tables content or editing SQL queries.
+*Emaj_web* has borrowed to *phpPgAdmin* its infrastructure (browser, icon trails, database connection,  management,…) and some useful functions like browsing the tables content or editing SQL queries.
 
 For databases into which the E-Maj extension has been installed, and if the user is connected with a role that owns the required rights, all E-Maj objects are accessible.
 
