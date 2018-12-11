@@ -27,7 +27,7 @@ L’arborescence comprend les éléments complémentaires suivants :
 
   * le fichier *emaj- -devel.sql*, source de l’extension dans sa version courante
   * le source de la version précédente *emaj- -<version_précédente>.sql*
-  * un script *ppa.sql* qui permet de préparer un environnement E-Maj pour les tests du plugin pour *phpPgAdmin* ou pour le client *Emaj_web*
+  * un script *emaj_prepare_emaj_web_test.sql* qui prépare un environnement E-Maj pour les tests du client *Emaj_web*
 
 * un répertoire *test* contenant tous les éléments permettant de :ref:`tester l’extension<testing>`
 * un répertoire *tools* contenant un certain nombre d’outils.

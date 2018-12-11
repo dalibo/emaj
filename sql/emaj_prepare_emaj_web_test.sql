@@ -1,4 +1,4 @@
--- ppa.sql: Create and setup all application objects that will be needed for the ppa plugin tests
+-- emaj_prepare_emaj_web_test.sql: Create and setup all application objects that will be needed for the emaj_web tests
 --
 SET client_min_messages TO WARNING;
 \set ON_ERROR_STOP

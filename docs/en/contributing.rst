@@ -27,7 +27,7 @@ The main directory also contains the following components:
 
   * the file *emaj- -devel.sql*, source of the extension in its current version
   * the source of the previous version *emaj- -<previous_version>.sql*
-  * a *ppa.sql* script that allows to prepare an E-Maj environment to test the *phpPgAdmin* plugin or the *Emaj_web* client
+  * a *emaj_prepare_emaj_web_test.sql* script that prepares an E-Maj environment to test the *Emaj_web* client
 
 * a *test* directory containing all components used to :ref:`test the extension <testing>`
 * a *tools* directory containing some ... tools.
