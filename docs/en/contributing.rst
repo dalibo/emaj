@@ -6,13 +6,13 @@ Any contribution to the development and the improvement of the E-Maj extension i
 Build the E-Maj environment
 ---------------------------
 
-The E-Maj extension repository is hosted on the *github* site:  https://github.com/beaud76/emaj
+The E-Maj extension repository is hosted on the *github* site:  https://github.com/dalibo/emaj
 
 Clone the E-Maj repository
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 So the first acction to perform is to locally clone this repository on his/her own computer. This can be done by using the functionnalities of the *github* web interface or by typing the *shell* command::
 
-   git clone https://github.com/beaud76/emaj.git
+   git clone https://github.com/dalibo/emaj.git
 
 Description of the E-Maj tree
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -6,13 +6,13 @@ Toute contribution au développement et à l’amélioration de l’extension E-
 Bâtir l’environnement E-Maj
 ---------------------------
 
-Le référentiel de l’extension E-Maj est hébergé sur le site *github* : https://github.com/beaud76/emaj
+Le référentiel de l’extension E-Maj est hébergé sur le site *github* : https://github.com/dalibo/emaj
 
 Cloner le dépôt E-Maj
 ^^^^^^^^^^^^^^^^^^^^^
 La première opération à réaliser consiste donc à cloner ce dépôt en local sur son serveur/poste. Pour ce faire, utiliser les fonctionnalités de l’interface web de *github* ou taper la commande *shell* ::
 
-   git clone https://github.com/beaud76/emaj.git
+   git clone https://github.com/dalibo/emaj.git
 
 Description de l’arborescence E-Maj
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

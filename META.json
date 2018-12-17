@@ -5,7 +5,7 @@
    "version": "<devel>",
    "maintainer": "Philippe Beaudoin - phb<dot>emaj<at>free<dot>fr",
    "license": "gpl_3",
-   "tags": [ "emaj", "table log", "audit log", "log trigger", "archive before journal", "logical rollback", "flashback", "change data capture" ],
+   "tags": [ "emaj", "table log", "audit", "log", "logging", "audit log", "audit logging", "DML log", "trigger-based logging", "version", "log trigger", "archive before journal", "logical rollback", "flashback", "change data capture", "table content change recording", "traceability", "tracking", "trackability" ],
    "prereqs": {
      "runtime": {
        "requires": {
@@ -25,12 +25,12 @@
    "resources": {
       "homepage": "http://emaj.readthedocs.io",
       "repository": {
-        "url":  "https://github.com/beaud76/emaj.git",
-        "web":  "https://github.com/beaud76/emaj/",
+        "url":  "https://github.com/dalibo/emaj.git",
+        "web":  "https://github.com/dalibo/emaj/",
         "type": "git"
       },
       "bugtracker": {
-         "web": "https://github.com/beaud76/emaj/issues"
+         "web": "https://github.com/dalibo/emaj/issues"
       }
    },
    "meta-spec": {

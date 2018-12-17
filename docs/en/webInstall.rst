@@ -11,7 +11,7 @@ Plug-in download
 ----------------
 
 The *Emaj_web* application can be downloaded from the following git repository:
-https://github.com/beaud76/emaj_web
+https://github.com/dalibo/emaj_web
 
 
 Application configuration

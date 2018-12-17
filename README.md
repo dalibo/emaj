@@ -37,7 +37,7 @@ In both environments, being able to examine the history of updates performed on 
 Distribution
 ------------
 
-E-Maj is available via the PGXN platform (https://pgxn.org/dist/e-maj/). It is also available on github (https://github.com/beaud76/emaj).
+E-Maj is available via the PGXN platform (https://pgxn.org/dist/e-maj/). It is also available on github (https://github.com/dalibo/emaj).
 
 
 Documentation
@@ -54,21 +54,14 @@ E-Maj can be installed using the usual method for postgres extensions (ie. CREAT
 The documentation contains all the [detailled information](http://emaj.readthedocs.io/en/latest/install.html) needed to install and use E-Maj.
 
 
-E-Maj web GUI
--------------
+Emaj_web GUI
+------------
 
-Two web GUI tools are available to bring a user friendly E-Maj administration:
+**Emaj_web** is a web GUI tool that brings a user friendly E-Maj administration. It is written in PHP.
 
- * a stand alone php application, named Emaj_web,
- * a plug-in for phpPgAdmin that takes benefit from the plugin architecture brought by phpPgAdmin 5.1+.
+The Emaj_web client is available on [github](https://github.com/dalibo/emaj_web).
 
-Both tools share the same functionalities regarding the E-Maj usage.
-
-The **Emaj_web** client is available on [github](https://github.com/beaud76/emaj_web).
-
-The **phpPgAdmin plugin** is available on [github](https://github.com/beaud76/emaj_ppa_plugin).
-
-Their installation and usage are also described in the [documentation](http://emaj.readthedocs.io/en/latest/webOverview.html).
+Its installation and usage are also described in the [documentation](http://emaj.readthedocs.io/en/latest/webOverview.html).
 
 
 Contributing
@@ -80,6 +73,6 @@ Any contribution on the project is welcome. A part of the documentation deals wi
 Support
 -------
 
-For additional support or bug report, please contact Philippe BEAUDOIN (phb <dot> emaj <at> free <dot> fr).
+For additional support or bug report, please contact Philippe BEAUDOIN (phb <dot> emaj <at> free <dot> fr) or create an issue on the github repository.
 
 Any feedback is welcome, even to just notice you use and appreciate E-Maj ;-)

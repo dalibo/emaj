@@ -8,9 +8,9 @@ E-Maj is available for download on the Internet site **PGXN**, the PostgreSQL Ex
 
 E-Maj and its add-ons are also available on the **github.org** Internet site:
 
-* source components (https://github.com/beaud76/emaj)
+* source components (https://github.com/dalibo/emaj)
 * documentation (https://github.com/beaud76/emaj_doc)
-* Emaj_web GUI (https://github.com/beaud76/emaj_web)
+* Emaj_web GUI (https://github.com/dalibo/emaj_web)
 
 For the records, an old repository (https://github.com/beaud76/emaj_ppa_plugin) contains a plugin for phpPgAdmin. It is not maintained since E-Maj 3.0.
 

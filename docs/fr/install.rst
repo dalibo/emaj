@@ -8,9 +8,9 @@ E-Maj est disponible en téléchargement sur le site Internet **PGXN** (https://
 
 E-Maj et ses compléments sont également disponibles sur le site Internet **github.org** :
 
-* Composants sources (https://github.com/beaud76/emaj)
+* Composants sources (https://github.com/dalibo/emaj)
 * Documentation (https://github.com/beaud76/emaj_doc)
-* Interface graphique Emaj_web (https://github.com/beaud76/emaj_web)
+* Interface graphique Emaj_web (https://github.com/dalibo/emaj_web)
 
 Pour mémoire, un ancien dépôt (https://github.com/beaud76/emaj_ppa_plugin) contient un plugin pour *phpPgAdmin*. Il n’est plus maintenu à partir de la version 3.0 d’E-Maj.
 

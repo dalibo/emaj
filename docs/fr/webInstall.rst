@@ -11,7 +11,7 @@ Téléchargement du plug-in
 
 L’application *Emaj_web* peut être téléchargée depuis le dépôt git suivant :
 
-https://github.com/beaud76/emaj_web
+https://github.com/dalibo/emaj_web
 
 Configuration de l’application
 ------------------------------
