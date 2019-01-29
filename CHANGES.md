@@ -25,7 +25,8 @@ E-Maj - Change log
   * Fix error that may occur when a non emaj role tries to drop or alter an
     object.
   * Fix a rare condition that aborts the emaj_uninstall.sql script.
-
+  * Let the emajParallelRollback.php and emajRollbakMonitor clients issue a
+    non 0 return code when an error occurs.
 
 2.3.1 (2018-Sept-6)
 ------

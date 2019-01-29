@@ -71,31 +71,31 @@
       break;
     case 'a':
       if (! is_numeric($options['a']) )
-        die("Nb hours (".$options['a'].") is not numeric !\n");
+        abort("Nb hours (".$options['a'].") is not numeric !\n");
       $complRlbkAgo = $options['a'];
       if ($complRlbkAgo < 0)
-        die("Nb hours (".$options['a'].") must be >= 0 !\n");
+        abort("Nb hours (".$options['a'].") must be >= 0 !\n");
       break;
     case 'i':
       if (! is_numeric($options['i']) )
-        die("Interval (".$options['i'].") is not numeric !\n");
+        abort("Interval (".$options['i'].") is not numeric !\n");
       $delay = $options['i'];
       if ($delay <= 0)
-        die("Interval (".$options['i'].") must be > 0 !\n");
+        abort("Interval (".$options['i'].") must be > 0 !\n");
       break;
     case 'l':
       if (! is_numeric($options['l']) )
-        die("Number of completed rollback operations (".$options['l'].") is not numeric !\n");
+        abort("Number of completed rollback operations (".$options['l'].") is not numeric !\n");
       $nbComplRlbk = $options['l'];
       if ($nbComplRlbk < 0)
-        die("Number of completed rollback operations (".$options['l'].") must be >= 0 !\n");
+        abort("Number of completed rollback operations (".$options['l'].") must be >= 0 !\n");
       break;
     case 'n':
       if (! is_numeric($options['n']) )
-        die("Number of iterations (".$options['n'].") is not numeric !\n");
+        abort("Number of iterations (".$options['n'].") is not numeric !\n");
       $nbIter = $options['n'];
       if ($nbIter <= 0)
-        die("Number of iterations (".$options['n'].") must be > 0 !\n");
+        abort("Number of iterations (".$options['n'].") must be > 0 !\n");
       break;
     case 'v':
       $verbose = true;
@@ -109,7 +109,7 @@
 // Open a database session.
 //   Connection parameters are optional. If not supplied, the environment variables and PostgreSQL default values are used
   $dbconn = pg_connect($conn_string)
-      or die("Connection failed".pg_last_error()."\n");
+      or abort("Connection failed".pg_last_error()."\n");
 
 // Perform the monitoring
 
@@ -129,7 +129,7 @@
                   ORDER BY rlbk_id DESC LIMIT {$nbComplRlbk}) AS t
               ORDER BY rlbk_id ASC";
     $result = pg_query($dbconn,$query)
-        or die('Access to the emaj_rlbk table failed '.pg_last_error()."\n");
+        or abort('Access to the emaj_rlbk table failed '.pg_last_error()."\n");
 
 // Display results
     while ($row = pg_fetch_assoc($result)) {
@@ -149,7 +149,7 @@
 // Call the emaj_rollback_activity() function to retrieve the rollback operations in progress
     $query = "SELECT * FROM emaj.emaj_rollback_activity() ORDER BY rlbk_id";
     $result = pg_query($dbconn,$query)
-        or die('Call of emaj_rollback_activity() function failed '.pg_last_error()."\n");
+        or abort('Call of emaj_rollback_activity() function failed '.pg_last_error()."\n");
 
 // Display results
     while ($row = pg_fetch_assoc($result)) {
@@ -177,6 +177,11 @@
 
 // Close the sessions
   pg_close($dbconn);
+
+function abort($msg){
+  echo $msg;
+  exit(1);
+}
 
 function print_help(){
   global $progName,$EmajVersion;

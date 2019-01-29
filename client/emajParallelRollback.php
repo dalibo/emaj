@@ -93,12 +93,12 @@
       break;
     case 's':
       if (! is_numeric($options['s']) )
-        die("Number of sessions (".$options['s'].") is not numeric !\n");
+        abort("Number of sessions (".$options['s'].") is not numeric !\n");
       $nbSession = $options['s'];
       if ($nbSession < 1)
-        die("Number of sessions (".$options['s'].") must be > 0 !\n");
+        abort("Number of sessions (".$options['s'].") must be > 0 !\n");
       if ($nbSession > 100)
-        die("Number of sessions (".$options['s'].") must be <= 100 !\n");
+        abort("Number of sessions (".$options['s'].") must be <= 100 !\n");
       break;
     case 'v':
       $verbose = true;
@@ -108,11 +108,11 @@
 
 // check the group name has been supplied
   if ($groups == ''){
-    die("At least one group name must be supplied with the -g parameter !\n");
+    abort("At least one group name must be supplied with the -g parameter !\n");
   }
 // check the mark has been supplied
   if ($mark == ''){
-    die("A mark must be supplied with the -m parameter !\n");
+    abort("A mark must be supplied with the -m parameter !\n");
   }
 
 // Open all required sessions
@@ -122,7 +122,7 @@
   for ($i = 1 ; $i <= $nbSession ; $i++){
     if ($verbose) echo date("d/m/Y - H:i:s")." Open session #$i...\n";
     $dbconn[$i] = pg_connect($conn_string,PGSQL_CONNECT_FORCE_NEW)
-        or die("Connection #$i failed".pg_last_error()."\n");
+        or abort("Connection #$i failed".pg_last_error()."\n");
     }
 
 // For each session, start a transaction 
@@ -130,7 +130,7 @@
   for ($i = 1 ; $i <= $nbSession ; $i++){
     if ($verbose) echo date("d/m/Y - H:i:s")." Start transaction #$i...\n";
     $result = pg_query($dbconn[$i],"BEGIN TRANSACTION")
-        or die('Begin transaction #'.$i.' failed: '.pg_last_error()."\n");
+        or abort('Begin transaction #'.$i.' failed: '.pg_last_error()."\n");
     }
   pg_free_result($result);
 
@@ -139,7 +139,7 @@
   $query = "SELECT emaj._rlbk_init (array[".$groups."],'".pg_escape_string($mark)."',$isLogged,$nbSession, $multiGroup, $isAlterGroupAllowed)";
   if ($verbose) echo date("d/m/Y - H:i:s")." Call _rlbk_init() for groups $groups and mark $mark...\n";
   $result = pg_query($dbconn[1],$query)
-      or die('Call of _rlbk_init() function failed '.pg_last_error()."\n");
+      or abort('Call of _rlbk_init() function failed '.pg_last_error()."\n");
   $rlbkId = pg_fetch_result($result,0,0);
   pg_free_result($result);
   echo "==> $msgRlbk to mark '$mark' is now in progress with $nbSession sessions...\n";
@@ -150,7 +150,7 @@
     $query = "SELECT emaj._rlbk_session_lock ($rlbkId,$i)";
     if ($verbose) echo date("d/m/Y - H:i:s")." Call _rlbk_session_lock() for session #$i -> lock tables...\n";
     $result = pg_query($dbconn[$i],$query) 
-        or die('Call of _rlbk_session_lock() function for #'.$i.' failed: '.pg_last_error()."\n");
+        or abort('Call of _rlbk_session_lock() function for #'.$i.' failed: '.pg_last_error()."\n");
     }
   pg_free_result($result);
 
@@ -160,7 +160,7 @@
   $query = "SELECT emaj._rlbk_start_mark ($rlbkId,$multiGroup)";
   if ($verbose) echo date("d/m/Y - H:i:s")." Call _rlbk_start_mark()...\n";
   $result = pg_query($dbconn[1],$query)
-      or die('Call of _rlbk_start_mark() function failed '.pg_last_error()."\n");
+      or abort('Call of _rlbk_start_mark() function failed '.pg_last_error()."\n");
   pg_free_result($result);
 
 // For each session, asynchronously call _rlbk_exec() to start the planned steps execution
@@ -168,20 +168,20 @@
   for ($i = 1 ; $i <= $nbSession ; $i++){
     $query = "SELECT emaj._rlbk_session_exec ($rlbkId,$i)";
     if (pg_connection_busy($dbconn[$i]))
-      die("Session #$i is busy. Unable to call for _rlbk_groups_step5\n");
+      abort("Session #$i is busy. Unable to call for _rlbk_groups_step5\n");
     if ($verbose) echo date("d/m/Y - H:i:s")." Call _rlbk_session_exec() for session #$i -> rollback tables...\n";
     pg_send_query($dbconn[$i],$query) 
-        or die('Call of _rlbk_session_exec() function for #'.$i.' failed: '.pg_last_error()."\n");
+        or abort('Call of _rlbk_session_exec() function for #'.$i.' failed: '.pg_last_error()."\n");
     }
 
 // For each session, get the result of the previous call of _rlbk_exec()
 
   for ($i = 1 ; $i <= $nbSession ; $i++){
     $result = pg_get_result($dbconn[$i])
-      or die('Getting the result of the _rlbk_session_exec() function failed '.pg_last_error()."\n");
+      or abort('Getting the result of the _rlbk_session_exec() function failed '.pg_last_error()."\n");
     if ($verbose) echo date("d/m/Y - H:i:s")." Get result of the _rlbk_session_exec() call for session #$i...\n";
     if (pg_result_error($result))
-      die("Execution of _rlbk_session_exec function failed \n".pg_result_error($result)."\n");
+      abort("Execution of _rlbk_session_exec function failed \n".pg_result_error($result)."\n");
     }
   pg_free_result($result);
 
@@ -190,7 +190,7 @@
   $query = "SELECT * FROM emaj._rlbk_end ($rlbkId,$multiGroup)";
   if ($verbose) echo date("d/m/Y - H:i:s")." Call _rlbk_end() -> complete rollback operation...\n";
   $result = pg_query($dbconn[1],$query)
-      or die('Call of _rlbk_end() function failed '.pg_last_error()."\n");
+      or abort('Call of _rlbk_end() function failed '.pg_last_error()."\n");
   $execReportRows = pg_fetch_all($result);
   pg_free_result($result);
 
@@ -199,7 +199,7 @@
   if ($nbSession == 1){
     if ($verbose) echo date("d/m/Y - H:i:s")." Commit transaction #1...\n";
     $result = pg_query($dbconn[1],"COMMIT")
-        or die('Commit prepared #1 failed: '.pg_last_error()."\n");
+        or abort('Commit prepared #1 failed: '.pg_last_error()."\n");
   }else{
 
 // else, COMMIT with 2PC to be sure that all sessions can either commit or rollback in a single transaction
@@ -209,7 +209,7 @@
     for ($i = 1 ; $i <= $nbSession ; $i++){
       if ($verbose) echo date("d/m/Y - H:i:s")." Prepare transaction #$i...\n";
       $result = pg_query($dbconn[$i],"PREPARE TRANSACTION 'emajtx".$i."'")
-          or die('Prepare transaction #'.$i.' failed: '.pg_last_error()."\n");
+          or abort('Prepare transaction #'.$i.' failed: '.pg_last_error()."\n");
       }
 
 // Phase 2 : Commit
@@ -217,7 +217,7 @@
     for ($i = 1 ; $i <= $nbSession ; $i++){
       if ($verbose) echo date("d/m/Y - H:i:s")." Commit transaction #$i...\n";
       $result = pg_query($dbconn[$i],"COMMIT PREPARED 'emajtx".$i."'")
-          or die('Commit prepared #'.$i.' failed: '.pg_last_error()."\n");
+          or abort('Commit prepared #'.$i.' failed: '.pg_last_error()."\n");
       }
   }
 
@@ -226,7 +226,7 @@
   $query = "SELECT emaj.emaj_cleanup_rollback_state()";
   if ($verbose) echo date("d/m/Y - H:i:s")." Call emaj_cleanup_rollback_state() -> set the rollback event as committed...\n";
   $result = pg_query($dbconn[1],$query)
-      or die('Call of emaj_cleanup_rollback_state() function failed '.pg_last_error()."\n");
+      or abort('Call of emaj_cleanup_rollback_state() function failed '.pg_last_error()."\n");
   pg_free_result($result);
 
 // Close the sessions
@@ -242,6 +242,11 @@
   foreach ($execReportRows as $execReportRow) {
     echo "    {$execReportRow['rlbk_severity']}: {$execReportRow['rlbk_message']}\n";
   }
+
+function abort($msg){
+  echo $msg;
+  exit(1);
+}
 
 function print_help(){
   global $progName,$EmajVersion;
@@ -270,6 +275,7 @@ function print_help(){
   echo "              lets the role emajadm perform a parallel logged rollback of 2 table\n";
   echo "              groups to mark myMark using 5 parallel sessions, in verbose mode.\n";
 }
+
 function print_version(){
   global $progName,$EmajVersion;
  
