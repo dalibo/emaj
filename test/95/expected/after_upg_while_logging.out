@@ -104,7 +104,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2b"
@@ -117,7 +117,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------

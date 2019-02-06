@@ -1761,10 +1761,10 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
     select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 87 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 87 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -1775,11 +1775,11 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFOR
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1815,10 +1815,10 @@ CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
   select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 87 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 87 at PERFORM
  emaj_create_group 
 -------------------
                  7
@@ -1855,19 +1855,19 @@ CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1905,19 +1905,19 @@ CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1948,11 +1948,11 @@ begin;
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------

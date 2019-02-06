@@ -70,7 +70,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
@@ -83,7 +83,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC"."myschema1_myTbl3_log_fnct"() CASCADE"
@@ -91,7 +91,7 @@ PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1."myTbl3""
@@ -104,15 +104,15 @@ PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -154,11 +154,11 @@ update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'mysch
 select emaj.emaj_alter_groups(array['myGroup1','myGroup2']);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -177,7 +177,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
@@ -190,7 +190,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC".s1t3_log_fnct() CASCADE"
@@ -198,7 +198,7 @@ PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1."myTbl3""
@@ -211,15 +211,15 @@ PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -274,11 +274,11 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
 select emaj.emaj_alter_group('myGroup2', 'Alter to add myseq2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -535,11 +535,11 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup2', 'Alter to remove myseq2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -550,11 +550,11 @@ insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq2');
 select emaj.emaj_alter_group('myGroup2', 'Alter to re-add myseq2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -573,11 +573,11 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup2', 'Alter to really remove myseq2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -887,7 +887,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl7"
@@ -899,7 +899,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl7"
@@ -909,11 +909,11 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1263,11 +1263,11 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup2', 'Alter to remove mytbl7');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1284,7 +1284,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl7"
@@ -1296,7 +1296,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl7"
@@ -1306,11 +1306,11 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1367,11 +1367,11 @@ delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tbl
 select emaj.emaj_alter_group('myGroup2', 'Alter to really remove mytbl7');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1691,7 +1691,7 @@ update emaj.emaj_group_def set grpdef_group = 'temporarily_removed'
 select emaj.emaj_alter_group('myGroup1','2nd remove_tbl');
 WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" references the table "myschema1.mytbl1" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1801,7 +1801,7 @@ begin;
   select emaj.emaj_alter_group('myGroup1','alter_before_drop_mytbl3');
 WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" references the table "myschema1.mytbl1" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1821,7 +1821,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1."myTbl3""
@@ -1833,7 +1833,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1."myTbl3""
@@ -1843,7 +1843,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj.myschema1_mytbl1_log"
@@ -1853,7 +1853,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
@@ -1865,7 +1865,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
@@ -1875,7 +1875,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emajb.myschema1_mytbl2b_log"
@@ -1885,7 +1885,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2b"
@@ -1897,7 +1897,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl2b"
@@ -1907,7 +1907,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -2155,7 +2155,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
@@ -2167,7 +2167,7 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
@@ -2177,11 +2177,11 @@ PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 24 at 
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 116 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -2223,7 +2223,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
@@ -2236,7 +2236,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
@@ -2244,7 +2244,7 @@ PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
@@ -2257,15 +2257,15 @@ PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -2302,18 +2302,12 @@ rollback;
 -- case when both groups are logging
 -- should not work, because myGroup2 is missing in the groups list and both groups are in LOGGING state
 select emaj.emaj_alter_group('myGroup1', 'move to myGroup1');
-WARNING:  _check_groups_content: Error, the table or sequence myschema2."myTbl3" belongs to another group (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
-WARNING:  _check_groups_content: Error, the table or sequence myschema2."myTbl3_col31_seq" belongs to another group (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
-ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema2."myTbl3" already belongs to the group "myGroup2".
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup2".
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
+CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 -- should be OK
 -- generates updates before the group change
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','before move');
@@ -2330,7 +2324,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
@@ -2343,7 +2337,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
@@ -2351,7 +2345,7 @@ PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
@@ -2364,15 +2358,15 @@ PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------
@@ -2494,7 +2488,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
@@ -2507,7 +2501,7 @@ PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) l
 SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION "emajC".s2t3_log_fnct() CASCADE"
@@ -2515,7 +2509,7 @@ PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
@@ -2528,15 +2522,15 @@ PL/pgSQL function emaj._change_emaj_names_prefix(emaj.emaj_relation,text,boolean
 SQL statement "SELECT emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 77 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 44 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
  emaj_alter_groups 
 -------------------

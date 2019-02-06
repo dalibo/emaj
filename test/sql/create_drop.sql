@@ -96,9 +96,10 @@ begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something', grpdef_log_idx_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
 rollback;
--- table with invalid tablespace
+-- table with invalid tablespaces
 begin;
-  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'dummyTablespace' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
+  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'dummyTablespace', grpdef_log_idx_tsp = 'dummyTablespace'
+    where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
   select emaj.emaj_create_group('myGroup1');
 rollback;
 -- already existing secondary schema

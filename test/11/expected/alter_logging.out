@@ -1807,12 +1807,10 @@ rollback;
 -- case when both groups are logging
 -- should not work, because myGroup2 is missing in the groups list and both groups are in LOGGING state
 select emaj.emaj_alter_group('myGroup1', 'move to myGroup1');
-WARNING:  _check_groups_content: Error, the table or sequence myschema2."myTbl3" belongs to another group (myGroup2).
-WARNING:  _check_groups_content: Error, the table or sequence myschema2."myTbl3_col31_seq" belongs to another group (myGroup2).
-ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
-SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
+WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema2."myTbl3" already belongs to the group "myGroup2".
+WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup2".
+ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 30 at RAISE
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 -- should be OK
 -- generates updates before the group change

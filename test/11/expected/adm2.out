@@ -2290,12 +2290,10 @@ PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 17 at PERFORM
 rollback;
 begin;
   select emaj.emaj_alter_group('phil''s group#3",','should also fails');
-WARNING:  _check_groups_content: Error, the table or sequence "phil's schema3".mytbl4 does not exist.
-WARNING:  _check_groups_content: Error, the table or sequence "phil's schema3"."phil's seq\1" does not exist.
-ERROR:  _check_groups_content: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._check_groups_content(text[],boolean) line 207 at RAISE
-SQL statement "SELECT emaj._check_groups_content(v_groupNames, NULL)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 19 at PERFORM
+WARNING:  _alter_groups: in the group "phil's group#3"",", the table or sequence "phil's schema3".mytbl4 does not exist.
+WARNING:  _alter_groups: in the group "phil's group#3"",", the table or sequence "phil's schema3"."phil's seq\1" does not exist.
+ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 30 at RAISE
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 rollback;
 delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';

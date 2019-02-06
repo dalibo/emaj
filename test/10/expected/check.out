@@ -100,17 +100,17 @@ select funcname, calls from pg_stat_user_functions
  _change_log_data_tsp_tbl                  |    19
  _change_log_index_tsp_tbl                 |     9
  _change_log_schema_tbl                    |    11
+ _check_conf_groups                        |   142
  _check_fk_groups                          |   242
  _check_group_names                        |   940
- _check_groups_content                     |   118
  _check_mark_name                          |   351
  _check_marks_range                        |   112
  _check_new_mark                           |   244
  _cleanup_rollback_state                   |   302
- _create_log_schemas                       |   117
- _create_log_trigger                       |   171
+ _create_log_schemas                       |   116
+ _create_log_trigger                       |   170
  _create_seq                               |    50
- _create_tbl                               |   149
+ _create_tbl                               |   148
  _dblink_close_cnx                         |    69
  _dblink_is_cnx_opened                     |   679
  _dblink_open_cnx                          |    86
@@ -128,7 +128,7 @@ select funcname, calls from pg_stat_user_functions
  _enable_event_triggers                    |   300
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |    96
- _event_trigger_table_rewrite_fnct         |   141
+ _event_trigger_table_rewrite_fnct         |   140
  _gen_sql_groups                           |    19
  _gen_sql_tbl                              |    36
  _get_current_sequence_state               |  2338
@@ -158,7 +158,7 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_tbl                                 |   116
  _rollback_activity                        |    17
  _set_mark_groups                          |   286
- _set_time_stamp                           |   415
+ _set_time_stamp                           |   414
  _start_groups                             |    50
  _stop_groups                              |    65
  _verify_all_groups                        |    40

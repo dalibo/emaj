@@ -481,7 +481,7 @@ $$Represents the structure of rows returned by the emaj_rollback_activity() func
 CREATE TYPE emaj.emaj_consolidable_rollback_type AS (
   cons_group                   TEXT,                       -- group name
   cons_target_rlbk_mark_name   TEXT,                       -- name of the mark used as target of the logged rollback operation
-  cons_target_rlbk_mark_time_id BIGINT,                     -- timestamp of the mark used as target of the logged rollback operation
+  cons_target_rlbk_mark_time_id BIGINT,                    -- timestamp of the mark used as target of the logged rollback operation
   cons_end_rlbk_mark_name      TEXT,                       -- name of the mark set at the end of the logged rollback operation
   cons_end_rlbk_mark_time_id   BIGINT,                     -- timestamp of the mark set at the end of the logged rollback operation
   cons_rows                    BIGINT,                     -- estimated number of update events that can be consolidated for the rollback
@@ -532,6 +532,18 @@ CREATE TYPE emaj._detailed_log_stat_type AS (
   );
 COMMENT ON TYPE emaj._detailed_log_stat_type IS
 $$Represents the structure of rows returned by the _detailed_log_stat_groups() function.$$;
+CREATE TYPE emaj._check_conf_groups_type AS (
+  chk_msg_type                 INT,                        -- message number
+  chk_severity                 INT,                        -- severity level: 1 = the error blocks any type group creation,
+                                                           --                 2 = the error only blocks ROLLBACKABLE groups creation
+  chk_group                    TEXT,                       -- group name
+  chk_schema                   TEXT,                       -- schema name
+  chk_tblseq                   TEXT,                       -- table or sequence name
+  chk_extra_data               TEXT,                       -- additional piece of data that populates the error message, depending on the message type
+  chk_message                  TEXT                        -- the formatted error message
+  );
+COMMENT ON TYPE emaj._check_conf_groups_type IS
+$$Represents the structure of rows returned by the _check_conf_groups() function.$$;
 ------------------------------------
 --                                --
 -- Parameters                     --
@@ -909,12 +921,12 @@ $_check_group_names$
     RETURN v_groupNames;
   END;
 $_check_group_names$;
-CREATE OR REPLACE FUNCTION emaj._check_groups_content(v_groupNames TEXT[], v_isRollbackable BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql AS
-$_check_groups_content$
+CREATE OR REPLACE FUNCTION emaj._check_conf_groups(v_groupNames TEXT[])
+RETURNS SETOF emaj._check_conf_groups_type LANGUAGE plpgsql AS
+$_check_conf_groups$
 -- This function verifies that the content of tables group as defined into the emaj_group_def table is correct.
--- Any issue is reported as a warning message. If at least one issue is detected, an exception is raised before exiting the function.
--- It is called by emaj_create_group() and emaj_alter_group() functions.
+-- Any detected issue is reported as a message row. The caller defines what to do with them, depending on the tables group type.
+-- It is called by the emaj_create_group() and _alter_groups() functions.
 -- This function checks that the referenced application tables and sequences:
 --  - exist,
 --  - is not located into an E-Maj schema (to protect against an E-Maj recursive use),
@@ -925,204 +937,144 @@ $_check_groups_content$
 --  - for rollbackable groups, tables are not UNLOGGED or WITH OIDS
 --  - for rollbackable groups, all tables have a PRIMARY KEY
 --  - for sequences, the tablespaces, emaj log schema and emaj object name prefix are all set to NULL
--- Input: name array of the tables group to check,
---        flag indicating whether the group is rollbackable or not (NULL when called by _alter_groups(), the groups state will be read from emaj_group)
-  DECLARE
-    v_nbError                INT = 0 ;
-    r                        RECORD;
+--  - for tables, configured tablespaces exist
+-- Input: name array of the tables groups to check
   BEGIN
 -- check that all application tables and sequences listed for the group really exist
-    FOR r IN
-      SELECT grpdef_schema, grpdef_tblseq FROM (
-        SELECT grpdef_schema, grpdef_tblseq
-          FROM emaj.emaj_group_def WHERE grpdef_group = ANY(v_groupNames)
-        EXCEPT
-        SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-          WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S','p')
-        ORDER BY 1,2) AS t
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, the table or sequence %.% does not exist.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- check that no application table is a partitioned table (only elementary partitions can be managed by E-Maj)
-    FOR r IN
-      SELECT grpdef_schema, grpdef_tblseq
+    RETURN QUERY
+      SELECT 1, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table or sequence %s.%s does not exist.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def
+        WHERE grpdef_group = ANY(v_groupNames)
+          AND (grpdef_schema, grpdef_tblseq) NOT IN (
+            SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S','p'));
+---- check that no application table is a partitioned table (only elementary partitions can be managed by E-Maj)
+    RETURN QUERY
+      SELECT 2, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table %s.%s is a partitionned table (only elementary partitions are supported by E-Maj).', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
-          AND grpdef_group = ANY(v_groupNames) AND relkind = 'p'
-        ORDER BY 1,2
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, the table %.% is a partitionned table (only elementary partitions are supported by E-Maj).', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- check no application schema listed for the group in the emaj_group_def table is an E-Maj schema
-    FOR r IN
-      SELECT grpdef_schema, grpdef_tblseq
+          AND grpdef_group = ANY(v_groupNames)
+          AND relkind = 'p';
+---- check no application schema listed for the group in the emaj_group_def table is an E-Maj schema
+    RETURN QUERY
+      SELECT 3, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table or sequence %s.%s belongs to an E-Maj schema.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
         FROM emaj.emaj_group_def, emaj.emaj_schema
-        WHERE grpdef_group = ANY (v_groupNames)
-          AND grpdef_schema = sch_name
-        ORDER BY grpdef_schema, grpdef_tblseq
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, the table or sequence %.% belongs to an E-Maj schema.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- check that no table or sequence of the checked groups already belongs to other created groups
-    FOR r IN
-      SELECT grpdef_schema, grpdef_tblseq, rel_group
+        WHERE grpdef_group = ANY(v_groupNames)
+          AND grpdef_schema = sch_name;
+---- check that no table or sequence of the checked groups already belongs to other created groups
+    RETURN QUERY
+      SELECT 4, 1, grpdef_group, grpdef_schema, grpdef_tblseq, rel_group,
+             format('in the group %s, the table or sequence %s.%s already belongs to the group %s.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), quote_ident(rel_group))
         FROM emaj.emaj_group_def, emaj.emaj_relation
         WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
-          AND upper_inf(rel_time_range) AND grpdef_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames)
-        ORDER BY grpdef_schema, grpdef_tblseq
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, the table or sequence %.% belongs to another group (%).', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq), r.rel_group;
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- check that several tables of the group have not the same emaj names prefix
-    FOR r IN
-      SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix, count(*)
-        FROM emaj.emaj_group_def
-        WHERE grpdef_group = ANY (v_groupNames)
-        GROUP BY 1 HAVING count(*) > 1
-        ORDER BY 1
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, the emaj prefix "%" is configured for several tables in the groups.', r.prefix;
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- check that emaj names prefix that will be generared will not generate conflict with objects from existing groups
-    FOR r IN
-      SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix
-        FROM emaj.emaj_group_def, emaj.emaj_relation
-        WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log' = rel_log_table
-          AND grpdef_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames)
-      ORDER BY 1
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, the emaj prefix "%" is already used.', r.prefix;
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- check no table is a TEMP table
-    FOR r IN
-      SELECT grpdef_schema, grpdef_tblseq
+          AND upper_inf(rel_time_range) AND grpdef_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames);
+---- check no table is a TEMP table
+    RETURN QUERY
+      SELECT 5, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table %s.%s is a TEMPORARY table.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 't'
-        ORDER BY grpdef_schema, grpdef_tblseq
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, the table %.% is a TEMPORARY table.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- for rollbackable groups, check no table is an unlogged table
-    FOR r IN
--- only 0 or 1 SELECT is really executed, depending on the v_isRollbackable value
-      SELECT grpdef_schema, grpdef_tblseq
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 't';
+---- check that several tables of the group have not the same emaj names prefix
+    RETURN QUERY
+      WITH dupl_prefix AS (
+        SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix, count(*)
+          FROM emaj.emaj_group_def
+          WHERE grpdef_group = ANY (v_groupNames)
+          GROUP BY 1 HAVING count(*) > 1)
+      SELECT 10, 1, grpdef_group, grpdef_schema, grpdef_tblseq, prefix,
+             format('in the group %s, the table %s.%s would have a duplicate emaj prefix "%s".', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), prefix)
+        FROM emaj.emaj_group_def, dupl_prefix
+        WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) = prefix
+          AND grpdef_group = ANY (v_groupNames);
+---- check that emaj names prefix that will be generared will not generate conflict with objects from existing groups
+    RETURN QUERY
+      WITH dupl_prefix AS (
+        SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix
+          FROM emaj.emaj_group_def, emaj.emaj_relation
+          WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log' = rel_log_table
+            AND grpdef_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames)
+      )
+      SELECT 11, 1, grpdef_group, grpdef_schema, grpdef_tblseq, prefix,
+             format('in the group %s, the table %s.%s would have an already used emaj prefix "%s".', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), prefix)
+        FROM emaj.emaj_group_def, dupl_prefix
+        WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) = prefix
+          AND grpdef_group = ANY (v_groupNames);
+---- check that the log data tablespaces for tables exist
+    RETURN QUERY
+      SELECT 12, 1, grpdef_group, grpdef_schema, grpdef_tblseq, grpdef_log_dat_tsp,
+             format('in the group %s, for the table %s.%s, the data log tablespace %s does not exist.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), quote_ident(grpdef_log_dat_tsp))
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE v_isRollbackable                                                 -- true (or false) for tables groups creation
-          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 'u'
-        UNION ALL
-      SELECT grpdef_schema, grpdef_tblseq
-        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
-        WHERE v_isRollbackable IS NULL                                         -- NULL for alter groups function call
-          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 'u'
-          AND group_name = grpdef_group AND group_is_rollbackable              -- the is_rollbackable attribute is read from the emaj_group table
-        ORDER BY grpdef_schema, grpdef_tblseq
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, the table %.% is an UNLOGGED table.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- for rollbackable groups, check no table is a WITH OIDS table
-    FOR r IN
--- only 0 or 1 SELECT is really executed, depending on the v_isRollbackable value
-      SELECT grpdef_schema, grpdef_tblseq
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND grpdef_log_dat_tsp IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = grpdef_log_dat_tsp);
+---- check that the log index tablespaces for tables exist
+    RETURN QUERY
+      SELECT 13, 1, grpdef_group, grpdef_schema, grpdef_tblseq, grpdef_log_idx_tsp,
+             format('in the group %s, for the table %s.%s, the index log tablespace %s does not exist.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), quote_ident(grpdef_log_idx_tsp))
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE v_isRollbackable                                                 -- true (or false) for tables groups creation
-          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relhasoids
-        UNION ALL
-      SELECT grpdef_schema, grpdef_tblseq
-        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
-        WHERE v_isRollbackable IS NULL                                         -- NULL for alter groups function call
-          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relhasoids
-          AND group_name = grpdef_group AND group_is_rollbackable              -- the is_rollbackable attribute is read from the emaj_group table
-        ORDER BY grpdef_schema, grpdef_tblseq
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, the table %.% is declared WITH OIDS.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- for rollbackable groups, check every table has a primary key
-    FOR r IN
--- only 0 or 1 SELECT is really executed, depending on the v_isRollbackable value
-      SELECT grpdef_schema, grpdef_tblseq
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND grpdef_log_idx_tsp IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = grpdef_log_idx_tsp);
+---- check no table is an unlogged table (blocking rollbackable groups only)
+    RETURN QUERY
+      SELECT 20, 2, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table %s.%s is an UNLOGGED table.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE v_isRollbackable                                                 -- true (or false) for tables groups creation
-          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 'u';
+---- check no table is a WITH OIDS table (blocking rollbackable groups only)
+    RETURN QUERY
+      SELECT 21, 2, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table %s.%s is declared WITH OIDS.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relhasoids;
+---- check every table has a primary key (blocking rollbackable groups only)
+    RETURN QUERY
+      SELECT 22, 2, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table %s.%s has no PRIMARY KEY.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
           AND grpdef_group = ANY (v_groupNames) AND relkind = 'r'
           AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
                             WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
-                            AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq)
-        UNION ALL
-      SELECT grpdef_schema, grpdef_tblseq
-        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
-        WHERE v_isRollbackable IS NULL                                         -- NULL for alter groups function call
-          AND grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r'
-          AND group_name = grpdef_group AND group_is_rollbackable              -- the is_rollbackable attribute is read from the emaj_group table
-          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
-                            WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
-                            AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq)
-      ORDER BY grpdef_schema, grpdef_tblseq
-    LOOP
-    RAISE WARNING '_check_groups_content: Error, the table %.% has no PRIMARY KEY.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- all sequences described in emaj_group_def have their log schema suffix attribute set to NULL
-    FOR r IN
-      SELECT grpdef_schema, grpdef_tblseq
+                            AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq);
+---- all sequences described in emaj_group_def have their log schema suffix attribute set to NULL
+    RETURN QUERY
+      SELECT 30, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, for the sequence %s.%s, the secondary log schema suffix is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_schema_suffix IS NOT NULL
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the secondary log schema suffix is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- all sequences described in emaj_group_def have their emaj names prefix attribute set to NULL
-    FOR r IN
-      SELECT grpdef_schema, grpdef_tblseq
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_schema_suffix IS NOT NULL;
+---- all sequences described in emaj_group_def have their emaj names prefix attribute set to NULL
+    RETURN QUERY
+      SELECT 31, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, for the sequence %s.%s, the emaj names prefix is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_emaj_names_prefix IS NOT NULL
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the emaj names prefix is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- all sequences described in emaj_group_def have their data log tablespaces attributes set to NULL
-    FOR r IN
-      SELECT grpdef_schema, grpdef_tblseq
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_emaj_names_prefix IS NOT NULL;
+---- all sequences described in emaj_group_def have their data log tablespaces attributes set to NULL
+    RETURN QUERY
+      SELECT 32, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, for the sequence %s.%s, the data log tablespace is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_dat_tsp IS NOT NULL
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the data log tablespace is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
--- all sequences described in emaj_group_def have their index log tablespaces attributes set to NULL
-    FOR r IN
-      SELECT grpdef_schema, grpdef_tblseq
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_dat_tsp IS NOT NULL;
+---- all sequences described in emaj_group_def have their index log tablespaces attributes set to NULL
+    RETURN QUERY
+      SELECT 33, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, for the sequence %s.%s, the index log tablespace is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_idx_tsp IS NOT NULL
-    LOOP
-      RAISE WARNING '_check_groups_content: Error, for the sequence %.%, the index log tablespace is not NULL.', quote_ident(r.grpdef_schema), quote_ident(r.grpdef_tblseq);
-      v_nbError = v_nbError + 1;
-    END LOOP;
-    IF v_nbError > 0 THEN
-      RAISE EXCEPTION '_check_groups_content: One or several errors have been detected in the emaj_group_def table content.';
-    END IF;
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_idx_tsp IS NOT NULL;
 --
     RETURN;
   END;
-$_check_groups_content$;
+$_check_conf_groups$;
 CREATE OR REPLACE FUNCTION emaj._check_mark_name(v_groupNames TEXT[], v_mark TEXT, v_checkList TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_mark_name$
@@ -2848,6 +2800,7 @@ $emaj_create_group$
     v_nbTbl                  INT = 0;
     v_nbSeq                  INT = 0;
     r_grpdef                 emaj.emaj_group_def%ROWTYPE;
+    r                        RECORD;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -2870,7 +2823,17 @@ $emaj_create_group$
        RAISE EXCEPTION 'emaj_create_group: The group "%" is referenced into the emaj_group_def table. This is not consistent with the <is_empty> parameter set to true.', v_groupName;
     END IF;
 -- performs various checks on the group's content described in the emaj_group_def table
-    PERFORM emaj._check_groups_content(ARRAY[v_groupName],v_isRollbackable);
+    FOR r IN
+      SELECT chk_message FROM emaj._check_conf_groups(ARRAY[v_groupName])
+        WHERE (v_isRollbackable AND chk_severity <= 2)
+           OR (NOT v_isRollbackable AND chk_severity <= 1)
+        ORDER BY chk_msg_type, chk_group, chk_schema, chk_tblseq
+    LOOP
+      RAISE WARNING 'emaj_create_group: %', r.chk_message;
+    END LOOP;
+    IF FOUND THEN
+      RAISE EXCEPTION 'emaj_create_group: One or several errors have been detected in the emaj_group_def table content.';
+    END IF;
 -- OK
 -- get the time stamp of the operation
     SELECT emaj._set_time_stamp('C') INTO v_timeId;
@@ -3062,6 +3025,7 @@ $_alter_groups$
     v_markName               TEXT;
     v_timeId                 BIGINT;
     v_eventTriggers          TEXT[];
+    r                        RECORD;
   BEGIN
 -- insert begin in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
@@ -3070,14 +3034,25 @@ $_alter_groups$
     SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '') INTO v_groupNames;
     IF v_groupNames IS NOT NULL THEN
 -- performs various checks on the groups content described in the emaj_group_def table
-      PERFORM emaj._check_groups_content(v_groupNames, NULL);
+    FOR r IN
+      SELECT chk_message FROM emaj._check_conf_groups(v_groupNames), emaj.emaj_group
+        WHERE chk_group = group_name
+          AND ((group_is_rollbackable AND chk_severity <= 2)
+            OR (NOT group_is_rollbackable AND chk_severity <= 1))
+        ORDER BY chk_msg_type, chk_group, chk_schema, chk_tblseq
+    LOOP
+      RAISE WARNING '_alter_groups: %', r.chk_message;
+    END LOOP;
+    IF FOUND THEN
+      RAISE EXCEPTION '_alter_groups: One or several errors have been detected in the emaj_group_def table content.';
+    END IF;
 -- build the list of groups that are in logging state
       SELECT array_agg(group_name ORDER BY group_name) INTO v_loggingGroups FROM emaj.emaj_group
         WHERE group_name = ANY(v_groupNames) AND group_is_logging;
 -- check and process the supplied mark name, if it is worth to be done
-       IF v_loggingGroups IS NOT NULL THEN
-         SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
-       END IF;
+      IF v_loggingGroups IS NOT NULL THEN
+        SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
+      END IF;
 -- OK
 -- get the time stamp of the operation
       SELECT emaj._set_time_stamp('A') INTO v_timeId;
@@ -7816,7 +7791,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:8002: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:7978: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation
@@ -7838,6 +7813,17 @@ select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user 
 delete from emaj.emaj_hist;
 -- check table list
 \d emaj.*
+       Composite type "emaj._check_conf_groups_type"
+     Column     |  Type   | Collation | Nullable | Default 
+----------------+---------+-----------+----------+---------
+ chk_msg_type   | integer |           |          | 
+ chk_severity   | integer |           |          | 
+ chk_group      | text    |           |          | 
+ chk_schema     | text    |           |          | 
+ chk_tblseq     | text    |           |          | 
+ chk_extra_data | text    |           |          | 
+ chk_message    | text    |           |          | 
+
                     Composite type "emaj._detailed_log_stat_type"
           Column          |           Type           | Collation | Nullable | Default 
 --------------------------+--------------------------+-----------+----------+---------

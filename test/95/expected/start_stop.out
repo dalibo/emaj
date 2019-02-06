@@ -10,7 +10,7 @@ alter sequence emaj.emaj_time_stamp_time_id_seq restart 1000;
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 67 at PERFORM
  emaj_create_group 
 -------------------
                  7
@@ -19,10 +19,10 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFOR
 select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 87 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 76 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 87 at PERFORM
  emaj_create_group 
 -------------------
                  8
