@@ -4,6 +4,8 @@
 # Create a postgres cluster suitable to run the E-Maj regression tests
 # Syntax: create_cluster.sh <major postgres version>
 
+export LANG='en_US.UTF-8'
+
 if [ ${#} -lt 1 ]; then
     echo "Usage: ${0} <major postgres version>"
     echo "for instance: '${0} 10' for version 10.2"
@@ -21,7 +23,6 @@ echo "**************************************************"
 echo "*     Create the cluster for version ${PGMAJORVERSION}     *"
 echo "**************************************************"
 echo
-
 
 if [ -d "${PGDATA}" ]; then
   # Trying to stop the cluster if it already exists and is up
