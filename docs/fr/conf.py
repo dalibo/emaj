@@ -46,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'E-Maj'
-copyright = u'2018, Philippe Beaudoin'
+copyright = u'2019, Philippe Beaudoin'
 author = u'Philippe Beaudoin'
 
 # The version info for the project you're documenting, acts as replacement for

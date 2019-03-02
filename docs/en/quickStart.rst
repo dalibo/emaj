@@ -78,4 +78,4 @@ would create and start the tables group, log updates and set several intermediat
 
 For more details, main functions are described :doc:`here <mainFunctions>`.
 
-Additionally, a web client can also be installed, either :doc:`a plugin for phpPhAdmin <ppaPluginInstall>` or :doc:`Emaj_web <webInstall>`.
+Additionally, the :doc:`Emaj_web <webOverview>` client can also be installed and used.
