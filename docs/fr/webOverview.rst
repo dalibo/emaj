@@ -1,7 +1,7 @@
 Présentation générale d'Emaj_web
 ================================
 
-Une application web, **Emaj_web**, facilite l'utilisation d'E-Maj.
+Une application web, **Emaj_web**, facilite grandement l'utilisation d'E-Maj.
 
 Pour mémoire, un plugin pour *phpPgAdmin* existait également pour les versions d’E-Maj antérieures à la version 3.0. Mais il n’est plus maintenu depuis cette version.
 

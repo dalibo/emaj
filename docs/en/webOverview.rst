@@ -1,7 +1,7 @@
 Emaj_web overview
 =================
 
-A web application, **Emaj_web**, makes E-Maj use easier.
+A web application, **Emaj_web**, makes E-Maj use much easier.
 
 For the records, a plugin for *phpPgAdmin* also existed. But it is not maintained any more since E-Maj 3.0.
 

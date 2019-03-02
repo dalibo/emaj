@@ -16,7 +16,9 @@ https://github.com/dalibo/emaj_web
 Configuration de l’application
 ------------------------------
 
-La configuration est centralisée dans un unique fichier : *emaj_web/conf/config.inc.php*. Il contient les paramètres généraux de l’application, incluant notamment la description des connexions aux instances PostgreSQL.
+La configuration est centralisée dans un unique fichier : *emaj_web/conf/config.inc.php*. Il contient les paramètres généraux de l’application, ainsi que la description des connexions aux instances PostgreSQL.
+
+Quand le nombre d’instances est important, il est possible de les répartir dans des *groupes d’instances*. Un groupe peut contenir des instances ou d’autres groupes d’instances.
 
 Pour pouvoir soumettre des rollbacks en tâche de fonds (c'est à dire sans mobiliser le navigateur durant le déroulement des rollbacks), il est nécessaire de valoriser deux paramètres de configuration :
 
@@ -24,4 +26,3 @@ Pour pouvoir soumettre des rollbacks en tâche de fonds (c'est à dire sans mobi
 * *$conf['temp_dir']* définit un répertoire temporaire utilisable lors des rollbacks en tâche de fonds. 
 
 Le fichier *emaj_web/conf/config.inc.php-dist* peut servir de base pour la configuration.
-
