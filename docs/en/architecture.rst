@@ -49,7 +49,7 @@ A **log table** has the same structure as its corresponding application table. H
 To let E-Maj work, some **other technical objects** are also created at extension installation time:
 
 * 15 tables,
-* 7 composite and 3 enum types,
+* 8 composite and 3 enum types,
 * 1 view,
 * 2 triggers,
 * more than 120 functions, about 50 of them being directly callable by users,

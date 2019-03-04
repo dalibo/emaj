@@ -49,7 +49,7 @@ Une **table de log** a la même structure que la table applicative correspondant
 Pour le bon fonctionnement d'E-Maj, un certain nombre d'**objets techniques** sont également créés à l'installation de cette extension :
 
 * 15 tables,
-* 7 types composites et 3 énumérations,
+* 8 types composites et 3 énumérations,
 * 1 vue,
 * 2 triggers,
 * plus de 120 fonctions, dont une cinquantaine directement appelables par les utilisateurs,
