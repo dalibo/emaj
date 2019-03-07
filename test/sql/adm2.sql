@@ -227,7 +227,7 @@ update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 <= 13;
 
 -- reset directory for snaps
 \! rm -Rf /tmp/emaj_test/snaps
-\! mkdir /tmp/emaj_test/snaps
+\! mkdir -p /tmp/emaj_test/snaps
 -- ... and snap the all groups
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','CSV HEADER');
 select emaj.emaj_snap_group('myGroup2','/tmp/emaj_test/snaps','CSV HEADER');
