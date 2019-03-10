@@ -225,6 +225,14 @@ update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c
 insert into myTbl6 select i+10, point(i,1.3), '((0,0),(2,2))', circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27' from generate_series (1,8) as i;
 update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 <= 13;
 
+-- also add rows with unusual text content
+insert into mytbl2 values (10, E'row 1 \r... and row 2 with a '' (quote) character',null);
+insert into mytbl2 values (11, E'row 1 with a true \\ character\r... and row 2 with two \\n true and a '' (quote) characters',null);
+-- and manupulate NULL characters
+insert into mytbl1 values (200, E'Start\tEnd ', E'A\\000B'::BYTEA);
+update mytbl1 set col12 = E' Start\tEnd' where col11 = 200;
+delete from mytbl1 where col13 = E'A\\000B'::BYTEA;
+
 -- reset directory for snaps
 \! rm -Rf /tmp/emaj_test/snaps
 \! mkdir -p /tmp/emaj_test/snaps
@@ -241,13 +249,13 @@ select emaj.emaj_snap_group('phil''s group#3",','/tmp/emaj_test/snaps','CSV HEAD
 
 -- generate sql script for each active group (and check the result with detailed log statistics + number of sequences)
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
-select coalesce(sum(stat_rows),0) + 1 as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
+select coalesce(sum(stat_rows),0) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
 select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup2.sql', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1','myschema2.myTbl3_col31_seq']);
 select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
 select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, '/tmp/emaj_test/sql_scripts/Group3.sql');
-select sum(stat_rows) + 1 as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
+select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
 
 -- process \\ in script files
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i_s -s 's/\\\\/\\/g'
@@ -289,7 +297,7 @@ rollback;
 set role emaj_regression_tests_adm_user;
 
 -----------------------------
--- Step 12 : test use of a table with a very long name (63 characters long)
+-- Step 13 : test use of a table with a very long name (63 characters long)
 -----------------------------
 select emaj.emaj_stop_group('phil''s group#3",');
 
@@ -313,7 +321,7 @@ select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
 
 -----------------------------
--- Step 13 : test use of groups or marks protection
+-- Step 14 : test use of groups or marks protection
 -----------------------------
 -- try to rollback a protected group
 select emaj.emaj_protect_group('myGroup2');
@@ -328,7 +336,7 @@ select emaj.emaj_unprotect_mark_group('myGroup1','Mark_to_protect');
 select emaj.emaj_delete_mark_group('myGroup1','Mark_to_protect');
 
 -----------------------------
--- Step 14 : test complex use of rollbacks consolidations
+-- Step 15 : test complex use of rollbacks consolidations
 -----------------------------
 set search_path=public,myschema1;
 
@@ -466,7 +474,7 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
 
 -----------------------------
--- Step 15 : test transactions with several emaj operations
+-- Step 16 : test transactions with several emaj operations
 -----------------------------
 select emaj.emaj_create_group('myGroup4');
 
@@ -484,7 +492,7 @@ commit;
 select * from emaj.emaj_mark where mark_group = 'myGroup4' order by mark_time_id, mark_group;
 
 -----------------------------
--- Step 16 : test partition attach and detach
+-- Step 17 : test partition attach and detach
 -----------------------------
 -- Needs postgres 10+
 
@@ -540,7 +548,7 @@ select emaj.emaj_stop_group('myGroup4');
 select emaj.emaj_drop_group('myGroup4');
 
 -----------------------------
--- Step 17 : test defect with application table or sequence
+-- Step 18 : test defect with application table or sequence
 --           also test some changes on the unlogged and the with oids tables
 -----------------------------
 update emaj.emaj_group_def set grpdef_group = 'phil''s group#3",' where grpdef_schema = 'myschema5';

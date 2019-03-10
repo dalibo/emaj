@@ -253,7 +253,7 @@ COPY 2
 COPY 19
  setval 
 --------
- 100811
+ 100886
 (1 row)
 
  setval 
@@ -303,12 +303,12 @@ COPY 19
 
  setval 
 --------
-     84
+    101
 (1 row)
 
  setval 
 --------
-     18
+     21
 (1 row)
 
  setval 
@@ -338,7 +338,7 @@ COPY 19
 
  setval 
 --------
-     20
+     21
 (1 row)
 
  setval 
@@ -363,7 +363,7 @@ COPY 19
 
  setval 
 --------
-   1000
+   1002
 (1 row)
 
 ALTER TABLE

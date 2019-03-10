@@ -27,6 +27,8 @@ E-Maj - Change log
   * Fix a rare condition that aborts the emaj_uninstall.sql script.
   * Let the emajParallelRollback.php and emajRollbakMonitor clients issue a
     non 0 return code when an error occurs.
+  * In emaj_gen_sql_group() and emaj_gen_sql_groups() functions, fix the 
+    cases of non-printable characters in text columns content.
 
 2.3.1 (2018-Sept-6)
 ------

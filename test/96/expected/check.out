@@ -117,7 +117,7 @@ select funcname, calls from pg_stat_user_functions
  _delete_before_mark_group                 |    19
  _delete_between_marks_group               |    13
  _delete_intermediate_mark_group           |    23
- _delete_log_tbl                           |    40
+ _delete_log_tbl                           |    42
  _detailed_log_stat_groups                 |    33
  _disable_event_triggers                   |   304
  _drop_group                               |    28
@@ -127,16 +127,16 @@ select funcname, calls from pg_stat_user_functions
  _emaj_group_def_change_fnct               |   249
  _enable_event_triggers                    |   300
  _estimate_rollback_groups                 |    13
- _event_trigger_sql_drop_fnct              |    97
+ _event_trigger_sql_drop_fnct              |    99
  _event_trigger_table_rewrite_fnct         |   140
  _gen_sql_groups                           |    22
- _gen_sql_tbl                              |    40
+ _gen_sql_tbl                              |    42
  _get_current_sequence_state               |  2338
  _get_default_tablespace                   |    10
  _get_previous_mark_group                  |    37
  _lock_groups                              |   236
  _log_stat_groups                          |    31
- _log_stat_tbl                             |  4783
+ _log_stat_tbl                             |  4785
  _log_truncate_fnct                        |     2
  _move_seq                                 |     5
  _move_tbl                                 |     5
@@ -153,9 +153,9 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_seq                                 |   179
  _rlbk_session_exec                        |    84
  _rlbk_session_lock                        |    84
- _rlbk_set_batch_number                    |   181
+ _rlbk_set_batch_number                    |   184
  _rlbk_start_mark                          |    78
- _rlbk_tbl                                 |   111
+ _rlbk_tbl                                 |   113
  _rollback_activity                        |    17
  _set_mark_groups                          |   286
  _set_time_stamp                           |   414

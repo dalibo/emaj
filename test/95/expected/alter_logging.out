@@ -722,11 +722,13 @@ select emaj.emaj_gen_sql_group('myGroup1', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_te
 --    for tables group(s): myGroup1
 --    processing logs between mark Mk1 and mark After_remove
 --    only for the following tables/sequences: myschema1.myTbl3_col31_seq
-SET standard_conforming_strings = ON;
+SET standard_conforming_strings = OFF;
+SET escape_string_warning = OFF;
 BEGIN TRANSACTION;
 ALTER SEQUENCE myschema1."myTbl3_col31_seq" RESTART 11 START 1 INCREMENT 1 MAXVALUE 9223372036854775807 MINVALUE 1 CACHE 1 NO CYCLE;
 COMMIT;
 RESET standard_conforming_strings;
+RESET escape_string_warning;
 \! rm -R /tmp/emaj_test
 begin;
   -- testing the alter_group mark deletion
