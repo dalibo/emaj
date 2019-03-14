@@ -261,6 +261,7 @@ DROP FUNCTION _emaj_event_trigger_table_rewrite_fnct();
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
 DROP FUNCTION IF EXISTS emaj._check_groups_content(V_GROUPNAMES TEXT[],V_ISROLLBACKABLE BOOLEAN);
+DROP FUNCTION IF EXISTS emaj._gen_sql_tbl(R_REL EMAJ.EMAJ_RELATION,V_CONDITIONS TEXT);
 DROP FUNCTION IF EXISTS emaj._get_current_sequences_state(V_GROUPNAMES TEXT[],V_RELKIND TEXT,V_TIMEID BIGINT);
 DROP FUNCTION IF EXISTS emaj._delete_intermediate_mark_group(V_GROUPNAME TEXT,V_MARKNAME TEXT,V_MARKID BIGINT,V_MARKTIMEID BIGINT);
 
@@ -837,6 +838,123 @@ $_create_seq$
     RETURN;
   END;
 $_create_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_firstEmajGid BIGINT, v_lastEmajGid BIGINT)
+RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+$_gen_sql_tbl$
+-- This function generates SQL commands representing all updates performed on a table between 2 marks
+-- or beetween a mark and the current situation. These command are stored into a temporary table created
+-- by the _gen_sql_groups() calling function.
+-- Input: row from emaj_relation corresponding to the appplication table to proccess,
+--        the global sequence value at requested start and end marks
+-- Output: number of generated SQL statements
+  DECLARE
+    v_fullTableName          TEXT;
+    v_logTableName           TEXT;
+    v_valList                TEXT;
+    v_setList                TEXT;
+    v_pkCondList             TEXT;
+    v_unquotedType           TEXT[] = array['smallint','integer','bigint','numeric','decimal',
+                                             'int2','int4','int8','serial','bigserial',
+                                             'real','double precision','float','float4','float8','oid'];
+    v_rqInsert               TEXT;
+    v_rqUpdate               TEXT;
+    v_rqDelete               TEXT;
+    v_rqTruncate             TEXT;
+    v_conditions             TEXT;
+    v_lastEmajGidRel         BIGINT;
+    v_nbSQL                  BIGINT;
+    r_col                    RECORD;
+  BEGIN
+-- build schema specified table name and log table name
+    v_fullTableName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
+    v_logTableName = quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
+-- retrieve from pg_attribute all columns of the application table and build :
+-- - the VALUES list used in the INSERT statements
+-- - the SET list used in the UPDATE statements
+    v_valList = '';
+    v_setList = '';
+    FOR r_col IN
+      SELECT attname, format_type(atttypid,atttypmod) FROM pg_catalog.pg_attribute
+       WHERE attrelid = v_fullTableName ::regclass
+         AND attnum > 0 AND NOT attisdropped
+       ORDER BY attnum
+    LOOP
+-- test if the column format (up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric data types)
+      IF regexp_replace(r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
+-- literal for this column can remain as is
+        v_valList = v_valList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::TEXT,''NULL'') || '', ';
+        v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.' || quote_ident(r_col.attname) || ' ::TEXT,''NULL'') || '', ';
+      ELSE
+-- literal for this column must be quoted
+        v_valList = v_valList || ''' || quote_nullable(o.' || quote_ident(r_col.attname) || ') || '', ';
+        v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_nullable(n.' || quote_ident(r_col.attname) || ') || '', ';
+      END IF;
+    END LOOP;
+-- suppress the final separators
+    v_valList = substring(v_valList FROM 1 FOR char_length(v_valList) - 2);
+    v_setList = substring(v_setList FROM 1 FOR char_length(v_setList) - 2);
+-- retrieve all columns that represents the pkey and build the "pkey equal" conditions set that will be used in UPDATE and DELETE statements
+-- (taking column names in pg_attribute from the table's definition instead of index definition is mandatory
+--  starting from pg9.0, joining tables with indkey instead of indexrelid)
+    v_pkCondList = '';
+    FOR r_col IN
+      SELECT attname, format_type(atttypid,atttypmod) FROM pg_catalog.pg_attribute, pg_catalog.pg_index
+        WHERE pg_attribute.attrelid = pg_index.indrelid
+          AND attnum = ANY (indkey)
+          AND indrelid = v_fullTableName::regclass AND indisprimary
+          AND attnum > 0 AND NOT attisdropped
+    LOOP
+-- test if the column format (at least up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric data types)
+      IF regexp_replace (r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
+-- literal for this column can remain as is
+--          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || o.' || quote_ident(r_col.attname) || ' || ''::' || r_col.format_type || ' AND ';
+        v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || o.' || quote_ident(r_col.attname) || ' || '' AND ';
+      ELSE
+-- literal for this column must be quoted
+--          v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(r_col.attname) || ') || ''::' || r_col.format_type || ' AND ';
+        v_pkCondList = v_pkCondList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(r_col.attname) || ') || '' AND ';
+      END IF;
+    END LOOP;
+-- suppress the final separator
+    v_pkCondList = substring(v_pkCondList FROM 1 FOR char_length(v_pkCondList) - 5);
+-- prepare sql skeletons for each statement type
+    v_rqInsert = '''INSERT INTO ' || replace(v_fullTableName,'''','''''') || ' VALUES (' || v_valList || ');''';
+    v_rqUpdate = '''UPDATE ONLY ' || replace(v_fullTableName,'''','''''') || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';''';
+    v_rqDelete = '''DELETE FROM ONLY ' || replace(v_fullTableName,'''','''''') || ' WHERE ' || v_pkCondList || ';''';
+    v_rqTruncate = '''TRUNCATE ' || replace(v_fullTableName,'''','''''') || ';''';
+-- build the restriction conditions on emaj_gid, depending on supplied marks range and the relation time range upper bound
+    v_conditions = 'o.emaj_gid > ' || v_firstEmajGid;
+--   get the EmajGid of the relation time range upper bound, if any
+    IF NOT upper_inf(r_rel.rel_time_range) THEN
+      SELECT time_last_emaj_gid INTO v_lastEmajGidRel FROM emaj.emaj_time_stamp WHERE time_id = upper(r_rel.rel_time_range);
+    END IF;
+--   if the relation time range upper bound is before the requested end mark, restrict the EmajGid upper limit
+    IF v_lastEmajGidRel IS NOT NULL AND
+       (v_lastEmajGid IS NULL OR (v_lastEmajGid IS NOT NULL AND v_lastEmajGidRel < v_lastEmajGid)) THEN
+      v_lastEmajGid = v_lastEmajGidRel;
+    END IF;
+--   complete the restriction conditions
+    IF v_lastEmajGid IS NOT NULL THEN
+      v_conditions = v_conditions || ' AND o.emaj_gid <= ' || v_lastEmajGid;
+    END IF;
+-- now scan the log table to process all statement types at once
+    EXECUTE 'INSERT INTO emaj_temp_script '
+         || 'SELECT o.emaj_gid, 0, o.emaj_txid, CASE '
+         ||   ' WHEN o.emaj_verb = ''INS'' THEN ' || v_rqInsert
+         ||   ' WHEN o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''OLD'' THEN ' || v_rqUpdate
+         ||   ' WHEN o.emaj_verb = ''DEL'' THEN ' || v_rqDelete
+         ||   ' WHEN o.emaj_verb = ''TRU'' THEN ' || v_rqTruncate
+         || ' END '
+         || ' FROM ' || v_logTableName || ' o'
+         ||   ' LEFT OUTER JOIN ' || v_logTableName || ' n ON n.emaj_gid = o.emaj_gid'
+         || '        AND (n.emaj_verb = ''UPD'' AND n.emaj_tuple = ''NEW'') '
+         || ' WHERE NOT (o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''NEW'')'
+         || ' AND ' || v_conditions;
+    GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
+    RETURN v_nbSQL;
+  END;
+$_gen_sql_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._verify_groups(v_groups TEXT[], v_onErrorStop BOOLEAN)
 RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
@@ -2656,7 +2774,6 @@ $_gen_sql_groups$
     v_cumNbSQL               BIGINT = 0;
     v_fullSeqName            TEXT;
     v_endComment             TEXT;
-    v_conditions             TEXT;
     v_endTimeId              BIGINT;
     v_rqSeq                  TEXT;
     r_tblsq                  RECORD;
@@ -2755,12 +2872,7 @@ $_gen_sql_groups$
         scr_emaj_txid          BIGINT,              -- for future use, to insert commit statement at each txid change
         scr_sql                TEXT                 -- the generated sql text
       );
--- for each application table referenced in the emaj_relation table, build SQL statements and process the related log table
--- build the restriction conditions on emaj_gid, depending on supplied mark range (the same for all tables)
-      v_conditions = 'o.emaj_gid > ' || v_firstEmajGid;
-      IF v_lastMarkTimeId IS NOT NULL THEN
-        v_conditions = v_conditions || ' AND o.emaj_gid <= ' || v_lastEmajGid;
-      END IF;
+-- for each application table referenced in the emaj_relation table, process the related log table, by calling the _gen_sql_tbl() function
       FOR r_rel IN
           SELECT * FROM emaj.emaj_relation
             WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                               -- tables belonging to the groups
@@ -2770,8 +2882,7 @@ $_gen_sql_groups$
                                     least(v_lastMarkTimeId, upper(rel_time_range))) > 0
             ORDER BY rel_priority, rel_schema, rel_tblseq
           LOOP
--- process the application table, by calling the _gen_sql_tbl() function
-        SELECT emaj._gen_sql_tbl(r_rel, v_conditions) INTO v_nbSQL;
+        SELECT emaj._gen_sql_tbl(r_rel, v_firstEmajGid, v_lastEmajGid) INTO v_nbSQL;
         v_cumNbSQL = v_cumNbSQL + v_nbSQL;
       END LOOP;
 -- process sequences

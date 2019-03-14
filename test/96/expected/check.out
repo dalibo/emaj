@@ -102,9 +102,9 @@ select funcname, calls from pg_stat_user_functions
  _change_log_schema_tbl                    |    11
  _check_conf_groups                        |   142
  _check_fk_groups                          |   242
- _check_group_names                        |   942
- _check_mark_name                          |   351
- _check_marks_range                        |   112
+ _check_group_names                        |   943
+ _check_mark_name                          |   352
+ _check_marks_range                        |   113
  _check_new_mark                           |   244
  _cleanup_rollback_state                   |   302
  _create_log_schemas                       |   116
@@ -127,16 +127,16 @@ select funcname, calls from pg_stat_user_functions
  _emaj_group_def_change_fnct               |   249
  _enable_event_triggers                    |   300
  _estimate_rollback_groups                 |    13
- _event_trigger_sql_drop_fnct              |    99
+ _event_trigger_sql_drop_fnct              |   100
  _event_trigger_table_rewrite_fnct         |   140
- _gen_sql_groups                           |    22
- _gen_sql_tbl                              |    42
+ _gen_sql_groups                           |    23
+ _gen_sql_tbl                              |    43
  _get_current_sequence_state               |  2338
  _get_default_tablespace                   |    10
  _get_previous_mark_group                  |    37
  _lock_groups                              |   236
  _log_stat_groups                          |    31
- _log_stat_tbl                             |  4785
+ _log_stat_tbl                             |  4786
  _log_truncate_fnct                        |     2
  _move_seq                                 |     5
  _move_tbl                                 |     5
@@ -182,7 +182,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_force_drop_group                     |     8
  emaj_force_stop_group                     |    15
  emaj_gen_sql_group                        |    17
- emaj_gen_sql_groups                       |     5
+ emaj_gen_sql_groups                       |     6
  emaj_get_consolidable_rollbacks           |    10
  emaj_get_previous_mark_group              |     8
  emaj_get_previous_mark_group              |     9
@@ -218,7 +218,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum 
 -----
- 770
+ 771
 (1 row)
 
 -----------------------------

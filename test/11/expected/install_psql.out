@@ -2293,14 +2293,14 @@ $_log_stat_tbl$
     RETURN (v_endLastValue - v_beginLastValue - v_sumHole);
   END;
 $_log_stat_tbl$;
-CREATE OR REPLACE FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_conditions TEXT)
+CREATE OR REPLACE FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_firstEmajGid BIGINT, v_lastEmajGid BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
 $_gen_sql_tbl$
 -- This function generates SQL commands representing all updates performed on a table between 2 marks
 -- or beetween a mark and the current situation. These command are stored into a temporary table created
 -- by the _gen_sql_groups() calling function.
 -- Input: row from emaj_relation corresponding to the appplication table to proccess,
---        sql conditions corresponding to the marks range to process
+--        the global sequence value at requested start and end marks
 -- Output: number of generated SQL statements
   DECLARE
     v_fullTableName          TEXT;
@@ -2315,6 +2315,8 @@ $_gen_sql_tbl$
     v_rqUpdate               TEXT;
     v_rqDelete               TEXT;
     v_rqTruncate             TEXT;
+    v_conditions             TEXT;
+    v_lastEmajGidRel         BIGINT;
     v_nbSQL                  BIGINT;
     r_col                    RECORD;
   BEGIN
@@ -2375,6 +2377,21 @@ $_gen_sql_tbl$
     v_rqUpdate = '''UPDATE ONLY ' || replace(v_fullTableName,'''','''''') || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';''';
     v_rqDelete = '''DELETE FROM ONLY ' || replace(v_fullTableName,'''','''''') || ' WHERE ' || v_pkCondList || ';''';
     v_rqTruncate = '''TRUNCATE ' || replace(v_fullTableName,'''','''''') || ';''';
+-- build the restriction conditions on emaj_gid, depending on supplied marks range and the relation time range upper bound
+    v_conditions = 'o.emaj_gid > ' || v_firstEmajGid;
+--   get the EmajGid of the relation time range upper bound, if any
+    IF NOT upper_inf(r_rel.rel_time_range) THEN
+      SELECT time_last_emaj_gid INTO v_lastEmajGidRel FROM emaj.emaj_time_stamp WHERE time_id = upper(r_rel.rel_time_range);
+    END IF;
+--   if the relation time range upper bound is before the requested end mark, restrict the EmajGid upper limit
+    IF v_lastEmajGidRel IS NOT NULL AND
+       (v_lastEmajGid IS NULL OR (v_lastEmajGid IS NOT NULL AND v_lastEmajGidRel < v_lastEmajGid)) THEN
+      v_lastEmajGid = v_lastEmajGidRel;
+    END IF;
+--   complete the restriction conditions
+    IF v_lastEmajGid IS NOT NULL THEN
+      v_conditions = v_conditions || ' AND o.emaj_gid <= ' || v_lastEmajGid;
+    END IF;
 -- now scan the log table to process all statement types at once
     EXECUTE 'INSERT INTO emaj_temp_script '
          || 'SELECT o.emaj_gid, 0, o.emaj_txid, CASE '
@@ -6743,7 +6760,6 @@ $_gen_sql_groups$
     v_cumNbSQL               BIGINT = 0;
     v_fullSeqName            TEXT;
     v_endComment             TEXT;
-    v_conditions             TEXT;
     v_endTimeId              BIGINT;
     v_rqSeq                  TEXT;
     r_tblsq                  RECORD;
@@ -6842,12 +6858,7 @@ $_gen_sql_groups$
         scr_emaj_txid          BIGINT,              -- for future use, to insert commit statement at each txid change
         scr_sql                TEXT                 -- the generated sql text
       );
--- for each application table referenced in the emaj_relation table, build SQL statements and process the related log table
--- build the restriction conditions on emaj_gid, depending on supplied mark range (the same for all tables)
-      v_conditions = 'o.emaj_gid > ' || v_firstEmajGid;
-      IF v_lastMarkTimeId IS NOT NULL THEN
-        v_conditions = v_conditions || ' AND o.emaj_gid <= ' || v_lastEmajGid;
-      END IF;
+-- for each application table referenced in the emaj_relation table, process the related log table, by calling the _gen_sql_tbl() function
       FOR r_rel IN
           SELECT * FROM emaj.emaj_relation
             WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                               -- tables belonging to the groups
@@ -6857,8 +6868,7 @@ $_gen_sql_groups$
                                     least(v_lastMarkTimeId, upper(rel_time_range))) > 0
             ORDER BY rel_priority, rel_schema, rel_tblseq
           LOOP
--- process the application table, by calling the _gen_sql_tbl() function
-        SELECT emaj._gen_sql_tbl(r_rel, v_conditions) INTO v_nbSQL;
+        SELECT emaj._gen_sql_tbl(r_rel, v_firstEmajGid, v_lastEmajGid) INTO v_nbSQL;
         v_cumNbSQL = v_cumNbSQL + v_nbSQL;
       END LOOP;
 -- process sequences
@@ -6914,14 +6924,16 @@ $_gen_sql_groups$
       END IF;
 -- encapsulate the sql statements inside a TRANSACTION
 -- and manage the standard_conforming_strings option to properly handle special characters
-      INSERT INTO emaj_temp_script SELECT 0, 10, 0, 'SET standard_conforming_strings = ON;';
-      INSERT INTO emaj_temp_script SELECT 0, 11, 0, 'BEGIN TRANSACTION;';
+      INSERT INTO emaj_temp_script SELECT 0, 10, 0, 'SET standard_conforming_strings = OFF;';
+      INSERT INTO emaj_temp_script SELECT 0, 11, 0, 'SET escape_string_warning = OFF;';
+      INSERT INTO emaj_temp_script SELECT 0, 20, 0, 'BEGIN TRANSACTION;';
       INSERT INTO emaj_temp_script SELECT NULL, 1, txid_current(), 'COMMIT;';
-      INSERT INTO emaj_temp_script SELECT NULL, 2, txid_current(), 'RESET standard_conforming_strings;';
+      INSERT INTO emaj_temp_script SELECT NULL, 10, txid_current(), 'RESET standard_conforming_strings;';
+      INSERT INTO emaj_temp_script SELECT NULL, 11, txid_current(), 'RESET escape_string_warning;';
 -- write the SQL script on the external file
       EXECUTE 'COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid ) TO '
             || quote_literal(v_location);
--- drop temporary table
+-- drop the temporary table
       DROP TABLE IF EXISTS emaj_temp_script;
 -- return the number of sql verbs generated into the output file
       v_cumNbSQL = v_cumNbSQL + v_nbSeq;
@@ -7791,7 +7803,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:7978: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:7990: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation

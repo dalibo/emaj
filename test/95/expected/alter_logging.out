@@ -361,7 +361,7 @@ myschema2	myseq2	6060	3	1	1	9223372036854775807	1	1	f	t
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, '/tmp/emaj_test/alter/myFile',array['myschema2.myseq2']);
 ERROR:  _gen_sql_groups: 1 table/sequence (myschema2.myseq2) did not belong to any of the selected tables groups at Before ADD_SEQ mark time.
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
-\! rm -R /tmp/emaj_test
+\! rm -R /tmp/emaj_test/alter/*
 -- testing mark deletions
 begin;
   -- testing delete a single mark set after the sequence addition
@@ -674,7 +674,6 @@ select * from emaj.emaj_verify_all();
 (1 row)
 
 --testing snap and sql generation
-\! mkdir -p /tmp/emaj_test/alter
 \! rm -Rf /tmp/emaj_test/alter/*
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/alter','');
  emaj_snap_group 
@@ -729,7 +728,7 @@ ALTER SEQUENCE myschema1."myTbl3_col31_seq" RESTART 11 START 1 INCREMENT 1 MAXVA
 COMMIT;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
-\! rm -R /tmp/emaj_test
+\! rm -R /tmp/emaj_test/alter/*
 begin;
   -- testing the alter_group mark deletion
   select emaj.emaj_delete_mark_group('myGroup1','Sequence_removed');
@@ -1016,7 +1015,6 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 (2 rows)
 
 --testing snap and sql generation
-\! mkdir -p /tmp/emaj_test/alter
 \! rm -Rf /tmp/emaj_test/alter/*
   select emaj.emaj_snap_group('myGroup2','/tmp/emaj_test/alter','');
  emaj_snap_group 
@@ -1053,7 +1051,6 @@ myschema2_mytbl7.snap
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, '/tmp/emaj_test/alter/myFile',array['myschema2.mytbl7']);
 ERROR:  _gen_sql_groups: 1 table/sequence (myschema2.mytbl7) did not belong to any of the selected tables groups at Before ADD_TBL mark time.
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
-\! rm -R /tmp/emaj_test
 -- testing mark deletions
 begin;
   -- testing delete a single mark set after the table addition
@@ -1353,7 +1350,6 @@ select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
 (2 rows)
 
 -- snap the logs
-\! mkdir -p /tmp/emaj_test/alter
 select emaj.emaj_snap_log_group('myGroup2',NULL,NULL,'/tmp/emaj_test/alter',NULL);
  emaj_snap_log_group 
 ---------------------
@@ -1363,7 +1359,7 @@ select emaj.emaj_snap_log_group('myGroup2',NULL,NULL,'/tmp/emaj_test/alter',NULL
 \! ls /tmp/emaj_test/alter/myschema2_mytbl7_log*
 /tmp/emaj_test/alter/myschema2_mytbl7_log.snap
 /tmp/emaj_test/alter/myschema2_mytbl7_log_1.snap
-\! rm -R /tmp/emaj_test
+\! rm -R /tmp/emaj_test/alter/*
 -- and finaly remove myTbl7 from the group
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl7';
 select emaj.emaj_alter_group('myGroup2', 'Alter to really remove mytbl7');
@@ -1515,7 +1511,6 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid
 (1 row)
 
 --testing snap and sql generation
-\! mkdir -p /tmp/emaj_test/alter
 \! rm -Rf /tmp/emaj_test/alter/*
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/alter','');
  emaj_snap_group 
@@ -1550,7 +1545,7 @@ select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp/emaj_test/alter',NULL
                   2
 (1 row)
 
-\! rm -R /tmp/emaj_test
+\! rm -R /tmp/emaj_test/alter/*
 -- test marks deletions
 begin;
 -- testing delete a single mark set before the table removal
@@ -2409,6 +2404,15 @@ select  stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, st
  myGroup1   | myschema2   | myTbl3     | move to myGroup1 |                  | UPDATE    | postgres  |         2
 (2 rows)
 
+-- generate a sql script crossing the move (before rollback)
+select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
+  array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
+ emaj_gen_sql_groups 
+---------------------
+                   4
+(1 row)
+
+\! rm /tmp/emaj_test/alter/*
 -- rollback to a mark set after the group change
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','after move');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
@@ -2457,14 +2461,13 @@ PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETUR
  Warning       | The sequence myschema2."myTbl3_col31_seq" has only been rolled back to its latest group attachment state (<timestamp>)
 (8 rows)
 
--- generate a sql script crossing the move
-\! mkdir -p /tmp/emaj_test/alter
-  select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
-    array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
+-- generate a sql script crossing the move (after rollback)
+select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
+  array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 ERROR:  _gen_sql_groups: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at before move mark time.
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
-  select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
-    array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
+select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
+  array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
  emaj_gen_sql_groups 
 ---------------------
                    4
@@ -3234,6 +3237,8 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS             | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUPS             | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS         | END                          | myGroup1,myGroup2            | after move                                                                                                             | postgres
+ GEN_SQL_GROUPS          | BEGIN                        | myGroup1,myGroup2            | From mark before move to current situation towards /tmp/emaj_test/alter/myFile with tables/sequences filtering         | postgres
+ GEN_SQL_GROUPS          | END                          | myGroup1,myGroup2            | 4 generated statements                                                                                                 | postgres
  ROLLBACK_GROUPS         | BEGIN                        | myGroup1,myGroup2            | Logged rollback to mark after move (timestamp)                                                                         | postgres
  DBLINK_OPEN_CNX         |                              | rlbk#1                       | Status = 1                                                                                                             | postgres
  LOCK_GROUP              | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                                                                    | postgres
@@ -3310,7 +3315,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP        | END                          | myGroup2                     | 8 tables/sequences processed                                                                                           | postgres
  FORCE_DROP_GROUP        | BEGIN                        | myGroup4                     |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | END                          | myGroup4                     | 5 tables/sequences processed                                                                                           | postgres
-(721 rows)
+(723 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
  time_id | time_last_emaj_gid | time_event 

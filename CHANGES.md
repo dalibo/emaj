@@ -29,6 +29,9 @@ E-Maj - Change log
     non 0 return code when an error occurs.
   * In emaj_gen_sql_group() and emaj_gen_sql_groups() functions, fix the 
     cases of non-printable characters in text columns content.
+  * In sql scripts generation functions, when a table is removed from its 
+    group in the time range targeted by the user, do not process changes 
+    later than the table removal from its group.
 
 2.3.1 (2018-Sept-6)
 ------
