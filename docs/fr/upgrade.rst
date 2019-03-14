@@ -145,4 +145,4 @@ Spécificités liées aux versions :
 
 * La procédure de mise à jour d’une version 2.2.2 en version 2.2.3 vérifie les valeurs des séquences de log enregistrées. Dans certains cas, elle peut demander une ré-initialisation préalable de certains groupes de tables.
 
-* La procédure de mise à jour d’une version 2.3.1 en version <devel> change la structure des tables de log : les 2 colonnes *emaj_client_ip* et *emaj_client_port* ne sont plus créées. Les tables de log existantes ne sont pas modifiées. Seules les nouvelles tables de log sont impactées. Mais il est possible à l’administrateur :ref:`d’ajouter ces deux colonnes<addLogColumns>`, en utilisant le paramètre *'alter_log_tables'*.
+* La procédure de mise à jour d’une version 2.3.1 en version 3.0.0 change la structure des tables de log : les 2 colonnes *emaj_client_ip* et *emaj_client_port* ne sont plus créées. Les tables de log existantes ne sont pas modifiées. Seules les nouvelles tables de log sont impactées. Mais il est possible à l’administrateur :ref:`d’ajouter ces deux colonnes<addLogColumns>`, en utilisant le paramètre *'alter_log_tables'*.
