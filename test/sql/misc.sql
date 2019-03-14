@@ -469,7 +469,6 @@ rollback;
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, 'Multi-2', NULL, NULL);
 
 -- start mark with the same point in time but not with the same name
---TODO: uncomment once the bug with the group start resetting the log sequences will be solved
 begin;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
   select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Common_mark_name');

@@ -1135,7 +1135,6 @@ CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_f
 PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- start mark with the same point in time but not with the same name
---TODO: uncomment once the bug with the group start resetting the log sequences will be solved
 begin;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
  emaj_stop_groups 
