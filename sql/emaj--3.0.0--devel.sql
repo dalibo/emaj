@@ -1,5 +1,5 @@
 --
--- E-Maj: migration from <PREVIOUS_VERSION> to <devel>
+-- E-Maj: migration from 3.0.0 to <devel>
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -29,19 +29,14 @@ $do$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current user (%) is not a superuser.', current_user;
     END IF;
--- the emaj version registered in emaj_param must be '<PREVIOUS_VERSION>'
+-- the emaj version registered in emaj_param must be '3.0.0'
     SELECT param_value_text INTO v_emajVersion FROM emaj.emaj_param WHERE param_key = 'emaj_version';
-    IF v_emajVersion <> '<PREVIOUS_VERSION>' THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not <PREVIOUS_VERSION>',v_emajVersion;
+    IF v_emajVersion <> '3.0.0' THEN
+      RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not 3.0.0',v_emajVersion;
     END IF;
 -- the installed postgres version must be at least 9.5
     IF current_setting('server_version_num')::int < 90500 THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with the new E-Maj version. The PostgreSQL version should be at least 9.5.', current_setting('server_version');
-    END IF;
--- the E-Maj environment is not damaged
-    PERFORM * FROM (SELECT * FROM emaj.emaj_verify_all()) AS t(msg) WHERE msg <> 'No error detected';
-    IF FOUND THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
     END IF;
 -- no existing group must have been created with a postgres version prior 8.4
     SELECT string_agg(group_name, ', ') INTO v_groupList FROM emaj.emaj_group
@@ -57,7 +52,7 @@ $do$;
 
 -- insert the upgrade begin record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-  VALUES ('EMAJ_INSTALL','BEGIN','E-Maj <devel>', 'Upgrade from <PREVIOUS_VERSION> started');
+  VALUES ('EMAJ_INSTALL','BEGIN','E-Maj <devel>', 'Upgrade from 3.0.0 started');
 
 -- lock emaj_group table to avoid any concurrent E-Maj activity
 LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
@@ -157,7 +152,7 @@ UPDATE emaj.emaj_param SET param_value_text = '<devel>' WHERE param_key = 'emaj_
 
 -- insert the upgrade end record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-  VALUES ('EMAJ_INSTALL','END','E-Maj <devel>', 'Upgrade from <PREVIOUS_VERSION> completed');
+  VALUES ('EMAJ_INSTALL','END','E-Maj <devel>', 'Upgrade from 3.0.0 completed');
 
 -- post installation checks
 DO

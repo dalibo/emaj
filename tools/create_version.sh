@@ -65,12 +65,15 @@
 	echo "Adjusting $NEW content..."
 
 # Delete tar files if exist
-	rm *.tar*
+	rm -f *.tar*
 
-# Process doc directory: rename *devel* with *<new version>*
-	for file in doc/*devel*; do
-		mv $file $(echo $file | sed -r "s/devel/${NEW}/")
-	done 
+# Process doc directory: copy the Libre Office source documents from the emaj_doc directory, if any
+	cp ../emaj_doc/Emaj.devel_doc_en.odt  doc/Emaj.${NEW}_doc_en.odt
+	cp ../emaj_doc/Emaj.devel_doc_fr.odt  doc/Emaj.${NEW}_doc_fr.odt
+	cp ../emaj_doc/Emaj.devel_pres_en.odp doc/Emaj.${NEW}_pres_en.odp
+	cp ../emaj_doc/Emaj.devel_pres_fr.odp doc/Emaj.${NEW}_pres_fr.odp
+	cp ../emaj_doc/Emaj.devel_overview_en.odp doc/Emaj.${NEW}_overview_en.odp
+	cp ../emaj_doc/Emaj.devel_overview_fr.odp doc/Emaj.${NEW}_overview_fr.odp
 
 # Process sql directory: change version identifiers inside the right files (excluding migration scripts)
 	for file in sql/*; do
@@ -79,7 +82,7 @@
 		fi
 	done
 	git mv sql/emaj--devel.sql sql/emaj--${NEW}.sql
-	git mv sql/emaj--devel.psql sql/emaj--${NEW}.psql
+	git mv sql/emaj-devel.sql sql/emaj-${NEW}.sql
 
 # Change version identifiers inside files from /client + + META.json README.md
 	find client META.json README.md -type f -exec sed -i "s/<devel>/${NEW}/g" '{}' \;
@@ -92,6 +95,7 @@
 
 # Change version identifiers inside files from /test/sql
 	find test/sql -type f -exec sed -i "s/'devel'/'${NEW}'/g" '{}' \;
+	sed -i "s/emaj-devel.sql/emaj-${NEW}.sql/" test/sql/install_psql.sql
 
 # Change environment directories and files into tools
 	sed -i "s/\/emaj/\/emaj-${NEW}/" tools/copy2Expected.sh

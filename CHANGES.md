@@ -3,6 +3,15 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+
+
+
+3.0.0 (2019-Mar-19)
+------
+###Enhancements:###
   * A psql script is supplied to install emaj on environments where it is not 
     possible to CREATE an EXTENSION (like PGaaS clouds).
   * Unlogged tables and tables with OIDS can be members of audit_only groups.
