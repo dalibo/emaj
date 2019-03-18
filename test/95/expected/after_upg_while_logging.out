@@ -285,7 +285,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist order by hist_id;
       hist_function       |     hist_event     |         hist_object          |                                        regexp_replace                                         | hist_user 
 --------------------------+--------------------+------------------------------+-----------------------------------------------------------------------------------------------+-----------
- EMAJ_INSTALL             |                    | E-Maj 2.3.1                  | Initialisation completed                                                                      | postgres
+ EMAJ_INSTALL             |                    | E-Maj 3.0.0                  | Initialisation completed                                                                      | postgres
  CREATE_GROUP             | BEGIN              | myGroup1                     | rollbackable                                                                                  | postgres
  CREATE_GROUP             | END                | myGroup1                     | 6 tables/sequences processed                                                                  | postgres
  CREATE_GROUP             | BEGIN              | myGroup2                     | rollbackable                                                                                  | postgres
@@ -396,9 +396,8 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUP              | TABLE REMOVED      | myschema1."myTbl3"           | From logging group myGroup1                                                                   | postgres
  ALTER_GROUP              | LOG SCHEMA CHANGED | myschema1.mytbl2b            | emaj => emajb                                                                                 | postgres
  ALTER_GROUP              | END                | myGroup1                     | Timestamp Id : 18                                                                             | postgres
- EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                | Upgrade from 2.3.1 started                                                                    | postgres
- ADJUST_GROUP_PROPERTIES  |                    | myGroup1                     | Set the group_has_waiting_changes column to true                                              | postgres
- EMAJ_INSTALL             | END                | E-Maj <devel>                | Upgrade from 2.3.1 completed                                                                  | postgres
+ EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                | Upgrade from 3.0.0 started                                                                    | postgres
+ EMAJ_INSTALL             | END                | E-Maj <devel>                | Upgrade from 3.0.0 completed                                                                  | postgres
  UNPROTECT_GROUP          |                    | myGroup1                     | Status 1                                                                                      | postgres
  ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2            | Unlogged rollback to mark Common (timestamp)                                                  | postgres
  DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -5                                                                                   | postgres
@@ -524,7 +523,7 @@ select hist_function, hist_event, hist_object,
  DELETE_MARK_GROUP        | END                | myGroup1                     | M1                                                                                            | postgres
  DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1                     | M4                                                                                            | postgres
  DELETE_BEFORE_MARK_GROUP | END                | myGroup1                     | 3 marks deleted ; M4 is now the initial mark                                                  | postgres
-(239 rows)
+(238 rows)
 
 --
 reset role;

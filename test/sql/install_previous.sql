@@ -15,7 +15,7 @@ SET default_tablespace TO tspemaj;
 ------------------------------------------------------------
 -- emaj installation in its previous version as an extension
 ------------------------------------------------------------
-CREATE EXTENSION emaj VERSION '2.3.1';
+CREATE EXTENSION emaj VERSION '3.0.0';
 
 ------------------------------------------------------------
 -- check installation
@@ -28,4 +28,3 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 
 -- check history
 select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
-
