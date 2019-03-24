@@ -8,6 +8,8 @@ E-Maj - Change log
 ###Bug fixes:###
   * When checking the emaj_group_def table content, duplicate emaj names
     prefix were sometimes erroneously detected.
+  * Fix the emaj_delete_before_mark_group() function call. In some rare cases,
+    it failed on a missing log table.
 
 
 3.0.0 (2019-Mar-19)

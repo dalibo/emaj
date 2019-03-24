@@ -4088,7 +4088,7 @@ $_delete_before_mark_group$
             WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper(rel_time_range) <= v_markTimeId
         EXCEPT
           SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
-            WHERE rel_kind = 'r' AND upper(rel_time_range) > v_markTimeId
+            WHERE rel_kind = 'r' AND (upper(rel_time_range) > v_markTimeId OR upper_inf(rel_time_range))
           ORDER BY 1,2
         LOOP
       EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' CASCADE';
