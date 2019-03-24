@@ -1032,7 +1032,8 @@ $_check_conf_groups$
         SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix
           FROM emaj.emaj_group_def, emaj.emaj_relation
           WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log' = rel_log_table
-            AND grpdef_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames)
+            AND grpdef_group = ANY (v_groupNames)
+            AND NOT rel_group = ANY (v_groupNames) AND upper_inf(rel_time_range)
       )
       SELECT 11, 1, grpdef_group, grpdef_schema, grpdef_tblseq, prefix,
              format('in the group %s, the table %s.%s would have an already used emaj prefix "%s".', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), prefix)

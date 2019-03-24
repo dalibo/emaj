@@ -93,6 +93,162 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._check_conf_groups(v_groupNames TEXT[])
+RETURNS SETOF emaj._check_conf_groups_type LANGUAGE plpgsql AS
+$_check_conf_groups$
+-- This function verifies that the content of tables group as defined into the emaj_group_def table is correct.
+-- Any detected issue is reported as a message row. The caller defines what to do with them, depending on the tables group type.
+-- It is called by the emaj_create_group() and _alter_groups() functions.
+-- This function checks that the referenced application tables and sequences:
+--  - exist,
+--  - is not located into an E-Maj schema (to protect against an E-Maj recursive use),
+--  - do not already belong to another tables group,
+--  - will not generate conflicts on emaj objects to create (when emaj names prefix is not the default one)
+-- It also checks that:
+--  - tables are not TEMPORARY
+--  - for rollbackable groups, tables are not UNLOGGED or WITH OIDS
+--  - for rollbackable groups, all tables have a PRIMARY KEY
+--  - for sequences, the tablespaces, emaj log schema and emaj object name prefix are all set to NULL
+--  - for tables, configured tablespaces exist
+-- Input: name array of the tables groups to check
+  BEGIN
+-- check that all application tables and sequences listed for the group really exist
+    RETURN QUERY
+      SELECT 1, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table or sequence %s.%s does not exist.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def
+        WHERE grpdef_group = ANY(v_groupNames)
+          AND (grpdef_schema, grpdef_tblseq) NOT IN (
+            SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S','p'));
+---- check that no application table is a partitioned table (only elementary partitions can be managed by E-Maj)
+    RETURN QUERY
+      SELECT 2, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table %s.%s is a partitionned table (only elementary partitions are supported by E-Maj).', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
+          AND grpdef_group = ANY(v_groupNames)
+          AND relkind = 'p';
+---- check no application schema listed for the group in the emaj_group_def table is an E-Maj schema
+    RETURN QUERY
+      SELECT 3, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table or sequence %s.%s belongs to an E-Maj schema.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, emaj.emaj_schema
+        WHERE grpdef_group = ANY(v_groupNames)
+          AND grpdef_schema = sch_name;
+---- check that no table or sequence of the checked groups already belongs to other created groups
+    RETURN QUERY
+      SELECT 4, 1, grpdef_group, grpdef_schema, grpdef_tblseq, rel_group,
+             format('in the group %s, the table or sequence %s.%s already belongs to the group %s.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), quote_ident(rel_group))
+        FROM emaj.emaj_group_def, emaj.emaj_relation
+        WHERE grpdef_schema = rel_schema AND grpdef_tblseq = rel_tblseq
+          AND upper_inf(rel_time_range) AND grpdef_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames);
+---- check no table is a TEMP table
+    RETURN QUERY
+      SELECT 5, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table %s.%s is a TEMPORARY table.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 't';
+---- check that several tables of the group have not the same emaj names prefix
+    RETURN QUERY
+      WITH dupl_prefix AS (
+        SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix, count(*)
+          FROM emaj.emaj_group_def
+          WHERE grpdef_group = ANY (v_groupNames)
+          GROUP BY 1 HAVING count(*) > 1)
+      SELECT 10, 1, grpdef_group, grpdef_schema, grpdef_tblseq, prefix,
+             format('in the group %s, the table %s.%s would have a duplicate emaj prefix "%s".', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), prefix)
+        FROM emaj.emaj_group_def, dupl_prefix
+        WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) = prefix
+          AND grpdef_group = ANY (v_groupNames);
+---- check that emaj names prefix that will be generared will not generate conflict with objects from existing groups
+    RETURN QUERY
+      WITH dupl_prefix AS (
+        SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix
+          FROM emaj.emaj_group_def, emaj.emaj_relation
+          WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log' = rel_log_table
+            AND grpdef_group = ANY (v_groupNames)
+            AND NOT rel_group = ANY (v_groupNames) AND upper_inf(rel_time_range)
+      )
+      SELECT 11, 1, grpdef_group, grpdef_schema, grpdef_tblseq, prefix,
+             format('in the group %s, the table %s.%s would have an already used emaj prefix "%s".', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), prefix)
+        FROM emaj.emaj_group_def, dupl_prefix
+        WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) = prefix
+          AND grpdef_group = ANY (v_groupNames);
+---- check that the log data tablespaces for tables exist
+    RETURN QUERY
+      SELECT 12, 1, grpdef_group, grpdef_schema, grpdef_tblseq, grpdef_log_dat_tsp,
+             format('in the group %s, for the table %s.%s, the data log tablespace %s does not exist.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), quote_ident(grpdef_log_dat_tsp))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND grpdef_log_dat_tsp IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = grpdef_log_dat_tsp);
+---- check that the log index tablespaces for tables exist
+    RETURN QUERY
+      SELECT 13, 1, grpdef_group, grpdef_schema, grpdef_tblseq, grpdef_log_idx_tsp,
+             format('in the group %s, for the table %s.%s, the index log tablespace %s does not exist.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), quote_ident(grpdef_log_idx_tsp))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND grpdef_log_idx_tsp IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = grpdef_log_idx_tsp);
+---- check no table is an unlogged table (blocking rollbackable groups only)
+    RETURN QUERY
+      SELECT 20, 2, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table %s.%s is an UNLOGGED table.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 'u';
+---- check no table is a WITH OIDS table (blocking rollbackable groups only)
+    RETURN QUERY
+      SELECT 21, 2, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table %s.%s is declared WITH OIDS.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relhasoids;
+---- check every table has a primary key (blocking rollbackable groups only)
+    RETURN QUERY
+      SELECT 22, 2, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, the table %s.%s has no PRIMARY KEY.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'r'
+          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+                            WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
+                            AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq);
+---- all sequences described in emaj_group_def have their log schema suffix attribute set to NULL
+    RETURN QUERY
+      SELECT 30, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, for the sequence %s.%s, the secondary log schema suffix is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_schema_suffix IS NOT NULL;
+---- all sequences described in emaj_group_def have their emaj names prefix attribute set to NULL
+    RETURN QUERY
+      SELECT 31, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, for the sequence %s.%s, the emaj names prefix is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_emaj_names_prefix IS NOT NULL;
+---- all sequences described in emaj_group_def have their data log tablespaces attributes set to NULL
+    RETURN QUERY
+      SELECT 32, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, for the sequence %s.%s, the data log tablespace is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_dat_tsp IS NOT NULL;
+---- all sequences described in emaj_group_def have their index log tablespaces attributes set to NULL
+    RETURN QUERY
+      SELECT 33, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, for the sequence %s.%s, the index log tablespace is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_idx_tsp IS NOT NULL;
+--
+    RETURN;
+  END;
+$_check_conf_groups$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --

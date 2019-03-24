@@ -6,7 +6,8 @@ E-Maj - Change log
 
 
 ###Bug fixes:###
-
+  * When checking the emaj_group_def table content, duplicate emaj names
+    prefix were sometimes erroneously detected.
 
 
 3.0.0 (2019-Mar-19)
